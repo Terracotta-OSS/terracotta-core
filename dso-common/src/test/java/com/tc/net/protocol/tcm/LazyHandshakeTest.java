@@ -4,7 +4,7 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -49,7 +49,7 @@ public class LazyHandshakeTest extends TCTestCase {
   private int                   proxyPort;
 
   private NetworkListener       listener;
-  private ClientMessageChannel  channel[]          = new ClientMessageChannel[CLIENT_COUNT];
+  private final ClientMessageChannel  channel[]          = new ClientMessageChannel[CLIENT_COUNT];
   private int                   currentClient      = 0;
 
   @Override
@@ -97,7 +97,7 @@ public class LazyHandshakeTest extends TCTestCase {
   }
 
   public void testLazyHandshake() {
-    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(this.getClass())));
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(this.getClass())));
     // imitating TCGroupManager implementation of StaticMemberDiscovery on handshake timeouts
 
     Thread lazyThread = new Thread(threadGroup, new Runnable() {

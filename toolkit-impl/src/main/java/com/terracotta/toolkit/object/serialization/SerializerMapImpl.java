@@ -7,7 +7,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.platform.PlatformService;
@@ -86,7 +86,7 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
       V val = createSCOIfNeeded(value);
       synchronized (localResolveLock) {
         V ret = internalput(key, val);
-        tcObject.logicalInvoke(SerializationUtil.PUT, SerializationUtil.PUT_SIGNATURE, new Object[] { key, val });
+        tcObject.logicalInvoke(LogicalOperation.PUT, new Object[] { key, val });
         return ret;
       }
     } finally {

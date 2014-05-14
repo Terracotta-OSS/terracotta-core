@@ -49,6 +49,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.UUID;
@@ -63,6 +64,10 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
+/*
+ * This test really belongs in the TC Messaging module but it's dependencies
+ * currently prevent that.  It needs some heavy refactoring.
+ */
 /*
  * Test case for TC-Group-Comm Tribes' GroupMessage sent via TCMessage
  */
@@ -191,11 +196,11 @@ public class TCGroupMessageWrapperTest extends TestCase {
   }
 
   public void testGCResultMessage() throws Exception {
-    ObjectIDSet oidSet = new ObjectIDSet();
+    ObjectIDSet oidSet = new BitSetObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT, new GarbageCollectionInfo(), oidSet);
+    GroupMessage sendMesg = new GCResultMessage(new GarbageCollectionInfo(), oidSet);
     sendGroupMessage(sendMesg);
   }
 
@@ -219,12 +224,12 @@ public class TCGroupMessageWrapperTest extends TestCase {
   }
 
   public void testObjectSyncCompleteMessage() throws Exception {
-    GroupMessage sendMesg = new ObjectSyncCompleteMessage(ObjectSyncCompleteMessage.OBJECT_SYNC_COMPLETE, 100);
+    GroupMessage sendMesg = new ObjectSyncCompleteMessage(100);
     sendGroupMessage(sendMesg);
   }
 
   public void testObjectSyncMessage() throws Exception {
-    ObjectIDSet dnaOids = new ObjectIDSet();
+    ObjectIDSet dnaOids = new BitSetObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       dnaOids.add(new ObjectID(i));
     }
@@ -233,10 +238,9 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ObjectStringSerializer objectSerializer = new ObjectStringSerializerImpl();
     Map roots = new HashMap();
     long sID = 10;
-    ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
-    message.initialize(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
-                                               new TransactionID(342)), dnaOids, count, serializedDNAs,
-                       objectSerializer, roots, sID, TCCollections.EMPTY_OBJECT_ID_SET);
+    ObjectSyncMessage message = new ObjectSyncMessage(new ServerTransactionID(new ServerID("hello", new byte[]{34, 33, (byte) 234}),
+            new TransactionID(342)), dnaOids, count, serializedDNAs,
+            objectSerializer, roots, sID, TCCollections.EMPTY_OBJECT_ID_SET);
     sendGroupMessage(message);
   }
 

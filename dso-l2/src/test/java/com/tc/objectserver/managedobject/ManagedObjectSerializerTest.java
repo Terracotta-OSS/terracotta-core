@@ -6,8 +6,8 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -61,16 +61,16 @@ public class ManagedObjectSerializerTest extends TestCase {
     final TestDNACursor cursor = new TestDNACursor();
     cursor.addArrayAction(new Object[] { new ObjectID(5000) });
     for (int i = 0; i < fieldSetCount; i++) {
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "refField" + i, new ObjectID(1) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "booleanField" + i, Boolean.valueOf(true) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "byteField" + i, Byte.valueOf((byte) 1) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "characterField" + i, Character.valueOf('c') });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "doubleField" + i, Double.valueOf(100.001d) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "floatField" + i, Float.valueOf(100.001f) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "integerField" + i, Integer.valueOf(100) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "longField" + i, Long.valueOf(100) });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "stringField" + i, "Some nice string field" + i });
-      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "shortField" + i, Short.valueOf((short) 1) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "refField" + i, new ObjectID(1) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "booleanField" + i, Boolean.valueOf(true) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "byteField" + i, Byte.valueOf((byte) 1) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "characterField" + i, Character.valueOf('c') });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "doubleField" + i, Double.valueOf(100.001d) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "floatField" + i, Float.valueOf(100.001f) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "integerField" + i, Integer.valueOf(100) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "longField" + i, Long.valueOf(100) });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "stringField" + i, "Some nice string field" + i });
+      cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { "shortField" + i, Short.valueOf((short) 1) });
     }
     final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     return dna;

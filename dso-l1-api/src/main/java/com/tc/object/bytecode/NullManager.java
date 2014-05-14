@@ -12,6 +12,7 @@ import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
@@ -100,7 +101,7 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void logicalInvoke(Object object, String methodName, Object[] params) {
+  public void logicalInvoke(Object object, LogicalOperation method, Object[] params) {
     //
   }
 
@@ -140,7 +141,7 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params) {
+  public void logicalInvokeWithTransaction(Object object, Object lockObject, LogicalOperation method, Object[] params) {
     throw new UnsupportedOperationException();
   }
 

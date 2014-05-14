@@ -210,25 +210,6 @@ public enum ManagedObjectStateStaticConfig {
                                             PersistentObjectFactory objectFactory) {
         return new ToolkitNotifierManagedObjectState(classId);
       }
-    },
-    SET_TYPE_FACTORY() {
-
-      @Override
-      public byte getStateObjectType() {
-        return ManagedObjectState.SET_TYPE;
-      }
-
-      @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput, PersistentObjectFactory objectFactory) throws IOException {
-        return SetManagedObjectState.readFrom(objectInput, objectFactory);
-      }
-
-      @Override
-      public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentObjectFactory objectFactory) {
-        return new SetManagedObjectState(classId, oid, objectFactory);
-      }
-
     };
 
     private static final Map<Byte, Factory> TYPE_TO_FACTORY_MAP = new ConcurrentHashMap<Byte, Factory>();

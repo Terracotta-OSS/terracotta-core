@@ -1,7 +1,7 @@
 package com.tc.objectserver.persistence;
 
 import com.tc.object.ObjectID;
-import com.tc.util.ObjectIDSet;
+import com.tc.util.BitSetObjectIDSet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -10,7 +10,7 @@ import java.util.Set;
  * @author tim
  */
 public class HeapInlineGCPersistor implements InlineGCPersistor {
-  private final Set<ObjectID> set = new ObjectIDSet();
+  private final Set<ObjectID> set = new BitSetObjectIDSet();
 
   @Override
   public synchronized int size() {
@@ -29,6 +29,6 @@ public class HeapInlineGCPersistor implements InlineGCPersistor {
 
   @Override
   public synchronized Set<ObjectID> allObjectIDs() {
-    return new ObjectIDSet(set);
+    return new BitSetObjectIDSet(set);
   }
 }

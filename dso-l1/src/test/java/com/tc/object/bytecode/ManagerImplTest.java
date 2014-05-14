@@ -11,6 +11,7 @@ import com.tc.net.NodeID;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
@@ -274,7 +275,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
+    public void checkPortabilityOfLogicalAction(final LogicalOperation operation, final Object[] params, final int index,
                                                 final Object pojo) throws TCNonPortableObjectError {
       throw new ImplementMe();
     }

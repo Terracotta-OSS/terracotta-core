@@ -7,7 +7,6 @@ import org.mockito.Mockito;
 
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
-import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
@@ -25,6 +24,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.impl.MockSerializedEntry;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -166,9 +166,8 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
     }
 
     @Override
-    public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
+    public ObjectIDSet getObjectIDsToValidate(final NodeID remoteNode) {
       throw new ImplementMe();
-
     }
 
     @Override

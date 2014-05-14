@@ -17,6 +17,7 @@ import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -138,7 +139,7 @@ public class GCTestObjectManager implements ObjectManager {
 
   @Override
   public ObjectIDSet getAllObjectIDs() {
-    ObjectIDSet oids = new ObjectIDSet(managed.keySet());
+    ObjectIDSet oids = new BitSetObjectIDSet(managed.keySet());
     oids.addAll(swappedToDisk.keySet());
     return oids;
   }
@@ -191,7 +192,7 @@ public class GCTestObjectManager implements ObjectManager {
 
   @Override
   public ObjectIDSet getObjectIDsInCache() {
-    return new ObjectIDSet(managed.keySet());
+    return new BitSetObjectIDSet(managed.keySet());
   }
 
   public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
@@ -208,19 +209,19 @@ public class GCTestObjectManager implements ObjectManager {
       ManagedObject obj = getObjectFromCacheByIDOrNull(id);
       if (obj == null) {
         // Not in cache, rescue stage to take care of these inward references.
-        return new ObjectIDSet();
+        return new BitSetObjectIDSet();
       }
       Set refs = obj.getObjectReferences();
       releaseReadOnly(obj);
-      return new ObjectIDSet(refs);
+      return new BitSetObjectIDSet(refs);
     } else {
       ManagedObject obj = getObjectByIDReadOnly(id);
       if (obj == null) {
-        return new ObjectIDSet();
+        return new BitSetObjectIDSet();
       }
       Set refs = obj.getObjectReferences();
       releaseReadOnly(obj);
-      return new ObjectIDSet(refs);
+      return new BitSetObjectIDSet(refs);
     }
   }
 

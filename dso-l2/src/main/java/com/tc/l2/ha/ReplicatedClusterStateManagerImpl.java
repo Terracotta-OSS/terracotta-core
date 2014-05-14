@@ -8,7 +8,6 @@ import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
-import com.tc.l2.msg.ClusterStateMessageFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -59,7 +58,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     state.syncActiveState();
 
     // Sync state to external passive servers
-    publishToAll(ClusterStateMessageFactory.createClusterStateMessage(state));
+    publishToAll(ClusterStateMessage.createClusterStateMessage(state));
 
     isActive = true;
     notifyAll();
@@ -69,7 +68,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
     waitUntilActive();
     ClusterStateMessage msg = (ClusterStateMessage) groupManager
-        .sendToAndWaitForResponse(nodeID, ClusterStateMessageFactory.createClusterStateMessage(state));
+        .sendToAndWaitForResponse(nodeID, ClusterStateMessage.createClusterStateMessage(state));
     validateResponse(nodeID, msg);
   }
 
@@ -101,34 +100,34 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   @Override
   public synchronized void publishNextAvailableObjectID(long minID) {
     state.setNextAvailableObjectID(minID);
-    publishToAll(ClusterStateMessageFactory.createNextAvailableObjectIDMessage(state));
+    publishToAll(ClusterStateMessage.createNextAvailableObjectIDMessage(state));
   }
 
   @Override
   public synchronized void publishNextAvailableDGCID(long nextGcIteration) {
     state.setNextAvailableDGCId(nextGcIteration);
-    publishToAll(ClusterStateMessageFactory.createNextAvailableDGCIterationMessage(state));
+    publishToAll(ClusterStateMessage.createNextAvailableDGCIterationMessage(state));
   }
 
   // TODO:: Sync only once a while to the passives
   @Override
   public void publishNextAvailableGlobalTransactionID(long minID) {
     state.setNextAvailableGlobalTransactionID(minID);
-    publishToAll(ClusterStateMessageFactory.createNextAvailableGlobalTransactionIDMessage(state));
+    publishToAll(ClusterStateMessage.createNextAvailableGlobalTransactionIDMessage(state));
   }
 
   @Override
   public synchronized void connectionIDCreated(ConnectionID connectionID) {
     Assert.assertTrue(stateManager.isActiveCoordinator());
     state.addNewConnection(connectionID);
-    publishToAll(ClusterStateMessageFactory.createNewConnectionCreatedMessage(connectionID));
+    publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
   }
 
   @Override
   public synchronized void connectionIDDestroyed(ConnectionID connectionID) {
     Assert.assertTrue(stateManager.isActiveCoordinator());
     state.removeConnection(connectionID);
-    publishToAll(ClusterStateMessageFactory.createConnectionDestroyedMessage(connectionID));
+    publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
   }
 
   private void publishToAll(GroupMessage message) {
@@ -196,7 +195,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   private void sendOKResponse(NodeID fromNode, ClusterStateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, ClusterStateMessageFactory.createOKResponse(msg));
+      groupManager.sendTo(fromNode, ClusterStateMessage.createOKResponse(msg));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }
@@ -204,7 +203,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   private void sendNGSplitBrainResponse(NodeID fromNode, ClusterStateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, ClusterStateMessageFactory.createNGSplitBrainResponse(msg));
+      groupManager.sendTo(fromNode, ClusterStateMessage.createNGSplitBrainResponse(msg));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }

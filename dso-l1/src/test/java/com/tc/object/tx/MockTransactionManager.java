@@ -11,6 +11,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -95,7 +96,7 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public void logicalInvoke(TCObject source, int name, String methodName, Object[] parameters) {
+  public void logicalInvoke(TCObject source, LogicalOperation name, Object[] parameters) {
     throw new ImplementMe();
   }
 
@@ -245,7 +246,7 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters) {
+  public boolean logicalInvokeWithResult(TCObject source, LogicalOperation method, Object[] parameters) {
     return false;
   }
 

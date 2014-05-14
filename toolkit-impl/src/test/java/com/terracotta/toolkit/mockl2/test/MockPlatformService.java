@@ -9,6 +9,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCClassFactory;
@@ -195,11 +196,11 @@ public class MockPlatformService implements PlatformService {
   }
 
   @Override
-  public void logicalInvoke(Object object, String methodName, Object[] params) {
-    MockUtil.logInfo("Platform Service : logicalInvoke : " + printVar(object, methodName, params));
+  public void logicalInvoke(Object object, LogicalOperation method, Object[] params) {
+    MockUtil.logInfo("Platform Service : logicalInvoke : " + printVar(object, method, params));
     for(MockPlatformListener listener : listeners) {
       if(listener != null) {
-        listener.logicalInvoke(object, methodName, params);
+        listener.logicalInvoke(object, method, params);
       }
     }
   }

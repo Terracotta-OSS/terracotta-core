@@ -10,6 +10,7 @@ import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.context.InvalidateObjectsForClientContext;
 import com.tc.objectserver.context.ValidateObjectsRequestContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -20,6 +21,7 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TCConcurrentStore;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,7 +43,7 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
                                                                                                                                         256,
                                                                                                                                         0.75f,
                                                                                                                                         128);
-  private final ConcurrentHashMap<ClientID, Invalidations> validateMap                 = new ConcurrentHashMap<ClientID, Invalidations>(
+  private final ConcurrentHashMap<ClientID, ObjectIDSet> validateMap                 = new ConcurrentHashMap<ClientID, ObjectIDSet>(
                                                                                                                                         32,
                                                                                                                                         0.75f,
                                                                                                                                         16);
@@ -76,9 +78,9 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
 
   @Override
   public void validateObjects(ObjectIDSet validEntries) {
-    for (Iterator i = validateMap.entrySet().iterator(); i.hasNext();) {
-      Entry<ClientID, Invalidations> e = (Entry<ClientID, Invalidations>) i.next();
-      Invalidations invalidations = e.getValue();
+    for (Iterator<Map.Entry<ClientID, ObjectIDSet>> i = validateMap.entrySet().iterator(); i.hasNext();) {
+      Entry<ClientID, ObjectIDSet> e = i.next();
+      Invalidations invalidations = new Invalidations(Collections.singletonMap(ObjectID.NULL_ID, e.getValue()));
       invalidations.removeAll(validEntries);
 
       if (!invalidations.isEmpty()) {
@@ -90,13 +92,13 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
   }
 
   @Override
-  public void addObjectsToValidateFor(ClientID clientID, Invalidations invalidations) {
+  public void addObjectsToValidateFor(ClientID clientID, ObjectIDSet invalidations) {
     if (state != State.INITIAL) { throw new AssertionError(
                                                            "Objects can be added for validation only in INITIAL state : state = "
                                                                + state + " clientID = " + clientID
                                                                + " objectIDsToValidate = " + invalidations.size()); }
     if (!invalidations.isEmpty()) {
-      Invalidations old = validateMap.put(clientID, invalidations);
+      ObjectIDSet old = validateMap.put(clientID, invalidations);
       if (old != null) { throw new AssertionError("Same client send validate objects twice : " + clientID
                                                   + " objects to validate : " + invalidations.size()); }
     }

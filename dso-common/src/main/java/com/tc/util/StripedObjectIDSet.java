@@ -7,7 +7,6 @@ import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.BitSetObjectIDSet.BitSet;
-import com.tc.util.ObjectIDSet.ObjectIDSetType;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -32,7 +31,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     this.objectIdSets = new ObjectIDSet[this.concurrency];
     this.locks = new ReentrantReadWriteLock[this.concurrency];
     for (int i = 0; i < this.concurrency; i++) {
-      this.objectIdSets[i] = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+      this.objectIdSets[i] = new BitSetObjectIDSet();
       this.locks[i] = new ReentrantReadWriteLock();
     }
   }
@@ -199,7 +198,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   @Override
   public <T> T[] toArray(T[] a) {
-    final SortedSet<ObjectID> sortedSet = new ObjectIDSet();
+    final SortedSet<ObjectID> sortedSet = new BitSetObjectIDSet();
 
     for (int index = 0; index < concurrency; index++) {
       locks[index].readLock().lock();

@@ -13,6 +13,7 @@ import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
@@ -63,7 +64,7 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
 
   @Override
   public ObjectIDSet getLookupIDs() {
-    ObjectIDSet set = new ObjectIDSet();
+    ObjectIDSet set = new BitSetObjectIDSet();
     for (ServerMapGetValueResponse resp : answers) {
       set.addAll(resp.getObjectIDs());
     }

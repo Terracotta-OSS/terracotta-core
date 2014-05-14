@@ -40,7 +40,7 @@ public class InvalidateObjectsHandler extends AbstractEventHandler {
     final InvalidateObjectsMessage message = (InvalidateObjectsMessage) channel
         .createMessage(TCMessageType.INVALIDATE_OBJECTS_MESSAGE);
 
-    message.initialize(invalidations);
+    message.initialize(invalidations.asMap());
     message.send();
   }
 

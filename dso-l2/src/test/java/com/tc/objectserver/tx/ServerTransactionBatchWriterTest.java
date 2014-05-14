@@ -10,6 +10,7 @@ import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
@@ -44,6 +45,10 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+/*
+ * This test really belongs in the TC Messaging module but it's dependencies
+ * currently prevent that.  It needs some heavy refactoring.
+ */
 public class ServerTransactionBatchWriterTest extends TestCase {
 
   private TxnBatchID batchID;
@@ -250,13 +255,13 @@ public class ServerTransactionBatchWriterTest extends TestCase {
                                                   new SerializerDNAEncodingImpl(), isDelta);
 
     final PhysicalAction action1 = new PhysicalAction("manoj.field1", Integer.valueOf(1), false);
-    final LogicalAction action2 = new LogicalAction(12, new Object[] { "K1", "V1" });
+    final LogicalAction action2 = new LogicalAction(LogicalOperation.PUT, new Object[] { "K1", "V1" });
     final PhysicalAction action3 = new PhysicalAction("manoj.field2", new ObjectID(99), true);
 
     dnaWriter.setParentObjectID(new ObjectID(100));
 
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
-    dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
+    dnaWriter.addLogicalAction(action2.getLogicalOperation(), action2.getParameters());
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     dnaWriter.markSectionEnd();
     dnaWriter.finalizeHeader();

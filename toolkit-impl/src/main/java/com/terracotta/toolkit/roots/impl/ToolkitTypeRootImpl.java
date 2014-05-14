@@ -6,7 +6,7 @@ package com.terracotta.toolkit.roots.impl;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.platform.PlatformService;
@@ -53,7 +53,7 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   }
 
   private void logicalInvokePut(String name, T manageable) {
-    tcManaged.logicalInvoke(SerializationUtil.PUT, SerializationUtil.PUT_SIGNATURE, new Object[] { name, manageable });
+    tcManaged.logicalInvoke(LogicalOperation.PUT, new Object[] { name, manageable });
   }
 
   @Override
@@ -85,7 +85,7 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   }
 
   private void logicalInvokeRemove(String name) {
-    tcManaged.logicalInvoke(SerializationUtil.REMOVE, SerializationUtil.REMOVE_SIGNATURE, new Object[] { name });
+    tcManaged.logicalInvoke(LogicalOperation.REMOVE, new Object[] { name });
   }
 
   @Override

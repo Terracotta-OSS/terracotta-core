@@ -9,11 +9,11 @@ import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.TraversedReferences;
-import com.tc.object.applicator.PartialHashMapApplicator;
+import com.tc.object.applicator.BaseApplicator;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -28,7 +28,7 @@ import com.terracotta.toolkit.object.DestroyApplicator;
 
 import java.io.IOException;
 
-public class ServerMapApplicator extends PartialHashMapApplicator {
+public class ServerMapApplicator extends BaseApplicator {
 
   public static final String CACHE_NAME_FIELDNAME           = "cacheName";
   public static final String INVALIDATE_ON_CHANGE_FIELDNAME = "invalidateOnChange";
@@ -69,7 +69,6 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
       UnclusteredConfiguration config = new UnclusteredConfiguration();
       String name = null;
       ToolkitLockTypeInternal lockType = null;
-      boolean broadcastEvictions = false;
       while (cursor.next(encoding)) {
         PhysicalAction physicalAction = cursor.getPhysicalAction();
         if (CACHE_NAME_FIELDNAME.equals(physicalAction.getFieldName())) {
@@ -145,12 +144,12 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
     // Transactions could be folded, hence ignoring other changes.
     while (cursor.next(this.encoding)) {
       final LogicalAction action = cursor.getLogicalAction();
-      final int method = action.getMethod();
-      if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE) {
+      final LogicalOperation method = action.getLogicalOperation();
+      if (LogicalOperation.CLEAR.equals(method) || LogicalOperation.CLEAR_LOCAL_CACHE.equals(method)) {
         ((TCObjectServerMap) tcObjectExternal).clearLocalCache((TCServerMap) pojo);
-      } else if (method == SerializationUtil.DESTROY) {
+      } else if (LogicalOperation.DESTROY.equals(method)) {
         ((DestroyApplicator) pojo).applyDestroy();
-      } else if (method == SerializationUtil.SET_LAST_ACCESSED_TIME) {
+      } else if (LogicalOperation.SET_LAST_ACCESSED_TIME.equals(method)) {
         ((TCObjectServerMap) tcObjectExternal).removeValueFromLocalCache(action.getParameters()[0]);
       } else {
         getLogger().warn("ServerMap received delta changes for methods other than CLEAR : " + method);

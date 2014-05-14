@@ -10,11 +10,15 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
 import java.util.Collections;
 import java.util.Map;
+
+import com.tc.l2.msg.ObjectSyncMessage;
+import com.tc.object.tx.ServerTransactionID;
 
 public class ManagedObjectSyncContext implements EventContext {
 
@@ -111,7 +115,7 @@ public class ManagedObjectSyncContext implements EventContext {
   }
 
   public ObjectIDSet getNewObjectIDs() {
-    return new ObjectIDSet();
+    return new BitSetObjectIDSet();
   }
 
   public void setSequenceID(long nextSequence) {
@@ -139,5 +143,9 @@ public class ManagedObjectSyncContext implements EventContext {
 
   public ObjectIDSet getDeletedOids() {
     return deletedOids;
+  }
+
+  public ObjectSyncMessage createObjectSyncMessage(final ServerTransactionID stxnID) {
+    return new ObjectSyncMessage(stxnID, getSynchedOids(), getDNACount(), getSerializedDNAs(), getObjectSerializer(), getRootsMap(), getSequenceID(), getDeletedOids());
   }
 }

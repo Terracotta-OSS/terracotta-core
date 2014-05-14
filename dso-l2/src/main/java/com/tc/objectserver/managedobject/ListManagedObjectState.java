@@ -5,7 +5,7 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -39,20 +38,14 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
 
   @Override
   protected LogicalChangeResult applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo,
-                                                   final int method,
+                                                   final LogicalOperation method,
                                       final Object[] params) throws AssertionError {
     switch (method) {
-      case SerializationUtil.ADD:
-      case SerializationUtil.ADD_LAST:
+      case ADD:
         addChangeToCollector(objectID, params[0], applyInfo);
         references.add(params[0]);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.ADD_FIRST:
-        addChangeToCollector(objectID, params[0], applyInfo);
-        references.add(0, params[0]);
-        return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.INSERT_AT:
-      case SerializationUtil.ADD_AT:
+      case ADD_AT:
         addChangeToCollector(objectID, params[1], applyInfo);
         int ai = Math.min(((Integer) params[0]).intValue(), references.size());
         if (references.size() < ai) {
@@ -61,19 +54,16 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
           references.add(ai, params[1]);
         }
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE:
+      case REMOVE:
         references.remove(params[0]);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_ALL:
-        references.removeAll(Arrays.asList(params));
-        return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_AT:
+      case REMOVE_AT:
         int index = (Integer) params[0];
         if (references.size() > index) {
           references.remove(index);
         }
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_RANGE: {
+      case REMOVE_RANGE: {
         int size = references.size();
         int fromIndex = (Integer) params[0];
         int toIndex = (Integer) params[1];
@@ -85,12 +75,11 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         }
       }
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.CLEAR:
-      case SerializationUtil.DESTROY:
+      case CLEAR:
+      case DESTROY:
         references.clear();
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.SET_ELEMENT:
-      case SerializationUtil.SET:
+      case SET:
         addChangeToCollector(objectID, params[1], applyInfo);
         int si = Math.min(((Integer) params[0]).intValue(), references.size());
         if (references.size() <= si) {
@@ -98,34 +87,6 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         } else {
           references.set(si, params[1]);
         }
-        return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_FIRST:
-        if (references.size() > 0) {
-          references.remove(0);
-        }
-        return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_LAST:
-        int size = references.size();
-        if (size > 0) {
-          references.remove(size - 1);
-        }
-        return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.SET_SIZE:
-        int setSize = (Integer) params[0];
-        int listSize = references.size();
-
-        if (listSize < setSize) {
-          for (int i = listSize; i < setSize; i++) {
-            references.add(ObjectID.NULL_ID);
-          }
-        } else if (listSize > setSize) {
-          for (int i = listSize; i != setSize; i--) {
-            references.remove(i - 1);
-          }
-        }
-        return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.TRIM_TO_SIZE:
-        // do nothing for now
         return LogicalChangeResult.SUCCESS;
       default:
         throw new AssertionError("Invalid method:" + method + " state:" + this);
@@ -148,7 +109,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     for (Iterator i = references.iterator(); i.hasNext();) {
       Object value = i.next();
-      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { value });
+      writer.addLogicalAction(LogicalOperation.ADD, new Object[] { value });
     }
   }
 

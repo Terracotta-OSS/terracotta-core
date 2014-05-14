@@ -10,7 +10,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.QueueFactory;
@@ -50,7 +50,7 @@ public class StageManagerImplTest extends TestCase {
     super.setUp();
     try {
       stageManager = new StageManagerImpl(new TCThreadGroup(
-                                                            new ThrowableHandler(TCLogging
+                                                            new ThrowableHandlerImpl(TCLogging
                                                                 .getLogger(StageManagerImpl.class))),
                                           new QueueFactory());
       testEventHandler = new TestEventHandler();

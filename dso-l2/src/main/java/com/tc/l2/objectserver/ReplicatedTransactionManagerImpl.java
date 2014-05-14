@@ -14,7 +14,6 @@ import com.tc.async.impl.OrderedSink;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncResetMessage;
-import com.tc.l2.msg.ObjectSyncResetMessageFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogger;
@@ -34,6 +33,7 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
@@ -132,7 +132,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private void sendOKResponse(NodeID fromNode, ObjectSyncResetMessage msg) {
     try {
-      groupManager.sendTo(fromNode, ObjectSyncResetMessageFactory.createOKResponse(msg));
+      groupManager.sendTo(fromNode, ObjectSyncResetMessage.createOKResponse(msg));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }
@@ -141,7 +141,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   @Override
   public void publishResetRequest(NodeID nodeID) throws GroupException {
     ObjectSyncResetMessage osr = (ObjectSyncResetMessage) groupManager
-        .sendToAndWaitForResponse(nodeID, ObjectSyncResetMessageFactory.createObjectSyncResetRequestMessage());
+        .sendToAndWaitForResponse(nodeID, ObjectSyncResetMessage.createObjectSyncResetRequestMessage());
     validateResponse(nodeID, osr);
   }
 
@@ -225,7 +225,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveUninitializedTransactionManager implements PassiveTransactionManager {
 
-    ObjectIDSet           existingOIDs = new ObjectIDSet();
+    ObjectIDSet existingOIDs = new BitSetObjectIDSet();
     PendingChangesAccount pca          = new PendingChangesAccount();
 
     // NOTE::XXX:: Messages are not Recylced in Passive Uninitialized state because of complicated pruning
@@ -254,8 +254,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       for (ServerTransaction st : txns) {
         List changes = st.getChanges();
         List prunedChanges = new ArrayList(changes.size());
-        ObjectIDSet oids = new ObjectIDSet();
-        ObjectIDSet newOids = new ObjectIDSet();
+        ObjectIDSet oids = new BitSetObjectIDSet();
+        ObjectIDSet newOids = new BitSetObjectIDSet();
         for (Iterator j = changes.iterator(); j.hasNext();) {
           DNA dna = (DNA) j.next();
           ObjectID id = dna.getObjectID();
@@ -292,14 +292,14 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     public void clear() {
-      existingOIDs = new ObjectIDSet();
+      existingOIDs = new BitSetObjectIDSet();
       pca.clear();
     }
 
     public void addKnownObjectIDs(Set knownObjectIDs) {
       if (existingOIDs.size() < knownObjectIDs.size()) {
         ObjectIDSet old = existingOIDs;
-        existingOIDs = new ObjectIDSet(knownObjectIDs); // This is optimized for ObjectIDSet2
+        existingOIDs = new BitSetObjectIDSet(knownObjectIDs); // This is optimized for ObjectIDSet2
         existingOIDs.addAll(old);
       } else {
         existingOIDs.addAll(knownObjectIDs);
@@ -330,7 +330,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       // XXX::NOTE:: Normally even though getChanges() returns a list, you will only find one change for each OID (Look
       // at ClientTransactionImpl) but here we break that. But hopefully no one is depending on THAT in the system.
       List compoundChanges = new ArrayList(changes.size() * 2);
-      ObjectIDSet oids = new ObjectIDSet();
+      ObjectIDSet oids = new BitSetObjectIDSet();
       boolean modified = false;
       for (Iterator i = changes.iterator(); i.hasNext();) {
         DNA dna = (DNA) i.next();

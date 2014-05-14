@@ -9,7 +9,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.terracotta.toolkit.cluster.TerracottaNode;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
@@ -66,7 +66,7 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   private void unlockedNotifyListeners(T msg) {
     String stringMsg = null;
     stringMsg = serStrategy.serializeToString(msg);
-    platformService.logicalInvoke(this, SerializationUtil.CLUSTERED_NOTIFIER_SIGNATURE, new Object[] { stringMsg,
+    platformService.logicalInvoke(this, LogicalOperation.CLUSTERED_NOTIFIER, new Object[] { stringMsg,
         currentNodeIdStringForm });
   }
 

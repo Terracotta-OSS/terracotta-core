@@ -6,7 +6,7 @@ package com.terracotta.toolkit.roots.impl;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -31,21 +31,21 @@ public class ToolkitTypeRootImplApplicator extends BaseApplicator {
 
     while (cursor.next(this.encoding)) {
       final LogicalAction action = cursor.getLogicalAction();
-      final int method = action.getMethod();
+      final LogicalOperation method = action.getLogicalOperation();
       final Object[] params = action.getParameters();
       apply(objectManager, pojo, method, params);
     }
   }
 
-  private void apply(final ClientObjectManager objectManager, final Object po, final int method, final Object[] params) {
+  private void apply(final ClientObjectManager objectManager, final Object po, final LogicalOperation method, final Object[] params) {
     final ToolkitTypeRootImpl m = (ToolkitTypeRootImpl) po;
     switch (method) {
-      case SerializationUtil.PUT:
+      case PUT:
         Object k = params[0];
         Object v = params[1];
         m.applyAdd((String) k, (ObjectID) v);
         break;
-      case SerializationUtil.REMOVE:
+      case REMOVE:
         k = params[0];
         m.applyRemove((String) k);
         break;

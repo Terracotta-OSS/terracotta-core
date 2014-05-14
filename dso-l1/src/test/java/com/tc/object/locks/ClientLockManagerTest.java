@@ -16,7 +16,7 @@ import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -71,7 +71,7 @@ public class ClientLockManagerTest extends TCTestCase {
   private ManualThreadIDManager                  threadManager;
 
   private final TCThreadGroup                    threadGroup                 = new TCThreadGroup(
-                                                                                                 new ThrowableHandler(
+                                                                                                 new ThrowableHandlerImpl(
                                                                                                                       TCLogging
                                                                                                                           .getLogger(ClientLockManagerTest.class)));
   private final TaskRunner                       taskRunner                  = Runners

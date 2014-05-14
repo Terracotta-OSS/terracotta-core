@@ -4,7 +4,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
@@ -26,8 +26,7 @@ public final class ServerMapEvictionDNA extends RemoveAllDNA {
   }
 
   private static class ServerMapEvictionDNACursor implements DNACursor {
-    private static final LogicalAction EVICTION_COMPLETED = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
-                                                                                     new Object[] {});
+    private static final LogicalAction EVICTION_COMPLETED = new LogicalAction(LogicalOperation.EVICTION_COMPLETED, new Object[] {});
 
     private final DNACursor removeCursor;
     private boolean returnedEvictionCompleted = false;

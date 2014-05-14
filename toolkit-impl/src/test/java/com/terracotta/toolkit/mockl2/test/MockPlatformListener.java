@@ -3,8 +3,10 @@
  */
 package com.terracotta.toolkit.mockl2.test;
 
+import com.tc.object.LogicalOperation;
+
 public interface MockPlatformListener {
   
-   void logicalInvoke(Object object, String methodName, Object[] params);
+   void logicalInvoke(Object object, LogicalOperation method, Object[] params);
 
 }

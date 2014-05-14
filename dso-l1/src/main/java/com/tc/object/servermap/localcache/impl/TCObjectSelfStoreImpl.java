@@ -5,7 +5,6 @@ package com.tc.object.servermap.localcache.impl;
 
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
-import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -19,6 +18,7 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
@@ -298,17 +298,19 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   @Override
-  public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
+  public ObjectIDSet getObjectIDsToValidate(NodeID remoteNode) {
     tcObjectStoreLock.writeLock().lock();
     try {
       throwExceptionIfNecessary();
-      tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations, remoteNode);
+      ObjectIDSet validations = new BitSetObjectIDSet();
+      tcObjectSelfStoreOids.addAllObjectIDsToValidate(validations, remoteNode);
       int grpID = ((GroupID) remoteNode).toInt();
       for (ObjectID id : tcObjectSelfTempCache.keySet()) {
         if (id.getGroupID() == grpID) {
-          invalidations.add(ObjectID.NULL_ID, id);
+          validations.add(id);
         }
       }
+      return validations;
     } finally {
       tcObjectStoreLock.writeLock().unlock();
     }
@@ -364,8 +366,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   private static class TCObjectSelfStoreObjectIDSet {
-    private final ObjectIDSet nonEventualIds = new ObjectIDSet();
-    private final ObjectIDSet eventualIds    = new ObjectIDSet();
+    private final ObjectIDSet nonEventualIds = new BitSetObjectIDSet();
+    private final ObjectIDSet eventualIds    = new BitSetObjectIDSet();
 
     public void clear() {
       nonEventualIds.clear();
@@ -402,11 +404,11 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       return eventualIds.contains(id) || nonEventualIds.contains(id);
     }
 
-    public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
+    public void addAllObjectIDsToValidate(ObjectIDSet validations, NodeID remoteNode) {
       int grpID = ((GroupID) remoteNode).toInt();
       for (ObjectID id : eventualIds) {
         if (id.getGroupID() == grpID) {
-          invalidations.add(ObjectID.NULL_ID, id);
+          validations.add(id);
         }
       }
     }

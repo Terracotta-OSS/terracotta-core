@@ -17,20 +17,21 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
+public class ExpandingBitSetObjectIDSet extends ObjectIDSet {
+
+  private int size;
+  private AATreeSet<BitSet> ranges = new AATreeSet<BitSet>();
+  private volatile int modCount;
 
   public ExpandingBitSetObjectIDSet(final Collection c) {
-    super();
-    if (c instanceof ExpandingBitSetObjectIDSet) {
-      final ExpandingBitSetObjectIDSet other = (ExpandingBitSetObjectIDSet) c;
-      // fast way to clone
-      this.size = other.size();
-      for (final BitSet range : (Iterable<BitSet>)other.ranges) {
-        this.ranges.add(new BitSet(range));
-      }
-    } else {
+    // TODO: This is busted for some reason...
+//    if (c instanceof ObjectIDSet) {
+//      for (Range range : ((ObjectIDSet)c).ranges()) {
+//        insertRange(range);
+//      }
+//    } else {
       addAll(c);
-    }
+//    }
   }
 
   public ExpandingBitSetObjectIDSet() {
@@ -48,7 +49,7 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
 
     // Step 1 : Check if number can be contained in any of the range, if so add to the same Range.
     BitSet probe = new BitSet(lid);
-    final BitSet prev = (BitSet) ranges.find(probe);
+    final BitSet prev = ranges.find(probe);
     if (prev != null) {
       final boolean isAdded = prev.add(lid);
       if (isAdded) {
@@ -59,8 +60,8 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
     }
 
     // Step 2: Check if the left neighbor exists for merging
-    final BitSet left = (BitSet) ranges.find(probe.leftNeighbor());
-    final BitSet right = (BitSet) ranges.find(probe.rightNeighbor());
+    final BitSet left = ranges.find(probe.leftNeighbor());
+    final BitSet right = ranges.find(probe.rightNeighbor());
     if (left != null && left.merge(probe)) {
       // Left and right cannot be equal because in order to get to this step, the probe must have landed in a gap meaning
       // its neighbors can't be equal (otherwise there would be no gap)
@@ -96,10 +97,14 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
    */
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   @Override
-  public boolean remove(final ObjectID id) {
+  public boolean remove(final Object o) {
+    if (!(o instanceof ObjectID)) {
+      return false;
+    }
+    ObjectID id = (ObjectID) o;
     final long lid = id.toLong();
 
-    final BitSet current = (BitSet) this.ranges.find(new BitSet(lid));
+    final BitSet current = this.ranges.find(new BitSet(lid));
     if (current == null) {
       // Not found
       return false;
@@ -120,42 +125,14 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
-  public boolean contains(final ObjectID id) {
-    final long lid = id.toLong();
-    final BitSet r = (BitSet) this.ranges.find(new BitSet(lid));
-    return r != null && r.contains(lid);
-  }
-
-  @Override
   public boolean contains(final Object o) {
-    if (o instanceof ObjectID) {
-      return contains((ObjectID) o);
-    } else {
+    if (!(o instanceof ObjectID)) {
       return false;
     }
-  }
-
-  @Override
-  public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
-    if (this.size != 0) { throw new RuntimeException("deserialize dirty ObjectIDSet"); }
-    int _size = in.readInt();
-    this.size = _size;
-    while (_size > 0) {
-      final BitSet r = new BitSet(0);
-      r.deserializeFrom(in);
-      this.ranges.add(r);
-      _size -= r.size();
-    }
-    return this;
-  }
-
-  @Override
-  public void serializeTo(final TCByteBufferOutput out) {
-    out.writeInt(this.size);
-    for (final Object range : this.ranges) {
-      final BitSet r = (BitSet)range;
-      r.serializeTo(out);
-    }
+    ObjectID id = (ObjectID) o;
+    final long lid = id.toLong();
+    final BitSet r = this.ranges.find(new BitSet(lid));
+    return r != null && r.contains(lid);
   }
 
   @Override
@@ -166,14 +143,14 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
   @Override
   public ObjectID first() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    final BitSet min = (BitSet) this.ranges.first();
+    final BitSet min = this.ranges.first();
     return new ObjectID(min.first());
   }
 
   @Override
   public ObjectID last() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    final BitSet max = (BitSet) this.ranges.last();
+    final BitSet max = this.ranges.last();
     return new ObjectID(max.last());
   }
 
@@ -280,7 +257,7 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
   /**
    * Ranges store the elements stored in the tree. The range is inclusive.
    */
-  static final class BitSet extends AbstractTreeNode<BitSet> implements Comparable<BitSet>, TCSerializable, Iterable<Long> {
+  static final class BitSet extends AbstractTreeNode<BitSet> implements Comparable<BitSet>, TCSerializable, Iterable<Long>, Range {
     private static final int MIN_SIZE = 16;
     // Needs to be a multiple of MIN_SIZE
     private static final int MAX_SIZE = 8192;
@@ -553,6 +530,16 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
       return new BitSetIterator();
     }
 
+    @Override
+    public long getStart() {
+      return start;
+    }
+
+    @Override
+    public long[] getBitmap() {
+      return nextLongs;
+    }
+
     private class BitSetIterator implements Iterator<Long> {
       long prev = max() + 1;
       long next = start - 1;
@@ -591,4 +578,33 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
     }
   }
 
+  @Override
+  protected void insertRange(final Range range) {
+    BitSet bitSet = new BitSet(range.getStart(), range.getBitmap());
+    if (!bitSet.isEmpty()) {
+      size += bitSet.size();
+      //TODO: This is not really "expanding". Refactor the logic out of add that does the expanding to make this work
+      ranges.add(bitSet);
+    }
+  }
+
+  @Override
+  protected Collection<? extends Range> ranges() {
+    return ranges;
+  }
+
+  @Override
+  public int size() {
+    return size;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("ExpandingBitSetObjectIDSet{");
+    sb.append("size=").append(size);
+    sb.append(", ranges=").append(ranges);
+    sb.append(", modCount=").append(modCount);
+    sb.append('}');
+    return sb.toString();
+  }
 }

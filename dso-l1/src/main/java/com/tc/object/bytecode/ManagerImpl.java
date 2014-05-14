@@ -26,9 +26,9 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.LiteralValues;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.RemoteSearchRequestManager;
-import com.tc.object.SerializationUtil;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.ServerEventListenerManager;
 import com.tc.object.TCObject;
@@ -82,7 +82,6 @@ import com.terracottatech.search.SearchBuilder.Search;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -110,8 +109,6 @@ public class ManagerImpl implements Manager {
   private volatile DSOClientConfigHelper              config;
   private volatile PreparedComponentsFromL2Connection connectionComponents;
   private final ProductID productId;
-
-  private final SerializationUtil                     serializer                = new SerializationUtil();
 
   private final ConcurrentHashMap<String, Object>     registeredObjects         = new ConcurrentHashMap<String, Object>();
   private final AbortableOperationManager             abortableOperationManager = new AbortableOperationManagerImpl();
@@ -240,7 +237,7 @@ public class ManagerImpl implements Manager {
     lookupExistingOrNull(o);
     // lock(new StringLockID("test"), LockLevel.WRITE);
     // unlock(new StringLockID("test"), LockLevel.WRITE);
-    logicalInvoke(new FakeManageableObject(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+    logicalInvoke(new FakeManageableObject(), LogicalOperation.CLEAR, new Object[] {});
   }
 
   private void startClient(final boolean forTests) {
@@ -346,7 +343,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void logicalInvoke(final Object object, final String methodSignature, final Object[] params) {
+  public void logicalInvoke(final Object object, final LogicalOperation method, final Object[] params) {
     final Manageable m = (Manageable) object;
     if (m.__tc_managed() != null) {
       final TCObject tco = lookupExistingOrNull(object);
@@ -354,15 +351,12 @@ public class ManagerImpl implements Manager {
       try {
         if (tco != null) {
 
-          if (SerializationUtil.ADD_ALL_SIGNATURE.equals(methodSignature)) {
-            logicalAddAllInvoke(this.serializer.methodToID(methodSignature), methodSignature, (Collection) params[0],
-                                tco);
-          } else if (SerializationUtil.ADD_ALL_AT_SIGNATURE.equals(methodSignature)) {
-            logicalAddAllAtInvoke(this.serializer.methodToID(methodSignature), methodSignature,
-                                  ((Integer) params[0]).intValue(), (Collection) params[1], tco);
+          if (LogicalOperation.ADD_ALL.equals(method)) {
+            logicalAddAllInvoke((Collection) params[0], tco);
+          } else if (LogicalOperation.ADD_ALL_AT.equals(method)) {
+            logicalAddAllAtInvoke(((Integer) params[0]), (Collection) params[1], tco);
           } else {
-            adjustForJava1ParametersIfNecessary(methodSignature, params);
-            tco.logicalInvoke(this.serializer.methodToID(methodSignature), methodSignature, params);
+            tco.logicalInvoke(method, params);
           }
         }
       } catch (final Throwable t) {
@@ -372,41 +366,26 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
+  public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final LogicalOperation method,
                                            final Object[] params) throws AbortedOperationException {
     final LockID lock = generateLockIdentifier(lockObject);
     lock(lock, LockLevel.WRITE);
     try {
-      logicalInvoke(object, methodName, params);
+      logicalInvoke(object, method, params);
     } finally {
       unlock(lock, LockLevel.WRITE);
     }
   }
 
-  private void adjustForJava1ParametersIfNecessary(final String methodName, final Object[] params) {
-    if ((params.length == 2) && (params[1] != null) && (params[1].getClass().equals(Integer.class))) {
-      if (SerializationUtil.SET_ELEMENT_SIGNATURE.equals(methodName)
-          || SerializationUtil.INSERT_ELEMENT_AT_SIGNATURE.equals(methodName)) {
-        // special case for reversing parameters
-        final Object tmp = params[0];
-        params[0] = params[1];
-        params[1] = tmp;
-      }
+  private void logicalAddAllInvoke(final Collection<?> collection, final TCObject tcobj) {
+    for (Object obj : collection) {
+      tcobj.logicalInvoke(LogicalOperation.ADD, new Object[] { obj });
     }
   }
 
-  private void logicalAddAllInvoke(final int method, final String methodSignature, final Collection collection,
-                                   final TCObject tcobj) {
-    for (final Iterator i = collection.iterator(); i.hasNext();) {
-      tcobj.logicalInvoke(method, methodSignature, new Object[] { i.next() });
-    }
-  }
-
-  private void logicalAddAllAtInvoke(final int method, final String methodSignature, int index,
-                                     final Collection collection, final TCObject tcobj) {
-
-    for (final Iterator i = collection.iterator(); i.hasNext();) {
-      tcobj.logicalInvoke(method, methodSignature, new Object[] { Integer.valueOf(index++), i.next() });
+  private void logicalAddAllAtInvoke(int index, final Collection<?> collection, final TCObject tcobj) {
+    for (Object obj : collection) {
+      tcobj.logicalInvoke(LogicalOperation.ADD_AT, new Object[] { index++, obj });
     }
   }
 

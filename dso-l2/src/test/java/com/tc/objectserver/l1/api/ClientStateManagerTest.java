@@ -14,6 +14,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collections;
@@ -180,7 +181,7 @@ public class ClientStateManagerTest extends TestCase {
     // Client ID 1 asserts
     Invalidations invalidationsForClient = new Invalidations();
     stateManager.createPrunedChangesAndAddObjectIDTo(Collections.EMPTY_LIST, applyTransactionInfo, cid1,
-                                                     new ObjectIDSet(), invalidationsForClient);
+                                                     new BitSetObjectIDSet(), invalidationsForClient);
     oidSetInvalidated = invalidationsForClient.getObjectIDSetForMapId(mapid1);
     Assert.assertEquals(50, oidSetInvalidated.size());
     for (int i = 1; i <= 50; i++) {
@@ -190,7 +191,7 @@ public class ClientStateManagerTest extends TestCase {
     // Client ID 2 asserts
     invalidationsForClient = new Invalidations();
     stateManager.createPrunedChangesAndAddObjectIDTo(Collections.EMPTY_LIST, applyTransactionInfo, cid2,
-                                                     new ObjectIDSet(), invalidationsForClient);
+                                                     new BitSetObjectIDSet(), invalidationsForClient);
     oidSetInvalidated = invalidationsForClient.getObjectIDSetForMapId(mapid2);
     Assert.assertEquals(75, oidSetInvalidated.size());
     for (int i = 101; i <= 175; i++) {
@@ -200,7 +201,7 @@ public class ClientStateManagerTest extends TestCase {
     // Client ID 3 asserts
     invalidationsForClient = new Invalidations();
     stateManager.createPrunedChangesAndAddObjectIDTo(Collections.EMPTY_LIST, applyTransactionInfo, cid3,
-                                                     new ObjectIDSet(), invalidationsForClient);
+                                                     new BitSetObjectIDSet(), invalidationsForClient);
     oidSetInvalidated = invalidationsForClient.getObjectIDSetForMapId(mapid2);
     Assert.assertEquals(25, oidSetInvalidated.size());
     for (int i = 151; i <= 175; i++) {
@@ -222,8 +223,8 @@ public class ClientStateManagerTest extends TestCase {
     ApplyTransactionInfo applyInfo = mock(ApplyTransactionInfo.class);
     Invalidations invalidations = spy(new Invalidations());
     when(applyInfo.getServerTransactionID()).thenReturn(new ServerTransactionID(clientID, new TransactionID(1)));
-    when(applyInfo.getObjectIDsToInvalidate()).thenReturn(new Invalidations(Collections.singletonMap(mapID, new ObjectIDSet(Collections
-        .singleton(objectID)))));
+    when(applyInfo.getObjectIDsToInvalidate()).thenReturn(new Invalidations(
+        Collections.<ObjectID, ObjectIDSet>singletonMap(mapID, new BitSetObjectIDSet(Collections.singleton(objectID)))));
 
     clientStateManager.startupNode(clientID);
     clientStateManager.addReferences(clientID, Sets.newHashSet(objectID, mapID));

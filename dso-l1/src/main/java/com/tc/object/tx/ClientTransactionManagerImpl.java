@@ -16,6 +16,7 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
@@ -650,11 +651,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
-    logicalInvoke(source, method, methodName, parameters, LogicalChangeID.NULL_ID);
+  public void logicalInvoke(final TCObject source, final LogicalOperation method, final Object[] parameters) {
+    logicalInvoke(source, method, parameters, LogicalChangeID.NULL_ID);
   }
 
-  private void logicalInvoke(final TCObject source, final int method, final String methodName,
+  private void logicalInvoke(final TCObject source, final LogicalOperation method,
                              final Object[] parameters, LogicalChangeID id) {
     if (isTransactionLoggingDisabled()) { return; }
 
@@ -667,8 +668,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       try {
         tx = getTransaction(pojo);
       } catch (final UnlockedSharedObjectException usoe) {
-        throw checkAndReportUnlockedSharedObjectException(usoe, "Failed Method Call: " + methodName, pojo, methodName,
-                                                          parameters);
+        throw checkAndReportUnlockedSharedObjectException(usoe, "Failed Method Call: " + method, pojo, parameters);
       }
 
       for (int i = 0; i < parameters.length; i++) {
@@ -676,7 +676,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         final boolean isLiteral = LiteralValues.isLiteralInstance(p);
         if (!isLiteral) {
           if (p != null) {
-            this.clientObjectManager.checkPortabilityOfLogicalAction(parameters, i, methodName, pojo);
+            this.clientObjectManager.checkPortabilityOfLogicalAction(method, parameters, i, pojo);
           }
 
           final TCObject tco = this.clientObjectManager.lookupOrCreate(p);
@@ -689,7 +689,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
           }
         }
       }
-      tx.logicalInvoke(source, method, parameters, methodName, id);
+      tx.logicalInvoke(source, method, parameters, id);
     } finally {
       enableTransactionLogging();
     }
@@ -718,7 +718,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   private RuntimeException checkAndReportUnlockedSharedObjectException(final UnlockedSharedObjectException usoe,
                                                                        final String details, Object context,
-                                                                       final String methodName,
                                                                        final Object[] parameters) {
     if (this.clientLockManager.isLockedByCurrentThread(LockLevel.READ)) {
       final ReadOnlyException roe = makeReadOnlyException(details);
@@ -858,7 +857,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public boolean logicalInvokeWithResult(final TCObject source, final int method, final String methodName,
+  public boolean logicalInvokeWithResult(final TCObject source, final LogicalOperation method,
                                          final Object[] parameters) throws AbortedOperationException {
     if (getTransaction().isAtomic()) { throw new UnsupportedOperationException(
                                                                                "LogicalInvokeWithResult not supported for atomic transactions"); }
@@ -867,7 +866,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     try {
       begin(CAS_LOCK_ID, LockLevel.CONCURRENT, false);
       try {
-        logicalInvoke(source, method, methodName, parameters, id);
+        logicalInvoke(source, method, parameters, id);
       } finally {
         commit(CAS_LOCK_ID, LockLevel.CONCURRENT, false, null);
       }

@@ -5,6 +5,7 @@
 package com.tc.object.tx;
 
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
@@ -89,7 +90,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters, LogicalChangeID id) {
+  protected void basicLogicalInvoke(TCObject source, LogicalOperation method, Object[] parameters, LogicalChangeID id) {
     getOrCreateChangeBuffer(source).logicalInvoke(method, parameters, id);
   }
 

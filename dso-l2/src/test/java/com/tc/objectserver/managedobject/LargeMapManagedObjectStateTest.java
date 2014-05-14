@@ -5,7 +5,6 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;

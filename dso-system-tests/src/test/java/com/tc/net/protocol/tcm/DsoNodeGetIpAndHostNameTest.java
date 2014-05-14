@@ -11,7 +11,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.object.BaseDSOTestCase;
@@ -179,7 +179,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
   }
 
   protected final TCThreadGroup group = new TCThreadGroup(
-                                                          new ThrowableHandler(TCLogging
+                                                          new ThrowableHandlerImpl(TCLogging
                                                               .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {

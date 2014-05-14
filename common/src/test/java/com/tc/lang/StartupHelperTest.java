@@ -47,7 +47,7 @@ public class StartupHelperTest extends TestCase {
   }
 
   public void testGroup() throws Throwable {
-    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(new NullTCLogger()));
+    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandlerImpl(new NullTCLogger()));
 
     StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
       @Override

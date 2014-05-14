@@ -8,7 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -35,17 +35,17 @@ public class SerializerMapImplApplicator extends BaseApplicator {
 
     while (cursor.next(this.encoding)) {
       final LogicalAction action = cursor.getLogicalAction();
-      final int method = action.getMethod();
+      final LogicalOperation method = action.getLogicalOperation();
       final Object[] params = action.getParameters();
       apply(objectManager, pojo, method, params);
     }
   }
 
-  private void apply(final ClientObjectManager objectManager, final Object po, final int method, final Object[] params)
+  private void apply(final ClientObjectManager objectManager, final Object po, final LogicalOperation method, final Object[] params)
       throws ClassNotFoundException {
     final SerializerMapImpl m = (SerializerMapImpl) po;
     switch (method) {
-      case SerializationUtil.PUT:
+      case PUT:
         Object k = params[0];
         Object v = params[1];
         if (v instanceof ObjectID) {
@@ -71,7 +71,7 @@ public class SerializerMapImplApplicator extends BaseApplicator {
       if (addValue == null) {
         continue;
       }
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { entry.getKey(), addValue });
+      writer.addLogicalAction(LogicalOperation.PUT, new Object[] { entry.getKey(), addValue });
     }
   }
 

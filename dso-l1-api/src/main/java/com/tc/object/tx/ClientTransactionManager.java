@@ -8,6 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -105,7 +106,7 @@ public interface ClientTransactionManager extends ClearableCallback {
    * @param methodName Method name
    * @param parameters Parameter values in call
    */
-  public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters);
+  public void logicalInvoke(TCObject source, LogicalOperation method, Object[] parameters);
 
   /**
    * Record notify() or notifyAll() call on object in current transaction
@@ -214,7 +215,7 @@ public interface ClientTransactionManager extends ClearableCallback {
   
   public void receivedLogicalChangeResult(Map<LogicalChangeID, LogicalChangeResult> results);
 
-  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters)
+  public boolean logicalInvokeWithResult(TCObject source, LogicalOperation method, Object[] parameters)
       throws AbortedOperationException;
 
 }

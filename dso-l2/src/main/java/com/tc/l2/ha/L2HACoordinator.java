@@ -152,7 +152,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    final ClusterState clusterState = new ClusterState(statePersistor, objectIDSequence,
+    final ClusterState clusterState = new ClusterStateImpl(statePersistor, objectIDSequence,
                                                        this.server.getConnectionIdFactory(),
                                                        gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);

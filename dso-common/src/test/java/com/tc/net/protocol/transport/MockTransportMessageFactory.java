@@ -36,7 +36,7 @@ public class MockTransportMessageFactory implements TransportHandshakeMessageFac
   }
 
   @Override
-  public TransportHandshakeMessage createSynAck(ConnectionID connectionId, TransportHandshakeErrorContext errorContext,
+  public TransportHandshakeMessage createSynAck(ConnectionID connectionId, TransportHandshakeError errorContext,
                                                 TCConnection source, boolean isMaxConnectionsExceeded,
                                                 int maxConnections) {
     createSynAckCalls.put(new CallContext(connectionId, errorContext, source, new Boolean(isMaxConnectionsExceeded),
@@ -45,13 +45,13 @@ public class MockTransportMessageFactory implements TransportHandshakeMessageFac
   }
 
   public static final class CallContext {
-    private final ConnectionID                   connectionId;
-    private final TCConnection                   source;
-    private final Boolean                        isMaxConnectionsExceeded;
-    private final Integer                        maxConnections;
-    private final TransportHandshakeErrorContext errorContext;
+    private final ConnectionID            connectionId;
+    private final TCConnection            source;
+    private final Boolean                 isMaxConnectionsExceeded;
+    private final Integer                 maxConnections;
+    private final TransportHandshakeError errorContext;
 
-    public CallContext(ConnectionID connectionId, TransportHandshakeErrorContext errorContext, TCConnection source,
+    public CallContext(ConnectionID connectionId, TransportHandshakeError errorContext, TCConnection source,
                        Boolean isMaxConnectionsExceeded, Integer maxConnections) {
       this.connectionId = connectionId;
       this.errorContext = errorContext;
@@ -60,7 +60,7 @@ public class MockTransportMessageFactory implements TransportHandshakeMessageFac
       this.maxConnections = maxConnections;
     }
 
-    public TransportHandshakeErrorContext getErrorContext() {
+    public TransportHandshakeError getErrorContext() {
       return this.errorContext;
     }
 

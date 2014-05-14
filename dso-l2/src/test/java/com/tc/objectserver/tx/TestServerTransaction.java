@@ -15,6 +15,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
@@ -27,7 +28,7 @@ import java.util.Map;
 public final class TestServerTransaction implements ServerTransaction {
 
   public List                       changes = new ArrayList();
-  public ObjectIDSet                oids    = new ObjectIDSet();
+  public ObjectIDSet                oids    = new BitSetObjectIDSet();
   private final ServerTransactionID sid;
   private final TxnBatchID          bid;
   private final GlobalTransactionID gtid;

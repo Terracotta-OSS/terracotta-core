@@ -8,7 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -38,17 +38,17 @@ public class ToolkitMapImplApplicator extends BaseApplicator {
 
     while (cursor.next(this.encoding)) {
       final LogicalAction action = cursor.getLogicalAction();
-      final int method = action.getMethod();
+      final LogicalOperation method = action.getLogicalOperation();
       final Object[] params = action.getParameters();
       apply(objectManager, po, method, params);
     }
   }
 
-  protected void apply(final ClientObjectManager objectManager, final Object po, final int method, final Object[] params)
+  protected void apply(final ClientObjectManager objectManager, final Object po, final LogicalOperation method, final Object[] params)
       throws ClassNotFoundException {
     final ToolkitMapImpl m = (ToolkitMapImpl) po;
     switch (method) {
-      case SerializationUtil.PUT:
+      case PUT:
         final Object k = params[0];
         final Object v = params[1];
         final Object pkey = getObjectForKey(objectManager, k);
@@ -56,7 +56,7 @@ public class ToolkitMapImplApplicator extends BaseApplicator {
 
         m.internalPut(pkey, value);
         break;
-      case SerializationUtil.REMOVE:
+      case REMOVE:
         Object rkey;
         try {
           rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
@@ -66,10 +66,10 @@ public class ToolkitMapImplApplicator extends BaseApplicator {
         m.internalRemove(rkey);
 
         break;
-      case SerializationUtil.CLEAR:
+      case CLEAR:
         m.internalClear();
         break;
-      case SerializationUtil.DESTROY:
+      case DESTROY:
         ((DestroyApplicator) m).applyDestroy();
         break;
 
@@ -105,10 +105,7 @@ public class ToolkitMapImplApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) throws IOException,
-      ClassNotFoundException {
-    if (false) { throw new IOException(); } // silence compiler warning
-    if (false) { throw new ClassNotFoundException(); } // silence compiler warning
+  public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) {
     throw new UnsupportedOperationException();
   }
 }

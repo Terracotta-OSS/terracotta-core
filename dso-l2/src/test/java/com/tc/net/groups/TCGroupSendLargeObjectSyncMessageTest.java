@@ -5,6 +5,10 @@
 
 package com.tc.net.groups;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.corestorage.KeyValueStorage;
@@ -20,9 +24,8 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.msg.ObjectSyncMessage;
-import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -46,6 +49,7 @@ import com.tc.objectserver.persistence.ObjectIDSetMaintainer;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.objectserver.persistence.SequenceManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.TCCollections;
@@ -58,10 +62,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
@@ -91,7 +91,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final int p2 = pc.chooseRandom2Port();
     final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1), new Node(LOCALHOST, p2, p2 + 1) };
 
-    final StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
+    final StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(null)),
                                                             new QueueFactory());
     final TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1,
                                                           stageManager1, null);
@@ -101,7 +101,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final MyListener l1 = new MyListener();
     gm1.registerForMessages(ObjectSyncMessage.class, l1);
 
-    final StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
+    final StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(null)),
                                                             new QueueFactory());
     final TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1,
                                                           stageManager2, null);
@@ -139,11 +139,11 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     }
     final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializerImpl();
     final ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap,
-                                                                                           new ObjectIDSet(rootsMap
+                                                                                           new BitSetObjectIDSet(rootsMap
                                                                                                .values()), true, 100,
                                                                                            10, 0);
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
-    ObjectIDSet oidSet = new ObjectIDSet();
+    ObjectIDSet oidSet = new BitSetObjectIDSet();
     for (long i = 0; i < oidsCount; ++i) {
       ObjectID oid = new ObjectID(i);
       oidSet.add(oid);
@@ -157,8 +157,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
                                                 (int) oidsCount, objectStringSerializer, TCCollections.EMPTY_OBJECT_ID_SET);
     managedObjectSyncContext.setSequenceID(11);
 
-    final ObjectSyncMessage osm = ObjectSyncMessageFactory
-        .createObjectSyncMessageFrom(managedObjectSyncContext, new ServerTransactionID(new ServerID("xyz", new byte[] {
+    final ObjectSyncMessage osm = managedObjectSyncContext.createObjectSyncMessage(new ServerTransactionID(new ServerID("xyz", new byte[] {
             3, 4, 5 }), new TransactionID(99)));
     return osm;
   }

@@ -22,6 +22,7 @@ import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import junit.framework.TestCase;
@@ -54,7 +55,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     handler.initializeContext(context);
 
     TestRequestManagedObjectMessage msg = new TestRequestManagedObjectMessage();
-    ObjectIDSet s = new ObjectIDSet();
+    ObjectIDSet s = new BitSetObjectIDSet();
     s.add(new ObjectID(1));
     msg.setObjectIDs(s);
     ObjectIDSet removed = makeRemovedSet(31);
@@ -68,7 +69,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
   }
 
   private ObjectIDSet makeRemovedSet(int num) {
-    ObjectIDSet rv = new ObjectIDSet();
+    ObjectIDSet rv = new BitSetObjectIDSet();
     for (int i = 0; i < num; i++) {
       rv.add(new ObjectID(i));
     }

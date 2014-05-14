@@ -37,7 +37,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerEvent;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.util.ObjectIDSet;
+import com.tc.util.BitSetObjectIDSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +98,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final Map newRoots = bcc.getNewRoots();
       final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
       List<DNA> prunedChanges;
-      final SortedSet<ObjectID> lookupObjectIDs = new ObjectIDSet();
+      final SortedSet<ObjectID> lookupObjectIDs = new BitSetObjectIDSet();
       final Invalidations invalidateObjectIDs = new Invalidations();
 
       if (!clientID.equals(committerID) || !bcc.getApplyInfo().getObjectsToEchoChangesFor().isEmpty()) {

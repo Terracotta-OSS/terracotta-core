@@ -27,6 +27,10 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+/*
+ * This test really belongs in the TC Messaging module but it's dependencies
+ * currently prevent that.  It needs some heavy refactoring.
+ */
 public class RelayedCommitTransactionMessageTest extends TestCase {
 
   private TestCommitTransactionMessage testCommitTransactionMessage;

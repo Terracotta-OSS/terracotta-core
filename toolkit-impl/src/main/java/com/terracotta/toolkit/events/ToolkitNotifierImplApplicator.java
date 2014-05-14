@@ -5,7 +5,7 @@ package com.terracotta.toolkit.events;
 
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -34,7 +34,7 @@ public class ToolkitNotifierImplApplicator extends BaseApplicator {
       Object action = cursor.getAction();
       if (action instanceof LogicalAction) {
         LogicalAction la = (LogicalAction) action;
-        if (la.getMethod() == SerializationUtil.CLUSTERED_NOTIFIER) {
+        if (LogicalOperation.CLUSTERED_NOTIFIER.equals(la.getLogicalOperation())) {
           Object[] parameters = la.getParameters();
           if (parameters.length != 2) { throw new AssertionError(
                                                                  "ClusteredNotifier should have 2 parameters, but found: "
@@ -42,7 +42,7 @@ public class ToolkitNotifierImplApplicator extends BaseApplicator {
                                                                      + Arrays.asList(parameters)); }
 
           clusteredNotifierImpl.onNotification((String) parameters[0], (String) parameters[1]);
-        } else if (la.getMethod() == SerializationUtil.DESTROY) {
+        } else if (LogicalOperation.DESTROY.equals(la.getLogicalOperation())) {
           clusteredNotifierImpl.applyDestroy();
         }
       } else if (action instanceof PhysicalAction) { throw new AssertionError(

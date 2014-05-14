@@ -15,7 +15,7 @@ import com.tc.objectserver.event.DefaultMutationEventPublisher;
 import com.tc.objectserver.event.InClusterServerEventBuffer;
 import com.tc.objectserver.event.MutationEventPublisher;
 import com.tc.objectserver.event.ServerEventBuffer;
-import com.tc.util.ObjectIDSet;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.TCCollections;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class ApplyTransactionInfo {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.isEviction = isEviction;
-    this.parents = new ObjectIDSet();
+    this.parents = new BitSetObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
     this.serverEventBuffer = serverEventBuffer;
@@ -88,7 +88,7 @@ public class ApplyTransactionInfo {
   }
 
   public Set<ObjectID> getAllParents() {
-    return new ObjectIDSet(this.parents);
+    return new BitSetObjectIDSet(this.parents);
   }
 
   public Set<ObjectID> addReferencedChildrenTo(final Set<ObjectID> objectIDs, final Set<ObjectID> interestedParents) {
@@ -153,7 +153,7 @@ public class ApplyTransactionInfo {
 
   public void ignoreBroadcastFor(final ObjectID objectID) {
     if (this.ignoreBroadcasts == Collections.EMPTY_SET) {
-      this.ignoreBroadcasts = new ObjectIDSet();
+      this.ignoreBroadcasts = new BitSetObjectIDSet();
     }
     this.ignoreBroadcasts.add(objectID);
   }
@@ -164,7 +164,7 @@ public class ApplyTransactionInfo {
 
   public void initiateEvictionFor(final ObjectID objectID) {
     if (this.initiateEviction == Collections.EMPTY_SET) {
-      this.initiateEviction = new ObjectIDSet();
+      this.initiateEviction = new BitSetObjectIDSet();
     }
     this.initiateEviction.add(objectID);
   }
@@ -186,14 +186,14 @@ public class ApplyTransactionInfo {
 
   public void deleteObject(ObjectID old) {
     if (this.deleteObjects == TCCollections.EMPTY_SORTED_SET) {
-      this.deleteObjects = new ObjectIDSet();
+      this.deleteObjects = new BitSetObjectIDSet();
     }
     this.deleteObjects.add(old);
   }
 
   public void deleteObjects(Set<ObjectID> oids) {
     if (this.deleteObjects == TCCollections.EMPTY_SORTED_SET) {
-      this.deleteObjects = new ObjectIDSet();
+      this.deleteObjects = new BitSetObjectIDSet();
     }
     this.deleteObjects.addAll(oids);
   }

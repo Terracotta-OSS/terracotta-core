@@ -177,7 +177,7 @@ public class DEV6342Test extends TestCase {
     }
 
     @Override
-    public void initialize(final ObjectRequestID requestID, final Set<ObjectID> requestedObjectIDs,
+    public void initialize(final ObjectRequestID requestID, final ObjectIDSet requestedObjectIDs,
                            final int requestDepth, final ObjectIDSet removeObjects) {
       this.initializeQueue.put(new Object[] { requestID, requestedObjectIDs, removeObjects });
     }

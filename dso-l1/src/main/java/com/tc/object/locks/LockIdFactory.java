@@ -29,7 +29,7 @@ public class LockIdFactory {
         }
       } else if (this.mgr.isLiteralAutolock(obj)) {
         try {
-          return new DsoLiteralLockID(this.mgr, obj);
+          return new DsoLiteralLockID(obj);
         } catch (final IllegalArgumentException e) {
           return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
         }

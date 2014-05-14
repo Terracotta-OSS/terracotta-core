@@ -7,7 +7,7 @@ package com.tc.objectserver.managedobject;
 import org.terracotta.corestorage.KeyValueStorage;
 
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -62,20 +62,20 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected LogicalChangeResult applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo,
-                                                   final int method,
+                                                   final LogicalOperation method,
                                     final Object[] params) {
     switch (method) {
-      case SerializationUtil.PUT:
+      case PUT:
         applyPut(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE:
+      case REMOVE:
         applyRemove(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.CLEAR:
-      case SerializationUtil.DESTROY:
+      case CLEAR:
+      case DESTROY:
         applyClear(applyInfo);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.NO_OP:
+      case NO_OP:
         return LogicalChangeResult.SUCCESS;
       default:
         throw new AssertionError("Invalid action:" + method);
@@ -148,7 +148,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     for (Object key : references.keySet()) {
       final Object value = get(key);
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { key, value });
+      writer.addLogicalAction(LogicalOperation.PUT, new Object[] { key, value });
     }
   }
 

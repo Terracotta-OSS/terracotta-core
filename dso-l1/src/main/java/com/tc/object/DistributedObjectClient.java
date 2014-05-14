@@ -147,11 +147,11 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.ClientTransactionFactory;
 import com.tc.object.tx.ClientTransactionFactoryImpl;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.ClientTransactionManagerImpl;
+import com.tc.object.tx.FoldingConfigHelper;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
@@ -471,7 +471,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.remoteTxnManager = this.dsoClientBuilder
         .createRemoteTransactionManager(this.channel.getClientIDProvider(), encoding,
-                                        FoldingConfig.createFromProperties(tcProperties), new TransactionIDGenerator(),
+                                        FoldingConfigHelper.createFromProperties(tcProperties),
+                                        new TransactionIDGenerator(),
                                         sessionManager, this.channel,
                                         transactionSizeCounter, transactionsPerBatchCounter, abortableOperationManager,
                                         taskRunner);

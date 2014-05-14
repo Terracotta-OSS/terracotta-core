@@ -23,7 +23,7 @@ import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.BaseDSOTestCase;
@@ -46,7 +46,7 @@ import java.util.Map;
 public class ConfigInfoFromL2Test extends BaseDSOTestCase {
   private static int                    STRIPE_COUNT    = 16;
   protected final TCThreadGroup         group           = new TCThreadGroup(
-                                                                            new ThrowableHandler(
+                                                                            new ThrowableHandlerImpl(
                                                                                                  TCLogging
                                                                                                      .getLogger(DistributedObjectServer.class)));
 

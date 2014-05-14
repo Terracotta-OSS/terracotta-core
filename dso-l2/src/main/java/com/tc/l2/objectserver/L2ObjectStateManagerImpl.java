@@ -15,6 +15,7 @@ import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteSequentialMap;
@@ -253,7 +254,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       Assert.assertTrue(this.state == SYNC_STARTED);
       Assert.assertNull(this.syncingContext);
       if (isRootsMissing()) { return getMissingRootsSynccontext(); }
-      final ObjectIDSet oids = new ObjectIDSet();
+      final ObjectIDSet oids = new BitSetObjectIDSet();
       addSomeMissingObjectIDsTo(oids, count);
       this.syncingContext = new ManagedObjectSyncContext(this.nodeID, oids, !this.missingOids.isEmpty(),
                                                          this.totalObjectsToSync, this.totalObjectsSynced,
@@ -269,7 +270,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     private ManagedObjectSyncContext getMissingRootsSynccontext() {
-      final ObjectIDSet oids = new ObjectIDSet();
+      final ObjectIDSet oids = new BitSetObjectIDSet();
       // NOTE:: some root IDs might not be present in this mirror group in AA config
       for (final Iterator i = this.missingRoots.values().iterator(); i.hasNext();) {
         final ObjectID rootID = (ObjectID) i.next();

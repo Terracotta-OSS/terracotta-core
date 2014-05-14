@@ -8,6 +8,7 @@ import org.terracotta.toolkit.rejoin.RejoinException;
 import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCClass;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.VersionedObject;
@@ -53,11 +54,6 @@ public class ExplicitLockingTCObjectServerMapImpl<L> implements TCObjectServerMa
   @Override
   public Object getPeerObject() {
     return delegate.getPeerObject();
-  }
-
-  @Override
-  public TCClass getTCClass() {
-    return delegate.getTCClass();
   }
 
   @Override
@@ -191,9 +187,9 @@ public class ExplicitLockingTCObjectServerMapImpl<L> implements TCObjectServerMa
   }
 
   @Override
-  public void logicalInvoke(int method, String methodSignature, Object[] params) {
+  public void logicalInvoke(LogicalOperation method, Object[] params) {
     assertLockAndRejoinState();
-    delegate.logicalInvoke(method, methodSignature, params);
+    delegate.logicalInvoke(method, params);
   }
 
   @Override
@@ -519,4 +515,33 @@ public class ExplicitLockingTCObjectServerMapImpl<L> implements TCObjectServerMa
     delegate.doUnregisterListener(eventTypes);
   }
 
+  @Override
+  public String getExtendingClassName() {
+    return delegate.getExtendingClassName();
+  }
+
+  @Override
+  public String getClassName() {
+    return delegate.getClassName();
+  }
+
+  @Override
+  public Class<?> getPeerClass() {
+    return delegate.getPeerClass();
+  }
+
+  @Override
+  public boolean isIndexed() {
+    return delegate.isIndexed();
+  }
+
+  @Override
+  public boolean isLogical() {
+    return delegate.isLogical();
+  }
+
+  @Override
+  public boolean isEnum() {
+    return delegate.isEnum();
+  }
 }

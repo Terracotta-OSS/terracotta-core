@@ -7,8 +7,8 @@ package com.tc.objectserver.core.api;
 import org.junit.experimental.categories.Category;
 import org.terracotta.test.categories.CheckShorts;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -48,10 +48,10 @@ public class ManagedObjectTest extends TCTestCase {
     assertTrue(mo.isNew());
 
     final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(100), new ObjectID(10000) });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { Integer.valueOf(100), new ObjectID(10000) });
     final TestDNA dna = new TestDNA(cursor);
 
     Map instances = instanceMonitor.getInstanceCounts();
@@ -95,7 +95,7 @@ public class ManagedObjectTest extends TCTestCase {
     final ManagedObjectImpl mo = new ManagedObjectImpl(objectID, persistor.getManagedObjectPersistor());
 
     final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
     TestDNA dna = new TestDNA(cursor);
     dna.version = 10;
 

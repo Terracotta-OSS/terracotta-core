@@ -9,6 +9,7 @@ import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
@@ -155,7 +156,7 @@ public class TCNotRunningTest extends TestCase {
     }
   }
 
-  private static class NonExitingThrowableHandler extends ThrowableHandler {
+  private static class NonExitingThrowableHandler extends ThrowableHandlerImpl {
 
     public NonExitingThrowableHandler(TCLogger logger) {
       super(logger);

@@ -13,6 +13,7 @@ import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
@@ -160,7 +161,7 @@ public interface Manager extends TerracottaLocking {
    * @param methodName The method to call
    * @param params The parameters to the method
    */
-  public void logicalInvoke(Object object, String methodName, Object[] params);
+  public void logicalInvoke(Object object, LogicalOperation method, Object[] params);
 
   /**
    * Perform invoke on logical managed object in lock
@@ -171,7 +172,7 @@ public interface Manager extends TerracottaLocking {
    * @param params The parameters to the method
    * @throws AbortedOperationException
    */
-  public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params)
+  public void logicalInvokeWithTransaction(Object object, Object lockObject, LogicalOperation method, Object[] params)
       throws AbortedOperationException;
 
   /**

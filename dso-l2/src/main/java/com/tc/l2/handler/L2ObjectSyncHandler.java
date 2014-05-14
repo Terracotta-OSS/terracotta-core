@@ -11,18 +11,15 @@ import com.tc.async.api.Sink;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
-import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerRelayedTxnAckMessage;
-import com.tc.l2.msg.ServerTxnAckMessageFactory;
 import com.tc.l2.objectserver.L2ObjectSyncAckManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -89,8 +86,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
     stateSyncManager.objectSyncComplete();
     objectSyncAckManager.objectSyncComplete();
-    ObjectSyncCompleteAckMessage ackMessage = ObjectSyncCompleteMessageFactory.createObjectSyncCompleteAckMessage(msg
-        .messageFrom());
+    ObjectSyncCompleteAckMessage ackMessage = new ObjectSyncCompleteAckMessage(msg.messageFrom());
     sendObjectSyncCompleteAckMessage(ackMessage);
   }
 
@@ -130,9 +126,8 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     startLWMUpdaterIfNecessary();
   }
 
-  private void ackRelayedTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {
-    final ServerRelayedTxnAckMessage msg = ServerTxnAckMessageFactory.createServerRelayedTxnAckMessage(messageFrom,
-                                                                                                       serverTxnIDs);
+  private void ackRelayedTransactions(final RelayedCommitTransactionMessage messageFrom, final Set serverTxnIDs) {
+    final ServerRelayedTxnAckMessage msg = new ServerRelayedTxnAckMessage(messageFrom, serverTxnIDs);
     this.sendSink.add(msg);
   }
 

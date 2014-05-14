@@ -5,7 +5,6 @@ package com.tc.l2.objectserver;
 
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ServerSyncTxnAckMessage;
-import com.tc.l2.msg.ServerTxnAckMessageFactory;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.MessageID;
@@ -56,9 +55,7 @@ public class L2ObjectSyncAckManagerImpl extends AbstractServerTransactionListene
   public void ackObjectSyncTxn(final ServerTransactionID stxID) {
     MessageID msgID = txnsToAckMsgID.remove(stxID);
     if (msgID != null) {
-      ServerSyncTxnAckMessage ackMsg = ServerTxnAckMessageFactory.createServerSyncTxnAckMessage(stxID.getSourceID(),
-                                                                                                msgID, Collections
-                                                                                                    .singleton(stxID));
+      ServerSyncTxnAckMessage ackMsg = new ServerSyncTxnAckMessage(stxID.getSourceID(), msgID, Collections.singleton(stxID));
       try {
         groupManager.sendTo(stxID.getSourceID(), ackMsg);
       } catch (GroupException e) {

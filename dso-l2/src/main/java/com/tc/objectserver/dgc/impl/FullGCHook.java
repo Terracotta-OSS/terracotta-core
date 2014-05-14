@@ -12,6 +12,7 @@ import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
@@ -50,7 +51,7 @@ public class FullGCHook extends AbstractGCHook {
 
   @Override
   public ObjectIDSet getRootObjectIDs(ObjectIDSet candidateIDs) {
-    return new ObjectIDSet(this.objectManager.getRootIDs());
+    return new BitSetObjectIDSet(this.objectManager.getRootIDs());
   }
 
   @Override
@@ -65,7 +66,7 @@ public class FullGCHook extends AbstractGCHook {
 
   @Override
   public ObjectIDSet getRescueIDs() {
-    ObjectIDSet rescueIds = new ObjectIDSet();
+    ObjectIDSet rescueIds = new BitSetObjectIDSet();
     this.stateManager.addAllReferencedIdsTo(rescueIds);
     int stateManagerIds = rescueIds.size();
 

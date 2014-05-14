@@ -7,6 +7,7 @@ package com.tc.object;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
@@ -184,7 +185,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
+  public void checkPortabilityOfLogicalAction(final LogicalOperation method, final Object[] params, final int index,
                                               final Object pojo) throws TCNonPortableObjectError {
     return;
   }

@@ -7,6 +7,7 @@ import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCClass;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.VersionedObject;
@@ -42,14 +43,6 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
 
   @Override
   public Object getPeerObject() {
-    if(true) {
-      throw new ImplementMe();
-      }
-    return null;
-  }
-
-  @Override
-  public TCClass getTCClass() {
     if(true) {
       throw new ImplementMe();
       }
@@ -212,7 +205,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void logicalInvoke(int method, String methodSignature, Object[] params) {
+  public void logicalInvoke(LogicalOperation method, Object[] params) {
     throw new ImplementMe();
     
   }
@@ -541,6 +534,36 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   public void doUnregisterListener(Set<ServerEventType> eventTypes) {
     throw new ImplementMe();
 
+  }
+
+  @Override
+  public String getExtendingClassName() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public String getClassName() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Class<?> getPeerClass() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isIndexed() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isLogical() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isEnum() {
+    throw new ImplementMe();
   }
 
   @Override

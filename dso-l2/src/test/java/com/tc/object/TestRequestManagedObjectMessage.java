@@ -10,8 +10,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.util.ObjectIDSet;
 
-import java.util.Set;
-
 public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage {
 
   private ObjectIDSet removed;
@@ -45,7 +43,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   }
 
   @Override
-  public void initialize(ObjectRequestID rID, Set<ObjectID> requestedObjectIDs, int requestDepth,
+  public void initialize(ObjectRequestID rID, ObjectIDSet requestedObjectIDs, int requestDepth,
                          ObjectIDSet removeObjects) {
     //
   }

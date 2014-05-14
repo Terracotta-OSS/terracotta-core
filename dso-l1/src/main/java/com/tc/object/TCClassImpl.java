@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Peer of a Class under management.
@@ -40,7 +41,7 @@ import java.util.Map;
  */
 public class TCClassImpl implements TCClass {
   private final static TCLogger          logger                 = TCLogging.getLogger(TCClassImpl.class);
-  private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
+  private final static Pattern           PARENT_FIELD_PATTERN   = Pattern.compile("^this\\$\\d+$");
 
   /**
    * Peer java class that this TCClass represents.
@@ -140,7 +141,7 @@ public class TCClassImpl implements TCClass {
   private Field findParentField() {
     final Field[] fields = this.peer.getDeclaredFields();
     for (final Field field : fields) {
-      if (SERIALIZATION_UTIL.isParent(field.getName())) { return field; }
+      if (PARENT_FIELD_PATTERN.matcher(field.getName()).matches()) { return field; }
     }
     return null;
   }

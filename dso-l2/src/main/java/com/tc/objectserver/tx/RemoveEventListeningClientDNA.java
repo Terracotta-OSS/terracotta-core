@@ -1,8 +1,8 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -81,7 +81,7 @@ public class RemoveEventListeningClientDNA implements DNAInternal {
     private boolean        completed;
 
     public RemoveEvenListeningClientDNACursor(final ClientID clientID) {
-      this.action = new LogicalAction(SerializationUtil.REMOVE_EVENT_LISTENING_CLIENT,
+      this.action = new LogicalAction(LogicalOperation.REMOVE_EVENT_LISTENING_CLIENT,
                                       new Object[] { clientID.toLong() });
     }
 

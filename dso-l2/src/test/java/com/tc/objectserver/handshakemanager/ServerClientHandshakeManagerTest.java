@@ -43,6 +43,7 @@ import com.tc.objectserver.l1.api.TestClientStateManager.AddReferenceContext;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 import com.tc.util.TestTimer;
@@ -202,7 +203,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     handshake.transactionSequenceIDs = sequenceIDs;
     handshake.clientObjectIds.add(new ObjectID(200));
     handshake.clientObjectIds.add(new ObjectID(20002));
-    handshake.validateObjectIds.add(new ObjectID(200), new ObjectID(20002));
+    handshake.validateObjectIds.add(new ObjectID(20002));
 
     final List<ClientServerExchangeLockContext> lockContexts = new LinkedList();
     lockContexts.add(new ClientServerExchangeLockContext(new StringLockID("my lock"), clientID1, new ThreadID(10001),
@@ -258,7 +259,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     // make sure object validation ids are added to InvalidateObjectManager
     assertTrue(handshake.validateObjectIds.size() > 0);
-    final ArgumentCaptor<Invalidations> requestContextArg = ArgumentCaptor.forClass(Invalidations.class);
+    final ArgumentCaptor<ObjectIDSet> requestContextArg = ArgumentCaptor.forClass(ObjectIDSet.class);
 
     Mockito.verify(invalidateObjMgr, Mockito.atMost(1)).addObjectsToValidateFor(
                                                                                 (ClientID) Matchers.eq(handshake

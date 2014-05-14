@@ -160,7 +160,7 @@ public class TCObjectPhysical extends TCObjectImpl {
   }
 
   @Override
-  public void logicalInvoke(int method, String methodSignature, Object[] params) {
+  public void logicalInvoke(LogicalOperation method, Object[] params) {
     throw new UnsupportedOperationException();
   }
 
@@ -183,7 +183,7 @@ public class TCObjectPhysical extends TCObjectImpl {
 
   @Override
   public void unresolveReference(String fieldName) {
-    TCField field = tcClazz.getField(fieldName);
+    TCField field = getTCClass().getField(fieldName);
     if (field == null) { throw new IllegalArgumentException("No such field: " + fieldName); }
     if (!field.canBeReference()) return;
 

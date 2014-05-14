@@ -49,6 +49,8 @@
 
     <module>management</module>
     <module>management-agent</module>
+
+    <module>tc-messaging</module>
   </modules>
 
   <profiles>

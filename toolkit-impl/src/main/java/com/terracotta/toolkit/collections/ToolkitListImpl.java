@@ -11,7 +11,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
@@ -77,7 +77,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     try {
       synchronized (localResolveLock) {
         Object o = createTCCompatibleObject(e);
-        logicalInvoke(SerializationUtil.ADD_SIGNATURE, new Object[] { o });
+        logicalInvoke(LogicalOperation.ADD, new Object[] { o });
         localList.add(o);
         return true;
       }
@@ -92,7 +92,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
 
     synchronized (localResolveLock) {
       Object o = createTCCompatibleObject(e);
-      platformService.logicalInvoke(this, SerializationUtil.ADD_SIGNATURE, new Object[] { o });
+      platformService.logicalInvoke(this, LogicalOperation.ADD, new Object[] { o });
       localList.add(o);
       return true;
     }
@@ -104,7 +104,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     try {
       synchronized (localResolveLock) {
         Object o = createTCCompatibleObject(e);
-        logicalInvoke(SerializationUtil.ADD_AT_SIGNATURE, new Object[] { Integer.valueOf(index), o });
+        logicalInvoke(LogicalOperation.ADD_AT, new Object[] { Integer.valueOf(index), o });
         localList.add(index, o);
       }
     } finally {
@@ -119,7 +119,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       synchronized (localResolveLock) {
 
         Collection collection = createTCCompatiableCollection(c);
-        logicalInvoke(SerializationUtil.ADD_ALL_SIGNATURE, new Object[] { collection });
+        logicalInvoke(LogicalOperation.ADD_ALL, new Object[] { collection });
         return localList.addAll(collection);
 
       }
@@ -135,7 +135,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       synchronized (localResolveLock) {
 
         Collection collection = createTCCompatiableCollection(c);
-        logicalInvoke(SerializationUtil.ADD_ALL_AT_SIGNATURE, new Object[] { Integer.valueOf(index), collection });
+        logicalInvoke(LogicalOperation.ADD_ALL_AT, new Object[] { Integer.valueOf(index), collection });
         return localList.addAll(index, collection);
 
       }
@@ -149,7 +149,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     writeLock();
     try {
       synchronized (localResolveLock) {
-        logicalInvoke(SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+        logicalInvoke(LogicalOperation.CLEAR, new Object[] {});
         localList.clear();
       }
     } finally {
@@ -229,10 +229,10 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     }
   }
 
-  private void logicalInvoke(String signature, Object[] params) {
+  private void logicalInvoke(LogicalOperation method, Object[] params) {
     concurrentLock.lock();
     try {
-      platformService.logicalInvoke(this, signature, params);
+      platformService.logicalInvoke(this, method, params);
     } finally {
       concurrentLock.unlock();
     }
@@ -294,7 +294,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     try {
       synchronized (localResolveLock) {
 
-        logicalInvoke(SerializationUtil.REMOVE_AT_SIGNATURE, new Object[] { Integer.valueOf(index) });
+        logicalInvoke(LogicalOperation.REMOVE_AT, new Object[] { Integer.valueOf(index) });
         return getValueFromTCCompatibleObject(localList.remove(index));
       }
     } finally {
@@ -323,7 +323,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       while (iterator.hasNext()) {
         Object tempObject = iterator.next();
         if (o.equals(getValueFromTCCompatibleObject(tempObject))) {
-          logicalInvoke(SerializationUtil.REMOVE_AT_SIGNATURE, new Object[] { Integer.valueOf(index) });
+          logicalInvoke(LogicalOperation.REMOVE_AT, new Object[] { Integer.valueOf(index) });
           iterator.remove();
           return true;
         }
@@ -340,7 +340,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       synchronized (localResolveLock) {
 
         Object o = createTCCompatibleObject(e);
-        logicalInvoke(SerializationUtil.SET_SIGNATURE, new Object[] { Integer.valueOf(index), o });
+        logicalInvoke(LogicalOperation.SET, new Object[] { Integer.valueOf(index), o });
         Object prev = localList.set(index, o);
         return getValueFromTCCompatibleObject(prev);
       }
@@ -442,7 +442,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
           checkModification();
           checkRange(index);
           Object o = createTCCompatibleObject(element);
-          logicalInvoke(SerializationUtil.ADD_AT_SIGNATURE, new Object[] { Integer.valueOf(startIndex + index), o });
+          logicalInvoke(LogicalOperation.ADD_AT, new Object[] { Integer.valueOf(startIndex + index), o });
           subList.add(index, o);
         }
       } finally {
@@ -458,7 +458,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
           checkModification();
           checkRange(index);
           Collection collection = createTCCompatiableCollection(c);
-          logicalInvoke(SerializationUtil.ADD_ALL_AT_SIGNATURE, new Object[] { Integer.valueOf(startIndex + index),
+          logicalInvoke(LogicalOperation.ADD_ALL_AT, new Object[] { Integer.valueOf(startIndex + index),
               collection });
           return subList.addAll(index, c);
         }
@@ -474,7 +474,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
         synchronized (localResolveLock) {
           checkModification();
           Collection collection = createTCCompatiableCollection(c);
-          logicalInvoke(SerializationUtil.ADD_ALL_AT_SIGNATURE,
+          logicalInvoke(LogicalOperation.ADD_ALL_AT,
                         new Object[] { Integer.valueOf(startIndex + subList.size()), collection });
           return subList.addAll(collection);
         }
@@ -489,7 +489,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       try {
         synchronized (localResolveLock) {
           checkModification();
-          logicalInvoke(SerializationUtil.REMOVE_RANGE_SIGNATURE,
+          logicalInvoke(LogicalOperation.REMOVE_RANGE,
                         new Object[] { Integer.valueOf(startIndex), Integer.valueOf(startIndex + subList.size()) });
           subList.clear();
         }
@@ -644,7 +644,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
         synchronized (localResolveLock) {
           checkModification();
           Object o = createTCCompatibleObject(e);
-          logicalInvoke(SerializationUtil.ADD_AT_SIGNATURE, new Object[] {
+          logicalInvoke(LogicalOperation.ADD_AT, new Object[] {
               Integer.valueOf(startIndex + subList.size()), o });
           subList.add(o);
           return true;
@@ -728,7 +728,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
             Object tcCompatibleObj = iter.next();
             Object tempObject = getValueFromTCCompatibleObject(tcCompatibleObj);
             if (!c.contains(tempObject)) {
-              logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcCompatibleObj });
+              logicalInvoke(LogicalOperation.REMOVE, new Object[] { tcCompatibleObj });
               iter.remove();
               modified = true;
             }
@@ -748,7 +748,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
           checkModification();
           checkRange(index);
           Object o = createTCCompatibleObject(element);
-          logicalInvoke(SerializationUtil.SET_SIGNATURE, new Object[] { Integer.valueOf(startIndex + index), o });
+          logicalInvoke(LogicalOperation.SET, new Object[] { Integer.valueOf(startIndex + index), o });
           return getValueFromTCCompatibleObject(subList.set(index, o));
         }
       } finally {
@@ -763,7 +763,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
         synchronized (localResolveLock) {
           checkModification();
           checkRange(index);
-          logicalInvoke(SerializationUtil.REMOVE_AT_SIGNATURE, new Object[] { Integer.valueOf(startIndex + index) });
+          logicalInvoke(LogicalOperation.REMOVE_AT, new Object[] { Integer.valueOf(startIndex + index) });
           return getValueFromTCCompatibleObject(subList.remove(index));
         }
       } finally {
@@ -926,7 +926,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       writeLock();
       try {
         synchronized (localResolveLock) {
-          logicalInvoke(SerializationUtil.REMOVE_AT_SIGNATURE, new Object[] { Integer.valueOf(currentIndex) });
+          logicalInvoke(LogicalOperation.REMOVE_AT, new Object[] { Integer.valueOf(currentIndex) });
           myListIterator.remove();
           currentIndex--;
         }
@@ -941,7 +941,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       try {
         synchronized (localResolveLock) {
           Object objectToPut = createTCCompatibleObject(o);
-          logicalInvoke(SerializationUtil.SET_SIGNATURE, new Object[] { Integer.valueOf(currentIndex),
+          logicalInvoke(LogicalOperation.SET, new Object[] { Integer.valueOf(currentIndex),
               objectToPut });
           myListIterator.set(objectToPut);
         }
@@ -956,7 +956,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       try {
         synchronized (localResolveLock) {
           Object objectToPut = createTCCompatibleObject(o);
-          logicalInvoke(SerializationUtil.ADD_SIGNATURE, new Object[] { objectToPut });
+          logicalInvoke(LogicalOperation.ADD, new Object[] { objectToPut });
           myListIterator.add(objectToPut);
           currentIndex++;
         }
@@ -1007,7 +1007,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
       writeLock();
       try {
         synchronized (localResolveLock) {
-          logicalInvoke(SerializationUtil.REMOVE_AT_SIGNATURE, new Object[] { Integer.valueOf(currentIndex) });
+          logicalInvoke(LogicalOperation.REMOVE_AT, new Object[] { Integer.valueOf(currentIndex) });
           myLocalIterator.remove();
           currentIndex--;
         }
@@ -1143,7 +1143,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
           Object tcCompatibleObj = iter.next();
           Object tempObject = getValueFromTCCompatibleObject(tcCompatibleObj);
           if (!c.contains(tempObject)) {
-            logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcCompatibleObj });
+            logicalInvoke(LogicalOperation.REMOVE, new Object[] { tcCompatibleObj });
             iter.remove();
             modified = true;
           }

@@ -4,7 +4,6 @@
 package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
-import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -13,17 +12,19 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.tx.TransactionID;
+import com.tc.util.BitSetObjectIDSet;
+import com.tc.util.ObjectIDSet;
+import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
-  public Set                    clientObjectIds                = new HashSet();
-  public Invalidations          validateObjectIds              = new Invalidations();
+  public ObjectIDSet            clientObjectIds                = new BitSetObjectIDSet();
+  public ObjectIDSet            validateObjectIds              = new BitSetObjectIDSet();
   public NoExceptionLinkedQueue sendCalls                      = new NoExceptionLinkedQueue();
   public ClientID               clientID;
   public List                   lockContexts                   = new ArrayList();
@@ -60,8 +61,18 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public Set getObjectIDs() {
-    return this.clientObjectIds;
+  public ObjectIDSet getObjectIDs() {
+    return clientObjectIds;
+  }
+
+  @Override
+  public void setObjectIDs(final ObjectIDSet objectIDs) {
+    clientObjectIds = objectIDs;
+  }
+
+  @Override
+  public void setObjectIDsToValidate(final ObjectIDSet objectIDsToValidate) {
+    validateObjectIds = objectIDsToValidate;
   }
 
   @Override
@@ -91,25 +102,25 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public List getTransactionSequenceIDs() {
+  public List<SequenceID> getTransactionSequenceIDs() {
     return this.transactionSequenceIDs;
   }
 
   @Override
-  public void addTransactionSequenceIDs(List ids) {
+  public void addTransactionSequenceIDs(List<SequenceID> ids) {
     this.transactionSequenceIDs = ids;
     this.setTransactionSequenceIDsCalls.put(this.transactionSequenceIDs);
   }
 
   @Override
-  public void addResentTransactionIDs(List resentTransactionIDs) {
+  public void addResentTransactionIDs(List<TransactionID> resentTransactionIDs) {
     this.transactionIDs = resentTransactionIDs;
     this.setTransactionIDsCalls.put(resentTransactionIDs);
 
   }
 
   @Override
-  public List getResentTransactionIDs() {
+  public List<com.tc.object.tx.TransactionID> getResentTransactionIDs() {
     return this.transactionIDs;
   }
 
@@ -159,7 +170,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public Invalidations getObjectIDsToValidate() {
+  public ObjectIDSet getObjectIDsToValidate() {
     return validateObjectIds;
   }
 

@@ -12,7 +12,6 @@ import com.tc.l2.msg.IndexSyncAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessage;
-import com.tc.l2.msg.IndexSyncMessageFactory;
 import com.tc.l2.msg.IndexSyncStartMessage;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
@@ -52,8 +51,7 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
     final IndexSyncCompleteMessage msg = context;
     logger.info("Received IndexSyncCompleteMessage Msg from : " + msg.messageFrom());
     stateSyncManager.indexSyncComplete();
-    IndexSyncCompleteAckMessage ackMessage = IndexSyncMessageFactory.createIndexSyncCompleteAckMessage(msg
-        .messageFrom());
+    IndexSyncCompleteAckMessage ackMessage = new IndexSyncCompleteAckMessage(msg.messageFrom());
 
     try {
       this.groupManager.sendTo(ackMessage.getDestinatioinNodeID(), ackMessage);
@@ -89,7 +87,7 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
     this.indexHACoordinator.applyIndexSync(syncMsg.getCacheName(), syncMsg.getIndexId(), syncMsg.getFileName(), data,
                                            syncMsg.isTCFile(), syncMsg.isLast());
 
-    IndexSyncAckMessage ack = IndexSyncMessageFactory.createIndexSyncAckMessage(syncMsg.getMessageID(), data.length);
+    IndexSyncAckMessage ack = new IndexSyncAckMessage(syncMsg.getMessageID(), data.length);
     try {
       this.groupManager.sendTo(syncMsg.messageFrom(), ack);
     } catch (GroupException e) {

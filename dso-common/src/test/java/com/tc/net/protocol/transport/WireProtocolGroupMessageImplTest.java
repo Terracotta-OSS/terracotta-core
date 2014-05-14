@@ -28,6 +28,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 
+/*
+ * This test really belongs in the TC Messaging module but it's dependencies
+ * currently prevent that.  It needs some heavy refactoring.
+ */
 public class WireProtocolGroupMessageImplTest extends TestCase {
   private TCConnectionManager connMgr;
   private TCListener          server;
@@ -165,7 +169,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
 
   private TCNetworkMessage getDSOMessage(final MessageMonitor monitor, final SequenceGenerator seq) {
     TCNetworkMessage msg = new PingMessage(monitor);
-    ((PingMessage) msg).initialize(seq);
+    ((PingMessage) msg).initialize(seq.getNextSequence());
     msg.seal();
     return msg;
   }

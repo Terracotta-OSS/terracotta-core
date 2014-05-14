@@ -19,6 +19,7 @@ import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.stats.counter.Counter;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -67,9 +68,9 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
     MessageChannel channel = rmom.getChannel();
-    Set<ObjectID> requestedIDs = rmom.getRequestedObjectIDs();
+    Set<ObjectID> requestedIDs = new BitSetObjectIDSet(rmom.getRequestedObjectIDs());
     ClientID clientID = (ClientID) rmom.getSourceNodeID();
-    ObjectIDSet removedIDs = rmom.getRemoved();
+    ObjectIDSet removedIDs = new BitSetObjectIDSet(rmom.getRemoved());
 
     final int numObjectsRequested = requestedIDs.size();
     if (numObjectsRequested != 0) {

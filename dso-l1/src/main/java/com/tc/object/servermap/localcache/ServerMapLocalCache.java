@@ -6,6 +6,7 @@ package com.tc.object.servermap.localcache;
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
 
@@ -126,7 +127,7 @@ public interface ServerMapLocalCache {
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
-  void handleObjectIDsToValidate(Invalidations invalidations);
+  void handleObjectIDsToValidate(ObjectIDSet validations);
 
   void addTxnInProgressKeys(Set<Object> addSet, Set<Object> removeSet);
 

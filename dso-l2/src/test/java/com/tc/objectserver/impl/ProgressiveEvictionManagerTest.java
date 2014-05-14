@@ -24,6 +24,7 @@ import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import java.util.Collections;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class ProgressiveEvictionManagerTest {
   @Before
   public void setUp() {
     PersistentManagedObjectStore store = mock(PersistentManagedObjectStore.class);
-    ObjectIDSet set = new ObjectIDSet();
+    ObjectIDSet set = new BitSetObjectIDSet();
     for (int x=0;x<2048;x++) {
       set.add(new ObjectID((long)x));
     }

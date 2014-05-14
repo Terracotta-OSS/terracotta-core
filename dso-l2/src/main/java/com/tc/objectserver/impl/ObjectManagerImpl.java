@@ -30,6 +30,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
@@ -510,7 +511,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ObjectIDSet removeAllObjectsByID(final Set<ObjectID> toDelete) {
-    ObjectIDSet missingObjects = new ObjectIDSet();
+    ObjectIDSet missingObjects = new BitSetObjectIDSet();
     while(!toDelete.isEmpty()) {
       Iterator<ObjectID> i = toDelete.iterator();
       while (i.hasNext()) {
@@ -531,7 +532,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   @Override
   public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects) {
-    Set<ObjectID> retry = new ObjectIDSet();
+    Set<ObjectID> retry = new BitSetObjectIDSet();
     for (ObjectID objectID : objectsToDelete) {
       ManagedObjectReference deleteable = markReferenceForDelete(objectID);
       if (checkedOutObjects.contains(objectID)) {
@@ -582,7 +583,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   @Override
   public ObjectIDSet getObjectIDsInCache() {
-    final ObjectIDSet ids = new ObjectIDSet();
+    final ObjectIDSet ids = new BitSetObjectIDSet();
     ids.addAll(this.references.keySet()); // CDM doesn't throw ConcurrentModificationException
     return ids;
   }
@@ -725,7 +726,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   @Override
   public Set<ObjectID> deleteObjects(Set<ObjectID> toDelete) {
-    return removeAllObjectsByID(new ObjectIDSet(toDelete));
+    return removeAllObjectsByID(new BitSetObjectIDSet(toDelete));
   }
   
   private void flushAllAndCommit(final Transaction persistenceTransaction, final Collection managedObjects) {
@@ -808,7 +809,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectManagerResultsContext responseContext;
-    private final ObjectIDSet                 missing        = new ObjectIDSet();
+    private final ObjectIDSet missing        = new BitSetObjectIDSet();
     private final AccessLevel                 accessLevel;
     private int                               processedCount = 0;
 
@@ -868,7 +869,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private class WaitForLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectID       lookupID;
-    private final ObjectIDSet    lookupIDs = new ObjectIDSet();
+    private final ObjectIDSet lookupIDs = new BitSetObjectIDSet();
     private boolean              resultSet = false;
     private ManagedObject        result;
     private final MissingObjects missingObjects;

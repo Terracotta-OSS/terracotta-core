@@ -17,6 +17,7 @@ import com.tc.invalidation.Invalidations;
 import com.tc.net.GroupID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
@@ -422,23 +423,21 @@ public class ServerMapLocalCacheImplTest extends TestCase {
                                          createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
     }
 
-    Invalidations invalidations = new Invalidations();
-    globalLocalCacheManager.addAllObjectIDsToValidate(invalidations, new GroupID(0));
 
-    Assert.assertEquals(0, invalidations.size());
+    ObjectIDSet validations1 = globalLocalCacheManager.getObjectIDsToValidate(new GroupID(0));
+
+    Assert.assertEquals(0, validations1.size());
 
     for (int i = 50; i < 100; i++) {
       MockModesAdd.addEventualValueToCache(cache, globalLocalCacheManager, "key" + i,
                                            createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
     }
-    globalLocalCacheManager.addAllObjectIDsToValidate(invalidations, new GroupID(0));
+    ObjectIDSet validations2 = globalLocalCacheManager.getObjectIDsToValidate(new GroupID(0));
 
-    Assert.assertEquals(50, invalidations.size());
+    Assert.assertEquals(50, validations2.size());
 
-    ObjectIDSet set = invalidations.getObjectIDSetForMapId(ObjectID.NULL_ID);
-    Assert.assertEquals(50, set.size());
     for (int i = 50; i < 100; i++) {
-      Assert.assertTrue(set.contains(new ObjectID(i)));
+      Assert.assertTrue(validations2.contains(new ObjectID(i)));
     }
   }
 
@@ -831,7 +830,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     @Override
-    public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName, LogicalChangeID id) {
+    public void logicalInvoke(TCObject source, LogicalOperation method, Object[] parameters, LogicalChangeID id) {
       throw new ImplementMe();
 
     }

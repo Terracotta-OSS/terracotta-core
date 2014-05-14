@@ -26,6 +26,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.test.TCTestCase;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.Runners;
@@ -658,8 +659,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     public final NoExceptionLinkedQueue initializeQueue = new NoExceptionLinkedQueue();
     public final NoExceptionLinkedQueue sendQueue       = new NoExceptionLinkedQueue();
-    public ObjectIDSet                  objectIDs;
-    private ObjectIDSet removed = new ObjectIDSet();
+    public ObjectIDSet objectIDs;
+    private ObjectIDSet removed = new BitSetObjectIDSet();
 
     @Override
     public ObjectRequestID getRequestID() {
@@ -677,9 +678,9 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     }
 
     @Override
-    public void initialize(final ObjectRequestID requestID, final Set<ObjectID> requestedObjectIDs,
+    public void initialize(final ObjectRequestID requestID, final ObjectIDSet requestedObjectIDs,
                            final int requestDepth, final ObjectIDSet removeObjects) {
-      this.objectIDs = new ObjectIDSet(requestedObjectIDs);
+      this.objectIDs = new BitSetObjectIDSet(requestedObjectIDs);
       removed.addAll(removeObjects);
       this.initializeQueue.put(new Object[] { requestID, requestedObjectIDs, removeObjects });
     }

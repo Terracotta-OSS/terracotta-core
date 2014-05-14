@@ -4,8 +4,8 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.ToolkitTypeNames;
@@ -29,8 +29,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
             break;
           case ManagedObjectState.LIST_TYPE:
             testList();
-            break;
-          case ManagedObjectState.SET_TYPE:
             break;
           case ManagedObjectState.TDC_SERIALIZED_ENTRY:
             testTcHibernateSerializedEntry();
@@ -57,8 +55,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2002) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2003) });
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -89,8 +87,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME,
                              Boolean.valueOf(false), false);
 
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003), 0L, 0L, 0L, 0L });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004), 0L, 0L, 0L, 0L });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003), 0L, 0L, 0L, 0L });
+    cursor.addLogicalAction(LogicalOperation.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004), 0L, 0L, 0L, 0L });
 
     final ManagedObjectState state = applyValidation(className, cursor);
 

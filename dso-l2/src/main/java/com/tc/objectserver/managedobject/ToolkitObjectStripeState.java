@@ -4,12 +4,13 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.*;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
@@ -64,16 +65,16 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
         }
       } else {
         final LogicalAction logicalAction = (LogicalAction) action;
-        final int method = logicalAction.getMethod();
+        final LogicalOperation method = logicalAction.getLogicalOperation();
         final Object[] params = logicalAction.getParameters();
         applyMethod(objectID, method, params);
       }
     }
   }
 
-  private void applyMethod(ObjectID objectID, int method, Object[] params) {
+  private void applyMethod(ObjectID objectID, LogicalOperation method, Object[] params) {
     switch (method) {
-      case SerializationUtil.PUT:
+      case PUT:
         final Object key = params[0];
         final Object value = params[1];
         String keyAsString;
@@ -129,8 +130,8 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
   }
 
   @Override
-  public Set getObjectReferences() {
-    ObjectIDSet set = new ObjectIDSet();
+  public Set<ObjectID> getObjectReferences() {
+    ObjectIDSet set = new BitSetObjectIDSet();
     if (componentObjects != null) {
       for (Object obj : componentObjects) {
         if (obj instanceof ObjectID) {

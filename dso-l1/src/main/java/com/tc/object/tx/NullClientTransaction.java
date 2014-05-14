@@ -5,6 +5,7 @@
 package com.tc.object.tx;
 
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.Notify;
@@ -52,7 +53,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters, LogicalChangeID id) {
+  protected void basicLogicalInvoke(TCObject source, LogicalOperation method, Object[] parameters, LogicalChangeID id) {
     // null do nothing
   }
 

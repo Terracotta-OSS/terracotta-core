@@ -3,7 +3,6 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
-import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
@@ -27,6 +26,7 @@ import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -757,16 +757,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   @Override
-  public void handleObjectIDsToValidate(Invalidations invalidations) {
+  public void handleObjectIDsToValidate(ObjectIDSet validations) {
     grabAllLocks();
     try {
-      ObjectIDSet toRemoveSet = new ObjectIDSet();
-      for (Object object : pendingTransactionEntries.keySet()) {
-        if (object instanceof ObjectID) {
-          toRemoveSet.add((ObjectID) object);
-        }
-      }
-      invalidations.removeAll(toRemoveSet);
+      validations.removeAll(pendingTransactionEntries.keySet());
     } finally {
       releaseAllLocks();
     }

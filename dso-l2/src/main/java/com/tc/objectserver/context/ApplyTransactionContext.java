@@ -8,7 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TxnObjectGrouping;
-import com.tc.util.ObjectIDSet;
+import com.tc.util.BitSetObjectIDSet;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,7 +31,7 @@ public class ApplyTransactionContext implements MultiThreadedEventContext {
   }
 
   public Map<ObjectID, ManagedObject> getObjects() {
-    Set<ObjectID> oids = new ObjectIDSet(txn.getObjectIDs());
+    Set<ObjectID> oids = new BitSetObjectIDSet(txn.getObjectIDs());
     oids.removeAll(ignoredObjects);
     return grouping.getObjects(oids);
   }

@@ -251,7 +251,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     SequenceGenerator sq = new SequenceGenerator();
     for (int i = 1; i <= 5; i++) {
       PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
-      ping.initialize(sq);
+      ping.initialize(sq.getNextSequence());
       ping.send();
     }
 
@@ -288,7 +288,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     SequenceGenerator sq = new SequenceGenerator();
     for (int i = 1; i <= 5; i++) {
       PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
-      ping.initialize(sq);
+      ping.initialize(sq.getNextSequence());
       ping.send();
     }
 
@@ -407,7 +407,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     SequenceGenerator sq = new SequenceGenerator();
     for (int i = 1; i <= 5; i++) {
       PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
-      ping.initialize(sq);
+      ping.initialize(sq.getNextSequence());
       ping.send();
     }
 
@@ -514,7 +514,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     SequenceGenerator sq = new SequenceGenerator();
     for (int i = 1; i <= 5; i++) {
       PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
-      ping.initialize(sq);
+      ping.initialize(sq.getNextSequence());
       ping.send();
     }
 
@@ -582,7 +582,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     SequenceGenerator sq = new SequenceGenerator();
     for (int i = 1; i <= 5; i++) {
       PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
-      ping.initialize(sq);
+      ping.initialize(sq.getNextSequence());
       ping.send();
     }
 

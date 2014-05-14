@@ -8,14 +8,15 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class ManagedObjectTraverser {
 
@@ -67,7 +68,7 @@ public class ManagedObjectTraverser {
     if (lookedUpObjects.size() > 0) {
       markProcessed(lookedUpObjects, false);
     }
-    final ObjectIDSet oidsToLookup = new ObjectIDSet();
+    final ObjectIDSet oidsToLookup = new BitSetObjectIDSet();
     for (final Entry<ObjectID, State> e : this.oids.entrySet()) {
       final State _state = e.getValue();
       Assert.assertTrue(_state != State.REQUIRED);

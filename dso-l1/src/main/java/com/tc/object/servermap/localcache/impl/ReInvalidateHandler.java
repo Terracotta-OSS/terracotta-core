@@ -5,6 +5,7 @@ package com.tc.object.servermap.localcache.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
@@ -146,7 +147,7 @@ public class ReInvalidateHandler {
       try {
         ObjectIDSet setFetched = map.get(mapId);
         if (setFetched == null) {
-          setFetched = new ObjectIDSet();
+          setFetched = new BitSetObjectIDSet();
           map.put(mapId, setFetched);
         }
 

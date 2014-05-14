@@ -5,7 +5,7 @@ package com.terracotta.toolkit.object;
 
 import org.terracotta.toolkit.config.Configuration;
 
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.terracotta.toolkit.config.ConfigChangeListener;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
@@ -88,7 +88,7 @@ public class ToolkitObjectStripeImpl<C extends TCToolkitObject> implements Toolk
   }
 
   private void logicalInvokePut(String key, Object value) {
-    tcObject.logicalInvoke(SerializationUtil.PUT, SerializationUtil.PUT_SIGNATURE, new Object[] { key, value });
+    tcObject.logicalInvoke(LogicalOperation.PUT, new Object[] { key, value });
   }
 
   @Override

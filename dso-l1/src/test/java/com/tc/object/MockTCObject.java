@@ -51,11 +51,6 @@ public class MockTCObject implements TCObject {
   }
 
   @Override
-  public TCClass getTCClass() {
-    return this.tcClazz;
-  }
-
-  @Override
   public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
                                   final int index) {
     if ("java.lang.reflect.AccessibleObject.override".equals(fieldname)) {
@@ -131,11 +126,41 @@ public class MockTCObject implements TCObject {
     return;
   }
 
+  @Override
+  public String getExtendingClassName() {
+    return tcClazz.getExtendingClassName();
+  }
+
+  @Override
+  public String getClassName() {
+    return tcClazz.getName();
+  }
+
+  @Override
+  public Class<?> getPeerClass() {
+    return tcClazz.getPeerClass();
+  }
+
+  @Override
+  public boolean isIndexed() {
+    return tcClazz.isIndexed();
+  }
+
+  @Override
+  public boolean isLogical() {
+    return tcClazz.isLogical();
+  }
+
+  @Override
+  public boolean isEnum() {
+    return tcClazz.isEnum();
+  }
+
   public static class MethodCall {
-    public int      method;
+    public LogicalOperation method;
     public Object[] parameters;
 
-    public MethodCall(final int method, final Object[] parameters) {
+    public MethodCall(final LogicalOperation method, final Object[] parameters) {
       this.method = method;
       this.parameters = parameters;
     }
@@ -237,7 +262,7 @@ public class MockTCObject implements TCObject {
   }
 
   @Override
-  public void logicalInvoke(final int method, final String methodSignature, final Object[] params) {
+  public void logicalInvoke(final LogicalOperation method, final Object[] params) {
     this.history.add(new MethodCall(method, params));
   }
 

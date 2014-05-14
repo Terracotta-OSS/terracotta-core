@@ -14,6 +14,7 @@ import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
@@ -28,7 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class TestGarbageCollector implements GarbageCollector {
-  public ObjectIDSet          collectedObjects = new ObjectIDSet();
+  public ObjectIDSet collectedObjects = new BitSetObjectIDSet();
   private boolean             collected        = false;
   private boolean             isPausing        = false;
   private boolean             isPaused         = false;

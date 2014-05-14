@@ -16,6 +16,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
@@ -66,11 +67,11 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.metaDataReaders = metaDataReaders;
     this.changes = dnas;
     this.serializer = serializer;
-    final ObjectIDSet ids = new ObjectIDSet();
-    final ObjectIDSet newIDs = new ObjectIDSet();
+    final ObjectIDSet ids = new BitSetObjectIDSet();
+    final ObjectIDSet newIDs = new BitSetObjectIDSet();
     boolean added = true;
-    for (final Iterator i = this.changes.iterator(); i.hasNext();) {
-      final DNA dna = (DNA) i.next();
+    for (final Object change : this.changes) {
+      final DNA dna = (DNA)change;
       added &= ids.add(dna.getObjectID());
       if (!dna.isDelta()) {
         newIDs.add(dna.getObjectID());

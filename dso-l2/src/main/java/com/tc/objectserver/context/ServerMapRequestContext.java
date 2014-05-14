@@ -12,6 +12,7 @@ import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
@@ -21,7 +22,7 @@ public abstract class ServerMapRequestContext implements ObjectManagerResultsCon
 
   private final static TCLogger logger    = TCLogging.getLogger(ServerMapRequestContext.class);
 
-  private final ObjectIDSet     lookupIDs = new ObjectIDSet();
+  private final ObjectIDSet     lookupIDs = new BitSetObjectIDSet();
   private final ObjectID        mapID;
   private final ClientID        clientID;
   private final Sink            destinationSink;
@@ -84,9 +85,5 @@ public abstract class ServerMapRequestContext implements ObjectManagerResultsCon
 
     final EntryForKeyResponseContext responseContext = new EntryForKeyResponseContext(mo, this.mapID);
     this.destinationSink.add(responseContext);
-  }
-
-  public boolean updateStats() {
-    return true;
   }
 }

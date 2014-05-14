@@ -16,6 +16,7 @@ import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -296,7 +297,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
 
   private static class ClientStateImpl implements PrettyPrintable, ClientState {
     private final NodeID        nodeID;
-    private final Set<ObjectID> managed = new ObjectIDSet();
+    private final Set<ObjectID> managed = new BitSetObjectIDSet();
     private final ReentrantLock lock    = new ReentrantLock();
 
     public ClientStateImpl(final NodeID nodeID) {

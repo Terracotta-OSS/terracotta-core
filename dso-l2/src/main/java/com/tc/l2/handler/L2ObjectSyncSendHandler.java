@@ -11,7 +11,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncMessage;
-import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
@@ -156,7 +155,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     ServerTransactionID sid = ServerTransactionID.NULL_ID;
     try {
       sid = this.serverTransactionFactory.getNextServerTransactionID(this.groupManager.getLocalNodeID());
-      final ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc, sid);
+      final ObjectSyncMessage msg = mosc.createObjectSyncMessage(sid);
       this.serverTxnMgr.objectsSynched(mosc.getNodeID(), sid);
       this.groupManager.sendTo(mosc.getNodeID(), msg);
       this.syncLogger.logSynced(mosc);

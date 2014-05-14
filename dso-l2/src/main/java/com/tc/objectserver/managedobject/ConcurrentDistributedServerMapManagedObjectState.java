@@ -9,7 +9,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -120,7 +120,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       dehydrateFields(writer);
       for (Object o : references.keySet()) {
         CDSMValue value = getValueForKey(o);
-        writer.addLogicalAction(SerializationUtil.PUT, new Object[] { o, value.getObjectID(), value.getCreationTime(),
+        writer.addLogicalAction(LogicalOperation.PUT, new Object[] { o, value.getObjectID(), value.getCreationTime(),
             value.getLastAccessedTime(), value.getTimeToIdle(), value.getTimeToLive() });
       }
 
@@ -138,7 +138,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       for (ClientID clientID : eventRegistry.get(eventType)) {
         params.add(clientID.toLong());
 
-        writer.addLogicalAction(SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE, params.toArray());
+        writer.addLogicalAction(LogicalOperation.REGISTER_SERVER_EVENT_LISTENER_PASSIVE, params.toArray());
       }
     }
   }
@@ -169,9 +169,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         eventCount++;
 
         final LogicalAction logicalAction = (LogicalAction) action;
-        final int method = logicalAction.getMethod();
+        final LogicalOperation operation = logicalAction.getLogicalOperation();
         final Object[] params = logicalAction.getParameters();
-        LogicalChangeResult result = applyLogicalAction(objectID, applyInfo, method, params);
+        LogicalChangeResult result = applyLogicalAction(objectID, applyInfo, operation, params);
         if (CAS_LOGGING && result == LogicalChangeResult.SUCCESS) {
           LOGGER.info("SUCCESS returned for KEY: " + params[0] + "   for ServerTransactionID: "
                       + applyInfo.getServerTransactionID() + "   ---   "
@@ -179,12 +179,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         }
         applyInfo.getApplyResultRecorder().recordResult(logicalAction.getLogicalChangeID(), result);
         // TODO: requires refactoring, we should call super.apply() instead
-        if (method == SerializationUtil.CLEAR) {
+        if (LogicalOperation.CLEAR.equals(operation)) {
           // clear needs to be broadcasted so local caches can be cleared elsewhere
           applyInfo.echoChangesFor(objectID); // Also echo the clear so that we don't need to clear local cache inline for
                                               // quick clear (DEV-9793)
           broadcast = true;
-        } else if (method == SerializationUtil.CLEAR_LOCAL_CACHE || method == SerializationUtil.DESTROY || method == SerializationUtil.SET_LAST_ACCESSED_TIME) {
+        } else if (LogicalOperation.CLEAR_LOCAL_CACHE.equals(operation) || LogicalOperation.DESTROY.equals(operation) || LogicalOperation.SET_LAST_ACCESSED_TIME.equals(operation)) {
           broadcast = true;
         }
       }
@@ -230,20 +230,20 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   protected LogicalChangeResult applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo,
-                                                   final int method,
+                                                   final LogicalOperation method,
                                       final Object[] params) {
     switch (method) {
-      case SerializationUtil.SET_LAST_ACCESSED_TIME:
+      case SET_LAST_ACCESSED_TIME:
         applySetLastAccessedTime(params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.FIELD_CHANGED:
+      case FIELD_CHANGED:
         final String fieldName = asString(params[0]);
         final boolean boolValue = (Boolean) params[1];
         if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
           this.evictionEnabled = boolValue;
         }
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.INT_FIELD_CHANGED:
+      case INT_FIELD_CHANGED:
         final String intFieldName = asString(params[0]);
         final int intValue = (Integer) params[1];
         if (MAX_TTI_SECONDS_FIELDNAME.equals(intFieldName)) {
@@ -257,47 +257,45 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
                                    + ", value: " + intValue);
         }
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_IF_VALUE_EQUAL:
+      case REMOVE_IF_VALUE_EQUAL:
         return applyRemoveIfValueEqual(applyInfo, params);
 
-      case SerializationUtil.EXPIRE_IF_VALUE_EQUAL:
+      case EXPIRE_IF_VALUE_EQUAL:
         return applyExpireIfValueEqual(applyInfo, params);
 
-      case SerializationUtil.PUT_IF_ABSENT:
+      case PUT_IF_ABSENT:
         return applyPutIfAbsent(applyInfo, params);
-      case SerializationUtil.PUT_IF_ABSENT_VERSIONED:
+      case PUT_IF_ABSENT_VERSIONED:
         return applyPutIfAbsentVersioned(applyInfo, params);
-      case SerializationUtil.PUT_VERSIONED:
+      case PUT_VERSIONED:
         applyPutVersioned(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_VERSIONED:
+      case REMOVE_VERSIONED:
         applyRemoveVersioned(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REPLACE_IF_VALUE_EQUAL:
+      case REPLACE_IF_VALUE_EQUAL:
         return applyReplaceIfEqualWithExpiry(applyInfo, params);
 
-      case SerializationUtil.REPLACE:
-        return applyReplace(applyInfo, params);
-      case SerializationUtil.EVICTION_COMPLETED:
+      case EVICTION_COMPLETED:
         evictionCompleted();
         // make sure we don't need more capacity eviction to get to target
         startCapacityEvictionIfNeccessary(applyInfo);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.CLEAR_LOCAL_CACHE:
+      case CLEAR_LOCAL_CACHE:
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.CLEAR_VERSIONED:
+      case CLEAR_VERSIONED:
         applyClearVersioned(applyInfo);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REGISTER_SERVER_EVENT_LISTENER:
+      case REGISTER_SERVER_EVENT_LISTENER:
         applyRegisterServerEventListener(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.UNREGISTER_SERVER_EVENT_LISTENER:
+      case UNREGISTER_SERVER_EVENT_LISTENER:
         applyUnregisterServerEventListener(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE:
+      case REGISTER_SERVER_EVENT_LISTENER_PASSIVE:
         applyRelayedRegisterServerEventListener(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
-      case SerializationUtil.REMOVE_EVENT_LISTENING_CLIENT:
+      case REMOVE_EVENT_LISTENING_CLIENT:
         applyRemoveEventListeningClient(applyInfo, params);
         return LogicalChangeResult.SUCCESS;
       default:

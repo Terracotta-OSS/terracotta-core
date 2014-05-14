@@ -30,7 +30,13 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
-    </dependency>    
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>tc-messaging</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcconfig</artifactId>

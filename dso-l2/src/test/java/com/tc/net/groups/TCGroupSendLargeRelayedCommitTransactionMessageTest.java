@@ -16,7 +16,7 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessageFactory;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -68,7 +68,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     final int p2 = pc.chooseRandom2Port();
     final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1), new Node(LOCALHOST, p2, p2 + 1) };
 
-    StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
+    StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(null)), new QueueFactory());
     TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1, stageManager1, null);
     ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
     stageManager1.startAll(context1, Collections.EMPTY_LIST);
@@ -76,7 +76,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     MyListener l1 = new MyListener();
     gm1.registerForMessages(RelayedCommitTransactionMessage.class, l1);
 
-    StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
+    StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(null)), new QueueFactory());
     TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2, null);
     ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
     stageManager2.startAll(context2, Collections.EMPTY_LIST);
@@ -143,14 +143,14 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
 
     int size1 = 0;
     TCByteBuffer[] buf1 = msg1.getBatchData();
-    for (int i = 0; i < buf1.length; ++i) {
-      size1 += buf1[i].limit();
+    for (TCByteBuffer element : buf1) {
+      size1 += element.limit();
     }
 
     int size2 = 0;
     TCByteBuffer[] buf2 = msg2.getBatchData();
-    for (int i = 0; i < buf2.length; ++i) {
-      size2 += buf2[i].limit();
+    for (TCByteBuffer element : buf2) {
+      size2 += element.limit();
     }
 
     assertEquals(size1, size2);
@@ -163,14 +163,14 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
 
     int size3 = 0;
     TCByteBuffer[] buf3 = msg3.getBatchData();
-    for (int i = 0; i < buf3.length; ++i) {
-      size3 += buf3[i].limit();
+    for (TCByteBuffer element : buf3) {
+      size3 += element.limit();
     }
 
     int size4 = 0;
     TCByteBuffer[] buf4 = msg4.getBatchData();
-    for (int i = 0; i < buf4.length; ++i) {
-      size4 += buf4[i].limit();
+    for (TCByteBuffer element : buf4) {
+      size4 += element.limit();
     }
 
     assertEquals(size3, size4);

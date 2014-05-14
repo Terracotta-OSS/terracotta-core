@@ -1,7 +1,7 @@
 package com.tc.objectserver.tx;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -114,7 +114,7 @@ public class RemoveAllDNA implements DNAInternal {
     public boolean next() {
       if (actions.hasNext()) {
         final Map.Entry<Object, EvictableEntry> e = actions.next();
-        currentAction = new LogicalAction(SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { e.getKey(),
+        currentAction = new LogicalAction(LogicalOperation.REMOVE_IF_VALUE_EQUAL, new Object[] { e.getKey(),
             e.getValue().getObjectID() });
         actionsCount--;
         return true;

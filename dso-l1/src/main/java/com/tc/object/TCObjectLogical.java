@@ -13,13 +13,12 @@ public class TCObjectLogical extends TCObjectImpl {
   }
 
   @Override
-  public void logicalInvoke(final int method, final String methodName, final Object[] parameters) {
-    getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
+  public void logicalInvoke(final LogicalOperation method, final Object[] parameters) {
+    getObjectManager().getTransactionManager().logicalInvoke(this, method, parameters);
   }
 
-  public boolean logicalInvokeWithResult(final int method, final String methodName, final Object[] parameters)
-      throws AbortedOperationException {
-    return getObjectManager().getTransactionManager().logicalInvokeWithResult(this, method, methodName, parameters);
+  public boolean logicalInvokeWithResult(final LogicalOperation method, final Object[] parameters) throws AbortedOperationException {
+    return getObjectManager().getTransactionManager().logicalInvokeWithResult(this, method, parameters);
   }
 
   @Override

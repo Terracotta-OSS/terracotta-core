@@ -14,7 +14,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.MockTCConnection;
 import com.tc.net.core.TCConnection;
@@ -168,7 +168,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
 
     RejoinManagerInternal mock = Mockito.mock(RejoinManagerInternal.class);
     DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
-                                                                 new TCThreadGroup(new ThrowableHandler(TCLogging
+                                                                 new TCThreadGroup(new ThrowableHandlerImpl(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
@@ -181,7 +181,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
   }
 
   protected final TCThreadGroup group = new TCThreadGroup(
-                                                          new ThrowableHandler(TCLogging
+                                                          new ThrowableHandlerImpl(TCLogging
                                                               .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {

@@ -7,6 +7,7 @@ package com.tc.l2.objectserver;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -89,7 +90,7 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   @Override
-  public Map getNewRoots() {
+  public Map<String, ObjectID> getNewRoots() {
     return this.orgTxn.getNewRoots();
   }
 

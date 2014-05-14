@@ -3,6 +3,7 @@
  */
 package com.tc.object.change.event;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.change.TCChangeBufferEvent;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalChangeID;
@@ -11,11 +12,11 @@ import com.tc.object.dna.api.LogicalChangeID;
  * Nov 22, 2004: Event representing any logical actions that need to be logged
  */
 public class LogicalChangeEvent implements TCChangeBufferEvent {
-  private final int      method;
+  private final LogicalOperation method;
   private final Object[] parameters;
   private final LogicalChangeID logicalChangeID;
 
-  public LogicalChangeEvent(int method, Object[] parameters, LogicalChangeID id) {
+  public LogicalChangeEvent(LogicalOperation method, Object[] parameters, LogicalChangeID id) {
     this.parameters = parameters;
     this.method = method;
     this.logicalChangeID = id;
@@ -26,7 +27,7 @@ public class LogicalChangeEvent implements TCChangeBufferEvent {
     writer.addLogicalAction(method, parameters, logicalChangeID);
   }
 
-  public int getMethodID() {
+  public LogicalOperation getLogicalOperation() {
     return method;
   }
 

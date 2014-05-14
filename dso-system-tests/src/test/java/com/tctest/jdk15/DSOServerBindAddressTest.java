@@ -13,7 +13,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
@@ -39,7 +39,7 @@ import java.util.concurrent.Callable;
  */
 public class DSOServerBindAddressTest extends BaseDSOTestCase {
   private final TCThreadGroup     group     = new TCThreadGroup(
-                                                                new ThrowableHandler(TCLogging
+                                                                new ThrowableHandlerImpl(TCLogging
                                                                     .getLogger(DistributedObjectServer.class)));
   private static final String[]   bindAddrs = { "0.0.0.0", "127.0.0.1", localAddr() };
   private DistributedObjectServer server;

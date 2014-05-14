@@ -5,7 +5,7 @@ import com.tc.logging.TCLogger;
 /**
 * @author tim
 */
-public class TestThrowableHandler extends ThrowableHandler {
+public class TestThrowableHandler extends ThrowableHandlerImpl {
   private volatile Throwable throwable;
 
   /**

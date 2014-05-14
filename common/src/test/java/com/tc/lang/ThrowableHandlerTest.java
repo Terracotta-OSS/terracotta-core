@@ -18,7 +18,7 @@ public class ThrowableHandlerTest extends TestCase {
   private boolean invokedCallback;
 
   public void testThrowableHandlerTest() {
-    ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(ThrowableHandlerTest.class)) {
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(ThrowableHandlerTest.class)) {
 
       @Override
       protected void exit(int status) {
@@ -37,7 +37,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   public void testImmediatelyExitOnOOME() {
     final AtomicInteger exitCode = new AtomicInteger(-1);
-    final ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(ThrowableHandlerTest.class)) {
+    final ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(ThrowableHandlerTest.class)) {
       @Override
       protected void exit(int status) {
         exitCode.set(status);
@@ -56,7 +56,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   public void testHandleJMXThreadServiceTermination() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
-    ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(getClass())) {
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(getClass())) {
       @Override
       protected synchronized void exit(final int status) {
         exited.set(true);
@@ -69,7 +69,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   public void testIsThreadGroupDestroyed() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
-    ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(getClass())) {
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(getClass())) {
       @Override
       protected synchronized void exit(final int status) {
         exited.set(true);

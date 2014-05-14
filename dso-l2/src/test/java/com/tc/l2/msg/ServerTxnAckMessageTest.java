@@ -12,7 +12,6 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.TestTransactionBatch;
@@ -31,11 +30,15 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+/*
+ * This test really belongs in the TC Messaging module but it's dependencies
+ * currently prevent that.  It needs some heavy refactoring.
+ */
 public class ServerTxnAckMessageTest extends TestCase {
-  private AbstractGroupMessage relayedCommitTransactionMessage;
-  private Set                  serverTransactionIDs;
-  private static final int     channelId = 2;
-  private final NodeID         nodeID    = new ServerID("foo", "foobar".getBytes());
+  private RelayedCommitTransactionMessage relayedCommitTransactionMessage;
+  private Set<ServerTransactionID>        serverTransactionIDs;
+  private static final int                channelId = 2;
+  private final NodeID                    nodeID    = new ServerID("foo", "foobar".getBytes());
 
   @Override
   public void setUp() {
@@ -63,7 +66,7 @@ public class ServerTxnAckMessageTest extends TestCase {
     transactions.add(new TestServerTransaction(stid4, new TxnBatchID(9), new GlobalTransactionID(78)));
 
     this.relayedCommitTransactionMessage = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage.getSourceNodeID(),
+        .createRelayedCommitTransactionMessage(cid,
                                                testCommitTransactionMessage.getBatchData(), transactions, 700,
                                                new GlobalTransactionID(99),
                                                testCommitTransactionMessage.getSerializer());
@@ -107,8 +110,7 @@ public class ServerTxnAckMessageTest extends TestCase {
   }
 
   public void testBasicSerialization() throws Exception {
-    ServerRelayedTxnAckMessage stam = ServerTxnAckMessageFactory
-        .createServerRelayedTxnAckMessage(this.relayedCommitTransactionMessage, this.serverTransactionIDs);
+    ServerRelayedTxnAckMessage stam = new ServerRelayedTxnAckMessage(this.relayedCommitTransactionMessage, this.serverTransactionIDs);
     ServerRelayedTxnAckMessage stam1 = writeAndRead(stam);
     validate(stam, stam1);
   }

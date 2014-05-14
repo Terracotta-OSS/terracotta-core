@@ -10,7 +10,7 @@ import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
 import com.tc.util.concurrent.ThreadUtil;
@@ -359,7 +359,7 @@ public class LockAccountingTest extends TestCase {
 
   // test for DEV-4081, toString() causing ConcuurentModificationException
   public void testToStringCME() {
-    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(null), "TCLockAccountingTestGroup");
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(null), "TCLockAccountingTestGroup");
     RunToStringThread runToStringThread = new RunToStringThread(threadGroup);
     AddTxnThread addTxnThread = new AddTxnThread(threadGroup);
 

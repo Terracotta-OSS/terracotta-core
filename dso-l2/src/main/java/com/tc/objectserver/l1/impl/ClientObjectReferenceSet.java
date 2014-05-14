@@ -10,6 +10,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.StripedObjectIDSet;
 
@@ -50,7 +51,7 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
     this.lock = new ReentrantReadWriteLock();
     this.timer = new Timer();
 
-    this.snapshotObjectReferences = new ObjectIDSet();
+    this.snapshotObjectReferences = new BitSetObjectIDSet();
     this.liveObjectReferences = new StripedObjectIDSet();
     this.objectReferencesRefreshInProgress = new AtomicBoolean();
     this.listeners = new CopyOnWriteArrayList<ClientObjectReferenceSetChangedListener>();
@@ -149,7 +150,7 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
       // register for new object reference added
       monitorObjectReferenceAddition();
 
-      this.snapshotObjectReferences = new ObjectIDSet();
+      this.snapshotObjectReferences = new BitSetObjectIDSet();
       this.liveObjectReferences = new StripedObjectIDSet();
       this.clientStateManager.addAllReferencedIdsTo(snapshotObjectReferences);
     } finally {

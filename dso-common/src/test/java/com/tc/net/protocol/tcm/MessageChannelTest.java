@@ -38,6 +38,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+/*
+ * This test really belongs in the TC Messaging module but it's dependencies
+ * currently prevent that.  It needs some heavy refactoring.
+ */
 /**
  * This is a test case for MessageChannel. XXX: This test could use some work. It's not very coherent and uses sleeps.
  * --Orion 12/19/2005
@@ -554,7 +558,7 @@ public class MessageChannelTest extends TCTestCase {
 
   private PingMessage createMessage() {
     PingMessage ping = (PingMessage) clientChannel.createMessage(TCMessageType.PING_MESSAGE);
-    ping.initialize(sq);
+    ping.initialize(sq.getNextSequence());
     return ping;
   }
 

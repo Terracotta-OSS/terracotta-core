@@ -45,7 +45,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -143,7 +143,7 @@ public class TCServerImpl extends SEDA implements TCServer {
    * This should only be used for tests.
    */
   public TCServerImpl(final L2ConfigurationSetupManager configurationSetupManager) {
-    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class))));
+    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(TCServer.class))));
   }
 
   public TCServerImpl(final L2ConfigurationSetupManager configurationSetupManager, final TCThreadGroup threadGroup) {

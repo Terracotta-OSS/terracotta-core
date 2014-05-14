@@ -14,6 +14,7 @@ import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -179,7 +180,7 @@ public class ClientTransactionManagerTest extends TestCase {
   }
 
   public void doSomeChange() {
-    clientTxnMgr.logicalInvoke(new MockTCObject(new ObjectID(1), new Object(), false, true), 1, "test", new Object[0]);
+    clientTxnMgr.logicalInvoke(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD, new Object[0]);
   }
 
   public void testAtomicTxn() throws Exception {
@@ -256,7 +257,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
   public void testLogicalInvokeResultWithoutTransaction() throws AbortedOperationException {
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), 1, "test",
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (UnlockedSharedObjectException e) {
@@ -267,7 +268,7 @@ public class ClientTransactionManagerTest extends TestCase {
   public void testLogicalInvokeWithResultNotSupportedForAtomicTransaction() throws AbortedOperationException {
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, true);
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), 1, "test",
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (UnsupportedOperationException e) {
@@ -291,7 +292,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), 1, "test",
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (AbortedOperationException e) {
@@ -320,7 +321,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), 1, "test",
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (PlatformRejoinException e) {
@@ -348,7 +349,7 @@ public class ClientTransactionManagerTest extends TestCase {
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     Assert
         .assertTrue(clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true),
-                                                         1, "test", new Object[0]));
+                                                         LogicalOperation.ADD, new Object[0]));
 
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
     thread.join();
@@ -371,7 +372,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
     Assert
         .assertFalse(clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true),
-                                                          1, "test", new Object[0]));
+                                                          LogicalOperation.ADD, new Object[0]));
 
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
     thread.join();

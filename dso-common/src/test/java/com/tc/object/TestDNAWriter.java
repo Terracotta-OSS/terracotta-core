@@ -29,7 +29,7 @@ public class TestDNAWriter implements DNAWriter {
   }
 
   @Override
-  public void addLogicalAction(final int method, final Object[] parameters, LogicalChangeID logicalChangeID) {
+  public void addLogicalAction(final LogicalOperation method, final Object[] parameters, LogicalChangeID logicalChangeID) {
     this.actions.add(new LogicalAction(method, parameters, logicalChangeID));
   }
 
@@ -174,7 +174,7 @@ public class TestDNAWriter implements DNAWriter {
     if (a1 == null || a2 == null) { return false; }
     if (a1.getParameters() == null || a2.getParameters() == null) { return false; }
 
-    if (a1.getMethod() == a2.getMethod()) {
+    if (a1.getLogicalOperation()== a2.getLogicalOperation()) {
       if (a1.getParameters().length == a2.getParameters().length) {
         for (int i = 0; i < a1.getParameters().length; i++) {
           if (!a1.getParameters()[i].equals(a2.getParameters()[i])) { return false; }
@@ -225,7 +225,7 @@ public class TestDNAWriter implements DNAWriter {
   }
 
   @Override
-  public void addLogicalAction(int method, Object[] parameters) {
+  public void addLogicalAction(LogicalOperation method, Object[] parameters) {
     this.actions.add(new LogicalAction(method, parameters));
 
   }

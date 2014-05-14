@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Arrays;
@@ -40,7 +41,7 @@ public class PersistentManagedObjectStoreTest extends TestCase {
   }
 
   public void testRemoveObjectsByID() throws Exception {
-    ObjectIDSet objectIDs = new ObjectIDSet(Arrays.asList(new ObjectID(1), new ObjectID(2)));
+    ObjectIDSet objectIDs = new BitSetObjectIDSet(Arrays.asList(new ObjectID(1), new ObjectID(2)));
     objectStore.removeAllObjectsByID(objectIDs);
     verify(persistor).deleteAllObjects(objectIDs);
   }

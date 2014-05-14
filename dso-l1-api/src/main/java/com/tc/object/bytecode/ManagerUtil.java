@@ -11,6 +11,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -273,8 +274,8 @@ public class ManagerUtil {
    * @param methodName The method to call
    * @param params The parameters to the method
    */
-  protected static void logicalInvoke(final Object object, final String methodName, final Object[] params) {
-    getManager().logicalInvoke(object, methodName, params);
+  protected static void logicalInvoke(final Object object, final LogicalOperation method, final Object[] params) {
+    getManager().logicalInvoke(object, method, params);
   }
 
   /**
@@ -287,9 +288,9 @@ public class ManagerUtil {
    * @throws AbortedOperationException
    */
   protected static void logicalInvokeWithTransaction(final Object object, final Object lockObject,
-                                                     final String methodName, final Object[] params)
+                                                     final LogicalOperation method, final Object[] params)
       throws AbortedOperationException {
-    getManager().logicalInvokeWithTransaction(object, lockObject, methodName, params);
+    getManager().logicalInvokeWithTransaction(object, lockObject, method, params);
   }
 
   /**

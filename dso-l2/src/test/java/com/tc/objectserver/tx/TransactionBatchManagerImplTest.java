@@ -25,7 +25,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.test.TCTestCase;
-import com.tc.util.ObjectIDSet;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 
@@ -86,7 +86,7 @@ public class TransactionBatchManagerImplTest extends TCTestCase {
     when(serverTransaction.getServerTransactionID()).thenReturn(new ServerTransactionID(new ClientID(1), new TransactionID(id)));
     when(serverTransaction.getClientSequenceID()).thenReturn(new SequenceID(id));
     when(serverTransaction.getTransactionType()).thenReturn(syncWrite ? TxnType.SYNC_WRITE : TxnType.NORMAL);
-    when(serverTransaction.getNewObjectIDs()).thenReturn(new ObjectIDSet());
+    when(serverTransaction.getNewObjectIDs()).thenReturn(new BitSetObjectIDSet());
     return serverTransaction;
   }
 }

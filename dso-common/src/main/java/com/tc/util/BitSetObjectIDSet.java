@@ -3,31 +3,27 @@
  */
 package com.tc.util;
 
-import com.tc.io.TCByteBufferInput;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
 import com.tc.util.AATreeSet.AbstractTreeNode;
 import com.tc.util.AATreeSet.Node;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-class BitSetObjectIDSet extends ObjectIDSetBase {
+public class BitSetObjectIDSet extends ObjectIDSet {
+
+  private int size = 0;
+  private final AATreeSet<BitSet> ranges = new AATreeSet<BitSet>();
+  private volatile int modCount = 0;
 
   public BitSetObjectIDSet(final Collection c) {
-    super();
-    if (c instanceof BitSetObjectIDSet) {
-      final BitSetObjectIDSet other = (BitSetObjectIDSet) c;
-      // fast way to clone
-      this.size = other.size();
-      for (final Iterator<BitSet> i = other.ranges.iterator(); i.hasNext();) {
-        this.ranges.add(new BitSet(i.next()));
+    if (c instanceof ObjectIDSet) {
+      for (Range range : ((ObjectIDSet)c).ranges()) {
+        insertRange(range);
       }
-      return;
     } else {
       addAll(c);
     }
@@ -111,7 +107,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
     }
 
     // Step 1 : Check if number can be contained in any of the range, if so add to the same Range.
-    final BitSet prev = (BitSet) this.ranges.find(new BitSet(start, 0));
+    final BitSet prev = this.ranges.find(new BitSet(start, 0));
     if (prev != null) {
       final boolean isAdded = prev.add(lid);
       if (isAdded) {
@@ -138,12 +134,16 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
    */
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   @Override
-  public boolean remove(final ObjectID id) {
+  public boolean remove(final Object o) {
+    if (!(o instanceof ObjectID)) {
+      return false;
+    }
+    ObjectID id = (ObjectID)o;
     final long lid = id.toLong();
 
     final long start = calculateStart(lid);
 
-    final BitSet current = (BitSet) this.ranges.find(new BitSet(start, 0));
+    final BitSet current = this.ranges.find(new BitSet(start, 0));
     if (current == null) {
       // Not found
       return false;
@@ -160,23 +160,18 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
-  public boolean contains(final ObjectID id) {
+  public boolean contains(final Object o) {
+    if (!(o instanceof ObjectID)) {
+      return false;
+    }
+    ObjectID id = (ObjectID)o;
     final long lid = id.toLong();
     final long start = calculateStart(lid);
-    final BitSet r = (BitSet) this.ranges.find(new BitSet(start, 0));
+    final BitSet r = this.ranges.find(new BitSet(start, 0));
     if (r == null) {
       return false;
     } else {
       return isPresent(lid, r);
-    }
-  }
-
-  @Override
-  public boolean contains(final Object o) {
-    if (o instanceof ObjectID) {
-      return contains((ObjectID) o);
-    } else {
-      return false;
     }
   }
 
@@ -187,47 +182,29 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
-  public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
-    if (this.size != 0) { throw new RuntimeException("deserialize dirty ObjectIDSet"); }
-    int _size = in.readInt();
-    this.size = _size;
-    while (_size > 0) {
-      final long start = in.readLong();
-      final long nextRanges = in.readLong();
-      final BitSet r = new BitSet(start, nextRanges);
-      this.ranges.add(r);
-      _size -= r.size();
-    }
-    return this;
-  }
-
-  @Override
-  public void serializeTo(final TCByteBufferOutput out) {
-    out.writeInt(this.size);
-    for (final Iterator i = this.ranges.iterator(); i.hasNext();) {
-      final BitSet r = (BitSet) i.next();
-      out.writeLong(r.start);
-      out.writeLong(r.nextLongs);
-    }
-  }
-
-  @Override
-  public Iterator iterator() {
+  public Iterator<ObjectID> iterator() {
     return new BitSetObjectIDSetIterator();
   }
 
   @Override
   public ObjectID first() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    final BitSet min = (BitSet) this.ranges.first();
+    final BitSet min = this.ranges.first();
     return new ObjectID(min.first());
   }
 
   @Override
   public ObjectID last() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    final BitSet max = (BitSet) this.ranges.last();
+    final BitSet max = this.ranges.last();
     return new ObjectID(max.last());
+  }
+
+  @Override
+  public void clear() {
+    this.size = 0;
+    this.modCount++;
+    this.ranges.clear();
   }
 
   public static long calculateStart(final long lid) {
@@ -238,7 +215,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
     }
   }
 
-  private class BitSetObjectIDSetIterator implements Iterator {
+  private class BitSetObjectIDSetIterator implements Iterator<ObjectID> {
 
     private Iterator nodes;
     private BitSet   current;
@@ -263,12 +240,12 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
     }
 
     private boolean isPointingToLast() {
-      if (!current.isEmpty() && this.current.last() >= this.current.start + this.idx) { return false; }
+      if (!this.current.isEmpty() && this.current.last() >= this.current.start + this.idx) { return false; }
       return true;
     }
 
     @Override
-    public Object next() {
+    public ObjectID next() {
       if (this.current == null) { throw new NoSuchElementException(); }
       if (this.expectedModCount != BitSetObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
       moveToNextIndex();
@@ -353,7 +330,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
   /**
    * Ranges store the elements stored in the tree. The range is inclusive.
    */
-  public static final class BitSet extends AbstractTreeNode<BitSet> implements Comparable<BitSet> {
+  public static final class BitSet extends AbstractTreeNode<BitSet> implements Comparable<BitSet>, Range {
     private long            start;
     private long            nextLongs  = 0;
     public static final int RANGE_SIZE = 64;
@@ -419,9 +396,9 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
     @Override
     public int compareTo(final BitSet o) {
       final BitSet other = o;
-      if (this.start < other.start) {
+      if (this.start < other.getStart()) {
         return -1;
-      } else if (this.start == other.start) {
+      } else if (this.start == other.getStart()) {
         return 0;
       } else {
         return 1;
@@ -474,6 +451,45 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
       }
       return this.start + BitSet.RANGE_SIZE - 1 - Long.numberOfLeadingZeros(this.nextLongs);
     }
+
+    @Override
+    public long getStart() {
+      return start;
+    }
+
+    @Override
+    public long[] getBitmap() {
+      return new long[] { nextLongs };
+    }
   }
 
+  @Override
+  protected void insertRange(final Range range) {
+    long start = range.getStart();
+    for (long l : range.getBitmap()) {
+      BitSet bitSet = new BitSet(start, l);
+      size += bitSet.size();
+      ranges.add(bitSet);
+    }
+  }
+
+  @Override
+  protected Collection<? extends Range> ranges() {
+    return ranges;
+  }
+
+  @Override
+  public int size() {
+    return size;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("BitSetObjectIDSet{");
+    sb.append("size=").append(size);
+    sb.append(", ranges=").append(ranges);
+    sb.append(", modCount=").append(modCount);
+    sb.append('}');
+    return sb.toString();
+  }
 }

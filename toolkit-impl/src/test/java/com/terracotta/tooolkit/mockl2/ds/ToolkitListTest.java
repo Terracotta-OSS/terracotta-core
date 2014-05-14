@@ -3,6 +3,8 @@
  */
 package com.terracotta.tooolkit.mockl2.ds;
 
+import com.tc.object.LogicalOperation;
+
 import org.junit.Assert;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.collections.ToolkitList;
@@ -44,8 +46,8 @@ public class ToolkitListTest extends ToolkitUnitTest {
     addPlatformListener(new MockPlatformListener() {
       
       @Override
-      public void logicalInvoke(Object object, String methodName, Object[] params) {
-          System.out.println("methodName : " + methodName);
+      public void logicalInvoke(Object object, LogicalOperation method, Object[] params) {
+          System.out.println("method : " + method);
           if(params != null) {
             for(Object param : params) {
               System.out.println(param);

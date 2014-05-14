@@ -19,6 +19,7 @@ import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -36,7 +37,7 @@ import java.util.Set;
 
 public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
-  private final Set<ObjectID> existingObjectIDs = new ObjectIDSet();
+  private final Set<ObjectID> existingObjectIDs = new BitSetObjectIDSet();
   private final Map<ObjectID, ManagedObject> checkedOutObjects = new HashMap<ObjectID, ManagedObject>();
   private List<ObjectManagerResultsContext> pendingLookups = new ArrayList<ObjectManagerResultsContext>();
 
@@ -89,7 +90,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   private ObjectIDSet missingObjects(Collection<ObjectID> ids) {
-    ObjectIDSet missingObjects = new ObjectIDSet(ids);
+    ObjectIDSet missingObjects = new BitSetObjectIDSet(ids);
     missingObjects.removeAll(existingObjectIDs);
     return missingObjects;
   }
@@ -177,7 +178,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   @Override
   public ObjectIDSet getAllObjectIDs() {
-    return new ObjectIDSet();
+    return new BitSetObjectIDSet();
   }
 
   public Object getLock() {

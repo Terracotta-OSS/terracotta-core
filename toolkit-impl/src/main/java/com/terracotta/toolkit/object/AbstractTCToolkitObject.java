@@ -5,7 +5,7 @@ package com.terracotta.toolkit.object;
 
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
-import com.tc.object.SerializationUtil;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.TerracottaToolkit;
@@ -61,7 +61,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   }
 
   protected void doLogicalDestroy() {
-    platformService.logicalInvoke(this, SerializationUtil.DESTROY_SIGNATURE, new Object[] {});
+    platformService.logicalInvoke(this, LogicalOperation.DESTROY, new Object[] {});
   }
 
   @Override

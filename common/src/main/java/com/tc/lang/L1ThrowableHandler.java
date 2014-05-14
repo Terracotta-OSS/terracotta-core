@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
  * A {@link ThrowableHandler} for Terracotta Client which avoids {@link System#exit(int)} on inconsistent state of
  * Terracotta Client. This handler will shutdown Terracotta Client instead through l1ShutdownCallable.
  */
-public class L1ThrowableHandler extends ThrowableHandler {
+public class L1ThrowableHandler extends ThrowableHandlerImpl {
   private final Callable<Void> l1ShutdownCallable;
 
   public L1ThrowableHandler(TCLogger logger, Callable<Void> l1ShutdownCallable) {

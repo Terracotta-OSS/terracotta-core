@@ -21,6 +21,7 @@ import com.tc.objectserver.l1.impl.InvalidateObjectManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.stats.Stats;
 import com.tc.test.TCTestCase;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
@@ -132,7 +133,7 @@ public class InvalidateObjectManagerTest extends TCTestCase {
 
   public void testValidations() throws Exception {
     // Valid object ids
-    ObjectIDSet validOids = new ObjectIDSet();
+    ObjectIDSet validOids = new BitSetObjectIDSet();
     for (int i = 0; i < 10; i++) {
       for (int j = 0; j < 50; j++) {
         long longOid = 100 * i + j;
@@ -146,12 +147,12 @@ public class InvalidateObjectManagerTest extends TCTestCase {
     }
 
     for (int i = 0; i < 10; i++) {
-      Invalidations objectIDsToValidate = new Invalidations();
+      ObjectIDSet validate = new BitSetObjectIDSet();
       for (int j = 0; j < 100; j++) {
         long longOid = 100 * i + j;
-        objectIDsToValidate.add(new ObjectID(1000 + i), new ObjectID(longOid));
+        validate.add(new ObjectID(longOid));
       }
-      invalidateObjectManager.addObjectsToValidateFor(cids[i], objectIDsToValidate);
+      invalidateObjectManager.addObjectsToValidateFor(cids[i], validate);
     }
 
     invalidateObjectManager.start();
@@ -168,7 +169,7 @@ public class InvalidateObjectManagerTest extends TCTestCase {
 
       Invalidations invalidationsGot = invalidateObjectManager.getObjectsIDsToInvalidate(cid);
       Invalidations expected = new Invalidations();
-      ObjectID mapID = new ObjectID(1000 + k);
+      ObjectID mapID = ObjectID.NULL_ID;
       for (int j = 50; j < 100; j++) {
         long longOid = 100 * k + j;
         expected.add(mapID, new ObjectID(longOid));

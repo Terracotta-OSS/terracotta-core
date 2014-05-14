@@ -37,6 +37,7 @@ import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.test.TCTestCase;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -224,7 +225,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   private static Collection<ObjectID> asCollectionOfObjectIDs(Long ... longs) {
-    Set<ObjectID> oids = new ObjectIDSet();
+    Set<ObjectID> oids = new BitSetObjectIDSet();
     for (long l : longs) {
       oids.add(new ObjectID(l));
     }
@@ -317,11 +318,11 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
   private ServerTransaction createTransaction(long txId, Collection<Long> newObjects, Collection<Long> objects) {
     ServerTransaction transaction = mock(ServerTransaction.class);
-    ObjectIDSet newObjectIDs = new ObjectIDSet();
+    ObjectIDSet newObjectIDs = new BitSetObjectIDSet();
     for (long l : newObjects) {
       newObjectIDs.add(new ObjectID(l));
     }
-    ObjectIDSet objectIDs = new ObjectIDSet(newObjectIDs);
+    ObjectIDSet objectIDs = new BitSetObjectIDSet(newObjectIDs);
     for (long l : objects) {
       objectIDs.add(new ObjectID(l));
     }

@@ -2,8 +2,8 @@ package com.tc.objectserver.managedobject;
 
 import org.terracotta.corestorage.KeyValueStorage;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.test.TCTestCase;
 
@@ -50,7 +50,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
 
   public void testUnknownLogicalAction() throws Exception {
     try {
-      mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.SET_LAST_ACCESSED_TIME, new Object[0]);
+      mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, LogicalOperation.SET_LAST_ACCESSED_TIME, new Object[0]);
       fail();
     } catch (AssertionError e) {
       // expected
@@ -58,7 +58,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
   }
 
   public void testPutLiterals() throws Exception {
-    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "key", "value" });
+    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, LogicalOperation.PUT, new Object[] { "key", "value" });
     verify(keyValueStorage).put("key", "value");
     verify(managedObjectChangeListener, never()).changed(any(ObjectID.class), any(ObjectID.class), any(ObjectID.class));
   }
@@ -66,7 +66,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
   public void testPutObjectKeyValue() throws Exception {
     ObjectID key = new ObjectID(1);
     ObjectID value = new ObjectID(1);
-    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { key, value });
+    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, LogicalOperation.PUT, new Object[] { key, value });
     verify(keyValueStorage).put(key, value);
     verify(managedObjectChangeListener, times(2)).changed(eq(oid), (ObjectID)isNull(), or(eq(value), eq(key)));
   }
@@ -75,12 +75,12 @@ public class MapManagedObjectStateTest extends TCTestCase {
     ObjectID oldOid = new ObjectID(1);
     ObjectID newOid = new ObjectID(2);
     when(keyValueStorage.get("key")).thenReturn(oldOid);
-    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "key", newOid });
+    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, LogicalOperation.PUT, new Object[] { "key", newOid });
     verify(keyValueStorage).put("key", newOid);
   }
 
   public void testRemoveMissingKey() throws Exception {
-    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE, new Object[] { "key" });
+    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, LogicalOperation.REMOVE, new Object[] { "key" });
     verify(applyTransactionInfo, never()).deleteObject(any(ObjectID.class));
   }
 
@@ -88,7 +88,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     ObjectID key = new ObjectID(2);
     ObjectID value = new ObjectID(1);
     when(keyValueStorage.get(key)).thenReturn(value);
-    mapManagedObjectState.applyLogicalAction(value, applyTransactionInfo, SerializationUtil.REMOVE, new Object[] { key });
+    mapManagedObjectState.applyLogicalAction(value, applyTransactionInfo, LogicalOperation.REMOVE, new Object[] { key });
     verify(keyValueStorage).remove(key);
   }
 
@@ -97,7 +97,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     ObjectID value = new ObjectID(2);
     when(keyValueStorage.keySet()).thenReturn(Collections.singleton((Object)key));
     when(keyValueStorage.values()).thenReturn(Collections.singleton((Object)value));
-    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR, new Object[0]);
+    mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, LogicalOperation.CLEAR, new Object[0]);
     verify(keyValueStorage).clear();
   }
 

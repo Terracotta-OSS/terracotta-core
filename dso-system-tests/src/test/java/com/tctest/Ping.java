@@ -63,7 +63,7 @@ public class Ping implements TCMessageSink {
       messageRouter.routeMessageType(TCMessageType.PING_MESSAGE, this);
       for (int i = 0; i < 400; i++) {
         PingMessage pingMsg = (PingMessage) channel.createMessage(TCMessageType.PING_MESSAGE);
-        pingMsg.initialize(sg);
+        pingMsg.initialize(sg.getNextSequence());
 
         long start = System.currentTimeMillis();
         pingMsg.send();

@@ -82,7 +82,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     if (messageEnvelope.getCloseConnection()) {
       reset();
     } else {
-      final Message message = messageEnvelope.getTunneledMessage();
+      final Message message = (Message) messageEnvelope.getTunneledMessage();
       synchronized (this) {
         if (messageEnvelope.getInitConnection()) {
           if (messageConnection != null) {

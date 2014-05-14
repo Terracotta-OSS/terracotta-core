@@ -116,7 +116,7 @@ public class JMXConnectStateMachine {
   }
 
   public void incomingNetworkMessage(JmxRemoteTunnelMessage messageEnvelope) {
-    final Message message = messageEnvelope.getTunneledMessage();
+    final Message message = (Message) messageEnvelope.getTunneledMessage();
     final MessageChannel channel = messageEnvelope.getChannel();
 
     TunnelingMessageConnection conn = tmc; // volatile read

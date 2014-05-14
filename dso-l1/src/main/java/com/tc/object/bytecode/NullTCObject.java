@@ -6,7 +6,7 @@ package com.tc.object.bytecode;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
-import com.tc.object.TCClass;
+import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
@@ -35,12 +35,6 @@ public class NullTCObject implements TCObject {
 
   @Override
   public Object getPeerObject() {
-    // do nothing
-    return null;
-  }
-
-  @Override
-  public TCClass getTCClass() {
     // do nothing
     return null;
   }
@@ -98,7 +92,7 @@ public class NullTCObject implements TCObject {
   }
 
   @Override
-  public void logicalInvoke(final int method, final String methodName, final Object[] parameters) {
+  public void logicalInvoke(final LogicalOperation method, final Object[] parameters) {
     // do nothing
   }
 
@@ -249,4 +243,33 @@ public class NullTCObject implements TCObject {
     //
   }
 
+  @Override
+  public String getExtendingClassName() {
+    throw new AssertionError();
+  }
+
+  @Override
+  public String getClassName() {
+    throw new AssertionError();
+  }
+
+  @Override
+  public Class<?> getPeerClass() {
+    throw new AssertionError();
+  }
+
+  @Override
+  public boolean isIndexed() {
+    throw new AssertionError();
+  }
+
+  @Override
+  public boolean isLogical() {
+    throw new AssertionError();
+  }
+
+  @Override
+  public boolean isEnum() {
+    throw new AssertionError();
+  }
 }

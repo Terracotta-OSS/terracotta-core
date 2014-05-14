@@ -32,7 +32,9 @@ import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.Counter;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.VicariousThreadLocal;
@@ -223,7 +225,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (isShutdown()) return;
     assertPausedOrRejoinInProgress("Attempt to initiateHandshake " + thisNode + " <--> " + remoteNode);
     changeStateToStarting();
-    addAllObjectIDs(handshakeMessage.getObjectIDs(), remoteNode);
+    ObjectIDSet oids = new BitSetObjectIDSet();
+    addAllObjectIDs(oids, remoteNode);
+    handshakeMessage.setObjectIDs(oids);
 
     // Ignore objects reaped before handshaking otherwise those won't be in the list sent to L2 at handshaking.
     // Leave an inconsistent state between L1 and L2. Reaped object is in L1 removeObjects but L2 doesn't aware
@@ -770,14 +774,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   @Override
-  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
+  public void checkPortabilityOfLogicalAction(final LogicalOperation method, final Object[] params, final int index,
                                               final Object pojo) throws TCNonPortableObjectError {
     final Object param = params[index];
     if (!portability.isPortableInstance(param)) {
       //
       throw new TCNonPortableObjectError("Attempt to share an instance of a non-portable class ("
                                          + param.getClass().getName() + ") by"
-                                         + " passing it as an argument to a method (" + methodName
+                                         + " passing it as an argument to a method (" + method
                                          + ") of a logically-managed class (" + pojo.getClass().getName() + ".");
     }
   }

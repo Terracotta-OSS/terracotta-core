@@ -15,6 +15,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -36,7 +37,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public final ArrayBlockingQueue retrieveRootIDResults = new ArrayBlockingQueue(SIZE);
 
   public static final DNA         THROW_NOT_FOUND       = Mockito.mock(DNA.class);
-  public final ObjectIDSet        removedObjects        = new ObjectIDSet();
+  public final ObjectIDSet        removedObjects        = new BitSetObjectIDSet();
   public static final DNA         REJOIN_IN_PROGRESS    = Mockito.mock(DNA.class);
 
   @Override

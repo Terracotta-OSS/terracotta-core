@@ -27,6 +27,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
@@ -112,9 +113,9 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
 
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
-    final ObjectIDSet synced = new ObjectIDSet();
-    final ObjectIDSet notSynced = new ObjectIDSet(oids);
-    final ObjectIDSet deletedOids = new ObjectIDSet();
+    final ObjectIDSet synced = new BitSetObjectIDSet();
+    final ObjectIDSet notSynced = new BitSetObjectIDSet(oids);
+    final ObjectIDSet deletedOids = new BitSetObjectIDSet();
     final Iterator<ObjectID> i = notSynced.iterator();
     for (; i.hasNext() && L2_OBJECT_SYNC_MESSAGE_MAXSIZE > (out.getBytesWritten() + serializer.getApproximateBytesWritten());) {
       ManagedObject m = null;

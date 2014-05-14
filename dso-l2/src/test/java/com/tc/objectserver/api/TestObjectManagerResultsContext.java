@@ -7,6 +7,7 @@ package com.tc.objectserver.api;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;
@@ -14,7 +15,7 @@ import java.util.Map;
 public class TestObjectManagerResultsContext implements ObjectManagerResultsContext {
 
   private final Map<ObjectID, ManagedObject> results;
-  private final ObjectIDSet                  objectIDs;
+  private final ObjectIDSet objectIDs;
 
   public TestObjectManagerResultsContext(Map<ObjectID, ManagedObject> results, ObjectIDSet objectIDs) {
     this.results = results;
@@ -39,7 +40,7 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
 
   @Override
   public ObjectIDSet getNewObjectIDs() {
-    return new ObjectIDSet();
+    return new BitSetObjectIDSet();
   }
 
   public boolean updateStats() {

@@ -13,7 +13,7 @@ public interface InvalidateObjectManager {
 
   public Invalidations getObjectsIDsToInvalidate(ClientID clientID);
 
-  public void addObjectsToValidateFor(ClientID clientID, Invalidations objectIDsToValidate);
+  public void addObjectsToValidateFor(ClientID clientID, ObjectIDSet objectIDsToValidate);
 
   public void start();
 

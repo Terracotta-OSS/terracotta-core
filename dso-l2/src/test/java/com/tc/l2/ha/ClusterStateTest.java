@@ -39,7 +39,7 @@ public class ClusterStateTest extends TCTestCase {
   public void testRejectDifferentGroupID() throws Exception {
     when(clusterStatePersistor.getGroupId()).thenReturn(new GroupID(0));
     try {
-      clusterState = new ClusterState(clusterStatePersistor, oidSequence, connectionIDFactory, gidSequenceProvider,
+      clusterState = new ClusterStateImpl(clusterStatePersistor, oidSequence, connectionIDFactory, gidSequenceProvider,
                                       new GroupID(1), stripeIdStateManager, dgcSequenceProvider);
       clusterState.toString();
       fail();
@@ -50,14 +50,14 @@ public class ClusterStateTest extends TCTestCase {
 
   public void testAcceptSameGroupID() throws Exception {
     when(clusterStatePersistor.getGroupId()).thenReturn(new GroupID(1));
-    clusterState = new ClusterState(clusterStatePersistor, oidSequence, connectionIDFactory, gidSequenceProvider,
+    clusterState = new ClusterStateImpl(clusterStatePersistor, oidSequence, connectionIDFactory, gidSequenceProvider,
                                     new GroupID(1), stripeIdStateManager, dgcSequenceProvider);
     clusterState.toString();
     verify(clusterStatePersistor, never()).setGroupId(new GroupID(1));
   }
 
   public void testSaveNewGroupID() throws Exception {
-    clusterState = new ClusterState(clusterStatePersistor, oidSequence, connectionIDFactory, gidSequenceProvider,
+    clusterState = new ClusterStateImpl(clusterStatePersistor, oidSequence, connectionIDFactory, gidSequenceProvider,
                                     new GroupID(1), stripeIdStateManager, dgcSequenceProvider);
     clusterState.toString();
     verify(clusterStatePersistor).setGroupId(new GroupID(1));

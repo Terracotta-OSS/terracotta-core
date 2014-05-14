@@ -15,9 +15,10 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
-import java.util.Collection;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -55,7 +56,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private volatile boolean stop = false;
     private final ObjectManager  mgr;
     private final ObjectIDSet exclusionList;
-    private final ObjectIDSet passList = new ObjectIDSet();
+    private final ObjectIDSet passList = new BitSetObjectIDSet();
     
     private static final ClientObjectReferenceSet noReference = new ClientObjectReferenceSet(new ClientStateManager() {
 
@@ -124,7 +125,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     });
     
     public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid) {
-        this(mgr,oid,new ObjectIDSet(), true);
+        this(mgr,oid,new BitSetObjectIDSet(), true);
     }
     
     public PeriodicEvictionTrigger duplicate() {

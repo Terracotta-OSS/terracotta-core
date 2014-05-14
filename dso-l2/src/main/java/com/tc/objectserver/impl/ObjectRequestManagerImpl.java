@@ -37,6 +37,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
@@ -99,14 +100,14 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
                                       final SortedSet<ObjectID> ids, final int maxRequestDepth,
                                       final LOOKUP_STATE lookupState, final String requestingThreadName) {
 
-    ObjectIDSet split = new ObjectIDSet();
+    ObjectIDSet split = new BitSetObjectIDSet();
     for (final Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
       final ObjectID id = iter.next();
       split.add(id);
       if (split.size() >= SPLIT_SIZE || !iter.hasNext()) {
         basicRequestObjects(clientID, requestID, lookupState, requestingThreadName,
                             new RequestedObject(split, maxRequestDepth));
-        split = new ObjectIDSet();
+        split = new BitSetObjectIDSet();
       }
     }
 
@@ -475,7 +476,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     private final Sink            respondObjectRequestSink;
     private final Sink            objectRequestSink;
 
-    private ObjectIDSet           missingObjects;
+    private ObjectIDSet missingObjects;
     private Map                   objects;
 
     public LookupContext(final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet lookupIDs,
@@ -499,7 +500,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     @Override
     public ObjectIDSet getNewObjectIDs() {
-      return new ObjectIDSet();
+      return new BitSetObjectIDSet();
     }
 
     @Override

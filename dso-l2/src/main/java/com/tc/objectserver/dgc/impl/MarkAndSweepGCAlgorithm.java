@@ -11,6 +11,7 @@ import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.UUID;
@@ -95,7 +96,7 @@ final class MarkAndSweepGCAlgorithm {
     gcInfo.setCandidateGarbageCount(gcResults.size());
     gcPublisher.fireGCRescue2StartEvent(gcInfo);
     long startRescue2 = System.currentTimeMillis();
-    ObjectIDSet toDelete = ObjectIDSet.unmodifiableObjectIDSet(rescue(new ObjectIDSet(gcResults)));
+    ObjectIDSet toDelete = ObjectIDSet.unmodifiableObjectIDSet(rescue(new BitSetObjectIDSet(gcResults)));
     long rescue2Time = System.currentTimeMillis() - startRescue2;
     gcInfo.setRescue2Time(rescue2Time);
 
@@ -127,7 +128,7 @@ final class MarkAndSweepGCAlgorithm {
     long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
     gcInfo.setTotalMarkCycleTime(elapsedTime);
     gcInfo.setElapsedTime(elapsedTime);
-    gcPublisher.fireGCCycleCompletedEvent(gcInfo, new ObjectIDSet());
+    gcPublisher.fireGCCycleCompletedEvent(gcInfo, new BitSetObjectIDSet());
     gcPublisher.fireGCCompletedEvent(gcInfo);
   }
 
@@ -149,12 +150,12 @@ final class MarkAndSweepGCAlgorithm {
   }
 
   private void collectRoot(Filter filter, ObjectID rootId, Set managedObjectIds, LifeCycleState lifeCycleState) {
-    Set<ObjectID> toBeVisited = new ObjectIDSet();
+    Set<ObjectID> toBeVisited = new BitSetObjectIDSet();
     toBeVisited.add(rootId);
 
     while (!toBeVisited.isEmpty() && !managedObjectIds.isEmpty()) {
 
-      for (Iterator i = new ObjectIDSet(toBeVisited).iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
+      for (Iterator i = new BitSetObjectIDSet(toBeVisited).iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
         ObjectID id = (ObjectID) i.next();
         if (lifeCycleState.isStopRequested()) return;
         Set<ObjectID> references = gcHook.getObjectReferencesFrom(id);

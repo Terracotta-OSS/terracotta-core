@@ -11,7 +11,6 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -222,7 +221,7 @@ public class StateManagerImpl implements StateManager {
   public void moveNodeToPassiveStandby(NodeID nodeID) {
     Assert.assertTrue(isActiveCoordinator());
     logger.info("Requesting node " + nodeID + " to move to " + PASSIVE_STANDBY);
-    GroupMessage msg = L2StateMessageFactory.createMoveToPassiveStandbyMessage(EnrollmentFactory
+    GroupMessage msg = L2StateMessage.createMoveToPassiveStandbyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
     try {
       this.groupManager.sendTo(nodeID, msg);
@@ -302,7 +301,7 @@ public class StateManagerImpl implements StateManager {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
       Assert.assertFalse(ServerID.NULL_ID.equals(activeNode));
       // This wouldn't normally happen, but we agree - so ack
-      GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
+      GroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
     } else if (state == ACTIVE_COORDINATOR || !activeNode.isNull()
@@ -315,7 +314,7 @@ public class StateManagerImpl implements StateManager {
       // Force other node to rerun election so that we can abort
       // Condition 3 :
       // We don't want new L2s to win an election when there are old L2s in PASSIVE states.
-      GroupMessage resultConflict = L2StateMessageFactory.createResultConflictMessage(msg, EnrollmentFactory
+      GroupMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       warn("WARNING :: Active Node = " + activeNode + " , " + state
            + " received ELECTION_RESULT message from another node : " + msg + " : Forcing re-election "
@@ -342,7 +341,7 @@ public class StateManagerImpl implements StateManager {
   private void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
     if (state == ACTIVE_COORDINATOR) {
       // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
-      GroupMessage abortMsg = L2StateMessageFactory.createAbortElectionMessage(msg, EnrollmentFactory
+      GroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
@@ -358,7 +357,7 @@ public class StateManagerImpl implements StateManager {
   public void publishActiveState(NodeID nodeID) throws GroupException {
     debugInfo("Publishing active state to nodeId: " + nodeID);
     Assert.assertTrue(isActiveCoordinator());
-    GroupMessage msg = L2StateMessageFactory.createElectionWonAlreadyMessage(EnrollmentFactory
+    GroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validateResponse(nodeID, response);
@@ -396,7 +395,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendOKResponse(NodeID fromNode, L2StateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment()));
+      groupManager.sendTo(fromNode, L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment()));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }
@@ -404,7 +403,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendNGResponse(NodeID fromNode, L2StateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, L2StateMessageFactory.createResultConflictMessage(msg, msg.getEnrollment()));
+      groupManager.sendTo(fromNode, L2StateMessage.createResultConflictMessage(msg, msg.getEnrollment()));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }

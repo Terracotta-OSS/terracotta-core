@@ -11,6 +11,7 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
@@ -123,8 +124,8 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void logicalInvoke(final Object object, final String methodName, final Object[] params) {
-    manager.logicalInvoke(object, methodName, params);
+  public void logicalInvoke(final Object object, final LogicalOperation method, final Object[] params) {
+    manager.logicalInvoke(object, method, params);
   }
 
   @Override

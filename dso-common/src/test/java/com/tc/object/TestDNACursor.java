@@ -33,7 +33,7 @@ public class TestDNACursor implements DNACursor {
     this.actions.add(new PhysicalAction(addFieldName, addObj, isref));
   }
 
-  public void addLogicalAction(final int method, final Object params[]) {
+  public void addLogicalAction(final LogicalOperation method, final Object params[]) {
     this.actions.add(new LogicalAction(method, params));
   }
 

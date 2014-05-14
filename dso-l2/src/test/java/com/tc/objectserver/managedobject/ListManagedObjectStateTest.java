@@ -4,8 +4,8 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -26,23 +26,21 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
     final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.ADD_FIRST, new Object[] { new ObjectID(2004) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2002) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2003) });
 
-    basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 3);
+    basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 2);
   }
 
   public void testObjectList2() throws Exception {
     final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.ADD_FIRST, new Object[] { new ObjectID(2004) });
-    cursor.addLogicalAction(SerializationUtil.ADD_AT, new Object[] { Integer.valueOf(1), new ObjectID(1000) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2002) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2003) });
+    cursor.addLogicalAction(LogicalOperation.ADD_AT, new Object[] { Integer.valueOf(1), new ObjectID(1000) });
 
-    basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 4);
+    basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 3);
   }
 
   public void testObjectList3() throws Exception {
@@ -50,9 +48,9 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
     final TestDNACursor cursor = new TestDNACursor();
 
     for (int i = 0; i < 1000; ++i) {
-      cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(1000 + i) });
+      cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(1000 + i) });
     }
-    cursor.addLogicalAction(SerializationUtil.CLEAR, null);
+    cursor.addLogicalAction(LogicalOperation.CLEAR, null);
 
     basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 0);
   }
@@ -61,13 +59,12 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
     final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2004) });
-    cursor.addLogicalAction(SerializationUtil.REMOVE_FIRST, null);
-    cursor.addLogicalAction(SerializationUtil.REMOVE, new Object[] { new ObjectID(2004) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2002) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2003) });
+    cursor.addLogicalAction(LogicalOperation.ADD, new Object[] { new ObjectID(2004) });
+    cursor.addLogicalAction(LogicalOperation.REMOVE, new Object[] { new ObjectID(2004) });
 
-    basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 1);
+    basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 2);
   }
 
 }

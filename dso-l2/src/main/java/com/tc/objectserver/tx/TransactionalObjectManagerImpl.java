@@ -20,6 +20,7 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
@@ -138,7 +139,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     TxnObjectGrouping grouping = null;
 
     // Check to see if a live object grouping has all this txn's objects, if not we'll need to need to do a fresh checkout
-    ObjectIDSet oldObjectIDs = new ObjectIDSet(objectsToLookup);
+    ObjectIDSet oldObjectIDs = new BitSetObjectIDSet(objectsToLookup);
     oldObjectIDs.removeAll(txn.getNewObjectIDs());
     if (!oldObjectIDs.isEmpty()) {
       TxnObjectGrouping existingGrouping = liveObjectGroupings.get(oldObjectIDs.first());
@@ -150,7 +151,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     }
 
-    ObjectIDSet newRequests = new ObjectIDSet();
+    ObjectIDSet newRequests = new BitSetObjectIDSet();
     boolean makePending = false;
     for (ObjectID oid : objectsToLookup) {
       if (pendingObjectRequest.contains(oid)) {

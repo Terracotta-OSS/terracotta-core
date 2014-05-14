@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.object.LogicalOperation;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
@@ -72,8 +73,7 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     return oid;
   }
 
-  @Override
-  public TCClass getTCClass() {
+  protected TCClass getTCClass() {
     if (tcClazz == null) throw new AssertionError("getTCClass() called before initialization for "
                                                   + this.getClass().getName());
     return tcClazz;
@@ -121,8 +121,8 @@ public class TCObjectSelfImpl implements TCObjectSelf {
   }
 
   @Override
-  public void logicalInvoke(int method, String methodName, Object[] parameters) {
-    tcClazz.getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
+  public void logicalInvoke(LogicalOperation method, Object[] parameters) {
+    tcClazz.getObjectManager().getTransactionManager().logicalInvoke(this, method, parameters);
   }
 
   @Override
@@ -332,4 +332,33 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     return true;
   }
 
+  @Override
+  public String getExtendingClassName() {
+    return getTCClass().getExtendingClassName();
+  }
+
+  @Override
+  public String getClassName() {
+    return getTCClass().getName();
+  }
+
+  @Override
+  public Class<?> getPeerClass() {
+    return getTCClass().getPeerClass();
+  }
+
+  @Override
+  public boolean isIndexed() {
+    return getTCClass().isIndexed();
+  }
+
+  @Override
+  public boolean isLogical() {
+    return getTCClass().isLogical();
+  }
+
+  @Override
+  public boolean isEnum() {
+    return getTCClass().isEnum();
+  }
 }

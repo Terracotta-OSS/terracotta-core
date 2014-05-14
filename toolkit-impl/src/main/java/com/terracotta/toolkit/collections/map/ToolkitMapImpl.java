@@ -13,8 +13,8 @@ import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -65,10 +65,10 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     lock.writeLock().lock();
   }
 
-  private void logicalInvoke(String signature, Object[] params) {
+  private void logicalInvoke(LogicalOperation method, Object[] params) {
     concurrentLock.lock();
     try {
-      platformService.logicalInvoke(ToolkitMapImpl.this, signature, params);
+      platformService.logicalInvoke(ToolkitMapImpl.this, method, params);
     } finally {
       concurrentLock.unlock();
     }
@@ -237,7 +237,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     Object tcKey = getOrCreateObjectForKey(key);
     Object tcVal = createTCCompatibleObject(value);
 
-    logicalInvoke(SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
+    logicalInvoke(LogicalOperation.PUT, new Object[] { tcKey, tcVal });
     keyValueHolder.put(key, value, getObjectIDForKey(tcKey));
 
     return rv;
@@ -313,7 +313,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     if (oidKey == null) { return null; }
 
     Object tcKey = getOrCreateObjectForKey(key);
-    logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+    logicalInvoke(LogicalOperation.REMOVE, new Object[] { tcKey });
     V oldValue = keyValueHolder.remove(key);
 
     return oldValue;
@@ -340,7 +340,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        logicalInvoke(SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+        logicalInvoke(LogicalOperation.CLEAR, new Object[] {});
         this.keyValueHolder.clear();
       }
     } finally {
@@ -705,7 +705,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           applyPendingChanges();
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(currentValue);
-          logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          logicalInvoke(LogicalOperation.REMOVE, new Object[] { tcKey });
           keyValueHolder.removeObjectIDForKey(currentValue);
         }
       } finally {
@@ -1194,7 +1194,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           applyPendingChanges();
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(entry.getKey());
-          logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          logicalInvoke(LogicalOperation.REMOVE, new Object[] { tcKey });
           keyValueHolder.removeObjectIDForKey(entry.getKey());
         }
       } finally {

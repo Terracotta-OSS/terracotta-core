@@ -10,6 +10,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ValidateObjectsRequestContext;
 import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
@@ -33,7 +34,7 @@ public class ValidateObjectsHandler extends AbstractEventHandler {
                                                                                         + context); }
 
     final ObjectIDSet evictableObjects = this.objectStore.getAllEvictableObjectIDs();
-    final ObjectIDSet allReachables = new ObjectIDSet();
+    final ObjectIDSet allReachables = new BitSetObjectIDSet();
     for (ObjectID evictableID : evictableObjects) {
       addReachablesTo(evictableID, allReachables);
     }
@@ -41,7 +42,7 @@ public class ValidateObjectsHandler extends AbstractEventHandler {
   }
 
   private void addReachablesTo(ObjectID evictableID, ObjectIDSet allReachables) {
-    Set oids = objectManager.getObjectReferencesFrom(evictableID, false);
+    Set<ObjectID> oids = objectManager.getObjectReferencesFrom(evictableID, false);
     allReachables.addAll(oids);
   }
 

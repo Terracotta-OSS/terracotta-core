@@ -15,11 +15,11 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -35,6 +35,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.TCCollections;
@@ -77,7 +78,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groupEventListeners = new TestGroupEventListener[n];
     nodes = new Node[n];
     error = new AtomicReference<Throwable>();
-    throwableHandler = new ThrowableHandler(TCLogging.getLogger(getClass())) {
+    throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(getClass())) {
       @Override
       public void handleThrowable(final Thread thread, final Throwable t) {
         if (error.compareAndSet(null, t)) {
@@ -107,9 +108,9 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private void tearGroups() throws Exception {
-    for (int i = 0; i < groups.length; ++i) {
-      System.out.println("Shutting down " + groups[i]);
-      groups[i].shutdown();
+    for (TCGroupManagerImpl group : groups) {
+      System.out.println("Shutting down " + group);
+      group.shutdown();
     }
     ThreadUtil.reallySleep(200);
     throwExceptionIfNecessary();
@@ -330,7 +331,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private ObjectSyncMessage createTestObjectSyncMessage() {
-    ObjectIDSet dnaOids = new ObjectIDSet();
+    ObjectIDSet dnaOids = new BitSetObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       dnaOids.add(new ObjectID(i));
     }
@@ -339,8 +340,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     ObjectStringSerializer objectSerializer = new ObjectStringSerializerImpl();
     Map roots = new HashMap();
     long sID = 10;
-    ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
-    message.initialize(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
+    ObjectSyncMessage message = new ObjectSyncMessage(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
                                                new TransactionID(342)), dnaOids, count, serializedDNAs,
                        objectSerializer, roots, sID, TCCollections.EMPTY_OBJECT_ID_SET);
     return (message);
@@ -387,11 +387,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private GCResultMessage createGCResultMessage() {
-    ObjectIDSet oidSet = new ObjectIDSet();
+    ObjectIDSet oidSet = new BitSetObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GCResultMessage message = new GCResultMessage(GCResultMessage.GC_RESULT, new GarbageCollectionInfo(), oidSet);
+    GCResultMessage message = new GCResultMessage(new GarbageCollectionInfo(), oidSet);
     return (message);
   }
 
@@ -593,7 +593,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     final Integer upbound = Integer.valueOf(50);
 
     // setup throwable ThreadGroup to catch AssertError from threads.
-    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(null), "TCGroupManagerImplTestGroup");
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(null), "TCGroupManagerImplTestGroup");
     ThreadUtil.reallySleep(1000);
 
     Thread t1 = new SenderThread(threadGroup, "Node-0", mgr1, upbound);
@@ -770,7 +770,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       super.messageReceived(fromNode, msg);
       L2StateMessage message = (L2StateMessage) msg;
-      GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(message, message.getEnrollment());
+      GroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(message, message.getEnrollment());
       try {
         manager.sendTo(message.messageFrom(), resultAgreed);
       } catch (GroupException e) {

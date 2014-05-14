@@ -9,6 +9,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -37,7 +38,7 @@ public interface PlatformService {
 
   <T> T registerObjectByNameIfAbsent(String name, T object);
 
-  void logicalInvoke(final Object object, final String methodName, final Object[] params);
+  void logicalInvoke(final Object object, final LogicalOperation method, final Object[] params);
 
   void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 

@@ -30,8 +30,8 @@ import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.VersionedObject;
@@ -650,7 +650,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } else {
       beginLock(getInstanceDsoLockName(), getEffectiveLockType());
       try {
-        platformService.logicalInvoke(this, SerializationUtil.CLEAR_LOCAL_CACHE_SIGNATURE, NO_ARGS);
+        platformService.logicalInvoke(this, LogicalOperation.CLEAR_LOCAL_CACHE, NO_ARGS);
       } finally {
         commitLock(getInstanceDsoLockName(), getEffectiveLockType());
         try {
@@ -1449,21 +1449,20 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public void addSelfToTxn() {
-    tcObjectServerMap.logicalInvoke(SerializationUtil.NO_OP, SerializationUtil.NO_OP_SIGNATURE, new Object[0]);
+    tcObjectServerMap.logicalInvoke(LogicalOperation.NO_OP, new Object[0]);
   }
 
   @Override
   public void takeSnapshot(SearchRequestID queryId) {
     addSnapshotMetaData(queryId, false);
-    tcObjectServerMap.logicalInvoke(SerializationUtil.NO_OP,
-                                                             SerializationUtil.NO_OP_SIGNATURE, new Object[0]);
+    tcObjectServerMap.logicalInvoke(LogicalOperation.NO_OP, new Object[0]);
   }
 
   @Override
   public void releaseSnapshot(SearchRequestID queryId) {
     beginLock(getInstanceDsoLockName(), this.lockType);
     try {
-      tcObjectServerMap.logicalInvoke(SerializationUtil.NO_OP, SerializationUtil.NO_OP_SIGNATURE, new Object[0]);
+      tcObjectServerMap.logicalInvoke(LogicalOperation.NO_OP, new Object[0]);
       addSnapshotMetaData(queryId, true);
     } finally {
       commitLock(getInstanceDsoLockName(), this.lockType);
@@ -1542,7 +1541,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setMaxTTI(int intValue) {
     try {
       this.maxTTISeconds = intValue;
-      platformService.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
+      platformService.logicalInvoke(this, LogicalOperation.INT_FIELD_CHANGED, new Object[] {
           ServerMapApplicator.MAX_TTI_SECONDS_FIELDNAME, this.maxTTISeconds });
     } finally {
       internalClearLocalCache();
@@ -1552,7 +1551,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setMaxTTL(int intValue) {
     try {
       this.maxTTLSeconds = intValue;
-      platformService.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
+      platformService.logicalInvoke(this, LogicalOperation.INT_FIELD_CHANGED, new Object[] {
           ServerMapApplicator.MAX_TTL_SECONDS_FIELDNAME, this.maxTTLSeconds });
     } finally {
       internalClearLocalCache();
@@ -1562,7 +1561,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setMaxTotalCount(int intValue) {
     try {
       this.maxCountInCluster = intValue;
-      platformService.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
+      platformService.logicalInvoke(this, LogicalOperation.INT_FIELD_CHANGED, new Object[] {
           ServerMapApplicator.MAX_COUNT_IN_CLUSTER_FIELDNAME, this.maxCountInCluster });
     } finally {
       internalClearLocalCache();
@@ -1577,7 +1576,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setEvictionEnabled(boolean value) {
     if (this.evictionEnabled != value) {
       this.evictionEnabled = value;
-      platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
+      platformService.logicalInvoke(this, LogicalOperation.FIELD_CHANGED, new Object[] {
           ServerMapApplicator.EVICTION_ENABLED_FIELDNAME, this.evictionEnabled });
     }
   }

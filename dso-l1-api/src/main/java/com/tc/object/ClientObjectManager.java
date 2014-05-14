@@ -7,6 +7,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
 
@@ -77,7 +78,7 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param pojo Instance
    * @throws TCNonPortableObjectError If logical action is not portable
    */
-  public void checkPortabilityOfLogicalAction(Object[] params, int paramIndex, String methodName, Object pojo)
+  public void checkPortabilityOfLogicalAction(LogicalOperation method, Object[] params, int paramIndex, Object pojo)
       throws TCNonPortableObjectError;
 
   /**

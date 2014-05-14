@@ -24,6 +24,7 @@ import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
 
@@ -149,11 +150,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   }
 
   @Override
-  public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
-    tcObjectSelfStore.addAllObjectIDsToValidate(invalidations, remoteNode);
+  public ObjectIDSet getObjectIDsToValidate(final NodeID remoteNode) {
+    ObjectIDSet validations = tcObjectSelfStore.getObjectIDsToValidate(remoteNode);
     for (ServerMapLocalCache cache : localStores.values()) {
-      cache.handleObjectIDsToValidate(invalidations);
+      cache.handleObjectIDsToValidate(validations);
     }
+    return validations;
   }
 
   /**
@@ -161,7 +163,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
    */
   @Override
   public ObjectIDSet removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set) {
-    ObjectIDSet invalidationsFailed = new ObjectIDSet();
+    ObjectIDSet invalidationsFailed = new BitSetObjectIDSet();
 
     if (ObjectID.NULL_ID.equals(mapID)) {
       for (ServerMapLocalCache cache : localCacheToPinnedEntryFaultCallback.keySet()) {

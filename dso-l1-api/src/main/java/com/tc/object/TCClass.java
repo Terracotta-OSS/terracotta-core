@@ -3,6 +3,9 @@
  */
 package com.tc.object;
 
+import com.tc.object.ObjectID;
+import com.tc.object.TCObject;
+import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;

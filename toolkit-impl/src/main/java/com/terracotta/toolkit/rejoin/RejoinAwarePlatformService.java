@@ -11,6 +11,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
@@ -153,11 +154,11 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public void logicalInvoke(Object object, String methodName, Object[] params) {
+  public void logicalInvoke(Object object, LogicalOperation method, Object[] params) {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
-      delegate.logicalInvoke(object, methodName, params);
+      delegate.logicalInvoke(object, method, params);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }

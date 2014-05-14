@@ -12,7 +12,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -65,7 +65,7 @@ public class RemoteTransactionManagerTest extends TestCase {
   private SampledRateCounter           transactionsPerBatchCounter, transactionSizeCounter;
 
   private final TCThreadGroup          threadGroup =
-      new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(RemoteTransactionManagerTest.class)));
+      new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(RemoteTransactionManagerTest.class)));
   private final TaskRunner             taskRunner = Runners.newSingleThreadScheduledTaskRunner(threadGroup);
 
   @Override
@@ -323,7 +323,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     assertTrue(ackd.isEmpty());
 
     // ACK all the transactions in batch1
-    Collection batch1Txs = ((TestTransactionBatch) batches.get(0)).addTransactionIDsTo(new HashSet());
+    Collection batch1Txs = batches.get(0).addTransactionIDsTo(new HashSet());
     for (Iterator i = batch1Txs.iterator(); i.hasNext();) {
       TransactionID txnId = (TransactionID) i.next();
       batchTxs.remove(txnId);
@@ -340,7 +340,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     // now make sure that the manager re-sends an outstanding batch until all of
     // its transactions have been ACKed.
     while (batches.size() > 0) {
-      Collection batchNTxs = ((TestTransactionBatch) batches.get(0)).addTransactionIDsTo(new HashSet());
+      Collection batchNTxs = batches.get(0).addTransactionIDsTo(new HashSet());
       for (Iterator i = batchNTxs.iterator(); i.hasNext();) {
         TransactionID txnId = (TransactionID) i.next();
         batchTxs.remove(txnId);
@@ -531,14 +531,14 @@ public class RemoteTransactionManagerTest extends TestCase {
   private List<TestTransactionBatch> ackBatchesThatAreSent() throws InterruptedException {
     TestTransactionBatch batch;
     List<TestTransactionBatch> ackd = new LinkedList<TestTransactionBatch>();
-    while ( (batch = (TestTransactionBatch)this.batchSendQueue.poll(4, TimeUnit.SECONDS)) != null ) {
+    while ( (batch = this.batchSendQueue.poll(4, TimeUnit.SECONDS)) != null ) {
 //      TestTransactionBatch compare = (TestTransactionBatch)this.batchFactory.newBatchQueue.poll();
 //      assertEquals(compare, batch);
       this.manager.receivedBatchAcknowledgement(batch.getTransactionBatchID(), GroupID.NULL_ID);
       ackd.add(batch);
     }
     return ackd;
-  } 
+  }
 
   private final class TestTransactionBatch implements ClientTransactionBatch {
 

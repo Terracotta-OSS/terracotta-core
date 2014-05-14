@@ -14,6 +14,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
@@ -130,7 +131,7 @@ public class ObjectStreamClassMappingTest {
     }
 
     @Override
-    public void logicalInvoke(Object object, String methodName, Object[] params) {
+    public void logicalInvoke(Object object, LogicalOperation method, Object[] params) {
       throw new ImplementMe();
     }
 
