@@ -256,15 +256,19 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     Assert.assertTrue(jmxPorts.length <= 1);
     if (!server.isSetJmxPort()) {
       BindPort jmxPort = server.addNewJmxPort();
-      int tempJmxPort = server.getTsaPort().getIntValue() + DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
-      int defaultJmxPort = ((tempJmxPort <= MAX_PORTNUMBER) ? tempJmxPort : (tempJmxPort % MAX_PORTNUMBER)
-                                                                            + MIN_PORTNUMBER);
+      int defaultJmxPort = computeJMXPortFromTSAPort(server.getTsaPort().getIntValue());
 
       jmxPort.setIntValue(defaultJmxPort);
       jmxPort.setBind(server.getBind());
     } else if (!server.getJmxPort().isSetBind()) {
       server.getJmxPort().setBind(server.getBind());
     }
+  }
+
+  public static int computeJMXPortFromTSAPort(int tsaPort) {
+    int tempJmxPort = tsaPort + DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
+    return ((tempJmxPort <= MAX_PORTNUMBER) ? tempJmxPort : (tempJmxPort % MAX_PORTNUMBER)
+                                                                          + MIN_PORTNUMBER);
   }
 
   private static void initializeTsaGroupPort(Server server, DefaultValueProvider defaultValueProvider) {

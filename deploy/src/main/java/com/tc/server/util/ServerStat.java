@@ -31,7 +31,7 @@ import javax.management.remote.JMXConnector;
 public class ServerStat {
   private static final String   UNKNOWN          = "unknown";
   private static final String   NEWLINE          = System.getProperty("line.separator");
-  private static final int      DEFAULT_JMX_PORT = 9520;
+  static final int              DEFAULT_JMX_PORT = 9520;
 
   private final String          host;
   private final String          hostName;
@@ -217,10 +217,18 @@ public class ServerStat {
     for (Server server : servers) {
       String host = server.getHost();
       String hostName = server.getName();
-      int jmxPort = server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
+      int jmxPort = computeJMXPort(server);
       ServerStat stat = new ServerStat(username, password, secured, host, hostName, jmxPort);
       System.out.println(stat.toString());
       stat.dispose();
+    }
+  }
+
+  static int computeJMXPort(Server server) {
+    if (server.isSetJmxPort()) {
+      return server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
+    } else {
+      return L2DSOConfigObject.computeJMXPortFromTSAPort(server.getTsaPort().getIntValue());
     }
   }
 

@@ -21,8 +21,7 @@ import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.security.TCSecurityManager;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.security.PwProvider;
 import com.tc.util.concurrent.ThreadUtil;
 import com.terracotta.management.keychain.KeyChain;
@@ -30,7 +29,6 @@ import com.terracotta.management.keychain.KeyChain;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -39,7 +37,6 @@ import java.util.Arrays;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
-import javax.net.ssl.SSLContext;
 
 public class TCStop {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
@@ -189,7 +186,7 @@ public class TCStop {
       if (host == null || host.equals("0.0.0.0")) host = serverConfig.host();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
-      port = serverConfig.jmxPort().getIntValue();
+      port = computeJMXPort(serverConfig);
       consoleLogger.info("Host: " + host + ", port: " + port);
     } else {
       if (arguments.length == 0) {
@@ -220,6 +217,14 @@ public class TCStop {
         consoleLogger.error("Unexpected error while stopping server: " + root.getMessage());
       }
       System.exit(1);
+    }
+  }
+
+  static int computeJMXPort(CommonL2Config l2Config) {
+    if (l2Config.jmxPort() != null) {
+      return l2Config.jmxPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.jmxPort().getIntValue();
+    } else {
+      return L2DSOConfigObject.computeJMXPortFromTSAPort(l2Config.tsaPort().getIntValue());
     }
   }
 
