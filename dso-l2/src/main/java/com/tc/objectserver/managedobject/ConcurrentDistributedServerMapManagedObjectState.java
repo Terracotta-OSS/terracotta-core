@@ -8,8 +8,8 @@ import com.google.common.collect.SetMultimap;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -435,19 +435,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     } else {
       removedReferences(applyInfo, value);
       addValue(applyInfo, value, true);
-      return LogicalChangeResult.FAILURE;
-    }
-  }
-
-  private LogicalChangeResult applyReplace(ApplyTransactionInfo applyInfo, Object[] params) {
-    Object key = params[0];
-    Object value = params[1];
-    if (references.containsKey(key)) {
-      applyPut(applyInfo, params);
-      return LogicalChangeResult.SUCCESS;
-    } else {
-      removedReferences(applyInfo, value);
-      addValue(applyInfo, value, false);
       return LogicalChangeResult.FAILURE;
     }
   }
