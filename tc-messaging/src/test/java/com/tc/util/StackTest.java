@@ -54,7 +54,7 @@ public class StackTest {
         }
       }
     } catch (AssertionError e) {
-      throw new AssertionError("Failure with seed " + seed, e);
+      throw new AssertionError("Failure with seed " + seed + " " + e);
     }
   }
 

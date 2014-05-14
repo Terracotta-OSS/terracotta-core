@@ -4,8 +4,6 @@
  */
 package com.tc.util;
 
-import com.tc.util.Assert;
-import com.tc.util.Conversion;
 
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
@@ -215,7 +213,7 @@ public class ConversionTest {
         int convertedInt = Conversion.bytes2Int(convertedBytes);
         assertEquals(testVal, convertedInt);
       } catch (RuntimeException e) {
-        throw new AssertionError("Failed to convert: " + testVal, e);
+        throw new AssertionError("Failed to convert: " + testVal + " : " + e);
       }
     }
   }
