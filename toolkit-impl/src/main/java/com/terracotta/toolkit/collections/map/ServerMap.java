@@ -1885,11 +1885,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         BufferedOperation<V> operation = e.getValue();
         MetaData metaData;
         SerializedMapValue<V> smv = createSerializedMapValue(operation);
+        long version = operation.isVersioned() ? operation.getVersion() : DEFAULT_VERSION;
         switch (operation.getType()) {
           case PUT:
-            metaData = createPutSearchMetaData(e.getKey(), operation.getValue());
-            doLogicalPut(operation.isVersioned() ? operation.getVersion() : DEFAULT_VERSION, MutateType.UNLOCKED, null,
-                metaData, e.getKey(), smv);
+            metaData = createMetaDataAndSetCommand(e.getKey(), operation.getValue(), SearchCommand.PUT);
+            doLogicalPut(version, MutateType.UNLOCKED, null, metaData, e.getKey(), smv);
             break;
           case PUT_IF_ABSENT:
             if (!operation.isVersioned()) {
@@ -1898,11 +1898,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
             }
             // "versioned" variant of putIfAbsent does not return
             metaData = createMetaDataAndSetCommand(e.getKey(), operation.getValue(), SearchCommand.PUT_IF_ABSENT);
-            unlockedPutIfAbsentNoReturnVersioned(e.getKey(), smv, metaData, operation.getVersion());
+            unlockedPutIfAbsentNoReturnVersioned(e.getKey(), smv, metaData, version);
             break;
           case REMOVE:
-            internalLogicalRemove(e.getKey(), operation.isVersioned() ? operation.getVersion() : DEFAULT_VERSION,
-                MutateType.UNLOCKED, null);
+            internalLogicalRemove(e.getKey(), version, MutateType.UNLOCKED, null);
             break;
         }
       }

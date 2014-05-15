@@ -1,23 +1,34 @@
 package com.terracotta.toolkit.collections.map;
 
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
+import org.mockito.internal.matchers.And;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
+import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.VersionedObject;
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCPropertiesImpl;
@@ -30,10 +41,17 @@ import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedMapValue;
 import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.search.SearchFactory;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchCommand;
+import com.terracottatech.search.SearchMetaData;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -43,9 +61,12 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -60,6 +81,7 @@ public class ServerMapTest {
   private Configuration configuration;
   private SerializationStrategy serializationStrategy;
   private TCObjectServerMap tcObjectServerMap;
+  private MetaDataDescriptor metaDataDescriptor;
 
   @Before
   public void setUp() throws Exception {
@@ -72,6 +94,25 @@ public class ServerMapTest {
     when(serializationStrategy.serialize(any(), anyBoolean())).thenReturn(new byte[1]);
     when(platformService.lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME, SerializationStrategy.class))
         .thenReturn(serializationStrategy);
+    metaDataDescriptor = mock(MetaDataDescriptor.class);
+    when(platformService.createMetaDataDescriptor(anyString())).then(new Answer<Object>() {
+      @Override
+      public Object answer(final InvocationOnMock invocation) throws Throwable {
+        return new MetaDataDescriptorImpl("bogus");
+      }
+    });
+    when(platformService.lookupOrCreate(anyObject(), any(GroupID.class))).then(new Answer<Object>() {
+      private final AtomicLong oid = new AtomicLong();
+      @Override
+      public Object answer(final InvocationOnMock invocation) throws Throwable {
+        if (invocation.getArguments()[0] instanceof TCObjectSelf) {
+          TCObjectSelf tcObjectSelf = (TCObjectSelf)invocation.getArguments()[0];
+          tcObjectSelf.initializeTCObject(new ObjectID(oid.incrementAndGet()), null, true);
+        }
+        return null;
+      }
+    });
+
 
     mockStatic(PlatformServiceProvider.class);
     when(PlatformServiceProvider.getPlatformService()).thenReturn(platformService);
@@ -124,8 +165,17 @@ public class ServerMapTest {
 
     serverMap.drain(operations);
     verify(tcObjectServerMap).doLogicalPutUnlockedVersioned(any(TCServerMap.class), eq("foo"), any(), eq(4L));
+    verify(tcObjectServerMap).addMetaData(argThat(and(
+        hasNVPair(SearchMetaData.COMMAND, SearchCommand.PUT),
+        hasNVPair(SearchMetaData.KEY, "foo"))));
     verify(tcObjectServerMap).doLogicalPutIfAbsentVersioned(eq("bar"), any(), eq(4L));
+    verify(tcObjectServerMap).addMetaData(argThat(and(
+        hasNVPair(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT),
+        hasNVPair(SearchMetaData.KEY, "bar"))));
     verify(tcObjectServerMap).doLogicalRemoveUnlockedVersioned(any(TCServerMap.class), eq("baz"), eq(4L));
+    verify(tcObjectServerMap).addMetaData(argThat(and(
+        hasNVPair(SearchMetaData.COMMAND, SearchCommand.REMOVE),
+        hasNVPair(SearchMetaData.KEY, "baz"))));
   }
 
   @Test
@@ -160,7 +210,31 @@ public class ServerMapTest {
     ServerMap serverMap = new ServerMap(configuration, "foo");
     serverMap.__tc_managed(tcObjectServerMap);
     serverMap.setLockStrategy(ConfigFieldsInternal.LOCK_STRATEGY.LONG_LOCK_STRATEGY);
+    serverMap.registerAttributeExtractor(mock(ToolkitAttributeExtractor.class));
+    serverMap.setSearchAttributeTypes(mock(ToolkitMap.class));
     return serverMap;
+  }
+
+  private static <T> Matcher<T> and(Matcher<T> ... matchers) {
+    return new And((List) Arrays.asList(matchers));
+  }
+
+  private static Matcher<MetaDataDescriptor> hasNVPair(final SearchMetaData searchMetaData, final Object value) {
+    return new ArgumentMatcher<MetaDataDescriptor>() {
+      @Override
+      public boolean matches(final Object item) {
+        if (item instanceof MetaDataDescriptor) {
+          MetaDataDescriptor mdd = (MetaDataDescriptor) item;
+          for(Iterator<NVPair> i = mdd.getMetaDatas(); i.hasNext();) {
+            NVPair nvPair = i.next();
+            if (searchMetaData.equals(nvPair.getName())) {
+              return value.equals(nvPair.getObjectValue());
+            }
+          }
+        }
+        return false;
+      }
+    };
   }
 
   private static <T> VersionedValue<T> versionedValue(T value, long version) {
