@@ -12,9 +12,6 @@ import java.io.File;
  */
 public interface CommonL2Config extends Config {
 
-  public static final int   MIN_PORTNUMBER                      = 0x0FFF;
-  public static final int   MAX_PORTNUMBER                      = 0xFFFF;
-
   File dataPath();
 
   File logsPath();

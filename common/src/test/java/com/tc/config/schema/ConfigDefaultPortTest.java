@@ -94,11 +94,11 @@ public class ConfigDefaultPortTest extends TCTestCase {
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server5");
       Assert.assertEquals(65534, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert
-          .assertEquals(((65534 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT) % CommonL2Config.MAX_PORTNUMBER)
-                        + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
+          .assertEquals(((65534 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT) % L2DSOConfigObject.MAX_PORTNUMBER)
+                        + L2DSOConfigObject.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert
-          .assertEquals(((65534 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT) % CommonL2Config.MAX_PORTNUMBER)
-                          + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
+          .assertEquals(((65534 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT) % L2DSOConfigObject.MAX_PORTNUMBER)
+                          + L2DSOConfigObject.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
     } catch (Throwable e) {
       throw new AssertionError(e);
