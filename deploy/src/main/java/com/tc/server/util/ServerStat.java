@@ -16,6 +16,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -213,11 +214,15 @@ public class ServerStat {
       throw new RuntimeException("Error parsing " + configFilePath + ": " + e.getMessage());
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
-    Server[] servers = L2DSOConfigObject.getServers(tcConfig.getServers());
+    Servers tcConfigServers = tcConfig.getServers();
+    Server[] servers = L2DSOConfigObject.getServers(tcConfigServers);
     for (Server server : servers) {
       String host = server.getHost();
       String hostName = server.getName();
       int jmxPort = computeJMXPort(server);
+      if (!secured && tcConfigServers.isSetSecure() && tcConfigServers.getSecure()) {
+        secured = true;
+      }
       ServerStat stat = new ServerStat(username, password, secured, host, hostName, jmxPort);
       System.out.println(stat.toString());
       stat.dispose();
