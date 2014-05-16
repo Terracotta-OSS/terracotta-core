@@ -719,6 +719,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
   // for tests
   void waitForPendings() {
+    while ( !sequencer.isEmpty() ) {
+      sendBatches(true);
+    }
     batchManager.waitForEmpty();
   }
 

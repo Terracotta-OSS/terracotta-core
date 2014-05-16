@@ -283,6 +283,10 @@ public class TransactionSequencer implements ClearableCallback {
     createNewBatch();
     notifyAll();
   }
+  
+  boolean isEmpty() {
+    return this.pendingBatches.isEmpty();
+  }
 
   public SequenceID getNextSequenceID() {
     ClientTransactionBatch batch = peek();
