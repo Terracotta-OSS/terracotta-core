@@ -5,18 +5,18 @@ package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
 
-import com.terracotta.management.service.ShutdownService;
+import com.terracotta.management.service.ShutdownServiceV2;
 
 import java.util.Set;
 
 /**
  * @author Ludovic Orban
  */
-public class ShutdownServiceImpl implements ShutdownService {
+public class ShutdownServiceImplV2 implements ShutdownServiceV2 {
 
-  private final ServerManagementService serverManagementService;
+  private final ServerManagementServiceV2 serverManagementService;
 
-  public ShutdownServiceImpl(ServerManagementService serverManagementService) {
+  public ShutdownServiceImplV2(ServerManagementServiceV2 serverManagementService) {
     this.serverManagementService = serverManagementService;
   }
 

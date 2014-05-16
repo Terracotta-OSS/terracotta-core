@@ -6,7 +6,7 @@
 package com.terracotta.management.l1bridge;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.AgentEntity;
+import org.terracotta.management.resource.AgentEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
@@ -24,13 +24,13 @@ import javax.ws.rs.core.UriInfo;
 /**
  * @author Ludovic Orban
  */
-public final class RemoteRequestValidator implements RequestValidator {
+public final class RemoteRequestValidatorV2 implements RequestValidator {
 
   private final RemoteAgentBridgeService remoteAgentBridgeService;
 
   private static final ThreadLocal<Set<String>> tlNode = new ThreadLocal<Set<String>>();
 
-  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService) {
+  public RemoteRequestValidatorV2(RemoteAgentBridgeService remoteAgentBridgeService) {
     this.remoteAgentBridgeService = remoteAgentBridgeService;
   }
 
@@ -58,9 +58,9 @@ public final class RemoteRequestValidator implements RequestValidator {
         String[] idsArray = ids.split(",");
 
         for (String id : idsArray) {
-          if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
+          if (!nodes.contains(id) && !AgentEntityV2.EMBEDDED_AGENT_ID.equals(id)) {
             throw new ResourceRuntimeException(
-                    String.format("Agent IDs must be in '%s' or '%s'.", nodes, AgentEntity.EMBEDDED_AGENT_ID),
+                    String.format("Agent IDs must be in '%s' or '%s'.", nodes, AgentEntityV2.EMBEDDED_AGENT_ID),
                     Response.Status.BAD_REQUEST.getStatusCode());
           }
         }

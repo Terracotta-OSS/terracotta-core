@@ -4,9 +4,10 @@
 package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.AgentEntity;
-import org.terracotta.management.resource.AgentMetadataEntity;
-import org.terracotta.management.resource.services.AgentService;
+import org.terracotta.management.resource.AgentEntityCollectionV2;
+import org.terracotta.management.resource.AgentEntityV2;
+import org.terracotta.management.resource.AgentMetadataEntityV2;
+import org.terracotta.management.resource.services.AgentServiceV2;
 
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.web.utils.TSAConfig;
@@ -19,34 +20,35 @@ import java.util.Set;
 /**
  * @author Ludovic Orban
  */
-public class TsaAgentServiceImpl implements AgentService {
+public class TsaAgentServiceImplV2 implements AgentServiceV2 {
 
   private static final String AGENCY = "TSA";
 
-  private final ServerManagementService serverManagementService;
+  private final ServerManagementServiceV2 serverManagementService;
   private final RemoteAgentBridgeService remoteAgentBridgeService;
-  private final AgentService l1Agent;
+  private final AgentServiceV2 l1Agent;
 
-  public TsaAgentServiceImpl(ServerManagementService serverManagementService, RemoteAgentBridgeService remoteAgentBridgeService, AgentService l1Agent) {
+  public TsaAgentServiceImplV2(ServerManagementServiceV2 serverManagementService, RemoteAgentBridgeService remoteAgentBridgeService, AgentServiceV2 l1Agent) {
     this.serverManagementService = serverManagementService;
     this.remoteAgentBridgeService = remoteAgentBridgeService;
     this.l1Agent = l1Agent;
   }
 
   @Override
-  public Collection<AgentEntity> getAgents(Set<String> ids) throws ServiceExecutionException {
+  public AgentEntityCollectionV2 getAgents(Set<String> ids) throws ServiceExecutionException {
     try {
-      Collection<AgentEntity> agentEntities = new ArrayList<AgentEntity>();
 
+      AgentEntityCollectionV2 agentEntityCollectionV2 =  new AgentEntityCollectionV2();
+      
       if (ids.isEmpty()) {
-        agentEntities.add(buildAgentEntity());
-        agentEntities.addAll(l1Agent.getAgents(ids));
+        agentEntityCollectionV2.getAgentEntities().add(buildAgentEntityV2());
+        agentEntityCollectionV2.getAgentEntities().addAll(l1Agent.getAgents(ids).getAgentEntities());
       } else {
         Set<String> l1Nodes = null;
         Set<String> remoteIds = new HashSet<String>();
         for (String id : ids) {
-          if (id.equals(AgentEntity.EMBEDDED_AGENT_ID)) {
-            agentEntities.add(buildAgentEntity());
+          if (id.equals(AgentEntityV2.EMBEDDED_AGENT_ID)) {
+            agentEntityCollectionV2.getAgentEntities().add(buildAgentEntityV2());
           } else {
             if (l1Nodes == null) {
               l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
@@ -59,11 +61,11 @@ public class TsaAgentServiceImpl implements AgentService {
           }
         }
         if (!remoteIds.isEmpty()) {
-          agentEntities.addAll(l1Agent.getAgents(remoteIds));
+          agentEntityCollectionV2.getAgentEntities().addAll(l1Agent.getAgents(remoteIds).getAgentEntities());
         }
       }
 
-      return agentEntities;
+      return agentEntityCollectionV2;
     } catch (ServiceExecutionException see) {
       throw see;
     } catch (Exception e) {
@@ -72,19 +74,19 @@ public class TsaAgentServiceImpl implements AgentService {
   }
 
   @Override
-  public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
+  public Collection<AgentMetadataEntityV2> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
     try {
-      Collection<AgentMetadataEntity> agentMetadataEntities = new ArrayList<AgentMetadataEntity>();
+      Collection<AgentMetadataEntityV2> agentMetadataEntities = new ArrayList<AgentMetadataEntityV2>();
 
       if (ids.isEmpty()) {
-        AgentMetadataEntity agentMetadataEntity = buildAgentMetadata();
+        AgentMetadataEntityV2 agentMetadataEntityV2 = buildAgentMetadata();
         agentMetadataEntities.addAll(l1Agent.getAgentsMetadata(ids));
-        agentMetadataEntities.add(agentMetadataEntity);
+        agentMetadataEntities.add(agentMetadataEntityV2);
       } else {
         Set<String> l1Nodes = null;
         Set<String> remoteIds = new HashSet<String>();
         for (String id : ids) {
-          if (id.equals(AgentEntity.EMBEDDED_AGENT_ID)) {
+          if (id.equals(AgentEntityV2.EMBEDDED_AGENT_ID)) {
             agentMetadataEntities.add(buildAgentMetadata());
           } else {
             if (l1Nodes == null) {
@@ -110,10 +112,10 @@ public class TsaAgentServiceImpl implements AgentService {
     }
   }
 
-  private AgentMetadataEntity buildAgentMetadata() throws ServiceExecutionException {
-    AgentMetadataEntity ame = new AgentMetadataEntity();
+  private AgentMetadataEntityV2 buildAgentMetadata() throws ServiceExecutionException {
+    AgentMetadataEntityV2 ame = new AgentMetadataEntityV2();
 
-    ame.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+    ame.setAgentId(AgentEntityV2.EMBEDDED_AGENT_ID);
     ame.setAgencyOf(AGENCY);
     ame.setVersion(this.getClass().getPackage().getImplementationVersion());
     ame.setAvailable(true);
@@ -127,9 +129,9 @@ public class TsaAgentServiceImpl implements AgentService {
     return ame;
   }
 
-  private AgentEntity buildAgentEntity() throws ServiceExecutionException {
-    AgentEntity e = new AgentEntity();
-    e.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+  private AgentEntityV2 buildAgentEntityV2() throws ServiceExecutionException {
+    AgentEntityV2 e = new AgentEntityV2();
+    e.setAgentId(AgentEntityV2.EMBEDDED_AGENT_ID);
     e.setAgencyOf(AGENCY);
     e.setVersion(this.getClass().getPackage().getImplementationVersion());
     e.getRootRepresentables().put("urls", createL2Urls());

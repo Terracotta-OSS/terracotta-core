@@ -6,9 +6,9 @@ import static com.terracotta.management.resource.services.utils.ProductIdConvert
 
 import org.terracotta.management.ServiceExecutionException;
 
-import com.terracotta.management.resource.ThreadDumpEntity;
-import com.terracotta.management.resource.TopologyReloadStatusEntity;
-import com.terracotta.management.service.DiagnosticsService;
+import com.terracotta.management.resource.ThreadDumpEntityV2;
+import com.terracotta.management.resource.TopologyReloadStatusEntityV2;
+import com.terracotta.management.service.DiagnosticsServiceV2;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,31 +17,31 @@ import java.util.Set;
 /**
  * @author Ludovic Orban
  */
-public class DiagnosticsServiceImpl implements DiagnosticsService {
+public class DiagnosticsServiceImplV2 implements DiagnosticsServiceV2 {
 
-  private final ServerManagementService serverManagementService;
-  private final ClientManagementService clientManagementService;
+  private final ServerManagementServiceV2 serverManagementService;
+  private final ClientManagementServiceV2 clientManagementService;
 
-  public DiagnosticsServiceImpl(ServerManagementService serverManagementService, ClientManagementService clientManagementService) {
+  public DiagnosticsServiceImplV2(ServerManagementServiceV2 serverManagementService, ClientManagementServiceV2 clientManagementService) {
     this.serverManagementService = serverManagementService;
     this.clientManagementService = clientManagementService;
   }
 
   @Override
-  public Collection<ThreadDumpEntity> getClusterThreadDump(Set<String> clientProductIds) throws ServiceExecutionException {
-    Collection<ThreadDumpEntity> result = new ArrayList<ThreadDumpEntity>();
+  public Collection<ThreadDumpEntityV2> getClusterThreadDump(Set<String> clientProductIds) throws ServiceExecutionException {
+    Collection<ThreadDumpEntityV2> result = new ArrayList<ThreadDumpEntityV2>();
     result.addAll(serverManagementService.serversThreadDump(null));
     result.addAll(clientManagementService.clientsThreadDump(null, stringsToProductsIds(clientProductIds)));
     return result;
   }
 
   @Override
-  public Collection<ThreadDumpEntity> getServersThreadDump(Set<String> serverNames) throws ServiceExecutionException {
+  public Collection<ThreadDumpEntityV2> getServersThreadDump(Set<String> serverNames) throws ServiceExecutionException {
     return serverManagementService.serversThreadDump(serverNames);
   }
 
   @Override
-  public Collection<ThreadDumpEntity> getClientsThreadDump(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException {
+  public Collection<ThreadDumpEntityV2> getClientsThreadDump(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException {
     return clientManagementService.clientsThreadDump(clientIds, stringsToProductsIds(clientProductIds));
   }
 
@@ -58,7 +58,7 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
   }
 
   @Override
-  public Collection<TopologyReloadStatusEntity> reloadConfiguration(Set<String> serverNames) throws ServiceExecutionException {
+  public Collection<TopologyReloadStatusEntityV2> reloadConfiguration(Set<String> serverNames) throws ServiceExecutionException {
     return serverManagementService.reloadConfiguration(serverNames);
   }
 

@@ -7,8 +7,8 @@ import static com.terracotta.management.resource.services.utils.ProductIdConvert
 
 import org.terracotta.management.ServiceExecutionException;
 
-import com.terracotta.management.resource.StatisticsEntity;
-import com.terracotta.management.service.MonitoringService;
+import com.terracotta.management.resource.StatisticsEntityV2;
+import com.terracotta.management.service.MonitoringServiceV2;
 
 import java.util.Collection;
 import java.util.Set;
@@ -16,30 +16,30 @@ import java.util.Set;
 /**
  * @author Ludovic Orban
  */
-public class MonitoringServiceImpl implements MonitoringService {
+public class MonitoringServiceImplV2 implements MonitoringServiceV2 {
 
   private static final int MAX_DGC_STATS_ENTRIES = 1000;
 
-  private final ServerManagementService serverManagementService;
-  private final ClientManagementService clientManagementService;
+  private final ServerManagementServiceV2 serverManagementService;
+  private final ClientManagementServiceV2 clientManagementService;
 
-  public MonitoringServiceImpl(ServerManagementService serverManagementService, ClientManagementService clientManagementService) {
+  public MonitoringServiceImplV2(ServerManagementServiceV2 serverManagementService, ClientManagementServiceV2 clientManagementService) {
     this.serverManagementService = serverManagementService;
     this.clientManagementService = clientManagementService;
   }
 
   @Override
-  public Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes, Set<String> clientProductIds) throws ServiceExecutionException {
+  public Collection<StatisticsEntityV2> getClientStatistics(Set<String> clientIds, Set<String> attributes, Set<String> clientProductIds) throws ServiceExecutionException {
     return clientManagementService.getClientsStatistics(clientIds, stringsToProductsIds(clientProductIds), attributes);
   }
 
   @Override
-  public Collection<StatisticsEntity> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException {
+  public Collection<StatisticsEntityV2> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException {
     return serverManagementService.getServersStatistics(serverNames, attributes);
   }
 
   @Override
-  public Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames) throws ServiceExecutionException {
+  public Collection<StatisticsEntityV2> getDgcStatistics(Set<String> serverNames) throws ServiceExecutionException {
     return serverManagementService.getDgcStatistics(serverNames, MAX_DGC_STATS_ENTRIES);
   }
 }
