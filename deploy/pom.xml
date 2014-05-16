@@ -28,7 +28,12 @@
   <dependencies>
     <dependency>
       <groupId>net.sf.ehcache</groupId>
-      <artifactId>management-ehcache-impl</artifactId>
+      <artifactId>management-ehcache-impl-v1</artifactId>
+      <version>${ehcache.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>management-ehcache-impl-v2</artifactId>
       <version>${ehcache.version}</version>
     </dependency>
     <dependency>
