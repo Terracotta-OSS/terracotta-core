@@ -53,12 +53,12 @@
 
   <servlet>
     <servlet-name>jersey</servlet-name>
-    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
     <init-param>
       <param-name>javax.ws.rs.Application</param-name>
       <param-value>com.terracotta.management.ApplicationTsa</param-value>
     </init-param>
-    <init-param>
+<!--     <init-param>
       <description>
         make sure com.sun.jersey.core.util.FeaturesAndProperties.FEATURE_XMLROOTELEMENT_PROCESSING is set to
         true so that a list of @XmlRootElement(name = "configuration") is "configurations"
@@ -77,7 +77,7 @@
     <init-param>
       <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
       <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
-    </init-param>
+    </init-param> -->
     <load-on-startup>1</load-on-startup>
   </servlet>
 

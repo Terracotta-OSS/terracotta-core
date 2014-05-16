@@ -14,7 +14,12 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>management-tsa-impl</artifactId>
+      <artifactId>management-tsa-impl-v1</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>management-tsa-impl-v2</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
