@@ -7,6 +7,7 @@ import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
+import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import com.google.common.collect.HashMultimap;
@@ -34,6 +35,7 @@ import com.terracotta.toolkit.util.ImmediateTimer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +45,9 @@ import java.util.concurrent.Callable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -101,6 +105,24 @@ public class AggregateServerMapTest {
     for (Map.Entry<Integer, Map<String, BufferedOperation<String>>> entry : batchedOps.entrySet()) {
       verify(serverMapList.get(entry.getKey())).drain(entry.getValue());
     }
+  }
+
+  @Test
+  public void testRejoinDuringDrain() throws Exception {
+    final ServerMap serverMap = mockServerMap(1);
+    ToolkitObjectStripe[] stripeObjects = createObjectStripes(configuration, Collections.singletonList(serverMap), 1);
+
+    AggregateServerMap<String, String> asm = new AggregateServerMap<String, String>(ToolkitObjectType.CACHE, mock(SearchFactory.class),
+        mock(DistributedClusteredObjectLookup.class), "foo", stripeObjects, configuration,
+        mock(Callable.class), serverMapLocalStoreFactory, platformService, mock(ToolkitLock.class));
+
+    doThrow(new RejoinException()).when(serverMap).drain(anyMap());
+
+    Map<String, BufferedOperation<String>> op = Collections.singletonMap("foo",
+        (BufferedOperation<String>) mock(BufferedOperation.class));
+
+    // Check that we're ignoring the rejoin exception.
+    asm.drain(op);
   }
 
   @Test

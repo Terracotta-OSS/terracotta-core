@@ -1249,7 +1249,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       futures.add(timer.schedule(new Runnable() {
         @Override
         public void run() {
-          entry.getKey().drain(entry.getValue());
+          try {
+            entry.getKey().drain(entry.getValue());
+          } catch (RejoinException e) {
+            LOGGER.warn("Got a rejoin while draining. Dumping the batch.");
+          } catch (TCNotRunningException e) {
+            LOGGER.debug("Got a TCNotRunningException while draining. Ignoring it.", e);
+          }
         }
       }, 0, TimeUnit.MILLISECONDS));
     }
