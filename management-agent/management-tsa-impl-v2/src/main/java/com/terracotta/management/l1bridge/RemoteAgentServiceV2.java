@@ -25,11 +25,11 @@ import java.util.concurrent.ExecutorService;
 /**
  * @author Ludovic Orban
  */
-public class RemoteAgentService implements AgentServiceV2 {
+public class RemoteAgentServiceV2 implements AgentServiceV2 {
 
   private final RemoteCaller remoteCaller;
 
-  public RemoteAgentService(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
+  public RemoteAgentServiceV2(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
                             ExecutorService executorService, RequestTicketMonitor ticketMonitor,
                             UserService userService, TimeoutService timeoutService) {
     this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService);

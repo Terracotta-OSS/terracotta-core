@@ -10,7 +10,7 @@ import org.terracotta.management.resource.services.AgentServiceV2;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 import org.terracotta.session.management.SessionsServiceV2;
 
-import com.terracotta.management.l1bridge.RemoteAgentService;
+import com.terracotta.management.l1bridge.RemoteAgentServiceV2;
 import com.terracotta.management.l1bridge.RemoteRequestValidatorV2;
 import com.terracotta.management.l1bridge.RemoteServiceStubGenerator;
 import com.terracotta.management.resource.services.BackupResourceServiceImplV2;
@@ -141,7 +141,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
 
     /// Compound Agent Service ///
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService);
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService);
     serviceClasses.put(AgentServiceV2.class, new TsaAgentServiceImplV2(serverManagementService, remoteAgentBridgeService, remoteAgentService));
 
     /// Ehcache Services ///

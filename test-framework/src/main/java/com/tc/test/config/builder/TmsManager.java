@@ -52,7 +52,7 @@ public class TmsManager {
         new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.ssl.SslSocketConnector"))).toURI().toURL(),
         new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.webapp.WebAppContext"))).toURI().toURL(),
         new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.util.Attributes"))).toURI().toURL(),
-        new File(TestBaseUtil.jarFor(Class.forName("org.objectweb.asm.ClassVisitor"))).toURI().toURL(),
+        // new File(TestBaseUtil.jarFor(Class.forName("org.objectweb.asm.ClassVisitor"))).toURI().toURL(),
         new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.Server"))).toURI().toURL()
     };
 
