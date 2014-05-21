@@ -4,11 +4,48 @@
  */
 package com.tc.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.ByteBuffer;
+import java.security.CodeSource;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
+import java.util.Enumeration;
 
 import junit.framework.TestCase;
 
 public class ProductInfoTest extends TestCase {
+
+  public void testNullCodeSource() throws Exception {
+    URL[] urls = ((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs();
+    ClassLoaderWithoutCodeSource loader = new ClassLoaderWithoutCodeSource(urls);
+
+    loader.nullCodeSource = true;
+    Class<?> productInfoClass = loader.loadClass(ProductInfo.class.getName());
+    assertNull(productInfoClass.getProtectionDomain().getCodeSource());
+    assertEquals(loader, productInfoClass.getClassLoader());
+
+    Object productInfo = productInfoClass.getMethod("getInstance").invoke(null);
+    assertEquals(ProductInfo.getInstance().toString(), productInfo.toString());
+  }
+
+  public void testNullCodeSourceLocation() throws Exception {
+    URL[] urls = ((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs();
+    ClassLoaderWithoutCodeSource loader = new ClassLoaderWithoutCodeSource(urls);
+
+    loader.nullLocation = true;
+    Class<?> productInfoClass = loader.loadClass(ProductInfo.class.getName());
+    assertNull(productInfoClass.getProtectionDomain().getCodeSource().getLocation());
+    assertEquals(loader, productInfoClass.getClassLoader());
+
+    Object productInfo = productInfoClass.getMethod("getInstance").invoke(null);
+    assertEquals(ProductInfo.getInstance().toString(), productInfo.toString());
+  }
 
   public void testOpenSourceEditionWithPatch() {
     try {
@@ -139,4 +176,85 @@ public class ProductInfoTest extends TestCase {
                  info.toLongPatchString());
     assertEquals("Patch Level [unknown]", info.toShortPatchString());
   }
+
+  private static class ClassLoaderWithoutCodeSource extends URLClassLoader {
+
+    boolean nullLocation   = false;
+    boolean nullCodeSource = false;
+
+    ClassLoaderWithoutCodeSource(URL[] urls) {
+      super(urls, null);
+    }
+
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+      Class<?> c = findLoadedClass(name);
+      if (c != null) { return c; }
+
+      URL url = findResource(name.replace('.', '/').concat(".class"));
+      if (url == null) { return super.loadClass(name); }
+
+      ByteBuffer b = getUrl(url);
+
+      ProtectionDomain pd = new ProtectionDomain(codeSource(url), new PermissionCollection() {
+        @Override
+        public boolean implies(Permission permission) {
+          return false;
+        }
+
+        @Override
+        public Enumeration<Permission> elements() {
+          return new Enumeration<Permission>() {
+
+            @Override
+            public boolean hasMoreElements() {
+              return false;
+            }
+
+            @Override
+            public Permission nextElement() {
+              throw new AssertionError();
+            }
+          };
+        }
+
+        @Override
+        public void add(Permission permission) {
+          //
+        }
+      });
+
+      return defineClass(name, b, pd);
+    }
+
+    private CodeSource codeSource(URL url) {
+      if (nullCodeSource) return null;
+      return new CodeSource(nullLocation ? null : url, new Certificate[] {});
+    }
+
+    private ByteBuffer getUrl(URL url) {
+      InputStream in = null;
+      try {
+        in = url.openStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int b;
+        while ((b = in.read()) >= 0) {
+          baos.write(b);
+        }
+
+        return ByteBuffer.wrap(baos.toByteArray());
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } finally {
+        if (in != null) {
+          try {
+            in.close();
+          } catch (IOException ioe) {
+            // ignore
+          }
+        }
+      }
+    }
+  }
+
 }
