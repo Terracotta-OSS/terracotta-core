@@ -7,13 +7,12 @@ import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceLocator;
-import org.terracotta.management.resource.services.validator.RequestValidator;
-
 import com.tc.net.util.TSASSLSocketFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.management.ApplicationTsaService;
 import com.terracotta.management.keychain.URIKeyName;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.IdentityAssertionServiceClient;
 import com.terracotta.management.security.KeyChainAccessor;
@@ -160,6 +159,7 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
       serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
       serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);
       serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
+      serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
 
       ServiceLoader<ApplicationTsaService> loaders = ServiceLoader.load(ApplicationTsaService.class);
       for (ApplicationTsaService applicationEhCacheService : loaders) {

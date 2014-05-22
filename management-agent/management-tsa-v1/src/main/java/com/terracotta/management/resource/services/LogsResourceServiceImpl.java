@@ -56,7 +56,7 @@ public class LogsResourceServiceImpl {
 
   public LogsResourceServiceImpl() {
     this.logsService = ServiceLocator.locate(LogsService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY_KEY = "sinceWhen";

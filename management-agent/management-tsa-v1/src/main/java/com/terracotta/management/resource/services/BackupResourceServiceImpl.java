@@ -44,7 +44,7 @@ public class BackupResourceServiceImpl {
 
   public BackupResourceServiceImpl() {
     this.backupService = ServiceLocator.locate(BackupService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_BACKUP_NAME_KEY = "name";

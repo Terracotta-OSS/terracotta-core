@@ -12,7 +12,7 @@ import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.ConfigEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.ConfigurationServiceV2;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class ConfigurationResourceServiceImplV2 {
 
   public ConfigurationResourceServiceImplV2() {
     this.configurationService = ServiceLocator.locate(ConfigurationServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
 

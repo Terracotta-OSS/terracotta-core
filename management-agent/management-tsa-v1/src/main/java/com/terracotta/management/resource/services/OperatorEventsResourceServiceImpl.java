@@ -45,7 +45,7 @@ public class OperatorEventsResourceServiceImpl {
 
   public OperatorEventsResourceServiceImpl() {
     this.operatorEventsService = ServiceLocator.locate(OperatorEventsService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY_KEY__SINCE_WHEN  = "sinceWhen";

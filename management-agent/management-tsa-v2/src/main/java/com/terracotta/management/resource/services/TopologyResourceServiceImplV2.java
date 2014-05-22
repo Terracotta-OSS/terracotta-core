@@ -13,7 +13,7 @@ import org.terracotta.management.resource.services.validator.RequestValidator;
 import com.terracotta.management.resource.ClientEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.OperatorEventsServiceV2;
 import com.terracotta.management.service.TopologyServiceV2;
 
@@ -48,7 +48,7 @@ public class TopologyResourceServiceImplV2 {
   public TopologyResourceServiceImplV2() {
     this.topologyService = ServiceLocator.locate(TopologyServiceV2.class);
     this.operatorEventsService = ServiceLocator.locate(OperatorEventsServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   /**

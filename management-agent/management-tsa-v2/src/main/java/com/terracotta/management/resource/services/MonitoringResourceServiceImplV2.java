@@ -12,7 +12,7 @@ import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.StatisticsEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.MonitoringServiceV2;
 
 import java.util.Arrays;
@@ -45,7 +45,7 @@ public class MonitoringResourceServiceImplV2 {
 
   public MonitoringResourceServiceImplV2() {
     this.monitoringService = ServiceLocator.locate(MonitoringServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY_KEY = "show";

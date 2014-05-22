@@ -11,7 +11,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.BackupEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.BackupServiceV2;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class BackupResourceServiceImplV2 {
 
   public BackupResourceServiceImplV2() {
     this.backupService = ServiceLocator.locate(BackupServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_BACKUP_NAME_KEY = "name";

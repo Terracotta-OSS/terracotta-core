@@ -54,7 +54,7 @@ public class DiagnosticsResourceServiceImpl {
 
   public DiagnosticsResourceServiceImpl() {
     this.diagnosticsService = ServiceLocator.locate(DiagnosticsService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   private InputStream zipAndConvertToInputStream(Collection<ThreadDumpEntity> threadDumpEntities) throws IOException {

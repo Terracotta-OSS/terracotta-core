@@ -13,7 +13,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.LogEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.LogsServiceV2;
 
 import java.io.ByteArrayInputStream;
@@ -56,7 +56,7 @@ public class LogsResourceServiceImplV2 {
 
   public LogsResourceServiceImplV2() {
     this.logsService = ServiceLocator.locate(LogsServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY_KEY = "sinceWhen";

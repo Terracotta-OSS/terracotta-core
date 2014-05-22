@@ -22,7 +22,6 @@ import com.terracotta.management.resource.services.MonitoringResourceServiceImpl
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImplV2;
 import com.terracotta.management.resource.services.ShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.TopologyResourceServiceImplV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SecurityContextService;
@@ -108,7 +107,6 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
      timeoutService, localManagementSource, remoteManagementSource, securityContextService);
      ClientManagementServiceV2 clientManagementService = new ClientManagementServiceV2(serverManagementService,
      tsaExecutorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
-     serviceClasses.put(TSARequestValidatorV2.class, new TSARequestValidatorV2());
      serviceClasses.put(TopologyServiceV2.class, new TopologyServiceImplV2(serverManagementService,
      clientManagementService));
      serviceClasses.put(MonitoringServiceV2.class, new MonitoringServiceImplV2(serverManagementService,

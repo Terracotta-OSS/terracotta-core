@@ -40,7 +40,7 @@ public class ShutdownResourceServiceImpl {
 
   public ShutdownResourceServiceImpl() {
     this.shutdownService = ServiceLocator.locate(ShutdownService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   @POST

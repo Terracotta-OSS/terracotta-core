@@ -11,7 +11,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.OperatorEventEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.OperatorEventsServiceV2;
 
 import java.util.Arrays;
@@ -45,7 +45,7 @@ public class OperatorEventsResourceServiceImplV2 {
 
   public OperatorEventsResourceServiceImplV2() {
     this.operatorEventsService = ServiceLocator.locate(OperatorEventsServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY_KEY__SINCE_WHEN  = "sinceWhen";

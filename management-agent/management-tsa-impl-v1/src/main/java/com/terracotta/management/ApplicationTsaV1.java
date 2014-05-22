@@ -22,7 +22,6 @@ import com.terracotta.management.resource.services.MonitoringResourceServiceImpl
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImpl;
 import com.terracotta.management.resource.services.ShutdownResourceServiceImpl;
 import com.terracotta.management.resource.services.TopologyResourceServiceImpl;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SecurityContextService;
@@ -106,11 +105,12 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     
      ServerManagementService serverManagementService = new ServerManagementService(tsaExecutorService,
      timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+     OperatorEventsServiceImpl operatorEventsServiceImpl = new
+         OperatorEventsServiceImpl(serverManagementService);
      ClientManagementService clientManagementService = new ClientManagementService(serverManagementService,
      tsaExecutorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
-     serviceClasses.put(TSARequestValidator.class, new TSARequestValidator());
      serviceClasses.put(TopologyService.class, new TopologyServiceImpl(serverManagementService,
-     clientManagementService));
+     clientManagementService, operatorEventsServiceImpl));
      serviceClasses.put(MonitoringService.class, new MonitoringServiceImpl(serverManagementService,
      clientManagementService));
      serviceClasses.put(DiagnosticsService.class, new DiagnosticsServiceImpl(serverManagementService,
@@ -119,8 +119,7 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
      clientManagementService));
      serviceClasses.put(BackupService.class, new BackupServiceImpl(serverManagementService));
      serviceClasses.put(LogsService.class, new LogsServiceImpl(serverManagementService));
-     serviceClasses.put(OperatorEventsService.class, new
-     OperatorEventsServiceImpl(serverManagementService));
+    serviceClasses.put(OperatorEventsService.class, operatorEventsServiceImpl);
      serviceClasses.put(ShutdownService.class, new ShutdownServiceImpl(serverManagementService));
      serviceClasses.put(JmxService.class, new JmxServiceImpl(serverManagementService));
 

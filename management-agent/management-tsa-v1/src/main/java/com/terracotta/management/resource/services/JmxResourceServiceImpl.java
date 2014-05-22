@@ -43,7 +43,7 @@ public class JmxResourceServiceImpl {
 
   public JmxResourceServiceImpl() {
     this.jmxService = ServiceLocator.locate(JmxService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY = "q";

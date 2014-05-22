@@ -45,7 +45,7 @@ public class MonitoringResourceServiceImpl {
 
   public MonitoringResourceServiceImpl() {
     this.monitoringService = ServiceLocator.locate(MonitoringService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY_KEY = "show";

@@ -11,7 +11,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.MBeanEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.JmxServiceV2;
 
 import java.util.Arrays;
@@ -43,7 +43,7 @@ public class JmxResourceServiceImplV2 {
 
   public JmxResourceServiceImplV2() {
     this.jmxService = ServiceLocator.locate(JmxServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   public final static String ATTR_QUERY = "q";

@@ -6,7 +6,7 @@
 package com.terracotta.management.l1bridge;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.AgentEntityV2;
+import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
@@ -58,9 +58,9 @@ public final class RemoteRequestValidatorV2 implements RequestValidator {
         String[] idsArray = ids.split(",");
 
         for (String id : idsArray) {
-          if (!nodes.contains(id) && !AgentEntityV2.EMBEDDED_AGENT_ID.equals(id)) {
+          if (!nodes.contains(id) && !Representable.EMBEDDED_AGENT_ID.equals(id)) {
             throw new ResourceRuntimeException(
-                    String.format("Agent IDs must be in '%s' or '%s'.", nodes, AgentEntityV2.EMBEDDED_AGENT_ID),
+                    String.format("Agent IDs must be in '%s' or '%s'.", nodes, Representable.EMBEDDED_AGENT_ID),
                     Response.Status.BAD_REQUEST.getStatusCode());
           }
         }

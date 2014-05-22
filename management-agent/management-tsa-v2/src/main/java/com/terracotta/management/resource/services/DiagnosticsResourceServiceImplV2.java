@@ -15,7 +15,7 @@ import org.terracotta.management.resource.services.validator.RequestValidator;
 import com.terracotta.management.resource.ThreadDumpEntityV2;
 import com.terracotta.management.resource.TopologyReloadStatusEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidatorV2;
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.DiagnosticsServiceV2;
 
 import java.io.ByteArrayInputStream;
@@ -54,7 +54,7 @@ public class DiagnosticsResourceServiceImplV2 {
 
   public DiagnosticsResourceServiceImplV2() {
     this.diagnosticsService = ServiceLocator.locate(DiagnosticsServiceV2.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidatorV2.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
   private InputStream zipAndConvertToInputStream(Collection<ThreadDumpEntityV2> threadDumpEntities) throws IOException {

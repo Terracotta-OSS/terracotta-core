@@ -44,7 +44,7 @@ public class ConfigurationResourceServiceImpl {
 
   public ConfigurationResourceServiceImpl() {
     this.configurationService = ServiceLocator.locate(ConfigurationService.class);
-    this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
+    this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
 
