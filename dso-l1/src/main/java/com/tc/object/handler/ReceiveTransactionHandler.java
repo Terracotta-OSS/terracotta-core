@@ -9,6 +9,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.exception.TCClassNotFoundException;
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -74,6 +75,10 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
           logger.warn("transaction apply failed for " + btm.getTransactionID(), cnfe);
           // Do not ignore, re-throw to kill this L1
           throw cnfe;
+        } catch (TCNotRunningException tcnre) {
+          // Catch and ignore, since we are shutting down anyway; ack should be sent below though, to prevent blockage
+          // when this is an echo broadcast (for new root creation, for instance)
+          logger.debug("ignoring transaction apply failure for " + btm.getTransactionID() + " due to " + tcnre);
         }
 
       }
