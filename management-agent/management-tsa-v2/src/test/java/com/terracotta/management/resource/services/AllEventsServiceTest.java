@@ -1,3 +1,4 @@
+package com.terracotta.management.resource.services;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -11,7 +12,7 @@ import javax.ws.rs.client.WebTarget;
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 
-public class AllEventsService {
+public class AllEventsServiceTest {
 
   @Test
   public void allEventsTest() {
