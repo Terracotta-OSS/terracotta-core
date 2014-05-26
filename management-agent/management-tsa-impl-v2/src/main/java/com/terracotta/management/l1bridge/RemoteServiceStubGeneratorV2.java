@@ -21,12 +21,12 @@ import javax.ws.rs.core.Response;
 /**
  * @author Ludovic Orban
  */
-public class RemoteServiceStubGenerator {
+public class RemoteServiceStubGeneratorV2 {
 
   private final RemoteCaller remoteCaller;
   private final RemoteRequestValidatorV2 requestValidator;
 
-  public RemoteServiceStubGenerator(RequestTicketMonitor requestTicketMonitor, UserService userService,
+  public RemoteServiceStubGeneratorV2(RequestTicketMonitor requestTicketMonitor, UserService userService,
                                     ContextService contextService, RemoteRequestValidatorV2 requestValidator,
                                     RemoteAgentBridgeService remoteAgentBridgeService, ExecutorService executorService,
                                     TimeoutService timeoutService) {

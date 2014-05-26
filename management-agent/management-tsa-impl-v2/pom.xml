@@ -75,7 +75,14 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>     
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>management-core</artifactId>
+      <version>${management-core-version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>  
   </dependencies>
 
   <build>

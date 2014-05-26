@@ -10,13 +10,12 @@ import java.util.Set;
 /**
  * @author: Anthony Dahanne
  */
-public class ApplicationTsaV1Test  extends JerseyApplicationTestCommon {
+public class ApplicationTsaV2Test extends JerseyApplicationTestCommon{
   @Test
   public void testGetClasses() throws Exception {
-    ApplicationTsaV1 applicationEhCache = new ApplicationTsaV1();
+    ApplicationTsaV2 applicationEhCache = new ApplicationTsaV2();
     Set<Class<?>> applicationClasses = applicationEhCache.getResourceClasses();
     Set<Class<?>> annotatedClasses = annotatedClassesFound();
     Assert.assertThat(annotatedClasses, equalTo(applicationClasses));
   }
-
 }
