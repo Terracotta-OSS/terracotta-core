@@ -53,5 +53,11 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>tc-messaging</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
+
 </project>

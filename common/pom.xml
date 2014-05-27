@@ -34,7 +34,6 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-messaging</artifactId>
-      <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
