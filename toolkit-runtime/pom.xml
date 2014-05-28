@@ -315,6 +315,7 @@
 									<artifacts>
 										<param>org.terracotta:terracotta-l1:${project.version}</param>
 									</artifacts>
+                  <excludeGroupIds>org.terracotta.internal</excludeGroupIds>
 									<outputDir>${project.build.outputDirectory}/L1</outputDir>
 								</configuration>
 							</execution>
