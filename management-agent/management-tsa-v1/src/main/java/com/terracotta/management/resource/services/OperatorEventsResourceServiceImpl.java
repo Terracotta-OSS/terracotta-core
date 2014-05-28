@@ -11,7 +11,6 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.OperatorEventEntity;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.OperatorEventsService;
 
 import java.util.Arrays;
@@ -51,6 +50,7 @@ public class OperatorEventsResourceServiceImpl {
   public final static String ATTR_QUERY_KEY__SINCE_WHEN  = "sinceWhen";
   public final static String ATTR_QUERY_KEY__EVENT_TYPES = "eventTypes";
   public final static String ATTR_FILTER_KEY             = "filterOutRead";
+  public final static String ATTR_QUERY_KEY__EVENT_LEVELS = "eventLevels";
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
@@ -66,9 +66,10 @@ public class OperatorEventsResourceServiceImpl {
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       String sinceWhen = qParams.getFirst(ATTR_QUERY_KEY__SINCE_WHEN);
       String eventTypes = qParams.getFirst(ATTR_QUERY_KEY__EVENT_TYPES);
+      String eventLevels = qParams.getFirst(ATTR_QUERY_KEY__EVENT_LEVELS);
       boolean filterOutRead = qParams.getFirst(ATTR_FILTER_KEY) == null || Boolean.parseBoolean(qParams.getFirst(ATTR_FILTER_KEY));
 
-      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, filterOutRead);
+      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, eventLevels, filterOutRead);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA operator events", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -91,6 +92,9 @@ public class OperatorEventsResourceServiceImpl {
         }
         if (operatorEventEntity.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
         }
         if (operatorEventEntity.getCollapseString() == null) {
           throw new ServiceExecutionException("collapseString must not be null");
@@ -124,10 +128,13 @@ public class OperatorEventsResourceServiceImpl {
     for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
       try {
         if (operatorEventEntity.getEventLevel() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
+          throw new ServiceExecutionException("eventLevel must not be null");
         }
         if (operatorEventEntity.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
         }
         if (operatorEventEntity.getCollapseString() == null) {
           throw new ServiceExecutionException("collapseString must not be null");

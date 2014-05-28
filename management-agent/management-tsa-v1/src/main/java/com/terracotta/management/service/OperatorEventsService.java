@@ -42,11 +42,12 @@ public interface OperatorEventsService {
    * @param serverNames A set of server names, null meaning all of them.
    * @param sinceWhen A string describing a timestamp that will be parsed to filter out events that happened before or at that time, null meaning no such filtering.
    * @param eventTypes A string describing comma-separated event types to filter out events of different types, null meaning no such filtering.
+   * @param eventLevels A string describing comma-separated event levels to filter out events of different log levels, null meaning no such filtering.
    * @param filterOutRead true if the read operator events should be filter out, false otherwise.
    * @return a collection of operator events
    * @throws org.terracotta.management.ServiceExecutionException
    */
-  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, boolean filterOutRead) throws ServiceExecutionException;
+  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, String eventLevels, boolean filterOutRead) throws ServiceExecutionException;
 
   /**
    * Mark an operator even as read or unread.

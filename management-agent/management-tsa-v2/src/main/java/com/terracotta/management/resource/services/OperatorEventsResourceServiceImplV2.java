@@ -11,7 +11,6 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.OperatorEventEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.OperatorEventsServiceV2;
 
 import java.util.Arrays;
@@ -51,6 +50,7 @@ public class OperatorEventsResourceServiceImplV2 {
   public final static String ATTR_QUERY_KEY__SINCE_WHEN  = "sinceWhen";
   public final static String ATTR_QUERY_KEY__EVENT_TYPES = "eventTypes";
   public final static String ATTR_FILTER_KEY             = "filterOutRead";
+  public final static String ATTR_QUERY_KEY__EVENT_LEVELS = "eventLevels";
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
@@ -66,16 +66,17 @@ public class OperatorEventsResourceServiceImplV2 {
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       String sinceWhen = qParams.getFirst(ATTR_QUERY_KEY__SINCE_WHEN);
       String eventTypes = qParams.getFirst(ATTR_QUERY_KEY__EVENT_TYPES);
+      String eventLevels = qParams.getFirst(ATTR_QUERY_KEY__EVENT_LEVELS);
       boolean filterOutRead = qParams.getFirst(ATTR_FILTER_KEY) == null || Boolean.parseBoolean(qParams.getFirst(ATTR_FILTER_KEY));
 
-      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, filterOutRead);
+      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, eventLevels, filterOutRead);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA operator events", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
   @POST
-  @Path("/v2/read")
+  @Path("/read")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public boolean markOperatorEventAsRead(@Context UriInfo info, Collection<OperatorEventEntityV2> operatorEventEntities) {
@@ -92,6 +93,8 @@ public class OperatorEventsResourceServiceImplV2 {
         if (operatorEventEntityV2.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
         }
+        if (operatorEventEntityV2.getEventType() == null) { throw new ServiceExecutionException(
+                                                                                                "eventType must not be null"); }
         if (operatorEventEntityV2.getCollapseString() == null) {
           throw new ServiceExecutionException("collapseString must not be null");
         }
@@ -112,7 +115,7 @@ public class OperatorEventsResourceServiceImplV2 {
   }
 
   @POST
-  @Path("/v2/unread")
+  @Path("/unread")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public boolean markOperatorEventAsUnread(@Context UriInfo info, Collection<OperatorEventEntityV2> operatorEventEntities) {
@@ -124,11 +127,14 @@ public class OperatorEventsResourceServiceImplV2 {
     for (OperatorEventEntityV2 operatorEventEntityV2 : operatorEventEntities) {
       try {
         if (operatorEventEntityV2.getEventLevel() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
+ throw new ServiceExecutionException(
+                                                                                                 "eventLevel must not be null");
         }
         if (operatorEventEntityV2.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
         }
+        if (operatorEventEntityV2.getEventType() == null) { throw new ServiceExecutionException(
+                                                                                                "eventType must not be null"); }
         if (operatorEventEntityV2.getCollapseString() == null) {
           throw new ServiceExecutionException("collapseString must not be null");
         }
@@ -147,5 +153,4 @@ public class OperatorEventsResourceServiceImplV2 {
 
     return rc;
   }
-
 }
