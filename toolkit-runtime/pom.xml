@@ -315,7 +315,7 @@
 									<artifacts>
 										<param>org.terracotta:terracotta-l1:${project.version}</param>
 									</artifacts>
-                  <excludeGroupIds>org.terracotta.internal</excludeGroupIds>
+                  <excludeArtifactIds>dso-l1,common,build-data,dso-common,dso-l1-api,dso-cluster-api,deploy,management,ent-dso-l1,ent-common,ent-deploy</excludeArtifactIds>
 									<outputDir>${project.build.outputDirectory}/L1</outputDir>
 								</configuration>
 							</execution>
