@@ -689,7 +689,7 @@ public class ServerManagementServiceV2 {
         UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
             .path("agents")
             .path("shutdown")
-            .matrixParam("serverNames", member.name());
+            .matrixParam("names", member.name());
 
         remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build());
         return null;
