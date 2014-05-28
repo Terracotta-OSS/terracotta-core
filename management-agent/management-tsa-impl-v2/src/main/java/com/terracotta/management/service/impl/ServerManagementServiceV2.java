@@ -331,7 +331,7 @@ public class ServerManagementServiceV2 {
     });
   }
 
-  public Collection<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final Set<String> acceptableTypes, final boolean read) throws ServiceExecutionException {
+  public Collection<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final Set<String> acceptableLevels, final boolean read) throws ServiceExecutionException {
     return forEachServer("getOperatorEvents", serverNames, new ForEachServer<OperatorEventEntityV2>() {
       @Override
       public Collection<OperatorEventEntityV2> queryLocalServer(L2Info member) {
@@ -343,9 +343,9 @@ public class ServerManagementServiceV2 {
               // filter out read events
               continue;
             }
-            if (acceptableTypes != null) {
-              // filter out event types
-              if (!acceptableTypes.contains(operatorEvent.getEventLevelAsString())) {
+            if (acceptableLevels != null) {
+              // filter out event levels
+              if (!acceptableLevels.contains(operatorEvent.getEventLevelAsString())) {
                 continue;
               }
             }
@@ -380,7 +380,7 @@ public class ServerManagementServiceV2 {
             .path("operatorEvents")
             .matrixParam("names", member.name());
         if (sinceWhen != null) { uriBuilder.queryParam("sinceWhen", sinceWhen); }
-        if (acceptableTypes != null) { uriBuilder.queryParam("eventTypes", toCsv(acceptableTypes)); }
+        if (acceptableLevels != null) { uriBuilder.queryParam("eventLevels", toCsv(acceptableLevels)); }
         uriBuilder.queryParam("filterOutRead", read);
 
         return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), OperatorEventEntityV2.class);

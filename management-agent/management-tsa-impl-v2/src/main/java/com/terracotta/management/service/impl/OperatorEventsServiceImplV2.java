@@ -27,17 +27,17 @@ public class OperatorEventsServiceImplV2 implements OperatorEventsServiceV2 {
   }
 
   @Override
-  public Collection<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, boolean read) throws ServiceExecutionException {
-    Set<String> acceptableTypes = null;
-    if (eventTypes != null) {
-      acceptableTypes = new HashSet<String>(Arrays.asList(eventTypes.split(",")));
+  public Collection<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventLevels, boolean read) throws ServiceExecutionException {
+    Set<String> acceptableLevels = null;
+    if (eventLevels != null) {
+      acceptableLevels = new HashSet<String>(Arrays.asList(eventLevels.split(",")));
     }
 
     if (sinceWhen == null) {
-      return serverManagementService.getOperatorEvents(serverNames, null, acceptableTypes, read);
+      return serverManagementService.getOperatorEvents(serverNames, null, acceptableLevels, read);
     } else {
       try {
-        return serverManagementService.getOperatorEvents(serverNames, TimeStringParser.parseTime(sinceWhen), acceptableTypes, read);
+        return serverManagementService.getOperatorEvents(serverNames, TimeStringParser.parseTime(sinceWhen), acceptableLevels, read);
       } catch (NumberFormatException nfe) {
         throw new ServiceExecutionException("Illegal time string: [" + sinceWhen + "]", nfe);
       }
