@@ -169,8 +169,7 @@ public class ServerStat {
 
     boolean secured = false;
     if (commandLineBuilder.hasOption("secured")) {
-      final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
-      securityManagerClass.getConstructor(boolean.class).newInstance(true);
+      initSecurityManager();
       secured = true;
     }
 
@@ -200,7 +199,12 @@ public class ServerStat {
     }
   }
 
-  private static void handleConfigFile(String username, String password, boolean secured, String configFilePath) {
+  private static void initSecurityManager() throws Exception {
+    final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
+    securityManagerClass.getConstructor(boolean.class).newInstance(true);
+  }
+
+  private static void handleConfigFile(String username, String password, boolean secured, String configFilePath) throws Exception {
     TcConfigDocument tcConfigDocument = null;
     try {
 
@@ -221,6 +225,7 @@ public class ServerStat {
       String hostName = server.getName();
       int jmxPort = computeJMXPort(server);
       if (!secured && tcConfigServers.isSetSecure() && tcConfigServers.getSecure()) {
+        initSecurityManager();
         secured = true;
       }
       ServerStat stat = new ServerStat(username, password, secured, host, hostName, jmxPort);
