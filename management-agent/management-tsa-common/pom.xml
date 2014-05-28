@@ -16,11 +16,11 @@
       <groupId>org.terracotta</groupId>
       <artifactId>management-core</artifactId>
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>com.terracotta</groupId>
       <artifactId>security-REST</artifactId>
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l2-common</artifactId>
       <version>${project.version}</version>
