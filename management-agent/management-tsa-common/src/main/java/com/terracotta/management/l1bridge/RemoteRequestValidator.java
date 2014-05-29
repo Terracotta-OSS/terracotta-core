@@ -24,13 +24,13 @@ import javax.ws.rs.core.UriInfo;
 /**
  * @author Ludovic Orban
  */
-public final class RemoteRequestValidatorV2 implements RequestValidator {
+public final class RemoteRequestValidator implements RequestValidator {
 
   private final RemoteAgentBridgeService remoteAgentBridgeService;
 
   private static final ThreadLocal<Set<String>> tlNode = new ThreadLocal<Set<String>>();
 
-  public RemoteRequestValidatorV2(RemoteAgentBridgeService remoteAgentBridgeService) {
+  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService) {
     this.remoteAgentBridgeService = remoteAgentBridgeService;
   }
 
@@ -60,8 +60,9 @@ public final class RemoteRequestValidatorV2 implements RequestValidator {
         for (String id : idsArray) {
           if (!nodes.contains(id) && !Representable.EMBEDDED_AGENT_ID.equals(id)) {
             throw new ResourceRuntimeException(
-                    String.format("Agent IDs must be in '%s' or '%s'.", nodes, Representable.EMBEDDED_AGENT_ID),
-                    Response.Status.BAD_REQUEST.getStatusCode());
+String.format("Agent IDs must be in '%s' or '%s'.", nodes,
+                Representable.EMBEDDED_AGENT_ID),
+                Response.Status.BAD_REQUEST.getStatusCode());
           }
         }
 
@@ -69,9 +70,9 @@ public final class RemoteRequestValidatorV2 implements RequestValidator {
       }
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException(
-              "Unexpected error validating request.",
-              see,
-              Response.Status.BAD_REQUEST.getStatusCode());
+          "Unexpected error validating request.",
+          see,
+          Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
