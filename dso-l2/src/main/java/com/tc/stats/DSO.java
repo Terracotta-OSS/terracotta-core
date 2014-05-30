@@ -8,6 +8,7 @@ import org.apache.commons.collections.set.ListOrderedSet;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.RemoteManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -91,6 +92,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final StorageDataStats                       storageStats;
   private final IndexManager                           indexManager;
   private final ConnectionPolicy                       connectionPolicy;
+  private final RemoteManagement                       remoteManagement;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
              final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher,
@@ -117,6 +119,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.offheapStats = offheapStats;
     this.storageStats = storageStats;
     this.connectionPolicy = managementContext.getConnectionPolicy();
+    this.remoteManagement = managementContext.getRemoteManagement();
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     txnMgr.addRootListener(new TransactionManagerListener());
@@ -832,5 +835,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public Map<String, Map<String, Long>> getStorageStats() {
     return storageStats.getStorageStats();
+  }
+
+  @Override
+  public RemoteManagement getRemoteManagement() {
+    return remoteManagement;
   }
 }

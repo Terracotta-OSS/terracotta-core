@@ -44,6 +44,7 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.UnclusteredLockID;
+import com.tc.object.management.ServiceID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.tx.ClientTransaction;
@@ -79,6 +80,7 @@ import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchBuilder.Search;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
@@ -86,6 +88,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import javax.management.MBeanServer;
 
@@ -992,5 +995,25 @@ public class ManagerImpl implements Manager {
   @Override
   public boolean isLockAwardValid(LockID lock, long awardID) {
     return lockManager.isLockAwardValid(lock, awardID);
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    ServiceID serviceID = ServiceID.newServiceID(service);
+    dso.getManagementServicesManager().registerService(serviceID, service, executorService);
+    return serviceID;
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+    if (!(serviceID instanceof ServiceID)) {
+      throw new IllegalArgumentException("serviceID object must be of class " + ServiceID.class.getName());
+    }
+    dso.getManagementServicesManager().unregisterService((ServiceID)serviceID);
+  }
+
+  @Override
+  public void sendEvent(Serializable event) {
+    dso.getManagementServicesManager().sendEvent(event);
   }
 }

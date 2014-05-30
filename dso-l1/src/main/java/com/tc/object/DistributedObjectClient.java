@@ -29,6 +29,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L1Management;
+import com.tc.management.ManagementServicesManager;
+import com.tc.management.ManagementServicesManagerImpl;
 import com.tc.management.TCClient;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
@@ -69,6 +71,7 @@ import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.handler.BatchTransactionAckHandler;
 import com.tc.object.handler.ClientCoordinationHandler;
+import com.tc.object.handler.ClientManagementHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMemberShipEventsHandler;
 import com.tc.object.handler.ClusterMetaDataHandler;
@@ -111,8 +114,12 @@ import com.tc.object.msg.GetAllSizeServerMapResponseMessageImpl;
 import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
 import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
 import com.tc.object.msg.InvalidateObjectsMessage;
+import com.tc.object.msg.InvokeRegisteredServiceMessage;
+import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
+import com.tc.object.msg.ListRegisteredServicesMessage;
+import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.msg.NodeMetaDataMessageImpl;
@@ -242,6 +249,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private ClientChannelEventController               clientChannelEventController;
   private RemoteResourceManager                      remoteResourceManager;
   private ServerEventListenerManager                 serverEventListenerManager;
+  private ManagementServicesManager                  managementServicesManager;
 
   private Stage                                      clusterEventsStage;
 
@@ -678,6 +686,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
                                                                 1, maxSize);
+
+    this.managementServicesManager = new ManagementServicesManagerImpl(Collections.<MessageChannel>singleton(channel.channel()),
+                                                                       channel.getClientIDProvider());
+
+    final Stage managementStage = stageManager.createStage(ClientConfigurationContext.MANAGEMENT_STAGE,
+        new ClientManagementHandler(managementServicesManager), 1, maxSize);
+
     final Stage receiveInvalidationStage = stageManager
         .createStage(ClientConfigurationContext.RECEIVE_INVALIDATE_OBJECTS_STAGE,
             new ReceiveInvalidationHandler(remoteServerMapManager), 1, TCPropertiesImpl.getProperties()
@@ -716,13 +731,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                          remoteObjectManager, this.clientTxnManager,
                                                                          this.clientHandshakeManager,
                                                                          this.clusterMetaDataManager,
-                                                                         this.rejoinManager);
+                                                                         this.rejoinManager,
+                                                                         this.managementServicesManager);
     // DO NOT create any stages after this call
     stageManager.startAll(cc, Collections.<PostInit>emptyList());
 
     initChannelMessageRouter(messageRouter, hydrateStage, lockResponse,
                              receiveRootID, receiveObject, receiveTransaction, oidRequestResponse, transactionResponse,
-                             batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, clusterMembershipEventStage,
+                             batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, managementStage, clusterMembershipEventStage,
                              clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage, receiveSearchQueryStage,
                              receiveSearchResultStage, receiveInvalidationStage,
                              resourceManagerStage);
@@ -907,6 +923,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 GetAllKeysServerMapRequestMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE, ListRegisteredServicesResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE, InvokeRegisteredServiceMessage.class);
+    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE, InvokeRegisteredServiceResponseMessage.class);
     return messageTypeClassMapping;
   }
 
@@ -914,7 +934,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                         Stage receiveRootID,
                                         Stage receiveObject, Stage receiveTransaction, Stage oidRequestResponse,
                                         Stage transactionResponse, Stage batchTxnAckStage, Stage pauseStage,
-                                        Stage jmxRemoteTunnelStage, Stage clusterMembershipEventStage,
+                                        Stage jmxRemoteTunnelStage, Stage managementStage,
+                                        Stage clusterMembershipEventStage,
                                         Stage clusterMetaDataStage, Stage syncWriteBatchRecvdHandler,
                                         Stage receiveServerMapStage,
                                         Stage receiveSearchQueryStage, Stage searchResultLoadStage,
@@ -940,6 +961,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, managementStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE, managementStage.getSink(),
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE,
                                    clusterMembershipEventStage.getSink(), hydrateSink);
@@ -1252,6 +1277,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   @Override
   public String[] processArguments() {
     return null;
+  }
+
+  public ManagementServicesManager getManagementServicesManager() {
+    return managementServicesManager;
   }
 
   private static class TCThreadGroupCleanerRunnable implements Runnable {

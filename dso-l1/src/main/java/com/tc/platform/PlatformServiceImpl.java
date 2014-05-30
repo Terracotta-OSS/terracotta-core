@@ -35,12 +35,14 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class PlatformServiceImpl implements PlatformService {
@@ -384,6 +386,21 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public long getClientId() {
     return manager.getClientID().toLong();
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    return manager.registerManagementService(service, executorService);
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+    manager.unregisterManagementService(serviceID);
+  }
+
+  @Override
+  public void sendEvent(Serializable event) {
+    manager.sendEvent(event);
   }
 
   private static class LockInfo {

@@ -33,9 +33,11 @@ import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.management.MBeanServer;
 
@@ -386,4 +388,10 @@ public interface Manager extends TerracottaLocking {
   public long getLockAwardIDFor(LockID lock);
 
   public boolean isLockAwardValid(LockID lock, long awardID);
+
+  Object registerManagementService(Object service, ExecutorService executorService);
+
+  void unregisterManagementService(Object serviceID);
+
+  void sendEvent(Serializable event);
 }

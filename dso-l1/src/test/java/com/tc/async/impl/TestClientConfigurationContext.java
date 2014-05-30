@@ -17,7 +17,7 @@ public class TestClientConfigurationContext extends ClientConfigurationContext {
   public ClientLockManager clientLockManager;
 
   public TestClientConfigurationContext() {
-    super(null, null, null, null, null, null, null);
+    super(null, null, null, null, null, null, null, null);
   }
 
   @Override

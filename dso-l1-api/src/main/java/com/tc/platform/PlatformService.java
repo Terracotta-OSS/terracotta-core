@@ -28,8 +28,10 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public interface PlatformService {
@@ -143,4 +145,10 @@ public interface PlatformService {
   boolean isLockedBeforeRejoin(Object lockID, LockLevel level);
 
   long getClientId();
+
+  Object registerManagementService(Object service, ExecutorService executorService);
+
+  void unregisterManagementService(Object serviceID);
+
+  void sendEvent(Serializable event);
 }

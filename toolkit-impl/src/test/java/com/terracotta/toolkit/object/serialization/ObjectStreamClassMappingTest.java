@@ -37,10 +37,12 @@ import com.terracottatech.search.NVPair;
 
 import java.io.IOException;
 import java.io.ObjectStreamClass;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
@@ -372,6 +374,21 @@ public class ObjectStreamClassMappingTest {
     @Override
     public long getClientId() {
       return -1;
+    }
+
+    @Override
+    public Object registerManagementService(Object service, ExecutorService executorService) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unregisterManagementService(Object serviceID) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sendEvent(Serializable event) {
+      throw new UnsupportedOperationException();
     }
   }
 

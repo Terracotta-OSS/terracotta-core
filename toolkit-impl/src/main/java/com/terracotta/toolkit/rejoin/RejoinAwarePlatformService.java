@@ -33,8 +33,10 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class RejoinAwarePlatformService implements PlatformService {
@@ -568,5 +570,20 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public long getClientId() {
     return delegate.getClientId();
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    return delegate.registerManagementService(service, executorService);
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+    delegate.unregisterManagementService(serviceID);
+  }
+
+  @Override
+  public void sendEvent(Serializable event) {
+    delegate.sendEvent(event);
   }
 }

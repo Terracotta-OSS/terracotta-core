@@ -79,6 +79,10 @@ public final class TCMessageType {
   public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
   public static final int           TYPE_SEARCH_RESULTS_REQUEST_MESSAGE               = 75;
   public static final int           TYPE_SEARCH_RESULTS_RESPONSE_MESSAGE              = 76;
+  public static final int           TYPE_LIST_REGISTERED_SERVICES_MESSAGE             = 80;
+  public static final int           TYPE_LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE    = 81;
+  public static final int           TYPE_INVOKE_REGISTERED_SERVICE_MESSAGE            = 82;
+  public static final int           TYPE_INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE   = 83;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType REQUEST_ROOT_MESSAGE                              = new TCMessageType();
@@ -128,6 +132,10 @@ public final class TCMessageType {
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
   public static final TCMessageType RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE           = new TCMessageType();
+  public static final TCMessageType LIST_REGISTERED_SERVICES_MESSAGE                  = new TCMessageType();
+  public static final TCMessageType LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE         = new TCMessageType();
+  public static final TCMessageType INVOKE_REGISTERED_SERVICE_MESSAGE                 = new TCMessageType();
+  public static final TCMessageType INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE        = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return typeMap.get(i);

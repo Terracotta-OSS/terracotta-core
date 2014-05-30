@@ -81,6 +81,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String GARBAGE_COLLECT_STAGE                              = "garbage_collect_stage";
   public static final String LOW_WATERMARK_CALLBACK_STAGE                       = "low_watermark_callback_stage";
   public static final String REGISTER_SERVER_EVENT_LISTENER_STAGE               = "register_server_event_listener_stage";
+  public static final String MANAGEMENT_STAGE                                   = "management_stage";
 
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";

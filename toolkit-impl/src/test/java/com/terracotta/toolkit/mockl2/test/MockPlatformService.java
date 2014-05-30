@@ -44,9 +44,11 @@ import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl;
 import com.terracottatech.search.NVPair;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MockPlatformService implements PlatformService {
@@ -391,5 +393,20 @@ public class MockPlatformService implements PlatformService {
   @Override
   public long getClientId() {
     return -1;
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void sendEvent(Serializable event) {
+    throw new UnsupportedOperationException();
   }
 }

@@ -36,9 +36,11 @@ import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.management.MBeanServer;
 
@@ -503,5 +505,18 @@ public class NullManager implements Manager {
   @Override
   public boolean isLockAwardValid(LockID lock, long awardID) {
     throw new ImplementMe();
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    return null;
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+  }
+
+  @Override
+  public void sendEvent(Serializable event) {
   }
 }

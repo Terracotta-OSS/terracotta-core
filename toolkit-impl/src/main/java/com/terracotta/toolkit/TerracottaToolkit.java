@@ -30,6 +30,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.feature.ManagementInternalFeature;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -112,6 +113,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final ClusterInfo                                       clusterInfoInstance;
   protected final boolean                                         isNonStop;
   private final ToolkitTransactionController                      transactionController;
+  private final ManagementInternalFeature                         managementInternalFeature;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider,
                            boolean isNonStop, ClassLoader loader) {
@@ -163,6 +165,7 @@ public class TerracottaToolkit implements ToolkitInternal {
 
     clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, context);
     transactionController = new ToolkitTransactionFeatureImpl(platformService);
+    managementInternalFeature = new ManagementInternalFeatureImpl(platformService);
   }
 
   private SerializationStrategy createSerializationStrategy(ClassLoader loader) {
@@ -359,6 +362,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     Preconditions.checkNotNull(type);
     if (type == ToolkitFeatureTypeInternal.TRANSACTION) { return (T) transactionController; }
     if (type == ToolkitFeatureTypeInternal.LICENSE) { return (T) NoopLicenseFeature.SINGLETON; }
+    if (type == ToolkitFeatureTypeInternal.MANAGEMENT) { return (T) managementInternalFeature; }
     return ToolkitInstanceProxy.newFeatureNotSupportedProxy(type.getFeatureClass());
   }
 }

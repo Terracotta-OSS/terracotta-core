@@ -27,6 +27,7 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.feature.ManagementInternalFeature;
 import org.terracotta.toolkit.internal.feature.NonStopInternalFeature;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
@@ -66,6 +67,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   private final NonStopClusterInfo             nonStopClusterInfo;
   private final PlatformService                platformService;
   private final NonStopInitializationService   nonStopInitiailzationService;
+  private final ManagementInternalFeature      managementInternalFeature;
 
   public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
     this.platformService = platformService;
@@ -84,6 +86,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     this.nonStopInternalFeature = new NonStopInternalFeatureImpl(context);
 
     this.nonStopInitiailzationService = new NonStopInitializationService(context);
+    this.managementInternalFeature = new ManagementInternalFeatureImpl(platformService);
   }
 
   private ToolkitInternal getInitializedToolkit() {
@@ -338,6 +341,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   @Override
   public <T extends ToolkitFeature> T getFeature(ToolkitFeatureTypeInternal<T> type) {
     if (type == ToolkitFeatureTypeInternal.NONSTOP) { return (T) nonStopInternalFeature; }
+    if (type == ToolkitFeatureTypeInternal.MANAGEMENT) { return (T) managementInternalFeature; }
     return getInitializedToolkit().getFeature(type);
   }
 
