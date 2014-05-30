@@ -17,6 +17,7 @@ import com.terracotta.management.resource.services.BackupResourceServiceImpl;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImpl;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImpl;
 import com.terracotta.management.resource.services.JmxResourceServiceImpl;
+import com.terracotta.management.resource.services.LicenseResourceServiceImpl;
 import com.terracotta.management.resource.services.LogsResourceServiceImpl;
 import com.terracotta.management.resource.services.MonitoringResourceServiceImpl;
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImpl;
@@ -30,6 +31,7 @@ import com.terracotta.management.service.BackupService;
 import com.terracotta.management.service.ConfigurationService;
 import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.JmxService;
+import com.terracotta.management.service.LicenseService;
 import com.terracotta.management.service.LogsService;
 import com.terracotta.management.service.MonitoringService;
 import com.terracotta.management.service.OperatorEventsService;
@@ -42,6 +44,7 @@ import com.terracotta.management.service.impl.ClientManagementService;
 import com.terracotta.management.service.impl.ConfigurationServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.JmxServiceImpl;
+import com.terracotta.management.service.impl.LicenseServiceImpl;
 import com.terracotta.management.service.impl.LogsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
 import com.terracotta.management.service.impl.OperatorEventsServiceImpl;
@@ -76,6 +79,7 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     s.add(TopologyResourceServiceImpl.class);
     s.add(IdentityAssertionResourceService.class);
     s.add(JmxResourceServiceImpl.class);
+    s.add(LicenseResourceServiceImpl.class);
 
     s.add(net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.CachesResourceServiceImpl.class);
@@ -119,9 +123,10 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
      clientManagementService));
      serviceClasses.put(BackupService.class, new BackupServiceImpl(serverManagementService));
      serviceClasses.put(LogsService.class, new LogsServiceImpl(serverManagementService));
-    serviceClasses.put(OperatorEventsService.class, operatorEventsServiceImpl);
+     serviceClasses.put(OperatorEventsService.class, operatorEventsServiceImpl);
      serviceClasses.put(ShutdownService.class, new ShutdownServiceImpl(serverManagementService));
      serviceClasses.put(JmxService.class, new JmxServiceImpl(serverManagementService));
+     serviceClasses.put(LicenseService.class, new LicenseServiceImpl(serverManagementService));
 
     
     // / L1 bridge and Security Services ///

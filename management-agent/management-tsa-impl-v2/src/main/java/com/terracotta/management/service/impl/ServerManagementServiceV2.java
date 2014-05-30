@@ -17,6 +17,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.terracotta.management.resource.BackupEntityV2;
 import com.terracotta.management.resource.ConfigEntityV2;
+import com.terracotta.management.resource.LicenseEntityV2;
 import com.terracotta.management.resource.LogEntityV2;
 import com.terracotta.management.resource.MBeanEntityV2;
 import com.terracotta.management.resource.OperatorEventEntityV2;
@@ -290,6 +291,28 @@ public class ServerManagementServiceV2 {
     });
   }
 
+  public Collection<LicenseEntityV2> getLicenseProperties(Set<String> serverNames) throws ServiceExecutionException {
+    return forEachServer("getLicenseProperties", serverNames, new ForEachServer<LicenseEntityV2>() {
+      @Override
+      public Collection<LicenseEntityV2> queryLocalServer(L2Info member) {
+        LicenseEntityV2 licenseV2 = new LicenseEntityV2();
+        licenseV2.setVersion(localManagementSource.getVersion());
+        licenseV2.setProperties(localManagementSource.getLicenseProperties());
+        return Collections.singleton(licenseV2);
+      }
+
+      @Override
+      public Collection<LicenseEntityV2> queryRemoteServer(L2Info member) throws Exception {
+        UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
+            .path("agents")
+            .path("licenseProperties")
+            .matrixParam("serverNames", member.name());
+
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), LicenseEntityV2.class);
+      }
+    });
+  }
+  
   public Collection<LogEntityV2> getLogs(Set<String> serverNames, final Long sinceWhen) throws ServiceExecutionException {
     return forEachServer("getLogs", serverNames, new ForEachServer<LogEntityV2>() {
       @Override

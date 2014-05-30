@@ -3,6 +3,7 @@
  */
 package com.terracotta.management.service.impl.util;
 
+import org.terracotta.license.LicenseConstants;
 import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
@@ -10,6 +11,7 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.TopologyReloadStatus;
+import com.tc.license.LicenseManager;
 import com.tc.license.ProductID;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -40,6 +42,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
 
@@ -559,5 +562,22 @@ public class LocalManagementSource {
     }
 
     return errors;
+  }
+
+  /**
+   * Returns license properties of this L2 without the signature
+   */
+  public Properties getLicenseProperties() {
+    try {
+      Properties licenseProperties = new Properties();
+      // make a copy of license properties
+      licenseProperties.putAll(LicenseManager.getLicense().getProperties());
+
+      // then remove the signature
+      licenseProperties.remove(LicenseConstants.LICENSE_SIGNATURE);
+      return licenseProperties;
+    } catch (Exception e) {
+      throw new ManagementSourceException(e);
+    }
   }
 }
