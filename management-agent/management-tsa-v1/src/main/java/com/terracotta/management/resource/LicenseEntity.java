@@ -10,6 +10,7 @@ import java.util.Properties;
  */
 public class LicenseEntity extends AbstractTsaEntity{
   private Properties properties = new Properties();
+  private String     sourceId;
 
   public Properties getProperties() {
     return properties;
@@ -17,5 +18,13 @@ public class LicenseEntity extends AbstractTsaEntity{
 
   public void setProperties(Properties properties) {
     this.properties = properties;
+  }
+
+  public String getSourceId() {
+    return sourceId;
+  }
+
+  public void setSourceId(String sourceId) {
+    this.sourceId = sourceId;
   }
 }
