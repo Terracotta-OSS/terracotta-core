@@ -22,27 +22,27 @@ public class ResponseHolder implements TCSerializable {
   }
 
   public ResponseHolder(Exception exception) {
-    this.serializedException = RemoteCallHolder.serialize(exception);
+    setException(exception);
   }
 
   public ResponseHolder(Object response) {
-    this.serializedResponse = RemoteCallHolder.serialize(response);
+    setResponse(response);
   }
 
   public Exception getException(final ClassLoader classLoader) throws ClassNotFoundException {
-    return (Exception)RemoteCallHolder.deserialize(serializedException, classLoader);
+    return (Exception)SerializationHelper.deserialize(serializedException, classLoader);
   }
 
   public void setException(Exception exception) {
-    this.serializedException = RemoteCallHolder.serialize(exception);
+    this.serializedException = SerializationHelper.serialize(exception);
   }
 
   public Object getResponse(ClassLoader classLoader) throws ClassNotFoundException {
-    return RemoteCallHolder.deserialize(serializedResponse, classLoader);
+    return SerializationHelper.deserialize(serializedResponse, classLoader);
   }
 
   public void setResponse(Object response) {
-    this.serializedResponse = RemoteCallHolder.serialize(response);
+    this.serializedResponse = SerializationHelper.serialize(response);
   }
 
   @Override
