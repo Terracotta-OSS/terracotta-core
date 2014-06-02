@@ -84,12 +84,12 @@ public class RemoteManagement {
     final CountDownLatch latch = new CountDownLatch(1);
     serverManagementHandler.registerResponseListener(message.getManagementRequestID(), new ManagementResponseListener() {
       @Override
-      public void onResponse(AbstractManagementMessage message) {
-        ListRegisteredServicesResponseMessage response = (ListRegisteredServicesResponseMessage)message;
+      public void onResponse(AbstractManagementMessage mgmtMessage) {
+        ListRegisteredServicesResponseMessage response = (ListRegisteredServicesResponseMessage)mgmtMessage;
 
         remoteCallDescriptors.set(response.getRemoteCallDescriptors());
 
-        serverManagementHandler.unregisterResponseListener(message.getManagementRequestID());
+        serverManagementHandler.unregisterResponseListener(mgmtMessage.getManagementRequestID());
         latch.countDown();
       }
     });
