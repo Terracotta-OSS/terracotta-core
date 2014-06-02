@@ -10,16 +10,12 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
-import com.terracotta.management.resource.ClientEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
-import com.terracotta.management.service.OperatorEventsServiceV2;
 import com.terracotta.management.service.TopologyServiceV2;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,11 +39,9 @@ public class TopologyResourceServiceImplV2 {
 
   private final TopologyServiceV2 topologyService;
   private final RequestValidator requestValidator;
-  private final OperatorEventsServiceV2 operatorEventsService;
 
   public TopologyResourceServiceImplV2() {
     this.topologyService = ServiceLocator.locate(TopologyServiceV2.class);
-    this.operatorEventsService = ServiceLocator.locate(OperatorEventsServiceV2.class);
     this.requestValidator = ServiceLocator.locate(RequestValidator.class);
   }
 
@@ -66,13 +60,7 @@ public class TopologyResourceServiceImplV2 {
 
     try {
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
-
-      TopologyEntityV2 result = new TopologyEntityV2();
-      result.setVersion(this.getClass().getPackage().getImplementationVersion());
-      result.getServerGroupEntities().addAll(topologyService.getServerGroups(null));
-      result.getClientEntities().addAll(topologyService.getClients(productIDs));
-      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(null));
-      return Collections.singleton(result);
+      return topologyService.getTopologies(productIDs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -95,22 +83,17 @@ public class TopologyResourceServiceImplV2 {
     try {
       String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
-
-      TopologyEntityV2 result = new TopologyEntityV2();
-      result.setVersion(this.getClass().getPackage().getImplementationVersion());
-      result.getServerGroupEntities().addAll(topologyService.getServerGroups(serverNames));
-      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(serverNames));
-      return Collections.singleton(result);
+      return topologyService.getServerTopologies(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA servers topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
   /**
-   * Get a {@code Collection} of {@link ClientEntityV2} objects representing the connected clients provided by the
+   * Get a {@code Collection} of {@link ClientEntity} objects representing the connected clients provided by the
    * associated monitorable entity's agent given the request path.
    *
-   * @return a collection of {@link ClientEntityV2} objects.
+   * @return a collection of {@link ClientEntity} objects.
    */
   @GET
   @Path("/v2/clients")
@@ -122,11 +105,7 @@ public class TopologyResourceServiceImplV2 {
 
     try {
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
-
-      TopologyEntityV2 result = new TopologyEntityV2();
-      result.setVersion(this.getClass().getPackage().getImplementationVersion());
-      result.getClientEntities().addAll(topologyService.getClients(productIDs));
-      return Collections.singleton(result);
+      return topologyService.getConnectedClients(productIDs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA clients topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -148,14 +127,9 @@ public class TopologyResourceServiceImplV2 {
     try {
       String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
-
-      TopologyEntityV2 result = new TopologyEntityV2();
-      result.setVersion(this.getClass().getPackage().getImplementationVersion());
-      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(serverNames));
-      return Collections.singleton(result);
+      return topologyService.getUnreadOperatorEventCount(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA unread operator events count", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
-
 }

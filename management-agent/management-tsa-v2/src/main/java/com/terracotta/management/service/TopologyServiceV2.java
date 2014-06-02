@@ -5,8 +5,7 @@ package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
 
-import com.terracotta.management.resource.ClientEntityV2;
-import com.terracotta.management.resource.ServerGroupEntityV2;
+import com.terracotta.management.resource.TopologyEntityV2;
 
 import java.util.Collection;
 import java.util.Set;
@@ -19,17 +18,35 @@ import java.util.Set;
 public interface TopologyServiceV2 {
 
   /**
-   * Get the topology of the current TSA
-   * @return a collection of server groups
+   * Get the server topology of the current TSA
+   * 
+   * @return a collection of server names
    * @throws ServiceExecutionException
    */
-  Collection<ServerGroupEntityV2> getServerGroups(Set<String> serverNames) throws ServiceExecutionException;
+  Collection<TopologyEntityV2> getServerTopologies(Set<String> serverNames) throws ServiceExecutionException;
+
+  /**
+   * Get the unread operator events of the current TSA
+   * 
+   * @return a collection of server names
+   * @throws ServiceExecutionException
+   */
+  Collection<TopologyEntityV2> getUnreadOperatorEventCount(Set<String> serverNames) throws ServiceExecutionException;
 
   /**
    * Get the connected clients of the current TSA
-   * @return a collection of currently connected clients
+   * 
+   * @return a collection of productIds
    * @throws ServiceExecutionException
    */
-  Collection<ClientEntityV2> getClients(Set<String> clientProductIds) throws ServiceExecutionException;
+  Collection<TopologyEntityV2> getConnectedClients(Set<String> productIDs) throws ServiceExecutionException;
+
+  /**
+   * Get the topology of the current TSA
+   * 
+   * @return a collection of productIds
+   * @throws ServiceExecutionException
+   */
+  Collection<TopologyEntityV2> getTopologies(Set<String> productIDs) throws ServiceExecutionException;
 
 }
