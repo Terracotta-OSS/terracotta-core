@@ -13,7 +13,7 @@ import org.terracotta.session.management.SessionsServiceV2;
 import com.terracotta.management.l1bridge.RemoteAgentServiceV2;
 import com.terracotta.management.l1bridge.RemoteRequestValidator;
 import com.terracotta.management.l1bridge.RemoteServiceStubGenerator;
-import com.terracotta.management.resource.services.AllEventsResourceService;
+//import com.terracotta.management.resource.services.AllEventsResourceService;
 import com.terracotta.management.resource.services.BackupResourceServiceImplV2;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImplV2;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImplV2;
@@ -79,7 +79,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     s.add(TopologyResourceServiceImplV2.class);
     s.add(IdentityAssertionResourceService.class);
     s.add(JmxResourceServiceImplV2.class);
-    s.add(AllEventsResourceService.class);
+//    s.add(AllEventsResourceService.class);
 
     s.add(net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImplV2.class);
     s.add(net.sf.ehcache.management.resource.services.CachesResourceServiceImplV2.class);
