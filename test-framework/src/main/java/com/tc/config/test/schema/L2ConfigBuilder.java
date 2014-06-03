@@ -165,13 +165,14 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private static final String[] AUTHENTICATION = new String[] { "password-file", "access-file" };
 
   private static final String[] ALL_PROPERTIES = concat(new Object[] { L2, AUTHENTICATION });
+  private static final boolean  JMX_ENABLED    = true;
 
   @Override
   public String toString() {
     String out = "";
 
     out += indent() + "<server host=" + (this.host != null ? "\"" + this.host + "\"" : "\"%i\"")
-           + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
+           + (this.name != null ? " name=\"" + this.name + "\"" : "") + " jmx-enabled=\"" + JMX_ENABLED + "\">\n";
 
     out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + getOffHeapConfig()
            + getSecurityConfig();
