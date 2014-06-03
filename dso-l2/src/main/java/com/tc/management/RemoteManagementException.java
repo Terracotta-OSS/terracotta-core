@@ -12,4 +12,8 @@ public class RemoteManagementException extends Exception {
   public RemoteManagementException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public RemoteManagementException(String message) {
+    super(message);
+  }
 }

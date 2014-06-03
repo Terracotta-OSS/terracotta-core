@@ -75,9 +75,18 @@ public class RemoteManagement {
     serverManagementHandler.unregisterEventListener(listener);
   }
 
-  public Set<RemoteCallDescriptor> listRegisteredServices(NodeID node) throws NoSuchChannelException, InterruptedException {
-    ListRegisteredServicesMessage message = (ListRegisteredServicesMessage)channelManager.getActiveChannel(node)
-        .createMessage(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE);
+  public Set<NodeID> getAllClientIDs() {
+    return channelManager.getAllClientIDs();
+  }
+
+  public Set<RemoteCallDescriptor> listRegisteredServices(NodeID node, long timeout, TimeUnit unit) throws RemoteManagementException {
+    ListRegisteredServicesMessage message;
+    try {
+      message = (ListRegisteredServicesMessage)channelManager.getActiveChannel(node)
+          .createMessage(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE);
+    } catch (NoSuchChannelException nsce) {
+      throw new RemoteManagementException("Error listing registered management services", nsce);
+    }
 
     final AtomicReference<Set<RemoteCallDescriptor>> remoteCallDescriptors = new AtomicReference<Set<RemoteCallDescriptor>>();
 
@@ -94,15 +103,29 @@ public class RemoteManagement {
       }
     });
     message.send();
-    latch.await();
+
+    try {
+      if (!latch.await(timeout, unit)) {
+        serverManagementHandler.unregisterResponseListener(message.getManagementRequestID());
+        throw new RemoteManagementException("Timed out while waiting for listRegisteredServices() response");
+      }
+    } catch (InterruptedException ie) {
+      serverManagementHandler.unregisterResponseListener(message.getManagementRequestID());
+      throw new RemoteManagementException("Interrupted while waiting for listRegisteredServices() response", ie);
+    }
 
     return remoteCallDescriptors.get();
   }
 
 
-  public Future<Object> asyncRemoteCall(final RemoteCallDescriptor remoteCallDescriptor, final ClassLoader classLoader, Object... args) throws Exception {
-    InvokeRegisteredServiceMessage invokeMessage = (InvokeRegisteredServiceMessage)channelManager.getActiveChannel(remoteCallDescriptor.getL1Node())
-        .createMessage(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE);
+  public Future<Object> asyncRemoteCall(final RemoteCallDescriptor remoteCallDescriptor, final ClassLoader classLoader, Object... args) throws RemoteManagementException {
+    InvokeRegisteredServiceMessage invokeMessage = null;
+    try {
+      invokeMessage = (InvokeRegisteredServiceMessage)channelManager.getActiveChannel(remoteCallDescriptor.getL1Node())
+          .createMessage(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE);
+    } catch (NoSuchChannelException nsce) {
+      throw new RemoteManagementException("Error calling management services", nsce);
+    }
 
     final AtomicReference<Exception> exception = new AtomicReference<Exception>();
     final AtomicReference<Object> response = new AtomicReference<Object>();
@@ -132,13 +155,14 @@ public class RemoteManagement {
     });
     invokeMessage.send();
 
-    Future<Object> future = new Future<Object>() {
+    return new Future<Object>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
         ManagementRequestID managementRequestID = managementRequestIDRef.get();
         if (managementRequestID != null) {
           serverManagementHandler.unregisterResponseListener(managementRequestID);
           managementRequestIDRef.set(null);
+          latch.countDown();
           return true;
         } else {
           return false;
@@ -158,8 +182,11 @@ public class RemoteManagement {
       @Override
       public Object get() throws InterruptedException, ExecutionException {
         latch.await();
+        if (isCancelled()) {
+          throw new ExecutionException(new RemoteManagementException("Management remote L1 call on " + remoteCallDescriptor.getL1Node() + " got cancelled"));
+        }
         if (exception.get() != null) {
-          throw new ExecutionException(new RemoteManagementException("Error performing remote L1 call on " + remoteCallDescriptor.getL1Node(), exception.get()));
+          throw new ExecutionException(new RemoteManagementException("Error performing management remote L1 call on " + remoteCallDescriptor.getL1Node(), exception.get()));
         }
         return response.get();
       }
@@ -167,16 +194,17 @@ public class RemoteManagement {
       @Override
       public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         if (!latch.await(timeout, unit)) {
-          throw new TimeoutException();
+          throw new TimeoutException("Timed out waiting for management remote L1 call response");
+        }
+        if (isCancelled()) {
+          throw new ExecutionException(new RemoteManagementException("Management remote L1 call on " + remoteCallDescriptor.getL1Node() + " got cancelled"));
         }
         if (exception.get() != null) {
-          throw new ExecutionException(new RemoteManagementException("Error performing remote L1 call on " + remoteCallDescriptor.getL1Node(), exception.get()));
+          throw new ExecutionException(new RemoteManagementException("Error performing management remote L1 call on " + remoteCallDescriptor.getL1Node(), exception.get()));
         }
         return response.get();
       }
     };
-
-    return future;
   }
 
 /*
