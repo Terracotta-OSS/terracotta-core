@@ -26,11 +26,12 @@ public class L2Info implements java.io.Serializable {
   private final int          tsaPort;
   private final String       tsaGroupBind;
   private final int          tsaGroupPort;
+  private final int          managementPort;
   private final String       securityHostname;
   private Integer            hashCode;
 
   public L2Info(String name, String host, int jmxPort, int tsaPort,
-                String tsaGroupBind, int tsaGroupPort, String securityHostname) {
+                String tsaGroupBind, int tsaGroupPort, int managementPort, String securityHostname) {
     Assert.assertNotBlank(host);
     Assert.eval(jmxPort >= 0);
 
@@ -40,13 +41,15 @@ public class L2Info implements java.io.Serializable {
     this.tsaPort = tsaPort;
     this.tsaGroupBind = tsaGroupBind;
     this.tsaGroupPort = tsaGroupPort;
+    this.managementPort = managementPort;
     this.securityHostname = securityHostname;
 
     safeGetHostAddress();
   }
 
   public L2Info(L2Info other) {
-    this(other.name(), other.host(), other.jmxPort(), other.tsaPort(), other.tsaGroupBind(), other.tsaGroupPort(), other.securityHostname());
+    this(other.name(), other.host(), other.jmxPort(), other.tsaPort(), other.tsaGroupBind(), other.tsaGroupPort(),
+         other.managementPort(), other.securityHostname());
   }
 
   public String name() {
@@ -95,6 +98,10 @@ public class L2Info implements java.io.Serializable {
     return this.jmxPort;
   }
 
+  public int managementPort() {
+    return this.managementPort;
+  }
+
   public int tsaPort() {
     return this.tsaPort;
   }
@@ -124,6 +131,7 @@ public class L2Info implements java.io.Serializable {
         builder.append(tsaGroupBind);
       }
       builder.append(tsaGroupPort);
+      builder.append(managementPort);
       builder.append(securityHostname);
       builder.append(host);
       hashCode = Integer.valueOf(builder.toHashCode());
@@ -140,6 +148,7 @@ public class L2Info implements java.io.Serializable {
            && tsaPort() == other.tsaPort()
            && tsaGroupPort() == other.tsaGroupPort()
            && StringUtils.equals(tsaGroupBind(), other.tsaGroupBind())
+           && managementPort() == other.managementPort()
            && StringUtils.equals(securityHostname(), other.securityHostname())
            && StringUtils.equals(host(), other.host());
   }
@@ -149,6 +158,7 @@ public class L2Info implements java.io.Serializable {
     if (jmxPort() != other.jmxPort()) return false;
     if (tsaPort() != other.tsaPort()) return false;
     if (tsaGroupPort() != other.tsaGroupPort()) return false;
+    if (managementPort() != other.managementPort()) return false;
     if (!StringUtils.equals(securityHostname(), other.securityHostname())) return false;
     if (!StringUtils.equals(tsaGroupBind(), other.tsaGroupBind())) return false;
     String hostname = safeGetCanonicalHostName();

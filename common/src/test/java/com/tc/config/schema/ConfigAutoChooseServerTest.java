@@ -61,6 +61,7 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
+      Assert.assertEquals(9540, configSetupMgr.dsoL2Config().managementPort().getIntValue());
 
     } catch (Throwable e) {
       throw new AssertionError(e);

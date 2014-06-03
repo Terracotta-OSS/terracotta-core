@@ -77,4 +77,15 @@ public class CommonL2ConfigObjectTest extends ConfigObjectTestBase {
     assertEquals(3285, object.jmxPort().getIntValue());
   }
 
+  public void testManagementPort() throws Exception {
+
+    assertEquals(9540, object.managementPort().getIntValue());
+    checkNoListener();
+
+    Server server = (Server) context().bean();
+    server.getManagementPort().setIntValue(1234);
+
+    assertEquals(1234, object.managementPort().getIntValue());
+  }
+
 }

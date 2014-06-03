@@ -20,9 +20,10 @@ public class GroupsData implements Serializable {
   private final String[] logDirectoryPath;
   private final String[] backupDirectoryPath;
   private final int      groupIndex;
+  private final int[]    managementPorts;
 
-  public GroupsData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, String[] serverNames,
-                    int[] proxyTsaPorts, int[] proxyTsaGroupPorts, String[] dataDirectoryPath,
+  public GroupsData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, int[] managementPorts,
+                    String[] serverNames, int[] proxyTsaPorts, int[] proxyTsaGroupPorts, String[] dataDirectoryPath,
                     String[] logDirectoryPath,
                     String[] backupDirectoryPath, final int groupIndex) {
     this.groupName = groupName;
@@ -32,6 +33,7 @@ public class GroupsData implements Serializable {
     this.tsaGroupPorts = tsaGroupPorts;
     this.proxyTsaPorts = proxyTsaPorts;
     this.proxyTsaGroupPorts = proxyTsaGroupPorts;
+    this.managementPorts = managementPorts;
     this.dataDirectoryPath = dataDirectoryPath;
     this.logDirectoryPath = logDirectoryPath;
     this.backupDirectoryPath = backupDirectoryPath;
@@ -56,6 +58,12 @@ public class GroupsData implements Serializable {
     Assert.assertTrue("server index > numOfServers, serverIndex: " + serverIndex + " numOfServers: "
                       + this.jmxPorts.length, (serverIndex >= 0 && serverIndex < this.jmxPorts.length));
     return jmxPorts[serverIndex];
+  }
+
+  public int getManagementPort(final int serverIndex) {
+    Assert.assertTrue("server index > numOfServers, serverIndex: " + serverIndex + " numOfServers: "
+                      + this.jmxPorts.length, (serverIndex >= 0 && serverIndex < this.managementPorts.length));
+    return managementPorts[serverIndex];
   }
 
   public int getTsaGroupPort(final int serverIndex) {
@@ -131,6 +139,11 @@ public class GroupsData implements Serializable {
     strBuilder.append("tsaGroupPorts: ");
     for (int tsaGroupPort : tsaGroupPorts) {
       strBuilder.append(tsaGroupPort + ", ");
+    }
+
+    strBuilder.append("managementPorts: ");
+    for (int managementPort : managementPorts) {
+      strBuilder.append(managementPort + ", ");
     }
 
     return strBuilder.toString();

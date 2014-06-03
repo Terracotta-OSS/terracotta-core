@@ -26,6 +26,8 @@ public interface L2DSOConfig extends Config {
 
   BindPort tsaGroupPort();
 
+  BindPort managementPort();
+
   String host();
 
   String serverName();

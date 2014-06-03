@@ -209,6 +209,9 @@ public class TcConfigBuilder {
 
       if (!server.isSetTsaGroupPort()) server.addNewTsaGroupPort();
       server.getTsaGroupPort().setIntValue(pc.chooseRandomPort());
+      
+      if (!server.isSetManagementPort()) server.addNewManagementPort();
+      server.getManagementPort().setIntValue(pc.chooseRandomPort());
     }
   }
 
