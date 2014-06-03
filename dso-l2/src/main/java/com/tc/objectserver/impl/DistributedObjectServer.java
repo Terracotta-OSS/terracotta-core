@@ -1390,11 +1390,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.error("Error shutting down jmx server", t);
     }
 
-    // XXX: not calling basicStop() here, it creates a race condition with the Sleepycat's own writer lock (see
-    // LKC-3239) Provided we ever fix graceful server shutdown, we'll want to uncommnet this at that time and/or get rid
-    // of this method completely
-
-    // basicStop();
+    basicStop();
   }
 
   private void basicStop() {
@@ -1449,9 +1445,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       jmxPort = new PortChooser().chooseRandomPort();
     }
 
-    this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean,
-                                                              this.configSetupManager, this, bind, jmxPort,
-                                                              remoteEventsSink, this, serverDBBackupMBean);
+    this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean, this.configSetupManager, this,
+                                                              bind, jmxPort, remoteEventsSink, this,
+                                                              serverDBBackupMBean);
 
     this.l2Management.start();
   }
@@ -1468,10 +1464,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public OffheapStats getOffheapStats() {
     Collection<MonitoredResource> list = persistor.getMonitoredResources();
-    for ( MonitoredResource rsrc : list ) {
-        if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP ) {
-            return new OffheapStatsImpl(rsrc);
-        }
+    for (MonitoredResource rsrc : list) {
+      if (rsrc.getType() == MonitoredResource.Type.OFFHEAP) { return new OffheapStatsImpl(rsrc); }
     }
     return null;
   }

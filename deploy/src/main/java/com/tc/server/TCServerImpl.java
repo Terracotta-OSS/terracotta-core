@@ -95,6 +95,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
@@ -435,6 +436,12 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if (logger.isDebugEnabled()) {
       consoleLogger.debug("Stopping TC server...");
+    }
+
+    try {
+      unregisterDSOMBeans(this.dsoServer.getMBeanServer());
+    } catch (Exception e) {
+      logger.error("Error unregistering mbeans", e);
     }
 
     if (this.terracottaConnector != null) {
@@ -827,6 +834,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider,
                            this.dsoServer.getOffheapStats(), this.dsoServer.getStorageStats());
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
+  }
+
+  protected void unregisterDSOMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
+    mbs.unregisterMBean(L2MBeanNames.DSO);
   }
 
   // TODO: check that this is not needed then remove
