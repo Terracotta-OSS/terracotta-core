@@ -7,8 +7,8 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.ManagementResponseListener;
+import com.tc.net.NodeID;
 import com.tc.object.management.ManagementRequestID;
-import com.tc.object.msg.AbstractManagementMessage;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.util.Assert;
@@ -31,12 +31,17 @@ public class ServerManagementHandler extends AbstractEventHandler {
       ManagementRequestID managementRequestID = response.getManagementRequestID();
       ManagementResponseListener responseListener = responseListenerMap.get(managementRequestID);
       if (responseListener != null) {
-        responseListener.onResponse(response);
+        try {
+          responseListener.onResponse(response);
+        } catch (RuntimeException re) {
+          getLogger().warn("response listener threw RuntimeException", re);
+        }
       } else {
         getLogger().warn("no listener registered for response " + managementRequestID + " - dropping it");
       }
     } else if (context instanceof InvokeRegisteredServiceResponseMessage) {
       InvokeRegisteredServiceResponseMessage response = (InvokeRegisteredServiceResponseMessage)context;
+      NodeID sourceNodeID = response.getSourceNodeID();
 
       ManagementRequestID managementRequestID = response.getManagementRequestID();
 
@@ -45,7 +50,9 @@ public class ServerManagementHandler extends AbstractEventHandler {
         for (ManagementEventListener eventListener : eventListeners) {
           try {
             Serializable event = (Serializable)response.getResponseHolder().getResponse(eventListener.getClassLoader());
-            eventListener.onEvent(event);
+            eventListener.onEvent(event, sourceNodeID);
+          } catch (RuntimeException re) {
+            getLogger().warn("event listener threw RuntimeException", re);
           } catch (ClassNotFoundException cnfe) {
             getLogger().warn("received event of an unknown class", cnfe);
           }
@@ -54,7 +61,11 @@ public class ServerManagementHandler extends AbstractEventHandler {
         // L1 response
         ManagementResponseListener responseListener = responseListenerMap.get(managementRequestID);
         if (responseListener != null) {
-          responseListener.onResponse(response);
+          try {
+            responseListener.onResponse(response);
+          } catch (RuntimeException re) {
+            getLogger().warn("response listener threw RuntimeException", re);
+          }
         } else {
           getLogger().warn("no listener registered for response " + managementRequestID + " - dropping it");
         }

@@ -4,6 +4,8 @@
  */
 package com.tc.management;
 
+import com.tc.net.NodeID;
+
 import java.io.Serializable;
 
 /**
@@ -20,7 +22,8 @@ public interface ManagementEventListener {
    * Called when an event was sent by a L1.
    *
    * @param event the event object.
+   * @param sourceNodeID the source node of the event.
    */
-  void onEvent(Serializable event);
+  void onEvent(Serializable event, NodeID sourceNodeID);
 
 }
