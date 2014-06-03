@@ -60,6 +60,7 @@ public class L2Management extends TerracottaManagement {
   protected final int                         jmxPort;
   protected final InetAddress                 bindAddress;
   private final Sink                          remoteEventsSink;
+  protected final boolean                     listenerEnabled;
 
   static {
     // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
@@ -68,13 +69,14 @@ public class L2Management extends TerracottaManagement {
     Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
   }
 
-  public L2Management(TCServerInfoMBean tcServerInfo,
-                      L2ConfigurationSetupManager configurationSetupManager, TCDumper tcDumper, InetAddress bindAddr,
+  public L2Management(TCServerInfoMBean tcServerInfo, L2ConfigurationSetupManager configurationSetupManager,
+                      TCDumper tcDumper, boolean listenerEnabled, InetAddress bindAddr,
                       int port, Sink remoteEventsSink) throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.configurationSetupManager = configurationSetupManager;
     this.tcDumper = tcDumper;
+    this.listenerEnabled = listenerEnabled;
     this.bindAddress = bindAddr;
     this.jmxPort = port;
     this.remoteEventsSink = remoteEventsSink;
@@ -102,6 +104,8 @@ public class L2Management extends TerracottaManagement {
   }
 
   public synchronized void start() throws Exception {
+    if (!listenerEnabled) { return; }
+
     JMXServiceURL url;
     Map env = new HashMap();
     env.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
@@ -132,7 +136,8 @@ public class L2Management extends TerracottaManagement {
 
   public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
     unregisterMBeans();
-    if (jmxConnectorServer != null) {
+
+    if (listenerEnabled) {
       jmxConnectorServer.stop();
     }
   }
@@ -147,6 +152,7 @@ public class L2Management extends TerracottaManagement {
   }
 
   public JMXConnectorServer getJMXConnServer() {
+    if (!listenerEnabled) { throw new IllegalStateException("jmx listener is not enabled"); }
     return jmxConnectorServer;
   }
 

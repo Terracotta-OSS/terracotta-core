@@ -43,4 +43,8 @@ public interface L2DSOConfig extends Config {
   DataStorage getDataStorage();
 
   Restartable getRestartable();
+
+  boolean isJmxEnabled();
+
+  void setJmxEnabled(boolean b);
 }

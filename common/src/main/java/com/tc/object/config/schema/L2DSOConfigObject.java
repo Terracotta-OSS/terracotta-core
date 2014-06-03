@@ -62,6 +62,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final int               clientReconnectWindow;
   private final Restartable       restartable;
   private final DataStorage       dataStorage;
+  private volatile boolean        jmxEnabled;
 
   public L2DSOConfigObject(ConfigContext context, GarbageCollection gc, int clientReconnectWindow,
                            Restartable restartable) {
@@ -85,6 +86,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     this.tsaGroupPort = server.getTsaGroupPort();
     this.managementPort = server.getManagementPort();
     this.dataStorage = server.getDataStorage();
+    this.jmxEnabled = server.getJmxEnabled();
     if (server.isSetSecurity()) {
       this.securityConfig = server.getSecurity();
     } else {
@@ -93,6 +95,16 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       this.securityConfig.setKeychain(Keychain.Factory.newInstance());
       this.securityConfig.setAuth(Auth.Factory.newInstance());
     }
+  }
+
+  @Override
+  public void setJmxEnabled(boolean b) {
+    this.jmxEnabled = b;
+  }
+
+  @Override
+  public boolean isJmxEnabled() {
+    return jmxEnabled;
   }
 
   @Override

@@ -193,6 +193,8 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     manager.commonl2Config().managementPort().setIntValue(managementPort);
     manager.commonl2Config().managementPort().setBind(bindAddress);
 
+    manager.dsoL2Config().setJmxEnabled(true);
+
     return manager;
   }
 }

@@ -476,7 +476,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // start the JMX server
     try {
-      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
+      startJMXServer(l2DSOConfig.isJmxEnabled(), jmxBind, this.configSetupManager.commonl2Config().jmxPort()
+          .getIntValue(),
                      new RemoteJMXProcessor(), null);
     } catch (final Exception e) {
       final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
@@ -484,6 +485,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.error(msg, e);
       System.exit(-1);
     }
+
 
     final TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath());
     boolean retries = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
@@ -1439,13 +1441,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.operatorEventHistoryProvider;
   }
 
-  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink,
+  private void startJMXServer(boolean listenerEnabled, final InetAddress bind, int jmxPort,
+                              final Sink remoteEventsSink,
                               final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
 
-    this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean, this.configSetupManager, this,
+    this.l2Management = this.serverBuilder.createL2Management(listenerEnabled, this.tcServerInfoMBean,
+                                                              this.configSetupManager, this,
                                                               bind, jmxPort, remoteEventsSink, this,
                                                               serverDBBackupMBean);
 

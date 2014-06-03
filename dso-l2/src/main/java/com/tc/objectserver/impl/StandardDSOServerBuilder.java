@@ -266,13 +266,13 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,
+  public L2Management createL2Management(final boolean listenerEnabled, final TCServerInfoMBean tcServerInfoMBean,
                                          final L2ConfigurationSetupManager configSetupManager,
                                          final DistributedObjectServer distributedObjectServer, final InetAddress bind,
                                          final int jmxPort, final Sink remoteEventsSink,
                                          final ServerConnectionValidator serverConnectionValidator,
                                          final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
-    return new L2Management(tcServerInfoMBean, configSetupManager, distributedObjectServer, bind,
+    return new L2Management(tcServerInfoMBean, configSetupManager, distributedObjectServer, listenerEnabled, bind,
                             jmxPort, remoteEventsSink);
   }
 
