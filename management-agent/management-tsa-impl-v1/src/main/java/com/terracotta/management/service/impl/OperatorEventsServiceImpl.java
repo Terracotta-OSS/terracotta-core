@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.resource.services.utils.TimeStringParser;
@@ -14,6 +15,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import javax.ws.rs.core.Response;
 
 /**
  * @author Ludovic Orban
@@ -50,8 +53,38 @@ public class OperatorEventsServiceImpl implements OperatorEventsService {
   }
 
   @Override
-  public boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
-    return serverManagementService.markOperatorEvent(operatorEventEntity, read);
+  public boolean markOperatorEvents(Collection<OperatorEventEntity> operatorEventEntities, boolean read) throws ServiceExecutionException {
+    
+    boolean rc = true;
+    for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
+      try {
+        if (operatorEventEntity.getEventLevel() == null) {
+          throw new ServiceExecutionException("eventLevel must not be null");
+        }
+        if (operatorEventEntity.getEventSubsystem() == null) {
+          throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
+        }
+        if (operatorEventEntity.getCollapseString() == null) {
+          throw new ServiceExecutionException("collapseString must not be null");
+        }
+        if (operatorEventEntity.getSourceId() == null) {
+          throw new ServiceExecutionException("sourceId must not be null");
+        }
+        if (operatorEventEntity.getTimestamp() == 0L) {
+          throw new ServiceExecutionException("timestamp must not be 0");
+        }
+
+        rc &= serverManagementService.markOperatorEvent(operatorEventEntity, read);
+      } catch (ServiceExecutionException see) {
+        throw new ResourceRuntimeException("Failed to mark TSA operator event as read", see, Response.Status.BAD_REQUEST.getStatusCode());
+      }
+    }
+    
+    return rc;
+
   }
 
   @Override

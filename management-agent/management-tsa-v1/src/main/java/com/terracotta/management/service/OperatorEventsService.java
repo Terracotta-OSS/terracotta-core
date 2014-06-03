@@ -50,13 +50,13 @@ public interface OperatorEventsService {
   Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, String eventLevels, boolean filterOutRead) throws ServiceExecutionException;
 
   /**
-   * Mark an operator even as read or unread.
-   * @param operatorEventEntity the operator event to mark.
+   * Mark operator events as read or unread.
+   * @param operatorEventEntities the operator events to mark.
    * @param read true if the operator even should be marked as read, false otherwise.
    * @return true if the event was found and marked, false otherwise.
    * @throws ServiceExecutionException
    */
-  boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
+  boolean markOperatorEvents(Collection<OperatorEventEntity> operatorEventEntities, boolean read) throws ServiceExecutionException;
 
   /**
    * Returns the number of unread operator events.

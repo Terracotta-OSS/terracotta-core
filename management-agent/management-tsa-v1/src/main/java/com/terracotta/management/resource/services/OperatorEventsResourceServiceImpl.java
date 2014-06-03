@@ -84,35 +84,11 @@ public class OperatorEventsResourceServiceImpl {
 
     requestValidator.validateSafe(info);
 
-    boolean rc = true;
-    for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
-      try {
-        if (operatorEventEntity.getEventLevel() == null) {
-          throw new ServiceExecutionException("eventLevel must not be null");
-        }
-        if (operatorEventEntity.getEventSubsystem() == null) {
-          throw new ServiceExecutionException("eventSubsystem must not be null");
-        }
-        if (operatorEventEntity.getEventType() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
-        }
-        if (operatorEventEntity.getCollapseString() == null) {
-          throw new ServiceExecutionException("collapseString must not be null");
-        }
-        if (operatorEventEntity.getSourceId() == null) {
-          throw new ServiceExecutionException("sourceId must not be null");
-        }
-        if (operatorEventEntity.getTimestamp() == 0L) {
-          throw new ServiceExecutionException("timestamp must not be 0");
-        }
-
-        rc &= operatorEventsService.markOperatorEvent(operatorEventEntity, true);
-      } catch (ServiceExecutionException see) {
-        throw new ResourceRuntimeException("Failed to mark TSA operator event as read", see, Response.Status.BAD_REQUEST.getStatusCode());
-      }
+    try {
+      return operatorEventsService.markOperatorEvents(operatorEventEntities, true);
+    } catch (ServiceExecutionException see) {
+      throw new ResourceRuntimeException("Failed to mark TSA operator event as read", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
-
-    return rc;
   }
 
   @POST
@@ -124,35 +100,12 @@ public class OperatorEventsResourceServiceImpl {
 
     requestValidator.validateSafe(info);
 
-    boolean rc = true;
-    for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
-      try {
-        if (operatorEventEntity.getEventLevel() == null) {
-          throw new ServiceExecutionException("eventLevel must not be null");
-        }
-        if (operatorEventEntity.getEventSubsystem() == null) {
-          throw new ServiceExecutionException("eventSubsystem must not be null");
-        }
-        if (operatorEventEntity.getEventType() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
-        }
-        if (operatorEventEntity.getCollapseString() == null) {
-          throw new ServiceExecutionException("collapseString must not be null");
-        }
-        if (operatorEventEntity.getSourceId() == null) {
-          throw new ServiceExecutionException("sourceId must not be null");
-        }
-        if (operatorEventEntity.getTimestamp() == 0L) {
-          throw new ServiceExecutionException("timestamp must not be 0");
-        }
-
-        rc &= operatorEventsService.markOperatorEvent(operatorEventEntity, false);
-      } catch (ServiceExecutionException see) {
-        throw new ResourceRuntimeException("Failed to mark TSA operator event as unread", see, Response.Status.BAD_REQUEST.getStatusCode());
-      }
+    try {
+      return operatorEventsService.markOperatorEvents(operatorEventEntities, false);
+    } catch (ServiceExecutionException see) {
+      throw new ResourceRuntimeException("Failed to mark TSA operator event as unread", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
 
-    return rc;
   }
 
 }
