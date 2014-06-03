@@ -16,6 +16,7 @@ import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
@@ -595,6 +596,13 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.httpServer = new Server();
     this.httpServer.setSendServerVersion(false);
     this.httpServer.addConnector(tcConnector);
+
+    SelectChannelConnector scc = new SelectChannelConnector();
+    scc.setPort(commonL2Config.managementPort().getIntValue());
+    scc.setHost(commonL2Config.managementPort().getBind());
+
+    this.httpServer.addConnector(scc);
+
     this.contextHandlerCollection = new ContextHandlerCollection();
 
     ServletContextHandler context = new ServletContextHandler(null, "/", ServletContextHandler.NO_SESSIONS
@@ -675,6 +683,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     try {
       this.httpServer.start();
+      consoleLogger.info("Management server started on " + scc.getHost() + ":" + scc.getLocalPort());
     } catch (Exception e) {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;
