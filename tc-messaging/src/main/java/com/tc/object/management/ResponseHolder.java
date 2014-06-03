@@ -22,11 +22,13 @@ public class ResponseHolder implements TCSerializable {
   }
 
   public ResponseHolder(Exception exception) {
+    serializedResponse = new byte[0];
     setException(exception);
   }
 
   public ResponseHolder(Object response) {
     setResponse(response);
+    serializedException = new byte[0];
   }
 
   public Exception getException(final ClassLoader classLoader) throws ClassNotFoundException {
