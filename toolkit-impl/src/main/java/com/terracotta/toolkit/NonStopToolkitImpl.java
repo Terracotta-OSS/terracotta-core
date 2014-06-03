@@ -268,7 +268,15 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   @Override
   public void shutdown() {
     nonStopManager.shutdown();
-    getInitializedToolkit().shutdown();
+    ToolkitInternal toolkit = null;
+    try {
+      toolkit = getInitializedToolkit();
+    } catch (Exception e) {
+      // Ignore if toolkit failed to initialize
+    }
+    if (toolkit != null) {
+      toolkit.shutdown();
+    }
     nonStopInitiailzationService.shutdown();
   }
 
