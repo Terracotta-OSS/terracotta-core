@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.handler;
 
+import com.tc.management.TSAManagementEvent;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
@@ -17,6 +19,8 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
   public void channelCreated(MessageChannel channel) {
     // Don't generate operator events for internal products
     if (!channel.getProductId().isInternal()) {
+      TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(
+          new TSAManagementEvent("L1.CONNECTED", channel.getRemoteNodeID().toString()));
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(channel
           .getRemoteNodeID().toString()));
     }
@@ -26,6 +30,8 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
   public void channelRemoved(MessageChannel channel) {
     // Don't generate operator events for internal products
     if (!channel.getProductId().isInternal()) {
+      TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(
+          new TSAManagementEvent("L1.DISCONNECTED", channel.getRemoteNodeID().toString()));
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(channel
           .getRemoteNodeID().toString()));
     }

@@ -58,6 +58,7 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
 import com.tc.management.RemoteManagement;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
@@ -1038,6 +1039,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.startAll(this.context, toInit);
 
     RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
+    TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
@@ -1325,6 +1327,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public synchronized void stop() {
+    TerracottaRemoteManagement.setRemoteManagementInstance(null);
 
     try {
       if (this.indexHACoordinator != null) {

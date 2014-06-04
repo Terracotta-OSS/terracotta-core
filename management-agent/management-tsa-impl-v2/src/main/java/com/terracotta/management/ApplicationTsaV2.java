@@ -33,6 +33,7 @@ import com.terracotta.management.resource.services.OperatorEventsResourceService
 import com.terracotta.management.resource.services.ServerStatResourceServiceImplV2;
 import com.terracotta.management.resource.services.ShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.TopologyResourceServiceImplV2;
+import com.terracotta.management.resource.services.events.TopologyEventResourceServiceImplV2;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SecurityContextService;
@@ -49,6 +50,7 @@ import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.ShutdownServiceV2;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.TopologyServiceV2;
+import com.terracotta.management.service.events.TopologyEventServiceV2;
 import com.terracotta.management.service.impl.BackupServiceImplV2;
 import com.terracotta.management.service.impl.ClientManagementServiceV2;
 import com.terracotta.management.service.impl.ConfigurationServiceImplV2;
@@ -62,6 +64,7 @@ import com.terracotta.management.service.impl.ServerManagementServiceV2;
 import com.terracotta.management.service.impl.ShutdownServiceImplV2;
 import com.terracotta.management.service.impl.TopologyServiceImplV2;
 import com.terracotta.management.service.impl.TsaAgentServiceImplV2;
+import com.terracotta.management.service.impl.events.TopologyEventServiceImplV2;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.resource.services.IdentityAssertionResourceService;
@@ -93,7 +96,8 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
 
     s.add(LocalShutdownResourceServiceImplV2.class);
     s.add(ServerStatResourceServiceImplV2.class);
-//    s.add(AllEventsResourceService.class);
+
+    s.add(TopologyEventResourceServiceImplV2.class);
 
     s.add(CacheStatisticSamplesResourceServiceImplV2.class);
     s.add(CachesResourceServiceImplV2.class);
@@ -140,6 +144,8 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
      serviceClasses.put(ShutdownServiceV2.class, new ShutdownServiceImplV2(serverManagementService));
      serviceClasses.put(JmxServiceV2.class, new JmxServiceImplV2(serverManagementService));
      serviceClasses.put(LicenseServiceV2.class, new LicenseServiceImplV2(serverManagementService));
+
+    serviceClasses.put(TopologyEventServiceV2.class, new TopologyEventServiceImplV2());
     
     // / L1 bridge and Security Services ///
 

@@ -98,9 +98,12 @@ public class ServerManagementHandler extends AbstractEventHandler {
   }
 
   public void fireEvent(Serializable event, Map<String, Object> context) {
-    //TODO: forward the event to passive L2s
     for (ManagementEventListener listener : eventListeners) {
-      listener.onEvent(event, context);
+      try {
+        listener.onEvent(event, context);
+      } catch (RuntimeException re) {
+        getLogger().warn("Management event listener error", re);
+      }
     }
   }
 }
