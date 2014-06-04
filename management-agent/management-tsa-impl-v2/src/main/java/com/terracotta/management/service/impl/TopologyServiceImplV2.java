@@ -37,4 +37,9 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
     return clientManagementService.getClients(null, stringsToProductsIds(clientProductIds));
   }
 
+  @Override
+  public String getLocalServerName() throws ServiceExecutionException {
+    return serverManagementService.getLocalServerName();
+  }
+
 }

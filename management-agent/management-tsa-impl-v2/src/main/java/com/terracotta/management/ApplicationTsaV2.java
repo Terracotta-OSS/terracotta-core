@@ -1,13 +1,21 @@
 package com.terracotta.management;
 
+import net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CacheManagerConfigsResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CacheManagersResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CachesResourceServiceImplV2;
 import net.sf.ehcache.management.resource.services.ElementsResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.QueryResourceServiceImplV2;
 import net.sf.ehcache.management.service.CacheManagerServiceV2;
 import net.sf.ehcache.management.service.CacheServiceV2;
 import net.sf.ehcache.management.service.EntityResourceFactoryV2;
 
 import org.terracotta.management.application.DefaultApplicationV2;
 import org.terracotta.management.resource.services.AgentServiceV2;
+import org.terracotta.management.resource.services.AgentsResourceServiceImplV2;
 import org.terracotta.management.resource.services.validator.RequestValidator;
+import org.terracotta.session.management.SessionsResourceServiceImplV2;
 import org.terracotta.session.management.SessionsServiceV2;
 
 import com.terracotta.management.l1bridge.RemoteAgentServiceV2;
@@ -18,6 +26,7 @@ import com.terracotta.management.resource.services.ConfigurationResourceServiceI
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImplV2;
 import com.terracotta.management.resource.services.JmxResourceServiceImplV2;
 import com.terracotta.management.resource.services.LicenseResourceServiceImplV2;
+import com.terracotta.management.resource.services.LocalShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.LogsResourceServiceImplV2;
 import com.terracotta.management.resource.services.MonitoringResourceServiceImplV2;
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImplV2;
@@ -80,17 +89,19 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     s.add(IdentityAssertionResourceService.class);
     s.add(JmxResourceServiceImplV2.class);
     s.add(LicenseResourceServiceImplV2.class);
+
+    s.add(LocalShutdownResourceServiceImplV2.class);
 //    s.add(AllEventsResourceService.class);
 
-    s.add(net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CachesResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CacheManagersResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CacheManagerConfigsResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImplV2.class);
-    s.add(org.terracotta.management.resource.services.AgentsResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.QueryResourceServiceImplV2.class);
+    s.add(CacheStatisticSamplesResourceServiceImplV2.class);
+    s.add(CachesResourceServiceImplV2.class);
+    s.add(CacheManagersResourceServiceImplV2.class);
+    s.add(CacheManagerConfigsResourceServiceImplV2.class);
+    s.add(CacheConfigsResourceServiceImplV2.class);
+    s.add(AgentsResourceServiceImplV2.class);
+    s.add(QueryResourceServiceImplV2.class);
     
-    s.add(org.terracotta.session.management.SessionsResourceServiceImplV2.class);
+    s.add(SessionsResourceServiceImplV2.class);
 
     return s;
   }
@@ -152,14 +163,12 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     serviceClasses.put(CacheManagerServiceV2.class, remoteServiceStubGenerator.newRemoteService(CacheManagerServiceV2.class, "Ehcache"));
     serviceClasses.put(CacheServiceV2.class, remoteServiceStubGenerator.newRemoteService(CacheServiceV2.class, "Ehcache"));
     serviceClasses.put(EntityResourceFactoryV2.class, remoteServiceStubGenerator.newRemoteService(EntityResourceFactoryV2.class, "Ehcache"));
-//
-//    /// Sessions Services ///
-//
+
+    /// Sessions Services ///
+
     serviceClasses.put(SessionsServiceV2.class, remoteServiceStubGenerator.newRemoteService(SessionsServiceV2.class, "Sessions"));
 
-    
     return serviceClasses;
-
   }
 
 

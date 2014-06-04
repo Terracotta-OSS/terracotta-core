@@ -782,6 +782,10 @@ public class ServerManagementServiceV2 {
     });
   }
 
+  public String getLocalServerName() {
+    return localManagementSource.getLocalServerName();
+  }
+
   interface ForEachServer<T> {
     Collection<T> queryLocalServer(L2Info member);
     Collection<T> queryRemoteServer(L2Info member) throws Exception;
