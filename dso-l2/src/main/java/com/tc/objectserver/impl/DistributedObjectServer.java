@@ -1037,7 +1037,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     stageManager.startAll(this.context, toInit);
 
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler);
+    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,

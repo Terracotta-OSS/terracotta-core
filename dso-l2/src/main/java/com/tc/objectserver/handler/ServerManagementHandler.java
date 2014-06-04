@@ -7,6 +7,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.ManagementResponseListener;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.management.ManagementRequestID;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
@@ -14,6 +15,7 @@ import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.util.Assert;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,10 +49,14 @@ public class ServerManagementHandler extends AbstractEventHandler {
 
       if (managementRequestID == null) {
         // L1 event
+        //TODO: forward the event to passive L2s
         for (ManagementEventListener eventListener : eventListeners) {
           try {
+            Map<String, Object> contextMap = new HashMap<String, Object>();
+            ClientID clientID = (ClientID)sourceNodeID;
+            contextMap.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, "" + clientID.toLong());
             Serializable event = (Serializable)response.getResponseHolder().getResponse(eventListener.getClassLoader());
-            eventListener.onEvent(event, sourceNodeID);
+            eventListener.onEvent(event, contextMap);
           } catch (RuntimeException re) {
             getLogger().warn("event listener threw RuntimeException", re);
           } catch (ClassNotFoundException cnfe) {
@@ -91,4 +97,10 @@ public class ServerManagementHandler extends AbstractEventHandler {
     eventListeners.remove(eventListener);
   }
 
+  public void fireEvent(Serializable event, Map<String, Object> context) {
+    //TODO: forward the event to passive L2s
+    for (ManagementEventListener listener : eventListeners) {
+      listener.onEvent(event, context);
+    }
+  }
 }

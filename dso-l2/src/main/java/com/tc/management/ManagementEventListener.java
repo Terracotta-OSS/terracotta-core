@@ -4,14 +4,15 @@
  */
 package com.tc.management;
 
-import com.tc.net.NodeID;
-
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  *
  */
 public interface ManagementEventListener {
+
+  static String CONTEXT_SOURCE_NODE_NAME = "CONTEXT_SOURCE_NODE_NAME";
 
   /**
    * @return the class loader that is going to be used to deserialize the event.
@@ -22,8 +23,8 @@ public interface ManagementEventListener {
    * Called when an event was sent by a L1.
    *
    * @param event the event object.
-   * @param sourceNodeID the source node of the event.
+   * @param context the event context.
    */
-  void onEvent(Serializable event, NodeID sourceNodeID);
+  void onEvent(Serializable event, Map<String, Object> context);
 
 }

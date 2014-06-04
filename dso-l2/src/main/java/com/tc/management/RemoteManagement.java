@@ -20,6 +20,9 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.handler.ServerManagementHandler;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -36,36 +39,19 @@ public class RemoteManagement {
 
   private final DSOChannelManager channelManager;
   private final ServerManagementHandler serverManagementHandler;
+  private final String thisServerNodeName;
 
-  public RemoteManagement(DSOChannelManager channelManager, ServerManagementHandler serverManagementHandler) {
+
+  public RemoteManagement(DSOChannelManager channelManager, ServerManagementHandler serverManagementHandler, String thisServerNodeName) {
     this.channelManager = channelManager;
     this.serverManagementHandler = serverManagementHandler;
+    this.thisServerNodeName = thisServerNodeName;
+  }
 
-/*
-    Timer t  = new Timer("test-timer", true);
-    t.scheduleAtFixedRate(new TimerTask() {
-      @Override
-      public void run() {
-        try {
-          checkNewManagementApi();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    }, 15000, 5000);
-
-    registerEventListener(new ServerManagementHandler.EventListener() {
-      @Override
-      public ClassLoader getClassLoader() {
-        return this.getClass().getClassLoader();
-      }
-
-      @Override
-      public void onEvent(Serializable event) {
-        System.out.println("EVENT: " + event);
-      }
-    });
-*/
+  public void sendEvent(Serializable event) {
+    Map<String, Object> context = new HashMap<String, Object>();
+    context.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, thisServerNodeName);
+    serverManagementHandler.fireEvent(event, context);
   }
 
   public void registerEventListener(ManagementEventListener listener) {
@@ -211,118 +197,5 @@ public class RemoteManagement {
       }
     };
   }
-
-/*
-
-  Object syncRemoteCall(RemoteCallDescriptor remoteCallDescriptor, final ClassLoader classLoader, Object... args) throws Exception {
-    InvokeRegisteredServiceMessage invokeMessage = (InvokeRegisteredServiceMessage)channelManager.getActiveChannel(remoteCallDescriptor.getL1Node())
-        .createMessage(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE);
-
-    final AtomicReference<Exception> exception = new AtomicReference<Exception>();
-    final AtomicReference<Object> response = new AtomicReference<Object>();
-
-    RemoteCallHolder remoteCallHolder = new RemoteCallHolder(remoteCallDescriptor, args);
-    invokeMessage.setRemoteCallHolder(remoteCallHolder);
-
-    final CountDownLatch latch = new CountDownLatch(1);
-    serverManagementHandler.registerResponseListener(invokeMessage.getManagementRequestID(), new ServerManagementHandler.ResponseListener() {
-      @Override
-      public void onResponse(AbstractManagementMessage message) {
-        InvokeRegisteredServiceResponseMessage responseMessage = (InvokeRegisteredServiceResponseMessage)message;
-        ResponseHolder responseHolder = responseMessage.getResponseHolder();
-        try {
-          exception.set(responseHolder.getException(classLoader));
-          response.set(responseHolder.getResponse(classLoader));
-        } catch (ClassNotFoundException cnfe) {
-          exception.set(new TCManagementSerializationException("Error deserializing management response", cnfe));
-          response.set(null);
-        }
-        serverManagementHandler.unregisterResponseListener(message.getManagementRequestID());
-        latch.countDown();
-      }
-    });
-    invokeMessage.send();
-    latch.await();
-
-    if (exception.get() != null) {
-      throw new RemoteManagementException("Error performing remote L1 call on " + remoteCallDescriptor.getL1Node(), exception.get());
-    }
-    return response.get();
-  }
-
-
-  void checkNewManagementApi() throws Exception {
-    printAllRegisteredServiceMethods();
-
-    printInvocation("sample.HelloService", "sayHello", "world");
-    printInvocation("sample.HelloService", "sayHello", "world");
-    printInvocation("sample.HelloService", "sayHello", "world");
-    printInvocation("sample.HelloService", "sayHello", "world");
-
-    printInvocations(4, "sample.HelloService", "sayHello", "world");
-  }
-
-  void printInvocations(int count, String serviceClassName, String methodName, Object... args) throws Exception {
-    Set allClientIDs = channelManager.getAllClientIDs();
-
-    List<Future<Object>> futures = new ArrayList<Future<Object>>();
-
-    for (Object clientID : allClientIDs) {
-      final NodeID node = (NodeID)clientID;
-
-      Set<RemoteCallDescriptor> descriptors = listRegisteredServices(node);
-      for (RemoteCallDescriptor remoteCallDescriptor : descriptors) {
-        String className = remoteCallDescriptor.getServiceID().getClassName();
-        if (!className.equals(serviceClassName)) { continue; }
-        if (!remoteCallDescriptor.getMethodName().equals(methodName)) { continue; }
-
-        for (int i=0;i<count;i++) {
-          System.out.println("INVOKING " + remoteCallDescriptor.getMethodName() + " on " + remoteCallDescriptor.getL1Node());
-          Future<Object> f = asyncRemoteCall(remoteCallDescriptor, getClass().getClassLoader(), args);
-          futures.add(f);
-        }
-      }
-    }
-
-    for (Future<Object> future : futures) {
-      Object rc = future.get();
-      System.out.println("INVOCATION RESPONSE: [" + rc + "]");
-    }
-
-  }
-
-  void printInvocation(String serviceClassName, String methodName, Object... args) throws Exception {
-    Set allClientIDs = channelManager.getAllClientIDs();
-
-    for (Object clientID : allClientIDs) {
-      final NodeID node = (NodeID)clientID;
-
-      Set<RemoteCallDescriptor> descriptors = listRegisteredServices(node);
-      for (RemoteCallDescriptor remoteCallDescriptor : descriptors) {
-        String className = remoteCallDescriptor.getServiceID().getClassName();
-        if (!className.equals(serviceClassName)) { continue; }
-        if (!remoteCallDescriptor.getMethodName().equals(methodName)) { continue; }
-
-        System.out.println("INVOKING " + remoteCallDescriptor.getMethodName() + " on " + remoteCallDescriptor.getL1Node());
-        Object rc = syncRemoteCall(remoteCallDescriptor, getClass().getClassLoader(), args);
-        System.out.println("INVOCATION RESPONSE: [" + rc + "]");
-      }
-    }
-
-  }
-
-  void printAllRegisteredServiceMethods() throws Exception {
-    Set allClientIDs = channelManager.getAllClientIDs();
-
-    for (Object clientID : allClientIDs) {
-      final NodeID node = (NodeID)clientID;
-
-      Set<RemoteCallDescriptor> descriptors = listRegisteredServices(node);
-      for (RemoteCallDescriptor descriptor : descriptors) {
-        System.out.println("DISCOVERED " + descriptor);
-      }
-    }
-  }
-*/
 
 }
