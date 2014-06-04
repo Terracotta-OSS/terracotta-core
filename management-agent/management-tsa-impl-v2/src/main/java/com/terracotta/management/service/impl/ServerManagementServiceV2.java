@@ -534,7 +534,7 @@ public class ServerManagementServiceV2 {
             sEntityV2.setVersion(localManagementSource.getVersion());
             sEntityV2.getAttributes().put("Name", member.name());
             sEntityV2.getAttributes().put("Host", member.host());
-            sEntityV2.getAttributes().put("JmxPort", member.jmxPort());
+            sEntityV2.getAttributes().put("ManagementPort", member.managementPort());
             sEntityV2.getAttributes().put("HostAddress", member.safeGetHostAddress());
 
             sgEntityV2.getServers().add(sEntityV2);
@@ -554,7 +554,7 @@ public class ServerManagementServiceV2 {
     serverEntityV2.setVersion(localManagementSource.getVersion());
     serverEntityV2.getAttributes().put("Name", member.name());
     serverEntityV2.getAttributes().put("Host", member.host());
-    serverEntityV2.getAttributes().put("JmxPort", member.jmxPort());
+    serverEntityV2.getAttributes().put("ManagementPort", member.managementPort());
     serverEntityV2.getAttributes().put("HostAddress", member.safeGetHostAddress());
     serverEntityV2.getAttributes().putAll(localManagementSource.getServerAttributes(SERVER_ENTITY_ATTRIBUTE_NAMES));
 

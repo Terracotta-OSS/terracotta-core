@@ -30,6 +30,7 @@ import com.terracotta.management.resource.services.LocalShutdownResourceServiceI
 import com.terracotta.management.resource.services.LogsResourceServiceImplV2;
 import com.terracotta.management.resource.services.MonitoringResourceServiceImplV2;
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImplV2;
+import com.terracotta.management.resource.services.ServerStatResourceServiceImplV2;
 import com.terracotta.management.resource.services.ShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.TopologyResourceServiceImplV2;
 import com.terracotta.management.security.ContextService;
@@ -91,6 +92,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     s.add(LicenseResourceServiceImplV2.class);
 
     s.add(LocalShutdownResourceServiceImplV2.class);
+    s.add(ServerStatResourceServiceImplV2.class);
 //    s.add(AllEventsResourceService.class);
 
     s.add(CacheStatisticSamplesResourceServiceImplV2.class);
