@@ -19,6 +19,7 @@
   <properties>
     <build.edition>opensource</build.edition>
     <maven-forge-plugin.version>1.2.6</maven-forge-plugin.version>
+    <skip.deploy>false</skip.deploy>
   </properties>
 
   <modules>
@@ -52,6 +53,32 @@
 
     <module>tc-messaging</module>
   </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.1</version>
+          <extensions>true</extensions>
+          <configuration>
+            <!-- The Base URL of Nexus instance where we want to stage -->
+            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
+            <!-- The server "id" element from settings to use authentication from -->
+            <serverId>terracotta-nexus-staging</serverId>
+            <skipNexusStagingDeployMojo>${skip.deploy}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <!-- Allow building kit from the top level -->
