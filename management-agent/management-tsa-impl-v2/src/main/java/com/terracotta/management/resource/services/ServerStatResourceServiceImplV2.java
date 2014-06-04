@@ -11,6 +11,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.resource.ServerEntityV2;
 import com.terracotta.management.resource.ServerGroupEntityV2;
+import com.terracotta.management.resource.ServerStatEntityV2;
 import com.terracotta.management.service.TopologyServiceV2;
 
 import java.util.Collection;
@@ -42,8 +43,8 @@ public class ServerStatResourceServiceImplV2 {
   }
 
   @GET
-  @Produces(MediaType.TEXT_PLAIN)
-  public String shutdown(@Context UriInfo info) {
+  @Produces(MediaType.APPLICATION_JSON)
+  public ServerStatEntityV2 shutdown(@Context UriInfo info) {
     LOG.debug(String.format("Invoking ServerStatResourceServiceImplV2.shutdown: %s", info.getRequestUri()));
 
     try {
@@ -51,17 +52,16 @@ public class ServerStatResourceServiceImplV2 {
       ServerEntityV2 currentServer = getCurrentServer(currentServerGroup);
 
       String health = "OK";
-      String role = (currentServer.getAttributes().get("State").equals("ACTIVE-COORDINATOR") ? "ACTIVE" : "PASSIVE");
-      Object state = currentServer.getAttributes().get("State");
-      Object managementPort = currentServer.getAttributes().get("ManagementPort");
+      String role =  null;
+      String state = null;
+      if(currentServer != null) {
+        role = (currentServer.getAttributes().get("State").equals("ACTIVE-COORDINATOR") ? "ACTIVE" : "PASSIVE");
+        state = (String) currentServer.getAttributes().get("State");
+      }
+      String managementPort = currentServer.getAttributes().get("ManagementPort").toString();
       String serverGroupName = currentServerGroup.getName();
 
-      return
-          "health: " + health + "\n" +
-          "role: " + role + "\n" +
-          "state: " + state + "\n" +
-          "managementport: " + managementPort + "\n" +
-          "group name: " + serverGroupName + "\n";
+      return new ServerStatEntityV2(health, role,state,managementPort,serverGroupName);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

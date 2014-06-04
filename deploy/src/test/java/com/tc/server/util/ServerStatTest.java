@@ -1,15 +1,15 @@
 package com.tc.server.util;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.Test;
 
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Server;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ServerStatTest {
 
@@ -38,7 +38,7 @@ public class ServerStatTest {
     when(bindPort.getIntValue()).thenReturn(0);
 
     int jmxPortResult = ServerStat.computeJMXPort(server);
-    assertThat(jmxPortResult, is(ServerStat.DEFAULT_JMX_PORT));
+    assertThat(jmxPortResult, is(ServerStat.DEFAULT_MANAGEMENT_PORT));
   }
 
   @Test
@@ -56,4 +56,13 @@ public class ServerStatTest {
     assertThat(jmxPortResult, is(tsaPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT));
   }
 
+  @Test
+  public void decodeJsonAndSetFieldsTest() {
+    ServerStat.decodeJsonAndSetFields("{ \"health\" : \"OK\", \"role\" : \"ACTIVE\", \"state\": \"ACTIVE-COORDINATOR\", \"managementPort\" : \"9540\", \"serverGroupName\" : \"defaultGroup\"}");
+    assertThat(ServerStat.health, is("OK"));
+    assertThat(ServerStat.role, is("ACTIVE"));
+    assertThat(ServerStat.state, is("ACTIVE-COORDINATOR"));
+    assertThat(ServerStat.groupName, is("defaultGroup"));
+  }
+  
 }

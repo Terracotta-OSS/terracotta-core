@@ -9,6 +9,7 @@ import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
+import com.terracotta.management.resource.ForceStopEntityV2;
 import com.terracotta.management.resource.ServerEntityV2;
 import com.terracotta.management.resource.ServerGroupEntityV2;
 import com.terracotta.management.service.ShutdownServiceV2;
@@ -19,10 +20,8 @@ import java.util.Collections;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -47,13 +46,12 @@ public class LocalShutdownResourceServiceImplV2 {
   }
 
   @POST
-  @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-  public boolean shutdown(@Context UriInfo info, @FormParam("force") boolean force) {
+  @Consumes(MediaType.APPLICATION_JSON)
+  public void shutdown(@Context UriInfo info, ForceStopEntityV2 force) {
     LOG.debug(String.format("Invoking BasicAuthShutdownResourceServiceImplV2.shutdown: %s", info.getRequestUri()));
 
     try {
-      if (!force && !isPassiveStandbyAvailable()) {
+      if (!force.isForceStop() && !isPassiveStandbyAvailable()) {
         throw new ResourceRuntimeException("No passive server available in Standby mode. Use force option to stop the server.", Response.Status.BAD_REQUEST.getStatusCode());
       }
 
@@ -62,11 +60,13 @@ public class LocalShutdownResourceServiceImplV2 {
       throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
     
-    return true;
   }
 
   private boolean isPassiveStandbyAvailable() throws ServiceExecutionException {
     ServerGroupEntityV2 currentServerGroup = getCurrentServerGroup();
+    if(currentServerGroup == null){
+      return false;
+    }
     for (ServerEntityV2 serverEntity : currentServerGroup.getServers()) {
       if (serverEntity.getAttributes().get("State").equals("PASSIVE_STANDBY")) {
         return true;
