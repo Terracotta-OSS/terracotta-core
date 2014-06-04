@@ -8,6 +8,7 @@ import java.io.IOException;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
 import javax.management.InvalidAttributeValueException;
@@ -21,15 +22,19 @@ public class PlainMBeanMirror implements MBeanMirror {
   private final MBeanServerConnection mbsc;
   private final ObjectName            objectName;
   private final ObjectName            localObjectName;
-  private final MBeanInfo             mbeanInfo;
+  private final MBeanInfo             mBeanInfo;
 
   public PlainMBeanMirror(MBeanServerConnection mbsc, ObjectName objectName, ObjectName localObjectName)
       throws IOException, InstanceNotFoundException, IntrospectionException {
     this.mbsc = mbsc;
     this.objectName = objectName;
     this.localObjectName = localObjectName;
+    MBeanInfo beanInfo = null;
     try {
-      this.mbeanInfo = mbsc.getMBeanInfo(objectName);
+      // Don't save the mbean info for dynamic mbeans, it can change during execution
+      if (!mbsc.isInstanceOf(objectName, DynamicMBean.class.getName())) {
+        beanInfo = mbsc.getMBeanInfo(objectName);
+      }
     } catch (ReflectionException e) {
       // Callers cannot possibly care about the difference between
       // IntrospectionException and ReflectionException
@@ -37,6 +42,7 @@ public class PlainMBeanMirror implements MBeanMirror {
       ie.initCause(e);
       throw ie;
     }
+    mBeanInfo = beanInfo;
   }
 
   public MBeanServerConnection getMBeanServerConnection() {
@@ -103,6 +109,10 @@ public class PlainMBeanMirror implements MBeanMirror {
   }
 
   public MBeanInfo getMBeanInfo() {
-    return mbeanInfo;
+    try {
+      return mBeanInfo == null ? mbsc.getMBeanInfo(objectName) : mBeanInfo;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }
