@@ -423,7 +423,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, new CallbackOnExitHandler() {
       @Override
       public void callbackOnExit(final CallbackOnExitState state) {
-        // do nothing;
+        Throwable t = state.getThrowable();
+        while (t.getCause() != null) {
+          t = t.getCause();
+        }
+        consoleLogger.error("Server exiting: " + t.getMessage());
       }
     });
 
