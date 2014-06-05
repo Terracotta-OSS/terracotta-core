@@ -49,8 +49,31 @@ public class OperatorEventsServiceImplV2 implements OperatorEventsServiceV2 {
     }
   }
   @Override
-  public boolean markOperatorEvent(OperatorEventEntityV2 operatorEventEntityV2, boolean read) throws ServiceExecutionException {
-    return serverManagementService.markOperatorEvent(operatorEventEntityV2, read);
+  public boolean markOperatorEvents(Collection<OperatorEventEntityV2> operatorEventEntities, boolean read) throws ServiceExecutionException {
+    boolean rc = true;
+    for (OperatorEventEntityV2 operatorEventEntity : operatorEventEntities) {
+      if (operatorEventEntity.getEventLevel() == null) {
+        throw new ServiceExecutionException("eventLevel must not be null");
+      }
+      if (operatorEventEntity.getEventSubsystem() == null) {
+        throw new ServiceExecutionException("eventSubsystem must not be null");
+      }
+      if (operatorEventEntity.getEventType() == null) {
+        throw new ServiceExecutionException("eventType must not be null");
+      }
+      if (operatorEventEntity.getCollapseString() == null) {
+        throw new ServiceExecutionException("collapseString must not be null");
+      }
+      if (operatorEventEntity.getSourceId() == null) {
+        throw new ServiceExecutionException("sourceId must not be null");
+      }
+      if (operatorEventEntity.getTimestamp() == 0L) {
+        throw new ServiceExecutionException("timestamp must not be 0");
+      }
+
+      rc &= serverManagementService.markOperatorEvent(operatorEventEntity, read);
+    }
+    return rc;
   }
 
   @Override

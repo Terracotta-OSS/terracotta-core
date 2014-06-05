@@ -297,6 +297,7 @@ public class ServerManagementService {
       public Collection<LicenseEntity> queryLocalServer(L2Info member) {
         LicenseEntity licenseEntity = new LicenseEntity();
         licenseEntity.setVersion(localManagementSource.getVersion());
+        licenseEntity.setSourceId(member.name());
         licenseEntity.setProperties(localManagementSource.getLicenseProperties());
         return Collections.singleton(licenseEntity);
       }

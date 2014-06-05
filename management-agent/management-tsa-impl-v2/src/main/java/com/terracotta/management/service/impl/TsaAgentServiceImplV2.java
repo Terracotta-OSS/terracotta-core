@@ -7,6 +7,7 @@ import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntityCollectionV2;
 import org.terracotta.management.resource.AgentEntityV2;
 import org.terracotta.management.resource.AgentMetadataEntityV2;
+import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.services.AgentServiceV2;
 
 import com.terracotta.management.service.RemoteAgentBridgeService;
@@ -125,13 +126,14 @@ public class TsaAgentServiceImplV2 implements AgentServiceV2 {
     ame.setLicensed(serverManagementService.isEnterpriseEdition());
     ame.setNeedClientAuth(false);
     ame.setEnabled(true);
+    ame.setRestAPIVersion("v2");
 
     return ame;
   }
 
   private AgentEntityV2 buildAgentEntityV2() throws ServiceExecutionException {
     AgentEntityV2 e = new AgentEntityV2();
-    e.setAgentId(AgentEntityV2.EMBEDDED_AGENT_ID);
+    e.setAgentId(Representable.EMBEDDED_AGENT_ID);
     e.setAgencyOf(AGENCY);
     e.setVersion(this.getClass().getPackage().getImplementationVersion());
     e.getRootRepresentables().put("urls", createL2Urls());

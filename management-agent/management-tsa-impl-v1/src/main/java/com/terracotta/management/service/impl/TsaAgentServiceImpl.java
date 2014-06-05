@@ -123,6 +123,7 @@ public class TsaAgentServiceImpl implements AgentService {
     ame.setLicensed(serverManagementService.isEnterpriseEdition());
     ame.setNeedClientAuth(false);
     ame.setEnabled(true);
+    ame.setRestAPIVersion("v1");
 
     return ame;
   }

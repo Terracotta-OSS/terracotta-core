@@ -1,16 +1,16 @@
 package com.terracotta.management.test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.terracotta.management.resource.AgentEntity;
+import org.terracotta.management.resource.Representable;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
 
 import java.io.IOException;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * AgentsTest
@@ -77,7 +77,7 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
       assertThat(urls[1], is("http://localhost:" + getGroupData(0).getTsaGroupPort(1)));
 //          assertThat(urls[2], is("http://localhost:" + getGroupData(1).getTsaGroupPort(0)));
 //          assertThat(urls[3], is("http://localhost:" + getGroupData(1).getTsaGroupPort(1)));
-      assertThat((String)content.get("agentId"), is(AgentEntity.EMBEDDED_AGENT_ID));
+      assertThat((String) content.get("agentId"), is(Representable.EMBEDDED_AGENT_ID));
       assertThat((String)content.get("version"), is(guessVersion()));
       assertThat((String)content.get("agencyOf"), is("TSA"));
 
@@ -97,7 +97,7 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
       assertThat((Long)info.get("sampleHistorySize"), is(0L));
       assertThat((Long)info.get("sampleIntervalSeconds"), is(0L));
       assertThat((Boolean)info.get("enabled"), is(true));
-      assertThat((String)info.get("restAPIVersion"), is(guessVersion()));
+      assertThat((String) info.get("restAPIVersion"), is("v1"));
     }
   }
 

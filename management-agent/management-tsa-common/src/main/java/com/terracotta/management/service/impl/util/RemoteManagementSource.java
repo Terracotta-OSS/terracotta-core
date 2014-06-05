@@ -104,7 +104,7 @@ public class RemoteManagementSource {
   public <T extends Representable> Collection<T> postToRemoteL2(String serverName, URI uri, Class<T> type) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .post(null, Collection.class);
+        .post(null, new CollectionOfRepresentableGenericType<T>(type));
   }
 
   private Invocation.Builder resource(URI uri) {

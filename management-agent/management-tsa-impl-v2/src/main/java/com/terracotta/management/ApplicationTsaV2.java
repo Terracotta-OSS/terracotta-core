@@ -77,7 +77,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class ApplicationTsaV2 extends DefaultApplicationV2 implements ApplicationTsaService {
 
-
   @Override
   public Set<Class<?>> getResourceClasses() {
     Set<Class<?>> s = new HashSet<Class<?>>(super.getClasses());
@@ -114,70 +113,72 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
 
   @Override
   public Map<Class<?>, Object> getServiceClasses(ThreadPoolExecutor tsaExecutorService, TimeoutService timeoutService,
-                                                LocalManagementSource localManagementSource,
-                                                RemoteManagementSource remoteManagementSource,
-                                                SecurityContextService securityContextService,
-                                                RequestTicketMonitor requestTicketMonitor, UserService userService,
-                                                ContextService contextService,
-                                                RemoteAgentBridgeService remoteAgentBridgeService,
-                                                ThreadPoolExecutor l1BridgeExecutorService) {
+                                                 LocalManagementSource localManagementSource,
+                                                 RemoteManagementSource remoteManagementSource,
+                                                 SecurityContextService securityContextService,
+                                                 RequestTicketMonitor requestTicketMonitor, UserService userService,
+                                                 ContextService contextService,
+                                                 RemoteAgentBridgeService remoteAgentBridgeService,
+                                                 ThreadPoolExecutor l1BridgeExecutorService) {
 
     Map<Class<?>, Object> serviceClasses = new HashMap<Class<?>, Object>();
 
+    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(tsaExecutorService,
+                                                                                      timeoutService,
+                                                                                      localManagementSource,
+                                                                                      remoteManagementSource,
+                                                                                      securityContextService);
+    OperatorEventsServiceImplV2 operatorEventsServiceImplV2 = new OperatorEventsServiceImplV2(serverManagementService);
+    ClientManagementServiceV2 clientManagementService = new ClientManagementServiceV2(serverManagementService,
+                                                                                      tsaExecutorService,
+                                                                                      timeoutService,
+                                                                                      localManagementSource,
+                                                                                      remoteManagementSource,
+                                                                                      securityContextService);
     
-     ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(tsaExecutorService,
-     timeoutService, localManagementSource, remoteManagementSource, securityContextService);
-     ClientManagementServiceV2 clientManagementService = new ClientManagementServiceV2(serverManagementService,
-     tsaExecutorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
-     serviceClasses.put(TopologyServiceV2.class, new TopologyServiceImplV2(serverManagementService,
-     clientManagementService));
-     serviceClasses.put(MonitoringServiceV2.class, new MonitoringServiceImplV2(serverManagementService,
-     clientManagementService));
-     serviceClasses.put(DiagnosticsServiceV2.class, new DiagnosticsServiceImplV2(serverManagementService,
-     clientManagementService));
-     serviceClasses.put(ConfigurationServiceV2.class, new ConfigurationServiceImplV2(serverManagementService,
-     clientManagementService));
-     serviceClasses.put(BackupServiceV2.class, new BackupServiceImplV2(serverManagementService));
-     serviceClasses.put(LogsServiceV2.class, new LogsServiceImplV2(serverManagementService));
-     serviceClasses.put(OperatorEventsServiceV2.class, new
-     OperatorEventsServiceImplV2(serverManagementService));
-     serviceClasses.put(ShutdownServiceV2.class, new ShutdownServiceImplV2(serverManagementService));
-     serviceClasses.put(JmxServiceV2.class, new JmxServiceImplV2(serverManagementService));
-     serviceClasses.put(LicenseServiceV2.class, new LicenseServiceImplV2(serverManagementService));
+    // pure L2 services
+    serviceClasses.put(TopologyServiceV2.class, new TopologyServiceImplV2(serverManagementService, clientManagementService, operatorEventsServiceImplV2));
+    serviceClasses.put(MonitoringServiceV2.class, new MonitoringServiceImplV2(serverManagementService, clientManagementService));
+    serviceClasses.put(DiagnosticsServiceV2.class, new DiagnosticsServiceImplV2(serverManagementService, clientManagementService));
+    serviceClasses.put(ConfigurationServiceV2.class, new ConfigurationServiceImplV2(serverManagementService, clientManagementService));
+    serviceClasses.put(BackupServiceV2.class, new BackupServiceImplV2(serverManagementService));
+    serviceClasses.put(LogsServiceV2.class, new LogsServiceImplV2(serverManagementService));
+    serviceClasses.put(OperatorEventsServiceV2.class, operatorEventsServiceImplV2);
+    serviceClasses.put(ShutdownServiceV2.class, new ShutdownServiceImplV2(serverManagementService));
+    serviceClasses.put(JmxServiceV2.class, new JmxServiceImplV2(serverManagementService));
+    serviceClasses.put(LicenseServiceV2.class, new LicenseServiceImplV2(serverManagementService));
 
     serviceClasses.put(TopologyEventServiceV2.class, new TopologyEventServiceImplV2());
-    
-    // / L1 bridge and Security Services ///
 
-
+    /// L1 bridge and Security Services ///
     RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor, userService,
-        contextService, requestValidator, remoteAgentBridgeService, l1BridgeExecutorService, timeoutService);
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor,
+                                                                                           userService, contextService,
+                                                                                           requestValidator,
+                                                                                           remoteAgentBridgeService,
+                                                                                           l1BridgeExecutorService,
+                                                                                           timeoutService);
 
+    /// utility services ///
     serviceClasses.put(RequestTicketMonitor.class, requestTicketMonitor);
     serviceClasses.put(ContextService.class, contextService);
     serviceClasses.put(UserService.class, userService);
-
     serviceClasses.put(RequestValidator.class, requestValidator);
     serviceClasses.put(RemoteAgentBridgeService.class, remoteAgentBridgeService);
 
     /// Compound Agent Service ///
-
     RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService);
     serviceClasses.put(AgentServiceV2.class, new TsaAgentServiceImplV2(serverManagementService, remoteAgentBridgeService, remoteAgentService));
 
     /// Ehcache Services ///
-
     serviceClasses.put(CacheManagerServiceV2.class, remoteServiceStubGenerator.newRemoteService(CacheManagerServiceV2.class, "Ehcache"));
     serviceClasses.put(CacheServiceV2.class, remoteServiceStubGenerator.newRemoteService(CacheServiceV2.class, "Ehcache"));
     serviceClasses.put(EntityResourceFactoryV2.class, remoteServiceStubGenerator.newRemoteService(EntityResourceFactoryV2.class, "Ehcache"));
-
+    
     /// Sessions Services ///
-
     serviceClasses.put(SessionsServiceV2.class, remoteServiceStubGenerator.newRemoteService(SessionsServiceV2.class, "Sessions"));
 
     return serviceClasses;
   }
-
 
 }
