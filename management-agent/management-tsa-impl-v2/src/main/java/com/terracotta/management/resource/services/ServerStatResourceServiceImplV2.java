@@ -14,6 +14,7 @@ import com.terracotta.management.resource.ServerGroupEntityV2;
 import com.terracotta.management.resource.ServerStatEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.service.TopologyServiceV2;
+import com.terracotta.management.service.impl.util.LocalManagementSource;
 
 import java.util.Collection;
 import java.util.Set;
@@ -37,6 +38,7 @@ public class ServerStatResourceServiceImplV2 {
   private static final Logger LOG = LoggerFactory.getLogger(ServerStatResourceServiceImplV2.class);
 
   private final TopologyServiceV2 topologyService;
+  private final LocalManagementSource localManagementSource = new LocalManagementSource();
 
   public ServerStatResourceServiceImplV2() {
     this.topologyService = ServiceLocator.locate(TopologyServiceV2.class);
@@ -68,7 +70,7 @@ public class ServerStatResourceServiceImplV2 {
   }
 
   private ServerEntityV2 getCurrentServer(ServerGroupEntityV2 currentServerGroup) throws ServiceExecutionException {
-    String localServerName = topologyService.getLocalServerName();
+    String localServerName = localManagementSource.getLocalServerName();
     for (ServerEntityV2 server : currentServerGroup.getServers()) {
       if (server.getAttributes().get("Name").equals(localServerName)) {
         return server;
@@ -78,7 +80,7 @@ public class ServerStatResourceServiceImplV2 {
   }
 
   private ServerGroupEntityV2 getCurrentServerGroup() throws ServiceExecutionException {
-    String localServerName = topologyService.getLocalServerName();
+    String localServerName = localManagementSource.getLocalServerName();
     Collection<TopologyEntityV2> serverTopologies = topologyService.getServerTopologies(null);
     for (TopologyEntityV2 serverTopology : serverTopologies) {
       Set<ServerGroupEntityV2> serverGroups = serverTopology.getServerGroupEntities();

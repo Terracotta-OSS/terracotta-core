@@ -75,9 +75,4 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
     return Collections.singleton(result);
   }
 
-  @Override
-  public String getLocalServerName() throws ServiceExecutionException {
-    return serverManagementService.getLocalServerName();
-  }
-
 }

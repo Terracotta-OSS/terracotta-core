@@ -15,6 +15,7 @@ import com.terracotta.management.resource.ServerGroupEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.service.ShutdownServiceV2;
 import com.terracotta.management.service.TopologyServiceV2;
+import com.terracotta.management.service.impl.util.LocalManagementSource;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +41,7 @@ public class LocalShutdownResourceServiceImplV2 {
 
   private final ShutdownServiceV2 shutdownService;
   private final TopologyServiceV2 topologyService;
+  private final LocalManagementSource localManagementSource = new LocalManagementSource();
 
   public LocalShutdownResourceServiceImplV2() {
     this.shutdownService = ServiceLocator.locate(ShutdownServiceV2.class);
@@ -56,7 +58,7 @@ public class LocalShutdownResourceServiceImplV2 {
         throw new ResourceRuntimeException("No passive server available in Standby mode. Use force option to stop the server.", Response.Status.BAD_REQUEST.getStatusCode());
       }
 
-      shutdownService.shutdown(Collections.singleton(topologyService.getLocalServerName()));
+      shutdownService.shutdown(Collections.singleton(localManagementSource.getLocalServerName()));
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -77,7 +79,7 @@ public class LocalShutdownResourceServiceImplV2 {
   }
 
   private ServerGroupEntityV2 getCurrentServerGroup() throws ServiceExecutionException {
-    String localServerName = topologyService.getLocalServerName();
+    String localServerName = localManagementSource.getLocalServerName();
     Collection<TopologyEntityV2> serverTopologies = topologyService.getServerTopologies(null);
     for (TopologyEntityV2 serverTopology : serverTopologies) {
       Set<ServerGroupEntityV2> serverGroups = serverTopology.getServerGroupEntities();

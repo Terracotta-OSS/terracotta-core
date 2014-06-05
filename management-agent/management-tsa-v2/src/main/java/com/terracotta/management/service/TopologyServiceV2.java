@@ -49,11 +49,4 @@ public interface TopologyServiceV2 {
    */
   Collection<TopologyEntityV2> getTopologies(Set<String> productIDs) throws ServiceExecutionException;
 
-  /**
-   * Get the local server name
-   * @return the local server name
-   * @throws ServiceExecutionException
-   */
-  String getLocalServerName() throws ServiceExecutionException;
-
 }
