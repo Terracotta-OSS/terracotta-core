@@ -12,6 +12,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import com.terracotta.management.resource.ForceStopEntityV2;
 import com.terracotta.management.resource.ServerEntityV2;
 import com.terracotta.management.resource.ServerGroupEntityV2;
+import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.service.ShutdownServiceV2;
 import com.terracotta.management.service.TopologyServiceV2;
 
@@ -77,12 +78,15 @@ public class LocalShutdownResourceServiceImplV2 {
 
   private ServerGroupEntityV2 getCurrentServerGroup() throws ServiceExecutionException {
     String localServerName = topologyService.getLocalServerName();
-    Collection<ServerGroupEntityV2> serverGroups = topologyService.getServerGroups(null);
-    for (ServerGroupEntityV2 serverGroup : serverGroups) {
-      Set<ServerEntityV2> servers = serverGroup.getServers();
-      for (ServerEntityV2 server : servers) {
-        if (server.getAttributes().get("Name").equals(localServerName)) {
-          return serverGroup;
+    Collection<TopologyEntityV2> serverTopologies = topologyService.getServerTopologies(null);
+    for (TopologyEntityV2 serverTopology : serverTopologies) {
+      Set<ServerGroupEntityV2> serverGroups = serverTopology.getServerGroupEntities();
+      for (ServerGroupEntityV2 serverGroup : serverGroups) {
+        Set<ServerEntityV2> servers = serverGroup.getServers();
+        for (ServerEntityV2 server : servers) {
+          if (server.getAttributes().get("Name").equals(localServerName)) {
+            return serverGroup;
+          }
         }
       }
     }
