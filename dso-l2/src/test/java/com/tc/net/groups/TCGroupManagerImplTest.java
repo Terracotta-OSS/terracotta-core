@@ -11,8 +11,10 @@ import com.tc.async.impl.StageManagerImpl;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
@@ -23,8 +25,11 @@ import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
+import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.ObjectID;
@@ -56,6 +61,15 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.mockito.Answers.RETURNS_MOCKS;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mock;
 
 public class TCGroupManagerImplTest extends TCTestCase {
 
@@ -578,6 +592,76 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     tearGroups();
   }
+
+  public void testVersionCompatibilityCheck() throws Exception {
+    PortChooser portChooser = new PortChooser();
+    TCGroupManagerImpl tcGroupManager = spy(new TCGroupManagerImpl(new NullConnectionPolicy(), "localhost",
+        portChooser.chooseRandomPort(), portChooser.chooseRandomPort(),
+        mock(StageManager.class, RETURNS_MOCKS.get()), mock(TCSecurityManager.class)) {
+      @Override
+      protected void initializeWeights(final WeightGeneratorFactory weightGeneratorFactory) {
+        weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+          @Override
+          public long getWeight() {
+            return 5;
+          }
+        });
+        weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+          @Override
+          public long getWeight() {
+            return 6;
+          }
+        });
+      }
+
+      @Override
+      protected String getVersion() {
+        return "4.2.0";
+      }
+    });
+    TCGroupMemberDiscovery discovery = mock(TCGroupMemberDiscovery.class);
+    when(discovery.isValidClusterNode(any(NodeID.class))).thenReturn(true);
+    tcGroupManager.setDiscover(discovery);
+
+    // Incompatible version, higher weights. Close down the handshake, the other guy will zap himself.
+    MessageChannel channel1 = mockMessageChannel();
+    tcGroupManager.receivedHandshake(mockHandshakeMessage(channel1, "4.3.1", new long [] { 4, 5 }));
+    verify(channel1).close();
+
+    // Incompatible version, lower weights. Zap yourself.
+    MessageChannel channel2 = mockMessageChannel();
+    try {
+      tcGroupManager.receivedHandshake(mockHandshakeMessage(channel2, "4.3.1", new long [] { 6, 1 }));
+      fail("Should have zapped here due to low weights");
+    } catch (TCShutdownServerException e) {
+      // expected
+      verify(channel2).close();
+    }
+
+    // Compatible version, everything should be fine
+    MessageChannel channel3 = mockMessageChannel();
+    tcGroupManager.receivedHandshake(mockHandshakeMessage(channel3, "4.2.1", new long[] { Long.MAX_VALUE, Long.MAX_VALUE}));
+    verify(channel3, never()).close();
+  }
+
+  private TCGroupHandshakeMessage mockHandshakeMessage(MessageChannel messageChannel, String version, long[] weights) {
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = mock(TCGroupHandshakeMessage.class);
+    when(tcGroupHandshakeMessage.getNodeID()).thenReturn(new ServerID("test", new byte[20]));
+    when(tcGroupHandshakeMessage.getVersion()).thenReturn(version);
+    when(tcGroupHandshakeMessage.getWeights()).thenReturn(weights);
+    when(tcGroupHandshakeMessage.getChannel()).thenReturn(messageChannel);
+    return tcGroupHandshakeMessage;
+  }
+
+  private MessageChannel mockMessageChannel() {
+    final TCGroupHandshakeMessage tcGroupHandshakeMessage = mock(TCGroupHandshakeMessage.class, RETURNS_MOCKS.get());
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getAttachment(anyString())).thenReturn(null);
+    when(channel.createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE)).thenReturn(tcGroupHandshakeMessage);
+    when(tcGroupHandshakeMessage.getChannel()).thenReturn(channel);
+    return channel;
+  }
+
 
   private void waitForMembersToJoin() throws Exception {
     int members = groups.length - 1;

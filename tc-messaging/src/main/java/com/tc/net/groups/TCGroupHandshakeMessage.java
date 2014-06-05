@@ -24,12 +24,16 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
   private final static byte MESSAGE_TYPE         = 1;
   private final static byte NODE_ID              = 2;
   private final static byte HANDSHAKE_MESSAGE_ID = 3;
+  private final static byte VERSION_ID           = 4;
+  private final static byte WEIGHTS_ID           = 5;
   private final static int  HANDSHAKE_ACK        = 2;
   private final static int  HANDSHAKE_OK         = 1;
   private final static int  HANDSHAKE_DENY       = 0;
   private byte              messageType;
   private ServerID          nodeID;
   private int               message;
+  private String            version;
+  private long[]            weights;
 
   public TCGroupHandshakeMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                  MessageChannel channel, TCMessageType type) {
@@ -71,9 +75,19 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     return this.nodeID;
   }
 
-  public void initializeNodeID(ServerID aNodeID) {
+  public void initializeNodeID(ServerID aNodeID, final String version, final long[] weights) {
     this.messageType = NODE_ID;
     this.nodeID = aNodeID;
+    this.version = version;
+    this.weights = weights;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public long[] getWeights() {
+    return weights;
   }
 
   @Override
@@ -81,6 +95,11 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     putNVPair(MESSAGE_TYPE, messageType);
     switch (messageType) {
       case NODE_ID:
+        putNVPair(VERSION_ID, version);
+        putNVPair(WEIGHTS_ID, weights.length);
+        for (long weight : weights) {
+          getOutputStream().writeLong(weight);
+        }
         putNVPair(NODE_ID, nodeID);
         return;
       case HANDSHAKE_MESSAGE_ID:
@@ -100,6 +119,15 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
         return true;
       case HANDSHAKE_MESSAGE_ID:
         message = getIntValue();
+        return true;
+      case VERSION_ID:
+        version = getStringValue();
+        return true;
+      case WEIGHTS_ID:
+        weights = new long[getIntValue()];
+        for (int i = 0; i < weights.length; i++) {
+          weights[i] = getLongValue();
+        }
         return true;
       default:
         return false;

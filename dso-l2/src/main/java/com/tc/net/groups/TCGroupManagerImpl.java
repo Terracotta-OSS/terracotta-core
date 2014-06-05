@@ -12,9 +12,11 @@ import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.TopologyChangeListener;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
 import com.tc.logging.TCLogger;
@@ -68,10 +70,13 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
+import com.tc.util.version.Version;
+import com.tc.util.version.VersionCompatibility;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -96,9 +101,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventListener, TopologyChangeListener {
   private static final TCLogger                             logger                      = TCLogging
                                                                                             .getLogger(TCGroupManagerImpl.class);
+
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   private final ReconnectConfig                             l2ReconnectConfig;
 
+  private final String                                      version;
   private final Sink                                        httpSink;
   private final TCSecurityManager                           securityManager;
   private final ServerID                                    thisNodeID;
@@ -119,6 +126,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private final StageManager                                stageManager;
   private final boolean                                     isUseOOOLayer;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
+  private final WeightGeneratorFactory                      weightGeneratorFactory      = new WeightGeneratorFactory();
 
   private CommunicationsManager                             communicationsManager;
   private NetworkListener                                   groupListener;
@@ -149,6 +157,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     this.securityManager = securityManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
+    this.version = getVersion();
+
+    initializeWeights(weightGeneratorFactory);
 
     L2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
@@ -175,6 +186,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     registerForGroupEvents(new OperatorEventsNodeConnectionListener(nodesStore));
   }
 
+  protected String getVersion() {
+    return ProductInfo.getInstance().version();
+  }
+
   @Override
   public boolean isNodeConnected(NodeID sid) {
     TCGroupMember m = members.get(sid);
@@ -193,9 +208,29 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     this.httpSink = null;
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
+    this.version = getVersion();
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + thisNodeID);
+    initializeWeights(weightGeneratorFactory);
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
+  }
+
+  protected void initializeWeights(WeightGeneratorFactory weightGeneratorFactory) {
+    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+      @Override
+      public long getWeight() {
+        return members.size();
+      }
+    });
+    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+      // Uptime weight
+      final long start = System.currentTimeMillis();
+      @Override
+      public long getWeight() {
+        return System.currentTimeMillis() - start;
+      }
+    });
+    weightGeneratorFactory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
   }
 
   private void init(TCSocketAddress socketAddress) {
@@ -909,7 +944,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         .getAttachment(HANDSHAKE_STATE_MACHINE_TAG);
     if (stateMachine == null) {
       debugInfo("Creating handshake state machine for channel: " + channel);
-      stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID());
+      stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, version);
       channel.addAttachment(HANDSHAKE_STATE_MACHINE_TAG, stateMachine, false);
       channel.addListener(new HandshakeChannelEventListener(stateMachine));
       stateMachine.start();
@@ -964,6 +999,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     private final TCGroupManagerImpl manager;
     private final MessageChannel     channel;
     private final ServerID           localNodeID;
+    private final WeightGeneratorFactory weightGeneratorFactory;
+    private final String               version;
 
     private HandshakeState           current;
     private ServerID                 peerNodeID;
@@ -971,10 +1008,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     private TCGroupMember            member;
     private boolean                  stateTransitionInProgress;
 
-    public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID) {
+    public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID,
+                                        WeightGeneratorFactory weightGeneratorFactory, String version) {
       this.manager = manager;
       this.channel = channel;
       this.localNodeID = localNodeID;
+      this.weightGeneratorFactory = weightGeneratorFactory;
+      this.version = version;
       this.stateTransitionInProgress = false;
     }
 
@@ -1122,6 +1162,15 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       @Override
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
+        if (!new VersionCompatibility().isCompatibleClientServer(new Version(version), new Version(msg.getVersion()))) {
+          switchToState(STATE_FAILURE);
+          if (checkWeights(msg)) {
+            logger.error("Node " + peerNodeID + " has an incompatible version " + msg.getVersion());
+            return;
+          } else {
+            throw new TCShutdownServerException("Version incompatible with the rest of the cluster.");
+          }
+        }
         if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
           logger.warn("Drop connection from non-member node " + peerNodeID);
           switchToState(STATE_FAILURE);
@@ -1145,9 +1194,21 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       void writeNodeIDMessage() {
         TCGroupHandshakeMessage msg = (TCGroupHandshakeMessage) channel
             .createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE);
-        msg.initializeNodeID(localNodeID);
+        msg.initializeNodeID(localNodeID, version, weightGeneratorFactory.generateWeightSequence());
         debugInfo("Sending group nodeID message to " + channel);
         msg.send();
+      }
+
+      boolean checkWeights(TCGroupHandshakeMessage msg) {
+        long[] myWeights = weightGeneratorFactory.generateWeightSequence();
+        for (int i = 0; i < myWeights.length; i++) {
+          if (myWeights[i] > msg.getWeights()[i]) {
+            return true;
+          } else if (msg.getWeights()[i] > myWeights[i]) {
+            return false;
+          }
+        }
+        return false;
       }
     }
 
