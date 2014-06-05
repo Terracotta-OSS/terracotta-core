@@ -1330,6 +1330,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return -1;
   }
 
+  public int getManagementPort() {
+    final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final int configValue = l2DSOConfig.managementPort().getIntValue();
+    if (configValue != 0) { return configValue; }
+    return -1;
+  }
+
   public synchronized void stop() {
     TerracottaRemoteManagement.setRemoteManagementInstance(null);
 

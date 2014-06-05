@@ -92,9 +92,9 @@ public class TSAConfig {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       Object securityHostnameAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityHostname");
-      Object tsaGroupPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "TSAGroupPort");
+      Object managementPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ManagementPort");
 
-      return "https://" + securityHostnameAttribute.toString() + ":" + tsaGroupPortAttribute + "/tc-management-api";
+      return "https://" + securityHostnameAttribute.toString() + ":" + managementPortAttribute + "/tc-management-api";
     } catch (Exception e) {
       throw new RuntimeException("Error building ManagementUrl", e);
     }

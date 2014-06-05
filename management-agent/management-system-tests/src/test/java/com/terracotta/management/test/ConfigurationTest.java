@@ -62,8 +62,8 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
     }
 
     private void waitUntilAllServerAgentsUp() {
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(0));
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(1));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(0));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(1));
     }
 
     private void testResources(int group, int member) throws IOException {
@@ -71,14 +71,14 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
     }
 
     private void testResources(int group, int member, int expectedDownCount) throws IOException {
-      int tsaGroupPort = getGroupData(group).getTsaGroupPort(member);
+      int managementPort = getGroupData(group).getManagementPort(member);
 
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/servers;names=" + getGroupData(group).getServerNames()[member]);
+      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, managementPort, "/tc-management-api/agents/configurations/servers;names=" + getGroupData(group).getServerNames()[member]);
       assertThat(contentArray.size(), is(1));
       JSONObject content = (JSONObject)contentArray.get(0);
       checkServerConfigurationWithName(group, content);
 
-      contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/servers");
+      contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, managementPort, "/tc-management-api/agents/configurations/servers");
       assertThat(contentArray.size(), is(MEMBER_COUNT * GROUP_COUNT));
       content = (JSONObject)contentArray.get(0);
       int downCount = 0;
@@ -136,8 +136,8 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
 
       for (int group = 0; group < GROUP_COUNT; group++) {
         for (int member = 0; member < MEMBER_COUNT; member++) {
-          int tsaGroupPort = getGroupData(group).getTsaGroupPort(member);
-          JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/clients");
+          int managementPort = getGroupData(group).getManagementPort(member);
+          JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, managementPort, "/tc-management-api/agents/configurations/clients");
           assertThat(contentArray.size(), is(1));
 
           JSONObject obj = (JSONObject)contentArray.get(0);
@@ -145,7 +145,7 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
           assertThat(obj.get("sourceId"), is(notNullValue()));
           assertThat(((JSONObject)obj.get("attributes")).size(), is(4));
 
-          contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations");
+          contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, managementPort, "/tc-management-api/agents/configurations");
           assertThat(contentArray.size(), is(3));
         }
       }

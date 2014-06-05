@@ -13,16 +13,19 @@ import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.MappedLoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.security.Password;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.tc.async.api.ConfigurationContext;
@@ -85,6 +88,7 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyStore;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,6 +103,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
+import javax.net.ssl.KeyManager;
 
 public class TCServerImpl extends SEDA implements TCServer {
 
@@ -396,6 +401,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     throw new IllegalStateException("TSA Server not running");
   }
 
+  @Override
+  public int getManagementPort() {
+    if (this.dsoServer != null) { return this.dsoServer.getManagementPort(); }
+    throw new IllegalStateException("TSA Server not running");
+  }
+
   public DistributedObjectServer getDSOServer() {
     return this.dsoServer;
   }
@@ -604,11 +615,23 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.httpServer.setSendServerVersion(false);
     this.httpServer.addConnector(tcConnector);
 
-    SelectChannelConnector scc = new SelectChannelConnector();
-    scc.setPort(commonL2Config.managementPort().getIntValue());
-    scc.setHost(commonL2Config.managementPort().getBind());
+    Connector managementConnector;
+    if (commonL2Config.isSecure()) {
+      //TODO: configure SslContextFactory
+      SslContextFactory sslContextFactory = new SslContextFactory();
 
-    this.httpServer.addConnector(scc);
+      SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
+      scc.setPort(commonL2Config.managementPort().getIntValue());
+      scc.setHost(commonL2Config.managementPort().getBind());
+      managementConnector = scc;
+    } else {
+      SelectChannelConnector scc = new SelectChannelConnector();
+      scc.setPort(commonL2Config.managementPort().getIntValue());
+      scc.setHost(commonL2Config.managementPort().getBind());
+      managementConnector = scc;
+    }
+
+    this.httpServer.addConnector(managementConnector);
 
     this.contextHandlerCollection = new ContextHandlerCollection();
 
@@ -690,7 +713,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     try {
       this.httpServer.start();
-      consoleLogger.info("Management server started on " + scc.getHost() + ":" + scc.getLocalPort());
+      consoleLogger.info("Management server started on " + managementConnector.getHost() + ":" + managementConnector.getLocalPort());
     } catch (Exception e) {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;

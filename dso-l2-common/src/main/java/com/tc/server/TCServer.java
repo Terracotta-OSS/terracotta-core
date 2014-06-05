@@ -55,6 +55,8 @@ public interface TCServer {
 
   int getTSAGroupPort();
 
+  int getManagementPort();
+
   void waitUntilShutdown();
 
   void dump();
