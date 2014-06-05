@@ -215,14 +215,14 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
 
-  protected void initializeWeights(WeightGeneratorFactory weightGeneratorFactory) {
-    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+  protected void initializeWeights(WeightGeneratorFactory factory) {
+    factory.add(new WeightGeneratorFactory.WeightGenerator() {
       @Override
       public long getWeight() {
         return members.size();
       }
     });
-    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+    factory.add(new WeightGeneratorFactory.WeightGenerator() {
       // Uptime weight
       final long start = System.currentTimeMillis();
       @Override
@@ -230,7 +230,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         return System.currentTimeMillis() - start;
       }
     });
-    weightGeneratorFactory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    factory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
   }
 
   private void init(TCSocketAddress socketAddress) {
@@ -1162,7 +1162,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       @Override
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
-        if (!new VersionCompatibility().isCompatibleClientServer(new Version(version), new Version(msg.getVersion()))) {
+        if (!new VersionCompatibility().isCompatibleServerServer(new Version(version), new Version(msg.getVersion()))) {
           switchToState(STATE_FAILURE);
           if (checkWeights(msg)) {
             logger.error("Node " + peerNodeID + " has an incompatible version " + msg.getVersion());

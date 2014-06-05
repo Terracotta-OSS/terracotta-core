@@ -9,6 +9,10 @@ public class VersionCompatibility {
     return isCompatible(clientVersion, serverVersion);
   }
 
+  public boolean isCompatibleServerServer(Version v1, Version v2) {
+    return isCompatible(v1, v2);
+  }
+
   public boolean isCompatibleServerPersistence(Version persisted, Version current) {
     return isCompatible(persisted, current);
   }
