@@ -5,6 +5,8 @@ import com.tc.security.PwProvider;
 
 import java.security.Principal;
 
+import javax.net.ssl.SSLContext;
+
 /**
  * @author Alex Snaps
  */
@@ -14,6 +16,8 @@ public interface TCSecurityManager extends PwProvider {
   boolean isUserInRole(Principal principal, String roleName);
 
   BufferManagerFactory getBufferManagerFactory();
+
+  SSLContext getSslContext();
 
   String getIntraL2Username();
 }

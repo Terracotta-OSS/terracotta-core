@@ -88,7 +88,6 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyStore;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,7 +102,6 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
-import javax.net.ssl.KeyManager;
 
 public class TCServerImpl extends SEDA implements TCServer {
 
@@ -617,8 +615,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     Connector managementConnector;
     if (commonL2Config.isSecure()) {
-      //TODO: configure SslContextFactory
       SslContextFactory sslContextFactory = new SslContextFactory();
+      sslContextFactory.setSslContext(securityManager.getSslContext());
 
       SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
       scc.setPort(commonL2Config.managementPort().getIntValue());
