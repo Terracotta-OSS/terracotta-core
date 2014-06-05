@@ -57,10 +57,7 @@ public class TopologyEventResourceServiceImplV2 {
         try {
           eventOutput.write(event);
         } catch (IOException e) {
-          throw new RuntimeException("Error when writing the event.", e);
-        } finally {
-
-          //WTF?
+          // throw new RuntimeException("Error when writing the event.", e);
           topologyEventService.unregisterTopologyEventListener(this);
 
           try {
