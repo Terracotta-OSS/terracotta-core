@@ -11,6 +11,8 @@ import com.terracotta.management.resource.events.TopologyEventEntityV2;
 import com.terracotta.management.service.events.TopologyEventServiceV2;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
@@ -18,10 +20,12 @@ import java.util.Map;
  */
 public class TopologyEventServiceImplV2 implements TopologyEventServiceV2 {
 
+  private final Map<TopologyEventListener, ManagementEventListener> listenerMap = Collections.synchronizedMap(new IdentityHashMap<TopologyEventListener, ManagementEventListener>());
+
   @Override
   public void registerTopologyEventListener(final TopologyEventListener listener) {
     RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
-    remoteManagementInstance.registerEventListener(new ManagementEventListener() {
+    ManagementEventListener managementEventListener = new ManagementEventListener() {
       @Override
       public ClassLoader getClassLoader() {
         return TopologyEventServiceImplV2.class.getClassLoader();
@@ -38,11 +42,14 @@ public class TopologyEventServiceImplV2 implements TopologyEventServiceV2 {
 
         listener.onEvent(topologyEventEntity);
       }
-    });
+    };
+    listenerMap.put(listener, managementEventListener);
+    remoteManagementInstance.registerEventListener(managementEventListener);
   }
 
   @Override
   public void unregisterTopologyEventListener(TopologyEventListener listener) {
-
+    RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
+    remoteManagementInstance.unregisterEventListener(listenerMap.remove(listener));
   }
 }

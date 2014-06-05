@@ -44,7 +44,6 @@ public class TopologyEventResourceServiceImplV2 {
     LOG.debug(String.format("Invoking TopologyEventResourceServiceImplV2.getServerSentEvents: %s", info.getRequestUri()));
 
     final EventOutput eventOutput = new EventOutput();
-
     topologyEventService.registerTopologyEventListener(new TopologyEventServiceV2.TopologyEventListener() {
       @Override
       public void onEvent(TopologyEventEntityV2 eventEntity) {
@@ -57,13 +56,11 @@ public class TopologyEventResourceServiceImplV2 {
         try {
           eventOutput.write(event);
         } catch (IOException e) {
-          // throw new RuntimeException("Error when writing the event.", e);
           topologyEventService.unregisterTopologyEventListener(this);
-
           try {
             eventOutput.close();
-          } catch (IOException ioClose) {
-            throw new RuntimeException("Error when closing the event output.", ioClose);
+          } catch (IOException ioe) {
+            LOG.warn("Error when closing the event output.", ioe);
           }
         }
       }
