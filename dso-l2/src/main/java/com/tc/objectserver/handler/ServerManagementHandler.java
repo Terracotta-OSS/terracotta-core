@@ -5,6 +5,7 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
+import com.tc.management.TCManagementEvent;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.ManagementResponseListener;
 import com.tc.net.ClientID;
@@ -14,7 +15,6 @@ import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.util.Assert;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +55,7 @@ public class ServerManagementHandler extends AbstractEventHandler {
             Map<String, Object> contextMap = new HashMap<String, Object>();
             ClientID clientID = (ClientID)sourceNodeID;
             contextMap.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, "" + clientID.toLong());
-            Serializable event = (Serializable)response.getResponseHolder().getResponse(eventListener.getClassLoader());
+            TCManagementEvent event = (TCManagementEvent)response.getResponseHolder().getResponse(eventListener.getClassLoader());
             eventListener.onEvent(event, contextMap);
           } catch (RuntimeException re) {
             getLogger().warn("event listener threw RuntimeException", re);
@@ -97,7 +97,7 @@ public class ServerManagementHandler extends AbstractEventHandler {
     eventListeners.remove(eventListener);
   }
 
-  public void fireEvent(Serializable event, Map<String, Object> context) {
+  public void fireEvent(TCManagementEvent event, Map<String, Object> context) {
     for (ManagementEventListener listener : eventListeners) {
       try {
         listener.onEvent(event, context);

@@ -4,11 +4,12 @@
 package com.terracotta.toolkit;
 
 import org.terracotta.toolkit.internal.feature.ManagementInternalFeature;
+import org.terracotta.toolkit.internal.feature.ToolkitManagementEvent;
 
+import com.tc.management.TCManagementEvent;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.feature.EnabledToolkitFeature;
 
-import java.io.Serializable;
 import java.util.concurrent.ExecutorService;
 
 public class ManagementInternalFeatureImpl extends EnabledToolkitFeature implements ManagementInternalFeature {
@@ -30,8 +31,8 @@ public class ManagementInternalFeatureImpl extends EnabledToolkitFeature impleme
   }
 
   @Override
-  public void sendEvent(Serializable event) {
-    platformService.sendEvent(event);
+  public void sendEvent(ToolkitManagementEvent event) {
+    platformService.sendEvent(new TCManagementEvent(event.getPayload(), event.getType()));
   }
 
 }

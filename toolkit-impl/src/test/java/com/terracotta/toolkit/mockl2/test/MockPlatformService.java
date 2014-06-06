@@ -8,6 +8,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.net.GroupID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
@@ -44,7 +45,6 @@ import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl;
 import com.terracottatech.search.NVPair;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -406,7 +406,7 @@ public class MockPlatformService implements PlatformService {
   }
 
   @Override
-  public void sendEvent(Serializable event) {
+  public void sendEvent(TCManagementEvent event) {
     throw new UnsupportedOperationException();
   }
 }

@@ -4,7 +4,6 @@
  */
 package com.tc.management;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -25,6 +24,6 @@ public interface ManagementEventListener {
    * @param event the event object.
    * @param context the event context.
    */
-  void onEvent(Serializable event, Map<String, Object> context);
+  void onEvent(TCManagementEvent event, Map<String, Object> context);
 
 }

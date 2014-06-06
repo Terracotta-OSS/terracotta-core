@@ -10,6 +10,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.net.GroupID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
@@ -33,7 +34,6 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -583,7 +583,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public void sendEvent(Serializable event) {
+  public void sendEvent(TCManagementEvent event) {
     delegate.sendEvent(event);
   }
 }

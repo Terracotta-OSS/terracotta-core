@@ -13,7 +13,6 @@ import com.tc.object.management.ResponseHolder;
 import com.tc.object.management.ServiceID;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,7 +103,7 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
   }
 
   @Override
-  public void sendEvent(Serializable event) {
+  public void sendEvent(TCManagementEvent event) {
     for (MessageChannel messageChannel : messageChannels) {
       ResponseHolder responseHolder = new ResponseHolder();
       responseHolder.setResponse(event);

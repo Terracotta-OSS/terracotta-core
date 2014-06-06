@@ -9,25 +9,15 @@ import java.io.Serializable;
 /**
  *
  */
-public class TSAManagementEvent implements Serializable {
+public class TSAManagementEventPayload implements Serializable {
 
-  private String type;
   private String targetNodeId;
 
-  public TSAManagementEvent() {
+  public TSAManagementEventPayload() {
   }
 
-  public TSAManagementEvent(String type, String targetNodeId) {
-    this.type = type;
+  public TSAManagementEventPayload(String targetNodeId) {
     this.targetNodeId = targetNodeId;
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  public void setType(String type) {
-    this.type = type;
   }
 
   public String getTargetNodeId() {

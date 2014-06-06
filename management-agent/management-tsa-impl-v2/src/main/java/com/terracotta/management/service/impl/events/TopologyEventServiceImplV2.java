@@ -3,14 +3,14 @@
  */
 package com.terracotta.management.service.impl.events;
 
+import com.tc.management.TCManagementEvent;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.RemoteManagement;
-import com.tc.management.TSAManagementEvent;
+import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.terracotta.management.resource.events.TopologyEventEntityV2;
 import com.terracotta.management.service.events.TopologyEventServiceV2;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -32,13 +32,14 @@ public class TopologyEventServiceImplV2 implements TopologyEventServiceV2 {
       }
 
       @Override
-      public void onEvent(Serializable event, Map<String, Object> context) {
-        TSAManagementEvent tsaManagementEvent = (TSAManagementEvent)event;
+      public void onEvent(TCManagementEvent event, Map<String, Object> context) {
+        if (!event.getType().startsWith("TSA.TOPOLOGY")) { return; }
+        TSAManagementEventPayload tsaManagementEventPayload = (TSAManagementEventPayload)event.getPayload();
 
         TopologyEventEntityV2 topologyEventEntity = new TopologyEventEntityV2();
         topologyEventEntity.setSourceId((String)context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME));
-        topologyEventEntity.setEvent(tsaManagementEvent.getType());
-        topologyEventEntity.setTargetId(tsaManagementEvent.getTargetNodeId());
+        topologyEventEntity.setEvent(event.getType());
+        topologyEventEntity.setTargetId(tsaManagementEventPayload.getTargetNodeId());
 
         listener.onEvent(topologyEventEntity);
       }

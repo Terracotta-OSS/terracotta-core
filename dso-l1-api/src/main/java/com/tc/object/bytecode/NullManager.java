@@ -9,6 +9,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -36,7 +37,6 @@ import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
@@ -517,6 +517,6 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void sendEvent(Serializable event) {
+  public void sendEvent(TCManagementEvent event) {
   }
 }

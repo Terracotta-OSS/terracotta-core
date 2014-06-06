@@ -18,6 +18,7 @@ import com.tc.license.LicenseManager;
 import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.TCManagementEvent;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -80,7 +81,6 @@ import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchBuilder.Search;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
@@ -1013,7 +1013,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void sendEvent(Serializable event) {
+  public void sendEvent(TCManagementEvent event) {
     dso.getManagementServicesManager().sendEvent(event);
   }
 }

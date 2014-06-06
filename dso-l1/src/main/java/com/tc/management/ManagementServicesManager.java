@@ -8,7 +8,6 @@ import com.tc.object.management.RemoteCallDescriptor;
 import com.tc.object.management.RemoteCallHolder;
 import com.tc.object.management.ServiceID;
 
-import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -30,7 +29,7 @@ public interface ManagementServicesManager {
 
   // L1 -> L2
 
-  void sendEvent(Serializable event);
+  void sendEvent(TCManagementEvent event);
 
 
   // common

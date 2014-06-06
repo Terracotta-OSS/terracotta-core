@@ -20,7 +20,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.handler.ServerManagementHandler;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class RemoteManagement {
     this.thisServerNodeName = thisServerNodeName;
   }
 
-  public void sendEvent(Serializable event) {
+  public void sendEvent(TCManagementEvent event) {
     Map<String, Object> context = new HashMap<String, Object>();
     context.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, thisServerNodeName);
     serverManagementHandler.fireEvent(event, context);

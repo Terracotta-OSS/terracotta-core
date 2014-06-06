@@ -7,9 +7,10 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.net.GroupID;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -28,7 +29,6 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -150,5 +150,5 @@ public interface PlatformService {
 
   void unregisterManagementService(Object serviceID);
 
-  void sendEvent(Serializable event);
+  void sendEvent(TCManagementEvent event);
 }
