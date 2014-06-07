@@ -1,5 +1,6 @@
 package org.terracotta.tests.base;
 
+import org.hamcrest.Matcher;
 import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.test.util.TestProcessUtil;
 
@@ -198,7 +199,8 @@ public class TestClientManager {
     String abstractClientBase = TestBaseUtil.jarFor(AbstractClientBase.class);
     String jmxp = TestBaseUtil.jarFor(JMXMPConnector.class);
     String log4j = TestBaseUtil.jarFor(org.apache.log4j.LogManager.class);
-    classPath = testBase.makeClasspath(classPath, test, junit, linkedChild, abstractClientBase, jmxp, log4j);
+    String hamcrest = TestBaseUtil.jarFor(Matcher.class);
+    classPath = testBase.makeClasspath(classPath, test, junit, linkedChild, abstractClientBase, jmxp, log4j, hamcrest);
     return classPath;
   }
 
