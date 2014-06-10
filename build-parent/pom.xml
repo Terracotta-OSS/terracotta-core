@@ -28,6 +28,7 @@
     <core-storage-api.version>1.3</core-storage-api.version>
     <heap-core-storage.version>1.1.2</heap-core-storage.version>
     <bigmemory-core-storage.version>1.1.10</bigmemory-core-storage.version>
+    <tc-messaging.version>4.2.0-SNAPSHOT</tc-messaging.version>
     <jetty.version>8.1.12.v20130726</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.7.5</slf4j.version>
@@ -102,7 +103,12 @@
         <artifactId>bigmemory-core-storage</artifactId>
         <version>${bigmemory-core-storage.version}</version>
       </dependency>
-    <dependency>
+      <dependency>
+	<groupId>org.terracotta.internal</groupId>
+	<artifactId>tc-messaging</artifactId>
+	<version>${tc-messaging.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
         <version>${linked-child-process.version}</version>
@@ -274,11 +280,6 @@
           </exclusion>          
         </exclusions>
       </dependency>
-      <dependency>
-        <groupId>com.terracottatech</groupId>
-        <artifactId>search</artifactId>
-        <version>${search.version}</version>
-      </dependency>          
       <dependency>
         <groupId>org.terracotta.license</groupId>
         <artifactId>terracotta-license</artifactId>

@@ -26,8 +26,8 @@
   
   <dependencies>
     <dependency>
-      <groupId>com.terracottatech</groupId>
-      <artifactId>search</artifactId>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>tc-messaging</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
