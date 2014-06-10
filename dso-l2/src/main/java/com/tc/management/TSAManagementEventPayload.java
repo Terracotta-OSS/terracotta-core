@@ -12,12 +12,14 @@ import java.io.Serializable;
 public class TSAManagementEventPayload implements Serializable {
 
   private String targetNodeId;
+  private String targetJmxId;
 
   public TSAManagementEventPayload() {
   }
 
-  public TSAManagementEventPayload(String targetNodeId) {
+  public TSAManagementEventPayload(String targetNodeId, String targetJmxId) {
     this.targetNodeId = targetNodeId;
+    this.targetJmxId = targetJmxId;
   }
 
   public String getTargetNodeId() {
@@ -26,5 +28,13 @@ public class TSAManagementEventPayload implements Serializable {
 
   public void setTargetNodeId(String targetNodeId) {
     this.targetNodeId = targetNodeId;
+  }
+
+  public String getTargetJmxId() {
+    return targetJmxId;
+  }
+
+  public void setTargetJmxId(String targetJmxId) {
+    this.targetJmxId = targetJmxId;
   }
 }

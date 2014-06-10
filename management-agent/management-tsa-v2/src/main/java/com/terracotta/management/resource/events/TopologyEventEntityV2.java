@@ -15,7 +15,8 @@ public class TopologyEventEntityV2 extends AbstractTsaEntityV2 {
 
   private String sourceId;
   private String event;
-  private String targetId;
+  private String targetNodeId;
+  private String targetJmxId;
 
   public String getSourceId() {
     return sourceId;
@@ -33,11 +34,19 @@ public class TopologyEventEntityV2 extends AbstractTsaEntityV2 {
     this.event = event;
   }
 
-  public String getTargetId() {
-    return targetId;
+  public String getTargetNodeId() {
+    return targetNodeId;
   }
 
-  public void setTargetId(String targetId) {
-    this.targetId = targetId;
+  public void setTargetNodeId(String targetNodeId) {
+    this.targetNodeId = targetNodeId;
+  }
+
+  public String getTargetJmxId() {
+    return targetJmxId;
+  }
+
+  public void setTargetJmxId(String targetJmxId) {
+    this.targetJmxId = targetJmxId;
   }
 }

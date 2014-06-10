@@ -39,7 +39,8 @@ public class TopologyEventServiceImplV2 implements TopologyEventServiceV2 {
         TopologyEventEntityV2 topologyEventEntity = new TopologyEventEntityV2();
         topologyEventEntity.setSourceId((String)context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME));
         topologyEventEntity.setEvent(event.getType());
-        topologyEventEntity.setTargetId(tsaManagementEventPayload.getTargetNodeId());
+        topologyEventEntity.setTargetNodeId(tsaManagementEventPayload.getTargetNodeId());
+        topologyEventEntity.setTargetJmxId(tsaManagementEventPayload.getTargetJmxId());
 
         listener.onEvent(topologyEventEntity);
       }
