@@ -15,14 +15,12 @@ import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.NullTCServerInfo;
+import com.tc.server.TCServerImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 
@@ -38,11 +36,11 @@ import java.util.concurrent.Callable;
  * @author Manoj
  */
 public class DSOServerBindAddressTest extends BaseDSOTestCase {
-  private final TCThreadGroup     group     = new TCThreadGroup(
-                                                                new ThrowableHandlerImpl(TCLogging
-                                                                    .getLogger(DistributedObjectServer.class)));
-  private static final String[]   bindAddrs = { "0.0.0.0", "127.0.0.1", localAddr() };
-  private DistributedObjectServer server;
+  private final TCThreadGroup   group     = new TCThreadGroup(
+                                                              new ThrowableHandlerImpl(TCLogging
+                                                                  .getLogger(DistributedObjectServer.class)));
+  private static final String[] bindAddrs = { "0.0.0.0", "127.0.0.1", localAddr() };
+  private TCServerImpl          server;
 
   static String localAddr() {
     try {
@@ -59,20 +57,20 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     private final int    jmxPort;
     private final String bindAddr;
     private final int    tsaGroupPort;
+    private final int    managementPort;
 
-    public StartAction(String bindAddr, int tsaPort, int jmxPort, int tsaGroupPort) {
+    public StartAction(String bindAddr, int tsaPort, int jmxPort, int tsaGroupPort, int mangementPort) {
       this.bindAddr = bindAddr;
       this.tsaPort = tsaPort;
       this.jmxPort = jmxPort;
       this.tsaGroupPort = tsaGroupPort;
+      this.managementPort = mangementPort;
     }
 
     @Override
     public void execute() throws Throwable {
       TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, "false");
-      server = new DistributedObjectServer(createL2Manager(bindAddr, tsaPort, jmxPort, tsaGroupPort), group,
-                                           new NullConnectionPolicy(), new NullTCServerInfo(),
-                                           new ObjectStatsRecorder());
+      server = new TCServerImpl(createL2Manager(bindAddr, tsaPort, jmxPort, tsaGroupPort, managementPort));
       server.start();
     }
 
@@ -88,10 +86,11 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       int tsaPort = pc.chooseRandomPort();
       int jmxPort = pc.chooseRandomPort();
       int tsaGroupPort = pc.chooseRandomPort();
+      int managementPort = pc.chooseRandomPort();
 
-      new StartupHelper(group, new StartAction(bind, tsaPort, jmxPort, tsaGroupPort)).startUp();
+      new StartupHelper(group, new StartAction(bind, tsaPort, jmxPort, tsaGroupPort, managementPort)).startUp();
 
-      final DistributedObjectServer dsoServer = server;
+      final DistributedObjectServer dsoServer = server.getDSOServer();
       WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
@@ -106,14 +105,14 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       });
 
       if (i == 0) {
-        Assert.eval(server.getListenAddr().isAnyLocalAddress());
+        Assert.eval(dsoServer.getListenAddr().isAnyLocalAddress());
       } else {
-        assertEquals(server.getListenAddr().getHostAddress(), bind);
+        assertEquals(dsoServer.getListenAddr().getHostAddress(), bind);
       }
-      Assert.assertNotNull(server.getJMXConnServer());
-      assertEquals(server.getJMXConnServer().getAddress().getHost(), bind);
+      Assert.assertNotNull(dsoServer.getJMXConnServer());
+      assertEquals(dsoServer.getJMXConnServer().getAddress().getHost(), bind);
 
-      testSocketConnect(bind, new int[] { tsaPort, jmxPort, tsaGroupPort }, true);
+      testSocketConnect(bind, new int[] { tsaPort, jmxPort, tsaGroupPort, managementPort }, true);
 
       server.stop();
       Thread.sleep(3000);
@@ -177,7 +176,8 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     }
   }
 
-  public L2ConfigurationSetupManager createL2Manager(String bindAddress, int tsaPort, int jmxPort, int tsaGroupPort)
+  public L2ConfigurationSetupManager createL2Manager(String bindAddress, int tsaPort, int jmxPort, int tsaGroupPort,
+                                                     int managementPort)
       throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory factory = super.configFactory();
     L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
@@ -189,6 +189,11 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
 
     manager.dsoL2Config().tsaGroupPort().setIntValue(tsaGroupPort);
     manager.dsoL2Config().tsaGroupPort().setBind(bindAddress);
+
+    manager.commonl2Config().managementPort().setIntValue(managementPort);
+    manager.commonl2Config().managementPort().setBind(bindAddress);
+
+    manager.dsoL2Config().setJmxEnabled(true);
 
     return manager;
   }

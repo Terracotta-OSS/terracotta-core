@@ -6,14 +6,11 @@ package com.tc.server.util;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.xmlbeans.XmlException;
+import org.terracotta.license.util.Base64;
 
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Loader;
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -22,30 +19,28 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.remote.JMXConnector;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class ServerStat {
   private static final String   UNKNOWN          = "unknown";
   private static final String   NEWLINE          = System.getProperty("line.separator");
-  static final int              DEFAULT_JMX_PORT = 9520;
+  static final int            DEFAULT_MANAGEMENT_PORT = 9520;
 
   private final String          host;
   private final String          hostName;
   private final int             port;
-  private final String          username;
-  private final String          password;
-  private final boolean         secured;
-  private JMXConnector          jmxc;
-  private MBeanServerConnection mbsc;
+  private final String        username;
+  private final String        password;
+  private final boolean       secured;
 
-  private TCServerInfoMBean     infoBean;
   private boolean               connected;
-  private String                errorMessage     = "";
+  static String                 groupName        = "UNKNOWN";
+  static String                 errorMessage     = "";
+  static String                 state;
+  static String                 role;
+  static String                 health;
 
   public ServerStat(String username, String password, boolean secured, String host, String hostAlias, int port) {
     this.username = username;
@@ -54,49 +49,18 @@ public class ServerStat {
     this.host = host;
     this.hostName = hostAlias;
     this.port = port;
-    connect();
-  }
-
-  private static void closeQuietly(JMXConnector connector) {
-    if (connector != null) {
-      try {
-        connector.close();
-      } catch (IOException e) {
-        // ignore
-      }
-    }
-  }
-
-  private void connect() {
-    closeQuietly(jmxc);
-    try {
-      jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port, secured);
-      mbsc = jmxc.getMBeanServerConnection();
-      infoBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
-                                                               TCServerInfoMBean.class, false);
-      connected = true;
-    } catch (Exception e) {
-      String rootCauseMessage = e.getMessage() != null ? e.getMessage() : e.getCause().getMessage();
-      errorMessage = "Failed to connect to " + host + ":" + port + ". "
-          + (rootCauseMessage != null ? rootCauseMessage : "");
-      closeQuietly(jmxc);
-      connected = false;
-    }
   }
 
   public String getState() {
-    if (!connected) return UNKNOWN;
-    return infoBean.getState();
+   return state;
   }
 
   public String getRole() {
-    if (!connected) return UNKNOWN;
-    return infoBean.isActive() ? "ACTIVE" : "PASSIVE";
+    return role;
   }
 
   public String getHealth() {
-    if (!connected) return "FAILED";
-    return infoBean.getHealthStatus();
+    return health;
   }
 
   /**
@@ -104,22 +68,7 @@ public class ServerStat {
    */
   public String getGroupName() {
     if (!connected) return UNKNOWN;
-    ServerGroupInfo[] serverGroupInfos = infoBean.getServerGroupInfo();
-    try {
-      InetAddress address = InetAddress.getByName(host);
-      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
-        L2Info[] l2Infos = serverGroupInfo.members();
-        for (L2Info l2Info : l2Infos) {
-          InetAddress l2Addr = InetAddress.getByName(l2Info.host());
-          if (l2Addr.equals(address) && this.port == l2Info.jmxPort()) {
-            return serverGroupInfo.name();
-          }
-        }
-      }
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-    return UNKNOWN;
+    return groupName;
   }
 
 
@@ -138,14 +87,6 @@ public class ServerStat {
     return sb.toString();
   }
 
-  /**
-   * Dispose any active JMX Connection properly
-   */
-  public void dispose() {
-    closeQuietly(jmxc);
-    connected = false;
-    errorMessage = "jmx connection was closed";
-  }
 
   public static void main(String[] args) throws Exception {
     String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9520,host2:9520" + NEWLINE
@@ -230,13 +171,12 @@ public class ServerStat {
       }
       ServerStat stat = new ServerStat(username, password, secured, host, hostName, jmxPort);
       System.out.println(stat.toString());
-      stat.dispose();
     }
   }
 
   static int computeJMXPort(Server server) {
     if (server.isSetJmxPort()) {
-      return server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
+      return server.getJmxPort().getIntValue() == 0 ? DEFAULT_MANAGEMENT_PORT : server.getJmxPort().getIntValue();
     } else {
       return L2DSOConfigObject.computeJMXPortFromTSAPort(server.getTsaPort().getIntValue());
     }
@@ -257,7 +197,7 @@ public class ServerStat {
   // info = host | host:port
   private static void printStat(String username, String password, boolean secured, String info) {
     String host = info;
-    int port = DEFAULT_JMX_PORT;
+    int port = DEFAULT_MANAGEMENT_PORT;
     if (info.indexOf(':') > 0) {
       String[] args = info.split(":");
       host = args[0];
@@ -267,8 +207,73 @@ public class ServerStat {
         throw new RuntimeException("Failed to parse jmxport: " + info);
       }
     }
+    
+    InputStream myInputStream = null;
+    String prefix = secured ? "https" : "http";
+    String urlAsString = prefix + "://" + host + ":" + port + "/tc-management-api/v2/local/stat";
+
+    HttpURLConnection conn = null;
+    try {
+      URL url = new URL(urlAsString);
+      conn = (HttpURLConnection) url.openConnection();
+      conn.setDoOutput(true);
+      conn.setRequestMethod("GET");
+      String headerValue = username + ":" + password;
+      byte[] bytes = headerValue.getBytes("UTF-8");
+      String encodeBase64 = Base64.encodeBytes(bytes);
+      // Basic auth
+      conn.addRequestProperty("Basic", encodeBase64);
+
+      // we send as text/plain , the forceStop attribute, that basically is a boolean
+      conn.addRequestProperty("Content-Type", "application/json");
+      conn.addRequestProperty("Accept", "*/*");
+
+      myInputStream = conn.getInputStream();
+    } catch (IOException e) {
+      java.util.Scanner s = new java.util.Scanner(conn.getErrorStream()).useDelimiter("\\A");
+      errorMessage = "Unexpected error while getting stat: " + e.getMessage();
+    } finally {
+      conn.disconnect();
+    }
+    if (myInputStream != null) {
+      java.util.Scanner s = new java.util.Scanner(myInputStream).useDelimiter("\\A");
+      String responseContent = s.hasNext() ? s.next() : "";
+      // { "health" : "OK", "role" : "ACTIVE", "state": "ACTIVE-COORDINATOR", "managementPort" : "9540", "serverGroupName" : "defaultGroup"}
+      decodeJsonAndSetFields(responseContent);
+      // consoleLogger.debug("Response code is : " + responseCode);
+      // consoleLogger.debug("Response content is : " + responseContent);
+    }
+    
     ServerStat stat = new ServerStat(username, password, secured, host, null, port);
     System.out.println(stat.toString());
-    stat.dispose();
+  }
+
+  static void decodeJsonAndSetFields(String responseContent) {
+    String strippedResponseContent = responseContent.replace("{", "");
+    strippedResponseContent = strippedResponseContent.replace("}", "");
+    String[] splittedFields = strippedResponseContent.split(",");
+    for (String jsonKeyValue : splittedFields) {
+      String[] keyValue = jsonKeyValue.split(":");
+      String key = keyValue[0].trim();
+      key = key.replace("\"","");
+      String value = keyValue[1].trim();
+      value = value.replace("\"","");
+      
+      if("health" .equals(key)) {
+        health =  value;
+      }
+      if("role" .equals(key)) {
+        role =  value;
+      }
+      if("state" .equals(key)) {
+        state =  value;
+      }
+      if("managementPort" .equals(key)) {
+        // port = Integer.valueOf(value);
+      }
+      if("serverGroupName" .equals(key)) {
+        groupName = value;
+      }
+    }
   }
 }

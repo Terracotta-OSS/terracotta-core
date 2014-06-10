@@ -68,6 +68,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   int getTSAGroupPort();
 
+  int getManagementPort();
+
   boolean getRestartable();
 
   boolean isGarbageCollectionEnabled();

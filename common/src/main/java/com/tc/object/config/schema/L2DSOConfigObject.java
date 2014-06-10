@@ -44,8 +44,9 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private static final TCLogger   logger                                = TCLogging.getLogger(L2DSOConfigObject.class);
   private static final String     WILDCARD_IP                           = "0.0.0.0";
   private static final String     LOCALHOST                             = "localhost";
-  public static final short       DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT   = 10;
-  public static final short       DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT = 20;
+  public static final short       DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT        = 10;
+  public static final short       DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT      = 20;
+  public static final short       DEFAULT_MANAGEMENTPORT_OFFSET_FROM_TSAPORT = 30;
   public static final int         MIN_PORTNUMBER                        = 0x0FFF;
   public static final int         MAX_PORTNUMBER                        = 0xFFFF;
   public static final String      DEFAULT_DATA_STORAGE_SIZE                 = "512m";
@@ -54,12 +55,14 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final GarbageCollection garbageCollection;
   private final BindPort          tsaPort;
   private final BindPort          tsaGroupPort;
+  private final BindPort          managementPort;
   private final String            host;
   private final String            serverName;
   private final String            bind;
   private final int               clientReconnectWindow;
   private final Restartable       restartable;
   private final DataStorage       dataStorage;
+  private volatile boolean        jmxEnabled;
 
   public L2DSOConfigObject(ConfigContext context, GarbageCollection gc, int clientReconnectWindow,
                            Restartable restartable) {
@@ -81,7 +84,9 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     this.serverName = server.getName();
     this.tsaPort = server.getTsaPort();
     this.tsaGroupPort = server.getTsaGroupPort();
+    this.managementPort = server.getManagementPort();
     this.dataStorage = server.getDataStorage();
+    this.jmxEnabled = server.getJmxEnabled();
     if (server.isSetSecurity()) {
       this.securityConfig = server.getSecurity();
     } else {
@@ -90,6 +95,16 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       this.securityConfig.setKeychain(Keychain.Factory.newInstance());
       this.securityConfig.setAuth(Auth.Factory.newInstance());
     }
+  }
+
+  @Override
+  public void setJmxEnabled(boolean b) {
+    this.jmxEnabled = b;
+  }
+
+  @Override
+  public boolean isJmxEnabled() {
+    return jmxEnabled;
   }
 
   @Override
@@ -115,6 +130,11 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   @Override
   public BindPort tsaGroupPort() {
     return this.tsaGroupPort;
+  }
+
+  @Override
+  public BindPort managementPort() {
+    return this.managementPort;
   }
 
   @Override
@@ -189,6 +209,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
         initializeTsaPort(server, defaultValueProvider);
         initializeJmxPort(server, defaultValueProvider);
         initializeTsaGroupPort(server, defaultValueProvider);
+        initializeManagementPort(server, defaultValueProvider);
         // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
         // and name is supposed to default to 'host:tsa-port'
         initializeNameAndHost(server, defaultValueProvider);
@@ -265,10 +286,29 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     }
   }
 
+  private static void initializeManagementPort(Server server, DefaultValueProvider defaultValueProvider) {
+    XmlObject[] managementPorts = server.selectPath("management-port");
+    Assert.assertTrue(managementPorts.length <= 1);
+    if (!server.isSetManagementPort()) {
+      BindPort managementPort = server.addNewManagementPort();
+      int defaultManagementPort = computeManagementPortFromTSAPort(server.getTsaPort().getIntValue());
+
+      managementPort.setIntValue(defaultManagementPort);
+      managementPort.setBind(server.getBind());
+    } else if (!server.getManagementPort().isSetBind()) {
+      server.getManagementPort().setBind(server.getBind());
+    }
+  }
+
   public static int computeJMXPortFromTSAPort(int tsaPort) {
     int tempJmxPort = tsaPort + DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     return ((tempJmxPort <= MAX_PORTNUMBER) ? tempJmxPort : (tempJmxPort % MAX_PORTNUMBER)
                                                                           + MIN_PORTNUMBER);
+  }
+
+  public static int computeManagementPortFromTSAPort(int tsaPort) {
+    int tempPort = tsaPort + DEFAULT_MANAGEMENTPORT_OFFSET_FROM_TSAPORT;
+    return ((tempPort <= MAX_PORTNUMBER) ? tempPort : (tempPort % MAX_PORTNUMBER) + MIN_PORTNUMBER);
   }
 
   private static void initializeTsaGroupPort(Server server, DefaultValueProvider defaultValueProvider) {

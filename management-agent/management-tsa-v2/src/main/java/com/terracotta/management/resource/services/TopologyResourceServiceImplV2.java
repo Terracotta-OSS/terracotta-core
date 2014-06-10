@@ -73,7 +73,7 @@ public class TopologyResourceServiceImplV2 {
    * @return a collection of {@link TopologyEntityV2} objects.
    */
   @GET
-  @Path("/v2/servers")
+  @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
   public Collection<TopologyEntityV2> getServerTopologies(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
@@ -90,13 +90,21 @@ public class TopologyResourceServiceImplV2 {
   }
 
   /**
+<<<<<<< .working
    * Get a {@code Collection} of {@link ClientEntity} objects representing the connected clients provided by the
+=======
+   * Get a {@code Collection} of {@link TopologyEntityV2} objects representing the connected clients provided by the
+>>>>>>> .merge-right.r25052
    * associated monitorable entity's agent given the request path.
    *
+<<<<<<< .working
    * @return a collection of {@link ClientEntity} objects.
+=======
+   * @return a collection of {@link TopologyEntityV2} objects.
+>>>>>>> .merge-right.r25052
    */
   @GET
-  @Path("/v2/clients")
+  @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
   public Collection<TopologyEntityV2> getConnectedClients(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
@@ -117,7 +125,7 @@ public class TopologyResourceServiceImplV2 {
    * @return a map of String/Integers.
    */
   @GET
-  @Path("/v2/unreadOperatorEventCount")
+  @Path("/unreadOperatorEventCount")
   @Produces(MediaType.APPLICATION_JSON)
   public Collection<TopologyEntityV2> getUnreadOperatorEventCount(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getUnreadOperatorEventCount: %s", info.getRequestUri()));

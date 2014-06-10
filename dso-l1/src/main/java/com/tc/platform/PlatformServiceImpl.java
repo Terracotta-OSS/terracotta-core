@@ -9,6 +9,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
@@ -41,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class PlatformServiceImpl implements PlatformService {
@@ -384,6 +386,21 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public long getClientId() {
     return manager.getClientID().toLong();
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    return manager.registerManagementService(service, executorService);
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+    manager.unregisterManagementService(serviceID);
+  }
+
+  @Override
+  public void sendEvent(TCManagementEvent event) {
+    manager.sendEvent(event);
   }
 
   private static class LockInfo {

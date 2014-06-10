@@ -23,4 +23,8 @@ public class PwProviderUtil {
       throw new IllegalStateException("BackEnd was already set!");
     }
   }
+
+  public static PwProvider getProvider() {
+    return backend.get();
+  }
 }

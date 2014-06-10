@@ -280,6 +280,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public int getManagementPort() {
+    return server.getManagementPort();
+  }
+
+  @Override
   public long getUsedMemory() {
     return manager.getMemoryUsage().getUsedMemory();
   }

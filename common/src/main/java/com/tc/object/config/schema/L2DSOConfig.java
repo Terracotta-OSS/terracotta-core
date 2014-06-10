@@ -26,6 +26,8 @@ public interface L2DSOConfig extends Config {
 
   BindPort tsaGroupPort();
 
+  BindPort managementPort();
+
   String host();
 
   String serverName();
@@ -41,4 +43,8 @@ public interface L2DSOConfig extends Config {
   DataStorage getDataStorage();
 
   Restartable getRestartable();
+
+  boolean isJmxEnabled();
+
+  void setJmxEnabled(boolean b);
 }

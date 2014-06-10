@@ -9,6 +9,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -39,6 +40,7 @@ import com.terracottatech.search.NVPair;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.management.MBeanServer;
 
@@ -503,5 +505,18 @@ public class NullManager implements Manager {
   @Override
   public boolean isLockAwardValid(LockID lock, long awardID) {
     throw new ImplementMe();
+  }
+
+  @Override
+  public Object registerManagementService(Object service, ExecutorService executorService) {
+    return null;
+  }
+
+  @Override
+  public void unregisterManagementService(Object serviceID) {
+  }
+
+  @Override
+  public void sendEvent(TCManagementEvent event) {
   }
 }

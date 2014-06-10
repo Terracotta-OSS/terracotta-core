@@ -23,6 +23,7 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
   private final BindPort jmxPort;
   private final BindPort tsaPort;
   private final BindPort tsaGroupPort;
+  private final BindPort managementPort;
   private final String   host;
   private final boolean  authentication;
   private final String   passwordFile;
@@ -90,6 +91,7 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
     this.jmxPort = server.getJmxPort();
     this.tsaPort = server.getTsaPort();
     this.tsaGroupPort = server.getTsaGroupPort();
+    this.managementPort = server.getManagementPort();
   }
 
   @Override
@@ -124,6 +126,11 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
   @Override
   public BindPort tsaPort() {
     return this.tsaPort;
+  }
+
+  @Override
+  public BindPort managementPort() {
+    return this.managementPort;
   }
 
   @Override

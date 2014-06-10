@@ -6,37 +6,31 @@ package com.tc.admin;
 
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang.ArrayUtils;
+import org.terracotta.license.util.Base64;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.management.TerracottaManagement;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.security.PwProvider;
-import com.tc.util.concurrent.ThreadUtil;
 import com.terracotta.management.keychain.KeyChain;
 
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.UnknownHostException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.management.MBeanServerConnection;
-import javax.management.remote.JMXConnector;
 
 public class TCStop {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
@@ -251,83 +245,53 @@ public class TCStop {
   }
 
   public void stop() throws IOException {
-    JMXConnector jmxc = null;
-    jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port, secured);
-    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
-    // To be in sync with Test framework's server shutdown grace time
-    long SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
-    long startTime = System.currentTimeMillis();
-    long maxWaitTime = (startTime + (long) (0.75 * SHUTDOWN_WAIT_TIME));
-    if (mbsc != null) {
-      TCServerInfoMBean tcServerInfo = (TCServerInfoMBean) TerracottaManagement
-          .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
-      if (!forceStop && tcServerInfo.isActive() && tcServerInfo.isLegacyProductionModeEnabled()) {
-        ServerGroupInfo currentServerGroup = getCurrentServerGroup(tcServerInfo);
-        if (currentServerGroup != null) {
-          boolean isPassiveStandByAvailable = false;
-          for (L2Info l2Info : currentServerGroup.members()) {
-            try {
-              if (isPassiveStandBy(l2Info)) {
-                isPassiveStandByAvailable = true;
-                break;
-              }
-            } catch (Exception e) {
-              continue;
-            }
-          }
+    InputStream myInputStream = null;
+    String prefix = secured ? "https" : "http";
+    String urlAsString = prefix + "://" + host + ":" + port + "/tc-management-api/v2/local/shutdown";
 
-          if (!isPassiveStandByAvailable) {
-            consoleLogger.error("No passive server available in Standby mode. Use -force option to stop the server");
-            return;
-          }
-        }
-
-      }
-
-      // wait a bit for server to be ready for shutdown
-      while (!tcServerInfo.isShutdownable() && (System.currentTimeMillis() < maxWaitTime)) {
-        consoleLogger.warn("Server state: " + tcServerInfo.getState() + ". Waiting for server to be shutdownable... ");
-        ThreadUtil.reallySleep(5000);
-      }
-      try {
-        tcServerInfo.shutdown();
-      } finally {
-        jmxc.close();
-      }
-    } else {
-      consoleLogger.warn("Unable to get mbean connection to Server " + host + ":" + port);
-    }
-  }
-
-  private ServerGroupInfo getCurrentServerGroup(TCServerInfoMBean tcServerInfo) throws UnknownHostException {
-    ServerGroupInfo[] serverGroupInfos = tcServerInfo.getServerGroupInfo();
-    for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
-      L2Info[] members = serverGroupInfo.members();
-      for (L2Info l2Info : members) {
-        if (l2Info.name().equals(tcServerInfo.getL2Identifier())) { return serverGroupInfo; }
-      }
-    }
-    return null;
-  }
-
-  private boolean isPassiveStandBy(L2Info l2Info) throws Exception {
-    TCServerInfoMBean mbean = null;
-    boolean isPassiveStandByAvailable = false;
-    JMXConnector jmxConnector = null;
-
+    StringBuilder sb = new StringBuilder();
+    // adding some data to send along with the request to the server
+    sb.append("{\"forceStop\":\"" + forceStop + "\"}");
+    URL url = new URL(urlAsString);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    OutputStreamWriter wr = null;
+    int responseCode = 0;
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(username, password, l2Info.host(), l2Info.jmxPort(), secured);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      mbean = MBeanServerInvocationProxy
-          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-      isPassiveStandByAvailable = mbean.isPassiveStandby();
-    } finally {
-      if (jmxConnector != null) {
-        jmxConnector.close();
-      }
-    }
+      conn.setDoOutput(true);
+      conn.setRequestMethod("POST");
+      String headerValue = username + ":" + password;
+      byte[] bytes = headerValue.getBytes("UTF-8");
+      String encodeBase64 = Base64.encodeBytes(bytes);
+      // Basic auth
+      conn.addRequestProperty("Basic", encodeBase64);
 
-    return isPassiveStandByAvailable;
+      // we send as text/plain , the forceStop attribute, that basically is a boolean
+      conn.addRequestProperty("Content-Type", "application/json");
+      conn.addRequestProperty("Accept", "*/*");
+
+      wr = new OutputStreamWriter(conn.getOutputStream());
+      // this is were we're adding post data to the request
+      wr.write(sb.toString());
+      wr.flush();
+      myInputStream = conn.getInputStream();
+      responseCode = conn.getResponseCode();
+    } catch (IOException e) {
+      java.util.Scanner s = new java.util.Scanner(conn.getErrorStream()).useDelimiter("\\A");
+      String errorResponse = s.hasNext() ? s.next() : "";
+      consoleLogger.error("Unexpected error while stopping server: " + e.getMessage());
+      consoleLogger.debug("The server returned the following response : " + errorResponse);
+    } finally {
+      if (wr != null) {
+        wr.close();
+      }
+      conn.disconnect();
+    }
+    if (myInputStream != null) {
+      java.util.Scanner s = new java.util.Scanner(myInputStream).useDelimiter("\\A");
+      String responseContent = s.hasNext() ? s.next() : "";
+      consoleLogger.debug("Response code is : " + responseCode);
+      consoleLogger.debug("Response content is : " + responseContent);
+    }
   }
 }

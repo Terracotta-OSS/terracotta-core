@@ -8,7 +8,7 @@ import java.util.Properties;
 /**
  * @author Hung Huynh
  */
-public class LicenseEntity extends AbstractTsaEntity{
+public class LicenseEntity extends AbstractTsaEntity {
   private Properties properties = new Properties();
   private String     sourceId;
 

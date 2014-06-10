@@ -13,15 +13,19 @@ import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.MappedLoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.security.Password;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.tc.async.api.ConfigurationContext;
@@ -94,6 +98,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
@@ -266,7 +271,8 @@ public class TCServerImpl extends SEDA implements TCServer {
         }
 
         out[i] = new L2Info(name, host, config.jmxPort().getIntValue(), config.tsaPort().getIntValue(), config
-            .tsaGroupPort().getBind(), config.tsaGroupPort().getIntValue(), getSecurityHostname());
+            .tsaGroupPort().getBind(), config.tsaGroupPort().getIntValue(), config.managementPort().getIntValue(),
+                            getSecurityHostname());
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }
@@ -393,6 +399,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     throw new IllegalStateException("TSA Server not running");
   }
 
+  @Override
+  public int getManagementPort() {
+    if (this.dsoServer != null) { return this.dsoServer.getManagementPort(); }
+    throw new IllegalStateException("TSA Server not running");
+  }
+
   public DistributedObjectServer getDSOServer() {
     return this.dsoServer;
   }
@@ -433,6 +445,12 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if (logger.isDebugEnabled()) {
       consoleLogger.debug("Stopping TC server...");
+    }
+
+    try {
+      unregisterDSOMBeans(this.dsoServer.getMBeanServer());
+    } catch (Exception e) {
+      logger.error("Error unregistering mbeans", e);
     }
 
     if (this.terracottaConnector != null) {
@@ -594,6 +612,25 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.httpServer = new Server();
     this.httpServer.setSendServerVersion(false);
     this.httpServer.addConnector(tcConnector);
+
+    Connector managementConnector;
+    if (commonL2Config.isSecure()) {
+      SslContextFactory sslContextFactory = new SslContextFactory();
+      sslContextFactory.setSslContext(securityManager.getSslContext());
+
+      SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
+      scc.setPort(commonL2Config.managementPort().getIntValue());
+      scc.setHost(commonL2Config.managementPort().getBind());
+      managementConnector = scc;
+    } else {
+      SelectChannelConnector scc = new SelectChannelConnector();
+      scc.setPort(commonL2Config.managementPort().getIntValue());
+      scc.setHost(commonL2Config.managementPort().getBind());
+      managementConnector = scc;
+    }
+
+    this.httpServer.addConnector(managementConnector);
+
     this.contextHandlerCollection = new ContextHandlerCollection();
 
     ServletContextHandler context = new ServletContextHandler(null, "/", ServletContextHandler.NO_SESSIONS
@@ -674,6 +711,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     try {
       this.httpServer.start();
+      consoleLogger.info("Management server started on " + managementConnector.getHost() + ":" + managementConnector.getLocalPort());
     } catch (Exception e) {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;
@@ -817,6 +855,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider,
                            this.dsoServer.getOffheapStats(), this.dsoServer.getStorageStats());
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
+  }
+
+  protected void unregisterDSOMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
+    mbs.unregisterMBean(L2MBeanNames.DSO);
   }
 
   // TODO: check that this is not needed then remove

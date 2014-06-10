@@ -41,6 +41,11 @@
     </dependency>  
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>tc-messaging</artifactId>
+      <scope>test</scope>
+    </dependency>  
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>

@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,6 +11,7 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.net.GroupID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
@@ -41,9 +40,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
+
+import static org.junit.Assert.assertEquals;
 
 public class ObjectStreamClassMappingTest {
 
@@ -372,6 +374,21 @@ public class ObjectStreamClassMappingTest {
     @Override
     public long getClientId() {
       return -1;
+    }
+
+    @Override
+    public Object registerManagementService(Object service, ExecutorService executorService) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unregisterManagementService(Object serviceID) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sendEvent(TCManagementEvent event) {
+      throw new UnsupportedOperationException();
     }
   }
 

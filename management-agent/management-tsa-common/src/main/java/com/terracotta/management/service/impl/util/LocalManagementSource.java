@@ -116,9 +116,9 @@ public class LocalManagementSource {
       for (L2Info l2Info : l2Infos) {
         String name = l2Info.name();
         String host = l2Info.host();
-        int tsaGroupPort = l2Info.tsaGroupPort();
+        int managementPort = l2Info.managementPort();
         boolean sslEnabled = TSAConfig.isSslEnabled();
-        String urlPrefix = (sslEnabled ? "https://" : "http://") + host + ":" + tsaGroupPort;
+        String urlPrefix = (sslEnabled ? "https://" : "http://") + host + ":" + managementPort;
         result.put(name, urlPrefix);
       }
 

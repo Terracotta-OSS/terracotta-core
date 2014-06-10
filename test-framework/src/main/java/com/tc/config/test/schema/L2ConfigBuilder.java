@@ -17,6 +17,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private PortConfigBuilder jmxPortBuilder   = null;
   private PortConfigBuilder tsaPortBuilder   = null;
   private PortConfigBuilder groupPortBuilder = null;
+  private PortConfigBuilder managementPortBuilder = null;
   private boolean           offheapEnabled   = false;
   private String            offheapMaxDataSize;
   private boolean           security_enabled = false;
@@ -74,6 +75,20 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
       this.jmxPortBuilder = new PortConfigBuilder(PortType.JMXPORT);
     }
     this.jmxPortBuilder.setBindPort(data);
+  }
+
+  public synchronized void setManagementPort(int data) {
+    if (this.managementPortBuilder == null) {
+      this.managementPortBuilder = new PortConfigBuilder(PortType.MANAGEMENTPORT);
+    }
+    this.managementPortBuilder.setBindPort(data);
+  }
+
+  public synchronized void setManagementPortBindAddress(String data) {
+    if (this.managementPortBuilder == null) {
+      this.managementPortBuilder = new PortConfigBuilder(PortType.MANAGEMENTPORT);
+    }
+    this.managementPortBuilder.setBindAddress(data);
   }
 
   public synchronized void setJMXBindAddress(String data) {
@@ -150,13 +165,14 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private static final String[] AUTHENTICATION = new String[] { "password-file", "access-file" };
 
   private static final String[] ALL_PROPERTIES = concat(new Object[] { L2, AUTHENTICATION });
+  private static final boolean  JMX_ENABLED    = true;
 
   @Override
   public String toString() {
     String out = "";
 
     out += indent() + "<server host=" + (this.host != null ? "\"" + this.host + "\"" : "\"%i\"")
-           + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
+           + (this.name != null ? " name=\"" + this.name + "\"" : "") + " jmx-enabled=\"" + JMX_ENABLED + "\">\n";
 
     out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + getOffHeapConfig()
            + getSecurityConfig();
@@ -207,6 +223,9 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     }
     if (this.groupPortBuilder != null) {
       out += this.groupPortBuilder.toString() + "\n";
+    }
+    if (this.managementPortBuilder != null) {
+      out += this.managementPortBuilder.toString() + "\n";
     }
 
     return out;

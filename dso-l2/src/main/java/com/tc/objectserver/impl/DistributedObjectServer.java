@@ -57,6 +57,8 @@ import com.tc.logging.TCLogging;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
+import com.tc.management.RemoteManagement;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
@@ -114,8 +116,12 @@ import com.tc.object.msg.GetAllSizeServerMapResponseMessageImpl;
 import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
 import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
 import com.tc.object.msg.InvalidateObjectsMessage;
+import com.tc.object.msg.InvokeRegisteredServiceMessage;
+import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
+import com.tc.object.msg.ListRegisteredServicesMessage;
+import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.msg.NodeMetaDataMessageImpl;
@@ -186,6 +192,7 @@ import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.RespondToServerMapRequestHandler;
 import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
+import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.objectserver.handler.ServerMapEvictionHandler;
 import com.tc.objectserver.handler.ServerMapPrefetchObjectHandler;
 import com.tc.objectserver.handler.ServerMapRequestHandler;
@@ -474,7 +481,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // start the JMX server
     try {
-      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
+      startJMXServer(l2DSOConfig.isJmxEnabled(), jmxBind, this.configSetupManager.commonl2Config().jmxPort()
+          .getIntValue(),
                      new RemoteJMXProcessor(), null);
     } catch (final Exception e) {
       final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
@@ -482,6 +490,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.error(msg, e);
       System.exit(-1);
     }
+
 
     final TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath());
     boolean retries = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
@@ -895,9 +904,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
         new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
+    ServerManagementHandler serverManagementHandler = new ServerManagementHandler();
+    final Stage managementStage = stageManager.createStage(ServerConfigurationContext.MANAGEMENT_STAGE, serverManagementHandler, 1, maxStageSize);
+
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
                       transactionAck, clientHandshake, txnLwmStage, jmxRemoteTunnelStage, clusterMetaDataStage,
-                      serverMapRequestStage, searchQueryRequestStage);
+                      managementStage, serverMapRequestStage, searchQueryRequestStage);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
 
@@ -1030,11 +1042,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     stageManager.startAll(this.context, toInit);
 
+    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
+    TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
+
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
                                                          this.lockManager, (DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats, instanceMonitor,
-                                                         indexHACoordinator, connectionPolicy);
+                                                         indexHACoordinator, connectionPolicy, remoteManagement);
     if (tcProperties.getBoolean(TCPropertiesConsts.L2_BEANSHELL_ENABLED)) {
       startBeanShell(tcProperties.getInt(TCPropertiesConsts.L2_BEANSHELL_PORT));
     }
@@ -1091,7 +1106,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   protected void initRouteMessages(TCMessageRouter messageRouter, final Stage processTx, final Stage rootRequest,
                                    final Stage requestLock, final Stage objectRequestStage, final Stage oidRequest,
                                    final Stage transactionAck, final Stage clientHandshake, final Stage txnLwmStage,
-                                   final Stage jmxRemoteTunnelStage, final Stage clusterMetaDataStage,
+                                   final Stage jmxRemoteTunnelStage, final Stage clusterMetaDataStage, final Stage managementStage,
                                    final Stage serverMapRequestStage, final Stage searchQueryRequestStage) {
     final Sink hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
@@ -1104,7 +1119,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionAck.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
-                                   hydrateSink);
+        hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                    hydrateSink);
@@ -1125,6 +1140,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageRouter.routeMessageType(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SEARCH_RESULTS_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE, managementStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE, managementStage.getSink(),
                                    hydrateSink);
   }
 
@@ -1192,6 +1211,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
+
+    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE, ListRegisteredServicesResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE, InvokeRegisteredServiceMessage.class);
+    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE, InvokeRegisteredServiceResponseMessage.class);
+
     return messageTypeClassMapping;
   }
 
@@ -1305,7 +1330,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return -1;
   }
 
+  public int getManagementPort() {
+    final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final int configValue = l2DSOConfig.managementPort().getIntValue();
+    if (configValue != 0) { return configValue; }
+    return -1;
+  }
+
   public synchronized void stop() {
+    TerracottaRemoteManagement.setRemoteManagementInstance(null);
 
     try {
       if (this.indexHACoordinator != null) {
@@ -1373,11 +1406,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.error("Error shutting down jmx server", t);
     }
 
-    // XXX: not calling basicStop() here, it creates a race condition with the Sleepycat's own writer lock (see
-    // LKC-3239) Provided we ever fix graceful server shutdown, we'll want to uncommnet this at that time and/or get rid
-    // of this method completely
-
-    // basicStop();
+    basicStop();
   }
 
   private void basicStop() {
@@ -1426,15 +1455,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.operatorEventHistoryProvider;
   }
 
-  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink,
+  private void startJMXServer(boolean listenerEnabled, final InetAddress bind, int jmxPort,
+                              final Sink remoteEventsSink,
                               final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
 
-    this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean,
-                                                              this.configSetupManager, this, bind, jmxPort,
-                                                              remoteEventsSink, this, serverDBBackupMBean);
+    this.l2Management = this.serverBuilder.createL2Management(listenerEnabled, this.tcServerInfoMBean,
+                                                              this.configSetupManager, this,
+                                                              bind, jmxPort, remoteEventsSink, this,
+                                                              serverDBBackupMBean);
 
     this.l2Management.start();
   }
@@ -1451,10 +1482,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public OffheapStats getOffheapStats() {
     Collection<MonitoredResource> list = persistor.getMonitoredResources();
-    for ( MonitoredResource rsrc : list ) {
-        if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP ) {
-            return new OffheapStatsImpl(rsrc);
-        }
+    for (MonitoredResource rsrc : list) {
+      if (rsrc.getType() == MonitoredResource.Type.OFFHEAP) { return new OffheapStatsImpl(rsrc); }
     }
     return null;
   }

@@ -1,13 +1,21 @@
 package com.terracotta.management;
 
+import net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CacheManagerConfigsResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CacheManagersResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.CachesResourceServiceImplV2;
 import net.sf.ehcache.management.resource.services.ElementsResourceServiceImplV2;
+import net.sf.ehcache.management.resource.services.QueryResourceServiceImplV2;
 import net.sf.ehcache.management.service.CacheManagerServiceV2;
 import net.sf.ehcache.management.service.CacheServiceV2;
 import net.sf.ehcache.management.service.EntityResourceFactoryV2;
 
 import org.terracotta.management.application.DefaultApplicationV2;
 import org.terracotta.management.resource.services.AgentServiceV2;
+import org.terracotta.management.resource.services.AgentsResourceServiceImplV2;
 import org.terracotta.management.resource.services.validator.RequestValidator;
+import org.terracotta.session.management.SessionsResourceServiceImplV2;
 import org.terracotta.session.management.SessionsServiceV2;
 
 import com.terracotta.management.l1bridge.RemoteAgentServiceV2;
@@ -18,11 +26,14 @@ import com.terracotta.management.resource.services.BackupResourceServiceImplV2;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImplV2;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImplV2;
 import com.terracotta.management.resource.services.JmxResourceServiceImplV2;
+import com.terracotta.management.resource.services.LocalShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.LogsResourceServiceImplV2;
 import com.terracotta.management.resource.services.MonitoringResourceServiceImplV2;
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImplV2;
+import com.terracotta.management.resource.services.ServerStatResourceServiceImplV2;
 import com.terracotta.management.resource.services.ShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.TopologyResourceServiceImplV2;
+import com.terracotta.management.resource.services.events.TopologyEventResourceServiceImplV2;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SecurityContextService;
@@ -39,6 +50,7 @@ import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.ShutdownServiceV2;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.TopologyServiceV2;
+import com.terracotta.management.service.events.TopologyEventServiceV2;
 import com.terracotta.management.service.impl.BackupServiceImplV2;
 import com.terracotta.management.service.impl.ClientManagementServiceV2;
 import com.terracotta.management.service.impl.ConfigurationServiceImplV2;
@@ -52,6 +64,7 @@ import com.terracotta.management.service.impl.ServerManagementServiceV2;
 import com.terracotta.management.service.impl.ShutdownServiceImplV2;
 import com.terracotta.management.service.impl.TopologyServiceImplV2;
 import com.terracotta.management.service.impl.TsaAgentServiceImplV2;
+import com.terracotta.management.service.impl.events.TopologyEventServiceImplV2;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.resource.services.IdentityAssertionResourceService;
@@ -79,17 +92,21 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     s.add(TopologyResourceServiceImplV2.class);
     s.add(IdentityAssertionResourceService.class);
     s.add(JmxResourceServiceImplV2.class);
-//    s.add(AllEventsResourceService.class);
 
-    s.add(net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CachesResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CacheManagersResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CacheManagerConfigsResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImplV2.class);
-    s.add(org.terracotta.management.resource.services.AgentsResourceServiceImplV2.class);
-    s.add(net.sf.ehcache.management.resource.services.QueryResourceServiceImplV2.class);
+    s.add(LocalShutdownResourceServiceImplV2.class);
+    s.add(ServerStatResourceServiceImplV2.class);
 
-    s.add(org.terracotta.session.management.SessionsResourceServiceImplV2.class);
+    s.add(TopologyEventResourceServiceImplV2.class);
+
+    s.add(CacheStatisticSamplesResourceServiceImplV2.class);
+    s.add(CachesResourceServiceImplV2.class);
+    s.add(CacheManagersResourceServiceImplV2.class);
+    s.add(CacheManagerConfigsResourceServiceImplV2.class);
+    s.add(CacheConfigsResourceServiceImplV2.class);
+    s.add(AgentsResourceServiceImplV2.class);
+    s.add(QueryResourceServiceImplV2.class);
+
+    s.add(SessionsResourceServiceImplV2.class);
 
     return s;
   }
@@ -132,6 +149,8 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     serviceClasses.put(LicenseServiceV2.class, new LicenseServiceImplV2(serverManagementService));
 
     /// L1 bridge and Security Services ///
+    serviceClasses.put(TopologyEventServiceV2.class, new TopologyEventServiceImplV2());
+
     RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
     RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor,
                                                                                            userService, contextService,
@@ -160,7 +179,6 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     serviceClasses.put(SessionsServiceV2.class, remoteServiceStubGenerator.newRemoteService(SessionsServiceV2.class, "Sessions"));
 
     return serviceClasses;
-
   }
 
 }

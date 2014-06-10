@@ -67,6 +67,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public int getManagementPort() {
+    return 0;
+  }
+
+  @Override
   public long getStartTime() {
     return 0;
   }

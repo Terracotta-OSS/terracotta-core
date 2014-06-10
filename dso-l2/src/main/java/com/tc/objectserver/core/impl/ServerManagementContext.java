@@ -4,15 +4,42 @@
  */
 package com.tc.objectserver.core.impl;
 
+import com.tc.management.RemoteManagement;
+import com.tc.management.RemoteManagementException;
+import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.object.management.ManagementRequestID;
+import com.tc.object.management.RemoteCallDescriptor;
+import com.tc.object.management.RemoteCallHolder;
+import com.tc.object.management.ResponseHolder;
+import com.tc.object.management.TCManagementSerializationException;
+import com.tc.object.msg.AbstractManagementMessage;
+import com.tc.object.msg.InvokeRegisteredServiceMessage;
+import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
+import com.tc.object.msg.ListRegisteredServicesMessage;
+import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.net.ChannelStats;
+import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerMBean;
+import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
+import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerManagementContext {
 
@@ -25,12 +52,14 @@ public class ServerManagementContext {
   private final ObjectInstanceMonitorMBean    instanceMonitor;
   private final IndexManager                  indexManager;
   private final ConnectionPolicy              connectionPolicy;
+  private final RemoteManagement              remoteManagement;
 
   public ServerManagementContext(ServerTransactionManagerMBean txnMgr, ObjectManagerMBean objMgr,
                                  LockManagerMBean lockMgr, DSOChannelManagerMBean channelMgr,
                                  DSOGlobalServerStats serverStats, ChannelStats channelStats,
                                  ObjectInstanceMonitorMBean instanceMonitor,
-                                 IndexManager indexManager, ConnectionPolicy connectionPolicy) {
+                                 IndexManager indexManager, ConnectionPolicy connectionPolicy,
+                                 RemoteManagement remoteManagement) {
     this.txnMgr = txnMgr;
     this.objMgr = objMgr;
     this.lockMgr = lockMgr;
@@ -40,6 +69,7 @@ public class ServerManagementContext {
     this.instanceMonitor = instanceMonitor;
     this.indexManager = indexManager;
     this.connectionPolicy = connectionPolicy;
+    this.remoteManagement = remoteManagement;
   }
 
   public IndexManager getIndexManager() {
@@ -77,4 +107,9 @@ public class ServerManagementContext {
   public ConnectionPolicy getConnectionPolicy() {
     return this.connectionPolicy;
   }
+
+  public RemoteManagement getRemoteManagement() {
+    return remoteManagement;
+  }
+
 }

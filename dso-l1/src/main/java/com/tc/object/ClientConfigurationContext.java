@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
+import com.tc.management.ManagementServicesManager;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.tx.ClientTransactionManager;
@@ -41,20 +42,23 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             PINNED_ENTRY_FAULT_STAGE                    = "pinned_entry_fault_stage";
   public static final String             RESOURCE_MANAGER_STAGE                      = "resource_manager_stage";
   public static final String             SERVER_EVENT_DELIVERY_STAGE                 = "server_event_delivery_stage";
+  public static final String             MANAGEMENT_STAGE                            = "management_stage";
 
-  private final ClientLockManager        lockManager;
-  private final RemoteObjectManager      remoteObjectManager;
-  private final ClientTransactionManager txManager;
-  private final ClientHandshakeManager   clientHandshakeManager;
-  private final ClusterMetaDataManager   clusterMetaDataManager;
-  private final RejoinManagerInternal    rejoinManager;
+  private final ClientLockManager         lockManager;
+  private final RemoteObjectManager       remoteObjectManager;
+  private final ClientTransactionManager  txManager;
+  private final ClientHandshakeManager    clientHandshakeManager;
+  private final ClusterMetaDataManager    clusterMetaDataManager;
+  private final RejoinManagerInternal     rejoinManager;
+  private final ManagementServicesManager managementServicesManager;
 
   public ClientConfigurationContext(final StageManager stageManager, final ClientLockManager lockManager,
                                     final RemoteObjectManager remoteObjectManager,
                                     final ClientTransactionManager txManager,
                                     final ClientHandshakeManager clientHandshakeManager,
                                     final ClusterMetaDataManager clusterMetaDataManager,
-                                    final RejoinManagerInternal rejoinManager) {
+                                    final RejoinManagerInternal rejoinManager,
+                                    final ManagementServicesManager managementServicesManager) {
     super(stageManager);
     this.lockManager = lockManager;
     this.remoteObjectManager = remoteObjectManager;
@@ -62,6 +66,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
     this.clientHandshakeManager = clientHandshakeManager;
     this.clusterMetaDataManager = clusterMetaDataManager;
     this.rejoinManager = rejoinManager;
+    this.managementServicesManager = managementServicesManager;
   }
 
   public RejoinManagerInternal getRejoinManager() {
@@ -86,6 +91,10 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
 
   public ClusterMetaDataManager getClusterMetaDataManager() {
     return this.clusterMetaDataManager;
+  }
+
+  public ManagementServicesManager getManagementServicesManager() {
+    return managementServicesManager;
   }
 
 }

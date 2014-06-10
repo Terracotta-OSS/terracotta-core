@@ -141,10 +141,13 @@ public abstract class TerracottaManagement {
   }
 
   private static void addNodeInfo(final StringBuffer objName, final TCSocketAddress addr) {
+    objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(buildNodeId(addr));
+  }
+
+  public static String buildNodeId(TCSocketAddress addr) {
     String remoteHost = addr.getAddress().getCanonicalHostName();
     int remotePort = addr.getPort();
-    objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(remoteHost).append(UNDERSCORE)
-        .append(remotePort);
+    return remoteHost + UNDERSCORE + remotePort;
   }
 
   public static ObjectName addNodeInfo(ObjectName objName, final TCSocketAddress addr)

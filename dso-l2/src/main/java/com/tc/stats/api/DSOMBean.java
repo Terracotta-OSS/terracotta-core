@@ -4,6 +4,7 @@
  */
 package com.tc.stats.api;
 
+import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaMBean;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
@@ -109,5 +110,7 @@ public interface DSOMBean extends DSOStats, OffheapStats, StorageDataStats, DGCM
   int getLicensedClientHighCount();
 
   Map<String, Integer> getUnreadOperatorEventCount();
+
+  RemoteManagement getRemoteManagement();
 
 }

@@ -7,9 +7,10 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.net.GroupID;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -30,6 +31,7 @@ import com.terracottatech.search.NVPair;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public interface PlatformService {
@@ -143,4 +145,10 @@ public interface PlatformService {
   boolean isLockedBeforeRejoin(Object lockID, LockLevel level);
 
   long getClientId();
+
+  Object registerManagementService(Object service, ExecutorService executorService);
+
+  void unregisterManagementService(Object serviceID);
+
+  void sendEvent(TCManagementEvent event);
 }

@@ -9,6 +9,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
+import com.tc.management.TCManagementEvent;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -36,6 +37,7 @@ import com.terracottatech.search.NVPair;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.management.MBeanServer;
 
@@ -386,4 +388,10 @@ public interface Manager extends TerracottaLocking {
   public long getLockAwardIDFor(LockID lock);
 
   public boolean isLockAwardValid(LockID lock, long awardID);
+
+  Object registerManagementService(Object service, ExecutorService executorService);
+
+  void unregisterManagementService(Object serviceID);
+
+  void sendEvent(TCManagementEvent event);
 }

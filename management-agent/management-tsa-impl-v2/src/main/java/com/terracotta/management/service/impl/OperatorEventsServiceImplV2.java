@@ -83,7 +83,6 @@ public class OperatorEventsServiceImplV2 implements OperatorEventsServiceV2 {
     }
     
     return rc;
-
   }
 
 

@@ -153,7 +153,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
                                       final DataStorage datastore, int electionTimeInSecs, NodesStore nodesStore);
 
-  L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean,
+  L2Management createL2Management(boolean listenerEnabled, TCServerInfoMBean tcServerInfoMBean,
                                   L2ConfigurationSetupManager configSetupManager,
                                   DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
                                   Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator,

@@ -5,14 +5,17 @@ package com.tc.config.test.schema;
 
 public class PortConfigBuilder extends BaseConfigBuilder {
   public static enum PortType {
-    JMXPORT, TSAPORT, GROUPPORT
+    JMXPORT, TSAPORT, GROUPPORT, MANAGEMENTPORT;
   }
 
-  private static final String   BIND           = "bind";
-  private static final String   TSA_PORT       = "tsa-port";
-  private static final String   JMX_PORT       = "jmx-port";
-  private static final String   GROUP_PORT     = "tsa-group-port";
-  private static final String[] ALL_PROPERTIES = concat(new Object[] { BIND, TSA_PORT, JMX_PORT, GROUP_PORT });
+  private static final String   BIND            = "bind";
+  private static final String   TSA_PORT        = "tsa-port";
+  private static final String   JMX_PORT        = "jmx-port";
+  private static final String   GROUP_PORT      = "tsa-group-port";
+  private static final String   MANAGEMENT_PORT = "management-port";
+
+  private static final String[] ALL_PROPERTIES  = concat(new Object[] { BIND, TSA_PORT, JMX_PORT, GROUP_PORT,
+      MANAGEMENT_PORT                          });
 
   private String                bindAddress;
   private int                   bindPort;
@@ -38,6 +41,9 @@ public class PortConfigBuilder extends BaseConfigBuilder {
         break;
       case GROUPPORT:
         this.portType = GROUP_PORT;
+        break;
+      case MANAGEMENTPORT:
+        this.portType = MANAGEMENT_PORT;
         break;
       default:
         throw new RuntimeException("invalid port type " + portType);
