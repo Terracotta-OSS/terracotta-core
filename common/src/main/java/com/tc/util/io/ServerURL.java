@@ -7,11 +7,14 @@ package com.tc.util.io;
 import sun.misc.BASE64Encoder;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
 import com.tc.security.TCAuthenticationException;
 import com.tc.security.TCAuthorizationException;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +26,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -35,38 +37,42 @@ import javax.net.ssl.X509TrustManager;
 @SuppressWarnings("restriction")
 public class ServerURL {
 
-  private static final boolean DISABLE_HOSTNAME_VERIFIER = Boolean.getBoolean("tc.ssl.disableHostnameVerifier");
-  private static final boolean TRUST_ALL_CERTS           = Boolean.getBoolean("tc.ssl.trustAllCerts");
+  private static final TCLogger logger                    = TCLogging.getLogger(ServerURL.class);
 
-  private final URL            url;
-  private final int            timeoutInMillis;
-  private final SecurityInfo   securityInfo;
+  private static final boolean  DISABLE_HOSTNAME_VERIFIER = Boolean.getBoolean("tc.ssl.disableHostnameVerifier");
+  private static final boolean  TRUST_ALL_CERTS           = Boolean.getBoolean("tc.ssl.trustAllCerts");
+
+  private final URL             theURL;
+  private final int             timeout;
+  private final SecurityInfo    securityInfo;
+
+  public ServerURL(String host, int port, String file, SecurityInfo securityInfo) throws MalformedURLException {
+    this(host, port, file, -1, securityInfo);
+  }
 
   public ServerURL(String host, int port, String file, int timeout, SecurityInfo securityInfo)
       throws MalformedURLException {
-    this.timeoutInMillis = timeout;
+    this.timeout = timeout;
     this.securityInfo = securityInfo;
-    this.url = new URL(securityInfo.isSecure() ? "https" : "http", host, port, file);
+    this.theURL = new URL(securityInfo.isSecure() ? "https" : "http", host, port, file);
   }
 
   public InputStream openStream() throws IOException {
     return this.openStream(null);
   }
 
-  public String getHeaderField(String fieldName, PwProvider pwProvider) throws IOException {
-    URLConnection urlConnection = createSecureConnection(pwProvider);
-    urlConnection.connect();
-    long startTime = System.nanoTime();
-    String field = urlConnection.getHeaderField(fieldName);
-    long timeTakenInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-    if (timeTakenInMillis > timeoutInMillis && field == null) { throw new RuntimeException(
-                                                                                   "time taken "
-                                                                                       + timeTakenInMillis
-                                                                                       + " millis while reading from "
-                                                                                       + urlConnection.getURL()
-                                                                                       + ". Please increase read timeout using tc.config.getFromSource.timeout (current="
-                                                                                       + timeoutInMillis + ")"); }
-    return field;
+  public String getHeaderField(String fieldName, PwProvider pwProvider, boolean retryOnNull) throws IOException {
+    for (int i = 0; i < 3; i++) {
+      URLConnection urlConnection = createSecureConnection(pwProvider);
+      urlConnection.connect();
+      String value = urlConnection.getHeaderField(fieldName);
+      if (value != null || !retryOnNull) { return value; }
+
+      logger.info("Retrying connection since header field was null");
+      ThreadUtil.reallySleep(50);
+    }
+
+    throw new RuntimeException("Cannot retrieve " + fieldName + " header from server url: " + theURL);
   }
 
   public InputStream openStream(PwProvider pwProvider) throws IOException {
@@ -95,18 +101,18 @@ public class ServerURL {
 
   private URLConnection createSecureConnection(PwProvider pwProvider) {
     if (securityInfo.isSecure()) {
-      Assert.assertNotNull("Secured URL '" + url + "', yet PwProvider instance", pwProvider);
+      Assert.assertNotNull("Secured URL '" + theURL + "', yet PwProvider instance", pwProvider);
     }
 
     URLConnection urlConnection;
     try {
-      urlConnection = url.openConnection();
+      urlConnection = theURL.openConnection();
       String uri = null;
 
       if (securityInfo.isSecure()) {
         if (securityInfo.getUsername() != null) {
           String encodedUsername = URLEncoder.encode(securityInfo.getUsername(), "UTF-8").replace("+", "%20");
-          uri = "tc://" + encodedUsername + "@" + url.getHost() + ":" + url.getPort();
+          uri = "tc://" + encodedUsername + "@" + theURL.getHost() + ":" + theURL.getPort();
           final char[] passwordTo;
           try {
             final URI theURI = new URI(uri);
@@ -114,7 +120,7 @@ public class ServerURL {
           } catch (URISyntaxException e) {
             throw new TCRuntimeException("Couldn't create URI to connect to " + uri, e);
           }
-          Assert.assertNotNull("No password for " + url + " found!", passwordTo);
+          Assert.assertNotNull("No password for " + theURL + " found!", passwordTo);
           urlConnection
               .addRequestProperty("Authorization",
                                   "Basic "
@@ -131,16 +137,16 @@ public class ServerURL {
       throw new IllegalStateException(e1);
     }
 
-    if (timeoutInMillis > -1) {
-      urlConnection.setConnectTimeout(timeoutInMillis);
-      urlConnection.setReadTimeout(timeoutInMillis);
+    if (timeout > -1) {
+      urlConnection.setConnectTimeout(timeout);
+      urlConnection.setReadTimeout(timeout);
     }
     return urlConnection;
   }
 
   @Override
   public String toString() {
-    return url.toString();
+    return theURL.toString();
   }
 
   public String getUsername() {

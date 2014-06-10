@@ -46,10 +46,6 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
   private static final long      RECONNECT_WAIT_INTERVAL                      = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
-  private static final long      GET_CONFIGURATION_ONE_SOURCE_TIMEOUT         = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
-                                                                                           30000);
   private static final long      MIN_RETRY_INTERVAL_MILLS                     = 1000;
 
   public static final String     GROUP_INFO_SERVLET_PATH                      = "/groupinfo";
@@ -279,8 +275,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
     for (int i = 0; i < connections.length; i++) {
       ConnectionInfo ci = connections[i];
       try {
-        theURL = new ServerURL(ci.getHostname(), ci.getPort(), httpPathExtension,
-                               (int) GET_CONFIGURATION_ONE_SOURCE_TIMEOUT, ci.getSecurityInfo());
+        theURL = new ServerURL(ci.getHostname(), ci.getPort(), httpPathExtension, ci.getSecurityInfo());
         String text = "Trying to get " + message + " from " + theURL.toString();
         logger.info(text);
         propFromL2Stream = theURL.openStream(pwProvider);

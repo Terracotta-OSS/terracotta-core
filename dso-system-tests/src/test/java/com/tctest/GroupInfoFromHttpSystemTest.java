@@ -74,7 +74,7 @@ public class GroupInfoFromHttpSystemTest extends BaseDSOTestCase {
   }
 
   private void testGroupInfoForServer(int tsaPort, boolean shouldPass) throws MalformedURLException {
-    ServerURL theURL = new ServerURL("localhost", tsaPort, TCServerImpl.GROUP_INFO_SERVLET_PATH, -1, new SecurityInfo());
+    ServerURL theURL = new ServerURL("localhost", tsaPort, TCServerImpl.GROUP_INFO_SERVLET_PATH, new SecurityInfo());
     InputStream l1PropFromL2Stream = null;
     System.out.println("Trying to get groupinfo from " + theURL.toString());
     int trials = 0;
