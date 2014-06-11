@@ -26,6 +26,7 @@ import com.terracotta.management.resource.services.BackupResourceServiceImplV2;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImplV2;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImplV2;
 import com.terracotta.management.resource.services.JmxResourceServiceImplV2;
+import com.terracotta.management.resource.services.LicenseResourceServiceImplV2;
 import com.terracotta.management.resource.services.LocalShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.LogsResourceServiceImplV2;
 import com.terracotta.management.resource.services.MonitoringResourceServiceImplV2;
@@ -107,6 +108,9 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     s.add(QueryResourceServiceImplV2.class);
 
     s.add(SessionsResourceServiceImplV2.class);
+    
+    s.add(LicenseResourceServiceImplV2.class);
+    
 
     return s;
   }
