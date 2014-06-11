@@ -1,6 +1,13 @@
 package com.tc.objectserver.handler;
 
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,18 +17,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.tc.license.ProductID;
 import com.tc.net.ClientID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.operatorevent.NodeNameProvider;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * @author tim
@@ -68,6 +69,7 @@ public class ClientChannelOperatorEventlistenerTest {
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(messageChannel.getProductId()).thenReturn(productID);
     when(messageChannel.getRemoteNodeID()).thenReturn(new ClientID(1));
+    when(messageChannel.getRemoteAddress()).thenReturn(new TCSocketAddress(0));
     return messageChannel;
   }
 }
