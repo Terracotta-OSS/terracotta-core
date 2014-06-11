@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
-public class TCStopBindAddessTest extends BaseDSOTestCase {
+public class TCStopBindAddressTest extends BaseDSOTestCase {
   private static final String SERVER_NAME_1      = "server1";
   private File                tcConfig           = null;
   private TcConfigBuilder     configBuilder;
@@ -59,7 +59,8 @@ public class TCStopBindAddessTest extends BaseDSOTestCase {
     tcConfig = getTempFile("tc-stop-bind-address-test.xml");
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                     + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
-                    + "\n <server name=\"server1\" host=\"" + InetAddress.getLocalHost().getHostAddress()
+                    + "\n <server name=\"server1\" jmx-enabled=\"true\" host=\""
+                    + InetAddress.getLocalHost().getHostAddress()
                     + " \" bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">" + "\n     " + " <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress() + "\">9510</tsa-port>" + "\n     "
                     + " <jmx-port bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">9520</jmx-port>" + "\n</server>"
