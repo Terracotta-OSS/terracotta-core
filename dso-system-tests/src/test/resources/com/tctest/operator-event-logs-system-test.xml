@@ -12,7 +12,7 @@ reserved.
               >
 
   <servers>
-    <server host="localhost" name="server-1">
+    <server jmx-enabled="true" host="localhost" name="server-1">
       <tsa-port>4210</tsa-port>
       <jmx-port>4220</jmx-port>
       <tsa-group-port>4200</tsa-group-port>
