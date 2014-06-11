@@ -219,6 +219,10 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
         initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
         initializeSecurity(server, defaultValueProvider);
         initializeDatastore(server, defaultValueProvider);
+
+        if (!server.isSetJmxEnabled()) {
+          server.setJmxEnabled(false);
+        }
       }
     }
 
