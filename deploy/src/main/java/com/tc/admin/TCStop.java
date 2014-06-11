@@ -43,7 +43,7 @@ public class TCStop {
   private final boolean         secured;
 
   public static final String    DEFAULT_HOST  = "localhost";
-  public static final int       DEFAULT_PORT  = 9520;
+  public static final int       DEFAULT_PORT  = 9540;
 
   public static final void main(String[] args) throws Exception {
     Options options = StandardConfigurationSetupManagerFactory
@@ -176,11 +176,11 @@ public class TCStop {
 
       CommonL2Config serverConfig = manager.commonL2ConfigFor(name);
 
-      host = serverConfig.jmxPort().getBind();
+      host = serverConfig.managementPort().getBind();
       if (host == null || host.equals("0.0.0.0")) host = serverConfig.host();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
-      port = computeJMXPort(serverConfig);
+      port = computeManagementPort(serverConfig);
       consoleLogger.info("Host: " + host + ", port: " + port);
     } else {
       if (arguments.length == 0) {
@@ -214,11 +214,11 @@ public class TCStop {
     }
   }
 
-  static int computeJMXPort(CommonL2Config l2Config) {
-    if (l2Config.jmxPort() != null) {
-      return l2Config.jmxPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.jmxPort().getIntValue();
+  static int computeManagementPort(CommonL2Config l2Config) {
+    if (l2Config.managementPort() != null) {
+      return l2Config.managementPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.managementPort().getIntValue();
     } else {
-      return L2DSOConfigObject.computeJMXPortFromTSAPort(l2Config.tsaPort().getIntValue());
+      return L2DSOConfigObject.computeManagementPortFromTSAPort(l2Config.tsaPort().getIntValue());
     }
   }
 
@@ -277,10 +277,13 @@ public class TCStop {
       myInputStream = conn.getInputStream();
       responseCode = conn.getResponseCode();
     } catch (IOException e) {
-      java.util.Scanner s = new java.util.Scanner(conn.getErrorStream()).useDelimiter("\\A");
-      String errorResponse = s.hasNext() ? s.next() : "";
       consoleLogger.error("Unexpected error while stopping server: " + e.getMessage());
-      consoleLogger.debug("The server returned the following response : " + errorResponse);
+      InputStream errorStream = conn.getErrorStream();
+      if (errorStream != null) {
+        java.util.Scanner s = new java.util.Scanner(errorStream).useDelimiter("\\A");
+        String errorResponse = s.hasNext() ? s.next() : "";
+        consoleLogger.debug("The server returned the following response : " + errorResponse);
+      }
     } finally {
       if (wr != null) {
         wr.close();

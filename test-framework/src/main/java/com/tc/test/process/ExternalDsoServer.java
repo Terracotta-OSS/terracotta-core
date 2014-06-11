@@ -13,6 +13,7 @@ import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.objectserver.control.ExtraProcessServerControl;
+import com.tc.test.config.builder.MavenArtifactFinder;
 import com.tc.util.PortChooser;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument;
@@ -20,7 +21,6 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,9 +136,10 @@ public class ExternalDsoServer {
     serverProc.startAndWait(seconds);
   }
 
-  private void initStart() throws FileNotFoundException {
+  private void initStart() throws IOException {
     logOutputStream = new FileOutputStream(serverLog);
     addDirectMemoryIfNeeded();
+    jvmArgs.add("-Dcom.tc.management.war=" + guessWarLocation());
     serverProc = new ExtraProcessServerControl(new ExtraProcessServerControl.DebugParams(),"localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false, jvmArgs);
     serverProc.setRunningDirectory(workingDir);
     serverProc.setServerName(serverName);
@@ -227,6 +228,11 @@ public class ExternalDsoServer {
     out.println(configAsString);
     out.close();
     return theConfigFile;
+  }
+
+  private String guessWarLocation() throws IOException {
+    String version = MavenArtifactFinder.figureCurrentArtifactMavenVersion();
+    return MavenArtifactFinder.findArtifactLocation("org.terracotta", "management-tsa-war", version, null, "war");
   }
 
   @Override

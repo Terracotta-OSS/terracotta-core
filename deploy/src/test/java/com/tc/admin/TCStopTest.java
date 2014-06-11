@@ -14,33 +14,33 @@ import static org.mockito.Mockito.when;
 public class TCStopTest {
 
   @Test
-  public void computeJMXPortDefined() {
-    int jmxPort = 9525;
+  public void computeManagementPortDefined() {
+    int managementPort = 9525;
 
     CommonL2Config l2Config = mock(CommonL2Config.class);
     BindPort bindPort = mock(BindPort.class);
 
-    when(l2Config.jmxPort()).thenReturn(bindPort);
-    when(bindPort.getIntValue()).thenReturn(jmxPort);
+    when(l2Config.managementPort()).thenReturn(bindPort);
+    when(bindPort.getIntValue()).thenReturn(managementPort);
 
-    int jmxPortResult = TCStop.computeJMXPort(l2Config);
-    assertThat(jmxPortResult, is(jmxPort));
+    int managementPortResult = TCStop.computeManagementPort(l2Config);
+    assertThat(managementPortResult, is(managementPort));
   }
 
   @Test
-  public void computeJMXPortDefinedAsZero() {
+  public void computeManagementPortDefinedAsZero() {
     CommonL2Config l2Config = mock(CommonL2Config.class);
     BindPort bindPort = mock(BindPort.class);
 
-    when(l2Config.jmxPort()).thenReturn(bindPort);
+    when(l2Config.managementPort()).thenReturn(bindPort);
     when(bindPort.getIntValue()).thenReturn(0);
 
-    int jmxPortResult = TCStop.computeJMXPort(l2Config);
-    assertThat(jmxPortResult, is(TCStop.DEFAULT_PORT));
+    int managementPortResult = TCStop.computeManagementPort(l2Config);
+    assertThat(managementPortResult, is(TCStop.DEFAULT_PORT));
   }
 
   @Test
-  public void computeJMXPortUndefined() {
+  public void computeManagementPortUndefined() {
     int tsaPort = 9515;
 
     CommonL2Config l2Config = mock(CommonL2Config.class);
@@ -49,8 +49,8 @@ public class TCStopTest {
     when(l2Config.tsaPort()).thenReturn(bindPort);
     when(bindPort.getIntValue()).thenReturn(tsaPort);
 
-    int jmxPortResult = TCStop.computeJMXPort(l2Config);
-    assertThat(jmxPortResult, is(tsaPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT));
+    int managementPortResult = TCStop.computeManagementPort(l2Config);
+    assertThat(managementPortResult, is(tsaPort + L2DSOConfigObject.DEFAULT_MANAGEMENTPORT_OFFSET_FROM_TSAPORT));
   }
 
 }
