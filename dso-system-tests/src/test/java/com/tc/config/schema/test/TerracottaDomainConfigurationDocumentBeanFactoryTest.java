@@ -53,6 +53,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactoryTest extends TCTest
 
   public void testSchemaViolation() throws Exception {
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
+    builder.getClient().setLogs("<this-tag-will-never-exist-in-the-schema-okay/>");
     byte[] xml = builder.toString().getBytes("UTF-8");
     ByteArrayInputStream stream = new ByteArrayInputStream(xml);
 
