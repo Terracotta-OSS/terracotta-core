@@ -29,6 +29,7 @@ public class BindAddressesTest extends BaseDSOTestCase {
   private final int[]               jmxPorts       = new int[NUM_OF_SERVERS];
   private final int[]               tsaPorts       = new int[NUM_OF_SERVERS];
   private final int[]               tsaGroupPorts  = new int[NUM_OF_SERVERS];
+  private final int[]               managementPorts = new int[NUM_OF_SERVERS];
 
   @Override
   protected boolean cleanTempDir() {
@@ -54,6 +55,7 @@ public class BindAddressesTest extends BaseDSOTestCase {
       tsaPorts[i] = configBuilder.getTsaPort(i);
       jmxPorts[i] = configBuilder.getJmxPort(i);
       tsaGroupPorts[i] = configBuilder.getGroupPort(i);
+      managementPorts[i] = configBuilder.getManagementPort(i);
     }
 
     servers[0] = createServer("server-1");
@@ -75,18 +77,22 @@ public class BindAddressesTest extends BaseDSOTestCase {
     testSocketConnect("127.0.0.1", tsaPorts[0], true);
     testSocketConnect("0.0.0.0", jmxPorts[0], true);
     testSocketConnect("0.0.0.0", tsaGroupPorts[0], true);
+    testSocketConnect("0.0.0.0", managementPorts[0], true);
 
     testSocket("127.0.0.1", tsaPorts[1], true);
     testSocket("127.0.0.1", jmxPorts[1], false);
     testSocket("127.0.0.1", tsaGroupPorts[1], false);
+    testSocket("127.0.0.1", managementPorts[1], false);
 
     testSocket("127.0.0.1", tsaPorts[2], true);
     testSocket("127.0.0.1", jmxPorts[2], false);
     testSocket("127.0.0.1", tsaGroupPorts[2], false);
+    testSocket("127.0.0.1", managementPorts[2], false);
 
     testSocket("0.0.0.0", tsaPorts[3], true);
     testSocket("0.0.0.0", jmxPorts[3], false);
     testSocket("0.0.0.0", tsaGroupPorts[3], false);
+    testSocket("0.0.0.0", managementPorts[3], false);
   }
 
   private void testSocketConnect(String host, int port, boolean testNegative) throws Exception {

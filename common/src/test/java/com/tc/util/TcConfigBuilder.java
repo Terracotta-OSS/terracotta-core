@@ -131,6 +131,16 @@ public class TcConfigBuilder {
     return getServer(serverIndex).getTsaPort().getIntValue();
   }
 
+  public int getManagementPort() {
+    return getManagementPort(0);
+  }
+
+  public int getManagementPort(int serverIndex) {
+    ensureServers();
+    Assert.assertNotNull(getServer(serverIndex));
+    return getServer(serverIndex).getManagementPort().getIntValue();
+  }
+
   public int getGroupPort() {
     return getGroupPort(0);
   }
@@ -269,4 +279,5 @@ public class TcConfigBuilder {
       throw new RuntimeException(e);
     }
   }
+
 }

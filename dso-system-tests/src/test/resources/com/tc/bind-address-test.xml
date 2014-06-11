@@ -8,25 +8,28 @@
 
   <servers>
     <mirror-group election-time="5">
-      <server host="localhost" name="server-1">
+      <server host="localhost" name="server-1" jmx-enabled="true">
         <tsa-port bind="127.0.0.1">4210</tsa-port>
         <jmx-port bind="0.0.0.0">4220</jmx-port>
-        <tsa-group-port>4200</tsa-group-port>
+        <tsa-group-port>4230</tsa-group-port>
+        <management-port>4240</management-port>
       </server>
 
-      <server host="localhost" name="server-2" bind="127.0.0.1">
+      <server host="localhost" name="server-2" bind="127.0.0.1" jmx-enabled="true">
         <tsa-port>5210</tsa-port>
         <jmx-port>5220</jmx-port>
-        <tsa-group-port>5200</tsa-group-port>
+        <tsa-group-port>5230</tsa-group-port>
+        <management-port>5240</management-port>
       </server>
 
-      <server host="localhost" name="server-3" bind="0.0.0.0">
+      <server host="localhost" name="server-3" bind="0.0.0.0" jmx-enabled="true">
         <tsa-port bind="127.0.0.1">6210</tsa-port>
         <jmx-port bind="127.0.0.1">6220</jmx-port>
-        <tsa-group-port bind="127.0.0.1">6200</tsa-group-port>
+        <management-port bind="127.0.0.1">6240</management-port>
+        <tsa-group-port bind="127.0.0.1">6230</tsa-group-port>
       </server>
 
-      <server host="localhost" name="server-4" />
+      <server host="localhost" name="server-4" jmx-enabled="true"/>
     </mirror-group>
 
     <update-check>
