@@ -42,14 +42,14 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     tcConfig = getTempFile("server-tc-config-bind-address-test.xml");
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                     + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
-                    + "\n      <server name=\"server1\" host=\""
+                    + "\n      <server jmx-enabled=\"true\" name=\"server1\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
                     + "\n      <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
  + "\">9510</tsa-port>"
                     + "\n      </server>"
-                    + "\n      <server name=\"server2\" host=\""
+                    + "\n      <server jmx-enabled=\"true\" name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
                     + "\n      <tsa-port bind=\""
@@ -88,14 +88,14 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     tcConfig = getTempFile("server-tc-config-bind-address-test.xml");
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                     + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
-                    + "\n      <server name=\"server1\" host=\""
+                    + "\n      <server jmx-enabled=\"true\" name=\"server1\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
                     + "\n      <tsa-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">9510</tsa-group-port>"
                     + "\n      </server>"
-                    + "\n      <server name=\"server2\" host=\""
+                    + "\n      <server jmx-enabled=\"true\" name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
                     + "\n      <tsa-group-port bind=\""
