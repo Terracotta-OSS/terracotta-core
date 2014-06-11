@@ -41,7 +41,7 @@ public class ServerStat {
   private final String        password;
   private final boolean       secured;
 
-  private boolean               connected;
+  private static boolean      connected               = false;
   static String                 groupName        = "UNKNOWN";
   static String                 errorMessage     = "";
   static String                 state;
@@ -236,6 +236,7 @@ public class ServerStat {
 
       myInputStream = conn.getInputStream();
       if (myInputStream != null) {
+        connected = true;
         String responseContent = toString(myInputStream);
         // { "health" : "OK", "role" : "ACTIVE", "state": "ACTIVE-COORDINATOR", "managementPort" : "9540",
         // "serverGroupName" : "defaultGroup"}
