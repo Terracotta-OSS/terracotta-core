@@ -10,7 +10,7 @@ reserved.
 	      xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
 
   <servers>
-    <server host="localhost" name="server1">
+    <server host="localhost" name="server1" jmx-enabled="true">
       <data>server1-data</data>
       <logs>server1-logs</logs>
       <tsa-port>1310</tsa-port>
