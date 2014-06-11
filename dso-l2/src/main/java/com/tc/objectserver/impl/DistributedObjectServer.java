@@ -1338,8 +1338,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public synchronized void stop() {
-    TerracottaRemoteManagement.setRemoteManagementInstance(null);
-
     try {
       if (this.indexHACoordinator != null) {
         this.indexHACoordinator.shutdown();
@@ -1390,26 +1388,22 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }
     }
 
-    try {
-      stopJMXServer();
-    } catch (final Throwable t) {
-      logger.error("Error shutting down jmx server", t);
-    }
-
     basicStop();
   }
 
   public void quickStop() {
+    basicStop();
+  }
+
+  private void basicStop() {
     try {
       stopJMXServer();
     } catch (final Throwable t) {
       logger.error("Error shutting down jmx server", t);
     }
 
-    basicStop();
-  }
+    TerracottaRemoteManagement.setRemoteManagementInstance(null);
 
-  private void basicStop() {
     if (this.startupLock != null) {
       this.startupLock.release();
     }
