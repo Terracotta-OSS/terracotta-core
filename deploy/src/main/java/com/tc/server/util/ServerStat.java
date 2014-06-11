@@ -17,16 +17,22 @@ import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 
 public class ServerStat {
   private static final String   UNKNOWN          = "unknown";
   private static final String   NEWLINE          = System.getProperty("line.separator");
-  static final int            DEFAULT_MANAGEMENT_PORT = 9520;
+  static final int            DEFAULT_MANAGEMENT_PORT = 9540;
 
   private final String          host;
   private final String          hostName;
@@ -184,7 +190,7 @@ public class ServerStat {
 
   private static void handleList(String username, String password, boolean secured, String hostList) {
     if (hostList == null) {
-      printStat(username, password, secured, "localhost:9520");
+      printStat(username, password, secured, "localhost:" + DEFAULT_MANAGEMENT_PORT);
     } else {
       String[] pairs = hostList.split(",");
       for (String info : pairs) {
@@ -229,21 +235,20 @@ public class ServerStat {
       conn.addRequestProperty("Accept", "*/*");
 
       myInputStream = conn.getInputStream();
+      if (myInputStream != null) {
+        String responseContent = toString(myInputStream);
+        // { "health" : "OK", "role" : "ACTIVE", "state": "ACTIVE-COORDINATOR", "managementPort" : "9540",
+        // "serverGroupName" : "defaultGroup"}
+        decodeJsonAndSetFields(responseContent);
+        // consoleLogger.debug("Response code is : " + responseCode);
+        // consoleLogger.debug("Response content is : " + responseContent);
+      }
+      
     } catch (IOException e) {
-      java.util.Scanner s = new java.util.Scanner(conn.getErrorStream()).useDelimiter("\\A");
       errorMessage = "Unexpected error while getting stat: " + e.getMessage();
     } finally {
       conn.disconnect();
     }
-    if (myInputStream != null) {
-      java.util.Scanner s = new java.util.Scanner(myInputStream).useDelimiter("\\A");
-      String responseContent = s.hasNext() ? s.next() : "";
-      // { "health" : "OK", "role" : "ACTIVE", "state": "ACTIVE-COORDINATOR", "managementPort" : "9540", "serverGroupName" : "defaultGroup"}
-      decodeJsonAndSetFields(responseContent);
-      // consoleLogger.debug("Response code is : " + responseCode);
-      // consoleLogger.debug("Response content is : " + responseContent);
-    }
-    
     ServerStat stat = new ServerStat(username, password, secured, host, null, port);
     System.out.println(stat.toString());
   }
@@ -276,4 +281,20 @@ public class ServerStat {
       }
     }
   }
+
+  public static String toString(InputStream stream) throws IOException {
+    Writer writer = new StringWriter();
+    char[] buffer = new char[1024];
+    try {
+      Reader reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
+      int n;
+      while ((n = reader.read(buffer)) != -1) {
+        writer.write(buffer, 0, n);
+      }
+    } finally {
+      stream.close();
+    }
+    return writer.toString();
+  }
+
 }
