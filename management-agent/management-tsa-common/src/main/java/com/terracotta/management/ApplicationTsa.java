@@ -6,6 +6,9 @@ package com.terracotta.management;
 
 import org.glassfish.jersey.media.sse.SseFeature;
 
+import com.terracotta.management.web.proxy.ProxyExceptionMapper;
+import com.terracotta.management.web.proxy.ContainerRequestContextFilter;
+
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -18,6 +21,8 @@ public class ApplicationTsa extends Application {
   public Set<Class<?>> getClasses() {
     Set<Class<?>> s = new HashSet<Class<?>>();
     s.add(SseFeature.class);
+    s.add(ProxyExceptionMapper.class);
+    s.add(ContainerRequestContextFilter.class);
     ServiceLoader<ApplicationTsaService> loader = ServiceLoader.load(ApplicationTsaService.class);
     for (ApplicationTsaService applicationTsaService : loader) {
       s.addAll(applicationTsaService.getResourceClasses());

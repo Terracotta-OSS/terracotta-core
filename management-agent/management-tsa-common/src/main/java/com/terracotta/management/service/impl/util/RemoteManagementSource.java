@@ -107,7 +107,7 @@ public class RemoteManagementSource {
         .post(null, new CollectionOfRepresentableGenericType<T>(type));
   }
 
-  private Invocation.Builder resource(URI uri) {
+  public Invocation.Builder resource(URI uri) {
     WebTarget resource = client.target(uri);
     resource.property(ClientProperties.CONNECT_TIMEOUT, (int)timeoutService.getCallTimeout());
     resource.property(ClientProperties.READ_TIMEOUT, (int)timeoutService.getCallTimeout());

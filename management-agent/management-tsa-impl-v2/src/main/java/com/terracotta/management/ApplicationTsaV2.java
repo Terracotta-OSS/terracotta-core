@@ -161,7 +161,8 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
                                                                                            requestValidator,
                                                                                            remoteAgentBridgeService,
                                                                                            l1BridgeExecutorService,
-                                                                                           timeoutService);
+                                                                                           timeoutService,
+                                                                                           serverManagementService);
 
     /// utility services ///
     serviceClasses.put(RequestTicketMonitor.class, requestTicketMonitor);

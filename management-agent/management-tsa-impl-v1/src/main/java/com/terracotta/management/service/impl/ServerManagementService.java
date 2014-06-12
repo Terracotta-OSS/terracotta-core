@@ -28,6 +28,7 @@ import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.security.SecurityContextService;
+import com.terracotta.management.service.ActiveServerSource;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
@@ -39,6 +40,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +57,7 @@ import javax.ws.rs.core.UriBuilder;
 /**
  * @author Ludovic Orban
  */
-public class ServerManagementService {
+public class ServerManagementService implements ActiveServerSource {
 
   private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] { "Version", "BuildID",
       "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
@@ -830,6 +832,39 @@ public class ServerManagementService {
       remoteManagementSource.cancelFutures(futures.values());
       throw new ServiceExecutionException("error executing remote " + methodName, e);
     }
+  }
+
+  @Override
+  public boolean isCurrentServerActive() {
+    return localManagementSource.isActiveCoordinator();
+  }
+
+  @Override
+  public List<String> getActiveL2Urls() throws ServiceExecutionException {
+    Set<String> activeNames = new HashSet<String>();
+
+    // collect all active names
+    Collection<ServerGroupEntity> serverGroups = getServerGroups(null);
+    for (ServerGroupEntity serverGroup : serverGroups) {
+      Set<ServerEntity> servers = serverGroup.getServers();
+      for (ServerEntity server : servers) {
+        String status = (String)server.getAttributes().get("State");
+        if ("ACTIVE-COORDINATOR".equals(status)) {
+          String name = (String)server.getAttributes().get("Name");
+          activeNames.add(name);
+          break;
+        }
+      }
+    }
+
+    // get the URL of each active
+    Map<String, String> serverUrls = localManagementSource.getServerUrls();
+    List<String> activeUrls = new ArrayList<String>();
+    for (String activeName : activeNames) {
+      String activeUrl = serverUrls.get(activeName);
+      activeUrls.add(activeUrl);
+    }
+    return activeUrls;
   }
 
 }
