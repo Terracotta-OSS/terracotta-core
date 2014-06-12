@@ -13,6 +13,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.terracottatech</groupId>
+      <artifactId>wan-management-v1</artifactId>
+      <version>${wan-management.version}</version>
+    </dependency>  
+    <dependency>
       <groupId>org.terracotta.session</groupId>
       <artifactId>sessions-management-v1</artifactId>
       <version>${session-management.version}</version>
