@@ -14,6 +14,7 @@ import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.config.builder.ClusterManager;
 import com.tc.test.config.model.L2Config;
 import com.tc.test.config.model.ServerCrashMode;
 import com.tc.test.config.model.TestConfig;
@@ -164,12 +165,14 @@ class GroupServerManager {
     serverCrasher = new GroupServerCrashManager(testConfig, this);
   }
 
-  private void createServers() {
+  private void createServers() throws IOException {
 
     for (int i = 0; i < groupData.getServerCount(); i++) {
       ArrayList<String> perServerJvmArgs = new ArrayList<String>();
       L2Config l2Config = testConfig.getL2Config(groupData.getGroupIndex(), i);
       perServerJvmArgs.addAll(l2Config.getExtraServerJvmArgs());
+      perServerJvmArgs.add("-Dcom.tc.management.war=" + ClusterManager.findWarLocation("org.terracotta", "management-tsa-war",
+          ClusterManager.guessMavenArtifactVersion()));
       if (isProxyTsaGroupPort()) {
         // hidden tc.properties only used by L2 proxy testing purpose
         perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "="
