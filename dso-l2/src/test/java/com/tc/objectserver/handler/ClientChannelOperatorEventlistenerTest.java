@@ -75,6 +75,14 @@ public class ClientChannelOperatorEventlistenerTest {
     verify(logger).fireOperatorEvent(any(TerracottaOperatorEvent.class));
   }
 
+  @Test
+  public void testNoOperatorEventForReconnectWindowClose() throws Exception {
+    MessageChannel channel = messageChannelWithProductID(ProductID.USER);
+    when(channel.getRemoteAddress()).thenReturn(null);
+    listener.channelRemoved(channel);
+    verify(logger, never()).fireOperatorEvent(any(TerracottaOperatorEvent.class));
+  }
+
   private MessageChannel messageChannelWithProductID(ProductID productID) {
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(messageChannel.getProductId()).thenReturn(productID);

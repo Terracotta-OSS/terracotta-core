@@ -35,7 +35,9 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
   @Override
   public void channelRemoved(MessageChannel channel) {
     // Don't generate operator events for internal products
-    if (!channel.getProductId().isInternal()) {
+    // Also, don't generate events for clients being removed as a result of the reconnect window closing (channel remote address is null),
+    // they weren't actually connected to begin with
+    if (!channel.getProductId().isInternal() && channel.getRemoteAddress() != null) {
       NodeID remoteNodeID = channel.getRemoteNodeID();
       ClientID clientID = (ClientID)remoteNodeID;
       String jmxId = TerracottaManagement.buildNodeId(channel.getRemoteAddress());
