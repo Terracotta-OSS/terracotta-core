@@ -16,8 +16,8 @@ public interface EventServiceV2 {
     void onEvent(EventEntityV2 eventEntity);
   }
 
-  void registerTopologyEventListener(EventListener listener);
+  void registerEventListener(EventListener listener);
 
-  void unregisterTopologyEventListener(EventListener listener);
+  void unregisterEventListener(EventListener listener);
 
 }

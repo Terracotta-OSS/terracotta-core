@@ -24,7 +24,7 @@ public class EventServiceImplV2 implements EventServiceV2 {
   private final Map<EventListener, ManagementEventListener> listenerMap = Collections.synchronizedMap(new IdentityHashMap<EventListener, ManagementEventListener>());
 
   @Override
-  public void registerTopologyEventListener(final EventListener listener) {
+  public void registerEventListener(final EventListener listener) {
     RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
     ManagementEventListener managementEventListener = new ManagementEventListener() {
       @Override
@@ -51,7 +51,7 @@ public class EventServiceImplV2 implements EventServiceV2 {
   }
 
   @Override
-  public void unregisterTopologyEventListener(EventListener listener) {
+  public void unregisterEventListener(EventListener listener) {
     RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
     remoteManagementInstance.unregisterEventListener(listenerMap.remove(listener));
   }

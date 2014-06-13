@@ -44,7 +44,7 @@ public class AllEventsResourceServiceImplV2 {
     LOG.debug(String.format("Invoking TopologyEventResourceServiceImplV2.getServerSentEvents: %s", info.getRequestUri()));
 
     final EventOutput eventOutput = new EventOutput();
-    topologyEventService.registerTopologyEventListener(new EventServiceV2.EventListener() {
+    topologyEventService.registerEventListener(new EventServiceV2.EventListener() {
       @Override
       public void onEvent(EventEntityV2 eventEntity) {
         OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
@@ -56,7 +56,7 @@ public class AllEventsResourceServiceImplV2 {
         try {
           eventOutput.write(event);
         } catch (IOException e) {
-          topologyEventService.unregisterTopologyEventListener(this);
+          topologyEventService.unregisterEventListener(this);
           try {
             eventOutput.close();
           } catch (IOException ioe) {
