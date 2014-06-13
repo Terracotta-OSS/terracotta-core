@@ -9,9 +9,9 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.events.EventEntityV2;
 
-import com.terracotta.management.resource.events.TopologyEventEntityV2;
-import com.terracotta.management.service.events.TopologyEventServiceV2;
+import com.terracotta.management.service.events.EventServiceV2;
 
 import java.io.IOException;
 
@@ -27,15 +27,15 @@ import javax.ws.rs.core.UriInfo;
  * 
  * @author Ludovic Orban
  */
-@Path("/v2/agents/events/topologies")
-public class TopologyEventResourceServiceImplV2 {
+@Path("/v2/agents/events")
+public class AllEventsResourceServiceImplV2 {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TopologyEventResourceServiceImplV2.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AllEventsResourceServiceImplV2.class);
 
-  private final TopologyEventServiceV2 topologyEventService;
+  private final EventServiceV2 topologyEventService;
 
-  public TopologyEventResourceServiceImplV2() {
-    this.topologyEventService = ServiceLocator.locate(TopologyEventServiceV2.class);
+  public AllEventsResourceServiceImplV2() {
+    this.topologyEventService = ServiceLocator.locate(EventServiceV2.class);
   }
 
   @GET
@@ -44,13 +44,13 @@ public class TopologyEventResourceServiceImplV2 {
     LOG.debug(String.format("Invoking TopologyEventResourceServiceImplV2.getServerSentEvents: %s", info.getRequestUri()));
 
     final EventOutput eventOutput = new EventOutput();
-    topologyEventService.registerTopologyEventListener(new TopologyEventServiceV2.TopologyEventListener() {
+    topologyEventService.registerTopologyEventListener(new EventServiceV2.EventListener() {
       @Override
-      public void onEvent(TopologyEventEntityV2 eventEntity) {
+      public void onEvent(EventEntityV2 eventEntity) {
         OutboundEvent.Builder eventBuilder = new OutboundEvent.Builder();
         eventBuilder.mediaType(MediaType.APPLICATION_JSON_TYPE);
-        eventBuilder.name(TopologyEventEntityV2.class.getSimpleName());
-        eventBuilder.data(TopologyEventEntityV2.class, eventEntity);
+        eventBuilder.name(EventEntityV2.class.getSimpleName());
+        eventBuilder.data(EventEntityV2.class, eventEntity);
         OutboundEvent event = eventBuilder.build();
 
         try {
