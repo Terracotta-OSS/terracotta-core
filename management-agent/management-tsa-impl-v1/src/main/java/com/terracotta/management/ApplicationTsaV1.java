@@ -54,6 +54,7 @@ import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
+import com.terracotta.management.web.proxy.ProxyExceptionMapper;
 import com.terracotta.management.web.resource.services.IdentityAssertionResourceService;
 import com.terracottatech.wan.monitor.WanMonitorService;
 
@@ -80,6 +81,9 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     s.add(IdentityAssertionResourceService.class);
     s.add(JmxResourceServiceImpl.class);
     s.add(LicenseResourceServiceImpl.class);
+    
+    s.add(ProxyExceptionMapper.class);
+
 
     s.add(net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.CachesResourceServiceImpl.class);
