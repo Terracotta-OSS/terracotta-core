@@ -73,10 +73,8 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
       assertThat(rootRepresentables.size(), is(1));
       String[] urls = ((String)rootRepresentables.get("urls")).split(",");
       assertThat(urls.length, is(MEMBER_COUNT * GROUP_COUNT));
-      assertThat(urls[0], is("http://localhost:" + getGroupData(0).getTsaGroupPort(0)));
-      assertThat(urls[1], is("http://localhost:" + getGroupData(0).getTsaGroupPort(1)));
-//          assertThat(urls[2], is("http://localhost:" + getGroupData(1).getTsaGroupPort(0)));
-//          assertThat(urls[3], is("http://localhost:" + getGroupData(1).getTsaGroupPort(1)));
+      assertThat(urls[0], is("http://localhost:" + getGroupData(0).getManagementPort(0)));
+      assertThat(urls[1], is("http://localhost:" + getGroupData(0).getManagementPort(1)));
       assertThat((String) content.get("agentId"), is(Representable.EMBEDDED_AGENT_ID));
       assertThat((String)content.get("version"), is(guessVersion()));
       assertThat((String)content.get("agencyOf"), is("TSA"));
