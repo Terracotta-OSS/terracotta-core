@@ -46,8 +46,8 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
       String jmxId = TerracottaManagement.buildNodeId(channel.getRemoteAddress());
 
       TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.L1.LEFT");
-      tsaManagementEventPayload.getAttributes().put("NodeID", Long.toString(clientID.toLong()));
-      tsaManagementEventPayload.getAttributes().put("JmxID", jmxId);
+      tsaManagementEventPayload.getAttributes().put("Client.NodeID", Long.toString(clientID.toLong()));
+      tsaManagementEventPayload.getAttributes().put("Client.JmxID", jmxId);
 
       TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(remoteNodeID.toString()));
