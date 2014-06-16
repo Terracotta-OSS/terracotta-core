@@ -3,6 +3,7 @@
  */
 package com.terracotta.management.service.impl.events;
 
+import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.events.EventEntityV2;
 
 import com.tc.management.ManagementEventListener;
@@ -34,16 +35,19 @@ public class EventServiceImplV2 implements EventServiceV2 {
 
       @Override
       public void onEvent(TCManagementEvent event, Map<String, Object> context) {
-//        if (!event.getType().startsWith("TSA.TOPOLOGY")) { return; }
         TSAManagementEventPayload tsaManagementEventPayload = (TSAManagementEventPayload)event.getPayload();
 
-        EventEntityV2 topologyEventEntity = new EventEntityV2();
-        topologyEventEntity.setSourceId((String)context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME));
-        topologyEventEntity.setType(event.getType());
-        topologyEventEntity.setTargetNodeId(tsaManagementEventPayload.getTargetNodeId());
-        topologyEventEntity.setTargetJmxId(tsaManagementEventPayload.getTargetJmxId());
+        EventEntityV2 eventEntity = new EventEntityV2();
+        if (event.getType().startsWith("TSA")) {
+          eventEntity.setAgentId(Representable.EMBEDDED_AGENT_ID);
+        } else {
+          eventEntity.setAgentId(tsaManagementEventPayload.getTargetJmxId());
+        }
+        eventEntity.getRootRepresentables().put("source.server.name", context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME));
+        eventEntity.getRootRepresentables().put("source.client.nodeId", tsaManagementEventPayload.getTargetNodeId());
+        eventEntity.setType(event.getType());
 
-        listener.onEvent(topologyEventEntity);
+        listener.onEvent(eventEntity);
       }
     };
     listenerMap.put(listener, managementEventListener);
