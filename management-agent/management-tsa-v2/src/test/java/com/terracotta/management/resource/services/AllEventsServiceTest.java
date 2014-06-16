@@ -20,7 +20,7 @@ public class AllEventsServiceTest {
   @Ignore
   public void allEventsTest() {
     Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
-    WebTarget target = client.target("http://localhost:9540/tc-management-api/v2/agents/events/topologies");
+    WebTarget target = client.target("http://localhost:29540/tc-management-api/v2/agents/events");
 
     EventInput eventInput = target.request().get(EventInput.class);
     while (!eventInput.isClosed()) {
