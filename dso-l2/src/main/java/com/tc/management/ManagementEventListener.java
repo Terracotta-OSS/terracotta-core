@@ -12,6 +12,7 @@ import java.util.Map;
 public interface ManagementEventListener {
 
   static String CONTEXT_SOURCE_NODE_NAME = "CONTEXT_SOURCE_NODE_NAME";
+  static String CONTEXT_SOURCE_JMX_ID = "CONTEXT_SOURCE_JMX_ID";
 
   /**
    * @return the class loader that is going to be used to deserialize the event.

@@ -5,36 +5,34 @@
 package com.tc.management;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
  */
 public class TSAManagementEventPayload implements Serializable {
 
-  private String targetNodeId;
-  private String targetJmxId;
+  private String type;
+  private final Map<String, Object> attributes = new HashMap<String, Object>();
 
   public TSAManagementEventPayload() {
   }
 
-  public TSAManagementEventPayload(String targetNodeId, String targetJmxId) {
-    this.targetNodeId = targetNodeId;
-    this.targetJmxId = targetJmxId;
+  public TSAManagementEventPayload(String type) {
+    this.type = type;
   }
 
-  public String getTargetNodeId() {
-    return targetNodeId;
+  public Map<String, Object> getAttributes() {
+    return attributes;
   }
 
-  public void setTargetNodeId(String targetNodeId) {
-    this.targetNodeId = targetNodeId;
+  public String getType() {
+    return type;
   }
 
-  public String getTargetJmxId() {
-    return targetJmxId;
+  public TCManagementEvent toManagementEvent() {
+    return new TCManagementEvent(this, getType());
   }
 
-  public void setTargetJmxId(String targetJmxId) {
-    this.targetJmxId = targetJmxId;
-  }
 }

@@ -58,6 +58,7 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
 import com.tc.management.RemoteManagement;
+import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
@@ -235,6 +236,8 @@ import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.operatorevent.DsoOperatorEventHistoryProvider;
+import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.L1ReconnectConfigImpl;
@@ -1042,7 +1045,23 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     stageManager.startAll(this.context, toInit);
 
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
+    final RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
+    TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
+      @Override
+      public void logOperatorEvent(TerracottaOperatorEvent event) {
+        TSAManagementEventPayload payload = new TSAManagementEventPayload("TSA.OPERATOR_EVENT." + event.getEventTypeAsString());
+
+        payload.getAttributes().put("OperatorEvent.CollapseString", event.getCollapseString());
+        payload.getAttributes().put("OperatorEvent.EventLevel", event.getEventLevelAsString());
+        payload.getAttributes().put("OperatorEvent.EventMessage", event.getEventMessage());
+        payload.getAttributes().put("OperatorEvent.EventSubsystem", event.getEventSubsystemAsString());
+        payload.getAttributes().put("OperatorEvent.EventType", event.getEventTypeAsString());
+        payload.getAttributes().put("OperatorEvent.EventTime", event.getEventTime().getTime());
+        payload.getAttributes().put("OperatorEvent.NodeName", event.getNodeName());
+
+        remoteManagement.sendEvent(payload.toManagementEvent());
+      }
+    });
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
 
     // XXX: yucky casts

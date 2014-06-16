@@ -13,6 +13,7 @@ import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.terracotta.management.service.events.EventServiceV2;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -35,18 +36,25 @@ public class EventServiceImplV2 implements EventServiceV2 {
 
       @Override
       public void onEvent(TCManagementEvent event, Map<String, Object> context) {
-        TSAManagementEventPayload tsaManagementEventPayload = (TSAManagementEventPayload)event.getPayload();
+        Serializable payload = event.getPayload();
+        EventEntityV2 eventEntity;
+        if (payload instanceof EventEntityV2) {
+          eventEntity = (EventEntityV2)payload;
+          eventEntity.setAgentId((String)context.get(ManagementEventListener.CONTEXT_SOURCE_JMX_ID));
+        } else if (payload instanceof TSAManagementEventPayload) {
+          TSAManagementEventPayload tsaManagementEventPayload = (TSAManagementEventPayload)payload;
 
-        EventEntityV2 eventEntity = new EventEntityV2();
-        if (event.getType().startsWith("TSA")) {
+          eventEntity = new EventEntityV2();
           eventEntity.setAgentId(Representable.EMBEDDED_AGENT_ID);
+          eventEntity.getRootRepresentables().put("Server.Name", context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME));
+          eventEntity.getRootRepresentables().putAll(tsaManagementEventPayload.getAttributes());
+          eventEntity.setType(event.getType());
         } else {
-          eventEntity.setAgentId(tsaManagementEventPayload.getTargetJmxId());
+          eventEntity = new EventEntityV2();
+          eventEntity.setType("TSA.ERROR");
+          eventEntity.setAgentId(Representable.EMBEDDED_AGENT_ID);
+          eventEntity.getRootRepresentables().put("Error.Details", "Unknown event : " + payload);
         }
-        eventEntity.getRootRepresentables().put("source.server.name", context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME));
-        eventEntity.getRootRepresentables().put("source.client.nodeId", tsaManagementEventPayload.getTargetNodeId());
-        eventEntity.setType(event.getType());
-
         listener.onEvent(eventEntity);
       }
     };

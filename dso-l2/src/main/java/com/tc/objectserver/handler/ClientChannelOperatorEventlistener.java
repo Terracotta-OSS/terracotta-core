@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.management.TCManagementEvent;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaRemoteManagement;
@@ -26,8 +25,12 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
       NodeID remoteNodeID = channel.getRemoteNodeID();
       ClientID clientID = (ClientID)remoteNodeID;
       String jmxId = TerracottaManagement.buildNodeId(channel.getRemoteAddress());
-      TerracottaRemoteManagement.getRemoteManagementInstance()
-          .sendEvent(new TCManagementEvent(new TSAManagementEventPayload(Long.toString(clientID.toLong()), jmxId), "TSA.TOPOLOGY.L1.CONNECTED"));
+
+      TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.L1.JOINED");
+      tsaManagementEventPayload.getAttributes().put("Client.NodeID", Long.toString(clientID.toLong()));
+      tsaManagementEventPayload.getAttributes().put("Client.JmxID", jmxId);
+
+      TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(remoteNodeID.toString()));
     }
   }
@@ -41,8 +44,12 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
       NodeID remoteNodeID = channel.getRemoteNodeID();
       ClientID clientID = (ClientID)remoteNodeID;
       String jmxId = TerracottaManagement.buildNodeId(channel.getRemoteAddress());
-      TerracottaRemoteManagement.getRemoteManagementInstance()
-          .sendEvent(new TCManagementEvent(new TSAManagementEventPayload(Long.toString(clientID.toLong()), jmxId), "TSA.TOPOLOGY.L1.DISCONNECTED"));
+
+      TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.L1.LEFT");
+      tsaManagementEventPayload.getAttributes().put("NodeID", Long.toString(clientID.toLong()));
+      tsaManagementEventPayload.getAttributes().put("JmxID", jmxId);
+
+      TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(remoteNodeID.toString()));
     }
   }
