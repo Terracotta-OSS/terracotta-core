@@ -70,6 +70,8 @@ import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.proxy.ProxyExceptionMapper;
 import com.terracotta.management.web.resource.services.IdentityAssertionResourceService;
+import com.terracottatech.wan.monitor.WanMonitorResourceServiceImplV2;
+import com.terracottatech.wan.monitor.WanMonitorServiceV2;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -113,7 +115,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     s.add(LicenseResourceServiceImplV2.class);
     
     s.add(ProxyExceptionMapper.class);
-    
+    s.add(WanMonitorResourceServiceImplV2.class);
 
     return s;
   }
@@ -186,6 +188,9 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     /// Sessions Services ///
     serviceClasses.put(SessionsServiceV2.class, remoteServiceStubGenerator.newRemoteService(SessionsServiceV2.class, "Sessions"));
 
+    /// WAN Services ///
+    serviceClasses.put(WanMonitorServiceV2.class, remoteServiceStubGenerator.newRemoteService(WanMonitorServiceV2.class, "WAN"));
+    
     return serviceClasses;
   }
 

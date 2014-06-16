@@ -11,12 +11,7 @@
     <relativePath>../../build-parent</relativePath>
   </parent>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.terracottatech</groupId>
-      <artifactId>wan-management-v1</artifactId>
-      <version>${wan-management.version}</version>
-    </dependency>  
+  <dependencies>  
     <dependency>
       <groupId>org.terracotta.session</groupId>
       <artifactId>sessions-management-v1</artifactId>
