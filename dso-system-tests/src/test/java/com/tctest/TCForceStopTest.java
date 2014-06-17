@@ -88,14 +88,14 @@ public class TCForceStopTest extends BaseDSOTestCase {
 
   private String[] getCommandLineArgsForStop(String serverName, String configFilePath, int port) {
     return new String[] { StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFilePath,
-        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, Integer.toString(port), };
+        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, Integer.toString(port), "-j"};
 
   }
 
   private String[] getCommandLineArgsForForceStop(String serverName, String configFilePath, int port) {
     return new String[] { StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFilePath,
         StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, Integer.toString(port),
-        "-force" };
+        "-force", "-j" };
   }
 
   private void stop(int jmxPort, String[] args) {
@@ -218,8 +218,8 @@ public class TCForceStopTest extends BaseDSOTestCase {
   @Override
   protected void tearDown() throws Exception {
     System.err.println("in tearDown");
-    if (server_1 != null && server_1.isRunning()) server_1.stop();
-    if (server_2 != null && server_2.isRunning()) server_2.stop();
+    if (server_1 != null && server_1.isRunning()) server_1.stopJmx();
+    if (server_2 != null && server_2.isRunning()) server_2.stopJmx();
   }
 
   private File getWorkDir(final String subDir) throws IOException {

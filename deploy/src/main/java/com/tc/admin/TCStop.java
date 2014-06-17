@@ -8,16 +8,23 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.license.util.Base64;
 
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.management.TerracottaManagement;
+import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.security.PwProvider;
+import com.tc.util.concurrent.ThreadUtil;
 import com.terracotta.management.keychain.KeyChain;
 
 import java.io.Console;
@@ -29,18 +36,15 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.management.MBeanServerConnection;
+import javax.management.remote.JMXConnector;
+
 public class TCStop {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
-
-  private final String          host;
-  private final int             port;
-  private final String          username;
-  private final String          password;
-  private final boolean         forceStop;
-  private final boolean         secured;
 
   public static final String    DEFAULT_HOST  = "localhost";
   public static final int       DEFAULT_PORT  = 9540;
@@ -50,6 +54,7 @@ public class TCStop {
         .createOptions(StandardConfigurationSetupManagerFactory.ConfigMode.L2);
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
     commandLineBuilder.setOptions(options);
+    commandLineBuilder.addOption("j", "jmx", false, "Use JMX", Boolean.class, false);
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
     commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
     commandLineBuilder.addOption("s", "secured", false, "secured", String.class, false);
@@ -83,6 +88,7 @@ public class TCStop {
     boolean passwordSpecified = commandLineBuilder.hasOption('w');
     boolean forceSpecified = commandLineBuilder.hasOption("force");
     boolean securedSpecified = commandLineBuilder.hasOption("s");
+    boolean useJmx = commandLineBuilder.hasOption("j");
     ArrayList tmpArgs = new ArrayList(Arrays.asList(args));
     tmpArgs.remove("-force");
     tmpArgs.remove("--force");
@@ -180,7 +186,7 @@ public class TCStop {
       if (host == null || host.equals("0.0.0.0")) host = serverConfig.host();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
-      port = computeManagementPort(serverConfig);
+      port = useJmx ? computeJMXPort(serverConfig) : computeManagementPort(serverConfig);
       consoleLogger.info("Host: " + host + ", port: " + port);
     } else {
       if (arguments.length == 0) {
@@ -198,7 +204,11 @@ public class TCStop {
     }
 
     try {
-      new TCStop(host, port, userName, password, forceSpecified, secured).stop();
+      if (useJmx) {
+        jmxStop(host, port, userName, password, forceSpecified, secured);
+      } else {
+        restStop(host, port, userName, password, forceSpecified, secured);
+      }
     } catch (SecurityException se) {
       consoleLogger.error(se.getMessage());
       commandLineBuilder.usageAndDie();
@@ -211,6 +221,14 @@ public class TCStop {
         consoleLogger.error("Unexpected error while stopping server: " + root.getMessage());
       }
       System.exit(1);
+    }
+  }
+
+  static int computeJMXPort(CommonL2Config l2Config) {
+    if (l2Config.jmxPort() != null) {
+      return l2Config.jmxPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.jmxPort().getIntValue();
+    } else {
+      return L2DSOConfigObject.computeJMXPortFromTSAPort(l2Config.tsaPort().getIntValue());
     }
   }
 
@@ -231,21 +249,7 @@ public class TCStop {
     return e;
   }
 
-  public TCStop(String host, int port) {
-    this(host, port, null, null, false, false);
-  }
-
-  public TCStop(String host, int port, String userName, String password, boolean forceStop, boolean secured) {
-    this.host = host;
-    this.port = port;
-    this.username = userName;
-    this.password = password;
-    this.forceStop = forceStop;
-    this.secured = secured;
-  }
-
-  public void stop() throws IOException {
-
+  public static void restStop(String host, int port, String username, String password, boolean forceStop, boolean secured) throws IOException {
     InputStream myInputStream = null;
     String prefix = secured ? "https" : "http";
     String urlAsString = prefix + "://" + host + ":" + port + "/tc-management-api/v2/local/shutdown";
@@ -296,5 +300,86 @@ public class TCStop {
       consoleLogger.debug("Response code is : " + responseCode);
       consoleLogger.debug("Response content is : " + responseContent);
     }
+  }
+
+  public static void jmxStop(String host, int port, String username, String password, boolean forceStop, boolean secured) throws IOException {
+    JMXConnector jmxc = null;
+    jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port, secured);
+    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+
+    // To be in sync with Test framework's server shutdown grace time
+    long SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
+    long startTime = System.currentTimeMillis();
+    long maxWaitTime = (startTime + (long) (0.75 * SHUTDOWN_WAIT_TIME));
+    if (mbsc != null) {
+      TCServerInfoMBean tcServerInfo = (TCServerInfoMBean) TerracottaManagement
+          .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
+      if (!forceStop && tcServerInfo.isActive() && tcServerInfo.isLegacyProductionModeEnabled()) {
+        ServerGroupInfo currentServerGroup = getCurrentServerGroup(tcServerInfo);
+        if (currentServerGroup != null) {
+          boolean isPassiveStandByAvailable = false;
+          for (L2Info l2Info : currentServerGroup.members()) {
+            try {
+              if (isPassiveStandBy(l2Info, username, password, secured)) {
+                isPassiveStandByAvailable = true;
+                break;
+              }
+            } catch (Exception e) {
+              continue;
+            }
+          }
+
+          if (!isPassiveStandByAvailable) {
+            consoleLogger.error("No passive server available in Standby mode. Use -force option to stop the server");
+            return;
+          }
+        }
+
+      }
+
+      // wait a bit for server to be ready for shutdown
+      while (!tcServerInfo.isShutdownable() && (System.currentTimeMillis() < maxWaitTime)) {
+        consoleLogger.warn("Server state: " + tcServerInfo.getState() + ". Waiting for server to be shutdownable... ");
+        ThreadUtil.reallySleep(5000);
+      }
+      try {
+        tcServerInfo.shutdown();
+      } finally {
+        jmxc.close();
+      }
+    } else {
+      consoleLogger.warn("Unable to get mbean connection to Server " + host + ":" + port);
+    }
+  }
+
+  private static ServerGroupInfo getCurrentServerGroup(TCServerInfoMBean tcServerInfo) throws UnknownHostException {
+    ServerGroupInfo[] serverGroupInfos = tcServerInfo.getServerGroupInfo();
+    for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+      L2Info[] members = serverGroupInfo.members();
+      for (L2Info l2Info : members) {
+        if (l2Info.name().equals(tcServerInfo.getL2Identifier())) { return serverGroupInfo; }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isPassiveStandBy(L2Info l2Info, String username, String password, boolean secured) throws Exception {
+    TCServerInfoMBean mbean = null;
+    boolean isPassiveStandByAvailable = false;
+    JMXConnector jmxConnector = null;
+
+    try {
+      jmxConnector = CommandLineBuilder.getJMXConnector(username, password, l2Info.host(), l2Info.jmxPort(), secured);
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      mbean = MBeanServerInvocationProxy
+          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
+      isPassiveStandByAvailable = mbean.isPassiveStandby();
+    } finally {
+      if (jmxConnector != null) {
+        jmxConnector.close();
+      }
+    }
+
+    return isPassiveStandByAvailable;
   }
 }

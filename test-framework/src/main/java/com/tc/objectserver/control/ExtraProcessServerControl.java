@@ -24,7 +24,6 @@ import com.tc.test.TestConfigUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
@@ -63,7 +62,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private StreamCopier         outCopier;
   private StreamCopier         errCopier;
   private final boolean        useIdentifier;
-  private String               stopperOutput;
 
   public Collection<String>    additionalArgs     = new ArrayList<String>();
 
@@ -407,18 +405,18 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   @Override
   public void attemptForceShutdown() throws Exception {
-    attemptForceShutdownInternal(false, null, null);
+    attemptForceShutdownInternal(false, null, null, false);
   }
 
   public void attemptForceShutdown(String username, String passwd) throws Exception {
-    attemptForceShutdownInternal(false, username, passwd);
+    attemptForceShutdownInternal(false, username, passwd, false);
   }
 
   public void attemptForceShutdownSecured(String username, String passwd) throws Exception {
-    attemptForceShutdownInternal(true, username, passwd);
+    attemptForceShutdownInternal(true, username, passwd, false);
   }
 
-  private void attemptForceShutdownInternal(boolean secured, String username, String passwd) throws Exception {
+  private void attemptForceShutdownInternal(boolean secured, String username, String passwd, final boolean jmx) throws Exception {
     System.out.println("Force Shutting down server (secured=" + secured
                        + (username != null ? ", username: " + username : "")
                        + (passwd != null ? ", passwd: " + passwd : "") + ")");
@@ -437,34 +435,25 @@ public class ExtraProcessServerControl extends ServerControlBase {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
+    if (jmx) {
+      mainClassArguments.add("-j");
+    }
     TestBaseUtil.setHeapSizeArgs(stopperJvmArgs, 32, 64, -1, true);
 
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, stopperJvmArgs);
     stopper.start();
+    stopper.mergeSTDOUT("TCStop");
+    stopper.mergeSTDERR("TCStop");
+  }
 
-    ByteArrayOutputStream stopperLog = null;
+  public void shutdownJmx() throws Exception {
     try {
-      stopperLog = new ByteArrayOutputStream();
-      StreamCopier stdoutCopier = new StreamCopier(stopper.STDOUT(), stopperLog);
-      StreamCopier stderrCopier = new StreamCopier(stopper.STDERR(), stopperLog);
-
-      stdoutCopier.start();
-      stderrCopier.start();
-
-      stdoutCopier.join(60 * 1000);
-      stderrCopier.join(60 * 1000);
-
-      if (stderrCopier.isAlive() || stdoutCopier.isAlive()) {
-        System.err.println("\n" + "TCStop output: " + stopperLog.toString() + "\n");
-      }
-    } finally {
-      if (stopperLog != null) {
-        stopperOutput = stopperLog.toString();
-        stopperLog.close();
-      }
-      stopper.STDIN().close();
+      attemptForceShutdownInternal(false, null, null, true);
+    } catch (Exception e) {
+      System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
     }
-
+    waitUntilShutdown();
+    System.out.println(this.name + " stopped.");
   }
 
   @Override
@@ -481,6 +470,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public void shutdown(String username, String passwd) throws Exception {
     try {
       attemptForceShutdown(username, passwd);
+    } catch (Exception e) {
+      System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
+    }
+    waitUntilShutdown();
+    System.out.println(this.name + " stopped.");
+  }
+
+  public void shutdownJmx(String username, String passwd) throws Exception {
+    try {
+      attemptForceShutdownInternal(false, username, passwd, true);
     } catch (Exception e) {
       System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
     }
@@ -526,7 +525,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     while (isRunning()) {
       Thread.sleep(1000);
       if (System.currentTimeMillis() > timeout) {
-        System.err.println("TCStoper output: " + stopperOutput);
         System.out.println("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME);
         dumpServerControl();
         throw new Exception("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME + " ms");

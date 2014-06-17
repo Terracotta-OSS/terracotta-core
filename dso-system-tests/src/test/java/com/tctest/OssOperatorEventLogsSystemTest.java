@@ -114,7 +114,7 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
   @Override
   protected void tearDown() throws Exception {
     System.err.println("in tearDown");
-    if (server_1 != null) server_1.stop();
+    if (server_1 != null) server_1.stopJmx();
   }
 
   private File getWorkDir(final String subDir) throws IOException {

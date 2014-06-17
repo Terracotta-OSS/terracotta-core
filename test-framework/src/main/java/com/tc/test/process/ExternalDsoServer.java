@@ -162,6 +162,14 @@ public class ExternalDsoServer {
     }
   }
 
+  public void stopJmx() throws Exception {
+    Assert.assertNotNull(serverProc);
+    Assert.assertNotNull(logOutputStream);
+    serverProc.shutdownJmx();
+    inited = false;
+    IOUtils.closeQuietly(logOutputStream);
+  }
+
   public void stop() throws Exception {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);
@@ -174,6 +182,14 @@ public class ExternalDsoServer {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);
     serverProc.shutdown(username, passwd);
+    inited = false;
+    IOUtils.closeQuietly(logOutputStream);
+  }
+
+  public void stopJmx(String username, String passwd) throws Exception {
+    Assert.assertNotNull(serverProc);
+    Assert.assertNotNull(logOutputStream);
+    serverProc.shutdownJmx(username, passwd);
     inited = false;
     IOUtils.closeQuietly(logOutputStream);
   }
