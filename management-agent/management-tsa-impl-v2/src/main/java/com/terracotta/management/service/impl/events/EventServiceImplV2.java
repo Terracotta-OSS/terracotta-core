@@ -3,6 +3,7 @@
  */
 package com.terracotta.management.service.impl.events;
 
+import org.glassfish.jersey.media.sse.InboundEvent;
 import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.events.EventEntityV2;
 import org.terracotta.management.resource.services.events.EventServiceV2;
@@ -12,6 +13,7 @@ import com.tc.management.RemoteManagement;
 import com.tc.management.TCManagementEvent;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
+import com.terracotta.management.service.impl.util.RemoteManagementSource;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -23,10 +25,27 @@ import java.util.Map;
  */
 public class EventServiceImplV2 implements EventServiceV2 {
 
-  private final Map<EventListener, ManagementEventListener> listenerMap = Collections.synchronizedMap(new IdentityHashMap<EventListener, ManagementEventListener>());
+  private final Map<EventListener, ListenerHolder> listenerMap = Collections.synchronizedMap(new IdentityHashMap<EventListener, ListenerHolder>());
+  private final RemoteManagementSource remoteManagementSource;
+
+  public EventServiceImplV2(RemoteManagementSource remoteManagementSource) {
+    this.remoteManagementSource = remoteManagementSource;
+  }
 
   @Override
-  public void registerEventListener(final EventListener listener) {
+  public void registerEventListener(final EventListener listener, boolean localOnly) {
+    RemoteManagementSource.RemoteTSAEventListener remoteTSAEventListener = null;
+    if (!localOnly) {
+      remoteTSAEventListener = new RemoteManagementSource.RemoteTSAEventListener() {
+        @Override
+        public void onEvent(InboundEvent inboundEvent) {
+          EventEntityV2 eventEntity = inboundEvent.readData(EventEntityV2.class);
+          listener.onEvent(eventEntity);
+        }
+      };
+      remoteManagementSource.addTsaEventListener(remoteTSAEventListener);
+    }
+
     RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
     ManagementEventListener managementEventListener = new ManagementEventListener() {
       @Override
@@ -58,13 +77,28 @@ public class EventServiceImplV2 implements EventServiceV2 {
         listener.onEvent(eventEntity);
       }
     };
-    listenerMap.put(listener, managementEventListener);
+    listenerMap.put(listener, new ListenerHolder(managementEventListener, remoteTSAEventListener));
     remoteManagementInstance.registerEventListener(managementEventListener);
   }
 
   @Override
   public void unregisterEventListener(EventListener listener) {
     RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
-    remoteManagementInstance.unregisterEventListener(listenerMap.remove(listener));
+    ListenerHolder listenerHolder = listenerMap.remove(listener);
+    remoteManagementInstance.unregisterEventListener(listenerHolder.managementEventListener);
+    if (listenerHolder.remoteTSAEventListener != null) {
+      remoteManagementSource.removeTsaEventListener(listenerHolder.remoteTSAEventListener);
+    }
   }
+
+  static class ListenerHolder {
+    ManagementEventListener managementEventListener;
+    RemoteManagementSource.RemoteTSAEventListener remoteTSAEventListener;
+
+    ListenerHolder(ManagementEventListener managementEventListener, RemoteManagementSource.RemoteTSAEventListener remoteTSAEventListener) {
+      this.managementEventListener = managementEventListener;
+      this.remoteTSAEventListener = remoteTSAEventListener;
+    }
+  }
+
 }

@@ -6,6 +6,9 @@ package com.terracotta.management.service.impl.util;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.filter.EncodingFilter;
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.sse.EventInput;
+import org.glassfish.jersey.media.sse.InboundEvent;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.slf4j.Logger;
@@ -27,16 +30,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.ws.rs.client.AsyncInvoker;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -50,33 +56,28 @@ public class RemoteManagementSource {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteManagementSource.class);
 
   private static final String CONNECTION_TIMEOUT_HEADER_NAME = "X-Terracotta-Connection-Timeout";
-
   private static final String READ_TIMEOUT_HEADER_NAME = "X-Terracotta-Read-Timeout";
 
   private final LocalManagementSource localManagementSource;
   private final TimeoutService timeoutService;
   private final SecurityContextService securityContextService;
   private final Client client;
+  private final List<RemoteTSAEventListener> listeners = new CopyOnWriteArrayList<RemoteTSAEventListener>();
 
   public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService) {
     this.localManagementSource = localManagementSource;
     this.timeoutService = timeoutService;
     this.securityContextService = securityContextService;
 
-    
-//    ClientConfig clientConfig = new DefaultClientConfig();
-//    clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-//    Client c = Client.create(clientConfig);
-//    c.addFilter(new GZIPContentEncodingFilter(false));
-    
-    
-    client = ClientBuilder.newBuilder()
-        .register(new JacksonFeature())
+    this.client = ClientBuilder.newBuilder()
+        .register(JacksonFeature.class)
+        .register(SseFeature.class)
+        .register(EncodingFilter.class)
+        .register(GZipEncoder.class)
+        .register(DeflateEncoder.class)
         .build();
 
-    
-    
-//    this.client = c;
+    initRemoteEventSource();
   }
 
   public void shutdown() {
@@ -111,9 +112,6 @@ public class RemoteManagementSource {
     WebTarget resource = client.target(uri);
     resource.property(ClientProperties.CONNECT_TIMEOUT, (int)timeoutService.getCallTimeout());
     resource.property(ClientProperties.READ_TIMEOUT, (int)timeoutService.getCallTimeout());
-    resource.register(EncodingFilter.class); // Allow to process encodings
-    resource.register(GZipEncoder.class);
-    resource.register(DeflateEncoder.class);
 
     Builder builder = resource.request();
 
@@ -126,10 +124,57 @@ public class RemoteManagementSource {
     }
 
     builder = builder.header(CONNECTION_TIMEOUT_HEADER_NAME, timeoutService.getCallTimeout());
-
     builder = builder.header(READ_TIMEOUT_HEADER_NAME, timeoutService.getCallTimeout());
 
     return builder;
+  }
+
+  public static interface RemoteTSAEventListener {
+    void onEvent(InboundEvent inboundEvent);
+  }
+
+  private void initRemoteEventSource() {
+    Map<String, String> remoteServerUrls = localManagementSource.getRemoteServerUrls();
+    for (String serverUrl : remoteServerUrls.values()) {
+      final AsyncInvoker async = resource(UriBuilder.fromUri(serverUrl)
+          .uri("/tc-management-api/v2/events")
+          .queryParam("localOnly", "true")
+          .build()).async();
+
+      async.get(new InvocationCallback<EventInput>() {
+        @Override
+        public void completed(EventInput eventInput) {
+          InboundEvent inboundEvent = eventInput.read();
+          if (inboundEvent != null) {
+            for (RemoteTSAEventListener listener : listeners) {
+              listener.onEvent(inboundEvent);
+            }
+          }
+
+          // re-arm immediately
+          async.get(this);
+        }
+
+        @Override
+        public void failed(Throwable throwable) {
+          // re-arm after a delay
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException ie) {
+            // ignore
+          }
+          async.get(this);
+        }
+      });
+    }
+  }
+
+  public void addTsaEventListener(final RemoteTSAEventListener listener) {
+    listeners.add(listener);
+  }
+
+  public void removeTsaEventListener(RemoteTSAEventListener listener) {
+    listeners.remove(listener);
   }
 
   public static String toCsv(Set<String> strings) {
