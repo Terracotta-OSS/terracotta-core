@@ -14,6 +14,7 @@ import net.sf.ehcache.management.service.EntityResourceFactoryV2;
 import org.terracotta.management.application.DefaultApplicationV2;
 import org.terracotta.management.resource.services.AgentServiceV2;
 import org.terracotta.management.resource.services.AgentsResourceServiceImplV2;
+import org.terracotta.management.resource.services.events.EventServiceV2;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 import org.terracotta.session.management.SessionsResourceServiceImplV2;
 import org.terracotta.session.management.SessionsServiceV2;
@@ -34,7 +35,6 @@ import com.terracotta.management.resource.services.OperatorEventsResourceService
 import com.terracotta.management.resource.services.ServerStatResourceServiceImplV2;
 import com.terracotta.management.resource.services.ShutdownResourceServiceImplV2;
 import com.terracotta.management.resource.services.TopologyResourceServiceImplV2;
-import com.terracotta.management.resource.services.events.AllEventsResourceServiceImplV2;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SecurityContextService;
@@ -51,7 +51,6 @@ import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.ShutdownServiceV2;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.TopologyServiceV2;
-import com.terracotta.management.service.events.EventServiceV2;
 import com.terracotta.management.service.impl.BackupServiceImplV2;
 import com.terracotta.management.service.impl.ClientManagementServiceV2;
 import com.terracotta.management.service.impl.ConfigurationServiceImplV2;
@@ -99,8 +98,6 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
 
     s.add(LocalShutdownResourceServiceImplV2.class);
     s.add(ServerStatResourceServiceImplV2.class);
-
-    s.add(AllEventsResourceServiceImplV2.class);
 
     s.add(CacheStatisticSamplesResourceServiceImplV2.class);
     s.add(CachesResourceServiceImplV2.class);

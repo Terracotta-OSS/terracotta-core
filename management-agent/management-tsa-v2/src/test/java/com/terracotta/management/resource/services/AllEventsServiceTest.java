@@ -3,7 +3,6 @@ package com.terracotta.management.resource.services;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Client;
@@ -17,10 +16,9 @@ import javax.ws.rs.client.WebTarget;
 public class AllEventsServiceTest {
 
   @Test
-  @Ignore
   public void allEventsTest() {
     Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
-    WebTarget target = client.target("http://localhost:29540/tc-management-api/v2/agents/events");
+    WebTarget target = client.target("http://localhost:9540/tc-management-api/v2/events");
 
     EventInput eventInput = target.request().get(EventInput.class);
     while (!eventInput.isClosed()) {

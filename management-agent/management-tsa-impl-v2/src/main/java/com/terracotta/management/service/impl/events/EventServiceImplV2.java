@@ -5,13 +5,13 @@ package com.terracotta.management.service.impl.events;
 
 import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.events.EventEntityV2;
+import org.terracotta.management.resource.services.events.EventServiceV2;
 
 import com.tc.management.ManagementEventListener;
 import com.tc.management.RemoteManagement;
 import com.tc.management.TCManagementEvent;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
-import com.terracotta.management.service.events.EventServiceV2;
 
 import java.io.Serializable;
 import java.util.Collections;
