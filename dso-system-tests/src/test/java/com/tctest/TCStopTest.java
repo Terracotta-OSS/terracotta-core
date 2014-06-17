@@ -52,8 +52,8 @@ public class TCStopTest extends BaseDSOTestCase {
   }
 
   public void testServerStop() throws Exception {
-    server_1.stop();
-    server_2.stop();
+    server_1.stopJmx();
+    server_2.stopJmx();
     Assert.assertFalse(server_1.isRunning());
     Assert.assertFalse(server_2.isRunning());
   }
@@ -132,8 +132,8 @@ public class TCStopTest extends BaseDSOTestCase {
   @Override
   protected void tearDown() throws Exception {
     System.err.println("in tearDown");
-    if (server_1 != null && server_1.isRunning()) server_1.stop();
-    if (server_2 != null && server_2.isRunning()) server_2.stop();
+    if (server_1 != null && server_1.isRunning()) server_1.stopJmx();
+    if (server_2 != null && server_2.isRunning()) server_2.stopJmx();
   }
 
   private File getWorkDir(final String subDir) throws IOException {
