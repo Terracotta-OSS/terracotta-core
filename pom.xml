@@ -191,6 +191,18 @@
     </profile>
 
     <profile>
+      <id>management-common</id>
+      <activation>
+        <file>
+          <exists>devwork/management-common</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/management-common</module>
+      </modules>
+    </profile>
+
+    <profile>
       <id>management-apps</id>
       <activation>
         <file>
