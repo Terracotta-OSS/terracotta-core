@@ -5,6 +5,7 @@
 package com.tc.admin;
 
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.license.util.Base64;
 
@@ -92,6 +93,10 @@ public class TCStop {
     ArrayList tmpArgs = new ArrayList(Arrays.asList(args));
     tmpArgs.remove("-force");
     tmpArgs.remove("--force");
+
+    if (forceSpecified) {
+      consoleLogger.info("A forced shutdown is requested");
+    }
 
     String userName = null;
     final String password;
@@ -210,7 +215,7 @@ public class TCStop {
         restStop(host, port, userName, password, forceSpecified, secured);
       }
     } catch (SecurityException se) {
-      consoleLogger.error(se.getMessage());
+      consoleLogger.error(se.getMessage(), se);
       commandLineBuilder.usageAndDie();
     } catch (Exception e) {
       Throwable root = getRootCause(e);
@@ -218,7 +223,7 @@ public class TCStop {
         consoleLogger.error("Unable to connect to host '" + host + "', port " + port
                             + ". Are you sure there is a Terracotta server instance running there?");
       } else {
-        consoleLogger.error("Unexpected error while stopping server: " + root.getMessage());
+        consoleLogger.error("Unexpected error while stopping server", root);
       }
       System.exit(1);
     }
@@ -278,27 +283,19 @@ public class TCStop {
       // this is were we're adding post data to the request
       wr.write(sb.toString());
       wr.flush();
+
       myInputStream = conn.getInputStream();
       responseCode = conn.getResponseCode();
-    } catch (IOException e) {
-      consoleLogger.error("Unexpected error while stopping server: " + e.getMessage());
-      InputStream errorStream = conn.getErrorStream();
-      if (errorStream != null) {
-        java.util.Scanner s = new java.util.Scanner(errorStream).useDelimiter("\\A");
-        String errorResponse = s.hasNext() ? s.next() : "";
-        consoleLogger.debug("The server returned the following response : " + errorResponse);
-      }
+
+      consoleLogger.debug("Stopping with REST call " + urlAsString + ", response code is " + responseCode);
+      consoleLogger.debug("REST response: " + IOUtils.toString(myInputStream));
     } finally {
-      if (wr != null) {
-        wr.close();
+      if (conn.getErrorStream() != null) {
+        consoleLogger.error("REST error response: " + IOUtils.toString(conn.getErrorStream()));
       }
+      IOUtils.closeQuietly(wr);
+      IOUtils.closeQuietly(myInputStream);
       conn.disconnect();
-    }
-    if (myInputStream != null) {
-      java.util.Scanner s = new java.util.Scanner(myInputStream).useDelimiter("\\A");
-      String responseContent = s.hasNext() ? s.next() : "";
-      consoleLogger.debug("Response code is : " + responseCode);
-      consoleLogger.debug("Response content is : " + responseContent);
     }
   }
 
