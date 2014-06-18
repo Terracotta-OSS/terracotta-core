@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.license.util.Base64;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.CommonL2Config;
@@ -40,6 +41,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -106,7 +108,7 @@ public class TCStop {
         password = commandLineBuilder.getOptionValue('w');
       } else {
         final Console console = System.console();
-        if(console != null) {
+        if (console != null) {
           password = new String(console.readPassword("Enter password: ")); // Hu?!
         } else {
           password = CommandLineBuilder.readPassword();
@@ -122,7 +124,7 @@ public class TCStop {
 
         tmpArgs.add("-f");
         final String absolutePath = configFile.getAbsolutePath();
-        if(securedSpecified && absolutePath.indexOf('@') == -1 && userNameSpecified) {
+        if (securedSpecified && absolutePath.indexOf('@') == -1 && userNameSpecified) {
           tmpArgs.add(userName + "@" + absolutePath);
         } else {
           tmpArgs.add(absolutePath);
@@ -135,22 +137,27 @@ public class TCStop {
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                               args,
                                                                                               StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                                              changeHandler, new PwProvider() {
-        @Override
-        public char[] getPasswordFor(final URI uri) {
-          return getPassword();
-        }
+                                                                                              changeHandler,
+                                                                                              new PwProvider() {
+                                                                                                @Override
+                                                                                                public char[] getPasswordFor(final URI uri) {
+                                                                                                  return getPassword();
+                                                                                                }
 
-        @Override
-        @SuppressWarnings("hiding")
-        public char[] getPasswordForTC(final String user, final String host, final int port) {
-          return getPassword();
-        }
+                                                                                                @Override
+                                                                                                @SuppressWarnings("hiding")
+                                                                                                public char[] getPasswordForTC(final String user,
+                                                                                                                               final String host,
+                                                                                                                               final int port) {
+                                                                                                  return getPassword();
+                                                                                                }
 
-        private char[] getPassword() {
-          return password != null ? password.toCharArray() : null;
-        }
-      });
+                                                                                                private char[] getPassword() {
+                                                                                                  return password != null ? password
+                                                                                                      .toCharArray()
+                                                                                                      : null;
+                                                                                                }
+                                                                                              });
 
       String name = null;
       if (nameSpecified) {
@@ -160,7 +167,7 @@ public class TCStop {
       L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name);
       String[] servers = manager.allCurrentlyKnownServers();
 
-      if(manager.isSecure() || securedSpecified) {
+      if (manager.isSecure() || securedSpecified) {
         // Create a security manager that will set the default SSL context
         final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
         securityManagerClass.getConstructor(KeyChain.class, boolean.class).newInstance(null, true);
@@ -254,7 +261,8 @@ public class TCStop {
     return e;
   }
 
-  public static void restStop(String host, int port, String username, String password, boolean forceStop, boolean secured) throws IOException {
+  public static void restStop(String host, int port, String username, String password, boolean forceStop,
+                              boolean secured) throws IOException {
     InputStream myInputStream = null;
     String prefix = secured ? "https" : "http";
     String urlAsString = prefix + "://" + host + ":" + port + "/tc-management-api/v2/local/shutdown";
@@ -284,22 +292,36 @@ public class TCStop {
       wr.write(sb.toString());
       wr.flush();
 
-      myInputStream = conn.getInputStream();
       responseCode = conn.getResponseCode();
-
-      consoleLogger.debug("Stopping with REST call " + urlAsString + ", response code is " + responseCode);
-      consoleLogger.debug("REST response: " + IOUtils.toString(myInputStream));
-    } finally {
-      if (conn.getErrorStream() != null) {
-        consoleLogger.error("REST error response: " + IOUtils.toString(conn.getErrorStream()));
+      if (responseCode >= 200 && responseCode < 300) {
+        myInputStream = conn.getInputStream();
+        consoleLogger.debug("Stopping with REST call " + urlAsString + ", response code is " + responseCode);
+        consoleLogger.debug("REST response: " + IOUtils.toString(myInputStream));
+      } else {
+        if (conn.getErrorStream() != null) {
+          String content = IOUtils.toString(conn.getErrorStream());
+          String error = content;
+          consoleLogger.debug("Error response: " + error);
+          // attempt to parse error as Json object first
+          try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> restResponse = mapper.readValue(content, Map.class);
+            error = (String) restResponse.get("error");
+          } catch (Exception mapException) {
+            // not a json response, ignore
+          }
+          throw new IOException(error);
+        }
       }
+    } finally {
       IOUtils.closeQuietly(wr);
       IOUtils.closeQuietly(myInputStream);
       conn.disconnect();
     }
   }
 
-  public static void jmxStop(String host, int port, String username, String password, boolean forceStop, boolean secured) throws IOException {
+  public static void jmxStop(String host, int port, String username, String password, boolean forceStop, boolean secured)
+      throws IOException {
     JMXConnector jmxc = null;
     jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port, secured);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
@@ -360,7 +382,8 @@ public class TCStop {
     return null;
   }
 
-  private static boolean isPassiveStandBy(L2Info l2Info, String username, String password, boolean secured) throws Exception {
+  private static boolean isPassiveStandBy(L2Info l2Info, String username, String password, boolean secured)
+      throws Exception {
     TCServerInfoMBean mbean = null;
     boolean isPassiveStandByAvailable = false;
     JMXConnector jmxConnector = null;
