@@ -46,10 +46,10 @@ public class ServerManagementHandlerTest {
       }
 
       @Override
-      public void onEvent(TCManagementEvent event, Map<String, Object> context) {
+      public void onEvent(TCManagementEvent e, Map<String, Object> context) {
         listenerCalled.set(true);
-        assertThat(event.getType(), equalTo(tcManagementEvent.getType()));
-        assertThat(event.getPayload(), equalTo(tcManagementEvent.getPayload()));
+        assertThat(e.getType(), equalTo(tcManagementEvent.getType()));
+        assertThat(e.getPayload(), equalTo(tcManagementEvent.getPayload()));
         assertThat((String)context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME), equalTo("123"));
         assertThat((String)context.get(ManagementEventListener.CONTEXT_SOURCE_JMX_ID), endsWith("_456"));
       }
