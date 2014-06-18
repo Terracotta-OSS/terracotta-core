@@ -34,14 +34,14 @@ public class HaConfigTest extends TCTestCase {
                                                                                                             .getAbsolutePath() },
                                                                                                     StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                                                     new FatalIllegalConfigurationChangeHandler(), null);
-      HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
+      HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null, true));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // test for picking up right active server group for a give server
       factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
           "server1" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                 new FatalIllegalConfigurationChangeHandler(), null);
-      haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
+      haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null, true));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // expecting an error when given non existing server for haConfig
@@ -49,7 +49,7 @@ public class HaConfigTest extends TCTestCase {
           "server2" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                 new FatalIllegalConfigurationChangeHandler(), null);
       try {
-        new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
+        new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null, true));
         throw new AssertionError("Config setup manager is suppose to blast for non-existing server name");
       } catch (ConfigurationSetupException cse) {
         // expected exception

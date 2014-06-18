@@ -187,7 +187,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     // FIXME 2005-11-30 andrew -- This stinks like mad...we should be able to do something better than perverting the
     // existing config-setup managers here.
 
-    sampleL2Manager = this.createL2TVSConfigurationSetupManager(null);
+    sampleL2Manager = this.createL2TVSConfigurationSetupManager(null, true);
     if (this.sampleL2Manager.tcPropertiesRepository().bean() == null) {
       try {
         this.sampleL2Manager.tcPropertiesRepository()
@@ -645,12 +645,12 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   }
 
   @Override
-  public L2ConfigurationSetupManagerImpl createL2TVSConfigurationSetupManager(String l2Identifier)
+  public L2ConfigurationSetupManagerImpl createL2TVSConfigurationSetupManager(String l2Identifier, boolean setupLogging)
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
     return new L2ConfigurationSetupManagerImpl(this.configurationCreator, effectiveL2Identifier,
                                                this.defaultValueProvider, this.xmlObjectComparator,
-                                               this.illegalChangeHandler);
+                                               this.illegalChangeHandler, setupLogging);
   }
 
   // used for just parsing and verifying tc-config.xml
@@ -666,6 +666,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
                                                                                                           .getParentFile()),
                                                                                 this.beanFactory);
     return new L2ConfigurationSetupManagerImpl(confiCreator, effectiveL2Identifier, this.defaultValueProvider,
-                                               this.xmlObjectComparator, this.illegalChangeHandler);
+                                               this.xmlObjectComparator, this.illegalChangeHandler, true);
   }
 }

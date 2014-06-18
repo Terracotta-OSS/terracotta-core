@@ -180,7 +180,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
                                                      int managementPort)
       throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory factory = super.configFactory();
-    L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+    L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null, true);
     manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
     manager.dsoL2Config().tsaPort().setBind(bindAddress);
 

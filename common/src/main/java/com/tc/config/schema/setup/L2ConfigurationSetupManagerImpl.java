@@ -91,16 +91,18 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
                                          XmlObjectComparator xmlObjectComparator,
-                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler)
+                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler,
+                                         boolean setupLogging)
       throws ConfigurationSetupException {
     this(null, configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator,
-         illegalConfigChangeHandler);
+         illegalConfigChangeHandler, setupLogging);
   }
 
   public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator,
                                          String thisL2Identifier, DefaultValueProvider defaultValueProvider,
                                          XmlObjectComparator xmlObjectComparator,
-                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler)
+                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler,
+                                         boolean setupLogging)
       throws ConfigurationSetupException {
     super(args, configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
@@ -164,7 +166,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
 
     verifyL2Identifier(servers, this.thisL2Identifier);
-    this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
+    this.myConfigData = setupConfigDataForL2(this.thisL2Identifier, setupLogging);
 
     // do this after servers and groups have been processed
     validateGroups();
@@ -509,10 +511,14 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return out;
   }
 
-  private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
+  private L2ConfigData setupConfigDataForL2(final String l2Identifier, boolean setupLogging)
+      throws ConfigurationSetupException {
     L2ConfigData serverConfigData = configDataFor(l2Identifier);
-    LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
-    listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
+
+    if (setupLogging) {
+      LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
+      listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
+    }
     return serverConfigData;
   }
 

@@ -119,7 +119,7 @@ public class GroupInfoServletTest extends TCTestCase {
     configSetupMgr = new L2ConfigurationSetupManagerImpl(configurationCreator, "S119D90",
                                                          new SchemaDefaultValueProvider(),
                                                          new StandardXmlObjectComparator(),
-                                                         new FatalIllegalConfigurationChangeHandler());
+                                                         new FatalIllegalConfigurationChangeHandler(), true);
 
     return configSetupMgr;
   }

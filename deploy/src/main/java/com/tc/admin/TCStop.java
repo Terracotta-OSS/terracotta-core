@@ -164,7 +164,7 @@ public class TCStop {
         name = commandLineBuilder.getOptionValue('n');
       }
 
-      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name);
+      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name, false);
       String[] servers = manager.allCurrentlyKnownServers();
 
       if (manager.isSecure() || securedSpecified) {

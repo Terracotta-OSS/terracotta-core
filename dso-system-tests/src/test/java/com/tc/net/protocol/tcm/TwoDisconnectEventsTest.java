@@ -210,7 +210,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = configFactory();
-      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null, true);
       manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
       manager.dsoL2Config().tsaPort().setBind("127.0.0.1");
 
