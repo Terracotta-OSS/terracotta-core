@@ -30,35 +30,29 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 public class ServerStat {
-  private static final String   UNKNOWN          = "unknown";
-  private static final String   NEWLINE          = System.getProperty("line.separator");
+  private static final String UNKNOWN                 = "unknown";
+  private static final String NEWLINE                 = System.getProperty("line.separator");
+
   static final int            DEFAULT_MANAGEMENT_PORT = 9540;
 
-  private final String          host;
-  private final String          hostName;
-  private final int             port;
-  private final String        username;
-  private final String        password;
-  private final boolean       secured;
+  private final String        host;
+  private final String        hostName;
 
-  private static boolean      connected               = false;
-  static String                 groupName        = "UNKNOWN";
-  static String                 errorMessage     = "";
-  static String                 state;
-  static String                 role;
-  static String                 health;
+  private int                 port;
+  private boolean             connected               = false;
+  private String              groupName               = "UNKNOWN";
+  private String              errorMessage            = "";
+  private String              state;
+  private String              role;
+  private String              health;
 
-  public ServerStat(String username, String password, boolean secured, String host, String hostAlias, int port) {
-    this.username = username;
-    this.password = password;
-    this.secured = secured;
+  public ServerStat(String host, String hostAlias) {
     this.host = host;
     this.hostName = hostAlias;
-    this.port = port;
   }
 
   public String getState() {
-   return state;
+    return state;
   }
 
   public String getRole() {
@@ -77,7 +71,6 @@ public class ServerStat {
     return groupName;
   }
 
-
   @Override
   public String toString() {
     String serverId = hostName != null ? hostName : host;
@@ -85,7 +78,7 @@ public class ServerStat {
     sb.append(serverId + ".health: " + getHealth()).append(NEWLINE);
     sb.append(serverId + ".role: " + getRole()).append(NEWLINE);
     sb.append(serverId + ".state: " + getState()).append(NEWLINE);
-    sb.append(serverId + ".jmxport: " + port).append(NEWLINE);
+    sb.append(serverId + ".port: " + port).append(NEWLINE);
     sb.append(serverId + ".group name: " + getGroupName()).append(NEWLINE);
     if (!connected) {
       sb.append(serverId + ".error: " + errorMessage).append(NEWLINE);
@@ -93,15 +86,14 @@ public class ServerStat {
     return sb.toString();
   }
 
-
   public static void main(String[] args) throws Exception {
-    String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9520,host2:9520" + NEWLINE
-        + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
+    String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9540,host2:9540" + NEWLINE
+                   + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
 
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
     commandLineBuilder.addOption("s", true, "Terracotta server instance list (comma separated)", String.class, false,
-        "list");
+                                 "list");
     commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
     commandLineBuilder.addOption(null, "secured", false, "secured", String.class, false);
@@ -151,7 +143,8 @@ public class ServerStat {
     securityManagerClass.getConstructor(boolean.class).newInstance(true);
   }
 
-  private static void handleConfigFile(String username, String password, boolean secured, String configFilePath) throws Exception {
+  private static void handleConfigFile(String username, String password, boolean secured, String configFilePath)
+      throws Exception {
     TcConfigDocument tcConfigDocument = null;
     try {
 
@@ -169,39 +162,29 @@ public class ServerStat {
     Server[] servers = L2DSOConfigObject.getServers(tcConfigServers);
     for (Server server : servers) {
       String host = server.getHost();
-      String hostName = server.getName();
-      int jmxPort = computeJMXPort(server);
       if (!secured && tcConfigServers.isSetSecure() && tcConfigServers.getSecure()) {
         initSecurityManager();
         secured = true;
       }
-      ServerStat stat = new ServerStat(username, password, secured, host, hostName, jmxPort);
-      System.out.println(stat.toString());
-    }
-  }
 
-  static int computeJMXPort(Server server) {
-    if (server.isSetJmxPort()) {
-      return server.getJmxPort().getIntValue() == 0 ? DEFAULT_MANAGEMENT_PORT : server.getJmxPort().getIntValue();
-    } else {
-      return L2DSOConfigObject.computeJMXPortFromTSAPort(server.getTsaPort().getIntValue());
+      printStat(username, password, secured, host + ":" + server.getManagementPort().getIntValue(), server.getName());
     }
   }
 
   private static void handleList(String username, String password, boolean secured, String hostList) {
     if (hostList == null) {
-      printStat(username, password, secured, "localhost:" + DEFAULT_MANAGEMENT_PORT);
+      printStat(username, password, secured, "localhost:" + DEFAULT_MANAGEMENT_PORT, null);
     } else {
       String[] pairs = hostList.split(",");
       for (String info : pairs) {
-        printStat(username, password, secured, info);
+        printStat(username, password, secured, info, null);
         System.out.println();
       }
     }
   }
 
   // info = host | host:port
-  private static void printStat(String username, String password, boolean secured, String info) {
+  private static void printStat(String username, String password, boolean secured, String info, String hostAlias) {
     String host = info;
     int port = DEFAULT_MANAGEMENT_PORT;
     if (info.indexOf(':') > 0) {
@@ -213,11 +196,12 @@ public class ServerStat {
         throw new RuntimeException("Failed to parse jmxport: " + info);
       }
     }
-    
+
     InputStream myInputStream = null;
     String prefix = secured ? "https" : "http";
     String urlAsString = prefix + "://" + host + ":" + port + "/tc-management-api/v2/local/stat";
 
+    ServerStat stat = new ServerStat(host, hostAlias);
     HttpURLConnection conn = null;
     try {
       URL url = new URL(urlAsString);
@@ -236,48 +220,49 @@ public class ServerStat {
 
       myInputStream = conn.getInputStream();
       if (myInputStream != null) {
-        connected = true;
         String responseContent = toString(myInputStream);
         // { "health" : "OK", "role" : "ACTIVE", "state": "ACTIVE-COORDINATOR", "managementPort" : "9540",
         // "serverGroupName" : "defaultGroup"}
-        decodeJsonAndSetFields(responseContent);
+        stat.decodeJsonAndSetFields(responseContent);
         // consoleLogger.debug("Response code is : " + responseCode);
         // consoleLogger.debug("Response content is : " + responseContent);
       }
-      
+
     } catch (IOException e) {
-      errorMessage = "Unexpected error while getting stat: " + e.getMessage();
+      stat.errorMessage = "Unexpected error while getting stat: " + e.getMessage();
     } finally {
       conn.disconnect();
     }
-    ServerStat stat = new ServerStat(username, password, secured, host, null, port);
+
     System.out.println(stat.toString());
   }
 
-  static void decodeJsonAndSetFields(String responseContent) {
+  void decodeJsonAndSetFields(String responseContent) {
+    connected = true;
+
     String strippedResponseContent = responseContent.replace("{", "");
     strippedResponseContent = strippedResponseContent.replace("}", "");
     String[] splittedFields = strippedResponseContent.split(",");
     for (String jsonKeyValue : splittedFields) {
       String[] keyValue = jsonKeyValue.split(":");
       String key = keyValue[0].trim();
-      key = key.replace("\"","");
+      key = key.replace("\"", "");
       String value = keyValue[1].trim();
-      value = value.replace("\"","");
-      
-      if("health" .equals(key)) {
-        health =  value;
+      value = value.replace("\"", "");
+
+      if ("health".equals(key)) {
+        health = value;
       }
-      if("role" .equals(key)) {
-        role =  value;
+      if ("role".equals(key)) {
+        role = value;
       }
-      if("state" .equals(key)) {
-        state =  value;
+      if ("state".equals(key)) {
+        state = value;
       }
-      if("managementPort" .equals(key)) {
-        // port = Integer.valueOf(value);
+      if ("managementPort".equals(key)) {
+        port = Integer.valueOf(value);
       }
-      if("serverGroupName" .equals(key)) {
+      if ("serverGroupName".equals(key)) {
         groupName = value;
       }
     }
