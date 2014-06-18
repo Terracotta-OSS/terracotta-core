@@ -113,14 +113,6 @@ public interface TransparencyClassSpec {
   public void disableWaitNotifyCodeSpec(String name);
 
   /**
-   * Add method code specification
-   * 
-   * @param name Method name
-   * @param codeSpec Transparency spec
-   */
-  public void addMethodCodeSpec(String name, TransparencyCodeSpec codeSpec);
-
-  /**
    * Set honor volatile flag
    * 
    * @param b New flag value
@@ -171,16 +163,6 @@ public interface TransparencyClassSpec {
    * @return True if is honor transient flag is set
    */
   public boolean isHonorTransientSet();
-
-  /**
-   * Find code spec for method
-   * 
-   * @param methodName Method name
-   * @param description Method signature
-   * @param isAutolock True if autolocked
-   * @return Transparency spec
-   */
-  public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock);
 
   /**
    * @return True of injection should occur on class load
@@ -245,11 +227,6 @@ public interface TransparencyClassSpec {
    * @return Class spec for super class
    */
   public TransparencyClassSpec getClassSpec(String superName);
-
-  /**
-   * The supplied spec will be returned if there exists no specific code spec for particular methods
-   */
-  public void setDefaultCodeSpec(TransparencyCodeSpec codeSpec);
 
   /**
    * Set the change applicator spec for this class spec

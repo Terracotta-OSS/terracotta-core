@@ -22,7 +22,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private final DSOClientConfigHelper             configuration;
   private final String                            className;
   private final Map<String, Boolean>              flags                     = new HashMap<String, Boolean>();
-  private final Map<String, TransparencyCodeSpec> codeSpecs                 = new HashMap<String, TransparencyCodeSpec>();
   private final Set<String>                       nonInstrumentedMethods    = Collections
                                                                                 .synchronizedSet(new HashSet<String>());
   private String                                  changeApplicatorClassName;
@@ -37,7 +36,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private String                                  postCreateMethod          = null;
   private String                                  preCreateMethod           = null;
   private String                                  logicalExtendingClassName = null;
-  private TransparencyCodeSpec                    defaultCodeSpec           = null;
 
   public TransparencyClassSpecImpl(final String className, final DSOClientConfigHelper configuration,
                                    final String changeApplicatorClassName) {
@@ -144,22 +142,12 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
   @Override
   public void addArrayCopyMethodCodeSpec(final String name) {
-    TransparencyCodeSpec codeSpec = new TransparencyCodeSpecImpl();
-    codeSpec.setArraycopyInstrumentationReq(true);
-    codeSpec.setArrayOperatorInstrumentationReq(true);
-    codeSpecs.put(name, codeSpec);
+    //
   }
 
   @Override
   public void disableWaitNotifyCodeSpec(final String name) {
-    TransparencyCodeSpec codeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
-    codeSpec.setWaitNotifyInstrumentationReq(false);
-    codeSpecs.put(name, codeSpec);
-  }
-
-  @Override
-  public void addMethodCodeSpec(final String name, final TransparencyCodeSpec codeSpec) {
-    codeSpecs.put(name, codeSpec);
+    //
   }
 
   @Override
@@ -214,14 +202,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   @Override
-  public TransparencyCodeSpec getCodeSpec(final String methodName, final String description, final boolean isAutolock) {
-    TransparencyCodeSpec spec = codeSpecs.get(methodName + description);
-    if (spec != null) { return spec; }
-    if (defaultCodeSpec != null) { return defaultCodeSpec; }
-    return TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical, isAutolock);
-  }
-
-  @Override
   public boolean isUseNonDefaultConstructor() {
     return this.useNonDefaultConstructor;
   }
@@ -254,11 +234,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   @Override
   public String getChangeApplicatorClassName() {
     return this.changeApplicatorClassName;
-  }
-
-  @Override
-  public void setDefaultCodeSpec(final TransparencyCodeSpec codeSpec) {
-    this.defaultCodeSpec = codeSpec;
   }
 
   @Override

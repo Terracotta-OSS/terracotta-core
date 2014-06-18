@@ -3,24 +3,25 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.msg.LockRequestMessageConsts;
 
 /**
  * Encapsulates a time interval for Object.wait(...) and tryLock.
  */
 public final class TimerSpec {
 
+  private final static int UNITIALIZED_TIME_INTERVAL = -1;
+
   private final Signature signature;
 
   private long            millis;
-  private int             nanos;
-  private long            mark = LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL;
+  private final int             nanos;
+  private long             mark                      = UNITIALIZED_TIME_INTERVAL;
 
   /**
    * Untimed interval
    */
   public TimerSpec() {
-    this(NO_ARGS, LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL, LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL);
+    this(NO_ARGS, UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL);
   }
 
   /**
@@ -28,7 +29,7 @@ public final class TimerSpec {
    * @param millis Milliseconds to wait
    */
   public TimerSpec(long millis) {
-    this(LONG, millis, LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL);
+    this(LONG, millis, UNITIALIZED_TIME_INTERVAL);
   }
 
   /**
@@ -41,7 +42,7 @@ public final class TimerSpec {
   }
 
   /**
-   * Time interval specified by a signature 
+   * Time interval specified by a signature
    * @param signature Method signature
    * @param millis Milliseconds
    * @param nanos Nanoseconds
@@ -104,10 +105,10 @@ public final class TimerSpec {
   }
 
   /**
-   * Adjust by removing time to wait by now-last mark. 
+   * Adjust by removing time to wait by now-last mark.
    */
   public void adjust() {
-    if (mark <= LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL || signature == NO_ARGS) return;
+    if (mark <= UNITIALIZED_TIME_INTERVAL || signature == NO_ARGS) return;
     long now = System.currentTimeMillis();
     millis -= (now - mark);
 
