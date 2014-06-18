@@ -300,8 +300,10 @@ public class TCStop {
       } else {
         if (conn.getErrorStream() != null) {
           String content = IOUtils.toString(conn.getErrorStream());
-          String error = content;
-          consoleLogger.debug("Error response: " + error);
+          consoleLogger.debug("Error response: " + content);
+
+          String error = content; // default case is the raw error response
+
           // attempt to parse error as Json object first
           try {
             ObjectMapper mapper = new ObjectMapper();
@@ -309,6 +311,12 @@ public class TCStop {
             error = (String) restResponse.get("error");
           } catch (Exception mapException) {
             // not a json response, ignore
+            if (responseCode == 404) {
+              error = urlAsString
+                      + " was not found (Response code 404). Was the server configured with management-tsa-war?";
+            } else {
+              error = conn.getResponseMessage() + ". Response code: " + responseCode;
+            }
           }
           throw new IOException(error);
         }
