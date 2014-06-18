@@ -405,7 +405,15 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   @Override
   public void attemptForceShutdown() throws Exception {
-    attemptForceShutdownInternal(false, null, null, false);
+    try {
+      // try jmx method first
+      attemptForceShutdownInternal(false, null, null, true);
+    } catch (Exception e) {
+      System.out.println("Attempted to shut down via JMX has failed: " + e.getMessage()
+                         + ". Retrying with REST method.");
+      // try REST method
+      attemptForceShutdownInternal(false, null, null, false);
+    }
   }
 
   public void attemptForceShutdown(String username, String passwd) throws Exception {
