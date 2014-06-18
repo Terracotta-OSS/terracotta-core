@@ -13,6 +13,8 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.TSAManagementEventPayload;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
@@ -415,6 +417,9 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void fireStateChangedOperatorEvent() {
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.L2.STATE_CHANGE");
+    tsaManagementEventPayload.getAttributes().put("State", state.getName());
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createClusterNodeStateChangedEvent(state
         .getName()));
   }

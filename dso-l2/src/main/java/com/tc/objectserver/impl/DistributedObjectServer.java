@@ -7,9 +7,6 @@ package com.tc.objectserver.impl;
 import org.apache.commons.io.FileUtils;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -58,6 +55,7 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
 import com.tc.management.RemoteManagement;
+import com.tc.management.RemoteManagementImpl;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
@@ -294,6 +292,9 @@ import java.util.Timer;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -1045,7 +1046,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     stageManager.startAll(this.context, toInit);
 
-    final RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
+    final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
+    TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
     TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
       @Override
       public void logOperatorEvent(TerracottaOperatorEvent event) {
@@ -1062,7 +1064,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         remoteManagement.sendEvent(payload.toManagementEvent());
       }
     });
-    TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,

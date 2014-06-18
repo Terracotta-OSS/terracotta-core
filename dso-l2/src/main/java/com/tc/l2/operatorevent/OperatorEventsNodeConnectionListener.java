@@ -4,6 +4,8 @@
 package com.tc.l2.operatorevent;
 
 import com.tc.config.NodesStore;
+import com.tc.management.TSAManagementEventPayload;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
@@ -26,6 +28,9 @@ public class OperatorEventsNodeConnectionListener implements GroupEventsListener
     Assert.assertTrue(nodeID instanceof ServerID);
     String serverName = nodesStore.getServerNameFromNodeName(((ServerID) nodeID).getName());
     Assert.assertNotNull(serverName);
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.NODE_JOINED");
+    tsaManagementEventPayload.getAttributes().put("Server.Name", serverName);
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(serverName));
   }
 
@@ -34,6 +39,9 @@ public class OperatorEventsNodeConnectionListener implements GroupEventsListener
     Assert.assertTrue(nodeID instanceof ServerID);
     String serverName = nodesStore.getServerNameFromNodeName(((ServerID) nodeID).getName());
     Assert.assertNotNull(serverName);
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.NODE_LEFT");
+    tsaManagementEventPayload.getAttributes().put("Server.Name", serverName);
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(serverName));
   }
 

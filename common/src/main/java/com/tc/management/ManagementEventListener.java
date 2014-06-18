@@ -7,7 +7,9 @@ package com.tc.management;
 import java.util.Map;
 
 /**
+ * Management events listener interface.
  *
+ * @author Ludovic Orban
  */
 public interface ManagementEventListener {
 
@@ -15,12 +17,14 @@ public interface ManagementEventListener {
   static String CONTEXT_SOURCE_JMX_ID = "CONTEXT_SOURCE_JMX_ID";
 
   /**
+   * Get the classloader from which to load classes of deserialized objects.
+   *
    * @return the class loader that is going to be used to deserialize the event.
    */
   ClassLoader getClassLoader();
 
   /**
-   * Called when an event was sent by a L1.
+   * Called when an event is sent by a L1.
    *
    * @param event the event object.
    * @param context the event context.

@@ -4,6 +4,8 @@
 package com.tc.l2.operatorevent;
 
 import com.tc.config.NodesStore;
+import com.tc.management.TSAManagementEventPayload;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.ServerID;
 import com.tc.net.groups.PassiveServerListener;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
@@ -32,6 +34,10 @@ public class OperatorEventsPassiveServerConnectionListener implements PassiveSer
     if (serverName == null) {
       serverName = nodeID.getName();
     }
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.PASSIVE_LEFT");
+    tsaManagementEventPayload.getAttributes().put("Server.Name", serverName);
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
+
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createPassiveL2DisconnectedEvent(serverName));
   }
 

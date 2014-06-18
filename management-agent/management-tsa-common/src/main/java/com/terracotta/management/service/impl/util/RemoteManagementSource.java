@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +62,7 @@ public class RemoteManagementSource {
   private final TimeoutService timeoutService;
   private final SecurityContextService securityContextService;
   private final Client client;
-  private final List<RemoteTSAEventListener> listeners = new CopyOnWriteArrayList<RemoteTSAEventListener>();
+  private final Map<RemoteTSAEventListener, Future<EventInput>> futures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Future<EventInput>>());
 
   public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService) {
     this.localManagementSource = localManagementSource;
@@ -76,8 +76,6 @@ public class RemoteManagementSource {
         .register(GZipEncoder.class)
         .register(DeflateEncoder.class)
         .build();
-
-    initRemoteEventSource();
   }
 
   public void shutdown() {
@@ -108,6 +106,19 @@ public class RemoteManagementSource {
         .post(null, new CollectionOfRepresentableGenericType<T>(type));
   }
 
+  private Invocation.Builder resourceNoTimeout(URI uri) {
+    WebTarget resource = client.target(uri);
+    Builder builder = resource.request();
+    if (TSAConfig.isSslEnabled()) {
+      SecurityContextService.SecurityContext securityContext = securityContextService.getSecurityContext();
+      builder = builder.header(IACredentials.REQ_TICKET, securityContext.getRequestTicket())
+          .header(IACredentials.SIGNATURE, securityContext.getSignature())
+          .header(IACredentials.ALIAS, securityContext.getAlias())
+          .header(IACredentials.TC_ID_TOKEN, securityContext.getToken());
+    }
+    return builder;
+  }
+
   public Invocation.Builder resource(URI uri) {
     WebTarget resource = client.target(uri);
     resource.property(ClientProperties.CONNECT_TIMEOUT, (int)timeoutService.getCallTimeout());
@@ -131,50 +142,47 @@ public class RemoteManagementSource {
 
   public static interface RemoteTSAEventListener {
     void onEvent(InboundEvent inboundEvent);
+    void onError(Throwable throwable);
   }
 
-  private void initRemoteEventSource() {
+  public void addTsaEventListener(final RemoteTSAEventListener listener) {
     Map<String, String> remoteServerUrls = localManagementSource.getRemoteServerUrls();
     for (String serverUrl : remoteServerUrls.values()) {
-      final AsyncInvoker async = resource(UriBuilder.fromUri(serverUrl)
+      final AsyncInvoker async = resourceNoTimeout(UriBuilder.fromUri(serverUrl)
           .uri("/tc-management-api/v2/events")
           .queryParam("localOnly", "true")
           .build()).async();
 
-      async.get(new InvocationCallback<EventInput>() {
+      Future<EventInput> f = async.get(new InvocationCallback<EventInput>() {
         @Override
         public void completed(EventInput eventInput) {
-          InboundEvent inboundEvent = eventInput.read();
-          if (inboundEvent != null) {
-            for (RemoteTSAEventListener listener : listeners) {
-              listener.onEvent(inboundEvent);
+          while (true) {
+            InboundEvent inboundEvent = eventInput.read();
+            if (inboundEvent == null) {
+              break;
             }
+            listener.onEvent(inboundEvent);
           }
 
           // re-arm immediately
-          async.get(this);
+          // TODO: async.get() will likely fail in a secure env as it will use outdated IA data
+          // -> close and force the client to re-open?
+          Future<EventInput> f = async.get(this);
+          futures.put(listener, f);
         }
 
         @Override
         public void failed(Throwable throwable) {
-          // re-arm after a delay
-          try {
-            Thread.sleep(1000);
-          } catch (InterruptedException ie) {
-            // ignore
-          }
-          async.get(this);
+          listener.onError(throwable);
         }
       });
+      futures.put(listener, f);
     }
   }
 
-  public void addTsaEventListener(final RemoteTSAEventListener listener) {
-    listeners.add(listener);
-  }
-
   public void removeTsaEventListener(RemoteTSAEventListener listener) {
-    listeners.remove(listener);
+    Future<EventInput> f = futures.remove(listener);
+    f.cancel(true);
   }
 
   public static String toCsv(Set<String> strings) {

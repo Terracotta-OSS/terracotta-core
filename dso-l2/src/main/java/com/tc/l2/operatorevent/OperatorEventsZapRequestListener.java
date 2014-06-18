@@ -5,6 +5,8 @@ package com.tc.l2.operatorevent;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.management.TSAManagementEventPayload;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.ZapEventListener;
@@ -42,6 +44,9 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
   @Override
   public void fireBackOffEvent(NodeID winnerNode) {
     Assert.assertTrue(winnerNode instanceof ServerID);
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.NODE_ZAPPED");
+    tsaManagementEventPayload.getAttributes().put("Winner.Server.Name", ((ServerID)winnerNode).getName());
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
         .createZapRequestAcceptedEvent(new Object[] { winnerNode }));
   }
@@ -56,6 +61,10 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
     localServerName = localServerName == null ? "NOT_FOUND" : localServerName;
     remoteServerName = remoteServerName == null ? "NOT_FOUND" : remoteServerName;
 
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.SPLIT_BRAIN");
+    tsaManagementEventPayload.getAttributes().put("Local.Server.Name", localServerName);
+    tsaManagementEventPayload.getAttributes().put("Remote.Server.Name", remoteServerName);
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createZapRequestReceivedEvent(new Object[] {
         localServerName, remoteServerName }));
   }

@@ -41,15 +41,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- *
+ * @author Ludovic Orban
  */
-public class RemoteManagementTest {
+public class RemoteManagementImplTest {
 
   @Test
   public void testGetAllClientIDs() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     when(channelManager.getAllClientIDs()).thenReturn(new HashSet() {{
       add(new ClientID(0L));
@@ -65,7 +65,7 @@ public class RemoteManagementTest {
   public void testListRegisteredServicesNormalCase() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     final ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -100,7 +100,7 @@ public class RemoteManagementTest {
   public void testListRegisteredServicesNoResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     final ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -118,7 +118,7 @@ public class RemoteManagementTest {
   public void testListRegisteredServicesInterrupted() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     final ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -142,7 +142,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getReturnsResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -179,7 +179,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getThrowsException() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -221,7 +221,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getInterrupted() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -264,7 +264,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getWithTimeoutReturnsResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -301,7 +301,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getWithTimeoutTimesOut() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -347,7 +347,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getWithTimeoutInterruptedBeforeResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -401,7 +401,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getWithTimeoutInterruptedBeforeResponseThenCancelAfterResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -457,7 +457,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getWithTimeoutInterruptedBeforeResponseThenCancelBeforeResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -519,7 +519,7 @@ public class RemoteManagementTest {
   public void testAsyncRemoteCall_getWithTimeoutInterruptedAfterResponse() throws Exception {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
-    RemoteManagement remoteManagement = new RemoteManagement(channelManager, serverManagementHandler, null);
+    RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
     ClientID clientID = new ClientID(0L);
     MessageChannel messageChannel = mock(MessageChannel.class);

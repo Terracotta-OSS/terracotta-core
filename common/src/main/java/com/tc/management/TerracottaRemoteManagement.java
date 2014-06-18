@@ -5,7 +5,7 @@
 package com.tc.management;
 
 /**
- *
+ * Holder of the {@link RemoteManagement} instance.
  */
 public class TerracottaRemoteManagement {
 

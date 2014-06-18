@@ -42,6 +42,11 @@ public class EventServiceImplV2 implements EventServiceV2 {
           EventEntityV2 eventEntity = inboundEvent.readData(EventEntityV2.class);
           listener.onEvent(eventEntity);
         }
+
+        @Override
+        public void onError(Throwable throwable) {
+          // todo: propagate this error
+        }
       };
       remoteManagementSource.addTsaEventListener(remoteTSAEventListener);
     }

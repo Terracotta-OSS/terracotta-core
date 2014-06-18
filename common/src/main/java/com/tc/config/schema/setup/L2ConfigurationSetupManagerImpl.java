@@ -30,6 +30,8 @@ import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.TSAManagementEventPayload;
+import com.tc.management.TerracottaRemoteManagement;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
@@ -191,6 +193,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
+
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.CONFIG_RELOADED");
+    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
 
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }

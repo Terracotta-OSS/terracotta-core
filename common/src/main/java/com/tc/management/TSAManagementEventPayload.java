@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * {@link TCManagementEvent} payload that originates from a server.
  *
+ * @author Ludovic Orban
  */
 public class TSAManagementEventPayload implements Serializable {
 

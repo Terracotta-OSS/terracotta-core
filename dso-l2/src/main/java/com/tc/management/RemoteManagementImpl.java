@@ -32,21 +32,22 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- *
+ * @author Ludovic Orban
  */
-public class RemoteManagement {
+public class RemoteManagementImpl implements RemoteManagement {
 
   private final DSOChannelManager channelManager;
   private final ServerManagementHandler serverManagementHandler;
   private final String thisServerNodeName;
 
 
-  public RemoteManagement(DSOChannelManager channelManager, ServerManagementHandler serverManagementHandler, String thisServerNodeName) {
+  public RemoteManagementImpl(DSOChannelManager channelManager, ServerManagementHandler serverManagementHandler, String thisServerNodeName) {
     this.channelManager = channelManager;
     this.serverManagementHandler = serverManagementHandler;
     this.thisServerNodeName = thisServerNodeName;
   }
 
+  @Override
   public void sendEvent(TCManagementEvent event) {
     Map<String, Object> context = new HashMap<String, Object>();
     context.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, thisServerNodeName);
