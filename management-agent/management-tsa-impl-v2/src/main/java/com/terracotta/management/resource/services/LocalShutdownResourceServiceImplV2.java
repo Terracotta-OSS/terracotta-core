@@ -3,12 +3,12 @@
  */
 package com.terracotta.management.resource.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.terracotta.management.resource.ForceStopEntityV2;
 import com.terracotta.management.resource.ServerEntityV2;
 import com.terracotta.management.resource.ServerGroupEntityV2;
@@ -37,7 +37,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("/v2/local/shutdown")
 public class LocalShutdownResourceServiceImplV2 {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LocalShutdownResourceServiceImplV2.class);
+  private static final TCLogger LOG = TCLogging.getLogger(LocalShutdownResourceServiceImplV2.class);
 
   private final ShutdownServiceV2 shutdownService;
   private final TopologyServiceV2 topologyService;
@@ -51,11 +51,13 @@ public class LocalShutdownResourceServiceImplV2 {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   public void shutdown(@Context UriInfo info, ForceStopEntityV2 force) {
-    LOG.debug(String.format("Invoking BasicAuthShutdownResourceServiceImplV2.shutdown: %s", info.getRequestUri()));
+    LOG.info(String.format("Invoking shutdown: %s", info.getRequestUri()));
 
     try {
       if (!force.isForceStop() && !isPassiveStandbyAvailable()) {
-        throw new ResourceRuntimeException("No passive server available in Standby mode. Use force option to stop the server.", Response.Status.BAD_REQUEST.getStatusCode());
+        String errorMessage = "No passive server available in Standby mode. Use force option to stop the server.";
+        LOG.debug(errorMessage);
+        throw new ResourceRuntimeException(errorMessage, Response.Status.BAD_REQUEST.getStatusCode());
       }
 
       shutdownService.shutdown(Collections.singleton(localManagementSource.getLocalServerName()));
