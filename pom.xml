@@ -32,7 +32,6 @@
     <module>dso-l1</module>
     <module>dso-l2</module>
     <module>deploy</module>
-    <module>dso-cluster-api</module>
 
     <module>legacy-test-tree</module>
     <module>dso-system-tests</module>

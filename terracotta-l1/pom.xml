@@ -47,7 +47,6 @@
                   <include>org.terracotta.internal:build-data</include>
                   <include>org.terracotta.internal:dso-common</include>
                   <include>org.terracotta.internal:dso-l1-api</include>
-                  <include>org.terracotta.internal:dso-cluster-api</include>
                   <include>org.terracotta.internal:management</include>
                 </includes>
               </artifactSet>       
