@@ -7,20 +7,16 @@ import com.google.common.base.Preconditions;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,12 +67,6 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
 
   private static String safeTypeName(final Object obj) {
     return obj == null ? "null" : obj.getClass().getName();
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
-    final Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>());
-    return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
   }
 
   protected Map<String, Object> addFacadeFields(final Map<String, Object> fields) {

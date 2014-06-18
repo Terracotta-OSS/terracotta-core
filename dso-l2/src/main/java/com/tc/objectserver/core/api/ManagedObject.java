@@ -16,7 +16,6 @@ import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -38,8 +37,6 @@ public interface ManagedObject {
   public boolean isDirty();
 
   public void setIsDirty(boolean isDirty);
-
-  public ManagedObjectFacade createFacade(int limit);
 
   public boolean isNew();
 

@@ -15,7 +15,6 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
 import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
@@ -232,11 +231,6 @@ public class GCTestObjectManager implements ObjectManager {
 
   @Override
   public Iterator getRootNames() {
-    return null;
-  }
-
-  @Override
-  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
   }
 

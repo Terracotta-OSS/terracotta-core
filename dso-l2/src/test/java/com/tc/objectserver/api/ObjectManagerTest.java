@@ -4,13 +4,16 @@
  */
 package com.tc.objectserver.api;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.tc.exception.ImplementMe;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -36,8 +39,6 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
@@ -69,9 +70,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author steve
@@ -379,79 +377,6 @@ public class ObjectManagerTest extends TCTestCase {
               false);
 
     this.objectManager.releaseAll(lookedUpObjects.values());
-
-    ManagedObjectFacade facade;
-
-    facade = this.objectManager.lookupFacade(mapID, -1);
-    validateMapFacade(facade, 3, 3);
-    facade = this.objectManager.lookupFacade(mapID, 5);
-    validateMapFacade(facade, 3, 3);
-    facade = this.objectManager.lookupFacade(mapID, 1);
-    validateMapFacade(facade, 1, 3);
-    facade = this.objectManager.lookupFacade(mapID, 0);
-    validateMapFacade(facade, 0, 3);
-
-    facade = this.objectManager.lookupFacade(setID, -1);
-    validateListFacade(facade, 3, 3);
-    facade = this.objectManager.lookupFacade(setID, 5);
-    validateListFacade(facade, 3, 3);
-    facade = this.objectManager.lookupFacade(setID, 1);
-    validateListFacade(facade, 1, 3);
-    facade = this.objectManager.lookupFacade(setID, 0);
-    validateListFacade(facade, 0, 3);
-  }
-
-  private void validateListFacade(final ManagedObjectFacade setFacade, final int facadeSize, final int totalSize) {
-    assertFalse(setFacade.isArray());
-    assertFalse(setFacade.isMap());
-    assertTrue(setFacade.isList());
-    assertEquals(ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName(), setFacade.getClassName());
-    assertEquals(facadeSize, setFacade.getFacadeSize());
-    assertEquals(totalSize, setFacade.getTrueObjectSize());
-
-    final List<String> expect = new ArrayList<String>();
-    expect.add("item1");
-    expect.add("item2");
-    expect.add("item3");
-
-    final List<String> actual = new ArrayList<String>();
-    for (int i = 0; i < facadeSize; i++) {
-      final String fName = String.valueOf(i);
-      final Object value = setFacade.getFieldValue(fName);
-      assertTrue(value instanceof String);
-      actual.add((String) value);
-    }
-
-    assertTrue(expect.containsAll(actual));
-  }
-
-  private void validateMapFacade(final ManagedObjectFacade mapFacade, final int facadeSize, final int totalSize) {
-    assertFalse(mapFacade.isArray());
-    assertTrue(mapFacade.isMap());
-    assertFalse(mapFacade.isSet());
-    assertFalse(mapFacade.isList());
-    assertEquals("com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl", mapFacade.getClassName());
-    assertEquals(facadeSize, mapFacade.getFacadeSize());
-    assertEquals(totalSize, mapFacade.getTrueObjectSize());
-
-    final Map<String, String> expect = new HashMap<String, String>();
-    expect.put("key1", "val1");
-    expect.put("key2", "val2");
-    expect.put("key3", "val3");
-
-    final Map<String, String> actual = new HashMap<String, String>();
-
-    for (int i = 0; i < facadeSize; i++) {
-      final String fName = String.valueOf(i);
-      final Object value = mapFacade.getFieldValue(fName);
-      assertTrue(value instanceof MapEntryFacade);
-      final MapEntryFacade entry = (MapEntryFacade) value;
-      actual.put((String) entry.getKey(), (String) entry.getValue());
-    }
-
-    for (final String key : actual.keySet()) {
-      assertEquals(expect.get(key), actual.get(key));
-    }
   }
 
   public void testObjectManagerBasics() {
@@ -583,17 +508,6 @@ public class ObjectManagerTest extends TCTestCase {
       this.objectManager.createObject(mo);
     }
     return oidSet;
-  }
-
-  public void testLookupFacadeForMissingObject() {
-    initObjectManager();
-
-    try {
-      this.objectManager.lookupFacade(new ObjectID(1), -1);
-      fail("lookup didn't throw exception");
-    } catch (final NoSuchObjectException e) {
-      // expected
-    }
   }
 
   public void testObjectManagerGC() throws Exception {

@@ -19,7 +19,6 @@ import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.GCStatsEventListener;
-import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -28,7 +27,6 @@ import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.locks.LockManagerMBean;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.StorageDataStats;
@@ -238,11 +236,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return list.toArray(new DSOClassInfo[list.size()]);
   }
 
-  @Override
-  public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
-    return this.objMgr.lookupFacade(objectID, limit);
-  }
-
   private void setupRoots() {
     for (Iterator iter = objMgr.getRootNames(); iter.hasNext();) {
       String name = (String) iter.next();
@@ -299,7 +292,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       }
 
       try {
-        DSORoot dsoRoot = new DSORoot(rootID, objMgr, name);
+        DSORoot dsoRoot = new DSORoot(rootID, name);
         mbeanServer.registerMBean(dsoRoot, rootName);
         rootObjectNames.add(rootName);
         sendNotification(ROOT_ADDED, rootName);

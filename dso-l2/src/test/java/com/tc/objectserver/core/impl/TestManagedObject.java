@@ -24,7 +24,6 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.io.IOException;
@@ -84,11 +83,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   @Override
   public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType dnaType) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(final int limit) {
     throw new ImplementMe();
   }
 
@@ -235,11 +229,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
     @Override
     public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
       throw new UnsupportedOperationException();
     }
 

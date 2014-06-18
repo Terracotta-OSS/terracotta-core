@@ -10,7 +10,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -49,8 +48,6 @@ public interface ManagedObjectState {
   public void addObjectReferencesTo(ManagedObjectTraverser traverser);
 
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type);
-
-  public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit);
 
   public byte getType();
 

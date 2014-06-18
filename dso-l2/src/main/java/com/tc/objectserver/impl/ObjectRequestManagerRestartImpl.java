@@ -11,10 +11,8 @@ import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestServerContext;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.text.PrettyPrinter;
@@ -172,11 +170,6 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
   @Override
   public Iterator getRoots() {
     return this.objectManager.getRoots();
-  }
-
-  @Override
-  public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
-    return this.objectManager.lookupFacade(id, limit);
   }
 
   @Override

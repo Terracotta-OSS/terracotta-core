@@ -4,13 +4,11 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalChangeResult;
-import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -116,26 +114,6 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
   @Override
   public String toString() {
     return "ListManagedStateObject(" + references + ")";
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    final int size = references.size();
-
-    if (limit < 0) {
-      limit = size;
-    } else {
-      limit = Math.min(limit, size);
-    }
-
-    Object[] data = new Object[limit];
-
-    int index = 0;
-    for (Iterator iter = references.iterator(); iter.hasNext() && index < limit; index++) {
-      data[index] = iter.next();
-    }
-
-    return LogicalManagedObjectFacade.createListInstance(objectID, className, data, size);
   }
 
   @Override

@@ -5,15 +5,11 @@
 package com.tc.stats.api;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.NoSuchObjectException;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 public interface DSORootMBean {
 
   public String getRootName();
 
   public ObjectID getObjectID();
-
-  public ManagedObjectFacade lookupFacade(int limit) throws NoSuchObjectException;
 
 }

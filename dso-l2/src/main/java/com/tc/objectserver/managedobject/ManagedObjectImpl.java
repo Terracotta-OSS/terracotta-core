@@ -22,7 +22,6 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.impl.ManagedObjectReference;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -249,11 +248,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     out.indent().print("isNew:" + isNew());
     out.indent().print("isReferenced:" + isReferenced()).println();
     return rv;
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(final int limit) {
-    return this.state.createFacade(this.id, getClassname(), limit);
   }
 
   /**

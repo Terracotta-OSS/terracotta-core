@@ -8,9 +8,7 @@ import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaMBean;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.locks.LockMBean;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -55,8 +53,6 @@ public interface DSOMBean extends DSOStats, OffheapStats, StorageDataStats, DGCM
   Map<ObjectName, Map> getL1Statistics();
 
   Map<ObjectName, Map> getPrimaryClientStatistics();
-
-  ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException;
 
   Map<ObjectName, Integer> getClientLiveObjectCount();
 

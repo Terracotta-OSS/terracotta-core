@@ -10,13 +10,11 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.BitSetObjectIDSet;
@@ -35,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TestObjectManager implements ObjectManager, ObjectStatsManager {
+public class TestObjectManager implements ObjectManager {
 
   private final Set<ObjectID> existingObjectIDs = new BitSetObjectIDSet();
   private final Map<ObjectID, ManagedObject> checkedOutObjects = new HashMap<ObjectID, ManagedObject>();
@@ -240,22 +238,12 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   @Override
-  public String getObjectTypeFromID(ObjectID id) {
-    return "";
-  }
-
-  @Override
   public int getLiveObjectCount() {
     return 0;
   }
 
   @Override
   public Iterator getRootNames() {
-    return null;
-  }
-
-  @Override
-  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
   }
 

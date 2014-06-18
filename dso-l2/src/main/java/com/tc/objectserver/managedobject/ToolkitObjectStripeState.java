@@ -3,13 +3,14 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
-import com.tc.object.dna.api.*;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.object.dna.api.DNACursor;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
@@ -89,12 +90,6 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
         throw new AssertionError("Gor unhandled logical action: objectId: " + objectID + ", method: " + method
                 + ", params: " + Arrays.asList(params));
     }
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
-    final Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>(), limit);
-    return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
   }
 
   protected Map<String, Object> addFacadeFields(final Map<String, Object> fields, int limit) {

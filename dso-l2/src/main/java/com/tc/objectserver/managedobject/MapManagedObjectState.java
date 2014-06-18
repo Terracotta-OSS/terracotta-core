@@ -6,17 +6,12 @@ package com.tc.objectserver.managedobject;
 
 import org.terracotta.corestorage.KeyValueStorage;
 
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.objectserver.api.Destroyable;
-import com.tc.objectserver.mgmt.FacadeUtil;
-import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.mgmt.MapEntryFacade;
-import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
 import com.tc.objectserver.persistence.ObjectNotFoundException;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
@@ -26,7 +21,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -172,31 +166,6 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     out = out.println("MapManagedObjectState").duplicateAndIndent();
     out.indent().println("references: " + this.references);
     return rv;
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, int limit) {
-
-    final int size = (int)this.references.size();
-
-    if (limit < 0) {
-      limit = size;
-    } else {
-      limit = Math.min(limit, size);
-    }
-
-    final MapEntryFacade[] data = new MapEntryFacade[limit];
-
-    int index = 0;
-
-    for (final Iterator<Object> i = references.keySet().iterator(); i.hasNext() && index < limit; index++) {
-      Object rawKey = i.next();
-      final Object key = FacadeUtil.processValue(rawKey);
-      final Object value = FacadeUtil.processValue(references.get(rawKey));
-      data[index] = new MapEntryFacadeImpl(key, value);
-    }
-
-    return LogicalManagedObjectFacade.createMapInstance(objectID, className, data, size);
   }
 
   @Override

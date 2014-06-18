@@ -9,7 +9,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestServerContext;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 
@@ -58,11 +57,6 @@ public class TestObjectRequestManager implements ObjectRequestManager {
 
   @Override
   public Iterator getRoots() {
-    return null;
-  }
-
-  @Override
-  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
   }
 

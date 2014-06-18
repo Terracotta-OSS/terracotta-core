@@ -62,7 +62,6 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
@@ -999,11 +998,6 @@ public class ObjectRequestManagerTest extends TestCase {
 
     @Override
     public Iterator getRootNames() {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
-    @Override
-    public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 

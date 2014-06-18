@@ -10,7 +10,6 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Destroyable;
-import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
@@ -26,7 +25,6 @@ import com.tc.objectserver.dgc.impl.NullGarbageCollector;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -198,26 +196,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public Iterator getRootNames() {
     assertNotInShutdown();
     return this.objectStore.getRootNames().iterator();
-  }
-
-  /**
-   * For management use only (see interface documentation)
-   */
-  @Override
-  public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
-    assertNotInShutdown();
-
-    if (!containsObject(id)) { throw new NoSuchObjectException(id); }
-
-    final ManagedObject object = lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, AccessLevel.READ);
-    if (object == null) { throw new NoSuchObjectException(id); }
-
-    try {
-
-      return object.createFacade(limit);
-    } finally {
-      releaseReadOnly(object);
-    }
   }
 
   private ManagedObject lookup(final ObjectID id, final MissingObjects missingObjects, final NewObjects newObjects,
@@ -575,10 +553,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   @Override
   public ObjectIDSet getAllObjectIDs() {
     return this.objectStore.getAllObjectIDs();
-  }
-
-  private boolean containsObject(final ObjectID id) {
-    return this.objectStore.containsObject(id);
   }
 
   @Override

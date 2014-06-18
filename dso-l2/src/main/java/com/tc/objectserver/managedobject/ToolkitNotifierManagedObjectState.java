@@ -4,12 +4,9 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -46,12 +43,6 @@ public class ToolkitNotifierManagedObjectState extends AbstractManagedObjectStat
   @Override
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     //
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    return new PhysicalManagedObjectFacade(objectID, null, className, Collections.EMPTY_MAP, false,
-                                           DNA.NULL_ARRAY_SIZE, false);
   }
 
   @Override
