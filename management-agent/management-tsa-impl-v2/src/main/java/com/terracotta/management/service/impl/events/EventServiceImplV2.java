@@ -45,7 +45,7 @@ public class EventServiceImplV2 implements EventServiceV2 {
 
         @Override
         public void onError(Throwable throwable) {
-          // todo: propagate this error
+          listener.onError(throwable);
         }
       };
       remoteManagementSource.addTsaEventListener(remoteTSAEventListener);
@@ -88,11 +88,13 @@ public class EventServiceImplV2 implements EventServiceV2 {
 
   @Override
   public void unregisterEventListener(EventListener listener) {
-    RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
     ListenerHolder listenerHolder = listenerMap.remove(listener);
-    remoteManagementInstance.unregisterEventListener(listenerHolder.managementEventListener);
-    if (listenerHolder.remoteTSAEventListener != null) {
-      remoteManagementSource.removeTsaEventListener(listenerHolder.remoteTSAEventListener);
+    if (listenerHolder != null) {
+      RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
+      remoteManagementInstance.unregisterEventListener(listenerHolder.managementEventListener);
+      if (listenerHolder.remoteTSAEventListener != null) {
+        remoteManagementSource.removeTsaEventListener(listenerHolder.remoteTSAEventListener);
+      }
     }
   }
 

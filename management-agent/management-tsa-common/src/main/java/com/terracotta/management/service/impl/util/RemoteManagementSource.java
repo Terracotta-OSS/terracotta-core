@@ -20,6 +20,7 @@ import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.web.utils.TSAConfig;
 
+import java.io.EOFException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -31,6 +32,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +64,7 @@ public class RemoteManagementSource {
   private final TimeoutService timeoutService;
   private final SecurityContextService securityContextService;
   private final Client client;
-  private final Map<RemoteTSAEventListener, Future<EventInput>> futures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Future<EventInput>>());
+  private final Map<RemoteTSAEventListener, Collection<Future<EventInput>>> futures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>());
 
   public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService) {
     this.localManagementSource = localManagementSource;
@@ -164,25 +166,58 @@ public class RemoteManagementSource {
             listener.onEvent(inboundEvent);
           }
 
-          // re-arm immediately
-          // TODO: async.get() will likely fail in a secure env as it will use outdated IA data
-          // -> close and force the client to re-open?
-          Future<EventInput> f = async.get(this);
-          futures.put(listener, f);
+          failed(new EOFException("Remote event listener closed"));
         }
 
         @Override
         public void failed(Throwable throwable) {
-          listener.onError(throwable);
+//            // handle security
+//            if (throwable == error HTTP 401) {
+//              listener.onError(throwable);
+//              return;
+//            }
+
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+            }
+
+            Future<EventInput> newFuture = async.get(this);
+            addFuture(listener, newFuture);
+            clearDoneFutures(listener);
         }
       });
-      futures.put(listener, f);
+
+      addFuture(listener, f);
+    }
+  }
+
+  private void addFuture(RemoteTSAEventListener listener, Future<EventInput> f) {
+    Collection<Future<EventInput>> futureList = futures.get(listener);
+    if (futureList == null) {
+      futureList = new CopyOnWriteArrayList<Future<EventInput>>();
+      futures.put(listener, futureList);
+    }
+    futureList.add(f);
+  }
+
+  private void clearDoneFutures(RemoteTSAEventListener listener) {
+    Collection<Future<EventInput>> futureList = futures.get(listener);
+    if (futureList != null) {
+      for (Future<EventInput> future : futureList) {
+        if (future.isDone() || future.isCancelled()) {
+          futureList.remove(future);
+        }
+      }
     }
   }
 
   public void removeTsaEventListener(RemoteTSAEventListener listener) {
-    Future<EventInput> f = futures.remove(listener);
-    f.cancel(true);
+    Collection<Future<EventInput>> fs = futures.remove(listener);
+    for (Future<EventInput> f : fs) {
+      f.cancel(true);
+    }
   }
 
   public static String toCsv(Set<String> strings) {
