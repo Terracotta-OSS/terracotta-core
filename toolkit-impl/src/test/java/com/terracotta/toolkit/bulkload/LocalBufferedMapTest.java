@@ -13,8 +13,6 @@ import com.terracotta.toolkit.util.ImmediateTimer;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.PUT;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.mockito.Matchers.any;
@@ -24,7 +22,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;

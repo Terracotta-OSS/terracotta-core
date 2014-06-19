@@ -64,6 +64,11 @@
       <version>4.3</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>management-common-v1</artifactId>
+      <version>1.3.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>
