@@ -21,6 +21,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
 import com.tc.test.TestConfigUtil;
+import com.tc.test.config.builder.ClusterManager;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -41,13 +42,13 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 public class ExtraProcessServerControl extends ServerControlBase {
-  private static final String  DEFAULT_MIN_HEAP   = "-Xms128m";
-  private static final String  DEFAULT_MAX_HEAP   = "-Xmx128m";
+  private static final String  DEFAULT_MIN_HEAP          = "-Xms128m";
+  private static final String  DEFAULT_MAX_HEAP          = "-Xmx128m";
   private static final String  DEFAULT_MAX_DIRECT_MEMORY = "-XX:MaxDirectMemorySize=1g";
-  private static final String  NOT_DEF            = "";
-  private static final String  ERR_STREAM         = "ERR";
-  private static final String  OUT_STREAM         = "OUT";
-  private final long           SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
+  private static final String  NOT_DEF                   = "";
+  private static final String  ERR_STREAM                = "ERR";
+  private static final String  OUT_STREAM                = "OUT";
+  private final long           SHUTDOWN_WAIT_TIME        = 2 * 60 * 1000;
 
   private final String         name;
   private final boolean        mergeOutput;
@@ -63,7 +64,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private StreamCopier         errCopier;
   private final boolean        useIdentifier;
 
-  public Collection<String>    additionalArgs     = new ArrayList<String>();
+  public Collection<String>    additionalArgs            = new ArrayList<String>();
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int tsaPort, int adminPort, String configFileLoc, boolean mergeOutput) {
@@ -187,6 +188,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
       jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
     }
 
+    jvmArgs.add("-Dcom.tc.management.war="
+                + ClusterManager.findWarLocation("org.terracotta", "management-tsa-war",
+                                                 ClusterManager.guessMavenArtifactVersion()));
+
     // Add test defined parameters last so they have the final word in what gets passed to the spawned process.
     if (additionalJvmArgs != null) {
       for (Iterator i = additionalJvmArgs.iterator(); i.hasNext();) {
@@ -196,7 +201,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
         }
       }
     }
-//    pruneJVMArgsList(jvmArgs);
+    // pruneJVMArgsList(jvmArgs);
     setDefaultHeapIfUnspecified();
   }
 
@@ -223,12 +228,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
     if (!hasMax) {
       jvmArgs.add(DEFAULT_MAX_HEAP);
     }
-    
+
     if (!hasDirect) {
       jvmArgs.add(DEFAULT_MAX_DIRECT_MEMORY);
     }
   }
-  
 
   protected void addProductKeyIfExists(List args) {
     String propertyKey = TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.PRODUCTKEY_PATH;
@@ -405,26 +409,18 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   @Override
   public void attemptForceShutdown() throws Exception {
-    try {
-      // try jmx method first
-      attemptForceShutdownInternal(false, null, null, true);
-    } catch (Exception e) {
-      System.out.println("Attempted to shut down via JMX has failed: " + e.getMessage()
-                         + ". Retrying with REST method.");
-      // try REST method
-      attemptForceShutdownInternal(false, null, null, false);
-    }
+    attemptForceShutdownInternal(false, null, null);
   }
 
   public void attemptForceShutdown(String username, String passwd) throws Exception {
-    attemptForceShutdownInternal(false, username, passwd, false);
+    attemptForceShutdownInternal(false, username, passwd);
   }
 
   public void attemptForceShutdownSecured(String username, String passwd) throws Exception {
-    attemptForceShutdownInternal(true, username, passwd, false);
+    attemptForceShutdownInternal(true, username, passwd);
   }
 
-  private void attemptForceShutdownInternal(boolean secured, String username, String passwd, final boolean jmx) throws Exception {
+  private void attemptForceShutdownInternal(boolean secured, String username, String passwd) throws Exception {
     System.out.println("Force Shutting down server (secured=" + secured
                        + (username != null ? ", username: " + username : "")
                        + (passwd != null ? ", passwd: " + passwd : "") + ")");
@@ -443,25 +439,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
-    if (jmx) {
-      mainClassArguments.add("-j");
-    }
     TestBaseUtil.setHeapSizeArgs(stopperJvmArgs, 32, 64, -1, true);
 
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, stopperJvmArgs);
     stopper.start();
     stopper.mergeSTDOUT("TCStop");
     stopper.mergeSTDERR("TCStop");
-  }
-
-  public void shutdownJmx() throws Exception {
-    try {
-      attemptForceShutdownInternal(false, null, null, true);
-    } catch (Exception e) {
-      System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
-    }
-    waitUntilShutdown();
-    System.out.println(this.name + " stopped.");
   }
 
   @Override
@@ -485,16 +468,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     System.out.println(this.name + " stopped.");
   }
 
-  public void shutdownJmx(String username, String passwd) throws Exception {
-    try {
-      attemptForceShutdownInternal(false, username, passwd, true);
-    } catch (Exception e) {
-      System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
-    }
-    waitUntilShutdown();
-    System.out.println(this.name + " stopped.");
-  }
-
   public void shutdownSecured(String username, String passwd) throws Exception {
     try {
       attemptForceShutdownSecured(username, passwd);
@@ -510,8 +483,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
       if (isRunning()) return;
       try {
         throw new IllegalStateException("process exited with: " + process.exitValue());
-      } catch ( IllegalThreadStateException state ) {
-        //  can continue
+      } catch (IllegalThreadStateException state) {
+        // can continue
       }
       Thread.sleep(1000);
     }

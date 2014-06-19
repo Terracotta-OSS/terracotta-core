@@ -165,7 +165,7 @@ public class ExternalDsoServer {
   public void stopJmx() throws Exception {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);
-    serverProc.shutdownJmx();
+    serverProc.shutdown();
     inited = false;
     IOUtils.closeQuietly(logOutputStream);
   }
@@ -189,7 +189,7 @@ public class ExternalDsoServer {
   public void stopJmx(String username, String passwd) throws Exception {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);
-    serverProc.shutdownJmx(username, passwd);
+    serverProc.shutdown(username, passwd);
     inited = false;
     IOUtils.closeQuietly(logOutputStream);
   }

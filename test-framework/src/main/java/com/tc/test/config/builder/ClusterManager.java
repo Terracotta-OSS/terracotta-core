@@ -21,7 +21,15 @@ import com.terracottatech.config.TcConfigDocument;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -51,7 +59,7 @@ public class ClusterManager {
   private final TcConfig tcConfig;
   private String maxDirectMemorySize = DEFAULT_MAX_DIRECT_MEMORY_SIZE;
 
-  private Map<String, String> systemProperties = new TreeMap<String, String>();
+  private final Map<String, String> systemProperties = new TreeMap<String, String>();
 
   public ClusterManager(Class<?> testClass, TcConfig tcConfig) throws IOException, XmlException {
     this(new File(TestConfigUtil.getTcBaseDirPath(), "temp" + File.separator + testClass.getSimpleName()), tcConfig, true);
@@ -219,8 +227,12 @@ public class ClusterManager {
     return MavenArtifactFinder.findArtifactLocation(gid, aid, ver, null, "war");
   }
 
-  public static String guessMavenArtifactVersion() throws IOException {
-    return MavenArtifactFinder.figureCurrentArtifactMavenVersion();
+  public static String guessMavenArtifactVersion() {
+    try {
+      return MavenArtifactFinder.figureCurrentArtifactMavenVersion();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void waitUntilTsaAgentInitialized(int port) throws Exception {
@@ -257,6 +269,7 @@ public class ClusterManager {
         final AtomicBoolean success = new AtomicBoolean(false);
 
         ContentExchange exchange = new ContentExchange(true) {
+          @Override
           protected void onResponseComplete() throws IOException {
             // if we get JSON back (even an error) then we can assume the agent started
             Collection<String> contentTypes = getResponseFields().getValuesCollection("content-type");
@@ -360,6 +373,7 @@ public class ClusterManager {
         final AtomicBoolean success = new AtomicBoolean(false);
 
         ContentExchange exchange = new ContentExchange(true) {
+          @Override
           protected void onResponseComplete() throws IOException {
            if(getResponseContent().contains("\"agencyOf\": \"Ehcache\"")) {
              success.set(true);
