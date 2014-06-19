@@ -90,6 +90,12 @@ public class RemoteManagementSource {
         .get(new CollectionOfRepresentableGenericType<T>(type));
   }
 
+  public <T, S> T getFromRemoteL2_singleObject(String serverName, URI uri, Class<T> type, Class<S> subType) throws ManagementSourceException {
+    String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
+    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
+        .get(new SubGenericType<T, S>(type, subType));
+  }
+
   public void postToRemoteL2(String serverName, URI uri) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
@@ -106,6 +112,12 @@ public class RemoteManagementSource {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
         .post(null, new CollectionOfRepresentableGenericType<T>(type));
+  }
+
+  public <T> T postToRemoteL2_singleObject(String serverName, URI uri, Class<T> type) throws ManagementSourceException {
+    String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
+    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
+        .post(null, type);
   }
 
   private Invocation.Builder resourceNoTimeout(URI uri) {
@@ -361,6 +373,32 @@ public class RemoteManagementSource {
         @Override
         public String toString() {
           return "CollectionOfRepresentableGenericType<" + clazz.getName() + ">";
+        }
+      });
+    }
+  }
+
+  private static final class SubGenericType<T, S> extends GenericType<T> {
+    SubGenericType(final Class<T> type, final Class<S> subType) {
+      super(new ParameterizedType() {
+        @Override
+        public Type[] getActualTypeArguments() {
+          return new Type[] { subType };
+        }
+
+        @Override
+        public Type getRawType() {
+          return type;
+        }
+
+        @Override
+        public Type getOwnerType() {
+          return type;
+        }
+
+        @Override
+        public String toString() {
+          return "SubGenericType<" + type.getName() + ", " + subType.getName() + ">";
         }
       });
     }

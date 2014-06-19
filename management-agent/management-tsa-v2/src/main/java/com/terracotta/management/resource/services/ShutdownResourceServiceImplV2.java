@@ -10,7 +10,6 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.ShutdownServiceV2;
 
 import java.util.Arrays;
@@ -51,7 +50,7 @@ public class ShutdownResourceServiceImplV2 {
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(1).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       shutdownService.shutdown(serverNames);

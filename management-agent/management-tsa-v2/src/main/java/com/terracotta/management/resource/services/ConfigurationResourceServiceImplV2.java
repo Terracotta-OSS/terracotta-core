@@ -7,17 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.ConfigEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.ConfigurationServiceV2;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,32 +48,32 @@ public class ConfigurationResourceServiceImplV2 {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<ConfigEntityV2> getConfigs(@Context UriInfo info) {
+  public ResponseEntityV2<ConfigEntityV2> getConfigs(@Context UriInfo info) {
     LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.geConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
-      Collection<ConfigEntityV2> configs = new ArrayList<ConfigEntityV2>();
-      configs.addAll(configurationService.getServerConfigs(null));
-      configs.addAll(configurationService.getClientConfigs(null, productIDs));
-      return configs;
+      ResponseEntityV2<ConfigEntityV2> responseEntityV2 = new ResponseEntityV2<ConfigEntityV2>();
+      responseEntityV2.getEntities().addAll(configurationService.getServerConfigs(null).getEntities());
+      responseEntityV2.getEntities().addAll(configurationService.getClientConfigs(null, productIDs).getEntities());
+      return responseEntityV2;
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA configs", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
   @GET
-  @Path("/v2/clients")
+  @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<ConfigEntityV2> getClientConfigs(@Context UriInfo info) {
+  public ResponseEntityV2<ConfigEntityV2> getClientConfigs(@Context UriInfo info) {
     LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.getClientConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String ids = info.getPathSegments().get(2).getMatrixParameters().getFirst("ids");
+      String ids = info.getPathSegments().get(3).getMatrixParameters().getFirst("ids");
       Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
 
@@ -86,15 +84,15 @@ public class ConfigurationResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/servers")
+  @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<ConfigEntityV2> getServerConfigs(@Context UriInfo info) {
+  public ResponseEntityV2<ConfigEntityV2> getServerConfigs(@Context UriInfo info) {
     LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.getServerConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       return configurationService.getServerConfigs(serverNames);

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
@@ -54,13 +55,13 @@ public class OperatorEventsResourceServiceImplV2 {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<OperatorEventEntityV2> getOperatorEvents(@Context UriInfo info) {
+  public ResponseEntityV2<OperatorEventEntityV2> getOperatorEvents(@Context UriInfo info) {
     LOG.debug(String.format("Invoking OperatorEventsResourceServiceImpl.getOperatorEvents: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(1).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();

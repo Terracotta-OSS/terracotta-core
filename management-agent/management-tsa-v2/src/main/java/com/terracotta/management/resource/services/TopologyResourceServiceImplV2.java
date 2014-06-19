@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
@@ -15,7 +16,6 @@ import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.TopologyServiceV2;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,7 +53,7 @@ public class TopologyResourceServiceImplV2 {
    */
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<TopologyEntityV2> getTopologies(@Context UriInfo info) {
+  public ResponseEntityV2<TopologyEntityV2> getTopologies(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
@@ -75,13 +75,13 @@ public class TopologyResourceServiceImplV2 {
   @GET
   @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<TopologyEntityV2> getServerTopologies(@Context UriInfo info) {
+  public ResponseEntityV2<TopologyEntityV2> getServerTopologies(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
       return topologyService.getServerTopologies(serverNames);
     } catch (ServiceExecutionException see) {
@@ -90,23 +90,15 @@ public class TopologyResourceServiceImplV2 {
   }
 
   /**
-<<<<<<< .working
-   * Get a {@code Collection} of {@link ClientEntity} objects representing the connected clients provided by the
-=======
    * Get a {@code Collection} of {@link TopologyEntityV2} objects representing the connected clients provided by the
->>>>>>> .merge-right.r25052
    * associated monitorable entity's agent given the request path.
    *
-<<<<<<< .working
-   * @return a collection of {@link ClientEntity} objects.
-=======
    * @return a collection of {@link TopologyEntityV2} objects.
->>>>>>> .merge-right.r25052
    */
   @GET
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<TopologyEntityV2> getConnectedClients(@Context UriInfo info) {
+  public ResponseEntityV2<TopologyEntityV2> getConnectedClients(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
@@ -127,13 +119,13 @@ public class TopologyResourceServiceImplV2 {
   @GET
   @Path("/unreadOperatorEventCount")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<TopologyEntityV2> getUnreadOperatorEventCount(@Context UriInfo info) {
+  public ResponseEntityV2<TopologyEntityV2> getUnreadOperatorEventCount(@Context UriInfo info) {
     LOG.debug(String.format("Invoking TopologyServiceImpl.getUnreadOperatorEventCount: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
       return topologyService.getUnreadOperatorEventCount(serverNames);
     } catch (ServiceExecutionException see) {

@@ -4,10 +4,10 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.ConfigEntityV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -25,7 +25,7 @@ public interface ConfigurationServiceV2 {
    * @return a collection {@link com.terracotta.management.resource.ConfigEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ConfigEntityV2> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException;
+  ResponseEntityV2<ConfigEntityV2> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException;
 
   /**
    * Get a collection {@link com.terracotta.management.resource.ConfigEntityV2} objects each representing a client
@@ -35,6 +35,6 @@ public interface ConfigurationServiceV2 {
    * @return a collection {@link com.terracotta.management.resource.ConfigEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ConfigEntityV2> getClientConfigs(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException;
+  ResponseEntityV2<ConfigEntityV2> getClientConfigs(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException;
 
 }

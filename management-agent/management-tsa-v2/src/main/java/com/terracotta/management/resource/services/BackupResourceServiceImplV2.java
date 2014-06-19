@@ -7,15 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.BackupEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.BackupServiceV2;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,12 +50,12 @@ public class BackupResourceServiceImplV2 {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<BackupEntityV2> getBackupStatus(@Context UriInfo info) {
+  public ResponseEntityV2<BackupEntityV2> getBackupStatus(@Context UriInfo info) {
     LOG.debug(String.format("Invoking BackupResourceServiceImpl.getBackupStatus: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
-    String names = info.getPathSegments().get(1).getMatrixParameters().getFirst("serverNames");
+    String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
     Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
     try {
@@ -68,12 +67,12 @@ public class BackupResourceServiceImplV2 {
 
   @POST
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<BackupEntityV2> backup(@Context UriInfo info) {
+  public ResponseEntityV2<BackupEntityV2> backup(@Context UriInfo info) {
     LOG.debug(String.format("Invoking BackupResourceServiceImpl.backup: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
-    String names = info.getPathSegments().get(1).getMatrixParameters().getFirst("serverNames");
+    String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
     Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
     MultivaluedMap<String, String> qParams = info.getQueryParameters();

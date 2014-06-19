@@ -7,15 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.MBeanEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.JmxServiceV2;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,13 +49,13 @@ public class JmxResourceServiceImplV2 {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<MBeanEntityV2> queryMBeans(@Context UriInfo info) {
+  public ResponseEntityV2<MBeanEntityV2> queryMBeans(@Context UriInfo info) {
     LOG.debug(String.format("Invoking JmxResourceServiceImpl.queryMBeans: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(1).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();

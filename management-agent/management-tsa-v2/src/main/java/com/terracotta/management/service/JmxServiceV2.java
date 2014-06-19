@@ -4,10 +4,10 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.MBeanEntityV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -24,7 +24,7 @@ public interface JmxServiceV2 {
    * @return a collection of MBeans
    * @throws org.terracotta.management.ServiceExecutionException
    */
-  Collection<MBeanEntityV2> queryMBeans(Set<String> serverNames, String query) throws ServiceExecutionException;
+  ResponseEntityV2<MBeanEntityV2> queryMBeans(Set<String> serverNames, String query) throws ServiceExecutionException;
 
 
 }

@@ -4,6 +4,7 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.StatisticsEntityV2;
 
@@ -25,7 +26,7 @@ public interface MonitoringServiceV2 {
    * @return a collection of {@link StatisticsEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<StatisticsEntityV2> getClientStatistics(Set<String> clientIds, Set<String> attributes, Set<String> clientProductIds) throws ServiceExecutionException;
+  ResponseEntityV2<StatisticsEntityV2> getClientStatistics(Set<String> clientIds, Set<String> attributes, Set<String> clientProductIds) throws ServiceExecutionException;
 
   /**
    * Get the statistics of the specified server.
@@ -35,7 +36,7 @@ public interface MonitoringServiceV2 {
    * @return a collection of {@link StatisticsEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<StatisticsEntityV2> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException;
+  ResponseEntityV2<StatisticsEntityV2> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException;
 
   /**
    * Get the DGC statistics.
@@ -45,6 +46,6 @@ public interface MonitoringServiceV2 {
    * one {@link StatisticsEntityV2} per DGC iteration.
    * @throws ServiceExecutionException
    */
-  Collection<StatisticsEntityV2> getDgcStatistics(Set<String> serverNames) throws ServiceExecutionException;
+  ResponseEntityV2<StatisticsEntityV2> getDgcStatistics(Set<String> serverNames) throws ServiceExecutionException;
 
 }

@@ -4,6 +4,7 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.OperatorEventEntityV2;
 
@@ -47,7 +48,7 @@ public interface OperatorEventsServiceV2 {
    * @return a collection of operator events
    * @throws org.terracotta.management.ServiceExecutionException
    */
-  Collection<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, String eventLevels, boolean filterOutRead) throws ServiceExecutionException;
+  ResponseEntityV2<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, String eventLevels, boolean filterOutRead) throws ServiceExecutionException;
 
   /**
    * Mark operator events as read or unread.

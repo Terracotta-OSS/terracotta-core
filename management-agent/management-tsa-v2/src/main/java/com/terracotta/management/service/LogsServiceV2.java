@@ -4,10 +4,10 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.LogEntityV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -42,7 +42,7 @@ public interface LogsServiceV2 {
    * @return a collection of logs
    * @throws org.terracotta.management.ServiceExecutionException
    */
-  Collection<LogEntityV2> getLogs(Set<String> serverNames) throws ServiceExecutionException;
+  ResponseEntityV2<LogEntityV2> getLogs(Set<String> serverNames) throws ServiceExecutionException;
 
   /**
    * Get the logs of the specified servers
@@ -52,7 +52,7 @@ public interface LogsServiceV2 {
    * @return a collection of logs
    * @throws org.terracotta.management.ServiceExecutionException
    */
-  Collection<LogEntityV2> getLogs(Set<String> serverNames, long sinceWhen) throws ServiceExecutionException;
+  ResponseEntityV2<LogEntityV2> getLogs(Set<String> serverNames, long sinceWhen) throws ServiceExecutionException;
 
   /**
    * Get the logs of the specified servers
@@ -61,7 +61,7 @@ public interface LogsServiceV2 {
    * @return a collection of logs
    * @throws org.terracotta.management.ServiceExecutionException
    */
-  Collection<LogEntityV2> getLogs(Set<String> serverNames, String sinceWhen) throws ServiceExecutionException;
+  ResponseEntityV2<LogEntityV2> getLogs(Set<String> serverNames, String sinceWhen) throws ServiceExecutionException;
 
 
 }

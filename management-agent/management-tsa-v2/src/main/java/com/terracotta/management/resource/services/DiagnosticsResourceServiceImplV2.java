@@ -3,19 +3,17 @@
  */
 package com.terracotta.management.resource.services;
 
-import static com.terracotta.management.resource.services.utils.AttachmentUtils.createTimestampedZipFilename;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.ThreadDumpEntityV2;
 import com.terracotta.management.resource.TopologyReloadStatusEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.DiagnosticsServiceV2;
 
 import java.io.ByteArrayInputStream;
@@ -38,6 +36,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import static com.terracotta.management.resource.services.utils.AttachmentUtils.createTimestampedZipFilename;
 
 /**
  * A resource service for performing TSA diagnostics.
@@ -72,9 +72,9 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/threadDump")
+  @Path("/threadDump")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<ThreadDumpEntityV2> clusterThreadDump(@Context UriInfo info) {
+  public ResponseEntityV2<ThreadDumpEntityV2> clusterThreadDump(@Context UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clusterThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
@@ -88,10 +88,10 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/threadDumpArchive")
+  @Path("/threadDumpArchive")
   @Produces("application/zip")
   public Response clusterThreadDumpZipped(@Context UriInfo info) {
-    Collection<ThreadDumpEntityV2> threadDumpEntities = clusterThreadDump(info);
+    Collection<ThreadDumpEntityV2> threadDumpEntities = clusterThreadDump(info).getEntities();
 
     try {
       InputStream inputStream = zipAndConvertToInputStream(threadDumpEntities);
@@ -102,15 +102,15 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/threadDump/servers")
+  @Path("/threadDump/servers")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<ThreadDumpEntityV2> serversThreadDump(@Context UriInfo info) {
+  public ResponseEntityV2<ThreadDumpEntityV2> serversThreadDump(@Context UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.serversThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(4).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       return diagnosticsService.getServersThreadDump(serverNames);
@@ -120,10 +120,10 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/threadDumpArchive/servers")
+  @Path("/threadDumpArchive/servers")
   @Produces("application/zip")
   public Response serversThreadDumpZipped(@Context UriInfo info) {
-    Collection<ThreadDumpEntityV2> threadDumpEntities = serversThreadDump(info);
+    Collection<ThreadDumpEntityV2> threadDumpEntities = serversThreadDump(info).getEntities();
 
     try {
       InputStream inputStream = zipAndConvertToInputStream(threadDumpEntities);
@@ -134,15 +134,15 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/threadDump/clients")
+  @Path("/threadDump/clients")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<ThreadDumpEntityV2> clientsThreadDump(@Context UriInfo info) {
+  public ResponseEntityV2<ThreadDumpEntityV2> clientsThreadDump(@Context UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clientsThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String ids = info.getPathSegments().get(3).getMatrixParameters().getFirst("ids");
+      String ids = info.getPathSegments().get(4).getMatrixParameters().getFirst("ids");
       Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
 
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
@@ -153,10 +153,10 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/threadDumpArchive/clients")
+  @Path("/threadDumpArchive/clients")
   @Produces("application/zip")
   public Response clientsThreadDumpZipped(@Context UriInfo info) {
-    Collection<ThreadDumpEntityV2> threadDumpEntities = clientsThreadDump(info);
+    Collection<ThreadDumpEntityV2> threadDumpEntities = clientsThreadDump(info).getEntities();
 
     try {
       InputStream inputStream = zipAndConvertToInputStream(threadDumpEntities);
@@ -167,7 +167,7 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @POST
-  @Path("/v2/dgc")
+  @Path("/dgc")
   @Produces(MediaType.APPLICATION_JSON)
   public boolean runDgc(@Context UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.runDgc: %s", info.getRequestUri()));
@@ -175,7 +175,7 @@ public class DiagnosticsResourceServiceImplV2 {
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       return diagnosticsService.runDgc(serverNames);
@@ -185,7 +185,7 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @POST
-  @Path("/v2/dumpClusterState")
+  @Path("/dumpClusterState")
   @Produces(MediaType.APPLICATION_JSON)
   public boolean dumpClusterState(@Context UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.dumpClusterState: %s", info.getRequestUri()));
@@ -193,7 +193,7 @@ public class DiagnosticsResourceServiceImplV2 {
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       return diagnosticsService.dumpClusterState(serverNames);
@@ -203,15 +203,15 @@ public class DiagnosticsResourceServiceImplV2 {
   }
 
   @POST
-  @Path("/v2/reloadConfiguration")
+  @Path("/reloadConfiguration")
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<TopologyReloadStatusEntityV2> reloadConfiguration(@Context UriInfo info) {
+  public ResponseEntityV2<TopologyReloadStatusEntityV2> reloadConfiguration(@Context UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.reloadConfiguration: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       return diagnosticsService.reloadConfiguration(serverNames);

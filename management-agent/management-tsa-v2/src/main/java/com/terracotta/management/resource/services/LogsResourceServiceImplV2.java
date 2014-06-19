@@ -3,17 +3,15 @@
  */
 package com.terracotta.management.resource.services;
 
-import static com.terracotta.management.resource.services.utils.AttachmentUtils.createTimestampedZipFilename;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.LogEntityV2;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.LogsServiceV2;
 
 import java.io.ByteArrayInputStream;
@@ -41,6 +39,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import static com.terracotta.management.resource.services.utils.AttachmentUtils.createTimestampedZipFilename;
+
 /**
  * A resource service for querying TSA logs.
  * 
@@ -63,13 +63,13 @@ public class LogsResourceServiceImplV2 {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Collection<LogEntityV2> getLogs(@Context UriInfo info) {
+  public ResponseEntityV2<LogEntityV2> getLogs(@Context UriInfo info) {
     LOG.debug(String.format("Invoking LogsResourceServiceImpl.getLogs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(1).getMatrixParameters().getFirst("names");
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
@@ -82,10 +82,10 @@ public class LogsResourceServiceImplV2 {
   }
 
   @GET
-  @Path("/v2/archive")
+  @Path("/archive")
   @Produces("application/zip")
   public Response getLogsZipped(@Context UriInfo info) {
-    Collection<LogEntityV2> logEntities = getLogs(info);
+    Collection<LogEntityV2> logEntities = getLogs(info).getEntities();
 
     try {
       InputStream inputStream = zipAndConvertToInputStream(logEntities);

@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.resource.OperatorEventEntityV2;
@@ -30,7 +31,7 @@ public class OperatorEventsServiceImplV2 implements OperatorEventsServiceV2 {
   }
 
   @Override
-  public Collection<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, String eventLevels, boolean read) throws ServiceExecutionException {
+  public ResponseEntityV2<OperatorEventEntityV2> getOperatorEvents(Set<String> serverNames, String sinceWhen, String eventTypes, String eventLevels, boolean read) throws ServiceExecutionException {
     Set<String> acceptableLevels = null;
     if (eventLevels != null) {
       acceptableLevels = new HashSet<String>(Arrays.asList(eventLevels.split(",")));

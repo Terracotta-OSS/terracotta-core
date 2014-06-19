@@ -4,11 +4,11 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.ThreadDumpEntityV2;
 import com.terracotta.management.resource.TopologyReloadStatusEntityV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -25,7 +25,7 @@ public interface DiagnosticsServiceV2 {
    * @return a collection {@link ThreadDumpEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ThreadDumpEntityV2> getClusterThreadDump(Set<String> clientProductIds) throws ServiceExecutionException;
+  ResponseEntityV2<ThreadDumpEntityV2> getClusterThreadDump(Set<String> clientProductIds) throws ServiceExecutionException;
 
   /**
    * Get a collection {@link ThreadDumpEntityV2} objects each representing a server
@@ -35,7 +35,7 @@ public interface DiagnosticsServiceV2 {
    * @return a collection {@link ThreadDumpEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ThreadDumpEntityV2> getServersThreadDump(Set<String> serverNames) throws ServiceExecutionException;
+  ResponseEntityV2<ThreadDumpEntityV2> getServersThreadDump(Set<String> serverNames) throws ServiceExecutionException;
 
   /**
    * Get a collection {@link ThreadDumpEntityV2} objects each representing a client
@@ -45,7 +45,7 @@ public interface DiagnosticsServiceV2 {
    * @return a collection {@link ThreadDumpEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ThreadDumpEntityV2> getClientsThreadDump(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException;
+  ResponseEntityV2<ThreadDumpEntityV2> getClientsThreadDump(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException;
 
   /**
    * Run the Distributed Garbage Collector in the server array.
@@ -65,6 +65,6 @@ public interface DiagnosticsServiceV2 {
    * @return a collection {@link TopologyReloadStatusEntityV2} objects.
    * @throws ServiceExecutionException
    */
-  Collection<TopologyReloadStatusEntityV2> reloadConfiguration(Set<String> serverNames) throws ServiceExecutionException;
+  ResponseEntityV2<TopologyReloadStatusEntityV2> reloadConfiguration(Set<String> serverNames) throws ServiceExecutionException;
 
 }

@@ -4,12 +4,12 @@
 package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.LogEntityV2;
 import com.terracotta.management.resource.services.utils.TimeStringParser;
 import com.terracotta.management.service.LogsServiceV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -24,17 +24,17 @@ public class LogsServiceImplV2 implements LogsServiceV2 {
   }
 
   @Override
-  public Collection<LogEntityV2> getLogs(Set<String> serverNames) throws ServiceExecutionException {
+  public ResponseEntityV2<LogEntityV2> getLogs(Set<String> serverNames) throws ServiceExecutionException {
     return serverManagementService.getLogs(serverNames, null);
   }
 
   @Override
-  public Collection<LogEntityV2> getLogs(Set<String> serverNames, long sinceWhen) throws ServiceExecutionException {
+  public ResponseEntityV2<LogEntityV2> getLogs(Set<String> serverNames, long sinceWhen) throws ServiceExecutionException {
     return serverManagementService.getLogs(serverNames, sinceWhen);
   }
 
   @Override
-  public Collection<LogEntityV2> getLogs(Set<String> serverNames, String sinceWhen) throws ServiceExecutionException {
+  public ResponseEntityV2<LogEntityV2> getLogs(Set<String> serverNames, String sinceWhen) throws ServiceExecutionException {
     if (sinceWhen == null) {
       return getLogs(serverNames);
     } else {

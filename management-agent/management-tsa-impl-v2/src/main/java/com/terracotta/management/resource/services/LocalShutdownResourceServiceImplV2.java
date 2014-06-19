@@ -82,7 +82,7 @@ public class LocalShutdownResourceServiceImplV2 {
 
   private ServerGroupEntityV2 getCurrentServerGroup() throws ServiceExecutionException {
     String localServerName = localManagementSource.getLocalServerName();
-    Collection<TopologyEntityV2> serverTopologies = topologyService.getServerTopologies(null);
+    Collection<TopologyEntityV2> serverTopologies = topologyService.getServerTopologies(null).getEntities();
     for (TopologyEntityV2 serverTopology : serverTopologies) {
       Set<ServerGroupEntityV2> serverGroups = serverTopology.getServerGroupEntities();
       for (ServerGroupEntityV2 serverGroup : serverGroups) {

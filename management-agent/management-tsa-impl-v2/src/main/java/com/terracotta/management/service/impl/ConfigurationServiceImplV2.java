@@ -3,15 +3,15 @@
  */
 package com.terracotta.management.service.impl;
 
-import static com.terracotta.management.resource.services.utils.ProductIdConverter.stringsToProductsIds;
-
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.ConfigEntityV2;
 import com.terracotta.management.service.ConfigurationServiceV2;
 
-import java.util.Collection;
 import java.util.Set;
+
+import static com.terracotta.management.resource.services.utils.ProductIdConverter.stringsToProductsIds;
 
 /**
  * @author Ludovic Orban
@@ -27,12 +27,12 @@ public class ConfigurationServiceImplV2 implements ConfigurationServiceV2 {
   }
 
   @Override
-  public Collection<ConfigEntityV2> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException {
+  public ResponseEntityV2<ConfigEntityV2> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException {
     return serverManagementService.getServerConfigs(serverNames);
   }
 
   @Override
-  public Collection<ConfigEntityV2> getClientConfigs(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException {
+  public ResponseEntityV2<ConfigEntityV2> getClientConfigs(Set<String> clientIds, Set<String> clientProductIds) throws ServiceExecutionException {
     return clientManagementService.getClientConfigs(clientIds, stringsToProductsIds(clientProductIds));
   }
 }

@@ -4,10 +4,10 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.LicenseEntityV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -23,6 +23,6 @@ public interface LicenseServiceV2 {
    * @return a collection of license properties
    * @throws ServiceExecutionException
    */
-  Collection<LicenseEntityV2> getLicenseProperties(Set<String> serverNames) throws ServiceExecutionException;
+  ResponseEntityV2<LicenseEntityV2> getLicenseProperties(Set<String> serverNames) throws ServiceExecutionException;
 
 }

@@ -3,9 +3,8 @@
  */
 package com.terracotta.management.service.impl;
 
-import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
-
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.tc.license.ProductID;
 import com.terracotta.management.resource.AbstractTsaEntityV2;
@@ -24,7 +23,6 @@ import com.terracotta.management.service.impl.util.RemoteManagementSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +32,8 @@ import java.util.concurrent.Future;
 
 import javax.management.ObjectName;
 import javax.ws.rs.core.UriBuilder;
+
+import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
 
 /**
  * @author Ludovic Orban
@@ -59,7 +59,7 @@ public class ClientManagementServiceV2 {
   }
 
 
-  public Collection<ThreadDumpEntityV2> clientsThreadDump(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
+  public ResponseEntityV2<ThreadDumpEntityV2> clientsThreadDump(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
     return forEachClient(clientProductIds, clientIds, "clientsThreadDump", new ForEachClient<ThreadDumpEntityV2>() {
       @Override
       public ThreadDumpEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
@@ -75,8 +75,9 @@ public class ClientManagementServiceV2 {
       }
 
       @Override
-      public Collection<ThreadDumpEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
+      public ResponseEntityV2<ThreadDumpEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
         UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
+            .path("v2")
             .path("agents")
             .path("diagnostics")
             .path("threadDump")
@@ -84,41 +85,44 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ThreadDumpEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
       }
     });
   }
 
-  public Collection<ClientEntityV2> getClients(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
+  public ResponseEntityV2<ClientEntityV2> getClients(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
     return forEachClient(clientProductIds, clientIds, "getClients", new ForEachClient<ClientEntityV2>() {
       @Override
       public ClientEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
         ClientEntityV2 clientEntityV2 = new ClientEntityV2();
+        clientEntityV2.setProductVersion(localManagementSource.getVersion());
         clientEntityV2.getAttributes().putAll(localManagementSource.getClientAttributes(clientObjectName));
         return clientEntityV2;
       }
 
       @Override
-      public Collection<ClientEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
+      public ResponseEntityV2<ClientEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
         UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
+            .path("v2")
             .path("agents")
             .path("topologies")
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
 
-        Collection<TopologyEntityV2> topologyEntities = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), TopologyEntityV2.class);
+        ResponseEntityV2<TopologyEntityV2> responseEntityV2 = remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder
+            .build(), ResponseEntityV2.class, TopologyEntityV2.class);
 
-        Collection<ClientEntityV2> result = new ArrayList<ClientEntityV2>();
-        for (TopologyEntityV2 topologyEntityV2 : topologyEntities) {
-          result.addAll(topologyEntityV2.getClientEntities());
+        ResponseEntityV2<ClientEntityV2> result = new ResponseEntityV2<ClientEntityV2>();
+        for (TopologyEntityV2 topologyEntityV2 : responseEntityV2.getEntities()) {
+          result.getEntities().addAll(topologyEntityV2.getClientEntities());
         }
         return result;
       }
     });
   }
 
-  public Collection<StatisticsEntityV2> getClientsStatistics(Set<String> clientIds, Set<ProductID> clientProductIds, final Set<String> attributesToShow) throws ServiceExecutionException {
+  public ResponseEntityV2<StatisticsEntityV2> getClientsStatistics(Set<String> clientIds, Set<ProductID> clientProductIds, final Set<String> attributesToShow) throws ServiceExecutionException {
     final String[] attributeNames = (attributesToShow == null) ?
         CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES :
         new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
@@ -137,8 +141,9 @@ public class ClientManagementServiceV2 {
       }
 
       @Override
-      public Collection<StatisticsEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
+      public ResponseEntityV2<StatisticsEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
         UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
+            .path("v2")
             .path("agents")
             .path("statistics")
             .path("clients");
@@ -146,12 +151,12 @@ public class ClientManagementServiceV2 {
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
         if (attributesToShow != null) { uriBuilder.queryParam("show", toCsv(attributesToShow)); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), StatisticsEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
       }
     });
   }
 
-  public Collection<ConfigEntityV2> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
+  public ResponseEntityV2<ConfigEntityV2> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
     return forEachClient(clientProductIds, clientIds, "getClientConfigs", new ForEachClient<ConfigEntityV2>() {
       @Override
       public ConfigEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
@@ -166,15 +171,16 @@ public class ClientManagementServiceV2 {
       }
 
       @Override
-      public Collection<ConfigEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
+      public ResponseEntityV2<ConfigEntityV2> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds) {
         UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
+            .path("v2")
             .path("agents")
             .path("configurations")
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ConfigEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
       }
     });
   }
@@ -194,15 +200,15 @@ public class ClientManagementServiceV2 {
 
   interface ForEachClient<T extends AbstractTsaEntityV2> {
     T queryClient(ObjectName clientObjectName, String clientId);
-    Collection<T> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds);
+    ResponseEntityV2<T> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds);
   }
 
-  private <T extends AbstractTsaEntityV2> Collection<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
+  private <T extends AbstractTsaEntityV2> ResponseEntityV2<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
     if (!localManagementSource.isActiveCoordinator()) {
       String activeServerName = findActiveServerName();
       if (activeServerName == null) {
         // there's no active at this time
-        return Collections.emptySet();
+        return new ResponseEntityV2<T>();
       }
       return fec.queryActiveServerClients(activeServerName, clientIds, clientProductIds);
     }
@@ -232,7 +238,9 @@ public class ClientManagementServiceV2 {
     }
 
     try {
-      return remoteManagementSource.collectEntitiesFromFutures(futures, timeoutService.getCallTimeout(), methodName, Integer.MAX_VALUE);
+      ResponseEntityV2<T> responseEntityV2 = new ResponseEntityV2<T>();
+      responseEntityV2.getEntities().addAll(remoteManagementSource.collectEntitiesFromFutures(futures, timeoutService.getCallTimeout(), methodName, Integer.MAX_VALUE));
+      return responseEntityV2;
     } catch (Exception e) {
       remoteManagementSource.cancelFutures(futures.values());
       throw new ServiceExecutionException("error collecting client data via " + methodName, e);
