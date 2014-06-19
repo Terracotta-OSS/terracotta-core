@@ -3,10 +3,12 @@
  */
 package com.terracotta.management.service.impl;
 
+import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
+
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.VersionedEntityV2;
 
 import com.tc.license.ProductID;
+import com.terracotta.management.resource.AbstractTsaEntityV2;
 import com.terracotta.management.resource.ClientEntityV2;
 import com.terracotta.management.resource.ConfigEntityV2;
 import com.terracotta.management.resource.ServerEntityV2;
@@ -32,8 +34,6 @@ import java.util.concurrent.Future;
 
 import javax.management.ObjectName;
 import javax.ws.rs.core.UriBuilder;
-
-import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
 
 /**
  * @author Ludovic Orban
@@ -65,7 +65,6 @@ public class ClientManagementServiceV2 {
       public ThreadDumpEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
         ThreadDumpEntityV2 threadDumpEntityV2 = new ThreadDumpEntityV2();
         threadDumpEntityV2.setNodeType(ThreadDumpEntityV2.NodeType.CLIENT);
-        threadDumpEntityV2.setVersion(localManagementSource.getVersion());
         threadDumpEntityV2.setSourceId(clientId);
         try {
           threadDumpEntityV2.setDump(localManagementSource.clientThreadDump(clientObjectName));
@@ -95,7 +94,6 @@ public class ClientManagementServiceV2 {
       @Override
       public ClientEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
         ClientEntityV2 clientEntityV2 = new ClientEntityV2();
-        clientEntityV2.setVersion(localManagementSource.getVersion());
         clientEntityV2.getAttributes().putAll(localManagementSource.getClientAttributes(clientObjectName));
         return clientEntityV2;
       }
@@ -130,7 +128,6 @@ public class ClientManagementServiceV2 {
       public StatisticsEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
         StatisticsEntityV2 statisticsEntityV2 = new StatisticsEntityV2();
         statisticsEntityV2.setSourceId(clientId);
-        statisticsEntityV2.setVersion(localManagementSource.getVersion());
         try {
           statisticsEntityV2.getStatistics().putAll(localManagementSource.getClientStatistics(clientId, attributeNames));
         } catch (ManagementSourceException e) {
@@ -159,7 +156,6 @@ public class ClientManagementServiceV2 {
       @Override
       public ConfigEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
         ConfigEntityV2 configEntityV2 = new ConfigEntityV2();
-        configEntityV2.setVersion(localManagementSource.getVersion());
         configEntityV2.setSourceId(clientId);
         try {
           configEntityV2.getAttributes().putAll(localManagementSource.getClientConfig(clientObjectName));
@@ -196,12 +192,12 @@ public class ClientManagementServiceV2 {
     return null;
   }
 
-  interface ForEachClient<T extends VersionedEntityV2> {
+  interface ForEachClient<T extends AbstractTsaEntityV2> {
     T queryClient(ObjectName clientObjectName, String clientId);
     Collection<T> queryActiveServerClients(String activeServerName, Set<String> clientIds, Set<ProductID> clientProductIds);
   }
 
-  private <T extends VersionedEntityV2> Collection<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
+  private <T extends AbstractTsaEntityV2> Collection<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
     if (!localManagementSource.isActiveCoordinator()) {
       String activeServerName = findActiveServerName();
       if (activeServerName == null) {

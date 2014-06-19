@@ -4,7 +4,7 @@
 package com.terracotta.management.resource;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing a TSA server or client
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing a TSA server or client
  * thread dump from the management API.
  *
  * @author Ludovic Orban

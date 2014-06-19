@@ -4,7 +4,7 @@
 package com.terracotta.management.resource;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing a topology reload status
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing a topology reload status
  * from the management API.
  *
  * @author Ludovic Orban

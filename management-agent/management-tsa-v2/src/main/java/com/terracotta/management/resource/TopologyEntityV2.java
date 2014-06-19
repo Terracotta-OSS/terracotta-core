@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing a TSA topology from the management API.
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing a TSA topology from the management API.
  *
  * @author Ludovic Orban
  */
@@ -34,4 +34,5 @@ public class TopologyEntityV2 extends AbstractTsaEntityV2 {
   public Map<String, Integer> getUnreadOperatorEventCount() {
     return unreadOperatorEventCount;
   }
+
 }

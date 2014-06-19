@@ -4,9 +4,9 @@
 package com.terracotta.management.l1bridge;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.AgentEntityCollectionV2;
+import org.terracotta.management.resource.AbstractEntityV2;
 import org.terracotta.management.resource.AgentEntityV2;
-import org.terracotta.management.resource.AgentMetadataEntityV2;
+import org.terracotta.management.resource.ResponseEntityV2;
 import org.terracotta.management.resource.services.AgentServiceV2;
 
 import com.terracotta.management.security.ContextService;
@@ -36,7 +36,9 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
   }
 
   @Override
-  public Collection<AgentMetadataEntityV2> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
+  public ResponseEntityV2 getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
+    ResponseEntityV2 result = new ResponseEntityV2();
+    
     Set<String> nodes = remoteCaller.getRemoteAgentNodeNames();
     if (ids.isEmpty()) {
       ids = new HashSet<String>(nodes);
@@ -47,15 +49,18 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
     if (!unknownIds.isEmpty()) { throw new ServiceExecutionException("Unknown agent IDs : " + unknownIds); }
 
     try {
-      return remoteCaller.fanOutCollectionCall(null, nodes, AgentServiceV2.class.getName(), AgentServiceV2.class.getMethod("getAgentsMetadata", Set.class), new Object[] {Collections.emptySet()});
+      Collection<? extends AbstractEntityV2> fanOutCollectionCall = remoteCaller.fanOutCollectionCall(null, nodes, AgentServiceV2.class.getName(), AgentServiceV2.class.getMethod("getAgentsMetadata", Set.class), new Object[] {Collections.emptySet()});
+      result.getEntities().addAll(fanOutCollectionCall);
     } catch (NoSuchMethodException nsme) {
       throw new ServiceExecutionException("Error executing remote call", nsme);
     }
+    
+    return result;
   }
 
   @Override
-  public AgentEntityCollectionV2 getAgents(Set<String> idSet) throws ServiceExecutionException {
-    AgentEntityCollectionV2 result = new AgentEntityCollectionV2();
+  public ResponseEntityV2 getAgents(Set<String> idSet) throws ServiceExecutionException {
+    ResponseEntityV2 result = new ResponseEntityV2();
 
     Map<String, Map<String, String>> nodes = remoteCaller.getRemoteAgentNodeDetails();
     if (idSet.isEmpty()) {
@@ -69,8 +74,7 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
       AgentEntityV2 e = new AgentEntityV2();
       e.setAgentId(id);
       e.setAgencyOf(props.get("Agency"));
-      e.setVersion(props.get("Version"));
-      result.getAgentEntities().add(e);
+      result.getEntities().add(e);
     }
 
     return result;

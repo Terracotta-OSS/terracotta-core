@@ -6,7 +6,7 @@ package com.terracotta.management.resource;
 import java.io.Serializable;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing a server MBean
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing a server MBean
  * from the management API.
  *
  * @author Ludovic Orban

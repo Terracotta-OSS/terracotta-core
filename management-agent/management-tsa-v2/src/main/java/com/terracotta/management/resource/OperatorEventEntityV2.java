@@ -4,7 +4,7 @@
 package com.terracotta.management.resource;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing an operator event
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing an operator event
  * from the management API.
  *
  * @author Ludovic Orban

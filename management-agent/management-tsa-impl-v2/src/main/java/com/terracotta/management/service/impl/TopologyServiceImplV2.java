@@ -43,7 +43,6 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
   @Override
   public Collection<TopologyEntityV2> getTopologies(Set<String> productIDs) throws ServiceExecutionException {
      TopologyEntityV2 result = new TopologyEntityV2();
-     result.setVersion(this.getClass().getPackage().getImplementationVersion());
      result.getServerGroupEntities().addAll(this.getServerGroups(null));
      result.getClientEntities().addAll(this.getClients(productIDs));
      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(null));
@@ -53,7 +52,6 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
   @Override
   public Collection<TopologyEntityV2> getServerTopologies(Set<String> serverNames) throws ServiceExecutionException {
      TopologyEntityV2 result = new TopologyEntityV2();
-     result.setVersion(this.getClass().getPackage().getImplementationVersion());
      result.getServerGroupEntities().addAll(this.getServerGroups(serverNames));
      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(serverNames));
      return Collections.singleton(result);
@@ -62,7 +60,6 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
   @Override
   public Collection<TopologyEntityV2> getConnectedClients(Set<String> productIDs) throws ServiceExecutionException {
     TopologyEntityV2 result = new TopologyEntityV2();
-    result.setVersion(this.getClass().getPackage().getImplementationVersion());
     result.getClientEntities().addAll(this.getClients(productIDs));
     return Collections.singleton(result);
   }
@@ -70,7 +67,6 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
   @Override
   public Collection<TopologyEntityV2> getUnreadOperatorEventCount(Set<String> serverNames) throws ServiceExecutionException {
     TopologyEntityV2 result = new TopologyEntityV2();
-    result.setVersion(this.getClass().getPackage().getImplementationVersion());
     result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(serverNames));
     return Collections.singleton(result);
   }

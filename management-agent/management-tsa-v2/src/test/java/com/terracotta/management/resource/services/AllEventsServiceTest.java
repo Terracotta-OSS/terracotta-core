@@ -12,13 +12,12 @@ import javax.ws.rs.client.WebTarget;
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-
 public class AllEventsServiceTest {
 
   @Test
   public void allEventsTest() {
     Client client = ClientBuilder.newBuilder().register(SseFeature.class).build();
-    WebTarget target = client.target("http://localhost:9540/tc-management-api/v2/events");
+    WebTarget target = client.target("http://localhost:9888/tc-management-api/v2/events");
 
     EventInput eventInput = target.request().get(EventInput.class);
     while (!eventInput.isClosed()) {

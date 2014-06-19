@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing a topology server
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing a topology server
  * or client's statistics from the management API.
  *
  * @author Ludovic Orban

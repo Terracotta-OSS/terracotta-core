@@ -103,7 +103,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       @Override
       public Collection<ThreadDumpEntityV2> queryLocalServer(L2Info member) {
         ThreadDumpEntityV2 threadDumpEntityV2 = new ThreadDumpEntityV2();
-        threadDumpEntityV2.setVersion(localManagementSource.getVersion());
         threadDumpEntityV2.setSourceId(member.name());
         threadDumpEntityV2.setNodeType(ThreadDumpEntityV2.NodeType.SERVER);
         try {
@@ -127,7 +126,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
           return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ThreadDumpEntityV2.class);
         } catch (ProcessingException che) {
           ThreadDumpEntityV2 threadDumpEntityV2 = new ThreadDumpEntityV2();
-          threadDumpEntityV2.setVersion(localManagementSource.getVersion());
           threadDumpEntityV2.setSourceId(member.name());
           threadDumpEntityV2.setNodeType(ThreadDumpEntityV2.NodeType.SERVER);
           threadDumpEntityV2.setDump("Unavailable");
@@ -147,7 +145,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       public Collection<StatisticsEntityV2> queryLocalServer(L2Info member) {
         StatisticsEntityV2 statisticsEntityV2 = new StatisticsEntityV2();
         statisticsEntityV2.setSourceId(member.name());
-        statisticsEntityV2.setVersion(localManagementSource.getVersion());
         try {
           statisticsEntityV2.getStatistics().putAll(localManagementSource.getDsoAttributes(mbeanAttributeNames));
         } catch (ManagementSourceException e) {
@@ -179,7 +176,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
           for (GCStats gcStat : attributes) {
             StatisticsEntityV2 statisticsEntityV2 = new StatisticsEntityV2();
             statisticsEntityV2.setSourceId(member.name());
-            statisticsEntityV2.setVersion(localManagementSource.getVersion());
 
             statisticsEntityV2.getStatistics().put("Iteration", gcStat.getIteration());
             statisticsEntityV2.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
@@ -198,7 +194,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         } catch (ManagementSourceException e) {
           StatisticsEntityV2 statisticsEntityV2 = new StatisticsEntityV2();
           statisticsEntityV2.setSourceId(member.name());
-          statisticsEntityV2.setVersion(localManagementSource.getVersion());
 
           statisticsEntityV2.getStatistics().put("Error", e.getMessage());
 
@@ -225,7 +220,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       @Override
       public Collection<ConfigEntityV2> queryLocalServer(L2Info member) {
         ConfigEntityV2 configEntityV2 = new ConfigEntityV2();
-        configEntityV2.setVersion(localManagementSource.getVersion());
         configEntityV2.setSourceId(member.name());
         try {
           configEntityV2.getAttributes().putAll(localManagementSource.getServerInfoAttributes());
@@ -247,7 +241,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
           return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ConfigEntityV2.class);
         } catch (ProcessingException che) {
           ConfigEntityV2 configEntityV2 = new ConfigEntityV2();
-          configEntityV2.setVersion(localManagementSource.getVersion());
           configEntityV2.setSourceId(member.name());
           configEntityV2.getAttributes().put("Error", che.getMessage());
           return Collections.singleton(configEntityV2);
@@ -269,7 +262,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         for (String name : backups.keySet()) {
           String status = backups.get(name);
           BackupEntityV2 backupEntityV2 = new BackupEntityV2();
-          backupEntityV2.setVersion(localManagementSource.getVersion());
           backupEntityV2.setSourceId(member.name());
           backupEntityV2.setName(name);
           backupEntityV2.setStatus(status);
@@ -298,7 +290,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       @Override
       public Collection<LicenseEntityV2> queryLocalServer(L2Info member) {
         LicenseEntityV2 licenseV2 = new LicenseEntityV2();
-        licenseV2.setVersion(localManagementSource.getVersion());
         licenseV2.setSourceId(member.name());
         licenseV2.setProperties(localManagementSource.getLicenseProperties());
         return Collections.singleton(licenseV2);
@@ -326,7 +317,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
           for (Notification logNotification : logNotifications) {
             LogEntityV2 logEntityV2 = new LogEntityV2();
             logEntityV2.setSourceId(member.name());
-            logEntityV2.setVersion(localManagementSource.getVersion());
             logEntityV2.setMessage(logNotification.getMessage());
             logEntityV2.setTimestamp(logNotification.getTimeStamp());
             logEntityV2.setThrowableStringRep((String[])logNotification.getUserData());
@@ -336,7 +326,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         } catch (Exception e) {
           LogEntityV2 logEntityV2 = new LogEntityV2();
           logEntityV2.setSourceId(member.name());
-          logEntityV2.setVersion(localManagementSource.getVersion());
           logEntityV2.setMessage(e.getMessage());
 
           localResult.add(logEntityV2);
@@ -384,7 +373,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
 
             OperatorEventEntityV2 operatorEventEntityV2 = new OperatorEventEntityV2();
             operatorEventEntityV2.setSourceId(member.name());
-            operatorEventEntityV2.setVersion(localManagementSource.getVersion());
             operatorEventEntityV2.setMessage(operatorEvent.getEventMessage());
             operatorEventEntityV2.setTimestamp(operatorEvent.getEventTime().getTime());
             operatorEventEntityV2.setCollapseString(operatorEvent.getCollapseString());
@@ -398,7 +386,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         } catch (Exception e) {
           OperatorEventEntityV2 operatorEventEntityV2 = new OperatorEventEntityV2();
           operatorEventEntityV2.setSourceId(member.name());
-          operatorEventEntityV2.setVersion(localManagementSource.getVersion());
           operatorEventEntityV2.setMessage(e.getMessage());
 
           localResult.add(operatorEventEntityV2);
@@ -441,7 +428,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
 
             MBeanEntityV2 mBeanEntityV2 = new MBeanEntityV2();
             mBeanEntityV2.setSourceId(member.name());
-            mBeanEntityV2.setVersion(localManagementSource.getVersion());
             mBeanEntityV2.setObjectName(objectName.toString());
             mBeanEntityV2.setAttributes(attributeEntities.toArray(new MBeanEntityV2.AttributeEntityV2[attributeEntities.size()]));
 
@@ -475,7 +461,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
     for (final ServerGroupInfo serverGroupInfo : serverGroupInfos) {
       ServerGroupEntityV2 serverGroupEntityV2 = new ServerGroupEntityV2();
 
-      serverGroupEntityV2.setVersion(localManagementSource.getVersion());
       serverGroupEntityV2.setName(serverGroupInfo.name());
       serverGroupEntityV2.setId(serverGroupInfo.id());
 
@@ -529,12 +514,11 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             return Collections.singleton(findServerGroupEntityV2ContainingServerWithName(topologyEntities, member.name()));
           } catch (ProcessingException che) {
             ServerGroupEntityV2 sgEntityV2 = new ServerGroupEntityV2();
-            sgEntityV2.setVersion(localManagementSource.getVersion());
             sgEntityV2.setName(serverGroupInfo.name());
             sgEntityV2.setId(serverGroupInfo.id());
 
             ServerEntityV2 sEntityV2 = new ServerEntityV2();
-            sEntityV2.setVersion(localManagementSource.getVersion());
+            sEntityV2.setProductVersion(localManagementSource.getVersion());
             sEntityV2.getAttributes().put("Name", member.name());
             sEntityV2.getAttributes().put("Host", member.host());
             sEntityV2.getAttributes().put("ManagementPort", member.managementPort());
@@ -554,7 +538,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
   private void getServerGroups_local(Collection<ServerGroupEntityV2> localServerGroupEntities, ServerGroupEntityV2 serverGroupEntityV2, L2Info member) {
     ServerEntityV2 serverEntityV2;
     serverEntityV2 = new ServerEntityV2();
-    serverEntityV2.setVersion(localManagementSource.getVersion());
+    serverEntityV2.setProductVersion(localManagementSource.getVersion());
     serverEntityV2.getAttributes().put("Name", member.name());
     serverEntityV2.getAttributes().put("Host", member.host());
     serverEntityV2.getAttributes().put("ManagementPort", member.managementPort());
@@ -585,7 +569,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       @Override
       public Collection<TopologyEntityV2> queryLocalServer(L2Info member) {
         TopologyEntityV2 topologyEntityV2 = new TopologyEntityV2();
-        topologyEntityV2.setVersion(localManagementSource.getVersion());
         topologyEntityV2.setUnreadOperatorEventCount(localManagementSource.getUnreadOperatorEventCount());
         return Collections.singleton(topologyEntityV2);
       }
@@ -680,7 +663,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         }
 
         BackupEntityV2 backupEntityV2 = new BackupEntityV2();
-        backupEntityV2.setVersion(localManagementSource.getVersion());
         backupEntityV2.setSourceId(member.name());
         backupEntityV2.setName(backupName);
 
@@ -762,7 +744,6 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       public Collection<TopologyReloadStatusEntityV2> queryLocalServer(L2Info member) {
         TopologyReloadStatusEntityV2 topologyReloadStatusEntityV2 = new TopologyReloadStatusEntityV2();
         topologyReloadStatusEntityV2.setSourceId(member.name());
-        topologyReloadStatusEntityV2.setVersion(localManagementSource.getVersion());
         try {
           TopologyReloadStatus topologyReloadStatus = localManagementSource.reloadConfiguration();
           topologyReloadStatusEntityV2.setStatus(topologyReloadStatus.name());

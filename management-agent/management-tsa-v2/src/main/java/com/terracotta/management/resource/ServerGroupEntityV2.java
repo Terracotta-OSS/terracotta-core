@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A {@link org.terracotta.management.resource.VersionedEntityV2} representing a topology's server group
+ * A {@link org.terracotta.management.resource.AbstractEntityV2} representing a topology's server group
  * from the management API.
  *
  * @author Ludovic Orban
