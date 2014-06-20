@@ -128,6 +128,10 @@ public class LocalManagementSource {
     }
   }
 
+  public boolean isLegacyProductionModeEnabled() {
+    return tcServerInfoMBean.isLegacyProductionModeEnabled();
+  }
+
   public boolean isEnterpriseEdition() throws ManagementSourceException {
     try {
       mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Enterprise Terracotta Server"), "Enabled");

@@ -20,6 +20,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.security.PwProvider;
+import com.tc.util.concurrent.ThreadUtil;
 import com.terracotta.management.keychain.KeyChain;
 
 import java.io.Console;
@@ -40,6 +41,8 @@ public class TCStop {
 
   public static final String    DEFAULT_HOST  = "localhost";
   public static final int       DEFAULT_PORT  = 9540;
+  private static final int MAX_TRIES = 50;
+  private static final int TRY_INTERVAL = 1000;
 
   public static final void main(String[] args) throws Exception {
     Options options = StandardConfigurationSetupManagerFactory
@@ -246,60 +249,68 @@ public class TCStop {
     // adding some data to send along with the request to the server
     sb.append("{\"forceStop\":\"" + forceStop + "\"}");
     URL url = new URL(urlAsString);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    OutputStreamWriter wr = null;
-    int responseCode = 0;
-    try {
-      conn.setDoOutput(true);
-      conn.setRequestMethod("POST");
-      String headerValue = username + ":" + password;
-      byte[] bytes = headerValue.getBytes("UTF-8");
-      String encodeBase64 = Base64.encodeBytes(bytes);
-      // Basic auth
-      conn.addRequestProperty("Basic", encodeBase64);
+    for (int i = 0 ;; i++) {
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      OutputStreamWriter wr = null;
+      int responseCode = 0;
+      try {
+        conn.setDoOutput(true);
+        conn.setRequestMethod("POST");
+        String headerValue = username + ":" + password;
+        byte[] bytes = headerValue.getBytes("UTF-8");
+        String encodeBase64 = Base64.encodeBytes(bytes);
+        // Basic auth
+        conn.addRequestProperty("Basic", encodeBase64);
 
-      // we send as text/plain , the forceStop attribute, that basically is a boolean
-      conn.addRequestProperty("Content-Type", "application/json");
-      conn.addRequestProperty("Accept", "*/*");
+        // we send as text/plain , the forceStop attribute, that basically is a boolean
+        conn.addRequestProperty("Content-Type", "application/json");
+        conn.addRequestProperty("Accept", "*/*");
 
-      wr = new OutputStreamWriter(conn.getOutputStream());
-      // this is were we're adding post data to the request
-      wr.write(sb.toString());
-      wr.flush();
+        wr = new OutputStreamWriter(conn.getOutputStream());
+        // this is were we're adding post data to the request
+        wr.write(sb.toString());
+        wr.flush();
 
-      responseCode = conn.getResponseCode();
-      if (responseCode >= 200 && responseCode < 300) {
-        myInputStream = conn.getInputStream();
-        consoleLogger.debug("Stopping with REST call " + urlAsString + ", response code is " + responseCode);
-        consoleLogger.debug("REST response: " + IOUtils.toString(myInputStream));
-      } else {
-        if (conn.getErrorStream() != null) {
-          String content = IOUtils.toString(conn.getErrorStream());
-          consoleLogger.debug("Error response: " + content);
+        responseCode = conn.getResponseCode();
+        if (responseCode >= 200 && responseCode < 300) {
+          myInputStream = conn.getInputStream();
+          consoleLogger.debug("Stopping with REST call " + urlAsString + ", response code is " + responseCode);
+          consoleLogger.debug("REST response: " + IOUtils.toString(myInputStream));
+          break;
+        } else {
+          if (conn.getErrorStream() != null) {
+            String content = IOUtils.toString(conn.getErrorStream());
+            consoleLogger.debug("Error response: " + content);
 
-          String error = content; // default case is the raw error response
+            String error = content; // default case is the raw error response
 
-          // attempt to parse error as Json object first
-          try {
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> restResponse = mapper.readValue(content, Map.class);
-            error = (String) restResponse.get("error");
-          } catch (Exception mapException) {
-            // not a json response, ignore
-            if (responseCode == 404) {
-              error = urlAsString
-                      + " was not found (Response code 404). Was the server configured with management-tsa-war?";
-            } else {
-              error = conn.getResponseMessage() + ". Response code: " + responseCode;
+            // attempt to parse error as Json object first
+            try {
+              ObjectMapper mapper = new ObjectMapper();
+              Map<String, Object> restResponse = mapper.readValue(content, Map.class);
+              error = (String) restResponse.get("error");
+            } catch (Exception mapException) {
+              // not a json response, ignore
+              if (responseCode == 404) {
+                if (i < MAX_TRIES) {
+                  consoleLogger.info("Got a 404, the REST service might not yet be fully started. Waiting a bit and trying again.");
+                  ThreadUtil.reallySleep(TRY_INTERVAL);
+                  continue;
+                }
+                error = urlAsString
+                        + " was not found (Response code 404). Was the server configured with management-tsa-war?";
+              } else {
+                error = conn.getResponseMessage() + ". Response code: " + responseCode;
+              }
             }
+            throw new IOException(error);
           }
-          throw new IOException(error);
         }
+      } finally {
+        IOUtils.closeQuietly(wr);
+        IOUtils.closeQuietly(myInputStream);
+        conn.disconnect();
       }
-    } finally {
-      IOUtils.closeQuietly(wr);
-      IOUtils.closeQuietly(myInputStream);
-      conn.disconnect();
     }
   }
 }
