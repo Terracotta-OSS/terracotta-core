@@ -21,9 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -75,7 +73,7 @@ public class DiagnosticsResourceServiceImplV2 {
   @Path("/threadDump")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<ThreadDumpEntityV2> clusterThreadDump(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clusterThreadDump: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImplV2.clusterThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -105,13 +103,12 @@ public class DiagnosticsResourceServiceImplV2 {
   @Path("/threadDump/servers")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<ThreadDumpEntityV2> serversThreadDump(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.serversThreadDump: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImplV2.serversThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(4).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
       return diagnosticsService.getServersThreadDump(serverNames);
     } catch (ServiceExecutionException see) {
@@ -137,14 +134,12 @@ public class DiagnosticsResourceServiceImplV2 {
   @Path("/threadDump/clients")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<ThreadDumpEntityV2> clientsThreadDump(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clientsThreadDump: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImplV2.clientsThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String ids = info.getPathSegments().get(4).getMatrixParameters().getFirst("ids");
-      Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
-
+      Set<String> clientIds = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "ids");
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
       return diagnosticsService.getClientsThreadDump(clientIds, productIDs);
     } catch (ServiceExecutionException see) {
@@ -170,13 +165,12 @@ public class DiagnosticsResourceServiceImplV2 {
   @Path("/dgc")
   @Produces(MediaType.APPLICATION_JSON)
   public boolean runDgc(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.runDgc: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImplV2.runDgc: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
       return diagnosticsService.runDgc(serverNames);
     } catch (ServiceExecutionException see) {
@@ -188,13 +182,12 @@ public class DiagnosticsResourceServiceImplV2 {
   @Path("/dumpClusterState")
   @Produces(MediaType.APPLICATION_JSON)
   public boolean dumpClusterState(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.dumpClusterState: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImplV2.dumpClusterState: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
       return diagnosticsService.dumpClusterState(serverNames);
     } catch (ServiceExecutionException see) {
@@ -206,13 +199,12 @@ public class DiagnosticsResourceServiceImplV2 {
   @Path("/reloadConfiguration")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<TopologyReloadStatusEntityV2> reloadConfiguration(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.reloadConfiguration: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImplV2.reloadConfiguration: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
       return diagnosticsService.reloadConfiguration(serverNames);
     } catch (ServiceExecutionException see) {

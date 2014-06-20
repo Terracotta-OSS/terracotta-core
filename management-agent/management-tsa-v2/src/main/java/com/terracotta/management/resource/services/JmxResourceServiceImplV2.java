@@ -12,10 +12,9 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.MBeanEntityV2;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.JmxServiceV2;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.GET;
@@ -50,13 +49,12 @@ public class JmxResourceServiceImplV2 {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<MBeanEntityV2> queryMBeans(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking JmxResourceServiceImpl.queryMBeans: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking JmxResourceServiceImplV2.queryMBeans: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       String query = qParams.getFirst(ATTR_QUERY);

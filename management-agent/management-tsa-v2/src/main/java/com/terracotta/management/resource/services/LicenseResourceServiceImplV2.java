@@ -12,10 +12,9 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.LicenseEntityV2;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.LicenseServiceV2;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.GET;
@@ -58,8 +57,7 @@ public class LicenseResourceServiceImplV2 {
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
       return licenseService.getLicenseProperties(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get license properties", see,

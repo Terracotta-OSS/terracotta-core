@@ -15,8 +15,6 @@ import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.TopologyServiceV2;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.GET;
@@ -54,7 +52,7 @@ public class TopologyResourceServiceImplV2 {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<TopologyEntityV2> getTopologies(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking TopologyServiceImpl.getTopologies: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyResourceServiceImplV2.getTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -76,13 +74,12 @@ public class TopologyResourceServiceImplV2 {
   @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<TopologyEntityV2> getServerTopologies(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyResourceServiceImplV2.getServerTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
       return topologyService.getServerTopologies(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA servers topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
@@ -99,7 +96,7 @@ public class TopologyResourceServiceImplV2 {
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<TopologyEntityV2> getConnectedClients(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyResourceServiceImplV2.getConnectedClients: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -120,13 +117,12 @@ public class TopologyResourceServiceImplV2 {
   @Path("/unreadOperatorEventCount")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<TopologyEntityV2> getUnreadOperatorEventCount(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking TopologyServiceImpl.getUnreadOperatorEventCount: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyResourceServiceImplV2.getUnreadOperatorEventCount: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
       return topologyService.getUnreadOperatorEventCount(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA unread operator events count", see, Response.Status.BAD_REQUEST.getStatusCode());

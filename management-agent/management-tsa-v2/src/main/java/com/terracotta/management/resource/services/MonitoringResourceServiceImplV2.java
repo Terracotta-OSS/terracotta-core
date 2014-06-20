@@ -15,7 +15,6 @@ import com.terracotta.management.resource.StatisticsEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.MonitoringServiceV2;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,13 +58,12 @@ public class MonitoringResourceServiceImplV2 {
   @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<StatisticsEntityV2> getServerStatistics(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking MonitoringResourceServiceImpl.getServerStatistics: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking MonitoringResourceServiceImplV2.getServerStatistics: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       List<String> attrs = qParams.get(ATTR_QUERY_KEY);
@@ -87,13 +85,12 @@ public class MonitoringResourceServiceImplV2 {
   @Path("/dgc")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<StatisticsEntityV2> getDgcStatistics(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking MonitoringResourceServiceImpl.getDgcStatistics: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking MonitoringResourceServiceImplV2.getDgcStatistics: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("serverNames");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
       return monitoringService.getDgcStatistics(serverNames);
     } catch (ServiceExecutionException see) {
@@ -111,13 +108,12 @@ public class MonitoringResourceServiceImplV2 {
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<StatisticsEntityV2> getClientStatistics(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking MonitoringResourceServiceImpl.getClientStatistics: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking MonitoringResourceServiceImplV2.getClientStatistics: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String ids = info.getPathSegments().get(3).getMatrixParameters().getFirst("ids");
-      Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
+      Set<String> clientIds = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "ids");
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       List<String> attrs = qParams.get(ATTR_QUERY_KEY);

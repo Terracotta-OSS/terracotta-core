@@ -12,6 +12,7 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.LogEntityV2;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.LogsServiceV2;
 
 import java.io.ByteArrayInputStream;
@@ -20,11 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -64,13 +63,12 @@ public class LogsResourceServiceImplV2 {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<LogEntityV2> getLogs(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking LogsResourceServiceImpl.getLogs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking LogsResourceServiceImplV2.getLogs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       String sinceWhen = qParams.getFirst(ATTR_QUERY_KEY);

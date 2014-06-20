@@ -15,8 +15,6 @@ import com.terracotta.management.resource.ConfigEntityV2;
 import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.ConfigurationServiceV2;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.GET;
@@ -49,7 +47,7 @@ public class ConfigurationResourceServiceImplV2 {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<ConfigEntityV2> getConfigs(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.geConfigs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ConfigurationResourceServiceImplV2.geConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -68,13 +66,12 @@ public class ConfigurationResourceServiceImplV2 {
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<ConfigEntityV2> getClientConfigs(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.getClientConfigs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ConfigurationResourceServiceImplV2.getClientConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String ids = info.getPathSegments().get(3).getMatrixParameters().getFirst("ids");
-      Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
+      Set<String> clientIds = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "ids");
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
 
       return configurationService.getClientConfigs(clientIds, productIDs);
@@ -87,13 +84,12 @@ public class ConfigurationResourceServiceImplV2 {
   @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<ConfigEntityV2> getServerConfigs(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.getServerConfigs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ConfigurationResourceServiceImplV2.getServerConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(3).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
 
       return configurationService.getServerConfigs(serverNames);
     } catch (ServiceExecutionException see) {

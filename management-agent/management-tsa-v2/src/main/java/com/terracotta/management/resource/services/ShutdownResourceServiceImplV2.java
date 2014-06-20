@@ -10,10 +10,9 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.ShutdownServiceV2;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.POST;
@@ -45,13 +44,12 @@ public class ShutdownResourceServiceImplV2 {
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   public boolean shutdown(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking ShutdownResourceServiceImpl.shutdown: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ShutdownResourceServiceImplV2.shutdown: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
-      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
 
       shutdownService.shutdown(serverNames);
     } catch (ServiceExecutionException see) {

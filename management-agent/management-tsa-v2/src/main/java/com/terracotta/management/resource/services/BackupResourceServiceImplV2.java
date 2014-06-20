@@ -12,10 +12,9 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.BackupEntityV2;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.service.BackupServiceV2;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.GET;
@@ -51,12 +50,11 @@ public class BackupResourceServiceImplV2 {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<BackupEntityV2> getBackupStatus(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking BackupResourceServiceImpl.getBackupStatus: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking BackupResourceServiceImplV2.getBackupStatus: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
-    String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
-    Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+    Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
     try {
       return backupService.getBackupStatus(serverNames);
@@ -68,12 +66,11 @@ public class BackupResourceServiceImplV2 {
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   public ResponseEntityV2<BackupEntityV2> backup(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking BackupResourceServiceImpl.backup: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking BackupResourceServiceImplV2.backup: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
-    String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
-    Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+    Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
 
     MultivaluedMap<String, String> qParams = info.getQueryParameters();
     String backupName = qParams.getFirst(ATTR_BACKUP_NAME_KEY);
