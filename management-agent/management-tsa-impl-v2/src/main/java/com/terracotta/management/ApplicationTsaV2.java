@@ -10,7 +10,6 @@ import net.sf.ehcache.management.resource.services.QueryResourceServiceImplV2;
 import net.sf.ehcache.management.service.CacheManagerServiceV2;
 import net.sf.ehcache.management.service.CacheServiceV2;
 import net.sf.ehcache.management.service.EntityResourceFactoryV2;
-
 import org.terracotta.management.application.DefaultApplicationV2;
 import org.terracotta.management.resource.services.AgentServiceV2;
 import org.terracotta.management.resource.services.AgentsResourceServiceImplV2;
@@ -21,8 +20,7 @@ import org.terracotta.session.management.SessionsServiceV2;
 
 import com.terracotta.management.l1bridge.RemoteAgentServiceV2;
 import com.terracotta.management.l1bridge.RemoteRequestValidator;
-import com.terracotta.management.l1bridge.RemoteServiceStubGenerator;
-//import com.terracotta.management.resource.services.AllEventsResourceService;
+import com.terracotta.management.l1bridge.RemoteServiceStubGeneratorV2;
 import com.terracotta.management.resource.services.BackupResourceServiceImplV2;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImplV2;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImplV2;
@@ -77,6 +75,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
+
+//import com.terracotta.management.resource.services.AllEventsResourceService;
 
 public class ApplicationTsaV2 extends DefaultApplicationV2 implements ApplicationTsaService {
 
@@ -158,7 +158,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     serviceClasses.put(EventServiceV2.class, new EventServiceImplV2(remoteManagementSource));
 
     RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor,
+    RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(requestTicketMonitor,
                                                                                            userService, contextService,
                                                                                            requestValidator,
                                                                                            remoteAgentBridgeService,

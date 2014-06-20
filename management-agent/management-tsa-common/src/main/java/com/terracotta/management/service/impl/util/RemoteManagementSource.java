@@ -90,9 +90,9 @@ public class RemoteManagementSource {
         .get(new CollectionOfRepresentableGenericType<T>(type));
   }
 
-  public <T, S> T getFromRemoteL2_singleObject(String serverName, URI uri, Class<T> type, Class<S> subType) throws ManagementSourceException {
+  public <T, S, R extends T> R getFromRemoteL2(String serverName, URI uri, Class<T> type, Class<S> subType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
+    return (R) resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
         .get(new SubGenericType<T, S>(type, subType));
   }
 
@@ -108,16 +108,10 @@ public class RemoteManagementSource {
         .post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), Boolean.class);
   }
 
-  public <T extends Representable> Collection<T> postToRemoteL2(String serverName, URI uri, Class<T> type) throws ManagementSourceException {
+  public <T, S, R extends T> R postToRemoteL2(String serverName, URI uri, Class<T> returnType, Class<S> returnSubType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .post(null, new CollectionOfRepresentableGenericType<T>(type));
-  }
-
-  public <T> T postToRemoteL2_singleObject(String serverName, URI uri, Class<T> type) throws ManagementSourceException {
-    String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .post(null, type);
+    return (R) resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
+        .post(null, new SubGenericType<T, S>(returnType, returnSubType));
   }
 
   private Invocation.Builder resourceNoTimeout(URI uri) {

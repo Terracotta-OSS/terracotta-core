@@ -85,7 +85,7 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
       }
     });
   }
@@ -110,7 +110,7 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
 
-        ResponseEntityV2<TopologyEntityV2> responseEntityV2 = remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder
+        ResponseEntityV2<TopologyEntityV2> responseEntityV2 = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder
             .build(), ResponseEntityV2.class, TopologyEntityV2.class);
 
         ResponseEntityV2<ClientEntityV2> result = new ResponseEntityV2<ClientEntityV2>();
@@ -151,7 +151,7 @@ public class ClientManagementServiceV2 {
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
         if (attributesToShow != null) { uriBuilder.queryParam("show", toCsv(attributesToShow)); }
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
       }
     });
   }
@@ -180,7 +180,7 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
       }
     });
   }

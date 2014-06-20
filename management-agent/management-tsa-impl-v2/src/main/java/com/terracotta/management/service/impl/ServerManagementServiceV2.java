@@ -125,10 +125,10 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .matrixParam("names", member.name());
 
         try {
-          return remoteManagementSource.getFromRemoteL2_singleObject(member.name(),
+          return remoteManagementSource.getFromRemoteL2(member.name(),
               uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
         } catch (ProcessingException che) {
-          ResponseEntityV2<ThreadDumpEntityV2> responseEntityV2 = new ResponseEntityV2();
+          ResponseEntityV2<ThreadDumpEntityV2> responseEntityV2 = new ResponseEntityV2<ThreadDumpEntityV2>();
           ThreadDumpEntityV2 threadDumpEntityV2 = new ThreadDumpEntityV2();
           threadDumpEntityV2.setSourceId(member.name());
           threadDumpEntityV2.setNodeType(ThreadDumpEntityV2.NodeType.SERVER);
@@ -159,7 +159,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       }
 
       @Override
-      public ResponseEntityV2 queryRemoteServer(L2Info member) throws Exception {
+      public ResponseEntityV2<StatisticsEntityV2> queryRemoteServer(L2Info member) throws Exception {
         UriBuilder uriBuilder = UriBuilder.fromPath("tc-management-api")
             .path("v2")
             .path("agents")
@@ -167,7 +167,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("servers")
             .matrixParam("names", member.name());
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
       }
     });
   }
@@ -217,7 +217,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("dgc")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
       }
     });
   }
@@ -246,9 +246,9 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .matrixParam("names", member.name());
 
         try {
-          return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
+          return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
         } catch (ProcessingException che) {
-          ResponseEntityV2 responseEntityV2 = new ResponseEntityV2();
+          ResponseEntityV2<ConfigEntityV2> responseEntityV2 = new ResponseEntityV2<ConfigEntityV2>();
           ConfigEntityV2 configEntityV2 = new ConfigEntityV2();
           configEntityV2.setSourceId(member.name());
           configEntityV2.getAttributes().put("Error", che.getMessage());
@@ -291,7 +291,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("backups")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, BackupEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, BackupEntityV2.class);
       }
     });
   }
@@ -314,7 +314,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("licenseProperties")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, LicenseEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, LicenseEntityV2.class);
       }
     });
   }
@@ -354,7 +354,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .matrixParam("names", member.name());
         if (sinceWhen != null) { uriBuilder.matrixParam("sinceWhen", sinceWhen); }
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, LogEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, LogEntityV2.class);
       }
     });
   }
@@ -418,7 +418,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         if (acceptableLevels != null) { uriBuilder.queryParam("eventLevels", toCsv(acceptableLevels)); }
         uriBuilder.queryParam("filterOutRead", read);
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, OperatorEventEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, OperatorEventEntityV2.class);
       }
     });
   }
@@ -462,7 +462,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .matrixParam("names", member.name());
         if (query != null) { uriBuilder.queryParam("q", query); }
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, MBeanEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, MBeanEntityV2.class);
       }
     });
   }
@@ -526,9 +526,9 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
               .matrixParam("names", member.name());
 
           try {
-            ResponseEntityV2 resp = remoteManagementSource.getFromRemoteL2_singleObject(member.name(),
+            ResponseEntityV2<TopologyEntityV2> resp = remoteManagementSource.getFromRemoteL2(member.name(),
                 uriBuilder.build(), ResponseEntityV2.class, TopologyEntityV2.class);
-            return Collections.singleton(findServerGroupEntityV2ContainingServerWithName((Collection)resp.getEntities(), member.name()));
+            return Collections.singleton(findServerGroupEntityV2ContainingServerWithName(resp.getEntities(), member.name()));
           } catch (ProcessingException che) {
             ServerGroupEntityV2 sgEntityV2 = new ServerGroupEntityV2();
             sgEntityV2.setName(serverGroupInfo.name());
@@ -599,7 +599,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("unreadOperatorEventCount")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class, TopologyEntityV2.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, TopologyEntityV2.class);
       }
     }).getEntities();
 
@@ -706,7 +706,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .matrixParam("serverNames", member.name())
             .queryParam("name", backupName);
 
-        return remoteManagementSource.postToRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class);
+        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, BackupEntityV2.class);
       }
     });
   }
@@ -785,18 +785,14 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("reloadConfiguration")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.postToRemoteL2_singleObject(member.name(), uriBuilder.build(), ResponseEntityV2.class);
+        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, TopologyReloadStatusEntityV2.class);
       }
     });
   }
 
-  public String getLocalServerName() {
-    return localManagementSource.getLocalServerName();
-  }
-
   interface ForEachServer<T extends AbstractEntityV2> {
     Collection<T> queryLocalServer(L2Info member);
-    ResponseEntityV2 queryRemoteServer(L2Info member) throws Exception;
+    ResponseEntityV2<T> queryRemoteServer(L2Info member) throws Exception;
   }
 
   private <T extends AbstractEntityV2> ResponseEntityV2<T> forEachServer(String methodName, Set<String> serverNames, final ForEachServer<T> fes) throws ServiceExecutionException {
@@ -806,7 +802,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
   // the logic of this method has been duplicated in getServerGroups()
   private <T extends AbstractEntityV2> ResponseEntityV2<T> forEachServer(String methodName, Set<String> serverNames, int maxEntries, final ForEachServer<T> fes) throws ServiceExecutionException {
     ResponseEntityV2<T> result = new ResponseEntityV2<T>();
-    Map<String, Future<ResponseEntityV2>> futures = new HashMap<String, Future<ResponseEntityV2>>();
+    Map<String, Future<ResponseEntityV2<T>>> futures = new HashMap<String, Future<ResponseEntityV2<T>>>();
 
     L2Info[] members = localManagementSource.getL2Infos();
     for (final L2Info member : members) {
@@ -819,9 +815,9 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
         }
       } else {
         final SecurityContextService.SecurityContext context = securityContextService.getSecurityContext();
-        Future<ResponseEntityV2> future = executorService.submit(new Callable<ResponseEntityV2>() {
+        Future<ResponseEntityV2<T>> future = executorService.submit(new Callable<ResponseEntityV2<T>>() {
           @Override
-          public ResponseEntityV2 call() throws Exception {
+          public ResponseEntityV2<T> call() throws Exception {
             securityContextService.setSecurityContext(context);
             try {
               return fes.queryRemoteServer(member);
@@ -835,9 +831,9 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
     }
 
     try {
-      Collection<ResponseEntityV2> responseEntityV2s = remoteManagementSource.collectEntitiesFromFutures(futures,
+      Collection<ResponseEntityV2<T>> responseEntityV2s = remoteManagementSource.collectEntitiesFromFutures(futures,
           timeoutService.getCallTimeout(), methodName, maxEntries);
-      for (ResponseEntityV2 remoteResponse : responseEntityV2s) {
+      for (ResponseEntityV2<T> remoteResponse : responseEntityV2s) {
         result.getEntities().addAll(remoteResponse.getEntities());
         result.getExceptionEntities().addAll(remoteResponse.getExceptionEntities());
       }

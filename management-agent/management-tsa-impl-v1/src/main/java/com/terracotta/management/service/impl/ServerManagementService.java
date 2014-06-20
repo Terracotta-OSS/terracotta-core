@@ -703,7 +703,7 @@ public class ServerManagementService implements ActiveServerSource {
             .matrixParam("serverNames", member.name())
             .queryParam("name", backupName);
 
-        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), BackupEntity.class);
+        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), Collection.class, BackupEntity.class);
       }
     });
   }
@@ -780,7 +780,7 @@ public class ServerManagementService implements ActiveServerSource {
             .path("reloadConfiguration")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), TopologyReloadStatusEntity.class);
+        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), Collection.class, TopologyReloadStatus.class);
       }
     });
   }

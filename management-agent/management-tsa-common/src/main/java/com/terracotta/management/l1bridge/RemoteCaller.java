@@ -38,14 +38,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteCaller {
 
-  private final RemoteAgentBridgeService remoteAgentBridgeService;
-  private final ContextService contextService;
-  private final ExecutorService executorService;
-  private final RequestTicketMonitor requestTicketMonitor;
-  private final UserService userService;
-  private final TimeoutService timeoutService;
   private static final Logger LOG = LoggerFactory.getLogger(RemoteCaller.class);
 
+  protected final RemoteAgentBridgeService remoteAgentBridgeService;
+  protected final ContextService contextService;
+  protected final ExecutorService executorService;
+  protected final RequestTicketMonitor requestTicketMonitor;
+  protected final UserService userService;
+  protected final TimeoutService timeoutService;
 
   public RemoteCaller(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
                       ExecutorService executorService, RequestTicketMonitor ticketMonitor,
@@ -116,25 +116,7 @@ public class RemoteCaller {
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
         serviceName, method.getName(), method.getParameterTypes(), args);
 
-    Future<byte[]> future;
-    try {
-      future = executorService.submit(new Callable<byte[]>() {
-        @Override
-        public byte[] call() throws Exception {
-          return remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
-        }
-      });
-    } catch (RejectedExecutionException ree) {
-      throw new ServiceExecutionException("Error invoking remote method ", ree);
-    }
-
-    byte[] bytes;
-    try {
-      bytes = future.get();
-    } catch (Exception e) {
-      future.cancel(true);
-      throw new ServiceExecutionException("Error invoking remote method ", e);
-    }
+    byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
 
     try {
       return deserializeAndRewriteAgentId(bytes, node);
@@ -206,7 +188,7 @@ public class RemoteCaller {
     return globalResult;
   }
 
-  private static <T> T deserializeAndRewriteAgentId(byte[] bytes, String agentId) throws IOException, ClassNotFoundException {
+  protected <T> T deserializeAndRewriteAgentId(byte[] bytes, String agentId) throws IOException, ClassNotFoundException {
     if (bytes == null) {
       return null;
     }
@@ -221,7 +203,7 @@ public class RemoteCaller {
     }
   }
 
-  private static void rewriteAgentId(Object obj, String agentId) {
+  protected void rewriteAgentId(Object obj, String agentId) {
     if (obj == null) {
       // do nothing
     } else if (obj instanceof Representable) {
