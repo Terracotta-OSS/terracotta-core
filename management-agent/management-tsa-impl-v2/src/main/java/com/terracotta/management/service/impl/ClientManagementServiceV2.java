@@ -15,6 +15,7 @@ import com.terracotta.management.resource.ServerGroupEntityV2;
 import com.terracotta.management.resource.StatisticsEntityV2;
 import com.terracotta.management.resource.ThreadDumpEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
+import com.terracotta.management.resource.services.utils.ProductIdConverter;
 import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
@@ -83,7 +84,7 @@ public class ClientManagementServiceV2 {
             .path("threadDump")
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
-        if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
+        if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
         return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
       }
@@ -108,7 +109,7 @@ public class ClientManagementServiceV2 {
             .path("topologies")
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
-        if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
+        if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
         ResponseEntityV2<TopologyEntityV2> responseEntityV2 = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder
             .build(), ResponseEntityV2.class, TopologyEntityV2.class);
@@ -148,8 +149,12 @@ public class ClientManagementServiceV2 {
             .path("statistics")
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
-        if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
-        if (attributesToShow != null) { uriBuilder.queryParam("show", toCsv(attributesToShow)); }
+        if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
+        if (attributesToShow != null) {
+          for (String attr : attributesToShow) {
+            uriBuilder.queryParam("show", attr);
+          }
+        }
 
         return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
       }
@@ -178,7 +183,7 @@ public class ClientManagementServiceV2 {
             .path("configurations")
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
-        if (clientProductIds != null) { uriBuilder.queryParam("productIds", clientProductIds); }
+        if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
         return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
       }

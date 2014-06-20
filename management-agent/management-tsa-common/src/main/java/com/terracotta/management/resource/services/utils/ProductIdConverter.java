@@ -20,5 +20,16 @@ public class ProductIdConverter {
     }
     return productIds;
   }
+
+  public static Set<String> productIdsToStrings(Set<ProductID> productIDs) {
+    if (productIDs == null) {
+      return null;
+    }
+    Set<String> strings = new HashSet<String>();
+    for (ProductID productID : productIDs) {
+      strings.add(productID.name());
+    }
+    return strings;
+  }
   
 }
