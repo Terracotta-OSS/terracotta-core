@@ -93,7 +93,7 @@ public class TCStopBindAddressTest extends BaseDSOTestCase {
 
   private String[] getCommandLineArgsForStop(String serverName, String configFilePath) {
     return new String[] { StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFilePath,
-        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, "-j"};
+        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName};
 
   }
 
