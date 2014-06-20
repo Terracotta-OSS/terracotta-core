@@ -155,6 +155,20 @@ public class TcConfigBuilder {
     setJmxPort(0, portNo);
   }
 
+  public void setManagementPort(int portNo) {
+    setManagementPort(0, portNo);
+  }
+
+  public void setManagementPort(int serverIndex, int portNo) {
+    ensureServers();
+    Server server = getServer(serverIndex);
+    Assert.assertNotNull(server);
+    if (!server.isSetManagementPort()) {
+      server.addNewManagementPort();
+    }
+    server.getManagementPort().setIntValue(portNo);
+  }
+
   public void setJmxPort(int serverIndex, int portNo) {
     ensureServers();
     Server server = getServer(serverIndex);
@@ -279,5 +293,6 @@ public class TcConfigBuilder {
       throw new RuntimeException(e);
     }
   }
+
 
 }
