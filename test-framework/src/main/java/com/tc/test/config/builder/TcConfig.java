@@ -133,6 +133,7 @@ public class TcConfig {
     if (tcServer.getTsaPort() == 0) tcServer.setTsaPort(portChooser.chooseRandomPort());
     if (tcServer.getJmxPort() == 0) tcServer.setJmxPort(portChooser.chooseRandomPort());
     if (tcServer.getTsaGroupPort() == 0) tcServer.setTsaGroupPort(portChooser.chooseRandomPort());
+    if (tcServer.getManagementPort() == 0) tcServer.setManagementPort(portChooser.chooseRandomPort());
 
     if (restartable && tcServer.getOffHeap() == null)
       tcServer.offHeap(new OffHeap().enabled(true).maxDataSize(ClusterManager.DEFAULT_MAX_DATA_SIZE));

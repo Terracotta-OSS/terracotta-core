@@ -147,7 +147,7 @@ public class ClusterManager {
 
     LOG.debug("Waiting for TSA agents to initialize...");
     for (Server server : servers) {
-      waitUntilTsaAgentInitialized(server.getTsaGroupPort().getIntValue());
+      waitUntilTsaAgentInitialized(server.getManagementPort().getIntValue());
       LOG.debug("{} initialized", server.getName());
     }
     System.out.println("All TSA agents started successfully");

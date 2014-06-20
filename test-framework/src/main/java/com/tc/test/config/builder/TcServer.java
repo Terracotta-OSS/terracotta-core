@@ -26,6 +26,8 @@ public class TcServer implements TcMirrorGroupChild {
   private int jmxPort;
   @XStreamAlias("tsa-group-port")
   private int tsaGroupPort;
+  @XStreamAlias("management-port")
+  private int managementPort;
 
   @XStreamAlias("offheap")
   private OffHeap offHeap;
@@ -149,6 +151,19 @@ public class TcServer implements TcMirrorGroupChild {
 
   public TcServer tsaGroupPort(int tsaGroupPort) {
     setTsaGroupPort(tsaGroupPort);
+    return this;
+  }
+
+  public int getManagementPort() {
+    return managementPort;
+  }
+
+  public void setManagementPort(int managementPort) {
+    this.managementPort = managementPort;
+  }
+
+  public TcServer managementPort(int managementPort) {
+    setManagementPort(managementPort);
     return this;
   }
 
