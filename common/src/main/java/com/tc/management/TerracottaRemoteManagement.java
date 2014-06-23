@@ -4,10 +4,15 @@
  */
 package com.tc.management;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+
 /**
  * Holder of the {@link RemoteManagement} instance.
  */
 public class TerracottaRemoteManagement {
+
+  private static final TCLogger LOGGER = TCLogging.getLogger(TerracottaRemoteManagement.class);
 
   private static volatile RemoteManagement remoteManagement;
 
@@ -19,6 +24,22 @@ public class TerracottaRemoteManagement {
   }
 
   public static RemoteManagement getRemoteManagementInstance() {
+    if (remoteManagement == null) {
+      return new RemoteManagement() {
+        @Override
+        public void registerEventListener(ManagementEventListener listener) {
+        }
+
+        @Override
+        public void unregisterEventListener(ManagementEventListener listener) {
+        }
+
+        @Override
+        public void sendEvent(TCManagementEvent event) {
+          LOGGER.warn("Trying to send a management event while the RemoteManagement instance was not set");
+        }
+      };
+    }
     return remoteManagement;
   }
 
