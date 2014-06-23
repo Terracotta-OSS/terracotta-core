@@ -429,6 +429,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     mainClassArguments.addAll(getMainClassArguments());
     mainClassArguments.add("-force");
     if (secured) {
+      mainClassArguments.add("-k");
       mainClassArguments.add("-s");
     }
     if (username != null) {
