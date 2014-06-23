@@ -193,7 +193,7 @@ public class ServerStat {
       try {
         port = Integer.valueOf(args[1]);
       } catch (NumberFormatException e) {
-        throw new RuntimeException("Failed to parse jmxport: " + info);
+        throw new RuntimeException("Failed to parse port: " + info);
       }
     }
 
