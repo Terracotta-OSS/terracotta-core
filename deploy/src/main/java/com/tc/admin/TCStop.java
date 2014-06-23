@@ -36,6 +36,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
+
 public class TCStop {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
@@ -71,7 +79,33 @@ public class TCStop {
     }
 
     if (commandLineBuilder.hasOption('k')) {
+      // disable SSL certificate verification
+
       System.setProperty("tc.ssl.trustAllCerts", "true");
+      System.setProperty("tc.ssl.disableHostnameVerifier", "true");
+
+      TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+          return null;
+        }
+        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+        }
+        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+        }
+      }
+      };
+
+      SSLContext sc = SSLContext.getInstance("TLS");
+      sc.init(null, trustAllCerts, null);
+      HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+      HostnameVerifier allHostsValid = new HostnameVerifier() {
+        public boolean verify(String hostname, SSLSession session) {
+          return true;
+        }
+      };
+
+      HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
     }
 
     String defaultName = StandardConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC;
@@ -108,7 +142,7 @@ public class TCStop {
       password = null;
     }
 
-    boolean secured = false;
+    boolean secured = securedSpecified;
     if (configSpecified || System.getProperty("tc.config") != null || configFile.exists()) {
       if (!configSpecified && System.getProperty("tc.config") == null) {
 
@@ -247,20 +281,21 @@ public class TCStop {
 
     StringBuilder sb = new StringBuilder();
     // adding some data to send along with the request to the server
-    sb.append("{\"forceStop\":\"" + forceStop + "\"}");
+    sb.append("{\"forceStop\":\"").append(forceStop).append("\"}");
     URL url = new URL(urlAsString);
-    for (int i = 0 ;; i++) {
+    for (int i = 0; i < MAX_TRIES; i++) {
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
       OutputStreamWriter wr = null;
       int responseCode = 0;
       try {
+        conn.setDoInput(true);
         conn.setDoOutput(true);
         conn.setRequestMethod("POST");
         String headerValue = username + ":" + password;
         byte[] bytes = headerValue.getBytes("UTF-8");
         String encodeBase64 = Base64.encodeBytes(bytes);
         // Basic auth
-        conn.addRequestProperty("Basic", encodeBase64);
+        conn.addRequestProperty("Authorization", "Basic " + encodeBase64);
 
         // we send as text/plain , the forceStop attribute, that basically is a boolean
         conn.addRequestProperty("Content-Type", "application/json");
@@ -270,6 +305,7 @@ public class TCStop {
         // this is were we're adding post data to the request
         wr.write(sb.toString());
         wr.flush();
+        wr.close();
 
         responseCode = conn.getResponseCode();
         if (responseCode >= 200 && responseCode < 300) {
@@ -278,7 +314,10 @@ public class TCStop {
           consoleLogger.debug("REST response: " + IOUtils.toString(myInputStream));
           break;
         } else {
-          if (conn.getErrorStream() != null) {
+          if (responseCode == 401) {
+            consoleLogger.error("Authentication failure. Invalid username/password.");
+            i = MAX_TRIES; // abort immediately
+          } else if (conn.getErrorStream() != null) {
             String content = IOUtils.toString(conn.getErrorStream());
             consoleLogger.debug("Error response: " + content);
 

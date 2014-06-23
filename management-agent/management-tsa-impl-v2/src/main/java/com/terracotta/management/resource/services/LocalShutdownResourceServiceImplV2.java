@@ -54,7 +54,7 @@ public class LocalShutdownResourceServiceImplV2 {
     LOG.info(String.format("Invoking shutdown: %s", info.getRequestUri()));
 
     try {
-      if (!force.isForceStop() && !isPassiveStandbyAvailable() && localManagementSource.isLegacyProductionModeEnabled()) {
+      if (force != null && !force.isForceStop() && !isPassiveStandbyAvailable() && localManagementSource.isLegacyProductionModeEnabled()) {
         String errorMessage = "No passive server available in Standby mode. Use force option to stop the server.";
         LOG.debug(errorMessage);
         throw new ResourceRuntimeException(errorMessage, Response.Status.BAD_REQUEST.getStatusCode());
