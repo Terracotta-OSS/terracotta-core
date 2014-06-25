@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Map;
 import java.util.Set;
@@ -42,8 +43,9 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     try {
       final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
       if (destinations == null) {
-        throw new IllegalStateException("Could not find server event destinations for cache: "
+        LOG.warn("Could not find server event destinations for cache: "
                                         + name + ". Incoming event: " + event);
+        return;
       }
 
       boolean handlerFound = false;
@@ -57,7 +59,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
       }
 
       if (!handlerFound) {
-        throw new IllegalStateException("Could not find handler for server event: " + event);
+        LOG.warn("Could not find handler for server event: " + event);
       }
     } finally {
       lock.readLock().unlock();
@@ -130,7 +132,12 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void cleanup() {
-    registry.clear();
+    lock.writeLock().lock();
+    try {
+      registry.clear();
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   @Override

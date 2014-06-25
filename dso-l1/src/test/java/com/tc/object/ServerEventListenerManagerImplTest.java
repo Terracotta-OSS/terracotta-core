@@ -98,12 +98,7 @@ public class ServerEventListenerManagerImplTest {
 
     manager.dispatch(event1, remoteNode);
     manager.dispatch(event2, remoteNode);
-    try {
-      manager.dispatch(event3, remoteNode);
-      fail();
-    } catch (IllegalStateException justAsPlanned) {
-      // mapping not found
-    }
+    manager.dispatch(event3, remoteNode);
     manager.dispatch(event4, remoteNode);
 
     // verify invocations
@@ -116,15 +111,18 @@ public class ServerEventListenerManagerImplTest {
   }
 
 
-  @Test(expected = IllegalStateException.class)
-  public void testMustFailOnNonExistentMapping() {
+  @Test
+  public void testNoRouteDestinationlessEvent() {
     // register listeners
     manager.registerListener(destinations[2], EnumSet.of(EVICT));
     manager.registerListener(destinations[2], EnumSet.of(PUT, REMOVE));
 
     final ServerEvent event1 = new BasicServerEvent(EXPIRE, "key-1", "cache2");
-    // exception due to non-existent mapping
     manager.dispatch(event1, remoteNode);
+
+    for (ServerEventDestination destination : destinations) {
+      verify(destination, never()).handleServerEvent(any(ServerEvent.class));
+    }
   }
 
   @Test
