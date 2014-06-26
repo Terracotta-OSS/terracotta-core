@@ -4,13 +4,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Maps;
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
       final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
       if (destinations == null) {
         LOG.warn("Could not find server event destinations for cache: "
-                                        + name + ". Incoming event: " + event);
+                 + name + ". Incoming event: " + event);
         return;
       }
 
@@ -154,7 +154,15 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
     for (Map<ServerEventDestination, Set<ServerEventType>> destinationMapping : registry.values()) {
       for (ServerEventDestination serverEventDestination : destinationMapping.keySet()) {
-        serverEventDestination.resendEventRegistrations();
+        try {
+          serverEventDestination.resendEventRegistrations();
+        } catch (TCNotRunningException e) {
+          // We can potentially get TCNotRunningExceptions if a connection was just established as the client shuts down
+          // since the client is going down anyways, just ignore it.
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Got a TCNotRunningException processing event listener re-registrations.");
+          }
+        }
       }
     }
   }

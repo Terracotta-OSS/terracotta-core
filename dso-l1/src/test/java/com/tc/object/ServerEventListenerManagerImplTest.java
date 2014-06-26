@@ -6,6 +6,7 @@ import static com.tc.server.ServerEventType.PUT;
 import static com.tc.server.ServerEventType.REMOVE;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
+import com.tc.exception.TCNotRunningException;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.server.BasicServerEvent;
@@ -184,4 +186,10 @@ public class ServerEventListenerManagerImplTest {
     verify(destinations[3]).resendEventRegistrations();
   }
 
+  @Test
+  public void testUnpauseWhenShutDown() throws Exception {
+    doThrow(new TCNotRunningException()).when(destinations[0]).resendEventRegistrations();
+    // Should not throw
+    manager.unpause(remoteNode, 0);
+  }
 }
