@@ -89,6 +89,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+<!-- temporary direct dependency during QA evaluation  -->
+        <groupId>com.terracottatech</groupId>
+        <artifactId>fast-restartable-store</artifactId>
+        <version>1.1.17-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>core-storage-api</artifactId>
         <version>${core-storage-api.version}</version>
