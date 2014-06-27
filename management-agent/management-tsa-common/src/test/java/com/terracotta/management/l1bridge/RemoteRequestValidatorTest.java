@@ -116,4 +116,50 @@ public class RemoteRequestValidatorTest {
 
   }
 
+  @Test
+  public void getAgentIdsFromPathSegments_v1Test() {
+    String idsExpected = "localhost_666,localhost_777";
+    RemoteRequestValidator remoteRequestValidator = new RemoteRequestValidator(null);
+
+    List<PathSegment> pathSegments = new ArrayList<PathSegment>();
+    PathSegment pathSegmentAgents = mock(PathSegment.class);
+    when(pathSegmentAgents.getPath()).thenReturn("agents");
+    MultivaluedMap<String, String> idsMatrixParameters = new MultivaluedHashMap<String, String>();
+    idsMatrixParameters.add("ids", idsExpected);
+    when(pathSegmentAgents.getMatrixParameters()).thenReturn(idsMatrixParameters);
+
+    PathSegment pathSegmentCacheManagers = mock(PathSegment.class);
+    when(pathSegmentCacheManagers.getPath()).thenReturn("cacheManagers");
+
+    pathSegments.add(pathSegmentAgents);
+    pathSegments.add(pathSegmentCacheManagers);
+
+    assertEquals(idsExpected, remoteRequestValidator.getAgentIdsFromPathSegments(pathSegments));
+
+  }
+
+  @Test
+  public void getAgentIdsFromPathSegments_v2Test() {
+    String idsExpected = "localhost_666,localhost_777";
+    RemoteRequestValidator remoteRequestValidator = new RemoteRequestValidator(null);
+
+    List<PathSegment> pathSegments = new ArrayList<PathSegment>();
+    PathSegment pathSegmentVersion = mock(PathSegment.class);
+    when(pathSegmentVersion.getPath()).thenReturn("v2");
+    PathSegment pathSegmentAgents = mock(PathSegment.class);
+    when(pathSegmentAgents.getPath()).thenReturn("agents");
+    MultivaluedMap<String, String> idsMatrixParameters = new MultivaluedHashMap<String, String>();
+    idsMatrixParameters.add("ids", idsExpected);
+    when(pathSegmentAgents.getMatrixParameters()).thenReturn(idsMatrixParameters);
+    PathSegment pathSegmentCacheManagers = mock(PathSegment.class);
+    when(pathSegmentCacheManagers.getPath()).thenReturn("cacheManagers");
+
+    pathSegments.add(pathSegmentVersion);
+    pathSegments.add(pathSegmentAgents);
+    pathSegments.add(pathSegmentCacheManagers);
+
+    assertEquals(idsExpected, remoteRequestValidator.getAgentIdsFromPathSegments(pathSegments));
+
+  }
+
 }

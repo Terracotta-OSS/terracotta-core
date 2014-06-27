@@ -48,7 +48,7 @@ public class RemoteRequestValidator implements RequestValidator {
   }
 
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
-    String ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
+    String ids = getAgentIdsFromPathSegments(pathSegments);
 
     try {
       Set<String> nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
@@ -74,6 +74,17 @@ String.format("Agent IDs must be in '%s' or '%s'.", nodes,
           see,
           Response.Status.BAD_REQUEST.getStatusCode());
     }
+  }
+
+  String getAgentIdsFromPathSegments(List<PathSegment> pathSegments) {
+    String ids = null;
+    String firstPathSegment = pathSegments.get(0).getPath();
+    if (firstPathSegment.equals("agents")) {
+      ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
+    } else {
+      ids = pathSegments.get(1).getMatrixParameters().getFirst("ids");
+    }
+    return ids;
   }
 
   public Set<String> getValidatedNodes() {
