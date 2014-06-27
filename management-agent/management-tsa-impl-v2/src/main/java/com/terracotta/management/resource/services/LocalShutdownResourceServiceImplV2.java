@@ -73,7 +73,7 @@ public class LocalShutdownResourceServiceImplV2 {
       return false;
     }
     for (ServerEntityV2 serverEntity : currentServerGroup.getServers()) {
-      if (serverEntity.getAttributes().get("State").equals("PASSIVE_STANDBY")) {
+      if (serverEntity.getAttributes().get("State").equals("PASSIVE-STANDBY")) {
         return true;
       }
     }
