@@ -88,7 +88,7 @@ public class RemoteServiceStubGeneratorV2 {
         throw new WebApplicationException(Response.status(404).entity(errorEntity).build());
       }
 
-      if (nodes.size() > 1 && ResponseEntityV2.class.isAssignableFrom(method.getReturnType())) {
+      if (ResponseEntityV2.class.isAssignableFrom(method.getReturnType())) {
         return remoteCaller.fanOutResponseCall(agency, nodes, serviceName, method, args);
       } else {
         String node = requestValidator.getSingleValidatedNode();

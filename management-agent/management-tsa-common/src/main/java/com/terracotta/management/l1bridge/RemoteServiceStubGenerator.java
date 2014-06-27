@@ -77,7 +77,8 @@ public class RemoteServiceStubGenerator {
       }
     }
 
-    private Object invokeActiveCase(Method method, Object[] args) throws org.terracotta.management.ServiceExecutionException {Set<String> nodes = requestValidator.getValidatedNodes();
+    private Object invokeActiveCase(Method method, Object[] args) throws org.terracotta.management.ServiceExecutionException {
+      Set<String> nodes = requestValidator.getValidatedNodes();
       if (nodes == null) {
         throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
       }
@@ -88,7 +89,7 @@ public class RemoteServiceStubGenerator {
         throw new WebApplicationException(Response.status(404).entity(errorEntity).build());
       }
 
-      if (nodes.size() > 1 && Collection.class.isAssignableFrom(method.getReturnType())) {
+      if (Collection.class.isAssignableFrom(method.getReturnType())) {
         return remoteCaller.fanOutCollectionCall(agency, nodes, serviceName, method, args);
       } else {
         String node = requestValidator.getSingleValidatedNode();

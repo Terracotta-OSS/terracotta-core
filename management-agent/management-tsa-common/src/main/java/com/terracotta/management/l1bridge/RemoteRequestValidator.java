@@ -24,7 +24,7 @@ import javax.ws.rs.core.UriInfo;
 /**
  * @author Ludovic Orban
  */
-public final class RemoteRequestValidator implements RequestValidator {
+public class RemoteRequestValidator implements RequestValidator {
 
   private final RemoteAgentBridgeService remoteAgentBridgeService;
 
