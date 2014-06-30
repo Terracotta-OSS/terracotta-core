@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
+import com.terracotta.management.service.ActiveServerSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class RemoteRequestValidatorTest {
   @Before
   public void setUp() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
     HashSet<String> agentNodeNames = new HashSet<String>();
     agentNodeNames.add("localhost.home_59822");
     agentNodeNames.add("localhost.home_1212");
@@ -38,72 +40,46 @@ public class RemoteRequestValidatorTest {
     agentNodeNames.add("localhost.home_4545");
 
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(agentNodeNames);
-    requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
+    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, activeServerSource);
     requestValidator.setValidatedNodes(new HashSet<String>());
   }
 
   @Test
   public void testValidateAgentSegment() throws Exception {
+    List<PathSegment> pathSegments = new ArrayList<PathSegment>();
+    pathSegments.add(new PathSegmentImpl("tc-management-api"));
+    pathSegments.add(new PathSegmentImpl("agents"));
+    pathSegments.add(new PathSegmentImpl("cacheManagers"));
 
-    List<PathSegment> pathSegements = new ArrayList<PathSegment>();
-    pathSegements.add(new PathSegment() {
-      @Override
-      public String getPath() {
-        return "/tc-management-api/agents/cacheManagers";
-      }
-
-      @Override
-      public MultivaluedMap<String, String> getMatrixParameters() {
-        return new MultivaluedHashMap<String, String>();
-      }
-    });
-    requestValidator.validateAgentSegment(pathSegements);
+    requestValidator.validateAgentSegment(pathSegments);
     Set<String> validatedNodes = requestValidator.getValidatedNodes();
     assertThat(validatedNodes, hasItems("localhost.home_59822","localhost.home_1212", "localhost.home_4343", "localhost.home_4545"));
-
   }
 
 
   @Test
   public void testValidateAgentSegment__idsOk() throws Exception {
-
     List<PathSegment> pathSegments = new ArrayList<PathSegment>();
-    pathSegments.add(new PathSegment() {
-      @Override
-      public String getPath() {
-        return "/tc-management-api/agents/cacheManagers";
-      }
-
-      @Override
-      public MultivaluedMap<String, String> getMatrixParameters() {
-        MultivaluedMap multivaluedMap = new MultivaluedHashMap();
-        multivaluedMap.add("ids","localhost.home_59822,localhost.home_4545");
-        return multivaluedMap;
-      }
-    });
+    pathSegments.add(new PathSegmentImpl("tc-management-api"));
+    pathSegments.add(new PathSegmentImpl("agents", new MultivaluedHashMap<String, String>(){{
+      add("ids","localhost.home_59822,localhost.home_4545");
+    }}));
+    pathSegments.add(new PathSegmentImpl("cacheManagers"));
     requestValidator.validateAgentSegment(pathSegments);
     Set<String> validatedNodes = requestValidator.getValidatedNodes();
     assertThat(validatedNodes, hasItems("localhost.home_59822", "localhost.home_4545"));
-
   }
 
   @Test
   public void testValidateAgentSegment__idsNotOk() throws Exception {
-
     List<PathSegment> pathSegments = new ArrayList<PathSegment>();
-    pathSegments.add(new PathSegment() {
-      @Override
-      public String getPath() {
-        return "/tc-management-api/agents/cacheManagers";
-      }
+    pathSegments.add(new PathSegmentImpl("tc-management-api"));
+    pathSegments.add(new PathSegmentImpl("agents", new MultivaluedHashMap<String, String>(){{
+      add("ids","blouf,localhost.home_4545");
+    }}));
+    pathSegments.add(new PathSegmentImpl("cacheManagers"));
 
-      @Override
-      public MultivaluedMap<String, String> getMatrixParameters() {
-        MultivaluedMap multivaluedMap = new MultivaluedHashMap();
-        multivaluedMap.add("ids","blouf,localhost.home_4545");
-        return multivaluedMap;
-      }
-    });
     ResourceRuntimeException e = null;
     try {
       requestValidator.validateAgentSegment(pathSegments);
@@ -119,7 +95,7 @@ public class RemoteRequestValidatorTest {
   @Test
   public void getAgentIdsFromPathSegments_v1Test() {
     String idsExpected = "localhost_666,localhost_777";
-    RemoteRequestValidator remoteRequestValidator = new RemoteRequestValidator(null);
+    RemoteRequestValidator remoteRequestValidator = new RemoteRequestValidator(null, null);
 
     List<PathSegment> pathSegments = new ArrayList<PathSegment>();
     PathSegment pathSegmentAgents = mock(PathSegment.class);
@@ -141,7 +117,7 @@ public class RemoteRequestValidatorTest {
   @Test
   public void getAgentIdsFromPathSegments_v2Test() {
     String idsExpected = "localhost_666,localhost_777";
-    RemoteRequestValidator remoteRequestValidator = new RemoteRequestValidator(null);
+    RemoteRequestValidator remoteRequestValidator = new RemoteRequestValidator(null, null);
 
     List<PathSegment> pathSegments = new ArrayList<PathSegment>();
     PathSegment pathSegmentVersion = mock(PathSegment.class);
@@ -160,6 +136,30 @@ public class RemoteRequestValidatorTest {
 
     assertEquals(idsExpected, remoteRequestValidator.getAgentIdsFromPathSegments(pathSegments));
 
+  }
+
+  static class PathSegmentImpl implements PathSegment {
+    private String path;
+    private MultivaluedMap<String, String> matrixParameters = new MultivaluedHashMap<String, String>();
+
+    PathSegmentImpl(String path) {
+      this.path = path;
+    }
+
+    PathSegmentImpl(String path, MultivaluedMap<String, String> matrixParameters) {
+      this.path = path;
+      this.matrixParameters = matrixParameters;
+    }
+
+    @Override
+    public String getPath() {
+      return path;
+    }
+
+    @Override
+    public MultivaluedMap<String, String> getMatrixParameters() {
+      return matrixParameters;
+    }
   }
 
 }

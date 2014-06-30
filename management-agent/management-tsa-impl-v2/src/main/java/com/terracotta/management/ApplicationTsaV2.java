@@ -157,7 +157,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     /// L1 bridge and Security Services ///
     serviceClasses.put(EventServiceV2.class, new EventServiceImplV2(remoteManagementSource));
 
-    RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
+    RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, serverManagementService);
     RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(requestTicketMonitor,
                                                                                            userService, contextService,
                                                                                            requestValidator,

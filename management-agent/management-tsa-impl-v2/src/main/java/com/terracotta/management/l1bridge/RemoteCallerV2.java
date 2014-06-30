@@ -45,6 +45,7 @@ public class RemoteCallerV2 extends RemoteCaller {
     Map<String, Future<ResponseEntityV2<T>>> futures = new HashMap<String, Future<ResponseEntityV2<T>>>();
 
     for (final String node : nodes) {
+      if (node.equals(AbstractEntityV2.EMBEDDED_AGENT_ID)) { continue; }
       try {
         Future<ResponseEntityV2<T>> future = executorService.submit(new Callable<ResponseEntityV2<T>>() {
           @Override
@@ -55,7 +56,7 @@ public class RemoteCallerV2 extends RemoteCaller {
             if (serviceAgency != null) {
               Map<String, String> nodeDetails = remoteAgentBridgeService.getRemoteAgentNodeDetails(node);
               String nodeAgency = nodeDetails.get("Agency");
-              if (!nodeAgency.equals(serviceAgency)) {
+              if (!serviceAgency.equals(nodeAgency)) {
                 return new ResponseEntityV2<T>();
               }
             }

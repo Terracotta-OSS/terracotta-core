@@ -70,6 +70,8 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
       attributes.put("Version", version);
       attributes.put("Agency", agency);
       return attributes;
+    } catch (ServiceExecutionException see) {
+      throw see;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }

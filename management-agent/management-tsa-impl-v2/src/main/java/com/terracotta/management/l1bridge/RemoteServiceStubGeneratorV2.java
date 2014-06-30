@@ -77,7 +77,8 @@ public class RemoteServiceStubGeneratorV2 {
       }
     }
 
-    private Object invokeActiveCase(Method method, Object[] args) throws org.terracotta.management.ServiceExecutionException {Set<String> nodes = requestValidator.getValidatedNodes();
+    private Object invokeActiveCase(Method method, Object[] args) throws org.terracotta.management.ServiceExecutionException {
+      Set<String> nodes = requestValidator.getValidatedNodes();
       if (nodes == null) {
         throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
       }

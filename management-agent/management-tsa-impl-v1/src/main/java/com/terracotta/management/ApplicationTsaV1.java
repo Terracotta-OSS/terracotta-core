@@ -134,7 +134,7 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     serviceClasses.put(LicenseService.class, new LicenseServiceImpl(serverManagementService));
 
     /// L1 bridge and Security Services ///
-    RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
+    RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, serverManagementService);
     RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor,
                                                                                            userService, contextService,
                                                                                            requestValidator,

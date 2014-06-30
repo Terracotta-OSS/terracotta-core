@@ -10,6 +10,7 @@ import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.terracotta.management.service.ActiveServerSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 
 import java.util.Arrays;
@@ -27,11 +28,13 @@ import javax.ws.rs.core.UriInfo;
 public class RemoteRequestValidator implements RequestValidator {
 
   private final RemoteAgentBridgeService remoteAgentBridgeService;
+  private final ActiveServerSource activeServerSource;
 
   private static final ThreadLocal<Set<String>> tlNode = new ThreadLocal<Set<String>>();
 
-  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService) {
+  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService, ActiveServerSource activeServerSource) {
     this.remoteAgentBridgeService = remoteAgentBridgeService;
+    this.activeServerSource = activeServerSource;
   }
 
   /**
@@ -48,6 +51,12 @@ public class RemoteRequestValidator implements RequestValidator {
   }
 
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
+    if (!activeServerSource.isCurrentServerActive()) {
+      // no validation is required on a passive as the request is going to be
+      // forwarded to an active
+      return;
+    }
+
     String ids = getAgentIdsFromPathSegments(pathSegments);
 
     try {
@@ -77,14 +86,12 @@ String.format("Agent IDs must be in '%s' or '%s'.", nodes,
   }
 
   String getAgentIdsFromPathSegments(List<PathSegment> pathSegments) {
-    String ids = null;
     String firstPathSegment = pathSegments.get(0).getPath();
     if (firstPathSegment.equals("agents")) {
-      ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
+      return pathSegments.get(0).getMatrixParameters().getFirst("ids");
     } else {
-      ids = pathSegments.get(1).getMatrixParameters().getFirst("ids");
+      return pathSegments.get(1).getMatrixParameters().getFirst("ids");
     }
-    return ids;
   }
 
   public Set<String> getValidatedNodes() {
