@@ -8,7 +8,6 @@ import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.terracotta.management.resource.TopologyEntityV2;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -40,7 +39,7 @@ public interface TopologyServiceV2 {
    * @return a collection of productIds
    * @throws ServiceExecutionException
    */
-  ResponseEntityV2<TopologyEntityV2> getConnectedClients(Set<String> productIDs) throws ServiceExecutionException;
+  ResponseEntityV2<TopologyEntityV2> getConnectedClients(Set<String> productIDs, Set<String> clientIDs) throws ServiceExecutionException;
 
   /**
    * Get the topology of the current TSA

@@ -102,7 +102,8 @@ public class TopologyResourceServiceImplV2 {
 
     try {
       Set<String> productIDs = UriInfoUtils.extractProductIds(info);
-      return topologyService.getConnectedClients(productIDs);
+      Set<String> clientIds = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "ids");
+      return topologyService.getConnectedClients(productIDs, clientIds);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA clients topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
