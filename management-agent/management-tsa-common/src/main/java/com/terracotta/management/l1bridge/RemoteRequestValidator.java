@@ -69,7 +69,7 @@ public class RemoteRequestValidator implements RequestValidator {
         for (String id : idsArray) {
           if (!nodes.contains(id) && !Representable.EMBEDDED_AGENT_ID.equals(id)) {
             throw new ResourceRuntimeException(
-String.format("Agent IDs must be in '%s' or '%s'.", nodes,
+                String.format("Agent IDs must be in '%s' or '%s'.", nodes,
                 Representable.EMBEDDED_AGENT_ID),
                 Response.Status.BAD_REQUEST.getStatusCode());
           }
@@ -86,12 +86,13 @@ String.format("Agent IDs must be in '%s' or '%s'.", nodes,
   }
 
   String getAgentIdsFromPathSegments(List<PathSegment> pathSegments) {
-    String firstPathSegment = pathSegments.get(0).getPath();
-    if (firstPathSegment.equals("agents")) {
-      return pathSegments.get(0).getMatrixParameters().getFirst("ids");
-    } else {
-      return pathSegments.get(1).getMatrixParameters().getFirst("ids");
+    for (PathSegment pathSegment : pathSegments) {
+      String path = pathSegment.getPath();
+      if (path.equals("agents")) {
+        return pathSegment.getMatrixParameters().getFirst("ids");
+      }
     }
+    return null;
   }
 
   public Set<String> getValidatedNodes() {
