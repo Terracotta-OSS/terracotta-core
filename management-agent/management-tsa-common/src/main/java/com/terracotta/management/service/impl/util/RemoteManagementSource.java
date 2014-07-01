@@ -238,12 +238,11 @@ public class RemoteManagementSource {
       sb.append(",");
     }
     if (!strings.isEmpty()) {
-      sb.deleteCharAt(sb.length());
+      sb.deleteCharAt(sb.length() - 1);
     }
 
     return sb.toString();
   }
-
 
   public <T extends Representable> Collection<T> collectEntitiesFromFutures(Map<String, Future<T>> futures, long timeoutInMillis, String methodName, int max) throws Exception {
     return collectEntitiesCollectionFromFutures(FutureAdapter.adapt(futures), timeoutInMillis, methodName, max);
