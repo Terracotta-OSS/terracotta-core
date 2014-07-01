@@ -34,7 +34,7 @@ public class OperatorEventsPassiveServerConnectionListener implements PassiveSer
     if (serverName == null) {
       serverName = nodeID.getName();
     }
-    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.PASSIVE_LEFT");
+    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.MIRROR_LEFT");
     tsaManagementEventPayload.getAttributes().put("Server.Name", serverName);
     TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
 
