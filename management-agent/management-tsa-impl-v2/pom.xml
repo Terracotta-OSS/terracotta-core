@@ -19,7 +19,7 @@
     </dependency>  
     <dependency>
       <groupId>org.terracotta.session</groupId>
-      <artifactId>sessions-management-v2</artifactId>
+      <artifactId>sessions-management-resources-v2</artifactId>
       <version>${session-management.version}</version>
     </dependency>
     <dependency>
@@ -83,7 +83,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-core</artifactId>
+      <artifactId>management-core-resources</artifactId>
       <version>${management-core-version}</version>
       <type>test-jar</type>
       <scope>test</scope>

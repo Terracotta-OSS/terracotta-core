@@ -14,7 +14,7 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-common-v2</artifactId>
+      <artifactId>management-common-resources-v2</artifactId>
       <version>${management-core-version}</version>
     </dependency>
   </dependencies>

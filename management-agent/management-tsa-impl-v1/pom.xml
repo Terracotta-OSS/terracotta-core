@@ -14,7 +14,7 @@
   <dependencies>  
     <dependency>
       <groupId>org.terracotta.session</groupId>
-      <artifactId>sessions-management-v1</artifactId>
+      <artifactId>sessions-management-resources-v1</artifactId>
       <version>${session-management.version}</version>
     </dependency>
     <dependency>
@@ -78,7 +78,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-core</artifactId>
+      <artifactId>management-core-resources</artifactId>
       <version>${management-core-version}</version>
       <type>test-jar</type>
       <scope>test</scope>
