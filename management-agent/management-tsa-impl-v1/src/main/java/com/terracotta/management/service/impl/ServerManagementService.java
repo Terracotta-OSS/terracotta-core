@@ -780,7 +780,7 @@ public class ServerManagementService implements ActiveServerSource {
             .path("reloadConfiguration")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), Collection.class, TopologyReloadStatus.class);
+        return remoteManagementSource.postToRemoteL2(member.name(), uriBuilder.build(), Collection.class, TopologyReloadStatusEntity.class);
       }
     });
   }
