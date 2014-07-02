@@ -4,6 +4,7 @@
  */
 package com.terracotta.management.web.proxy;
 
+import org.glassfish.jersey.server.ContainerRequest;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
@@ -40,9 +41,11 @@ public class ProxyExceptionMapper implements ExceptionMapper<ProxyException> {
     if ("GET".equals(method)) {
       return remoteManagementSource.resource(uriToGo).get();
     } else if ("POST".equals(method)) {
-      return remoteManagementSource.resource(uriToGo).post(Entity.entity(request.getEntityStream(), request.getMediaType()));
+      String e = ((ContainerRequest)request).readEntity(String.class);
+      return remoteManagementSource.resource(uriToGo).post(Entity.entity(e, request.getMediaType()));
     } else if ("PUT".equals(method)) {
-      return remoteManagementSource.resource(uriToGo).put(Entity.entity(request.getEntityStream(), request.getMediaType()));
+      String e = ((ContainerRequest)request).readEntity(String.class);
+      return remoteManagementSource.resource(uriToGo).put(Entity.entity(e, request.getMediaType()));
     } else if ("DELETE".equals(method)) {
       return remoteManagementSource.resource(uriToGo).delete();
     } else {

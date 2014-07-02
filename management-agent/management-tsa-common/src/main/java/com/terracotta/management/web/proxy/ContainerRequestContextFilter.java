@@ -4,6 +4,8 @@
  */
 package com.terracotta.management.web.proxy;
 
+import org.glassfish.jersey.server.ContainerRequest;
+
 import java.io.IOException;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -20,6 +22,7 @@ public class ContainerRequestContextFilter implements ContainerRequestFilter, Co
 
   @Override
   public void filter(ContainerRequestContext requestContext) throws IOException {
+    ((ContainerRequest)requestContext).bufferEntity();
     CONTAINER_REQUEST_CONTEXT_THREAD_LOCAL.set(requestContext);
   }
 
