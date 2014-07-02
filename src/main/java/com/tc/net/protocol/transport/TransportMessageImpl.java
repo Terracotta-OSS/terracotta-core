@@ -20,13 +20,15 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
    * VERSION_2: Transport Handshake Message Version for Terracotta = 2.6
    * VERSION_3: Transport Handshake Message Version for Terracotta = 3.6 (Ulloa)
    * VERSION_4: Transport Handshake Message Version for Terracotta = 3.7 (Gladstone)
+   * VERSION_5: Transport Handshake Message Version for Terracotta = 4.1 (Wawona)
    * VERSION: Current Version for Transport Handshake Messages
    */
   static final byte          VERSION_1  = 1;
   static final byte          VERSION_2  = 2;
   static final byte          VERSION_3  = 3;
   static final byte          VERSION_4  = 4;
-  static final byte          VERSION    = VERSION_4;
+  static final byte          VERSION_5  = 5;
+  static final byte          VERSION    = VERSION_5;
 
 
   static final byte          SYN        = 1;
@@ -34,7 +36,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   static final byte          SYN_ACK    = 3;
   static final byte          PING       = 4;
   static final byte          PING_REPLY = 5;
-  static final byte TIME_CHECK = 6;
+  static final byte          TIME_CHECK = 6;
 
   private final byte         version;
   private final byte         type;
@@ -59,11 +61,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
 
       this.type = in.readByte();
 
-      try {
-        this.connectionId = ConnectionID.readFrom(in);
-      } catch (IOException e) {
-        throw new TCProtocolException(e);
-      }
+      this.connectionId = ConnectionID.readFrom(in);
 
       this.isMaxConnectionsExceeded = in.readBoolean();
       this.maxConnections = in.readInt();
@@ -79,8 +77,10 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
         this.errorContext = null;
       }
       this.timestamp = (type == TIME_CHECK) ? in.readLong() : -1;
-    } catch (IOException e) {
-      throw new TCProtocolException("IOException reading data: " + e.getMessage());
+    } catch (TCProtocolException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new TCProtocolException("Exception reading data: ", e);
     }
   }
 
