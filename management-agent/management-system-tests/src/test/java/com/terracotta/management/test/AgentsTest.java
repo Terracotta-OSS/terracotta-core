@@ -9,6 +9,7 @@ import org.terracotta.management.resource.Representable;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
+import com.tc.util.ProductInfo;
 
 import java.io.IOException;
 
@@ -86,7 +87,8 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
       // [{"agentId":"embedded","agencyOf":"TSA","available":true,"secured":false,"sslEnabled":false,"needClientAuth":false,
       //   "licensed":false,"sampleHistorySize":0,"sampleIntervalSeconds":0,"enabled":true,"restAPIVersion":"4.1.0-SNAPSHOT"}]
       JSONObject info = (JSONObject)agentsInfoArray.get(0);
-      assertThat(info.size(), is(11));
+      assertThat(info.size(), is(12));
+      assertThat((String) info.get("version"), is(ProductInfo.getInstance().buildVersion()));
       assertThat((Boolean)info.get("available"), is(true));
       assertThat((Boolean)info.get("secured"), is(false));
       assertThat((Boolean)info.get("sslEnabled"), is(false));
