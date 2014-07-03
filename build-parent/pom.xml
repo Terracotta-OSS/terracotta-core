@@ -257,6 +257,11 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
+        <artifactId>management-core</artifactId>
+        <version>${management-core-version}</version>
+      </dependency>      
+      <dependency>
+        <groupId>org.terracotta</groupId>
         <artifactId>management-core-resources</artifactId>
         <version>${management-core-version}</version>
       </dependency>
