@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-root</artifactId>
-    <version>4.2.0-SNAPSHOT</version>
+    <version>4.3.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -34,7 +34,7 @@
     <search.version>1.4.8</search.version>
     <security-version>1.3.18-SNAPSHOT</security-version>
     <management-core-version>1.3.0-SNAPSHOT</management-core-version>
-    <management.apps.parent.version>1.3.0-SNAPSHOT</management.apps.parent.version>
+    <management.apps.parent.version>1.4.0-SNAPSHOT</management.apps.parent.version>
     <session-management.version>${project.version}</session-management.version>
     <wan-management.version>4.2.0-SNAPSHOT</wan-management.version>
     <tc-messaging.version>4.2.0-SNAPSHOT</tc-messaging.version>
@@ -42,7 +42,7 @@
     <toolkit-api.version>2.6</toolkit-api.version> 
     <toolkit-api-internal.version>1.16</toolkit-api-internal.version>
     <!-- version of ehcache embedded inside toolkit -->
-    <ehcache.version>2.9.0-SNAPSHOT</ehcache.version>
+    <ehcache.version>2.10.0-SNAPSHOT</ehcache.version>
     <tcconfig.version>9.1</tcconfig.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
