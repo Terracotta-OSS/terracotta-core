@@ -316,6 +316,7 @@
 									<artifacts>
 										<param>org.terracotta:terracotta-l1:${project.version}</param>
 									</artifacts>
+                  <createShadeRecord>true</createShadeRecord>
                   <excludeArtifactIds>dso-l1,common,build-data,dso-common,dso-l1-api,deploy,management,ent-dso-l1,ent-common,ent-deploy</excludeArtifactIds>
 									<outputDir>${project.build.outputDirectory}/L1</outputDir>
 								</configuration>
@@ -330,6 +331,7 @@
 									<artifacts>
 										<param>org.terracotta.internal:terracotta-toolkit-impl:${project.version}</param>
 									</artifacts>
+                  <createShadeRecord>true</createShadeRecord>
 									<resolveTransitively>false</resolveTransitively>
 									<outputDir>${project.build.outputDirectory}/TIMs</outputDir>
 								</configuration>
@@ -344,6 +346,7 @@
 									<artifacts>
 										<param>net.sf.ehcache:ehcache:${ehcache.version}</param>
 									</artifacts>
+                  <createShadeRecord>true</createShadeRecord>
 									<outputDir>${project.build.outputDirectory}/ehcache</outputDir>
 								</configuration>
 							</execution>
