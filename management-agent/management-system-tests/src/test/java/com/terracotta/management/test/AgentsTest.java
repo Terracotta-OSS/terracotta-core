@@ -29,7 +29,6 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
   }
 
   public static class AgentsTestClient extends AbstractTsaClient {
-
     public AgentsTestClient(String[] args) {
       super(args);
     }

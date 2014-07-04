@@ -1,11 +1,14 @@
 package com.terracotta.management.test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.TerracottaClientConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration;
+
 import org.apache.commons.codec.Encoder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -39,9 +42,6 @@ import com.tc.util.runtime.Os;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
@@ -79,15 +79,16 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String commonsCodec = TestBaseUtil.jarFor(Encoder.class);
     String commonsLogging = TestBaseUtil.jarFor(Log.class);
     String coreMatchers = TestBaseUtil.jarFor(CoreMatchers.class);
+    String commonCli = TestBaseUtil.jarFor(org.apache.commons.cli.ParseException.class);
+    String commonLang = TestBaseUtil.jarFor(org.apache.commons.lang.StringUtils.class);
     return makeClasspath(tk, common, expressRuntime, fs, l1, clientBase, l2Mbean, jsonParser, ehCache, slf4J,
-            commonsIo, ehcache,
-        httpClient, httpCore, commonsCodec, commonsLogging,
-        coreMatchers);
+                         commonsIo, ehcache, httpClient, httpCore, commonsCodec, commonsLogging, coreMatchers,
+                         commonCli, commonLang);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
 
-    protected static final String TSA_TEST_CACHE = "tsaTest";
+    protected static final String      TSA_TEST_CACHE = "tsaTest";
 
     private static CloseableHttpClient httpClient;
 
@@ -100,12 +101,13 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       httpClient = HttpClients.createDefault();
 
       // wait for the TSA agent to finish up initialization
-      boolean initSuccessful =  false;
+      boolean initSuccessful = false;
       System.out.println("Starting test for " + getTerracottaUrl());
       for (int i = 0; i < 20; i++) {
         try {
           for (int j = 0; j < getGroupData(0).getServerCount(); j++) {
-            httpGet("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(j) + "/tc-management-api/agents");
+            httpGet("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(j)
+                    + "/tc-management-api/agents");
           }
           initSuccessful = true;
           break;
@@ -124,7 +126,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     protected abstract void doTsaTest() throws Throwable;
 
-    protected byte[] getTsaRawContent(String host, int port, String path, Map<String,String> headers) throws IOException {
+    protected byte[] getTsaRawContent(String host, int port, String path, Map<String, String> headers)
+        throws IOException {
       return httpRawGet("http://" + host + ":" + port + path, headers);
     }
 
@@ -132,10 +135,10 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       String result = httpGet("http://" + host + ":" + port + path);
       System.out.println("Server ");
       System.out.println(result);
-      return (JSONArray)JSONValue.parse(result);
+      return (JSONArray) JSONValue.parse(result);
     }
 
-    protected byte[] httpRawGet(String urlString, Map<String,String> headers) throws IOException {
+    protected byte[] httpRawGet(String urlString, Map<String, String> headers) throws IOException {
       HttpGet httpGet = new HttpGet(urlString);
       if (headers != null) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -216,7 +219,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       super(args);
     }
 
-    protected CacheManager createCacheManager(String host, String port) {Configuration configuration = new Configuration();
+    protected CacheManager createCacheManager(String host, String port) {
+      Configuration configuration = new Configuration();
       TerracottaClientConfiguration terracottaClientConfiguration = new TerracottaClientConfiguration();
       terracottaClientConfiguration.url(host, port);
 
@@ -241,12 +245,13 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     }
 
     protected boolean serverContainsAllOfThoseLogs(int group, int member, String... logs) throws IOException {
-      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member), "/tc-management-api/agents/logs");
+      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+                                                   "/tc-management-api/agents/logs");
       boolean[] contains = new boolean[logs.length];
 
       for (Object aLogsArray : logsArray) {
-        JSONObject o = (JSONObject)aLogsArray;
-        String message = (String)o.get("message");
+        JSONObject o = (JSONObject) aLogsArray;
+        String message = (String) o.get("message");
 
         for (int j = 0; j < logs.length; j++) {
           contains[j] |= message.contains(logs[j]);
@@ -263,15 +268,14 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     }
 
     protected boolean serverContainsAnyOfThoseLogs(int group, int member, String... logs) throws IOException {
-      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member), "/tc-management-api/agents/logs");
+      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+                                                   "/tc-management-api/agents/logs");
       for (Object aLogsArray : logsArray) {
-        JSONObject o = (JSONObject)aLogsArray;
-        String message = (String)o.get("message");
+        JSONObject o = (JSONObject) aLogsArray;
+        String message = (String) o.get("message");
 
         for (String log : logs) {
-          if (message.contains(log)) {
-            return true;
-          }
+          if (message.contains(log)) { return true; }
         }
       }
       return false;
@@ -294,6 +298,5 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       assertThat(success, is(true));
     }
   }
-
 
 }
