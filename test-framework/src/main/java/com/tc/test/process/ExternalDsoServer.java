@@ -45,6 +45,7 @@ public class ExternalDsoServer {
   private boolean                   persistentMode;
   private int                       tsaPort;
   private int                       jmxPort;
+  private int                       managementPort;
   private int                       tsaGroupPort;
   private final List                jvmArgs                = new ArrayList();
   private final File                workingDir;
@@ -81,6 +82,7 @@ public class ExternalDsoServer {
             jmxPort = server.getJmxPort().getIntValue();
             tsaPort = server.getTsaPort().getIntValue();
             tsaGroupPort = server.getTsaGroupPort().getIntValue();
+            managementPort = server.getManagementPort().getIntValue();
             break;
           }
         }
@@ -89,6 +91,7 @@ public class ExternalDsoServer {
         jmxPort = servers[0].getJmxPort().getIntValue();
         tsaPort = servers[0].getTsaPort().getIntValue();
         tsaGroupPort = servers[0].getTsaGroupPort().getIntValue();
+        managementPort = servers[0].getManagementPort().getIntValue();
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -258,6 +261,10 @@ public class ExternalDsoServer {
 
   public int getAdminPort() {
     return jmxPort;
+  }
+
+  public int getManagementPort() {
+    return managementPort;
   }
 
   public List getJvmArgs() {

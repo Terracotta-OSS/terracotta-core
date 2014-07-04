@@ -32,6 +32,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -42,7 +43,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.security.cert.X509Certificate;
 
 public class TCStop {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
@@ -85,11 +85,14 @@ public class TCStop {
       System.setProperty("tc.ssl.disableHostnameVerifier", "true");
 
       TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+        @Override
         public java.security.cert.X509Certificate[] getAcceptedIssuers() {
           return null;
         }
+        @Override
         public void checkClientTrusted(X509Certificate[] certs, String authType) {
         }
+        @Override
         public void checkServerTrusted(X509Certificate[] certs, String authType) {
         }
       }
@@ -100,6 +103,7 @@ public class TCStop {
       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
       HostnameVerifier allHostsValid = new HostnameVerifier() {
+        @Override
         public boolean verify(String hostname, SSLSession session) {
           return true;
         }
