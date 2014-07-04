@@ -6,6 +6,7 @@ package com.tctest;
 import com.tc.admin.TCStop;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
@@ -18,6 +19,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
@@ -29,7 +31,7 @@ public class TCForceStopTest extends BaseDSOTestCase {
   private TcConfigBuilder     configBuilder;
   private ExternalDsoServer   server_1, server_2;
   private int                 jmxPort_1, jmxPort_2;
-  private final long          SHUTDOWN_WAIT_TIME = TimeUnit.NANOSECONDS.convert(120, TimeUnit.SECONDS);
+  private final long          SHUTDOWN_WAIT_TIME = TimeUnit.NANOSECONDS.convert(30, TimeUnit.SECONDS);
 
   @Override
   protected boolean cleanTempDir() {
@@ -60,52 +62,55 @@ public class TCForceStopTest extends BaseDSOTestCase {
   }
 
   public void testServerForceStop() throws Exception {
+    // wait for REST agents to properly set up
+    // TODO: useServerStat when it has proper API to check REST agent
+    ThreadUtil.reallySleep(5000);
+
     // Case : 1 Active + 1 Passive
     stop(server_1, SERVER_NAME_1);
-
     Assert.assertFalse(server_1.isRunning());
     waitTillBecomeActive(jmxPort_2);
+
     // Case : Only 1 active server
     stop(server_2, SERVER_NAME_2);
     Assert.assertTrue(server_2.isRunning());
+
     // Case : only 1 active server force shutdown
     forceStop(server_2, SERVER_NAME_2);
     Assert.assertFalse(server_2.isRunning());
-
   }
 
   private void stop(ExternalDsoServer server, String serverName) {
     System.out.println("Going to stop server :" + server.getAdminPort());
     stop(server.getAdminPort(),
-         getCommandLineArgsForStop(serverName, server.getConfigFile().getPath(), server.getAdminPort()));
+         getCommandLineArgsForStop(serverName, server.getConfigFile().getPath(), server.getManagementPort()));
   }
 
   private void forceStop(ExternalDsoServer server, String serverName) {
     System.out.println("Going to force stop server :" + server.getAdminPort());
     stop(server.getAdminPort(),
-         getCommandLineArgsForForceStop(serverName, server.getConfigFile().getPath(), server.getAdminPort()));
+         getCommandLineArgsForForceStop(serverName, server.getConfigFile().getPath(), server.getManagementPort()));
   }
 
   private String[] getCommandLineArgsForStop(String serverName, String configFilePath, int port) {
     return new String[] { StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFilePath,
-        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, Integer.toString(port), "-j"};
+        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName };
 
   }
 
   private String[] getCommandLineArgsForForceStop(String serverName, String configFilePath, int port) {
     return new String[] { StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFilePath,
-        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, Integer.toString(port),
-        "-force" };
+        StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, "-force" };
   }
 
   private void stop(int jmxPort, String[] args) {
     try {
-      TCStop.main(args);
-    } catch (Exception e) {
-      System.out.println("Exception while stopping server :" + jmxPort);
-      System.out.println(e);
-    }
-    try {
+      LinkedJavaProcess stopProcess = new LinkedJavaProcess(TCStop.class.getName(), Arrays.asList(args));
+      stopProcess.start();
+      System.out.println("TCStop command issued. Waiting for server to die...");
+      stopProcess.mergeSTDERR("TCStop-stderr");
+      stopProcess.mergeSTDOUT("TCStop-stdin");
+      stopProcess.waitFor();
       waitUntilShutdown(jmxPort);
     } catch (Exception e) {
       System.out.println("Exception while stopping server :" + jmxPort);
