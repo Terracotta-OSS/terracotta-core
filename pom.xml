@@ -48,15 +48,15 @@
   
   <distributionManagement>
     <repository>
-      <id>terracotta-releases</id>
-      <name>Terracotta Releases Repository</name>
-      <url>${terracotta-releases-url}</url>
+      <id>terracotta-ee-releases</id>
+      <name>Terracotta EE Releases Repository</name>
+      <url>${terracotta-ee-releases-url}</url>
     </repository>
     <snapshotRepository>
-      <id>terracotta-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta Snapshots Repository</name>
-      <url>${terracotta-snapshots-url}</url>
+      <id>terracotta-ee-snapshots</id>
+       <uniqueVersion>false</uniqueVersion>
+       <name>Terracotta Snapshots Repository</name>
+       <url>${terracotta-ee-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 
