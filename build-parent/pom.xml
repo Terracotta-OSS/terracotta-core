@@ -23,7 +23,7 @@
 
   <properties>
     <group>unit</group>
-    
+
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <core-storage-api.version>1.3</core-storage-api.version>
     <heap-core-storage.version>1.1.2</heap-core-storage.version>
@@ -89,7 +89,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-<!-- temporary direct dependency during QA evaluation  -->
+        <!-- temporary direct dependency during QA evaluation  -->
         <groupId>com.terracottatech</groupId>
         <artifactId>fast-restartable-store</artifactId>
         <version>1.1.17-SNAPSHOT</version>
@@ -110,9 +110,9 @@
         <version>${bigmemory-core-storage.version}</version>
       </dependency>
       <dependency>
-	<groupId>org.terracotta.internal</groupId>
-	<artifactId>tc-messaging</artifactId>
-	<version>${tc-messaging.version}</version>
+        <groupId>org.terracotta</groupId>
+        <artifactId>tc-messaging</artifactId>
+        <version>${tc-messaging.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -266,14 +266,14 @@
         <version>${management-core-version}</version>
       </dependency>
       <dependency>
-    	<groupId>com.terracotta</groupId>
-    	<artifactId>security-core</artifactId>
-    	<version>${security-version}</version>
+        <groupId>com.terracotta</groupId>
+        <artifactId>security-core</artifactId>
+        <version>${security-version}</version>
       </dependency>
       <dependency>
-    	<groupId>com.terracotta</groupId>
-    	<artifactId>security-keychain</artifactId>
-    	<version>${security-version}</version>
+        <groupId>com.terracotta</groupId>
+        <artifactId>security-keychain</artifactId>
+        <version>${security-version}</version>
       </dependency>
       <dependency>
         <groupId>com.terracotta</groupId>
@@ -321,7 +321,7 @@
         <artifactId>jackson-databind</artifactId>
         <version>2.3.3</version>
       </dependency>
-      
+
       <!-- Glassfish substitutes -->
       <dependency>
         <groupId>gf-3122</groupId>
@@ -526,7 +526,7 @@
                 <printSummary>true</printSummary>
                 <reportFormat>plain</reportFormat>
                 <includes>
-                 <include>**/*Test.java</include>
+                  <include>**/*Test.java</include>
                 </includes>         
                 <skipTests>${should_skip_tests}</skipTests>
                 <forkMode>always</forkMode>
@@ -720,7 +720,7 @@
         <should_skip_tests>false</should_skip_tests>
       </properties>
     </profile>
-  
+
     <profile>
       <id>client-jvm</id>
       <properties>
@@ -745,7 +745,7 @@
         <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
       </properties>
     </profile>
-    
+
     <profile>
       <id>check-short</id>
       <properties>

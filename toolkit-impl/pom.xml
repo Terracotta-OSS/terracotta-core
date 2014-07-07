@@ -34,7 +34,7 @@
       <version>${toolkit-api-internal.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>tc-messaging</artifactId>
       <scope>provided</scope>
     </dependency>

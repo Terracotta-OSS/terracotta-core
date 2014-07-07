@@ -32,7 +32,7 @@ Apache Ivy version: 2.2.0 20100923230623
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>tc-messaging</artifactId>
       <scope>compile</scope>
     </dependency>

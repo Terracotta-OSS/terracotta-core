@@ -317,7 +317,11 @@
 										<param>org.terracotta:terracotta-l1:${project.version}</param>
 									</artifacts>
                   <createShadeRecord>true</createShadeRecord>
-                  <excludeArtifactIds>dso-l1,common,build-data,dso-common,dso-l1-api,deploy,management,ent-dso-l1,ent-common,ent-deploy</excludeArtifactIds>
+                  <!-- we need to exclude these even though they're not supposed to be part of terracotta-l1
+                       dependency-reduced-pom. However, terracotta-l1 is built in the same session of toolkit-runtime 
+                       (ie. in the same reactor list)
+                       so the dependency-reduced-pom is not taken effect, the original pom is -->
+                  <excludeGroupIds>org.terracotta.internal</excludeGroupIds>
 									<outputDir>${project.build.outputDirectory}/L1</outputDir>
 								</configuration>
 							</execution>

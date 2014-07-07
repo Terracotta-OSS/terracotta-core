@@ -108,6 +108,10 @@
     <dependency>
       <groupId>org.terracotta.license</groupId>
       <artifactId>terracotta-license</artifactId>
-    </dependency> 
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-messaging</artifactId>
+    </dependency>    
   </dependencies>
 </project>
