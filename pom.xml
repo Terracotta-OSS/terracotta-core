@@ -68,8 +68,8 @@
   </build>
 
   <scm>
-    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging</connection>
-    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging</developerConnection>
+    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/trunk</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging/trunk</developerConnection>
   </scm>
   
   <distributionManagement>
