@@ -369,6 +369,7 @@ public class LocalManagementSource {
       ObjectName l1InfoObjectName = (ObjectName)mBeanServer.getAttribute(clientObjectName, "L1InfoBeanName");
       result.put("Version", mBeanServer.getAttribute(l1InfoObjectName, "Version"));
       result.put("BuildID", mBeanServer.getAttribute(l1InfoObjectName, "BuildID"));
+      result.put("ClientUUID", mBeanServer.getAttribute(l1InfoObjectName, "ClientUUID"));
 
       return result;
     } catch (JMException jme) {

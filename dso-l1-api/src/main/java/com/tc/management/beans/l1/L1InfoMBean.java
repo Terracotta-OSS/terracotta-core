@@ -27,6 +27,8 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
 
   String getPatchBuildID();
 
+  String getClientUUID();
+
   String getCopyright();
 
   String takeThreadDump(long requestMillis);

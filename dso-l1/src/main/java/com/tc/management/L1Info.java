@@ -127,6 +127,11 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   @Override
+  public String getClientUUID() {
+    return client.getUUID();
+  }
+
+  @Override
   public String getCopyright() {
     return productInfo.copyright();
   }

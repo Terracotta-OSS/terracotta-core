@@ -18,4 +18,6 @@ public interface TCClient extends TCDumper, LockInfoDumpHandler {
   public void addServerConfigurationChangedListeners(ClusterTopologyChangedListener listener);
 
   public String[] processArguments();
+
+  public String getUUID();
 }

@@ -5,9 +5,9 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.management.TCManagementEvent;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.ManagementResponseListener;
+import com.tc.management.TCManagementEvent;
 import com.tc.management.TerracottaManagement;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -21,11 +21,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class ServerManagementHandler extends AbstractEventHandler {
 
+  private static final int MAX_UNFIRED_EVENT_COUNT = 15;
+  private static final int MAX_UNFIRED_EVENT_RETENTION_MILLIS = 30000;
+
   private final Map<ManagementRequestID, ManagementResponseListener> responseListenerMap = new ConcurrentHashMap<ManagementRequestID, ManagementResponseListener>();
   private final List<ManagementEventListener> eventListeners = new CopyOnWriteArrayList<ManagementEventListener>();
+  private final List<EventHolder> unfiredEvents = new CopyOnWriteArrayList<EventHolder>() {
+    @Override
+    public boolean add(EventHolder eventHolder) {
+      if (size() >= maxUnfiredEventCount()) {
+        remove(0);
+      }
+      return super.add(eventHolder);
+    }
+  };
 
   @Override
   public void handleEvent(final EventContext context) {
@@ -50,7 +63,6 @@ public class ServerManagementHandler extends AbstractEventHandler {
 
       if (managementRequestID == null) {
         // L1 event
-        //TODO: forward the event to passive L2s
         for (ManagementEventListener eventListener : eventListeners) {
           try {
             Map<String, Object> contextMap = new HashMap<String, Object>();
@@ -92,7 +104,16 @@ public class ServerManagementHandler extends AbstractEventHandler {
   }
 
   public void registerEventListener(ManagementEventListener eventListener) {
+    boolean empty = eventListeners.isEmpty();
     eventListeners.add(eventListener);
+    if (empty) {
+      for (EventHolder eventHolder : unfiredEvents) {
+        if (!eventHolder.isExpired()) {
+          eventListener.onEvent(eventHolder.event, eventHolder.context);
+        }
+      }
+      unfiredEvents.clear();
+    }
   }
 
   public void unregisterEventListener(ManagementEventListener eventListener) {
@@ -100,12 +121,43 @@ public class ServerManagementHandler extends AbstractEventHandler {
   }
 
   public void fireEvent(TCManagementEvent event, Map<String, Object> context) {
-    for (ManagementEventListener listener : eventListeners) {
-      try {
-        listener.onEvent(event, context);
-      } catch (RuntimeException re) {
-        getLogger().warn("Management event listener error", re);
+    if (eventListeners.isEmpty()) {
+      unfiredEvents.add(new EventHolder(event, context));
+    } else {
+      for (ManagementEventListener listener : eventListeners) {
+        try {
+          listener.onEvent(event, context);
+        } catch (RuntimeException re) {
+          getLogger().warn("Management event listener error", re);
+        }
       }
     }
   }
+
+
+  private final class EventHolder {
+    TCManagementEvent event;
+    Map<String, Object> context;
+    long fireTime;
+
+    private EventHolder(TCManagementEvent event, Map<String, Object> context) {
+      this.event = event;
+      this.context = context;
+      this.fireTime = System.nanoTime();
+    }
+
+    boolean isExpired() {
+      long now = System.nanoTime();
+      return TimeUnit.NANOSECONDS.toMillis(now - fireTime) >= maxUnfiredEventRetentionMillis();
+    }
+  }
+
+  int maxUnfiredEventRetentionMillis() {
+    return MAX_UNFIRED_EVENT_RETENTION_MILLIS;
+  }
+
+  int maxUnfiredEventCount() {
+    return MAX_UNFIRED_EVENT_COUNT;
+  }
+
 }

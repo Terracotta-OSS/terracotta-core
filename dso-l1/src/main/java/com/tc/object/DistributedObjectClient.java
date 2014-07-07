@@ -1279,6 +1279,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     return null;
   }
 
+  @Override
+  public String getUUID() {
+    return uuid.toString();
+  }
+
   public ManagementServicesManager getManagementServicesManager() {
     return managementServicesManager;
   }

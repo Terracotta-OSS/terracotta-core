@@ -13,6 +13,7 @@ import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -83,5 +84,108 @@ public class ServerManagementHandlerTest {
 
     serverManagementHandler.fireEvent(tcManagementEvent, context);
     assertThat("Expected listener to be called", listenerCalled.get(), is(true));
+  }
+
+  @Test
+  public void testUnfiredEventsCallListeners() throws Exception {
+    final AtomicInteger listenerCalledCount = new AtomicInteger(0);
+    final TCManagementEvent tcManagementEvent = new TCManagementEvent("this is my test response", "test.type");
+    final Map<String, Object> context = new HashMap<String, Object>();
+
+    ServerManagementHandler serverManagementHandler = new ServerManagementHandler();
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+
+    serverManagementHandler.registerEventListener(new ManagementEventListener() {
+      @Override
+      public ClassLoader getClassLoader() {
+        return ServerManagementHandlerTest.class.getClassLoader();
+      }
+
+      @Override
+      public void onEvent(TCManagementEvent event, Map<String, Object> ctx) {
+        listenerCalledCount.incrementAndGet();
+        assertThat(event.getType(), equalTo(tcManagementEvent.getType()));
+        assertThat(event.getPayload(), equalTo(tcManagementEvent.getPayload()));
+        assertThat(ctx, equalTo(context));
+      }
+    });
+
+    assertThat("Expected listener to be called twice", listenerCalledCount.get(), is(5));
+  }
+
+  @Test
+  public void testUnfiredEventsCallListenersWithinCountLimits() throws Exception {
+    final AtomicInteger listenerCalledCount = new AtomicInteger(0);
+    final TCManagementEvent tcManagementEvent = new TCManagementEvent("this is my test response", "test.type");
+    final Map<String, Object> context = new HashMap<String, Object>();
+
+    ServerManagementHandler serverManagementHandler = new ServerManagementHandler() {
+      @Override
+      int maxUnfiredEventCount() {
+        return 3;
+      }
+    };
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+
+    serverManagementHandler.registerEventListener(new ManagementEventListener() {
+      @Override
+      public ClassLoader getClassLoader() {
+        return ServerManagementHandlerTest.class.getClassLoader();
+      }
+
+      @Override
+      public void onEvent(TCManagementEvent event, Map<String, Object> ctx) {
+        listenerCalledCount.incrementAndGet();
+        assertThat(event.getType(), equalTo(tcManagementEvent.getType()));
+        assertThat(event.getPayload(), equalTo(tcManagementEvent.getPayload()));
+        assertThat(ctx, equalTo(context));
+      }
+    });
+
+    assertThat("Expected listener to be called twice", listenerCalledCount.get(), is(3));
+  }
+
+  @Test
+  public void testUnfiredEventsDoNotCallListenersAfterExpiration() throws Exception {
+    final AtomicInteger listenerCalledCount = new AtomicInteger(0);
+    final TCManagementEvent tcManagementEvent = new TCManagementEvent("this is my test response", "test.type");
+    final Map<String, Object> context = new HashMap<String, Object>();
+
+    ServerManagementHandler serverManagementHandler = new ServerManagementHandler() {
+      @Override
+      int maxUnfiredEventRetentionMillis() {
+        return 0;
+      }
+    };
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+    serverManagementHandler.fireEvent(tcManagementEvent, context);
+
+    serverManagementHandler.registerEventListener(new ManagementEventListener() {
+      @Override
+      public ClassLoader getClassLoader() {
+        return ServerManagementHandlerTest.class.getClassLoader();
+      }
+
+      @Override
+      public void onEvent(TCManagementEvent event, Map<String, Object> ctx) {
+        listenerCalledCount.incrementAndGet();
+        assertThat(event.getType(), equalTo(tcManagementEvent.getType()));
+        assertThat(event.getPayload(), equalTo(tcManagementEvent.getPayload()));
+        assertThat(ctx, equalTo(context));
+      }
+    });
+
+    assertThat("Expected listener to not be called", listenerCalledCount.get(), is(0));
   }
 }
