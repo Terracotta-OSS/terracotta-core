@@ -11,10 +11,10 @@
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent</artifactId>
-    <version>3.7</version>
+    <version>3.11</version>
   </parent>
   
-  <groupId>org.terracotta.internal</groupId>
+  <groupId>org.terracotta</groupId>
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
@@ -41,4 +41,61 @@
     </dependency>
   </dependencies>
   
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.1</version>
+          <extensions>true</extensions>
+          <configuration>
+            <!-- The Base URL of Nexus instance where we want to stage -->
+            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
+            <!-- The server "id" element from settings to use authentication from -->
+            <serverId>terracotta-nexus-staging</serverId>
+            <skipNexusStagingDeployMojo>${skipDeploy}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+      </plugins>    
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <scm>
+    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging</developerConnection>
+  </scm>
+  
+  <distributionManagement>
+    <repository>
+      <id>terracotta-nexus-staging</id>
+      <name>Terracotta Nexus Staging Repository</name>
+      <url>${terracotta-nexus-staging-url}</url>
+    </repository>
+    <snapshotRepository>
+      <id>terracotta-ee-snapshots</id>
+       <uniqueVersion>false</uniqueVersion>
+       <name>Terracotta EE Snapshots Repository</name>
+       <url>${terracotta-ee-snapshots-url}</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </pluginRepository>
+  </pluginRepositories>  
 </project>
