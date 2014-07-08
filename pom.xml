@@ -18,7 +18,7 @@
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
-  <version>4.2.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <dependencies>
     <dependency>
