@@ -91,7 +91,7 @@ public class TCStop {
         ThreadUtil.reallySleep(TRY_INTERVAL);
       } else {
         Map<String, ?> errorResponse = response.readEntity(Map.class);
-        consoleLogger.debug(errorResponse.get("stackTrace"));
+        consoleLogger.error(errorResponse.get("stackTrace"));
         throw new IOException("Error stopping server: " + errorResponse.get("error"));
       }
     }
