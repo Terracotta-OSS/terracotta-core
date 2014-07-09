@@ -12,16 +12,18 @@ public class ServerStatEntityV2 implements Serializable {
   private  String state;
   private  String managementPort;
   private  String serverGroupName;
+  private  String name;
 
   public ServerStatEntityV2() {
   }
   
-  public ServerStatEntityV2(String health, String role, String state, String managementPort, String serverGroupName) {
+  public ServerStatEntityV2(String health, String role, String state, String managementPort, String serverGroupName, String serverName) {
     this.health = health;
     this.role = role;
     this.state = state;
     this.managementPort = managementPort;
     this.serverGroupName = serverGroupName;
+    this.name = serverName;
   }
   
   public String getHealth() {
@@ -64,5 +66,11 @@ public class ServerStatEntityV2 implements Serializable {
     this.serverGroupName = serverGroupName;
   }
 
+  public String getName() {
+    return name;
+  }
 
+  public void setName(final String name) {
+    this.name = name;
+  }
 }

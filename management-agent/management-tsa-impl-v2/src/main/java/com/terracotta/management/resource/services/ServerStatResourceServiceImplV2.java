@@ -63,7 +63,8 @@ public class ServerStatResourceServiceImplV2 {
       String managementPort = currentServer.getAttributes().get("ManagementPort").toString();
       String serverGroupName = currentServerGroup.getName();
 
-      return new ServerStatEntityV2(health, role,state,managementPort,serverGroupName);
+      return new ServerStatEntityV2(health, role, state, managementPort, serverGroupName,
+          localManagementSource.getLocalServerName());
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

@@ -4,51 +4,57 @@
  */
 package com.tc.server.util;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.xmlbeans.XmlException;
-import org.terracotta.license.util.Base64;
-
 import com.tc.cli.CommandLineBuilder;
-import com.tc.config.Loader;
-import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.object.config.schema.L2DSOConfigObject;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.tc.cli.ManagementToolUtil;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.Charset;
+import java.net.ConnectException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 public class ServerStat {
   private static final String UNKNOWN                 = "unknown";
   private static final String NEWLINE                 = System.getProperty("line.separator");
 
-  static final int            DEFAULT_MANAGEMENT_PORT = 9540;
-
   private final String        host;
   private final String        hostName;
 
-  private int                 port;
-  private boolean             connected               = false;
-  private String              groupName               = "UNKNOWN";
-  private String              errorMessage            = "";
-  private String              state;
-  private String              role;
-  private String              health;
+  private final int                 port;
+  private final boolean             connected;
+  private final String              groupName;
+  private final String              errorMessage;
+  private final String              state;
+  private final String              role;
+  private final String              health;
 
-  public ServerStat(String host, String hostAlias) {
+  private ServerStat(String host, int port, String error) {
+    this.errorMessage = error;
+    this.connected = false;
+    this.port = port;
+    this.groupName = UNKNOWN;
+    this.state = UNKNOWN;
+    this.role = UNKNOWN;
+    this.health = UNKNOWN;
+    this.host = host;
+    this.hostName = null;
+  }
+
+  private ServerStat(String host, String hostAlias, int port, String groupName, String state, String role,
+                     String health) {
     this.host = host;
     this.hostName = hostAlias;
+    this.port = port;
+    this.groupName = groupName;
+    this.state = state;
+    this.role = role;
+    this.health = health;
+    this.connected = true;
+    this.errorMessage = "";
   }
 
   public String getState() {
@@ -61,6 +67,10 @@ public class ServerStat {
 
   public String getHealth() {
     return health;
+  }
+
+  public String getErrorMessage() {
+    return errorMessage;
   }
 
   /**
@@ -90,15 +100,10 @@ public class ServerStat {
     String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9540,host2:9540" + NEWLINE
                    + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
 
-    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
-
-    commandLineBuilder.addOption("s", true, "Terracotta server instance list (comma separated)", String.class, false,
-                                 "list");
-    commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
+    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(),
+        replaceServerArg(args));
+    ManagementToolUtil.addConnectionOptionsTo(commandLineBuilder);
     commandLineBuilder.addOption("h", "help", String.class, false);
-    commandLineBuilder.addOption(null, "secured", false, "secured", String.class, false);
-    commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
-    commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
     commandLineBuilder.setUsageMessage(usage);
     commandLineBuilder.parse();
 
@@ -106,181 +111,65 @@ public class ServerStat {
       commandLineBuilder.usageAndDie();
     }
 
-    boolean secured = false;
-    if (commandLineBuilder.hasOption("secured")) {
-      initSecurityManager();
-      secured = true;
+    for (WebTarget target : ManagementToolUtil.getTargets(commandLineBuilder, true)) {
+      System.out.println(getStats(target));
     }
+  }
 
-    String username = null;
-    String password = null;
-    if (commandLineBuilder.hasOption('u')) {
-      username = commandLineBuilder.getOptionValue('u');
-      if (commandLineBuilder.hasOption('w')) {
-        password = commandLineBuilder.getOptionValue('w');
-      } else {
-        password = CommandLineBuilder.readPassword();
-      }
+  /**
+   * Handle the "-s" for list of servers in the usage. In ManagementToolUtil, "-s" means secured.
+   *
+   * @param args args from the commandline
+   * @return filtered args
+   */
+  private static String[] replaceServerArg(String[] args) {
+    String[] argCopy = new String[args.length];
+    for (int i = 0; i < args.length; i++) {
+      argCopy[i] = args[i].equals("-s") ? "-servers" : args[i];
     }
+    return argCopy;
+  }
 
-    String hostList = commandLineBuilder.getOptionValue('s');
-    String configFile = commandLineBuilder.getOptionValue('f');
-
+  public static ServerStat getStats(WebTarget target) throws IOException {
+    Response response = null;
+    String host = target.getUri().getHost();
+    int port = target.getUri().getPort();
     try {
-      if (configFile != null) {
-        handleConfigFile(username, password, secured, configFile);
+      response = target.path("/tc-management-api/v2/local/stat").request(MediaType.APPLICATION_JSON_TYPE).get();
+    } catch (RuntimeException e) {
+      if (getRootCause(e) instanceof ConnectException) {
+        return new ServerStat(host, port, "Connection refused to " + host + ":" + port + ". Is the TSA running?");
       } else {
-        handleList(username, password, secured, hostList);
+        throw e;
       }
-    } catch (Exception e) {
-      System.err.println(e.getMessage());
-      System.exit(1);
     }
-  }
 
-  private static void initSecurityManager() throws Exception {
-    final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
-    securityManagerClass.getConstructor(boolean.class).newInstance(true);
-  }
-
-  private static void handleConfigFile(String username, String password, boolean secured, String configFilePath)
-      throws Exception {
-    TcConfigDocument tcConfigDocument = null;
-    try {
-
-      String configFileContent = FileUtils.readFileToString(new File(configFilePath));
-      String configFileSubstitutedContent = ParameterSubstituter.substitute(configFileContent);
-
-      tcConfigDocument = new Loader().parse(configFileSubstitutedContent);
-    } catch (IOException e) {
-      throw new RuntimeException("Error reading " + configFilePath + ": " + e.getMessage());
-    } catch (XmlException e) {
-      throw new RuntimeException("Error parsing " + configFilePath + ": " + e.getMessage());
-    }
-    TcConfig tcConfig = tcConfigDocument.getTcConfig();
-    Servers tcConfigServers = tcConfig.getServers();
-    Server[] servers = L2DSOConfigObject.getServers(tcConfigServers);
-    for (Server server : servers) {
-      String host = server.getHost();
-      if (!secured && tcConfigServers.isSetSecure() && tcConfigServers.getSecure()) {
-        initSecurityManager();
-        secured = true;
-      }
-
-      printStat(username, password, secured, host + ":" + server.getManagementPort().getIntValue(), server.getName());
-    }
-  }
-
-  private static void handleList(String username, String password, boolean secured, String hostList) {
-    if (hostList == null) {
-      printStat(username, password, secured, "localhost:" + DEFAULT_MANAGEMENT_PORT, null);
+    if (response.getStatus() >= 200 && response.getStatus() < 300) {
+      Map<String, String> map = response.readEntity(Map.class);
+      return new ServerStat(host, map.get("name"), port, map.get("serverGroupName"), map.get("state"), map.get("role"),
+          map.get("health"));
+    } else if (response.getStatus() == 401) {
+      return new ServerStat(host, port, "Authentication error, check username/password and try again.");
+    } else if (response.getStatus() == 404) {
+      return new ServerStat(host, port, "Got a 404, is the management server running?");
     } else {
-      String[] pairs = hostList.split(",");
-      for (String info : pairs) {
-        printStat(username, password, secured, info, null);
-        System.out.println();
-      }
+      Map<?, ?> errorResponse = response.readEntity(Map.class);
+      return new ServerStat(host, port, "Error fetching stats: " + errorResponse.get("error"));
     }
   }
 
-  // info = host | host:port
-  private static void printStat(String username, String password, boolean secured, String info, String hostAlias) {
-    String host = info;
-    int port = DEFAULT_MANAGEMENT_PORT;
-    if (info.indexOf(':') > 0) {
-      String[] args = info.split(":");
-      host = args[0];
-      try {
-        port = Integer.valueOf(args[1]);
-      } catch (NumberFormatException e) {
-        throw new RuntimeException("Failed to parse port: " + info);
-      }
+  private static Throwable getRootCause(Throwable e) {
+    Throwable t = e;
+    while (t != null) {
+      e = t;
+      t = t.getCause();
     }
-
-    InputStream myInputStream = null;
-    String prefix = secured ? "https" : "http";
-    String urlAsString = prefix + "://" + host + ":" + port + "/tc-management-api/v2/local/stat";
-
-    ServerStat stat = new ServerStat(host, hostAlias);
-    HttpURLConnection conn = null;
-    try {
-      URL url = new URL(urlAsString);
-      conn = (HttpURLConnection) url.openConnection();
-      conn.setDoOutput(true);
-      conn.setRequestMethod("GET");
-      String headerValue = username + ":" + password;
-      byte[] bytes = headerValue.getBytes("UTF-8");
-      String encodeBase64 = Base64.encodeBytes(bytes);
-      // Basic auth
-      conn.addRequestProperty("Basic", encodeBase64);
-
-      // we send as text/plain , the forceStop attribute, that basically is a boolean
-      conn.addRequestProperty("Content-Type", "application/json");
-      conn.addRequestProperty("Accept", "*/*");
-
-      myInputStream = conn.getInputStream();
-      if (myInputStream != null) {
-        String responseContent = toString(myInputStream);
-        // { "health" : "OK", "role" : "ACTIVE", "state": "ACTIVE-COORDINATOR", "managementPort" : "9540",
-        // "serverGroupName" : "defaultGroup"}
-        stat.decodeJsonAndSetFields(responseContent);
-        // consoleLogger.debug("Response code is : " + responseCode);
-        // consoleLogger.debug("Response content is : " + responseContent);
-      }
-
-    } catch (IOException e) {
-      stat.errorMessage = "Unexpected error while getting stat: " + e.getMessage();
-    } finally {
-      conn.disconnect();
-    }
-
-    System.out.println(stat.toString());
+    return e;
   }
 
-  void decodeJsonAndSetFields(String responseContent) {
-    connected = true;
-
-    String strippedResponseContent = responseContent.replace("{", "");
-    strippedResponseContent = strippedResponseContent.replace("}", "");
-    String[] splittedFields = strippedResponseContent.split(",");
-    for (String jsonKeyValue : splittedFields) {
-      String[] keyValue = jsonKeyValue.split(":");
-      String key = keyValue[0].trim();
-      key = key.replace("\"", "");
-      String value = keyValue[1].trim();
-      value = value.replace("\"", "");
-
-      if ("health".equals(key)) {
-        health = value;
-      }
-      if ("role".equals(key)) {
-        role = value;
-      }
-      if ("state".equals(key)) {
-        state = value;
-      }
-      if ("managementPort".equals(key)) {
-        port = Integer.valueOf(value);
-      }
-      if ("serverGroupName".equals(key)) {
-        groupName = value;
-      }
-    }
+  public static ServerStat getStats(String host, int port, String username, String password,
+                                    boolean secured, boolean ignoreUntrusted)
+      throws KeyManagementException, NoSuchAlgorithmException, IOException {
+    return getStats(ManagementToolUtil.targetFor(host, port, username, password, secured, ignoreUntrusted));
   }
-
-  public static String toString(InputStream stream) throws IOException {
-    Writer writer = new StringWriter();
-    char[] buffer = new char[1024];
-    try {
-      Reader reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
-      int n;
-      while ((n = reader.read(buffer)) != -1) {
-        writer.write(buffer, 0, n);
-      }
-    } finally {
-      stream.close();
-    }
-    return writer.toString();
-  }
-
 }

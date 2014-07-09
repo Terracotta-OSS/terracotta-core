@@ -99,6 +99,10 @@ public class CommandLineBuilder {
     return commandLine.getArgs();
   }
 
+  public String[] getUnparsedArgs() {
+    return cmdArguments;
+  }
+
   public void parse() {
     try {
       commandLine = new GnuParser().parse(options, cmdArguments);

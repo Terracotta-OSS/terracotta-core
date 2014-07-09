@@ -321,6 +321,16 @@
         <artifactId>jackson-databind</artifactId>
         <version>2.3.3</version>
       </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-client</artifactId>
+        <version>2.6</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-json-jackson</artifactId>
+        <version>2.6</version>
+      </dependency>
 
       <!-- Glassfish substitutes -->
       <dependency>
