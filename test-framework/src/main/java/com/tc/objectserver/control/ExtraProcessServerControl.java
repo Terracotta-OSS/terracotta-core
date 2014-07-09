@@ -6,7 +6,6 @@ package com.tc.objectserver.control;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.test.util.JMXUtils;
-import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.test.util.TestProcessUtil;
 
 import com.tc.admin.TCStop;
