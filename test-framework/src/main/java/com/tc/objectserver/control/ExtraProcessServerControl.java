@@ -9,6 +9,7 @@ import org.terracotta.test.util.JMXUtils;
 import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.test.util.TestProcessUtil;
 
+import com.tc.admin.TCStop;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
@@ -425,7 +426,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
                        + (username != null ? ", username: " + username : "")
                        + (passwd != null ? ", passwd: " + passwd : "") + ")");
     List<String> mainClassArguments = new ArrayList<String>();
-    List<String> stopperJvmArgs = new ArrayList<String>(jvmArgs);
     mainClassArguments.addAll(getMainClassArguments());
     mainClassArguments.add("-force");
     if (secured) {
@@ -440,12 +440,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
-    TestBaseUtil.setHeapSizeArgs(stopperJvmArgs, 32, 64, -1, true);
-
-    LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, stopperJvmArgs);
-    stopper.start();
-    stopper.mergeSTDOUT("TCStop");
-    stopper.mergeSTDERR("TCStop");
+    TCStop.main(mainClassArguments.toArray(new String[mainClassArguments.size()]));
   }
 
   @Override
