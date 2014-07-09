@@ -85,9 +85,11 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 import javax.management.MBeanServer;
@@ -121,6 +123,7 @@ public class ManagerImpl implements Manager {
   private ServerEventListenerManager                  serverEventListenerManager;
   private final String                                L1VMShutdownHookName      = "L1 VM Shutdown Hook";
   private volatile TaskRunner                         taskRunner;
+  private final Queue<TCManagementEvent>              unfiredTcManagementEvents = new ConcurrentLinkedQueue<TCManagementEvent>();
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -285,6 +288,16 @@ public class ManagerImpl implements Manager {
                                          ManagerImpl.this.objectManager, ManagerImpl.this.dso.getClusterEventsStage());
         ManagerImpl.this.dsoCluster.addClusterListener(new ClusterEventListener(ManagerImpl.this.shutdownManager
             .getRemoteTransactionManager()));
+
+        // fire queued events now that the DSO client is created
+        while (true) {
+          TCManagementEvent event = unfiredTcManagementEvents.poll();
+          if (event == null) {
+            break;
+          }
+          dso.getManagementServicesManager().sendEvent(event);
+        }
+        unfiredTcManagementEvents.clear();
       }
 
     };
@@ -1014,6 +1027,11 @@ public class ManagerImpl implements Manager {
 
   @Override
   public void sendEvent(TCManagementEvent event) {
-    dso.getManagementServicesManager().sendEvent(event);
+    // fix for NonStopCacheStartupTest: queue events if the DSO client hasn't been created yet
+    if (dso == null) {
+      unfiredTcManagementEvents.offer(event);
+    } else {
+      dso.getManagementServicesManager().sendEvent(event);
+    }
   }
 }
