@@ -46,7 +46,7 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
     TopologyEntityV2 result = new TopologyEntityV2();
     result.getServerGroupEntities().addAll(this.getServerGroups(null));
     result.getClientEntities().addAll(this.getClients(productIDs, null));
-    result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(null));
+    result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(null));
     response.getEntities().add(result);
     return response;
   }
@@ -56,7 +56,7 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
     ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
     TopologyEntityV2 result = new TopologyEntityV2();
     result.getServerGroupEntities().addAll(this.getServerGroups(serverNames));
-    result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(serverNames));
+    result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(serverNames));
     response.getEntities().add(result);
     return response;
   }
@@ -74,7 +74,7 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
   public ResponseEntityV2<TopologyEntityV2> getUnreadOperatorEventCount(Set<String> serverNames) throws ServiceExecutionException {
     ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
     TopologyEntityV2 result = new TopologyEntityV2();
-    result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount(serverNames));
+    result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(serverNames));
     response.getEntities().add(result);
     return response;
   }

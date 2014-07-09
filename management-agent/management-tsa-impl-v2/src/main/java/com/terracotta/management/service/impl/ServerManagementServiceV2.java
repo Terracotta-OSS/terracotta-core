@@ -586,7 +586,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
       @Override
       public Collection<TopologyEntityV2> queryLocalServer(L2Info member) {
         TopologyEntityV2 topologyEntityV2 = new TopologyEntityV2();
-        topologyEntityV2.setUnreadOperatorEventCount(localManagementSource.getUnreadOperatorEventCount());
+        topologyEntityV2.getUnreadOperatorEventCount().putAll(localManagementSource.getUnreadOperatorEventCount());
         return Collections.singleton(topologyEntityV2);
       }
 
