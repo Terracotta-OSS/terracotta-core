@@ -8,10 +8,10 @@ import org.terracotta.tests.base.TestFailureListener;
 import com.tc.lang.ServerExitStatus;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.server.util.ServerStat;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.config.model.L2Config;
@@ -24,6 +24,8 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +55,6 @@ class GroupServerManager {
   private final File                javaHome;
   private final File                tempDir;
   private static final int          NULL_VAL              = -1;
-  private final TCServerInfoMBean[] tcServerInfoMBeans;
   private final JMXConnector[]      jmxConnectors;
   private int                       lastCrashedIndex      = NULL_VAL;
   private Random                    random;
@@ -124,7 +125,6 @@ class GroupServerManager {
     this.tcConfigFile = tcConfigFile;
     this.expectedServerRunning = new boolean[groupData.getServerCount()];
     createServers();
-    this.tcServerInfoMBeans = new TCServerInfoMBean[groupData.getServerCount()];
     this.jmxConnectors = new JMXConnector[groupData.getServerCount()];
     SecureRandom srandom = SecureRandom.getInstance("SHA1PRNG");
     seed = srandom.nextLong();
@@ -232,8 +232,6 @@ class GroupServerManager {
     if (isProxyTsaGroupPort()) {
       proxyL2Managers[index].proxyUp();
       proxyL2Managers[index].startProxyTest();
-      debugPrintln("***** Caching tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]");
-      tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
     }
     expectedServerRunning[index] = true;
     // this is the only server running. start an async thread to start l1 proxy when the server becomes active.
@@ -402,17 +400,6 @@ class GroupServerManager {
     if (!(new File(directory).delete())) { throw new AssertionError("delete file=[" + directory + "] failed"); }
     debugPrintln("\n ##### deleted directory=[" + directory + "]");
     debugPrintln("\n ##### dataFile=[" + directory + "] still exists? [" + (new File(directory).exists()) + "]");
-  }
-
-  private TCServerInfoMBean getTcServerInfoMBean(int index) throws IOException {
-    closeJMXConnector(index);
-    MBeanServerConnection mBeanServer;
-    synchronized (jmxConnectors) {
-      jmxConnectors[index] = getJMXConnector(serverControl[index].getAdminPort());
-      mBeanServer = jmxConnectors[index].getMBeanServerConnection();
-    }
-    return MBeanServerInvocationHandler.newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO,
-                                                         TCServerInfoMBean.class, true);
   }
 
   private static JMXConnector getJMXConnector(int jmxPort) throws IOException {
@@ -727,7 +714,7 @@ class GroupServerManager {
     return rv;
   }
 
-  private boolean dumpClusterStateInternal(int serverIndex) throws IOException, InterruptedException, Exception {
+  private boolean dumpClusterStateInternal(int serverIndex) throws Exception {
     if (serverControl[serverIndex].isRunning()) {
       System.out.println("Dumping server=[" + serverControl[serverIndex].getTsaPort() + "]");
 
@@ -767,28 +754,28 @@ class GroupServerManager {
     return getActiveServerIndex() == -1 ? false : true;
   }
 
+  private boolean isServerPassiveStandby(int serverIndex) {
+    try {
+      return "PASSIVE-STANDBY".equals(getServerStat(serverIndex).getState());
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private ServerStat getServerStat(final int serverIndex) throws KeyManagementException, NoSuchAlgorithmException, IOException {return ServerStat
+      .getStats(HOST, groupData.getManagementPort(serverIndex), null, null, false, false);}
+
   private boolean isEveryPassiveStandBy() {
 
     System.out.println("Searching for appropriate passive server(s)... ");
     int passives = 0;
     int expectedPassives = -1;
     for (int i = 0; i < groupData.getServerCount(); i++) {
-      try {
-        if (expectedServerRunning[i]) {
-          expectedPassives++;
-        }
-        if (tcServerInfoMBeans[i].isPassiveStandby()) {
-          passives++;
-        }
-      } catch (Exception e) {
-        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getTsaPort() + "]... ["
-                           + e.getMessage() + "]");
-        try {
-          tcServerInfoMBeans[i] = getTcServerInfoMBean(i);
-          if (tcServerInfoMBeans[i].isPassiveStandby()) passives++;
-        } catch (Exception e2) {
-          System.out.println("exception restoring jmx connection [" + e2.getMessage() + "]");
-        }
+      if (expectedServerRunning[i]) {
+        expectedPassives++;
+      }
+      if (isServerPassiveStandby(i)) {
+        passives++;
       }
     }
 
@@ -799,53 +786,26 @@ class GroupServerManager {
 
     System.out.println("Searching for appropriate passive server(s)... ");
     for (int i = 0; i < groupData.getServerCount(); i++) {
-      try {
-        if (tcServerInfoMBeans[i].isPassiveStandby()) { return true; }
-      } catch (Exception e) {
-        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getTsaPort() + "]... ["
-                           + e.getMessage() + "]");
-        try {
-          tcServerInfoMBeans[i] = getTcServerInfoMBean(i);
-          if (tcServerInfoMBeans[i].isPassiveStandby()) return true;
-        } catch (Exception e2) {
-          System.out.println("exception restoring jmx connection [" + e2.getMessage() + "]");
-        }
-      }
+      if (isServerPassiveStandby(i)) { return true; }
     }
 
     return false;
   }
 
   boolean isPassiveUninitialized(int index) {
-    boolean isPassiveUnitialized = false;
     try {
-      isPassiveUnitialized = tcServerInfoMBeans[index].isPassiveUninitialized();
+      return "PASSIVE-UNINITIALIZED".equals(getServerStat(index).getState());
     } catch (Exception e) {
-      System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]...");
-      try {
-        tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
-        isPassiveUnitialized = tcServerInfoMBeans[index].isPassiveUninitialized();
-      } catch (Exception e2) {
-        System.out.println("exception restoring jmx connection [" + e2.getMessage() + "]");
-      }
+      return false;
     }
-    return isPassiveUnitialized;
   }
 
   private boolean isActive(int index) {
-    boolean isActive = false;
     try {
-      isActive = tcServerInfoMBeans[index].isActive();
+      return "ACTIVE-COORDINATOR".equals(getServerStat(index).getState());
     } catch (Exception e) {
-      System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]...");
-      try {
-        tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
-        isActive = tcServerInfoMBeans[index].isActive();
-      } catch (Exception e2) {
-        System.out.println("exception restoring jmx connection [" + e2.getMessage() + "]");
-      }
+      return false;
     }
-    return isActive;
   }
 
   void startCrasher() {
