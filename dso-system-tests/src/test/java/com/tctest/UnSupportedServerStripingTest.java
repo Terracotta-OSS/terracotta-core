@@ -27,7 +27,6 @@ public class UnSupportedServerStripingTest extends BaseDSOTestCase {
 
     server.startAndWait(30);
     assertFalse("Expected the server to fail due to unsupported feature", server.isRunning());
-    server.stop();
 
     List<CharSequence> result = Grep.grep("Terracotta license key is required for Enterprise capabilities",
                                           server.getServerLog());
