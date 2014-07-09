@@ -119,20 +119,22 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
       disableTest();
     }
     if (!"".equals(System.getProperty("com.tc.productkey.path"))) {
-      if (!testConfig.getL2Config().isOffHeapEnabled() && testConfig.getL2Config().isAutoOffHeapEnable()) {
-        System.out.println("============= Offheap is turned off, switching it on to avoid OOMEs! ==============");
-        testConfig.getL2Config().setOffHeapEnabled(true);
-        if (testConfig.getGroupConfig().getMemberCount() * testConfig.getNumOfGroups() < 4) {
-          testConfig.getL2Config().setDirectMemorySize(1024);
-          testConfig.getL2Config().setMaxOffHeapDataSize(512);
+      if (!testConfig.getL2Config().isOffHeapEnabled()) {
+        if (testConfig.getL2Config().isAutoOffHeapEnable()) {
+          System.out.println("============= Offheap is turned off, switching it on to avoid OOMEs! ==============");
+          testConfig.getL2Config().setOffHeapEnabled(true);
+          if (testConfig.getGroupConfig().getMemberCount() * testConfig.getNumOfGroups() < 4) {
+            testConfig.getL2Config().setDirectMemorySize(1024);
+            testConfig.getL2Config().setMaxOffHeapDataSize(512);
+          } else {
+            boolean isRestartable = testConfig.getRestartable();
+            // reduce memory settings for AA tests until RAM is increased on MNK machines.
+            TestBaseUtil.configureOffHeap(testConfig, 1024, 300);
+            testConfig.setRestartable(isRestartable);
+          }
         } else {
-          boolean isRestartable = testConfig.getRestartable();
-          // reduce memory settings for AA tests until RAM is increased on MNK machines.
-          TestBaseUtil.configureOffHeap(testConfig, 1024, 300);
-          testConfig.setRestartable(isRestartable);
+          Banner.warnBanner("Offheap is disabled and auto-enable-offheap is also set to false! L2 may suffer OOME");
         }
-      } else {
-        Banner.warnBanner("Offheap is disabled and auto-enable-offheap is also set to false! L2 may suffer OOME");
       }
     } else {
       if (testConfig.getRestartable()) {
