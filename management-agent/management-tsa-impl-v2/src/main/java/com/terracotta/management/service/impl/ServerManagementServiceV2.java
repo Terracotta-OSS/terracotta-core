@@ -122,7 +122,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
             .path("diagnostics")
             .path("threadDump")
             .path("servers")
-            .matrixParam("names", member.name());
+            .matrixParam("serverNames", member.name());
 
         try {
           return remoteManagementSource.getFromRemoteL2(member.name(),
