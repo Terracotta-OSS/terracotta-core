@@ -81,10 +81,9 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String coreMatchers = TestBaseUtil.jarFor(CoreMatchers.class);
     String commonCli = TestBaseUtil.jarFor(org.apache.commons.cli.ParseException.class);
     String commonLang = TestBaseUtil.jarFor(org.apache.commons.lang.StringUtils.class);
-    String tcMessaging = TestBaseUtil.jarFor(com.tc.util.Assert.class);
     return makeClasspath(tk, common, expressRuntime, fs, l1, clientBase, l2Mbean, jsonParser, ehCache, slf4J,
                          commonsIo, ehcache, httpClient, httpCore, commonsCodec, commonsLogging, coreMatchers,
-                         commonCli, commonLang, tcMessaging);
+                         commonCli, commonLang);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
