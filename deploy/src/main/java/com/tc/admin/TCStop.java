@@ -32,26 +32,31 @@ public class TCStop {
   private static final int TRY_INTERVAL = 1000;
 
   public static void main(String[] args) throws Exception {
-    Options options = StandardConfigurationSetupManagerFactory
-        .createOptions(StandardConfigurationSetupManagerFactory.ConfigMode.L2);
-    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
-    commandLineBuilder.setOptions(options);
-    ManagementToolUtil.addConnectionOptionsTo(commandLineBuilder);
-    commandLineBuilder.addOption("force", "force", false, "force", String.class, false);
-    commandLineBuilder.addOption("h", "help", String.class, false);
-
-    commandLineBuilder.parse();
+    CommandLineBuilder commandLineBuilder = getCommandLineBuilder(args);
 
     if (commandLineBuilder.hasOption('h')) {
       commandLineBuilder.usageAndDie();
     }
+
+    try {
+      stop(args);
+    } catch (SecurityException se) {
+      consoleLogger.error(se.getMessage(), se);
+      commandLineBuilder.usageAndDie();
+    } catch (Exception e) {
+      System.exit(1);
+    }
+  }
+
+  public static void stop(final String[] args) throws Exception {
+    CommandLineBuilder commandLineBuilder = getCommandLineBuilder(args);
 
     for (WebTarget target : ManagementToolUtil.getTargets(commandLineBuilder)) {
         try {
           restStop(target, commandLineBuilder.hasOption("force"));
         } catch (SecurityException se) {
           consoleLogger.error(se.getMessage(), se);
-          commandLineBuilder.usageAndDie();
+          throw se;
         } catch (Exception e) {
           Throwable root = getRootCause(e);
           if (root instanceof ConnectException) {
@@ -60,9 +65,20 @@ public class TCStop {
           } else {
             consoleLogger.error("Unexpected error while stopping server", root);
           }
-          System.exit(1);
+          throw e;
         }
       }
+  }
+
+  protected static CommandLineBuilder getCommandLineBuilder(final String[] args) {Options options = StandardConfigurationSetupManagerFactory
+    .createOptions(StandardConfigurationSetupManagerFactory.ConfigMode.L2);
+    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
+    commandLineBuilder.setOptions(options);
+    ManagementToolUtil.addConnectionOptionsTo(commandLineBuilder);
+    commandLineBuilder.addOption("force", "force", false, "force", String.class, false);
+    commandLineBuilder.addOption("h", "help", String.class, false);
+    commandLineBuilder.parse();
+    return commandLineBuilder;
   }
 
   private static Throwable getRootCause(Throwable e) {

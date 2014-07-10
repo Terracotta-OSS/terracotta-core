@@ -10,6 +10,8 @@ import org.terracotta.test.util.TestProcessUtil;
 
 import com.tc.admin.TCStop;
 import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.cli.CommandLineBuilder;
+import com.tc.cli.ManagementToolUtil;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
@@ -40,6 +42,7 @@ import java.util.Map.Entry;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
+import javax.ws.rs.client.WebTarget;
 
 public class ExtraProcessServerControl extends ServerControlBase {
   private static final String  DEFAULT_MIN_HEAP          = "-Xms128m";
@@ -439,7 +442,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
-    TCStop.main(mainClassArguments.toArray(new String[mainClassArguments.size()]));
+    TCStop.stop(mainClassArguments.toArray(new String[mainClassArguments.size()]));
   }
 
   @Override
