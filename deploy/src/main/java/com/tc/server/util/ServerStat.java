@@ -6,6 +6,9 @@ package com.tc.server.util;
 
 import com.tc.cli.CommandLineBuilder;
 import com.tc.cli.ManagementToolUtil;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -18,6 +21,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class ServerStat {
+  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+
+  private static final int MAX_TRIES = 50;
+  private static final int RETRY_INTERVAL = 1000;
+
   private static final String UNKNOWN                 = "unknown";
   private static final String NEWLINE                 = System.getProperty("line.separator");
 
@@ -134,28 +142,32 @@ public class ServerStat {
     Response response = null;
     String host = target.getUri().getHost();
     int port = target.getUri().getPort();
-    try {
-      response = target.path("/tc-management-api/v2/local/stat").request(MediaType.APPLICATION_JSON_TYPE).get();
-    } catch (RuntimeException e) {
-      if (getRootCause(e) instanceof ConnectException) {
-        return new ServerStat(host, port, "Connection refused to " + host + ":" + port + ". Is the TSA running?");
+    for (int i = 0; i < MAX_TRIES; i++) {
+      try {
+        response = target.path("/tc-management-api/v2/local/stat").request(MediaType.APPLICATION_JSON_TYPE).get();
+      } catch (RuntimeException e) {
+        if (getRootCause(e) instanceof ConnectException) {
+          return new ServerStat(host, port, "Connection refused to " + host + ":" + port + ". Is the TSA running?");
+        } else {
+          throw e;
+        }
+      }
+
+      if (response.getStatus() >= 200 && response.getStatus() < 300) {
+        Map<String, String> map = response.readEntity(Map.class);
+        return new ServerStat(host, map.get("name"), port, map.get("serverGroupName"), map.get("state"), map.get("role"),
+            map.get("health"));
+      } else if (response.getStatus() == 401) {
+        return new ServerStat(host, port, "Authentication error, check username/password and try again.");
+      } else if (response.getStatus() == 404) {
+        consoleLogger.debug("Got a 404 getting the server stats. Management service might not be started yet. Trying again.");
+        ThreadUtil.reallySleep(RETRY_INTERVAL);
       } else {
-        throw e;
+        Map<?, ?> errorResponse = response.readEntity(Map.class);
+        return new ServerStat(host, port, "Error fetching stats: " + errorResponse.get("error"));
       }
     }
-
-    if (response.getStatus() >= 200 && response.getStatus() < 300) {
-      Map<String, String> map = response.readEntity(Map.class);
-      return new ServerStat(host, map.get("name"), port, map.get("serverGroupName"), map.get("state"), map.get("role"),
-          map.get("health"));
-    } else if (response.getStatus() == 401) {
-      return new ServerStat(host, port, "Authentication error, check username/password and try again.");
-    } else if (response.getStatus() == 404) {
-      return new ServerStat(host, port, "Got a 404, is the management server running?");
-    } else {
-      Map<?, ?> errorResponse = response.readEntity(Map.class);
-      return new ServerStat(host, port, "Error fetching stats: " + errorResponse.get("error"));
-    }
+    return new ServerStat(host, port, "Got a 404, is the management server running?");
   }
 
   private static Throwable getRootCause(Throwable e) {
