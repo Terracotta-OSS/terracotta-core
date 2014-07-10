@@ -3,12 +3,13 @@
  */
 package com.tc.objectserver.control;
 
+import org.terracotta.test.util.WaitUtil;
+
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
-import com.tc.util.CallableWaiter;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -67,7 +68,7 @@ public class ServerMBeanRetriever {
 
   public static DSOMBean getDSOMBean(final String host, final int jmxPort) throws Exception {
     final AtomicReference<DSOMBean> dsoMBeanRef = new AtomicReference<DSOMBean>();
-    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+    WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         JMXConnector jmxConnector = null;
@@ -93,7 +94,7 @@ public class ServerMBeanRetriever {
     // Not going to cache this and check liveness because it's not used super frequently and it doesn't have an easy
     // non-destructive check method.
     final AtomicReference<L2DumperMBean> l2DumperRef = new AtomicReference<L2DumperMBean>();
-    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+    WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         JMXConnector jmxConnector = null;
@@ -116,7 +117,7 @@ public class ServerMBeanRetriever {
 
   public static TCServerInfoMBean getTCServerInfoMBean(final String host, final int jmxPort) throws Exception {
     final AtomicReference<TCServerInfoMBean> tcServerInfoMBeanRef = new AtomicReference<TCServerInfoMBean>();
-    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+    WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         JMXConnector jmxConnector = null;
@@ -124,7 +125,7 @@ public class ServerMBeanRetriever {
           jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
           MBeanServerConnection msc = jmxConnector.getMBeanServerConnection();
           tcServerInfoMBeanRef.set(MBeanServerInvocationProxy.newMBeanProxy(msc, L2MBeanNames.TC_SERVER_INFO,
-                                                                            TCServerInfoMBean.class, false));
+              TCServerInfoMBean.class, false));
           return true;
         } catch (Exception e) {
           if (jmxConnector != null) {
