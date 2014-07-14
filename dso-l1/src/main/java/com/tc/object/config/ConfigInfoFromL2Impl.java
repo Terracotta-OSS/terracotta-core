@@ -40,9 +40,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
 
   private static final TCLogger  logger                                       = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger  consoleLogger                                = CustomerLogging.getConsoleLogger();
-  private static final int       MAX_CONNECT_TRIES                            = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
+  private static final int       MAX_CONNECT_TRIES                            = -1;
   private static final long      RECONNECT_WAIT_INTERVAL                      = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);

@@ -58,7 +58,8 @@ public interface TCPropertiesConsts {
       "l2.offHeapCache.skip.jvmarg.check", "l1.cachemanager.enabled", "l1.cachemanager.logging.enabled",
       "l1.cachemanager.leastCount", "l1.cachemanager.percentageToEvict", "l1.cachemanager.sleepInterval",
       "l1.cachemanager.criticalThreshold", "l1.cachemanager.threshold", "l1.cachemanager.monitorOldGenOnly",
-      "l1.cachemanager.criticalObjectThreshold", "l1.connect.versionMatchCheck.enabled", "l1.jvm.check.compatibility" };
+      "l1.cachemanager.criticalObjectThreshold", "l1.connect.versionMatchCheck.enabled", "l1.jvm.check.compatibility",
+      "l1.max.connect.retries"                                                             };
 
   /*********************************************************************************************************************
    * <code>
@@ -385,13 +386,11 @@ public interface TCPropertiesConsts {
    * <code>
    * Section: L1 Connect Properties
    * Description: This section contains properties controlling L1 connect feature
-   * max.connect.retries               - Maximum L2 connection attempts
    * socket.connect.timeout            - Socket timeout (ms) when connecting to server
    * reconnect.waitInterval            - Sleep time (ms) between trying connections to the server
    *                                     (values less than 10ms will be set to 10ms)
    * </code>
    ********************************************************************************************************************/
-  public static final String L1_MAX_CONNECT_RETRIES                                         = "l1.max.connect.retries";
   public static final String L1_SOCKET_CONNECT_TIMEOUT                                      = "l1.socket.connect.timeout";
   public static final String L1_SOCKET_RECONNECT_WAIT_INTERVAL                              = "l1.socket.reconnect.waitInterval";
   public static final String L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS                           = "l1.clusterevents.outofbandnotifier.jointime.millis";
