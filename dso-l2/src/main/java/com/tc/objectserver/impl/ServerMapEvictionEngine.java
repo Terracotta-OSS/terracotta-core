@@ -192,7 +192,9 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     
     inflightEvictions.put(serverTransaction.getServerTransactionID(), oid);
 
-    evictionTransactionPersistor.saveEviction(serverTransaction.getServerTransactionID(), oid, cacheName, candidates);
+    if ( persistent ) {
+      evictionTransactionPersistor.saveEviction(serverTransaction.getServerTransactionID(), oid, cacheName, candidates);
+    }
     transactionBatchManager.processTransactions(batchContext);
   }
 
