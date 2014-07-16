@@ -15,10 +15,12 @@ public class VersionCompatibility {
   }
 
   public boolean isCompatibleServerPersistence(Version persisted, Version current) {
-    if (persisted.major() == current.major() && persisted.minor() == current.minor()) {
+    if (persisted.compareTo(MINIMUM_COMPATIBLE_PERSISTENCE) < 0) {
+      return false;
+    } else if (persisted.major() == current.major() && persisted.minor() == current.minor()) {
       return true;
     } else {
-      return current.compareTo(persisted) >= 0 && MINIMUM_COMPATIBLE_PERSISTENCE.compareTo(persisted) <= 0;
+      return current.compareTo(persisted) >= 0;
     }
   }
 
