@@ -90,7 +90,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
       }
       val.append(" ");
     }
-    return val.toString();
+    return val.toString().trim();
   }
 
   @Override
