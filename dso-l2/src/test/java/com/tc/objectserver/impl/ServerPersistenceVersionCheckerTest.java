@@ -3,6 +3,7 @@ package com.tc.objectserver.impl;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
+import com.tc.util.version.VersionCompatibility;
 
 /**
  * @author tim
@@ -24,12 +26,15 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   private ClusterStatePersistor           clusterStatePersistor;
   private ServerPersistenceVersionChecker serverPersistenceVersionChecker;
   private ProductInfo                     productInfo;
+  private VersionCompatibility            versionCompatibility;
 
   @Override
   public void setUp() throws Exception {
     clusterStatePersistor = mock(ClusterStatePersistor.class);
     productInfo = mock(ProductInfo.class);
-    serverPersistenceVersionChecker = new ServerPersistenceVersionChecker(clusterStatePersistor, productInfo);
+    versionCompatibility = spy(new VersionCompatibility());
+    when(versionCompatibility.getMinimumCompatiblePersistence()).thenReturn(new Version("0.0.1"));
+    serverPersistenceVersionChecker = new ServerPersistenceVersionChecker(clusterStatePersistor, productInfo, versionCompatibility);
   }
 
   public void testDotVersionBump() throws Exception {
@@ -53,7 +58,7 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   public void testMinorVersionBump() throws Exception {
     currentVersion("1.1.0");
     persistedVersion("1.0.0");
-    verifyExceptionAndNoUpdate();
+    verifyUpdatedTo("1.1.0");
   }
 
   public void testMinorVersionDrop() throws Exception {
@@ -65,7 +70,7 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   public void testMajorVersionBump() throws Exception {
     persistedVersion("1.0.0");
     currentVersion("2.0.0");
-    verifyExceptionAndNoUpdate();
+    verifyUpdatedTo("2.0.0");
   }
 
   public void testInitializeVersion() throws Exception {

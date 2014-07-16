@@ -14,18 +14,21 @@ public class ServerPersistenceVersionChecker {
   private static final TCLogger LOGGER = TCLogging.getLogger(ServerPersistenceVersionChecker.class);
   private final ClusterStatePersistor clusterStatePersistor;
   private final ProductInfo productInfo;
+  private final VersionCompatibility versionCompatibility;
 
   public ServerPersistenceVersionChecker(final ClusterStatePersistor clusterStatePersistor) {
-    this(clusterStatePersistor, ProductInfo.getInstance());
+    this(clusterStatePersistor, ProductInfo.getInstance(), new VersionCompatibility());
   }
 
-  ServerPersistenceVersionChecker(final ClusterStatePersistor clusterStatePersistor, final ProductInfo productInfo) {
+  ServerPersistenceVersionChecker(final ClusterStatePersistor clusterStatePersistor, final ProductInfo productInfo,
+                                  final VersionCompatibility versionCompatibility) {
     this.clusterStatePersistor = clusterStatePersistor;
     this.productInfo = productInfo;
+    this.versionCompatibility = versionCompatibility;
   }
 
   private boolean checkVersion(Version persisted, Version current) {
-    if (persisted != null) { return new VersionCompatibility().isCompatibleServerPersistence(persisted, current); }
+    if (persisted != null) { return versionCompatibility.isCompatibleServerPersistence(persisted, current); }
     return true;
   }
 
