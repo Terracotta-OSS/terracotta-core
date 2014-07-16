@@ -4,6 +4,7 @@
 package com.tc.util.version;
 
 public class VersionCompatibility {
+  protected static final Version MINIMUM_COMPATIBLE_PERSISTENCE = new Version("4.1.2");
 
   public boolean isCompatibleClientServer(Version clientVersion, Version serverVersion) {
     return isCompatible(clientVersion, serverVersion);
@@ -14,7 +15,11 @@ public class VersionCompatibility {
   }
 
   public boolean isCompatibleServerPersistence(Version persisted, Version current) {
-    return isCompatible(persisted, current);
+    if (persisted.major() == current.major() && persisted.minor() == current.minor()) {
+      return true;
+    } else {
+      return current.compareTo(persisted) >= 0 && MINIMUM_COMPATIBLE_PERSISTENCE.compareTo(persisted) <= 0;
+    }
   }
 
   private static boolean isCompatible(Version v1, Version v2) {
