@@ -165,7 +165,7 @@
             <executions>
               <execution>
                 <id>inject-correct-pom-to-jar</id>
-                <phase>package</phase>
+                <phase>verify</phase>
                 <goals>
                   <goal>execute</goal>
                 </goals>
