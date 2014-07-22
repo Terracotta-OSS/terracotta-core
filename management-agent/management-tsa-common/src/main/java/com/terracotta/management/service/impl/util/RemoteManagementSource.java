@@ -5,7 +5,6 @@ package com.terracotta.management.service.impl.util;
 
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.filter.EncodingFilter;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.sse.EventInput;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -72,7 +71,6 @@ public class RemoteManagementSource {
     this.securityContextService = securityContextService;
 
     this.client = ClientBuilder.newBuilder()
-        .register(JacksonFeature.class)
         .register(SseFeature.class)
         .register(EncodingFilter.class)
         .register(GZipEncoder.class)
