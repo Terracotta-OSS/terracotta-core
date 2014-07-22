@@ -1,0 +1,184 @@
+package com.terracotta.management.l1bridge;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.terracotta.management.l1bridge.RemoteCallDescriptor;
+import org.terracotta.management.resource.AgentEntityV2;
+import org.terracotta.management.resource.AgentMetadataEntityV2;
+import org.terracotta.management.resource.ResponseEntityV2;
+
+import com.terracotta.management.security.impl.NullContextService;
+import com.terracotta.management.security.impl.NullRequestTicketMonitor;
+import com.terracotta.management.security.impl.NullUserService;
+import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.impl.TimeoutServiceImpl;
+import com.terracotta.management.web.proxy.ProxyException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.ws.rs.WebApplicationException;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author Ludovic Orban
+ */
+public class RemoteAgentServiceV2Test {
+
+  private ExecutorService executorService;
+
+  @Before
+  public void setUp() throws Exception {
+    executorService = Executors.newSingleThreadExecutor();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    executorService.shutdown();
+  }
+
+  @Test
+  public void testGetAgents() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(Collections.singleton("node1"));
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails(anyString())).thenReturn(new HashMap<String, String>(){{
+      put("Agency", "Tst");
+      put("Version", "1.2.3");
+    }});
+
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+
+    ResponseEntityV2<AgentEntityV2> agents = remoteAgentService.getAgents(Collections.<String>emptySet());
+    assertThat(agents.getEntities().size(), is(1));
+    AgentEntityV2 entity = agents.getEntities().iterator().next();
+    assertThat(entity.getAgencyOf(), equalTo("Tst"));
+  }
+
+  @Test
+  public void testGetAgentsProxyToActive() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
+    when(activeServerSource.getActiveL2Urls()).thenReturn(Arrays.asList("http://localhost:1234"));
+
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+
+    try {
+      remoteAgentService.getAgents(Collections.<String>emptySet());
+      fail("expected ProxyException");
+    } catch (ProxyException pe) {
+      assertThat(pe.getActiveL2Url(), equalTo("http://localhost:1234"));
+    }
+  }
+
+  @Test
+  public void testGetAgentsFailWhenNoActive() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
+    when(activeServerSource.getActiveL2Urls()).thenReturn(Collections.<String>emptyList());
+
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+
+    try {
+      remoteAgentService.getAgents(Collections.<String>emptySet());
+      fail("expected WebApplicationException");
+    } catch (WebApplicationException wae) {
+      assertThat(wae.getResponse().getStatus(), equalTo(404));
+    }
+  }
+
+  @Test
+  public void testGetAgentsMetadata() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(Collections.singleton("node1"));
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails(anyString())).thenReturn(new HashMap<String, String>(){{
+      put("Agency", "Tst");
+      put("Version", "1.2.3");
+    }});
+
+    AgentMetadataEntityV2 ame = new AgentMetadataEntityV2();
+    ame.setAgencyOf("Tst");
+    ResponseEntityV2<AgentMetadataEntityV2> responseEntity = new ResponseEntityV2<AgentMetadataEntityV2>();
+    responseEntity.getEntities().add(ame);
+    when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), any(RemoteCallDescriptor.class))).thenReturn(serialize(responseEntity));
+
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+
+    ResponseEntityV2<AgentMetadataEntityV2> agents = remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
+    assertThat(agents.getEntities().size(), is(1));
+    AgentMetadataEntityV2 entity = agents.getEntities().iterator().next();
+    assertThat(entity.getAgentId(), equalTo("node1"));
+    assertThat(entity.getAgencyOf(), equalTo("Tst"));
+  }
+
+
+  @Test
+  public void testGetAgentsMetadataProxyToActive() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
+    when(activeServerSource.getActiveL2Urls()).thenReturn(Arrays.asList("http://localhost:1234"));
+
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+
+    try {
+      remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
+      fail("expected ProxyException");
+    } catch (ProxyException pe) {
+      assertThat(pe.getActiveL2Url(), equalTo("http://localhost:1234"));
+    }
+  }
+
+  @Test
+  public void testGetAgentsMetadataFailWhenNoActive() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
+    when(activeServerSource.getActiveL2Urls()).thenReturn(Collections.<String>emptyList());
+
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+
+    try {
+      remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
+      fail("expected WebApplicationException");
+    } catch (WebApplicationException wae) {
+      assertThat(wae.getResponse().getStatus(), equalTo(404));
+    }
+  }
+
+  private static byte[] serialize(Object obj) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(baos);
+    oos.writeObject(obj);
+    oos.close();
+    return baos.toByteArray();
+  }
+
+}

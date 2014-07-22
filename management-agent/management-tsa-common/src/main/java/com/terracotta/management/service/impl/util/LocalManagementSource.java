@@ -38,7 +38,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -373,8 +372,7 @@ public class LocalManagementSource {
 
       return result;
     } catch (JMException jme) {
-      // client must have disconnected
-      return Collections.emptyMap();
+      throw new ManagementSourceException(jme);
     }
   }
 

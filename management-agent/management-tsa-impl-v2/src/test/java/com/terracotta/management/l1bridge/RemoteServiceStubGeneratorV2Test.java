@@ -1,5 +1,6 @@
 package com.terracotta.management.l1bridge;
 
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -14,19 +15,24 @@ import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.service.ActiveServerSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.impl.TimeoutServiceImpl;
+import com.terracotta.management.web.proxy.ProxyException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.ws.rs.WebApplicationException;
+
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -48,6 +54,45 @@ public class RemoteServiceStubGeneratorV2Test {
   @After
   public void tearDown() throws Exception {
     executorService.shutdown();
+  }
+
+
+  @Test
+  public void testPassiveProxyingToActive() throws Exception {
+    RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), activeServerSource);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
+    when(activeServerSource.getActiveL2Urls()).thenReturn(Arrays.asList("http://some-host:1234"));
+
+    DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
+    try {
+      cacheService.getCaches();
+      fail("expected ProxyException");
+    } catch (ProxyException pe) {
+      assertThat(pe.getActiveL2Url(), CoreMatchers.equalTo("http://some-host:1234"));
+    }
+  }
+
+  @Test
+  public void testPassiveThrowing404WhenNoActive() throws Exception {
+    RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), activeServerSource);
+
+    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
+    when(activeServerSource.getActiveL2Urls()).thenReturn(Collections.<String>emptyList());
+
+    DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
+    try {
+      cacheService.getCaches();
+      fail("expected WebApplicationException");
+    } catch (WebApplicationException wae) {
+      assertThat(wae.getResponse().getStatus(), CoreMatchers.equalTo(404));
+    }
   }
 
   @Test

@@ -12,14 +12,12 @@ import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.ActiveServerSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.web.proxy.ProxyException;
+import com.terracotta.management.service.impl.util.ActiveServerSourceUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -64,16 +62,8 @@ public class RemoteServiceStubGenerator {
         return invokeActiveCase(method, args);
       } else {
         // cannot handle the request on this server, find an active to do the job
-        List<String> activeL2Urls = activeServerSource.getActiveL2Urls();
-        if (activeL2Urls.isEmpty()) {
-          ErrorEntity errorEntity = new ErrorEntity();
-          errorEntity.setError("No active coordinator");
-          errorEntity.setDetails("No server is in the ACTIVE-COORDINATOR state, try again later.");
-          throw new WebApplicationException(Response.status(404).entity(errorEntity).build());
-        }
-        Collections.shuffle(activeL2Urls);
-        String activeL2Url = activeL2Urls.get(0);
-        throw new ProxyException(activeL2Url);
+        ActiveServerSourceUtils.proxyClientRequest(activeServerSource.getActiveL2Urls());
+        return null;
       }
     }
 

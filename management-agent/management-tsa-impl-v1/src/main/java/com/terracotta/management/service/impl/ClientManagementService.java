@@ -83,7 +83,7 @@ public class ClientManagementService {
             .path("diagnostics")
             .path("threadDump")
             .path("clients");
-        if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
+        if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
         return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ThreadDumpEntity.class);
@@ -107,7 +107,7 @@ public class ClientManagementService {
             .path("agents")
             .path("topologies")
             .path("clients");
-        if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
+        if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
         Collection<TopologyEntity> topologyEntities = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), TopologyEntity.class);
@@ -146,7 +146,7 @@ public class ClientManagementService {
             .path("agents")
             .path("statistics")
             .path("clients");
-        if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
+        if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
         if (attributesToShow != null) {
           for (String attr : attributesToShow) {
@@ -180,7 +180,7 @@ public class ClientManagementService {
             .path("agents")
             .path("configurations")
             .path("clients");
-        if (clientIds != null) { uriBuilder.matrixParam("ids", clientIds); }
+        if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
         return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ConfigEntity.class);

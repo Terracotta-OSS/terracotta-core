@@ -35,81 +35,63 @@ public class TsaAgentServiceImplV2 implements AgentServiceV2 {
   }
 
   @Override
-  public ResponseEntityV2 getAgents(Set<String> ids) throws ServiceExecutionException {
-    try {
-
-      ResponseEntityV2 ResponseEntityV2 =  new ResponseEntityV2();
-      
-      if (ids.isEmpty()) {
-        ResponseEntityV2.getEntities().add(buildAgentEntityV2());
-        ResponseEntityV2.getEntities().addAll(l1Agent.getAgents(ids).getEntities());
-      } else {
-        Set<String> l1Nodes = null;
-        Set<String> remoteIds = new HashSet<String>();
-        for (String id : ids) {
-          if (id.equals(AgentEntityV2.EMBEDDED_AGENT_ID)) {
-            ResponseEntityV2.getEntities().add(buildAgentEntityV2());
+  public ResponseEntityV2<AgentEntityV2> getAgents(Set<String> ids) throws ServiceExecutionException {
+    ResponseEntityV2<AgentEntityV2> responseEntityV2 = new ResponseEntityV2<AgentEntityV2>();
+    if (ids.isEmpty()) {
+      responseEntityV2.getEntities().add(buildAgentEntityV2());
+      responseEntityV2.getEntities().addAll(l1Agent.getAgents(ids).getEntities());
+    } else {
+      Set<String> l1Nodes = null;
+      Set<String> remoteIds = new HashSet<String>();
+      for (String id : ids) {
+        if (id.equals(AgentEntityV2.EMBEDDED_AGENT_ID)) {
+          responseEntityV2.getEntities().add(buildAgentEntityV2());
+        } else {
+          if (l1Nodes == null) {
+            l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
+          }
+          if (l1Nodes.contains(id)) {
+            remoteIds.add(id);
           } else {
-            if (l1Nodes == null) {
-              l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
-            }
-            if (l1Nodes.contains(id)) {
-              remoteIds.add(id);
-            } else {
-              throw new ServiceExecutionException("Unknown agent ID : " + id);
-            }
+            throw new ServiceExecutionException("Unknown agent ID : " + id);
           }
         }
-        if (!remoteIds.isEmpty()) {
-          ResponseEntityV2.getEntities().addAll(l1Agent.getAgents(remoteIds).getEntities());
-        }
       }
-
-      return ResponseEntityV2;
-    } catch (ServiceExecutionException see) {
-      throw see;
-    } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", e);
+      if (!remoteIds.isEmpty()) {
+        responseEntityV2.getEntities().addAll(l1Agent.getAgents(remoteIds).getEntities());
+      }
     }
+    return responseEntityV2;
   }
 
   @Override
-  public ResponseEntityV2 getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
-    try {
-
-      ResponseEntityV2 ResponseEntityV2 =  new ResponseEntityV2();
-      
-      if (ids.isEmpty()) {
-        ResponseEntityV2.getEntities().add(buildAgentMetadata());
-        ResponseEntityV2.getEntities().addAll(l1Agent.getAgentsMetadata(ids).getEntities());
-      } else {
-        Set<String> l1Nodes = null;
-        Set<String> remoteIds = new HashSet<String>();
-        for (String id : ids) {
-          if (id.equals(AgentEntityV2.EMBEDDED_AGENT_ID)) {
-            ResponseEntityV2.getEntities().add(buildAgentMetadata());
+  public ResponseEntityV2<AgentMetadataEntityV2> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
+    ResponseEntityV2<AgentMetadataEntityV2> responseEntityV2 = new ResponseEntityV2<AgentMetadataEntityV2>();
+    if (ids.isEmpty()) {
+      responseEntityV2.getEntities().add(buildAgentMetadata());
+      responseEntityV2.getEntities().addAll(l1Agent.getAgentsMetadata(ids).getEntities());
+    } else {
+      Set<String> l1Nodes = null;
+      Set<String> remoteIds = new HashSet<String>();
+      for (String id : ids) {
+        if (id.equals(AgentEntityV2.EMBEDDED_AGENT_ID)) {
+          responseEntityV2.getEntities().add(buildAgentMetadata());
+        } else {
+          if (l1Nodes == null) {
+            l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
+          }
+          if (l1Nodes.contains(id)) {
+            remoteIds.add(id);
           } else {
-            if (l1Nodes == null) {
-              l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
-            }
-            if (l1Nodes.contains(id)) {
-              remoteIds.add(id);
-            } else {
-              throw new ServiceExecutionException("Unknown agent ID : " + id);
-            }
+            throw new ServiceExecutionException("Unknown agent ID : " + id);
           }
         }
-        if (!remoteIds.isEmpty()) {
-          ResponseEntityV2.getEntities().addAll(l1Agent.getAgentsMetadata(remoteIds).getEntities());
-        }
       }
-
-      return ResponseEntityV2;
-    } catch (ServiceExecutionException see) {
-      throw see;
-    } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", e);
+      if (!remoteIds.isEmpty()) {
+        responseEntityV2.getEntities().addAll(l1Agent.getAgentsMetadata(remoteIds).getEntities());
+      }
     }
+    return responseEntityV2;
   }
 
   private AgentMetadataEntityV2 buildAgentMetadata() throws ServiceExecutionException {

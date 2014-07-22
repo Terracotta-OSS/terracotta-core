@@ -11,8 +11,10 @@ import org.terracotta.management.resource.services.AgentService;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
+import com.terracotta.management.service.ActiveServerSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
+import com.terracotta.management.service.impl.util.ActiveServerSourceUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,16 +29,23 @@ import java.util.concurrent.ExecutorService;
  */
 public class RemoteAgentService implements AgentService {
 
+  private final ActiveServerSource activeServerSource;
   private final RemoteCaller remoteCaller;
 
   public RemoteAgentService(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
                             ExecutorService executorService, RequestTicketMonitor ticketMonitor,
-                            UserService userService, TimeoutService timeoutService) {
+                            UserService userService, TimeoutService timeoutService, ActiveServerSource activeServerSource) {
+    this.activeServerSource = activeServerSource;
     this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService);
   }
 
   @Override
   public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
+    if (!activeServerSource.isCurrentServerActive()) {
+      // cannot handle the request on this server, find an active to do the job
+      ActiveServerSourceUtils.proxyClientRequest(activeServerSource.getActiveL2Urls());
+    }
+
     Set<String> nodes = remoteCaller.getRemoteAgentNodeNames();
     if (ids.isEmpty()) {
       ids = new HashSet<String>(nodes);
@@ -55,6 +64,11 @@ public class RemoteAgentService implements AgentService {
 
   @Override
   public Collection<AgentEntity> getAgents(Set<String> idSet) throws ServiceExecutionException {
+    if (!activeServerSource.isCurrentServerActive()) {
+      // cannot handle the request on this server, find an active to do the job
+      ActiveServerSourceUtils.proxyClientRequest(activeServerSource.getActiveL2Urls());
+    }
+
     Collection<AgentEntity> result = new ArrayList<AgentEntity>();
 
     Map<String, Map<String, String>> nodes = remoteCaller.getRemoteAgentNodeDetails();

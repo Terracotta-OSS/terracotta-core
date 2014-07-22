@@ -149,7 +149,7 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     serviceClasses.put(RemoteAgentBridgeService.class, remoteAgentBridgeService);
 
     /// Compound Agent Service ///
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService, serverManagementService);
     serviceClasses.put(AgentService.class, new TsaAgentServiceImpl(serverManagementService, remoteAgentBridgeService, remoteAgentService));
 
     /// Ehcache Services ///
