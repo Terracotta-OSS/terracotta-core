@@ -2,7 +2,6 @@ package com.tc.cli;
 
 import org.apache.xmlbeans.XmlException;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.jackson.JacksonFeature;
 
 import com.tc.config.Loader;
 import com.tc.config.schema.CommonL2Config;
@@ -227,7 +226,7 @@ public abstract class ManagementToolUtil {
       initSecurityManager();
     }
 
-    ClientBuilder clientBuilder = ClientBuilder.newBuilder().register(JacksonFeature.class);
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder();
     if (username != null && password != null) {
       clientBuilder.register(HttpAuthenticationFeature.basic(username, password));
     }

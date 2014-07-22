@@ -23,6 +23,9 @@
   <properties>  
     <sag-deps>false</sag-deps>
     <skip.deploy>true</skip.deploy>
+    <jersey.version>2.6</jersey.version>
+    <hk2.version>2.2.0</hk2.version>
+    <jackson.version>2.3.3</jackson.version>
   </properties>
     
   <dependencies>
@@ -155,13 +158,73 @@
     </dependency>
     <dependency>
       <groupId>gf-40</groupId>
-      <artifactId>gf.jersey-media-json-jackson</artifactId>
+      <artifactId>gf.jersey-common</artifactId>
       <version>2.6</version>
     </dependency>
     <dependency>
       <groupId>gf-40</groupId>
       <artifactId>gf.javax.ws.rs-api</artifactId>
       <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.jersey-media-sse</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.1.0.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.jersey-guava</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.hk2-api</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.hk2-utils</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.aopalliance-repackaged</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.javax.inject</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.hk2-locator</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.osgi-resource-locator</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.18.1-GA</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-40</groupId>
+      <artifactId>gf.javax.annotation-api</artifactId>
+      <version>1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.jaxrs</groupId>
+      <artifactId>jackson-jaxrs-json-provider</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
   </dependencies>
   
