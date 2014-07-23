@@ -33,7 +33,7 @@ public class ProxyExceptionMapper implements ExceptionMapper<ProxyException> {
   @Override
   public Response toResponse(ProxyException exception) {
     ContainerRequestContext request = ContainerRequestContextFilter.CONTAINER_REQUEST_CONTEXT_THREAD_LOCAL.get();
-    String activeL2Url = exception.getActiveL2Url();
+    String activeL2Url = exception.getActiveL2WithMBeansUrl();
     URI uri = request.getUriInfo().getRequestUri();
     String method = request.getMethod();
     URI uriToGo = UriBuilder.fromUri(activeL2Url).path(uri.getPath()).replaceQuery(uri.getQuery()).build();

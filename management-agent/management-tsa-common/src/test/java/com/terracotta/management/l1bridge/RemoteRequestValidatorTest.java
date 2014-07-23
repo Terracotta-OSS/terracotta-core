@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class RemoteRequestValidatorTest {
   @Before
   public void setUp() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
     HashSet<String> agentNodeNames = new HashSet<String>();
     agentNodeNames.add("localhost.home_59822");
     agentNodeNames.add("localhost.home_1212");
@@ -40,8 +40,8 @@ public class RemoteRequestValidatorTest {
     agentNodeNames.add("localhost.home_4545");
 
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(agentNodeNames);
-    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
-    requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, activeServerSource);
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
+    requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, l1MBeansSource);
     requestValidator.setValidatedNodes(new HashSet<String>());
   }
 

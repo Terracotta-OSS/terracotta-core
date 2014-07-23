@@ -16,6 +16,7 @@ public class ServerGroupEntityV2 extends AbstractTsaEntityV2 {
 
   private Integer id;
   private String name;
+  private boolean coordinator;
   private Set<ServerEntityV2> servers = new HashSet<ServerEntityV2>();
 
   public Integer getId() {
@@ -32,6 +33,14 @@ public class ServerGroupEntityV2 extends AbstractTsaEntityV2 {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public boolean isCoordinator() {
+    return coordinator;
+  }
+
+  public void setCoordinator(boolean coordinator) {
+    this.coordinator = coordinator;
   }
 
   public Set<ServerEntityV2> getServers() {

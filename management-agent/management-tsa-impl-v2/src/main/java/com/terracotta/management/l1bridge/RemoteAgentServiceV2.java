@@ -12,10 +12,10 @@ import org.terracotta.management.resource.services.AgentServiceV2;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.service.impl.util.ActiveServerSourceUtils;
+import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,21 +28,21 @@ import java.util.concurrent.ExecutorService;
  */
 public class RemoteAgentServiceV2 implements AgentServiceV2 {
 
-  private final ActiveServerSource activeServerSource;
+  private final L1MBeansSource l1MBeansSource;
   private final RemoteCallerV2 remoteCaller;
 
   public RemoteAgentServiceV2(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
                               ExecutorService executorService, RequestTicketMonitor ticketMonitor,
-                              UserService userService, TimeoutService timeoutService, ActiveServerSource activeServerSource) {
-    this.activeServerSource = activeServerSource;
+                              UserService userService, TimeoutService timeoutService, L1MBeansSource l1MBeansSource) {
+    this.l1MBeansSource = l1MBeansSource;
     this.remoteCaller = new RemoteCallerV2(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService);
   }
 
   @Override
   public ResponseEntityV2<AgentMetadataEntityV2> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
-    if (!activeServerSource.isCurrentServerActive()) {
-      // cannot handle the request on this server, find an active to do the job
-      ActiveServerSourceUtils.proxyClientRequest(activeServerSource.getActiveL2Urls());
+    if (!l1MBeansSource.containsJmxMBeans()) {
+      // cannot handle the request on this server, find another one to do the job
+      L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
     }
 
     ResponseEntityV2<AgentMetadataEntityV2> result = new ResponseEntityV2<AgentMetadataEntityV2>();
@@ -70,9 +70,9 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
 
   @Override
   public ResponseEntityV2<AgentEntityV2> getAgents(Set<String> idSet) throws ServiceExecutionException {
-    if (!activeServerSource.isCurrentServerActive()) {
-      // cannot handle the request on this server, find an active to do the job
-      ActiveServerSourceUtils.proxyClientRequest(activeServerSource.getActiveL2Urls());
+    if (!l1MBeansSource.containsJmxMBeans()) {
+      // cannot handle the request on this server, find another one to do the job
+      L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
     }
 
     ResponseEntityV2<AgentEntityV2> result = new ResponseEntityV2<AgentEntityV2>();

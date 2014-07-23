@@ -3,8 +3,6 @@
  */
 package com.terracotta.management.service.impl;
 
-import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
-
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.Representable;
 
@@ -28,7 +26,7 @@ import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.security.SecurityContextService;
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
@@ -40,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,10 +51,12 @@ import javax.management.ObjectName;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.UriBuilder;
 
+import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
+
 /**
  * @author Ludovic Orban
  */
-public class ServerManagementService implements ActiveServerSource {
+public class ServerManagementService implements L1MBeansSource {
 
   private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] { "Version", "BuildID",
       "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
@@ -477,6 +476,7 @@ public class ServerManagementService implements ActiveServerSource {
 
       serverGroupEntity.setVersion(localManagementSource.getVersion());
       serverGroupEntity.setName(serverGroupInfo.name());
+      serverGroupEntity.setCoordinator(serverGroupInfo.isCoordinator());
       serverGroupEntity.setId(serverGroupInfo.id());
 
       L2Info[] members = serverGroupInfo.members();
@@ -531,6 +531,7 @@ public class ServerManagementService implements ActiveServerSource {
             ServerGroupEntity sgEntity = new ServerGroupEntity();
             sgEntity.setVersion(localManagementSource.getVersion());
             sgEntity.setName(serverGroupInfo.name());
+            sgEntity.setCoordinator(serverGroupInfo.isCoordinator());
             sgEntity.setId(serverGroupInfo.id());
 
             ServerEntity sEntity = new ServerEntity();
@@ -835,36 +836,27 @@ public class ServerManagementService implements ActiveServerSource {
   }
 
   @Override
-  public boolean isCurrentServerActive() {
-    return localManagementSource.isActiveCoordinator();
+  public boolean containsJmxMBeans() {
+    return localManagementSource.containsJmxMBeans();
   }
 
   @Override
-  public List<String> getActiveL2Urls() throws ServiceExecutionException {
-    Set<String> activeNames = new HashSet<String>();
-
-    // collect all active names
+  public String getActiveL2ContainingMBeansUrl() throws ServiceExecutionException {
     Collection<ServerGroupEntity> serverGroups = getServerGroups(null);
     for (ServerGroupEntity serverGroup : serverGroups) {
       Set<ServerEntity> servers = serverGroup.getServers();
       for (ServerEntity server : servers) {
         String status = (String)server.getAttributes().get("State");
-        if ("ACTIVE-COORDINATOR".equals(status)) {
-          String name = (String)server.getAttributes().get("Name");
-          activeNames.add(name);
-          break;
+
+        // the active of coordinator group is always the one where the MBeans are tunneled to
+        if ("ACTIVE-COORDINATOR".equals(status) && serverGroup.isCoordinator()) {
+          String activeName = (String)server.getAttributes().get("Name");
+          return localManagementSource.getServerUrls().get(activeName);
         }
       }
     }
 
-    // get the URL of each active
-    Map<String, String> serverUrls = localManagementSource.getServerUrls();
-    List<String> activeUrls = new ArrayList<String>();
-    for (String activeName : activeNames) {
-      String activeUrl = serverUrls.get(activeName);
-      activeUrls.add(activeUrl);
-    }
-    return activeUrls;
+    return null;
   }
 
 }

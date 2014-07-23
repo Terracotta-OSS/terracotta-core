@@ -10,7 +10,7 @@ import org.terracotta.management.resource.AgentMetadataEntity;
 import com.terracotta.management.security.impl.NullContextService;
 import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.impl.TimeoutServiceImpl;
 import com.terracotta.management.web.proxy.ProxyException;
@@ -18,7 +18,6 @@ import com.terracotta.management.web.proxy.ProxyException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,16 +55,16 @@ public class RemoteAgentServiceTest {
   @Test
   public void testGetAgents() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(Collections.singleton("node1"));
     when(remoteAgentBridgeService.getRemoteAgentNodeDetails(anyString())).thenReturn(new HashMap<String, String>(){{
       put("Agency", "Tst");
       put("Version", "1.2.3");
     }});
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     Collection<AgentEntity> agents = remoteAgentService.getAgents(Collections.<String>emptySet());
     assertThat(agents.size(), is(1));
@@ -77,30 +76,30 @@ public class RemoteAgentServiceTest {
   @Test
   public void testGetAgentsProxyToActive() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
-    when(activeServerSource.getActiveL2Urls()).thenReturn(Arrays.asList("http://localhost:1234"));
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
+    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("http://localhost:1234");
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     try {
       remoteAgentService.getAgents(Collections.<String>emptySet());
       fail("expected ProxyException");
     } catch (ProxyException pe) {
-      assertThat(pe.getActiveL2Url(), equalTo("http://localhost:1234"));
+      assertThat(pe.getActiveL2WithMBeansUrl().contains("http://localhost:1234"), is(true));
     }
   }
 
   @Test
   public void testGetAgentsFailWhenNoActive() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
-    when(activeServerSource.getActiveL2Urls()).thenReturn(Collections.<String>emptyList());
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
+    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn(null);
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     try {
       remoteAgentService.getAgents(Collections.<String>emptySet());
@@ -113,9 +112,9 @@ public class RemoteAgentServiceTest {
   @Test
   public void testGetAgentsMetadata() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(Collections.singleton("node1"));
     when(remoteAgentBridgeService.getRemoteAgentNodeDetails(anyString())).thenReturn(new HashMap<String, String>(){{
       put("Agency", "Tst");
@@ -127,7 +126,7 @@ public class RemoteAgentServiceTest {
     ame.setVersion("1.2.3");
     when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), any(RemoteCallDescriptor.class))).thenReturn(serialize(Collections.singleton(ame)));
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     Collection<AgentMetadataEntity> agents = remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
     assertThat(agents.size(), is(1));
@@ -141,30 +140,30 @@ public class RemoteAgentServiceTest {
   @Test
   public void testGetAgentsMetadataProxyToActive() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
-    when(activeServerSource.getActiveL2Urls()).thenReturn(Arrays.asList("http://localhost:1234"));
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
+    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("http://localhost:1234");
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     try {
       remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
       fail("expected ProxyException");
     } catch (ProxyException pe) {
-      assertThat(pe.getActiveL2Url(), equalTo("http://localhost:1234"));
+      assertThat(pe.getActiveL2WithMBeansUrl().contains("http://localhost:1234"), is(true));
     }
   }
 
   @Test
   public void testGetAgentsMetadataFailWhenNoActive() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
-    when(activeServerSource.getActiveL2Urls()).thenReturn(Collections.<String>emptyList());
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
+    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn(null);
 
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), activeServerSource);
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     try {
       remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());

@@ -27,7 +27,7 @@ import com.terracotta.management.resource.ThreadDumpEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.resource.TopologyReloadStatusEntityV2;
 import com.terracotta.management.security.SecurityContextService;
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +57,7 @@ import static com.terracotta.management.service.impl.util.RemoteManagementSource
 /**
  * @author Ludovic Orban
  */
-public class ServerManagementServiceV2 implements ActiveServerSource {
+public class ServerManagementServiceV2 implements L1MBeansSource {
 
   private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] { "Version", "BuildID",
       "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
@@ -478,6 +477,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
 
       serverGroupEntityV2.setName(serverGroupInfo.name());
       serverGroupEntityV2.setId(serverGroupInfo.id());
+      serverGroupEntityV2.setCoordinator(serverGroupInfo.isCoordinator());
 
       L2Info[] members = serverGroupInfo.members();
       for (final L2Info member : members) {
@@ -532,6 +532,7 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
           } catch (ProcessingException che) {
             ServerGroupEntityV2 sgEntityV2 = new ServerGroupEntityV2();
             sgEntityV2.setName(serverGroupInfo.name());
+            sgEntityV2.setCoordinator(serverGroupInfo.isCoordinator());
             sgEntityV2.setId(serverGroupInfo.id());
 
             ServerEntityV2 sEntityV2 = new ServerEntityV2();
@@ -845,36 +846,27 @@ public class ServerManagementServiceV2 implements ActiveServerSource {
   }
 
   @Override
-  public boolean isCurrentServerActive() {
-    return localManagementSource.isActiveCoordinator();
+  public boolean containsJmxMBeans() {
+    return localManagementSource.containsJmxMBeans();
   }
 
   @Override
-  public List<String> getActiveL2Urls() throws ServiceExecutionException {
-    Set<String> activeNames = new HashSet<String>();
-
-    // collect all active names
+  public String getActiveL2ContainingMBeansUrl() throws ServiceExecutionException {
     Collection<ServerGroupEntityV2> serverGroups = getServerGroups(null);
     for (ServerGroupEntityV2 serverGroup : serverGroups) {
       Set<ServerEntityV2> servers = serverGroup.getServers();
       for (ServerEntityV2 server : servers) {
         String status = (String)server.getAttributes().get("State");
-        if ("ACTIVE-COORDINATOR".equals(status)) {
-          String name = (String)server.getAttributes().get("Name");
-          activeNames.add(name);
-          break;
+
+        // the active of coordinator group is always the one where the MBeans are tunneled to
+        if ("ACTIVE-COORDINATOR".equals(status) && serverGroup.isCoordinator()) {
+          String activeName = (String)server.getAttributes().get("Name");
+          return localManagementSource.getServerUrls().get(activeName);
         }
       }
     }
 
-    // get the URL of each active
-    Map<String, String> serverUrls = localManagementSource.getServerUrls();
-    List<String> activeUrls = new ArrayList<String>();
-    for (String activeName : activeNames) {
-      String activeUrl = serverUrls.get(activeName);
-      activeUrls.add(activeUrl);
-    }
-    return activeUrls;
+    return null;
   }
 
 }

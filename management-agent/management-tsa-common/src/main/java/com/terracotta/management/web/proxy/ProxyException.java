@@ -6,13 +6,13 @@ package com.terracotta.management.web.proxy;
  * @author Ludovic Orban
  */
 public class ProxyException extends RuntimeException {
-  private final String activeL2Url;
+  private final String activeL2WithMBeansUrl;
 
-  public ProxyException(String activeL2Url) {
-    this.activeL2Url = activeL2Url;
+  public ProxyException(String activeL2WithMBeansUrl) {
+    this.activeL2WithMBeansUrl = activeL2WithMBeansUrl;
   }
 
-  public String getActiveL2Url() {
-    return activeL2Url;
+  public String getActiveL2WithMBeansUrl() {
+    return activeL2WithMBeansUrl;
   }
 }

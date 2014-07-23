@@ -243,6 +243,28 @@ public class LocalManagementSource {
     return "ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState());
   }
 
+  public boolean containsJmxMBeans() {
+    // the active of groupId 0 is always the one where the MBeans are tunneled to
+    // see: com.tc.net.OrderedGroupIDs.getActiveCoordinatorGroup()
+    return isActiveCoordinator() && isLocalGroupCoordinator();
+  }
+
+
+  private boolean isLocalGroupCoordinator() {
+    String localServerName = getLocalServerName();
+    ServerGroupInfo[] serverGroupInfos = getServerGroupInfos();
+    for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+      L2Info[] members = serverGroupInfo.members();
+      for (L2Info member : members) {
+        if (member.name().equals(localServerName)) {
+          return serverGroupInfo.isCoordinator();
+        }
+      }
+    }
+    throw new ManagementSourceException("Cannot find local server group in topology data structure");
+  }
+
+
   public Map<String, String> getBackupStatuses() throws ManagementSourceException {
     try {
       return tcServerInfoMBean.getBackupStatuses();

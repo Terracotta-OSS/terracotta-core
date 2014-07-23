@@ -12,7 +12,7 @@ import org.terracotta.management.resource.ResponseEntityV2;
 import com.terracotta.management.security.impl.NullContextService;
 import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.impl.TimeoutServiceImpl;
 import com.terracotta.management.web.proxy.ProxyException;
@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +30,7 @@ import java.util.concurrent.Executors;
 import javax.ws.rs.WebApplicationException;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -61,18 +61,18 @@ public class RemoteServiceStubGeneratorV2Test {
   public void testPassiveProxyingToActive() throws Exception {
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), activeServerSource);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
-    when(activeServerSource.getActiveL2Urls()).thenReturn(Arrays.asList("http://some-host:1234"));
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
+    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("http://some-host:1234");
 
     DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
     try {
       cacheService.getCaches();
       fail("expected ProxyException");
     } catch (ProxyException pe) {
-      assertThat(pe.getActiveL2Url(), CoreMatchers.equalTo("http://some-host:1234"));
+      assertThat(pe.getActiveL2WithMBeansUrl().contains("http://some-host:1234"), is(true));
     }
   }
 
@@ -80,11 +80,11 @@ public class RemoteServiceStubGeneratorV2Test {
   public void testPassiveThrowing404WhenNoActive() throws Exception {
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), activeServerSource);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(false);
-    when(activeServerSource.getActiveL2Urls()).thenReturn(Collections.<String>emptyList());
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
+    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn(null);
 
     DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
     try {
@@ -109,10 +109,10 @@ public class RemoteServiceStubGeneratorV2Test {
 
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
-    RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), activeServerSource);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
+    RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteRequestValidator.getValidatedNodes()).thenReturn(new HashSet<String>(Arrays.asList("node_cache", "node1_session", "node2_session")));
     when(remoteRequestValidator.getSingleValidatedNode()).thenThrow(new RuntimeException("Multiple nodes were specified"));
     when(remoteAgentBridgeService.getRemoteAgentNodeDetails(eq("node_cache"))).thenReturn(new HashMap<String, String>() {{
@@ -145,10 +145,10 @@ public class RemoteServiceStubGeneratorV2Test {
 
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ActiveServerSource activeServerSource = mock(ActiveServerSource.class);
-    RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), activeServerSource);
+    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
+    RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    when(activeServerSource.isCurrentServerActive()).thenReturn(true);
+    when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteRequestValidator.getValidatedNodes()).thenReturn(new HashSet<String>(Arrays.asList("node_cache")));
     when(remoteRequestValidator.getSingleValidatedNode()).thenReturn("node_cache");
     when(remoteAgentBridgeService.getRemoteAgentNodeDetails(eq("node_cache"))).thenReturn(new HashMap<String, String>() {{

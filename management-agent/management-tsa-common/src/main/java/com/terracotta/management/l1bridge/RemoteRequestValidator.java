@@ -10,7 +10,7 @@ import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 
 import java.util.Arrays;
@@ -28,13 +28,13 @@ import javax.ws.rs.core.UriInfo;
 public class RemoteRequestValidator implements RequestValidator {
 
   private final RemoteAgentBridgeService remoteAgentBridgeService;
-  private final ActiveServerSource activeServerSource;
+  private final L1MBeansSource l1MBeansSource;
 
   private static final ThreadLocal<Set<String>> tlNode = new ThreadLocal<Set<String>>();
 
-  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService, ActiveServerSource activeServerSource) {
+  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService, L1MBeansSource l1MBeansSource) {
     this.remoteAgentBridgeService = remoteAgentBridgeService;
-    this.activeServerSource = activeServerSource;
+    this.l1MBeansSource = l1MBeansSource;
   }
 
   /**
@@ -51,9 +51,9 @@ public class RemoteRequestValidator implements RequestValidator {
   }
 
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
-    if (!activeServerSource.isCurrentServerActive()) {
-      // no validation is required on a passive as the request is going to be
-      // forwarded to an active
+    if (!l1MBeansSource.containsJmxMBeans()) {
+      // no validation is required on this server as the request is going to be
+      // forwarded to another one
       return;
     }
 

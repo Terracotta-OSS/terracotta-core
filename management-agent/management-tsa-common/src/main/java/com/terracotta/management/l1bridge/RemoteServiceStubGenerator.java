@@ -9,10 +9,10 @@ import org.terracotta.management.resource.ErrorEntity;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
-import com.terracotta.management.service.ActiveServerSource;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.service.impl.util.ActiveServerSourceUtils;
+import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -31,14 +31,14 @@ public class RemoteServiceStubGenerator {
 
   private final RemoteCaller remoteCaller;
   private final RemoteRequestValidator requestValidator;
-  private final ActiveServerSource activeServerSource;
+  private final L1MBeansSource l1MBeansSource;
 
   public RemoteServiceStubGenerator(RequestTicketMonitor requestTicketMonitor, UserService userService,
                                     ContextService contextService, RemoteRequestValidator requestValidator,
                                     RemoteAgentBridgeService remoteAgentBridgeService, ExecutorService executorService,
-                                    TimeoutService timeoutService, ActiveServerSource activeServerSource) {
+                                    TimeoutService timeoutService, L1MBeansSource l1MBeansSource) {
     this.requestValidator = requestValidator;
-    this.activeServerSource = activeServerSource;
+    this.l1MBeansSource = l1MBeansSource;
     this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
   }
 
@@ -58,16 +58,16 @@ public class RemoteServiceStubGenerator {
 
     @Override
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      if (activeServerSource.isCurrentServerActive()) {
-        return invokeActiveCase(method, args);
+      if (l1MBeansSource.containsJmxMBeans()) {
+        return invokeOnLocalServer(method, args);
       } else {
         // cannot handle the request on this server, find an active to do the job
-        ActiveServerSourceUtils.proxyClientRequest(activeServerSource.getActiveL2Urls());
+        L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
         return null;
       }
     }
 
-    private Object invokeActiveCase(Method method, Object[] args) throws org.terracotta.management.ServiceExecutionException {
+    private Object invokeOnLocalServer(Method method, Object[] args) throws org.terracotta.management.ServiceExecutionException {
       Set<String> nodes = requestValidator.getValidatedNodes();
       if (nodes == null) {
         throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
