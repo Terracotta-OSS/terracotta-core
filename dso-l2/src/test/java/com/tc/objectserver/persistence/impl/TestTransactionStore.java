@@ -121,6 +121,16 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
+  public GlobalTransactionDescriptor clearCommittedTransaction(final ServerTransactionID serverTransactionID) {
+    GlobalTransactionDescriptor descriptor = volatileMap.remove(serverTransactionID);
+    if (descriptor != null) {
+      durableMap.remove(serverTransactionID);
+      ids.remove(descriptor.getGlobalTransactionID());
+    }
+    return descriptor;
+  }
+
+  @Override
   public void shutdownNode(NodeID nid) {
     throw new ImplementMe();
   }

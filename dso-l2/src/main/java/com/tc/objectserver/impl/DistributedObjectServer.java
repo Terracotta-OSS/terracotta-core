@@ -740,7 +740,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCumulativeCounter globalServerMapGetSnapshotRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
 
-    final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
+    final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory(thisServerNodeID);
 
     // cache server event related objects
     final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer();

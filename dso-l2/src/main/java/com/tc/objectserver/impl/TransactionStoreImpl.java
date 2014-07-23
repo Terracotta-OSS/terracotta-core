@@ -48,14 +48,11 @@ public class TransactionStoreImpl implements TransactionStore {
   @Override
   public void commitTransactionDescriptor(ServerTransactionID stxID) {
     GlobalTransactionDescriptor gtx = this.sids.get(stxID);
-    if (stxID.isServerGeneratedTransaction()) {
+    if (!stxID.isServerGeneratedTransaction()) {
       // XXX:: Since server Generated Transactions don't get completed ACKs, we don't persist these
-      this.sids.remove(stxID);
-      this.ids.remove(gtx.getGlobalTransactionID());
-    } else {
       this.persistor.saveGlobalTransactionDescriptor(gtx);
-      gtx.commitComplete();
     }
+    gtx.commitComplete();
   }
 
   @Override
@@ -120,6 +117,15 @@ public class TransactionStoreImpl implements TransactionStore {
     Collection<GlobalTransactionDescriptor> removedGDs = this.sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
     removeGlobalTransactionDescs(removedGDs);
     return removedGDs;
+  }
+
+  @Override
+  public GlobalTransactionDescriptor clearCommittedTransaction(final ServerTransactionID serverTransactionID) {
+    GlobalTransactionDescriptor descriptor = sids.remove(serverTransactionID);
+    if (descriptor != null) {
+      ids.remove(descriptor.getGlobalTransactionID());
+    }
+    return descriptor;
   }
 
   @Override

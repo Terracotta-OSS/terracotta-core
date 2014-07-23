@@ -154,7 +154,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
     ServerTransactionID sid = ServerTransactionID.NULL_ID;
     try {
-      sid = this.serverTransactionFactory.getNextServerTransactionID(this.groupManager.getLocalNodeID());
+      sid = this.serverTransactionFactory.getNextServerTransactionID();
       final ObjectSyncMessage msg = mosc.createObjectSyncMessage(sid);
       this.serverTxnMgr.objectsSynched(mosc.getNodeID(), sid);
       this.groupManager.sendTo(mosc.getNodeID(), msg);

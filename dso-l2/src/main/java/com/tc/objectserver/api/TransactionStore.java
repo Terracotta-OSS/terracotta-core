@@ -30,6 +30,14 @@ public interface TransactionStore {
   public Collection<GlobalTransactionDescriptor> clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark);
 
   /**
+   * Clear a single server transaction out of the store.
+   *
+   * @param serverTransactionID the transaction to clear
+   * @return descriptor of the removed transaction
+   */
+  public GlobalTransactionDescriptor clearCommittedTransaction(ServerTransactionID serverTransactionID);
+
+  /**
    * This is used by the passive to clear completed Transaction ids.
    */
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark);

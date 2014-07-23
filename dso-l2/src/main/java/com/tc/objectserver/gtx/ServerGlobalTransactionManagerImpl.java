@@ -20,6 +20,7 @@ import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,15 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     tx.commit();
     processCallbacks();
     clearEventBuffer(removedGDs);
+  }
+
+  @Override
+  public void clearCommittedTransaction(final ServerTransactionID serverTransactionID) {
+    // This never hits the persistor (disk), so don't bother starting a transaction or it'll slow everything down
+    GlobalTransactionDescriptor descriptor = transactionStore.clearCommittedTransaction(serverTransactionID);
+    processCallbacks();
+    clearEventBuffer(descriptor == null ? Collections.<GlobalTransactionDescriptor>emptySet() :
+        Collections.singleton(descriptor));
   }
 
   private void clearEventBuffer(Collection<GlobalTransactionDescriptor> removedGDs) {

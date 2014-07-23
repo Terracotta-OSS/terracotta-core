@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.context.ServerTransactionCompleteContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 
 public class TransactionLowWaterMarkHandler extends AbstractEventHandler {
@@ -20,9 +21,15 @@ public class TransactionLowWaterMarkHandler extends AbstractEventHandler {
 
   @Override
   public void handleEvent(EventContext context) {
-    CompletedTransactionLowWaterMarkMessage mdg = (CompletedTransactionLowWaterMarkMessage) context;
-    ServerTransactionID sid = new ServerTransactionID(mdg.getSourceNodeID(),mdg.getLowWaterMark());
-    gtxm.clearCommitedTransactionsBelowLowWaterMark(sid);
+    if (context instanceof CompletedTransactionLowWaterMarkMessage) {
+      CompletedTransactionLowWaterMarkMessage mdg = (CompletedTransactionLowWaterMarkMessage) context;
+      ServerTransactionID sid = new ServerTransactionID(mdg.getSourceNodeID(), mdg.getLowWaterMark());
+      gtxm.clearCommitedTransactionsBelowLowWaterMark(sid);
+    } else if (context instanceof ServerTransactionCompleteContext) {
+      gtxm.clearCommittedTransaction(((ServerTransactionCompleteContext) context).getServerTransactionID());
+    } else {
+      throw new IllegalArgumentException("Unknown context " + context);
+    }
   }
 
 }

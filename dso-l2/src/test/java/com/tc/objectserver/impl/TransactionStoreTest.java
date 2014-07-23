@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -12,6 +15,7 @@ import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.heap.HeapStorageManager;
 
 import com.tc.net.ClientID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -50,6 +54,13 @@ public class TransactionStoreTest extends TCTestCase {
     transactionPersistor = spy(new TransactionPersistorImpl(storageManager));
     gidSequence = spy(new TestMutableSequence());
     store = new TransactionStoreImpl(transactionPersistor, gidSequence);
+  }
+
+  public void testClearCommitted() throws Exception {
+    ServerTransactionID serverTransactionID = new ServerTransactionID(ServerID.NULL_ID, new TransactionID(1));
+    GlobalTransactionDescriptor descriptor = store.getOrCreateTransactionDescriptor(serverTransactionID);
+    assertThat(store.clearCommittedTransaction(serverTransactionID), is(descriptor));
+    assertThat(store.getTransactionDescriptor(serverTransactionID), nullValue());
   }
 
   public void testDeleteByGlobalTransactionID() throws Exception {

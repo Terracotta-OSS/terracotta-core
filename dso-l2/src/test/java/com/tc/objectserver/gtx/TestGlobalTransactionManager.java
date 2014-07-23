@@ -42,6 +42,11 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   }
 
   @Override
+  public void clearCommittedTransaction(final ServerTransactionID serverTransactionID) {
+    // Does nothing...
+  }
+
+  @Override
   public void shutdownNode(NodeID nodeID) {
     //
   }

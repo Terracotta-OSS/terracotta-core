@@ -4,11 +4,10 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.Sink;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.NodeID;
-import com.tc.net.groups.GroupManager;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
@@ -17,6 +16,7 @@ import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.EvictionListener;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.context.ServerTransactionCompleteContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -75,9 +75,9 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
   private final Map<ServerTransactionID, ObjectID> inflightEvictions          = new ConcurrentHashMap<ServerTransactionID, ObjectID>();
 
-  private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
   private EvictionTransactionPersistor        evictionTransactionPersistor;
+  private Sink                                lowWaterMarkUpdateSink;
 
   public ServerMapEvictionEngine(final ObjectManager objectManager,
                                  final ServerTransactionFactory serverTransactionFactory,
@@ -90,8 +90,8 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
   public void initializeContext(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    this.groupManager = scc.getL2Coordinator().getGroupManager();
     this.transactionBatchManager = scc.getTransactionBatchManager();
+    this.lowWaterMarkUpdateSink = scc.getStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE).getSink();
 
     // if running in persistence mode, we need to save each in-flight transaction to FRS and delete it when complete
     scc.getTransactionManager().addTransactionListener(this);
@@ -182,13 +182,12 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
       logger.debug("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
     }
 
-    NodeID localNodeID = groupManager.getLocalNodeID();
     ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    ServerTransaction serverTransaction = serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
+    ServerTransaction serverTransaction = serverTransactionFactory.createServerMapEvictionTransactionFor(oid,
         candidates, serializer, cacheName);
 
-    TransactionBatchContext batchContext = new ServerTransactionBatchContext(localNodeID, serverTransaction,
-        serializer);
+    TransactionBatchContext batchContext = new ServerTransactionBatchContext(serverTransaction.getSourceID(),
+        serverTransaction, serializer);
     
     inflightEvictions.put(serverTransaction.getServerTransactionID(), oid);
 
@@ -222,6 +221,8 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     if ( persistent ) {
       evictionTransactionPersistor.removeEviction(stxID);
     }
+
+    lowWaterMarkUpdateSink.add(new ServerTransactionCompleteContext(stxID));
   }
   
   public synchronized void addEvictionListener(EvictionListener listener) {

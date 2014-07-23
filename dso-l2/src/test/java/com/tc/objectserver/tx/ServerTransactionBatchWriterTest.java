@@ -72,9 +72,9 @@ public class ServerTransactionBatchWriterTest extends TestCase {
   public void testBasicServerEvictionTxn() throws Exception {
     final ObjectID oid = new ObjectID(55455);
     final Map candidates = getCandidatesToEvict();
-    final ServerTransactionFactory factory = new ServerTransactionFactory();
+    final ServerTransactionFactory factory = new ServerTransactionFactory(sourceNodeID);
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid,
+    final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(oid,
         candidates, serializer, "foo");
     final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(TxnBatchID.NULL_BATCH_ID,
                                                                                     serializer);
@@ -107,8 +107,8 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     serverTransactions.addAll(txnList1);
 
     // server map eviction txn
-    final ServerTransactionFactory factory = new ServerTransactionFactory();
-    final ServerTransaction serverMapEvictionTxn = factory.createServerMapEvictionTransactionFor(nodeID, oid,
+    final ServerTransactionFactory factory = new ServerTransactionFactory(sourceNodeID);
+    final ServerTransaction serverMapEvictionTxn = factory.createServerMapEvictionTransactionFor(oid,
         candidates,
                                                                                                  serializer, "foo");
     serverTransactions.add(serverMapEvictionTxn);

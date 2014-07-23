@@ -76,7 +76,7 @@ public class ClientChannelMonitorImpl implements ClientChannelMonitor, DSOChanne
 
     for (ObjectID objectID : subscribedOIDs) {
       ServerTransaction serverTransaction = serverTransactionFactory
-          .createRemoveEventListeningClientTransaction(localNodeID, objectID, clientID, serializer);
+          .createRemoveEventListeningClientTransaction(objectID, clientID, serializer);
 
       TransactionBatchContext batchContext = new ServerTransactionBatchContext(localNodeID, serverTransaction, serializer);
       transactionBatchManager.processTransactions(batchContext);

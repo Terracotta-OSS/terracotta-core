@@ -36,6 +36,13 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid);
 
   /**
+   * Clear a given server transaction from the system.
+   *
+   * @param serverTransactionID the transaction to clear
+   */
+  public void clearCommittedTransaction(ServerTransactionID serverTransactionID);
+
+  /**
    * This is used in the PASSIVE to clear completed transaction ids when low water mark is published from the ACTIVE.
    */
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark);
