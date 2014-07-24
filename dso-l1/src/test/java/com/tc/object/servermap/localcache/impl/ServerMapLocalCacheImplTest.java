@@ -3,6 +3,7 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.exceptions.verification.TooManyActualInvocations;
@@ -33,6 +34,7 @@ import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.OnCommitCallable;
@@ -61,6 +63,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ServerMapLocalCacheImplTest extends TestCase {
   private volatile ServerMapLocalCacheImpl cache;
@@ -134,14 +143,14 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     Mockito.verify(mng, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     Mockito.verify(mng, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
 
-    // should not pin again for same lock id and award id
+    // should call pin again even with same lock id and award id (outgoing old value will unpin)
     MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
                                                   mapID, MapOperationType.PUT, 1L);
-    Mockito.verify(mng, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    barier.await();
-    barier.await();
     Mockito.verify(mng, Mockito.times(3)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    Mockito.verify(mng, Mockito.times(2)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    barier.await();
+    barier.await();
+    Mockito.verify(mng, Mockito.times(4)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(mng, Mockito.times(3)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     // should pin for different lock id and key
     lockId = 101;
     strongOid = 2 * lockId;
@@ -664,6 +673,32 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     Assert.assertFalse(keySet.iterator().hasNext());
   }
 
+  @Test
+  public void testEventualValueReplacedWithStrong() {
+    ClientTransaction txn = mock(ClientTransaction.class);
+    ClientTransactionManager txnManager = mock(ClientTransactionManager.class);
+    when(txnManager.getCurrentTransaction()).thenReturn(txn);
+    ClientObjectManager objectManager = mock(ClientObjectManager.class);
+    when(objectManager.getTransactionManager()).thenReturn(txnManager);
+    LocalCacheStoreEventualValue eventual = mock(LocalCacheStoreEventualValue.class);
+    when(eventual.isEventualConsistentValue()).thenReturn(true);
+    when(eventual.getValueObjectId()).thenReturn(new ObjectID(41L));
+    L1ServerMapLocalCacheStore localStore = mock(L1ServerMapLocalCacheStore.class);
+    when(localStore.remove("foo")).thenReturn(eventual);
+    
+    Manager manager = mock(Manager.class);
+    ServerMapLocalCacheImpl cache = new ServerMapLocalCacheImpl(objectManager, manager, null, true, 
+            mock(ServerMapLocalCacheRemoveCallback.class), localStore);
+
+    LocalCacheStoreStrongValue strong = mock(LocalCacheStoreStrongValue.class);
+    when(strong.isStrongConsistentValue()).thenReturn(true);
+    when(strong.getValueObjectId()).thenReturn(new ObjectID(42L));
+    
+    cache.addToCache("foo", strong, MapOperationType.PUT);
+    
+    verify(manager, times(1)).pinLock(any(LockID.class), anyLong());
+  }
+          
   public class MyClientTransaction implements ClientTransaction {
     private final CyclicBarrier barrier;
     private final boolean       transactionAbort;

@@ -398,31 +398,22 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) localStore.get(key);
       if (value != null && value.getValueObjectId().equals(oid)) {
         AbstractLocalCacheStoreValue removed = (AbstractLocalCacheStoreValue) localStore.remove(key);
-        unpinLockIfNecessary(removed);
-        remoteRemoveObjectIfPossible(removed);
+        handleKeyValueMappingRemoved(key, removed, true);
       }
     } finally {
       lock.writeLock().unlock();
     }
   }
 
-  // this accept old value of pending transaction or Local store and pin if there is no old value(means null)
-  // or if old value is award ID is out dated(means lock award id should be invalid)
-  public void pinLockIfNecessary(AbstractLocalCacheStoreValue value, AbstractLocalCacheStoreValue oldvalue) {
-    if (PINNING_ENABLED
-        && value.isStrongConsistentValue()
-        && (oldvalue == null || (oldvalue.isStrongConsistentValue() && (((LocalCacheStoreStrongValue) value)
-            .getLockAwardID() != ((LocalCacheStoreStrongValue) oldvalue).getLockAwardID())))) {
-      manager.pinLock(((LocalCacheStoreStrongValue) value).getLockId(),
-                      (((LocalCacheStoreStrongValue) value).getLockAwardID()));
+  public void pinLockIfNecessary(AbstractLocalCacheStoreValue added) {
+    if (PINNING_ENABLED && added.isStrongConsistentValue()) {
+      manager.pinLock(added.getLockId(), ((LocalCacheStoreStrongValue) added).getLockAwardID());
     }
   }
 
-  public void unpinLockIfNecessary(AbstractLocalCacheStoreValue value) {
-    if (PINNING_ENABLED && value != null && value.isStrongConsistentValue()
-        && manager.isLockAwardValid(value.getLockId(), ((LocalCacheStoreStrongValue) value).getLockAwardID())) {
-      manager.unpinLock(((LocalCacheStoreStrongValue) value).getLockId(),
-                        (((LocalCacheStoreStrongValue) value).getLockAwardID()));
+  public void unpinLockIfNecessary(AbstractLocalCacheStoreValue removed) {
+    if (PINNING_ENABLED && removed != null && removed.isStrongConsistentValue()) {
+      manager.unpinLock(removed.getLockId(), (((LocalCacheStoreStrongValue) removed).getLockAwardID()));
     }
   }
 
@@ -643,40 +634,35 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return this.localStore.containsKeyOffHeap(key);
   }
 
-  private AbstractLocalCacheStoreValue putKeyValueMapping(Object key, AbstractLocalCacheStoreValue value,
+  private void putKeyValueMapping(Object key, AbstractLocalCacheStoreValue value,
                                                           MapOperationType mapOperation) {
-    AbstractLocalCacheStoreValue old;
-
     if (mapOperation.isMutateOperation()) {
-      old = (AbstractLocalCacheStoreValue) this.pendingTransactionEntries.put(key, value);
+      AbstractLocalCacheStoreValue old = (AbstractLocalCacheStoreValue) this.pendingTransactionEntries.put(key, value);
       if (old != null) {
-        cleanupOldMetaMapping(key, value, old, false);
+        cleanupOldMetaMapping(key, old, false);
       } else {
         old = (AbstractLocalCacheStoreValue) this.localStore.remove(key);
-        cleanupOldMetaMapping(key, value, old, true);
+        cleanupOldMetaMapping(key, old, true);
       }
-
     } else {
-      old = (AbstractLocalCacheStoreValue) this.localStore.put(key, value);
+      AbstractLocalCacheStoreValue old = (AbstractLocalCacheStoreValue) this.localStore.put(key, value);
       Object serializeEntry = value.getValueObject();
       if (serializeEntry instanceof LocalCacheAddCallBack) {
         ((LocalCacheAddCallBack) serializeEntry).addedToLocalCache();
       }
-      cleanupOldMetaMapping(key, value, old, true);
+      cleanupOldMetaMapping(key, old, true);
     }
-    pinLockIfNecessary(value, old);
-    return old;
+    pinLockIfNecessary(value);
   }
 
-  private void cleanupOldMetaMapping(Object key, AbstractLocalCacheStoreValue value, AbstractLocalCacheStoreValue old,
+  private void cleanupOldMetaMapping(Object key, AbstractLocalCacheStoreValue old,
                                      boolean isRemoveFromInternalStore) {
     if (old == null || old.isValueNull() || old.isLiteral()) {
       // we don't put any meta mapping for REMOVE when value == null
       // when literal is present then lockid-> key will be present which we don want to remove
       return;
     }
-    removeMetaMapping(key, old, isRemoveFromInternalStore);
-    remoteRemoveObjectIfPossible(old);
+    handleKeyValueMappingRemoved(key, old, isRemoveFromInternalStore);
   }
 
   private Object remove(Object key) {
