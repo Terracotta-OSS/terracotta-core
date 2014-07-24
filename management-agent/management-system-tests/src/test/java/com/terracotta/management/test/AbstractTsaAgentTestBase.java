@@ -162,6 +162,12 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       }
     }
 
+    private int lastHttpResponseCode = 0;
+
+    protected int getLastHttpResponseCode() {
+      return lastHttpResponseCode;
+    }
+
     protected String httpGet(String urlString) throws IOException {
       HttpGet httpGet = new HttpGet(urlString);
       httpGet.addHeader("Accept", "application/json");
@@ -173,6 +179,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
           String s = EntityUtils.toString(entity2);
           System.out.println("Error");
           System.out.println(s);
+          lastHttpResponseCode = response.getStatusLine().getStatusCode();
           throw new IOException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
         }
 

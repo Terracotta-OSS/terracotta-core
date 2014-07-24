@@ -19,9 +19,9 @@ public class L1MBeansSourceUtils {
   public static void proxyClientRequest(String activeL2WithMBeansUrls) throws ProxyException, WebApplicationException {
     if (activeL2WithMBeansUrls == null) {
       ErrorEntity errorEntity = new ErrorEntity();
-      errorEntity.setError("No active coordinator");
-      errorEntity.setDetails("No server is in the ACTIVE-COORDINATOR state, try again later.");
-      throw new WebApplicationException(Response.status(404).entity(errorEntity).build());
+      errorEntity.setError("No management coordinator");
+      errorEntity.setDetails("No server is in the ACTIVE-COORDINATOR state in the coordinator group, try again later.");
+      throw new WebApplicationException(Response.status(400).entity(errorEntity).build());
     }
     throw new ProxyException(activeL2WithMBeansUrls);
   }

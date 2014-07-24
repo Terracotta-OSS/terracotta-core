@@ -49,9 +49,15 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
         testResources(0, 0);
         fail("expected IOException");
       } catch (IOException e) {
-        // expected
+        // expected, the server is down
       }
-      testResources(0, 1);
+      try {
+        testResources(0, 1);
+        fail("expected IOException");
+      } catch (IOException e) {
+        // expected, there is no more active coordinator to list L1 agents
+        assertEquals(400, getLastHttpResponseCode());
+      }
 
       // restart crashed server -> make sure everything is back in working order
       getTestControlMbean().restartLastCrashedServer(0);
