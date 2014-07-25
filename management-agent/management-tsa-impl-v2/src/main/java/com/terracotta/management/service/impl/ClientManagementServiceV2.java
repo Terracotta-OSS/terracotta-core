@@ -10,13 +10,12 @@ import com.tc.license.ProductID;
 import com.terracotta.management.resource.AbstractTsaEntityV2;
 import com.terracotta.management.resource.ClientEntityV2;
 import com.terracotta.management.resource.ConfigEntityV2;
-import com.terracotta.management.resource.ServerEntityV2;
-import com.terracotta.management.resource.ServerGroupEntityV2;
 import com.terracotta.management.resource.StatisticsEntityV2;
 import com.terracotta.management.resource.ThreadDumpEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.resource.services.utils.ProductIdConverter;
 import com.terracotta.management.security.SecurityContextService;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
@@ -45,14 +44,14 @@ public class ClientManagementServiceV2 {
 
   private final LocalManagementSource localManagementSource;
   private final TimeoutService timeoutService;
-  private final ServerManagementServiceV2 serverManagementService;
+  private final L1MBeansSource l1MBeansSource;
   private final ExecutorService executorService;
   private final RemoteManagementSource remoteManagementSource;
   private final SecurityContextService securityContextService;
 
-  public ClientManagementServiceV2(ServerManagementServiceV2 serverManagementService, ExecutorService executorService, TimeoutService timeoutService, LocalManagementSource localManagementSource, RemoteManagementSource remoteManagementSource, SecurityContextService securityContextService) {
+  public ClientManagementServiceV2(L1MBeansSource l1MBeansSource, ExecutorService executorService, TimeoutService timeoutService, LocalManagementSource localManagementSource, RemoteManagementSource remoteManagementSource, SecurityContextService securityContextService) {
     this.timeoutService = timeoutService;
-    this.serverManagementService = serverManagementService;
+    this.l1MBeansSource = l1MBeansSource;
     this.executorService = executorService;
     this.localManagementSource = localManagementSource;
     this.remoteManagementSource = remoteManagementSource;
@@ -150,11 +149,7 @@ public class ClientManagementServiceV2 {
             .path("clients");
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
-        if (attributesToShow != null) {
-          for (String attr : attributesToShow) {
-            uriBuilder.queryParam("show", attr);
-          }
-        }
+        if (attributesToShow != null) { uriBuilder.queryParam("show", toCsv(attributesToShow)); }
 
         return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
       }
@@ -190,18 +185,6 @@ public class ClientManagementServiceV2 {
     });
   }
 
-  private String findActiveServerName() throws ServiceExecutionException {
-    Collection<ServerGroupEntityV2> serverGroups = serverManagementService.getServerGroups(null);
-    for (ServerGroupEntityV2 serverGroup : serverGroups) {
-      for (ServerEntityV2 server : serverGroup.getServers()) {
-        Object state = server.getAttributes().get("State");
-        if ("ACTIVE-COORDINATOR".equals(state)) {
-          return (String)server.getAttributes().get("Name");
-        }
-      }
-    }
-    return null;
-  }
 
   interface ForEachClient<T extends AbstractTsaEntityV2> {
     T queryClient(ObjectName clientObjectName, String clientId);
@@ -209,8 +192,8 @@ public class ClientManagementServiceV2 {
   }
 
   private <T extends AbstractTsaEntityV2> ResponseEntityV2<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
-    if (!localManagementSource.isActiveCoordinator()) {
-      String activeServerName = findActiveServerName();
+    if (!l1MBeansSource.containsJmxMBeans()) {
+      String activeServerName = l1MBeansSource.getActiveL2ContainingMBeansUrl();
       if (activeServerName == null) {
         // there's no active at this time
         return new ResponseEntityV2<T>();

@@ -9,13 +9,12 @@ import org.terracotta.management.resource.VersionedEntity;
 import com.tc.license.ProductID;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
-import com.terracotta.management.resource.ServerEntity;
-import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.resource.services.utils.ProductIdConverter;
 import com.terracotta.management.security.SecurityContextService;
+import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
@@ -45,14 +44,14 @@ public class ClientManagementService {
 
   private final LocalManagementSource localManagementSource;
   private final TimeoutService timeoutService;
-  private final ServerManagementService serverManagementService;
+  private final L1MBeansSource l1MBeansSource;
   private final ExecutorService executorService;
   private final RemoteManagementSource remoteManagementSource;
   private final SecurityContextService securityContextService;
 
-  public ClientManagementService(ServerManagementService serverManagementService, ExecutorService executorService, TimeoutService timeoutService, LocalManagementSource localManagementSource, RemoteManagementSource remoteManagementSource, SecurityContextService securityContextService) {
+  public ClientManagementService(L1MBeansSource l1MBeansSource, ExecutorService executorService, TimeoutService timeoutService, LocalManagementSource localManagementSource, RemoteManagementSource remoteManagementSource, SecurityContextService securityContextService) {
     this.timeoutService = timeoutService;
-    this.serverManagementService = serverManagementService;
+    this.l1MBeansSource = l1MBeansSource;
     this.executorService = executorService;
     this.localManagementSource = localManagementSource;
     this.remoteManagementSource = remoteManagementSource;
@@ -188,18 +187,6 @@ public class ClientManagementService {
     });
   }
 
-  private String findActiveServerName() throws ServiceExecutionException {
-    Collection<ServerGroupEntity> serverGroups = serverManagementService.getServerGroups(null);
-    for (ServerGroupEntity serverGroup : serverGroups) {
-      for (ServerEntity server : serverGroup.getServers()) {
-        Object state = server.getAttributes().get("State");
-        if ("ACTIVE-COORDINATOR".equals(state)) {
-          return (String)server.getAttributes().get("Name");
-        }
-      }
-    }
-    return null;
-  }
 
   interface ForEachClient<T extends VersionedEntity> {
     T queryClient(ObjectName clientObjectName, String clientId);
@@ -207,8 +194,8 @@ public class ClientManagementService {
   }
 
   private <T extends VersionedEntity> Collection<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
-    if (!localManagementSource.isActiveCoordinator()) {
-      String activeServerName = findActiveServerName();
+    if (!l1MBeansSource.containsJmxMBeans()) {
+      String activeServerName = l1MBeansSource.getActiveL2ContainingMBeansUrl();
       if (activeServerName == null) {
         // there's no active at this time
         return Collections.emptySet();
