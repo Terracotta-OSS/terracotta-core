@@ -30,7 +30,7 @@
     <bigmemory-core-storage.version>1.1.11</bigmemory-core-storage.version>
     <jetty.version>8.1.12.v20130726</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
-    <slf4j.version>1.7.5</slf4j.version>
+    <slf4j.version>1.7.7</slf4j.version>
     <search.version>1.4.9</search.version>
     <security-version>2.0.1</security-version>
     <management-core-version>2.0.1</management-core-version>
