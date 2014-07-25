@@ -121,11 +121,10 @@ public class ServerManagementServiceV2 implements L1MBeansSource {
             .path("diagnostics")
             .path("threadDump")
             .path("servers")
-            .matrixParam("serverNames", member.name());
+            .matrixParam("names", member.name());
 
         try {
-          return remoteManagementSource.getFromRemoteL2(member.name(),
-              uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
+          return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
         } catch (ProcessingException che) {
           ResponseEntityV2<ThreadDumpEntityV2> responseEntityV2 = new ResponseEntityV2<ThreadDumpEntityV2>();
           ThreadDumpEntityV2 threadDumpEntityV2 = new ThreadDumpEntityV2();

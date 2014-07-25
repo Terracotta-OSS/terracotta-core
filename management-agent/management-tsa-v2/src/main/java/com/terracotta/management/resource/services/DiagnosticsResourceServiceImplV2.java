@@ -108,7 +108,7 @@ public class DiagnosticsResourceServiceImplV2 {
     requestValidator.validateSafe(info);
 
     try {
-      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "serverNames");
+      Set<String> serverNames = UriInfoUtils.extractLastSegmentMatrixParameterAsSet(info, "names");
 
       return diagnosticsService.getServersThreadDump(serverNames);
     } catch (ServiceExecutionException see) {
