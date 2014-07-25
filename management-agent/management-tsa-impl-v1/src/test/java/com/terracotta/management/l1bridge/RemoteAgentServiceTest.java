@@ -105,7 +105,7 @@ public class RemoteAgentServiceTest {
       remoteAgentService.getAgents(Collections.<String>emptySet());
       fail("expected WebApplicationException");
     } catch (WebApplicationException wae) {
-      assertThat(wae.getResponse().getStatus(), equalTo(404));
+      assertThat(wae.getResponse().getStatus(), equalTo(400));
     }
   }
 
@@ -169,7 +169,7 @@ public class RemoteAgentServiceTest {
       remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
       fail("expected WebApplicationException");
     } catch (WebApplicationException wae) {
-      assertThat(wae.getResponse().getStatus(), equalTo(404));
+      assertThat(wae.getResponse().getStatus(), equalTo(400));
     }
   }
 

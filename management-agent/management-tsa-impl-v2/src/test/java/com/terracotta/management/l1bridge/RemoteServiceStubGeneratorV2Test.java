@@ -77,7 +77,7 @@ public class RemoteServiceStubGeneratorV2Test {
   }
 
   @Test
-  public void testPassiveThrowing404WhenNoActive() throws Exception {
+  public void testPassiveThrowing400WhenNoActive() throws Exception {
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
@@ -91,7 +91,7 @@ public class RemoteServiceStubGeneratorV2Test {
       cacheService.getCaches();
       fail("expected WebApplicationException");
     } catch (WebApplicationException wae) {
-      assertThat(wae.getResponse().getStatus(), CoreMatchers.equalTo(404));
+      assertThat(wae.getResponse().getStatus(), CoreMatchers.equalTo(400));
     }
   }
 
