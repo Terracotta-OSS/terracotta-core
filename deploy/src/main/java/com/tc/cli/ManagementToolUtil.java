@@ -116,7 +116,8 @@ public abstract class ManagementToolUtil {
       if (allFromConfigs) {
         targets.addAll(getAllTargetsForConfig(commandLineBuilder.getOptionValue("f"), username, password, secured, ignoreUntrusted));
       } else {
-        targets.add(getTargetsForConfig(commandLineBuilder.getUnparsedArgs(), username, password, secured, ignoreUntrusted));
+        targets.add(getTargetsForConfig(commandLineBuilder.getOptionValue("-f"), commandLineBuilder.getOptionValue("-n"),
+            username, password, secured, ignoreUntrusted));
       }
     }
 
@@ -167,9 +168,15 @@ public abstract class ManagementToolUtil {
     }
   }
 
-  private static WebTarget getTargetsForConfig(final String[] args, String username, String password, boolean secured,
+  private static WebTarget getTargetsForConfig(String file, String serverName, String username, String password, boolean secured,
                                                            boolean ignoreUntrusted)
       throws ConfigurationSetupException, NoSuchAlgorithmException, KeyManagementException {
+    String[] args;
+    if (serverName != null) {
+      args = new String[] { "-f", file, "-n", serverName };
+    } else {
+      args = new String[] { "-f", file };
+    }
     ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
         StandardConfigurationSetupManagerFactory.ConfigMode.L2, new FatalIllegalConfigurationChangeHandler(), null);
     L2ConfigurationSetupManager l2TVSConfigurationSetupManager = factory.createL2TVSConfigurationSetupManager(null, false);
