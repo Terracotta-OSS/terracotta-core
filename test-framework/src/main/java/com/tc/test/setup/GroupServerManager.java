@@ -126,7 +126,7 @@ class GroupServerManager {
     this.expectedServerRunning = new boolean[groupData.getServerCount()];
     createServers();
     this.jmxConnectors = new JMXConnector[groupData.getServerCount()];
-    SecureRandom srandom = SecureRandom.getInstance("SHA1PRNG");
+    SecureRandom srandom = new SecureRandom();
     seed = srandom.nextLong();
     random = new Random(seed);
     // setup proxy
