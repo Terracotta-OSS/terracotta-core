@@ -141,7 +141,7 @@ public class ServerManagementServiceV2Test {
   }
 
   @Test
-  public void test_getServersStatistics() throws Exception {
+  public void test_getServersStatistics_all() throws Exception {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
@@ -174,6 +174,40 @@ public class ServerManagementServiceV2Test {
 
     verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s2")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
     verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
+  }
+
+  @Test
+  public void test_getServersStatistics_filter() throws Exception {
+    LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
+    TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
+    DfltSecurityContextService securityContextService = new DfltSecurityContextService();
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService));
+
+    when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
+    when(localManagementSource.getLocalServerName()).thenReturn("s1");
+    when(localManagementSource.isActiveCoordinator()).thenReturn(true);
+    when(localManagementSource.getDsoAttributes(eq(new String[] {"stat1", "stat3"}))).thenReturn(new HashMap<String, Object>() {{
+      put("stat1", "val1");
+      put("stat3", "val3");
+    }});
+
+    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+
+    ResponseEntityV2<StatisticsEntityV2> response = serverManagementService.getServersStatistics(
+        new HashSet<String>(Arrays.asList("s1", "s2", "s3")),
+        new HashSet<String>(Arrays.asList("stat1", "stat3")));
+
+    assertThat(response.getExceptionEntities().size(), is(0));
+    assertThat(response.getEntities().size(), is(1));
+    StatisticsEntityV2 entity = response.getEntities().iterator().next();
+    assertThat(entity.getSourceId(), equalTo("s1"));
+    assertThat(entity.getStatistics(), CoreMatchers.<Map<String, Object>>equalTo(new HashMap<String, Object>() {{
+      put("stat1", "val1");
+      put("stat3", "val3");
+    }}));
+
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s2?show=stat1,stat3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s3?show=stat1,stat3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
   }
 
   @Test
