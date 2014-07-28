@@ -85,7 +85,7 @@ public class ClientManagementService {
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ThreadDumpEntity.class);
+        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), Collection.class, ThreadDumpEntity.class);
       }
     });
   }
@@ -109,7 +109,7 @@ public class ClientManagementService {
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
-        Collection<TopologyEntity> topologyEntities = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), TopologyEntity.class);
+        Collection<TopologyEntity> topologyEntities = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), Collection.class, TopologyEntity.class);
 
         Collection<ClientEntity> result = new ArrayList<ClientEntity>();
         for (TopologyEntity topologyEntity : topologyEntities) {
@@ -153,7 +153,7 @@ public class ClientManagementService {
           }
         }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), StatisticsEntity.class);
+        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), Collection.class, StatisticsEntity.class);
       }
     });
   }
@@ -182,7 +182,7 @@ public class ClientManagementService {
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ConfigEntity.class);
+        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), Collection.class, ConfigEntity.class);
       }
     });
   }
@@ -195,7 +195,7 @@ public class ClientManagementService {
 
   private <T extends VersionedEntity> Collection<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
     if (!l1MBeansSource.containsJmxMBeans()) {
-      String activeServerName = l1MBeansSource.getActiveL2ContainingMBeansUrl();
+      String activeServerName = l1MBeansSource.getActiveL2ContainingMBeansName();
       if (activeServerName == null) {
         // there's no active at this time
         return Collections.emptySet();

@@ -1,6 +1,5 @@
 package com.terracotta.management.l1bridge;
 
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -15,7 +14,6 @@ import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.impl.TimeoutServiceImpl;
-import com.terracotta.management.web.proxy.ProxyException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,15 +25,12 @@ import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.ws.rs.WebApplicationException;
-
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -65,34 +60,11 @@ public class RemoteServiceStubGeneratorV2Test {
     RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
 
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("http://some-host:1234");
+    when(l1MBeansSource.getActiveL2ContainingMBeansName()).thenReturn("host-1");
 
     DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
-    try {
-      cacheService.getCaches();
-      fail("expected ProxyException");
-    } catch (ProxyException pe) {
-      assertThat(pe.getActiveL2WithMBeansUrl().contains("http://some-host:1234"), is(true));
-    }
-  }
-
-  @Test
-  public void testPassiveThrowing400WhenNoActive() throws Exception {
-    RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
-    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
-
-    when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn(null);
-
-    DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
-    try {
-      cacheService.getCaches();
-      fail("expected WebApplicationException");
-    } catch (WebApplicationException wae) {
-      assertThat(wae.getResponse().getStatus(), CoreMatchers.equalTo(400));
-    }
+    cacheService.getCaches();
+    verify(l1MBeansSource).proxyClientRequest();
   }
 
   @Test

@@ -12,7 +12,9 @@ import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.management.resource.ErrorEntity;
 import org.terracotta.management.resource.Representable;
+import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
 import com.terracotta.management.security.IACredentials;
 import com.terracotta.management.security.SecurityContextService;
@@ -37,6 +39,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.AsyncInvoker;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -82,34 +85,56 @@ public class RemoteManagementSource {
     client.close();
   }
 
-  public <T extends Representable> Collection<T> getFromRemoteL2(String serverName, URI uri, Class<T> type) throws ManagementSourceException {
-    String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .get(new CollectionOfRepresentableGenericType<T>(type));
-  }
-
   public <T, S, R extends T> R getFromRemoteL2(String serverName, URI uri, Class<T> type, Class<S> subType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return (R) resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .get(new SubGenericType<T, S>(type, subType));
+    URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    try {
+      return (R) resource(fullUri).get(new SubGenericType<T, S>(type, subType));
+    } catch (WebApplicationException wae) {
+      ErrorEntity errorEntity = createErrorEntity(wae);
+      throw new ManagementSourceException("GET " + fullUri + " failed", errorEntity);
+    }
   }
 
   public void postToRemoteL2(String serverName, URI uri) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .post(null);
+    URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    try {
+      resource(fullUri).post(null);
+    } catch (WebApplicationException wae) {
+      ErrorEntity errorEntity = createErrorEntity(wae);
+      throw new ManagementSourceException("POST(1) " + fullUri + " failed", errorEntity);
+    }
   }
 
   public <T extends Representable> Object postToRemoteL2(String serverName, URI uri, Collection<T> entities) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), Boolean.class);
+    URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    try {
+      return resource(fullUri).post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), Boolean.class);
+    } catch (WebApplicationException wae) {
+      ErrorEntity errorEntity = createErrorEntity(wae);
+      throw new ManagementSourceException("POST(2) " + fullUri + " failed", errorEntity);
+    }
   }
 
   public <T, S, R extends T> R postToRemoteL2(String serverName, URI uri, Class<T> returnType, Class<S> returnSubType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
-    return (R) resource(UriBuilder.fromUri(serverUrl).uri(uri).build())
-        .post(null, new SubGenericType<T, S>(returnType, returnSubType));
+    URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    try {
+      return (R) resource(fullUri).post(null, new SubGenericType<T, S>(returnType, returnSubType));
+    } catch (WebApplicationException wae) {
+      ErrorEntity errorEntity = createErrorEntity(wae);
+      throw new ManagementSourceException("POST(3) " + fullUri + " failed", errorEntity);
+    }
+  }
+
+  private ErrorEntity createErrorEntity(WebApplicationException wae) {
+    try {
+      return wae.getResponse().readEntity(ErrorEntity.class);
+    } catch (Exception e) {
+      return ExceptionUtils.toErrorEntity(wae);
+    }
   }
 
   private Invocation.Builder resourceNoTimeout(URI uri) {
@@ -340,32 +365,6 @@ public class RemoteManagementSource {
       }
 
       return result;
-    }
-  }
-
-  private static final class CollectionOfRepresentableGenericType<T extends Representable> extends GenericType<Collection<T>> {
-    public CollectionOfRepresentableGenericType(final Class<T> clazz) {
-      super(new ParameterizedType() {
-        @Override
-        public Type[] getActualTypeArguments() {
-          return new Type[] { clazz };
-        }
-
-        @Override
-        public Type getRawType() {
-          return Collection.class;
-        }
-
-        @Override
-        public Type getOwnerType() {
-          return Collection.class;
-        }
-
-        @Override
-        public String toString() {
-          return "CollectionOfRepresentableGenericType<" + clazz.getName() + ">";
-        }
-      });
     }
   }
 

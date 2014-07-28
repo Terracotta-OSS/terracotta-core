@@ -36,46 +36,50 @@ public class TopologyServiceImplV2 implements TopologyServiceV2 {
     return serverManagementService.getServerGroups(serverNames);
   }
 
-  private Collection<ClientEntityV2> getClients(Set<String> clientProductIds, Set<String> clientIds) throws ServiceExecutionException {
-    return clientManagementService.getClients(clientIds, stringsToProductsIds(clientProductIds)).getEntities();
+  private ResponseEntityV2<ClientEntityV2> getClients(Set<String> clientProductIds, Set<String> clientIds) throws ServiceExecutionException {
+    return clientManagementService.getClients(clientIds, stringsToProductsIds(clientProductIds));
   }
 
   @Override
   public ResponseEntityV2<TopologyEntityV2> getTopologies(Set<String> productIDs) throws ServiceExecutionException {
     ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
-    TopologyEntityV2 result = new TopologyEntityV2();
-    result.getServerGroupEntities().addAll(this.getServerGroups(null));
-    result.getClientEntities().addAll(this.getClients(productIDs, null));
-    result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(null));
-    response.getEntities().add(result);
+    TopologyEntityV2 topology = new TopologyEntityV2();
+    topology.getServerGroupEntities().addAll(this.getServerGroups(null));
+    ResponseEntityV2<ClientEntityV2> clientsResponse = this.getClients(productIDs, null);
+    topology.getClientEntities().addAll(clientsResponse.getEntities());
+    response.getExceptionEntities().addAll(clientsResponse.getExceptionEntities());
+    topology.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(null));
+    response.getEntities().add(topology);
     return response;
   }
 
   @Override
   public ResponseEntityV2<TopologyEntityV2> getServerTopologies(Set<String> serverNames) throws ServiceExecutionException {
     ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
-    TopologyEntityV2 result = new TopologyEntityV2();
-    result.getServerGroupEntities().addAll(this.getServerGroups(serverNames));
-    result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(serverNames));
-    response.getEntities().add(result);
+    TopologyEntityV2 topology = new TopologyEntityV2();
+    topology.getServerGroupEntities().addAll(this.getServerGroups(serverNames));
+    topology.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(serverNames));
+    response.getEntities().add(topology);
     return response;
   }
 
   @Override
   public ResponseEntityV2<TopologyEntityV2> getConnectedClients(Set<String> productIDs, Set<String> clientIDs) throws ServiceExecutionException {
     ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
-    TopologyEntityV2 result = new TopologyEntityV2();
-    result.getClientEntities().addAll(this.getClients(productIDs, clientIDs));
-    response.getEntities().add(result);
+    TopologyEntityV2 topology = new TopologyEntityV2();
+    ResponseEntityV2<ClientEntityV2> clientsResponse = this.getClients(productIDs, clientIDs);
+    topology.getClientEntities().addAll(clientsResponse.getEntities());
+    response.getExceptionEntities().addAll(clientsResponse.getExceptionEntities());
+    response.getEntities().add(topology);
     return response;
   }
 
   @Override
   public ResponseEntityV2<TopologyEntityV2> getUnreadOperatorEventCount(Set<String> serverNames) throws ServiceExecutionException {
     ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
-    TopologyEntityV2 result = new TopologyEntityV2();
-    result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(serverNames));
-    response.getEntities().add(result);
+    TopologyEntityV2 topology = new TopologyEntityV2();
+    topology.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount(serverNames));
+    response.getEntities().add(topology);
     return response;
   }
 

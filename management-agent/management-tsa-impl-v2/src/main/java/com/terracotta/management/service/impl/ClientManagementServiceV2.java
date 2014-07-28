@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.ExceptionEntityV2;
 import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.tc.license.ProductID;
@@ -85,7 +86,13 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
+        try {
+          return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ThreadDumpEntityV2.class);
+        } catch (ManagementSourceException mse) {
+          ResponseEntityV2<ThreadDumpEntityV2> response = new ResponseEntityV2<ThreadDumpEntityV2>();
+          response.getExceptionEntities().add(createExceptionEntity(mse));
+          return response;
+        }
       }
     });
   }
@@ -110,12 +117,16 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
-        ResponseEntityV2<TopologyEntityV2> responseEntityV2 = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder
-            .build(), ResponseEntityV2.class, TopologyEntityV2.class);
-
         ResponseEntityV2<ClientEntityV2> result = new ResponseEntityV2<ClientEntityV2>();
-        for (TopologyEntityV2 topologyEntityV2 : responseEntityV2.getEntities()) {
-          result.getEntities().addAll(topologyEntityV2.getClientEntities());
+        try {
+          ResponseEntityV2<TopologyEntityV2> responseEntityV2 = remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder
+              .build(), ResponseEntityV2.class, TopologyEntityV2.class);
+          for (TopologyEntityV2 topologyEntityV2 : responseEntityV2.getEntities()) {
+            result.getEntities().addAll(topologyEntityV2.getClientEntities());
+          }
+          return result;
+        } catch (ManagementSourceException mse) {
+          result.getExceptionEntities().add(createExceptionEntity(mse));
         }
         return result;
       }
@@ -151,7 +162,13 @@ public class ClientManagementServiceV2 {
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
         if (attributesToShow != null) { uriBuilder.queryParam("show", toCsv(attributesToShow)); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
+        try {
+          return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, StatisticsEntityV2.class);
+        } catch (ManagementSourceException mse) {
+          ResponseEntityV2<StatisticsEntityV2> response = new ResponseEntityV2<StatisticsEntityV2>();
+          response.getExceptionEntities().add(createExceptionEntity(mse));
+          return response;
+        }
       }
     });
   }
@@ -180,7 +197,13 @@ public class ClientManagementServiceV2 {
         if (clientIds != null) { uriBuilder.matrixParam("ids", toCsv(clientIds)); }
         if (clientProductIds != null) { uriBuilder.queryParam("productIds", toCsv(ProductIdConverter.productIdsToStrings(clientProductIds))); }
 
-        return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
+        try {
+          return remoteManagementSource.getFromRemoteL2(activeServerName, uriBuilder.build(), ResponseEntityV2.class, ConfigEntityV2.class);
+        } catch (ManagementSourceException mse) {
+          ResponseEntityV2<ConfigEntityV2> response = new ResponseEntityV2<ConfigEntityV2>();
+          response.getExceptionEntities().add(createExceptionEntity(mse));
+          return response;
+        }
       }
     });
   }
@@ -193,7 +216,7 @@ public class ClientManagementServiceV2 {
 
   private <T extends AbstractTsaEntityV2> ResponseEntityV2<T> forEachClient(Set<ProductID> clientProductIds, Set<String> clientIds, String methodName, final ForEachClient<T> fec) throws ServiceExecutionException {
     if (!l1MBeansSource.containsJmxMBeans()) {
-      String activeServerName = l1MBeansSource.getActiveL2ContainingMBeansUrl();
+      String activeServerName = l1MBeansSource.getActiveL2ContainingMBeansName();
       if (activeServerName == null) {
         // there's no active at this time
         return new ResponseEntityV2<T>();
@@ -232,6 +255,17 @@ public class ClientManagementServiceV2 {
     } catch (Exception e) {
       remoteManagementSource.cancelFutures(futures.values());
       throw new ServiceExecutionException("error collecting client data via " + methodName, e);
+    }
+  }
+
+  private ExceptionEntityV2 createExceptionEntity(ManagementSourceException mse) {
+    if (mse.getErrorEntity() != null) {
+      ExceptionEntityV2 exceptionEntity = new ExceptionEntityV2();
+      exceptionEntity.setMessage(mse.getMessage());
+      exceptionEntity.setStackTrace(mse.getErrorEntity().getStackTrace());
+      return exceptionEntity;
+    } else {
+      return new ExceptionEntityV2(mse);
     }
   }
 

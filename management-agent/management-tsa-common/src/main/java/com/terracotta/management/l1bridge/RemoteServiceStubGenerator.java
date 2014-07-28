@@ -12,7 +12,6 @@ import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -62,7 +61,7 @@ public class RemoteServiceStubGenerator {
         return invokeOnLocalServer(method, args);
       } else {
         // cannot handle the request on this server, find an active to do the job
-        L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
+        l1MBeansSource.proxyClientRequest();
         return null;
       }
     }

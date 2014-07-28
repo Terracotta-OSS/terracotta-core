@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.management.resource.ResponseEntityV2;
 
-import com.tc.config.schema.L2Info;
 import com.terracotta.management.resource.ClientEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
 import com.terracotta.management.security.impl.DfltSecurityContextService;
@@ -98,7 +97,7 @@ public class ClientManagementServiceV2Test {
       put("s3", "http://host-3.com:9540");
     }});
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("s1");
+    when(l1MBeansSource.getActiveL2ContainingMBeansName()).thenReturn("s1");
     ResponseEntityV2<TopologyEntityV2> value = new ResponseEntityV2<TopologyEntityV2>();
     TopologyEntityV2 topologyEntity = new TopologyEntityV2();
     ClientEntityV2 clientEntity = new ClientEntityV2();

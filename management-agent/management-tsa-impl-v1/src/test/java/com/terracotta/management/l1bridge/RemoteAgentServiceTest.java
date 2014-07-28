@@ -13,7 +13,6 @@ import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.impl.TimeoutServiceImpl;
-import com.terracotta.management.web.proxy.ProxyException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,15 +23,13 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.ws.rs.WebApplicationException;
-
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -79,16 +76,12 @@ public class RemoteAgentServiceTest {
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("http://localhost:1234");
+    when(l1MBeansSource.getActiveL2ContainingMBeansName()).thenReturn("http://localhost:1234");
 
     RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    try {
-      remoteAgentService.getAgents(Collections.<String>emptySet());
-      fail("expected ProxyException");
-    } catch (ProxyException pe) {
-      assertThat(pe.getActiveL2WithMBeansUrl().contains("http://localhost:1234"), is(true));
-    }
+    remoteAgentService.getAgents(Collections.<String>emptySet());
+    verify(l1MBeansSource).proxyClientRequest();
   }
 
   @Test
@@ -97,16 +90,13 @@ public class RemoteAgentServiceTest {
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn(null);
+    when(l1MBeansSource.getActiveL2ContainingMBeansName()).thenReturn(null);
 
     RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    try {
-      remoteAgentService.getAgents(Collections.<String>emptySet());
-      fail("expected WebApplicationException");
-    } catch (WebApplicationException wae) {
-      assertThat(wae.getResponse().getStatus(), equalTo(400));
-    }
+    remoteAgentService.getAgents(Collections.<String>emptySet());
+
+    verify(l1MBeansSource).proxyClientRequest();
   }
 
   @Test
@@ -143,16 +133,12 @@ public class RemoteAgentServiceTest {
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn("http://localhost:1234");
+    when(l1MBeansSource.getActiveL2ContainingMBeansName()).thenReturn("http://localhost:1234");
 
     RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    try {
-      remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
-      fail("expected ProxyException");
-    } catch (ProxyException pe) {
-      assertThat(pe.getActiveL2WithMBeansUrl().contains("http://localhost:1234"), is(true));
-    }
+    remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
+    verify(l1MBeansSource).proxyClientRequest();
   }
 
   @Test
@@ -161,16 +147,12 @@ public class RemoteAgentServiceTest {
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(false);
-    when(l1MBeansSource.getActiveL2ContainingMBeansUrl()).thenReturn(null);
+    when(l1MBeansSource.getActiveL2ContainingMBeansName()).thenReturn(null);
 
     RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
-    try {
-      remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
-      fail("expected WebApplicationException");
-    } catch (WebApplicationException wae) {
-      assertThat(wae.getResponse().getStatus(), equalTo(400));
-    }
+    remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
+    verify(l1MBeansSource).proxyClientRequest();
   }
 
   private static byte[] serialize(Object obj) throws IOException {

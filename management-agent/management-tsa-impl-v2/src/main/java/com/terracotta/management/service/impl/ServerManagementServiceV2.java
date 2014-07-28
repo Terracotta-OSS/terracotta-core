@@ -29,9 +29,11 @@ import com.terracotta.management.resource.TopologyReloadStatusEntityV2;
 import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.TimeoutService;
+import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
+import com.terracotta.management.web.proxy.ProxyException;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -851,7 +853,17 @@ public class ServerManagementServiceV2 implements L1MBeansSource {
   }
 
   @Override
-  public String getActiveL2ContainingMBeansUrl() throws ServiceExecutionException {
+  public void proxyClientRequest() throws ProxyException, ServiceExecutionException {
+    L1MBeansSourceUtils.proxyClientRequest(getActiveL2UrlContainingMBeans());
+  }
+
+  private String getActiveL2UrlContainingMBeans() throws ServiceExecutionException {
+    String name = getActiveL2ContainingMBeansName();
+    return name == null ? null : localManagementSource.getServerUrls().get(name);
+  }
+
+  @Override
+  public String getActiveL2ContainingMBeansName() throws ServiceExecutionException {
     Collection<ServerGroupEntityV2> serverGroups = getServerGroups(null);
     for (ServerGroupEntityV2 serverGroup : serverGroups) {
       Set<ServerEntityV2> servers = serverGroup.getServers();
@@ -860,8 +872,7 @@ public class ServerManagementServiceV2 implements L1MBeansSource {
 
         // the active of coordinator group is always the one where the MBeans are tunneled to
         if ("ACTIVE-COORDINATOR".equals(status) && serverGroup.isCoordinator()) {
-          String activeName = (String)server.getAttributes().get("Name");
-          return localManagementSource.getServerUrls().get(activeName);
+          return (String)server.getAttributes().get("Name");
         }
       }
     }

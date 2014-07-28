@@ -15,7 +15,6 @@ import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,7 +41,8 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
   public ResponseEntityV2<AgentMetadataEntityV2> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
     if (!l1MBeansSource.containsJmxMBeans()) {
       // cannot handle the request on this server, find another one to do the job
-      L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
+      l1MBeansSource.proxyClientRequest();
+      return null;
     }
 
     ResponseEntityV2<AgentMetadataEntityV2> result = new ResponseEntityV2<AgentMetadataEntityV2>();
@@ -72,7 +72,8 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
   public ResponseEntityV2<AgentEntityV2> getAgents(Set<String> idSet) throws ServiceExecutionException {
     if (!l1MBeansSource.containsJmxMBeans()) {
       // cannot handle the request on this server, find another one to do the job
-      L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
+      l1MBeansSource.proxyClientRequest();
+      return null;
     }
 
     ResponseEntityV2<AgentEntityV2> result = new ResponseEntityV2<AgentEntityV2>();

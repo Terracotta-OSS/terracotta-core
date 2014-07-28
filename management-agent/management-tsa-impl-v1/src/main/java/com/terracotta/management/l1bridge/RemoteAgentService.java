@@ -14,7 +14,6 @@ import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +42,8 @@ public class RemoteAgentService implements AgentService {
   public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
     if (!l1MBeansSource.containsJmxMBeans()) {
       // cannot handle the request on this server, find an active to do the job
-      L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
+      l1MBeansSource.proxyClientRequest();
+      return null;
     }
 
     Set<String> nodes = remoteCaller.getRemoteAgentNodeNames();
@@ -66,7 +66,8 @@ public class RemoteAgentService implements AgentService {
   public Collection<AgentEntity> getAgents(Set<String> idSet) throws ServiceExecutionException {
     if (!l1MBeansSource.containsJmxMBeans()) {
       // cannot handle the request on this server, find an active to do the job
-      L1MBeansSourceUtils.proxyClientRequest(l1MBeansSource.getActiveL2ContainingMBeansUrl());
+      l1MBeansSource.proxyClientRequest();
+      return null;
     }
 
     Collection<AgentEntity> result = new ArrayList<AgentEntity>();

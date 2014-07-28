@@ -4,22 +4,22 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.management.resource.ResponseEntityV2;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
-import com.terracotta.management.resource.BackupEntityV2;
-import com.terracotta.management.resource.ServerEntityV2;
-import com.terracotta.management.resource.ServerGroupEntityV2;
-import com.terracotta.management.resource.StatisticsEntityV2;
-import com.terracotta.management.resource.ThreadDumpEntityV2;
-import com.terracotta.management.resource.TopologyEntityV2;
+import com.terracotta.management.resource.BackupEntity;
+import com.terracotta.management.resource.ServerEntity;
+import com.terracotta.management.resource.ServerGroupEntity;
+import com.terracotta.management.resource.StatisticsEntity;
+import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.security.impl.DfltSecurityContextService;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.proxy.ProxyException;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,12 +45,13 @@ import static org.mockito.Mockito.when;
 /**
  * @author Ludovic Orban
  */
-public class ServerManagementServiceV2Test {
+public class ServerManagementServiceImplTest {
+
 
   private static final L2Info[] L2_INFOS = new L2Info[] {
-    new L2Info("s1", "s1_host", 9520, 9510, "s1_bind", 9530, 9540, "s1_secure"),
-    new L2Info("s2", "s2_host", 9521, 9511, "s2_bind", 9531, 9541, "s2_secure"),
-    new L2Info("s3", "s3_host", 9522, 9512, "s3_bind", 9532, 9542, "s3_secure")
+      new L2Info("s1", "s1_host", 9520, 9510, "s1_bind", 9530, 9540, "s1_secure"),
+      new L2Info("s2", "s2_host", 9521, 9511, "s2_bind", 9531, 9541, "s2_secure"),
+      new L2Info("s3", "s3_host", 9522, 9512, "s3_bind", 9532, 9542, "s3_secure")
   };
 
 
@@ -80,19 +81,19 @@ public class ServerManagementServiceV2Test {
       put("backup1", "OK");
     }});
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
-    ResponseEntityV2<BackupEntityV2> backupsStatus = serverManagementService.getBackupsStatus(new HashSet<String>(Arrays.asList("s1", "s2", "s3")));
-    assertThat(backupsStatus.getExceptionEntities().size(), is(0));
-    assertThat(backupsStatus.getEntities().size(), is(1));
-    BackupEntityV2 entity = backupsStatus.getEntities().iterator().next();
+    Collection<BackupEntity> backupsStatus = serverManagementService.getBackupsStatus(new HashSet<String>(Arrays
+        .asList("s1", "s2", "s3")));
+    assertThat(backupsStatus.size(), is(1));
+    BackupEntity entity = backupsStatus.iterator().next();
     assertThat(entity.getName(), equalTo("backup1"));
     assertThat(entity.getStatus(), equalTo("OK"));
     assertThat(entity.getSourceId(), equalTo("s1"));
     assertThat(entity.getError(), is((Object)null));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/backups;serverNames=s2")), eq(ResponseEntityV2.class), eq(BackupEntityV2.class));
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/backups;serverNames=s3")), eq(ResponseEntityV2.class), eq(BackupEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/agents/backups;serverNames=s2")), eq(Collection.class), eq(BackupEntity.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/agents/backups;serverNames=s3")), eq(Collection.class), eq(BackupEntity.class));
   }
 
   @Test
@@ -107,18 +108,17 @@ public class ServerManagementServiceV2Test {
     when(localManagementSource.isActiveCoordinator()).thenReturn(true);
     when(localManagementSource.serverThreadDump()).thenReturn("thread dump");
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
-    ResponseEntityV2<ThreadDumpEntityV2> response = serverManagementService.serversThreadDump(new HashSet<String>(Arrays.asList("s1", "s2", "s3")));
-    assertThat(response.getExceptionEntities().size(), is(0));
-    assertThat(response.getEntities().size(), is(1));
-    ThreadDumpEntityV2 entity = response.getEntities().iterator().next();
+    Collection<ThreadDumpEntity> response = serverManagementService.serversThreadDump(new HashSet<String>(Arrays.asList("s1", "s2", "s3")));
+    assertThat(response.size(), is(1));
+    ThreadDumpEntity entity = response.iterator().next();
     assertThat(entity.getSourceId(), equalTo("s1"));
     assertThat(entity.getDump(), equalTo("thread dump"));
-    assertThat(entity.getNodeType(), equalTo(ThreadDumpEntityV2.NodeType.SERVER));
+    assertThat(entity.getNodeType(), equalTo(ThreadDumpEntity.NodeType.SERVER));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/diagnostics/threadDump/servers;names=s2")), eq(ResponseEntityV2.class), eq(ThreadDumpEntityV2.class));
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/diagnostics/threadDump/servers;names=s3")), eq(ResponseEntityV2.class), eq(ThreadDumpEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/agents/diagnostics/threadDump/servers;names=s2")), eq(Collection.class), eq(ThreadDumpEntity.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/agents/diagnostics/threadDump/servers;names=s3")), eq(Collection.class), eq(ThreadDumpEntity.class));
   }
 
   @Test
@@ -133,17 +133,16 @@ public class ServerManagementServiceV2Test {
     when(localManagementSource.isActiveCoordinator()).thenReturn(true);
     when(localManagementSource.serverThreadDump()).thenReturn("thread dump");
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
-    ResponseEntityV2<ThreadDumpEntityV2> response = serverManagementService.serversThreadDump(new HashSet<String>(Arrays.asList("s1", "s3")));
-    assertThat(response.getExceptionEntities().size(), is(0));
-    assertThat(response.getEntities().size(), is(1));
-    ThreadDumpEntityV2 entity = response.getEntities().iterator().next();
+    Collection<ThreadDumpEntity> response = serverManagementService.serversThreadDump(new HashSet<String>(Arrays.asList("s1", "s3")));
+    assertThat(response.size(), is(1));
+    ThreadDumpEntity entity = response.iterator().next();
     assertThat(entity.getSourceId(), equalTo("s1"));
     assertThat(entity.getDump(), equalTo("thread dump"));
-    assertThat(entity.getNodeType(), equalTo(ThreadDumpEntityV2.NodeType.SERVER));
+    assertThat(entity.getNodeType(), equalTo(ThreadDumpEntity.NodeType.SERVER));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/diagnostics/threadDump/servers;names=s3")), eq(ResponseEntityV2.class), eq(ThreadDumpEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/agents/diagnostics/threadDump/servers;names=s3")), eq(Collection.class), eq(ThreadDumpEntity.class));
   }
 
   @Test
@@ -162,15 +161,14 @@ public class ServerManagementServiceV2Test {
       put("stat3", "val3");
     }});
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
-    ResponseEntityV2<StatisticsEntityV2> response = serverManagementService.getServersStatistics(
+    Collection<StatisticsEntity> response = serverManagementService.getServersStatistics(
         new HashSet<String>(Arrays.asList("s1", "s2", "s3")),
         null);
 
-    assertThat(response.getExceptionEntities().size(), is(0));
-    assertThat(response.getEntities().size(), is(1));
-    StatisticsEntityV2 entity = response.getEntities().iterator().next();
+    assertThat(response.size(), is(1));
+    StatisticsEntity entity = response.iterator().next();
     assertThat(entity.getSourceId(), equalTo("s1"));
     assertThat(entity.getStatistics(), CoreMatchers.<Map<String, Object>>equalTo(new HashMap<String, Object>() {{
       put("stat1", "val1");
@@ -178,8 +176,8 @@ public class ServerManagementServiceV2Test {
       put("stat3", "val3");
     }}));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s2")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/agents/statistics/servers;names=s2")), eq(Collection.class), eq(StatisticsEntity.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/agents/statistics/servers;names=s3")), eq(Collection.class), eq(StatisticsEntity.class));
   }
 
   @Test
@@ -197,23 +195,22 @@ public class ServerManagementServiceV2Test {
       put("stat3", "val3");
     }});
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
-    ResponseEntityV2<StatisticsEntityV2> response = serverManagementService.getServersStatistics(
+    Collection<StatisticsEntity> response = serverManagementService.getServersStatistics(
         new HashSet<String>(Arrays.asList("s1", "s2", "s3")),
         new HashSet<String>(Arrays.asList("stat1", "stat3")));
 
-    assertThat(response.getExceptionEntities().size(), is(0));
-    assertThat(response.getEntities().size(), is(1));
-    StatisticsEntityV2 entity = response.getEntities().iterator().next();
+    assertThat(response.size(), is(1));
+    StatisticsEntity entity = response.iterator().next();
     assertThat(entity.getSourceId(), equalTo("s1"));
     assertThat(entity.getStatistics(), CoreMatchers.<Map<String, Object>>equalTo(new HashMap<String, Object>() {{
       put("stat1", "val1");
       put("stat3", "val3");
     }}));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s2?show=stat1,stat3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s3?show=stat1,stat3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/agents/statistics/servers;names=s2?show=stat1&show=stat3")), eq(Collection.class), eq(StatisticsEntity.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/agents/statistics/servers;names=s3?show=stat1&show=stat3")), eq(Collection.class), eq(StatisticsEntity.class));
   }
 
   @Test
@@ -231,18 +228,18 @@ public class ServerManagementServiceV2Test {
         new ServerGroupInfo(new L2Info[] {L2_INFOS[2]}, "group1", 1, false),
     });
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
-    Collection<ServerGroupEntityV2> response = serverManagementService.getServerGroups(new HashSet<String>(Arrays.asList("s1", "s2", "s3")));
+    Collection<ServerGroupEntity> response = serverManagementService.getServerGroups(new HashSet<String>(Arrays.asList("s1", "s2", "s3")));
 
     assertThat(response.size(), is(1));
-    ServerGroupEntityV2 entity = response.iterator().next();
+    ServerGroupEntity entity = response.iterator().next();
     assertThat(entity.getName(), equalTo("group0"));
     assertThat(entity.getId(), equalTo(0));
     assertThat(entity.isCoordinator(), equalTo(true));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/topologies/servers;names=s2")), eq(ResponseEntityV2.class), eq(TopologyEntityV2.class));
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/topologies/servers;names=s3")), eq(ResponseEntityV2.class), eq(TopologyEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/agents/topologies/servers;names=s2")), eq(Collection.class), eq(TopologyEntity.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/agents/topologies/servers;names=s3")), eq(Collection.class), eq(TopologyEntity.class));
   }
 
   @Test
@@ -263,10 +260,10 @@ public class ServerManagementServiceV2Test {
       put("s3", "http://s3");
     }});
 
-    doReturn(createTopologySingleServerResponse(true, "s1", "ACTIVE-COORDINATOR")).when(remoteManagementSource).getFromRemoteL2(eq("s1"), any(URI.class), eq(ResponseEntityV2.class), eq(TopologyEntityV2.class));
-    doReturn(createTopologySingleServerResponse(true, "s3", "PASSIVE_STANDBY")).when(remoteManagementSource).getFromRemoteL2(eq("s3"), any(URI.class), eq(ResponseEntityV2.class), eq(TopologyEntityV2.class));
+    doReturn(createTopologySingleServerResponse(true, "s1", "ACTIVE-COORDINATOR")).when(remoteManagementSource).getFromRemoteL2(eq("s1"), any(URI.class), eq(Collection.class), eq(TopologyEntity.class));
+    doReturn(createTopologySingleServerResponse(true, "s3", "PASSIVE_STANDBY")).when(remoteManagementSource).getFromRemoteL2(eq("s3"), any(URI.class), eq(Collection.class), eq(TopologyEntity.class));
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
     try {
       serverManagementService.proxyClientRequest();
@@ -276,17 +273,17 @@ public class ServerManagementServiceV2Test {
     }
   }
 
-  private ResponseEntityV2<TopologyEntityV2> createTopologySingleServerResponse(boolean isGroupCoordinator, String serverName, String serverState) {
-    ResponseEntityV2<TopologyEntityV2> response = new ResponseEntityV2<TopologyEntityV2>();
-    TopologyEntityV2 topologyEntityV2 = new TopologyEntityV2();
-    ServerGroupEntityV2 serverGroupEntityV2 = new ServerGroupEntityV2();
-    serverGroupEntityV2.setCoordinator(isGroupCoordinator);
-    ServerEntityV2 serverEntityV2 = new ServerEntityV2();
-    serverEntityV2.getAttributes().put("Name", serverName);
-    serverEntityV2.getAttributes().put("State", serverState);
-    serverGroupEntityV2.getServers().add(serverEntityV2);
-    topologyEntityV2.getServerGroupEntities().add(serverGroupEntityV2);
-    response.getEntities().add(topologyEntityV2);
+  private Collection<TopologyEntity> createTopologySingleServerResponse(boolean isGroupCoordinator, String serverName, String serverState) {
+    Collection<TopologyEntity> response = new ArrayList<TopologyEntity>();
+    TopologyEntity topologyEntityV2 = new TopologyEntity();
+    ServerGroupEntity serverGroupEntity = new ServerGroupEntity();
+    serverGroupEntity.setCoordinator(isGroupCoordinator);
+    ServerEntity serverEntity = new ServerEntity();
+    serverEntity.getAttributes().put("Name", serverName);
+    serverEntity.getAttributes().put("State", serverState);
+    serverGroupEntity.getServers().add(serverEntity);
+    topologyEntityV2.getServerGroupEntities().add(serverGroupEntity);
+    response.add(topologyEntityV2);
     return response;
   }
 
@@ -302,7 +299,7 @@ public class ServerManagementServiceV2Test {
         new ServerGroupInfo(new L2Info[] {L2_INFOS[2]}, "group1", 1, false),
     });
 
-    ServerManagementServiceV2 serverManagementService = new ServerManagementServiceV2(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+    ServerManagementService serverManagementService = new ServerManagementService(executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
     try {
       serverManagementService.proxyClientRequest();
@@ -311,4 +308,5 @@ public class ServerManagementServiceV2Test {
       assertThat(wae.getResponse().getStatus(), is(400));
     }
   }
+
 }

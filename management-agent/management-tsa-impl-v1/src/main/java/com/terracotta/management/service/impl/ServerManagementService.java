@@ -28,9 +28,11 @@ import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.service.L1MBeansSource;
 import com.terracotta.management.service.TimeoutService;
+import com.terracotta.management.service.impl.util.L1MBeansSourceUtils;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.ManagementSourceException;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
+import com.terracotta.management.web.proxy.ProxyException;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -123,7 +125,7 @@ public class ServerManagementService implements L1MBeansSource {
             .matrixParam("names", member.name());
 
         try {
-          return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ThreadDumpEntity.class);
+          return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, ThreadDumpEntity.class);
         } catch (ProcessingException che) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
           threadDumpEntity.setVersion(localManagementSource.getVersion());
@@ -136,7 +138,7 @@ public class ServerManagementService implements L1MBeansSource {
     });
   }
 
-  public Collection<StatisticsEntity> getServersStatistics(Set<String> serverNames, Set<String> attributesToShow) throws ServiceExecutionException {
+  public Collection<StatisticsEntity> getServersStatistics(Set<String> serverNames, final Set<String> attributesToShow) throws ServiceExecutionException {
     final String[] mbeanAttributeNames = (attributesToShow == null) ?
         SERVER_STATS_ATTRIBUTE_NAMES :
         new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
@@ -162,8 +164,13 @@ public class ServerManagementService implements L1MBeansSource {
             .path("statistics")
             .path("servers")
             .matrixParam("names", member.name());
+        if (attributesToShow != null) {
+          for (String attribute : attributesToShow) {
+            uriBuilder.queryParam("show", attribute);
+          }
+        }
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), StatisticsEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, StatisticsEntity.class);
       }
     });
   }
@@ -214,7 +221,7 @@ public class ServerManagementService implements L1MBeansSource {
             .path("dgc")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), StatisticsEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, StatisticsEntity.class);
       }
     });
   }
@@ -243,7 +250,7 @@ public class ServerManagementService implements L1MBeansSource {
             .matrixParam("names", member.name());
 
         try {
-          return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), ConfigEntity.class);
+          return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, ConfigEntity.class);
         } catch (ProcessingException che) {
           ConfigEntity configEntity = new ConfigEntity();
           configEntity.setVersion(localManagementSource.getVersion());
@@ -287,7 +294,7 @@ public class ServerManagementService implements L1MBeansSource {
             .path("backups")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), BackupEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, BackupEntity.class);
       }
     });
   }
@@ -310,7 +317,7 @@ public class ServerManagementService implements L1MBeansSource {
             .path("licenseProperties")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), LicenseEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, LicenseEntity.class);
       }
     });
   }
@@ -351,7 +358,7 @@ public class ServerManagementService implements L1MBeansSource {
             .matrixParam("names", member.name());
         if (sinceWhen != null) { uriBuilder.matrixParam("sinceWhen", sinceWhen); }
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), LogEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, LogEntity.class);
       }
     });
   }
@@ -416,7 +423,7 @@ public class ServerManagementService implements L1MBeansSource {
         if (acceptableLevels != null) { uriBuilder.queryParam("eventLevels", toCsv(acceptableLevels)); }
         uriBuilder.queryParam("filterOutRead", read);
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), OperatorEventEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, OperatorEventEntity.class);
       }
     });
   }
@@ -460,7 +467,7 @@ public class ServerManagementService implements L1MBeansSource {
             .matrixParam("names", member.name());
         if (query != null) { uriBuilder.queryParam("q", query); }
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), MBeanEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, MBeanEntity.class);
       }
     });
   }
@@ -525,7 +532,7 @@ public class ServerManagementService implements L1MBeansSource {
               .matrixParam("names", member.name());
 
           try {
-            Collection<TopologyEntity> topologyEntities = remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), TopologyEntity.class);
+            Collection<TopologyEntity> topologyEntities = remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, TopologyEntity.class);
             return Collections.singleton(findServerGroupEntityContainingServerWithName(topologyEntities, member.name()));
           } catch (ProcessingException che) {
             ServerGroupEntity sgEntity = new ServerGroupEntity();
@@ -599,7 +606,7 @@ public class ServerManagementService implements L1MBeansSource {
             .path("unreadOperatorEventCount")
             .matrixParam("serverNames", member.name());
 
-        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), TopologyEntity.class);
+        return remoteManagementSource.getFromRemoteL2(member.name(), uriBuilder.build(), Collection.class, TopologyEntity.class);
       }
     });
 
@@ -841,7 +848,17 @@ public class ServerManagementService implements L1MBeansSource {
   }
 
   @Override
-  public String getActiveL2ContainingMBeansUrl() throws ServiceExecutionException {
+  public void proxyClientRequest() throws ProxyException, ServiceExecutionException {
+    L1MBeansSourceUtils.proxyClientRequest(getActiveL2UrlContainingMBeans());
+  }
+
+  private String getActiveL2UrlContainingMBeans() throws ServiceExecutionException {
+    String name = getActiveL2ContainingMBeansName();
+    return name == null ? null : localManagementSource.getServerUrls().get(name);
+  }
+
+  @Override
+  public String getActiveL2ContainingMBeansName() throws ServiceExecutionException {
     Collection<ServerGroupEntity> serverGroups = getServerGroups(null);
     for (ServerGroupEntity serverGroup : serverGroups) {
       Set<ServerEntity> servers = serverGroup.getServers();
@@ -850,8 +867,7 @@ public class ServerManagementService implements L1MBeansSource {
 
         // the active of coordinator group is always the one where the MBeans are tunneled to
         if ("ACTIVE-COORDINATOR".equals(status) && serverGroup.isCoordinator()) {
-          String activeName = (String)server.getAttributes().get("Name");
-          return localManagementSource.getServerUrls().get(activeName);
+          return (String)server.getAttributes().get("Name");
         }
       }
     }
