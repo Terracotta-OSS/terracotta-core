@@ -15,22 +15,22 @@ public class ApplicationTsaV1Test  extends JerseyApplicationTestCommon {
   @Test
   public void testGetClasses() throws Exception {
     ApplicationTsaV1 applicationEhCache = new ApplicationTsaV1();
-    Set<Class<?>> applicationClasses = applicationEhCache.getResourceClasses();
+    Set<Class<?>> filteredApplicationClasses = filterClassesFromJaxRSPackages(applicationEhCache.getResourceClasses());
     Set<Class<?>> annotatedClasses = annotatedClassesFound();
-    if (applicationClasses.size() > annotatedClasses.size()) {
-      for (Class<?> applicationClass : applicationClasses) {
+    if (filteredApplicationClasses.size() > annotatedClasses.size()) {
+      for (Class<?> applicationClass : filteredApplicationClasses) {
         if(!annotatedClasses.contains(applicationClass)) {
           fail("While scanning the classpath, we could not find " + applicationClass);
         }
       }
     } else {
       for (Class<?> annotatedClass : annotatedClasses) {
-        if(!applicationClasses.contains(annotatedClass)) {
-          fail("Should  " + annotatedClass + " be added to ApplicationTsaV2 ?");
+        if(!filteredApplicationClasses.contains(annotatedClass)) {
+          fail("Should  " + annotatedClass + " be added to ApplicationTsaV1 ?");
         }
       }
     }
-    Assert.assertThat(annotatedClasses, equalTo(applicationClasses));
+    Assert.assertThat(annotatedClasses, equalTo(filteredApplicationClasses));
   }
 
 }
