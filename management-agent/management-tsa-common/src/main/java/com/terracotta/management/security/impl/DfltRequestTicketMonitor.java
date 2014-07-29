@@ -42,7 +42,7 @@ public final class DfltRequestTicketMonitor implements RequestTicketMonitor {
 
     for (Iterator<RequestTicket> itr = issuedTickets.iterator(); itr.hasNext(); ) {
       RequestTicket next = itr.next();
-      if (ticket.equals(next.getTicketId().toString())) {
+      if (isEqualSecure(ticket, next.getTicketId().toString())) {
         itr.remove();
         found = next;
         break;
@@ -54,6 +54,20 @@ public final class DfltRequestTicketMonitor implements RequestTicketMonitor {
           "Unknown ticket cannot be redeemed. Either ticket '%s' has expired prior to this redemption attempt or this is a replay attack!",
           ticket));
     }
+  }
+
+  public static boolean isEqualSecure(byte[] a, byte[] b) {
+    if (a.length != b.length) { return false; }
+
+    int result = 0;
+    for (int i = 0; i < a.length; i++) {
+      result |= a[i] ^ b[i];
+    }
+    return result == 0;
+  }
+
+  public static boolean isEqualSecure(String a, String b) {
+    return isEqualSecure(a.getBytes(), b.getBytes());
   }
 
   private void cleanupOldsters() {
