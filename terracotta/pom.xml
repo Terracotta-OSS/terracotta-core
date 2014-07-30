@@ -159,56 +159,6 @@
               </execution>
             </executions>
           </plugin>
-          <plugin>
-            <groupId>org.codehaus.gmaven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>inject-correct-pom-to-jar</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-                <configuration>
-                  <source>
-                def reducedPom = new File(project.build.directory, "dependency-reduced-pom.xml")
-                def pomProject = new XmlParser().parse(reducedPom)
-
-                def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122')}
-                if(gfArtifacts[0] != null) {
-
-                  def gfArtifactsParent = gfArtifacts[0].parent()
-
-                  def profiles = pomProject.profiles
-
-                  def newProfile = profiles[0].appendNode('profile')
-                  def newProfileId = new Node(newProfile,'id',"sag-deps");
-                  def newProfileActivation = new Node(newProfile,'activation');
-                  def newProfileActivationProperty = new Node(newProfileActivation,'property');
-                  def newProfileActivationPropertyName = new Node(newProfileActivationProperty,'name',"sag-deps");
-                  def newProfileActivationPropertyValue = new Node(newProfileActivationProperty,'value',"true");
-                  def newNode = newProfile.appendNode('dependencies',gfArtifacts)
-
-                  gfArtifacts.each { g -&gt;
-                      print g.artifactId.text()
-                      gfArtifactsParent.remove(g)
-                  }
-
-                  def xmlNodePrinter = new XmlNodePrinter(new PrintWriter(new FileWriter(reducedPom)))
-                  xmlNodePrinter.preserveWhitespace=true;
-                  xmlNodePrinter.print(pomProject)
-                }
-
-                def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
-                ant.jar(destfile: jarFile, update: "true") {
-                  zipfileset(file: reducedPom,
-                             fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
-                }
-                  </source>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
         </plugins>
       </build>
     </profile>

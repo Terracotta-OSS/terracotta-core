@@ -128,41 +128,9 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>hamcrest-all</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.servlet-api</artifactId>
+     </dependency>
   </dependencies>
-  
-  <profiles>
-    <profile>
-      <id>sag-deps</id>
-      <activation>
-        <property>
-          <name>sag-deps</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>gf-3122</groupId>
-          <artifactId>gf.javax.servlet-api</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>community-deps</id>
-      <activation>
-        <property>
-          <name>sag-deps</name>
-          <value>false</value>
-        </property>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.servlet</artifactId>
-        </dependency>
-      </dependencies>
-    </profile> 
-  </profiles>
-  
 </project>

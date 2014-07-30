@@ -210,26 +210,6 @@
         </exclusions>        
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.servlet</artifactId>
-        <version>${javax.servlet.version}</version>
-      </dependency>      
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.security.auth.message</artifactId>
-        <version>1.0.0.v201108011116</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.annotation</artifactId>
-        <version>1.1.0.v201108011116</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.mail.glassfish</artifactId>
-        <version>1.4.1.v201005082020</version>
-      </dependency>      
-      <dependency>
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
         <version>0.9.94</version>
@@ -320,16 +300,6 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>2.3.3</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.core</groupId>
-        <artifactId>jersey-client</artifactId>
-        <version>2.6</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.media</groupId>
-        <artifactId>jersey-media-json-jackson</artifactId>
-        <version>2.6</version>
       </dependency>
 
       <!-- Glassfish substitutes -->

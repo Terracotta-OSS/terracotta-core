@@ -159,7 +159,23 @@
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency>    
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.security.auth.message</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.annotation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.mail</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.servlet-api</artifactId>
+    </dependency> 
   </dependencies>
 
   <build>
@@ -255,64 +271,5 @@
       </plugin>
     </plugins>
   </build>
-  
-  <profiles>
-    <profile>
-      <id>sag-deps</id>
-      <activation>
-        <property>
-          <name>sag-deps</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>gf-3122</groupId>
-          <artifactId>gf.javax.security.auth.message</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>gf-3122</groupId>
-          <artifactId>gf.javax.annotation</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>gf-3122</groupId>
-          <artifactId>gf.javax.mail</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>gf-3122</groupId>
-          <artifactId>gf.javax.servlet-api</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>community-deps</id>
-      <activation>
-        <property>
-          <name>sag-deps</name>
-          <value>false</value>
-        </property>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.servlet</artifactId>        
-        </dependency>
-        <dependency>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.security.auth.message</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.annotation</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.mail.glassfish</artifactId>
-        </dependency>         
-      </dependencies>
-    </profile>     
-  </profiles>
-
 
 </project>
