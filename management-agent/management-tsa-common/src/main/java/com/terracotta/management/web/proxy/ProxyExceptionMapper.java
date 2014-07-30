@@ -39,20 +39,26 @@ public class ProxyExceptionMapper implements ExceptionMapper<ProxyException> {
     URI uriToGo = UriBuilder.fromUri(activeL2Url).path(uri.getPath()).replaceQuery(uri.getQuery()).build();
 
     if ("GET".equals(method)) {
-      return remoteManagementSource.resource(uriToGo).get();
+      return buildResponse(remoteManagementSource.resource(uriToGo).get());
     } else if ("POST".equals(method)) {
       String e = ((ContainerRequest)request).readEntity(String.class);
-      return remoteManagementSource.resource(uriToGo).post(Entity.entity(e, request.getMediaType()));
+      return buildResponse(remoteManagementSource.resource(uriToGo).post(Entity.entity(e, request.getMediaType())));
     } else if ("PUT".equals(method)) {
       String e = ((ContainerRequest)request).readEntity(String.class);
-      return remoteManagementSource.resource(uriToGo).put(Entity.entity(e, request.getMediaType()));
+      return buildResponse(remoteManagementSource.resource(uriToGo).put(Entity.entity(e, request.getMediaType())));
     } else if ("DELETE".equals(method)) {
-      return remoteManagementSource.resource(uriToGo).delete();
+      return buildResponse(remoteManagementSource.resource(uriToGo).delete());
     } else {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .type(MediaType.APPLICATION_JSON_TYPE)
           .entity(ExceptionUtils.toErrorEntity(new Exception("Cannot proxy " + method + " HTTP method"))).build();
     }
+  }
+
+  private Response buildResponse(Response response) {
+    return Response.fromResponse(response)
+        .entity(response.readEntity(byte[].class))
+        .build();
   }
 
 }
