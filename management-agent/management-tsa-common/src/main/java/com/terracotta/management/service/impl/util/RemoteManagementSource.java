@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.resource.ErrorEntity;
 import org.terracotta.management.resource.Representable;
+import org.terracotta.management.resource.SubGenericType;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
 import com.terracotta.management.security.IACredentials;
@@ -22,18 +23,16 @@ import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.web.utils.TSAConfig;
 
 import java.io.EOFException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +47,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
@@ -66,25 +64,35 @@ public class RemoteManagementSource {
   private final TimeoutService timeoutService;
   private final SecurityContextService securityContextService;
   private final Client client;
-  private final Map<RemoteTSAEventListener, Collection<Future<EventInput>>> futures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>());
+  private final Map<RemoteTSAEventListener, Collection<Future<EventInput>>> eventListenerFutures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>());
 
   public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService) {
     this.localManagementSource = localManagementSource;
     this.timeoutService = timeoutService;
     this.securityContextService = securityContextService;
 
-    this.client = ClientBuilder.newBuilder()
-        .register(SseFeature.class)
-        .register(EncodingFilter.class)
-        .register(GZipEncoder.class)
-        .register(DeflateEncoder.class)
-        .build();
+    // do not register the EncodingFilter, GZipEncoder and DeflateEncoder here
+    // as a Jersey bug breaks SSE flow when they are enabled.
+    // Only the non-SSE resources will register them for now.
+    this.client = ClientBuilder.newBuilder().build();
+  }
+
+  // test ctor
+  RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService, Client client) {
+    this.localManagementSource = localManagementSource;
+    this.timeoutService = timeoutService;
+    this.securityContextService = securityContextService;
+    this.client = client;
   }
 
   public void shutdown() {
     client.close();
   }
 
+  /**
+   * Perform a GET on the specified URI of the specified server and return an object of type 'type' generified to 'subType'.
+   * @throws ManagementSourceException
+   */
   public <T, S, R extends T> R getFromRemoteL2(String serverName, URI uri, Class<T> type, Class<S> subType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
@@ -96,6 +104,10 @@ public class RemoteManagementSource {
     }
   }
 
+  /**
+   * Perform an empty POST on the specified URI of the specified server and return nothing.
+   * @throws ManagementSourceException
+   */
   public void postToRemoteL2(String serverName, URI uri) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
@@ -107,17 +119,25 @@ public class RemoteManagementSource {
     }
   }
 
-  public <T extends Representable> Object postToRemoteL2(String serverName, URI uri, Collection<T> entities) throws ManagementSourceException {
+  /**
+   * Perform a POST of 'entities' on the specified URI of the specified server and return an object of type 'returnType'.
+   * @throws ManagementSourceException
+   */
+  public <T extends Representable, R> R postToRemoteL2(String serverName, URI uri, Collection<T> entities, Class<R> returnType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
     try {
-      return resource(fullUri).post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), Boolean.class);
+      return resource(fullUri).post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), returnType);
     } catch (WebApplicationException wae) {
       ErrorEntity errorEntity = createErrorEntity(wae);
       throw new ManagementSourceException("POST(2) " + fullUri + " failed", errorEntity);
     }
   }
 
+  /**
+   * Perform an empty POST on the specified URI of the specified server and return an object of type 'type' generified to 'subType'.
+   * @throws ManagementSourceException
+   */
   public <T, S, R extends T> R postToRemoteL2(String serverName, URI uri, Class<T> returnType, Class<S> returnSubType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
@@ -137,9 +157,10 @@ public class RemoteManagementSource {
     }
   }
 
-  private Invocation.Builder resourceNoTimeout(URI uri) {
+  private Invocation.Builder sseResource(URI uri) {
     WebTarget resource = client.target(uri);
     Builder builder = resource.request();
+    resource.register(SseFeature.class);
     if (TSAConfig.isSslEnabled()) {
       SecurityContextService.SecurityContext securityContext = securityContextService.getSecurityContext();
       builder = builder.header(IACredentials.REQ_TICKET, securityContext.getRequestTicket())
@@ -151,7 +172,16 @@ public class RemoteManagementSource {
   }
 
   public Invocation.Builder resource(URI uri) {
+    return resource(uri, true);
+  }
+
+  public Invocation.Builder resource(URI uri, boolean enableCompression) {
     WebTarget resource = client.target(uri);
+    if (enableCompression) {
+      resource.register(EncodingFilter.class);
+    }
+    resource.register(GZipEncoder.class);
+    resource.register(DeflateEncoder.class);
     resource.property(ClientProperties.CONNECT_TIMEOUT, (int)timeoutService.getCallTimeout());
     resource.property(ClientProperties.READ_TIMEOUT, (int)timeoutService.getCallTimeout());
 
@@ -179,7 +209,7 @@ public class RemoteManagementSource {
   public void addTsaEventListener(final RemoteTSAEventListener listener) {
     Map<String, String> remoteServerUrls = localManagementSource.getRemoteServerUrls();
     for (String serverUrl : remoteServerUrls.values()) {
-      final AsyncInvoker async = resourceNoTimeout(UriBuilder.fromUri(serverUrl)
+      final AsyncInvoker async = sseResource(UriBuilder.fromUri(serverUrl)
           .uri("/tc-management-api/v2/events")
           .queryParam("localOnly", "true")
           .build()).async();
@@ -200,21 +230,34 @@ public class RemoteManagementSource {
 
         @Override
         public void failed(Throwable throwable) {
-//            // handle security
-//            if (throwable == error HTTP 401) {
-//              listener.onError(throwable);
-//              return;
-//            }
-
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-              Thread.currentThread().interrupt();
+          if (throwable instanceof WebApplicationException) {
+            WebApplicationException wae = (WebApplicationException)throwable;
+            if (wae.getResponse().getStatus() == 401) {
+              // IA error -> disconnect
+              listener.onError(throwable);
+              clearAndCancelFutures(listener);
+              return;
             }
+          }
 
-            Future<EventInput> newFuture = async.get(this);
-            addFuture(listener, newFuture);
-            clearDoneFutures(listener);
+          if (throwable instanceof InterruptedException) {
+            listener.onError(throwable);
+            clearAndCancelFutures(listener);
+            return;
+          }
+
+          try {
+            Thread.sleep(eventReadFailureRetryDelayInMs());
+          } catch (InterruptedException ie) {
+            listener.onError(throwable);
+            clearAndCancelFutures(listener);
+            return;
+          }
+
+          // restart the request
+          Future<EventInput> newFuture = async.get(this);
+          addFuture(listener, newFuture);
+          clearDoneFutures(listener);
         }
       });
 
@@ -222,30 +265,59 @@ public class RemoteManagementSource {
     }
   }
 
+  // for testing
+  protected long eventReadFailureRetryDelayInMs() {
+    return 1000L;
+  }
+
   private void addFuture(RemoteTSAEventListener listener, Future<EventInput> f) {
-    Collection<Future<EventInput>> futureList = futures.get(listener);
+    Collection<Future<EventInput>> futureList = eventListenerFutures.get(listener);
     if (futureList == null) {
-      futureList = new CopyOnWriteArrayList<Future<EventInput>>();
-      futures.put(listener, futureList);
+      futureList = new ArrayList<Future<EventInput>>();
+      eventListenerFutures.put(listener, futureList);
     }
-    futureList.add(f);
+    synchronized (futureList) {
+      futureList.add(f);
+    }
   }
 
   private void clearDoneFutures(RemoteTSAEventListener listener) {
-    Collection<Future<EventInput>> futureList = futures.get(listener);
+    Collection<Future<EventInput>> futureList = eventListenerFutures.get(listener);
     if (futureList != null) {
-      for (Future<EventInput> future : futureList) {
-        if (future.isDone() || future.isCancelled()) {
-          futureList.remove(future);
+      synchronized (futureList) {
+        Iterator<Future<EventInput>> it = futureList.iterator();
+        while (it.hasNext()) {
+          Future<EventInput> future = it.next();
+          if (future.isDone() || future.isCancelled()) {
+            it.remove();
+          }
+        }
+      }
+    }
+  }
+
+  private void clearAndCancelFutures(RemoteTSAEventListener listener) {
+    Collection<Future<EventInput>> futureList = eventListenerFutures.remove(listener);
+    if (futureList != null) {
+      synchronized (futureList) {
+        Iterator<Future<EventInput>> it = futureList.iterator();
+        while (it.hasNext()) {
+          Future<EventInput> future = it.next();
+          future.cancel(true);
+          it.remove();
         }
       }
     }
   }
 
   public void removeTsaEventListener(RemoteTSAEventListener listener) {
-    Collection<Future<EventInput>> fs = futures.remove(listener);
-    for (Future<EventInput> f : fs) {
-      f.cancel(true);
+    Collection<Future<EventInput>> futureList = eventListenerFutures.remove(listener);
+    if (futureList != null) {
+      synchronized (futureList) {
+        for (Future<EventInput> future : futureList) {
+          future.cancel(true);
+        }
+      }
     }
   }
 
@@ -368,30 +440,5 @@ public class RemoteManagementSource {
     }
   }
 
-  private static final class SubGenericType<T, S> extends GenericType<T> {
-    SubGenericType(final Class<T> type, final Class<S> subType) {
-      super(new ParameterizedType() {
-        @Override
-        public Type[] getActualTypeArguments() {
-          return new Type[] { subType };
-        }
-
-        @Override
-        public Type getRawType() {
-          return type;
-        }
-
-        @Override
-        public Type getOwnerType() {
-          return type;
-        }
-
-        @Override
-        public String toString() {
-          return "SubGenericType<" + type.getName() + ", " + subType.getName() + ">";
-        }
-      });
-    }
-  }
 
 }

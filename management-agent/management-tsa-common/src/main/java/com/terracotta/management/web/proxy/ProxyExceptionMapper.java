@@ -38,16 +38,21 @@ public class ProxyExceptionMapper implements ExceptionMapper<ProxyException> {
     String method = request.getMethod();
     URI uriToGo = UriBuilder.fromUri(activeL2Url).path(uri.getPath()).replaceQuery(uri.getQuery()).build();
 
+    // only add the "Accept-Encoding" header on the proxy request when the original request contains
+    // them, otherwise we're going to stream compressed data to a client which may not support that.
+    String acceptEncoding = request.getHeaders().getFirst("Accept-Encoding");
+    boolean compress = acceptEncoding.contains("gzip") || acceptEncoding.contains("deflate");
+
     if ("GET".equals(method)) {
-      return buildResponse(remoteManagementSource.resource(uriToGo).get());
+      return buildResponse(remoteManagementSource.resource(uriToGo, compress).get());
     } else if ("POST".equals(method)) {
       String e = ((ContainerRequest)request).readEntity(String.class);
-      return buildResponse(remoteManagementSource.resource(uriToGo).post(Entity.entity(e, request.getMediaType())));
+      return buildResponse(remoteManagementSource.resource(uriToGo, compress).post(Entity.entity(e, request.getMediaType())));
     } else if ("PUT".equals(method)) {
       String e = ((ContainerRequest)request).readEntity(String.class);
-      return buildResponse(remoteManagementSource.resource(uriToGo).put(Entity.entity(e, request.getMediaType())));
+      return buildResponse(remoteManagementSource.resource(uriToGo, compress).put(Entity.entity(e, request.getMediaType())));
     } else if ("DELETE".equals(method)) {
-      return buildResponse(remoteManagementSource.resource(uriToGo).delete());
+      return buildResponse(remoteManagementSource.resource(uriToGo, compress).delete());
     } else {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
           .type(MediaType.APPLICATION_JSON_TYPE)

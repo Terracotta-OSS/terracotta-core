@@ -760,7 +760,7 @@ public class ServerManagementService implements L1MBeansSource {
           .path("operatorEvents");
       uriBuilder = (read) ? uriBuilder.path("read") : uriBuilder.path("unread");
 
-      return (Boolean)remoteManagementSource.postToRemoteL2(sourceId, uriBuilder.build(), Collections.singleton(operatorEventEntity));
+      return remoteManagementSource.postToRemoteL2(sourceId, uriBuilder.build(), Collections.singleton(operatorEventEntity), Boolean.class);
     }
   }
 
