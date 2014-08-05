@@ -36,18 +36,13 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
   @Override
   public boolean isEmpty() {
-    if ((logicalEvents != null) && (!logicalEvents.isEmpty())) { return false; }
-    if (!metaData.isEmpty()) return false;
-
-    return true;
+    return logicalEvents.isEmpty() && metaData.isEmpty();
   }
 
   @Override
   public void writeTo(DNAWriter writer) {
     if (dnaCreated.attemptSet()) {
-      if (logicalEvents != null) {
-        writeEventsToDNA(logicalEvents, writer);
-      }
+      writeEventsToDNA(logicalEvents, writer);
 
       for (MetaDataDescriptorInternal md : metaData) {
         ((DNAWriterInternal) writer).addMetaData(md);
