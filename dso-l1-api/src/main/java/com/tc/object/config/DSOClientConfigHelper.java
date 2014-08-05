@@ -21,15 +21,9 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig {
 
   String rawConfigText();
 
-  boolean isLogical(String theClass);
-
-  TransparencyClassSpec[] getAllSpecs();
-
   Class getChangeApplicator(Class clazz);
 
   boolean addTunneledMBeanDomain(String tunneledMBeanDomain);
-
-  TransparencyClassSpec getOrCreateSpec(String className);
 
   TransparencyClassSpec getOrCreateSpec(String className, String applicator);
 
@@ -39,10 +33,6 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig {
 
   void setFaultCount(int count);
 
-  String getPreCreateMethodIfDefined(String className);
-
-  String getPostCreateMethodIfDefined(String className);
-
   boolean isUseNonDefaultConstructor(Class clazz);
 
   CommonL1Config getNewCommonL1Config();
@@ -51,16 +41,12 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig {
 
   void removeSpec(String className);
 
-  String getLogicalExtendingClassName(String className);
-
   public ReconnectConfig getL1ReconnectProperties(final PwProvider pwProvider) throws ConfigurationSetupException;
 
   public void validateGroupInfo(final PwProvider pwProvider) throws ConfigurationSetupException;
 
   public void validateClientServerCompatibility(final PwProvider pwProvider, SecurityInfo securityInfo)
       throws ConfigurationSetupException;
-
-  boolean useResolveLockWhenClearing(Class clazz);
 
   L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;
 

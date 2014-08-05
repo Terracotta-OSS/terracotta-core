@@ -10,6 +10,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.LogicalOperation;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.cluster.TerracottaNode;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
@@ -31,7 +32,8 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   private volatile String                                                      lockid;
   private final ExecutorService                                                notifierService;
 
-  public ToolkitNotifierImpl() {
+  public ToolkitNotifierImpl(PlatformService platformService) {
+    super(platformService);
     this.currentNodeIdStringForm = serStrategy.serializeToString(new TerracottaNode(platformService.getCurrentNode()));
     this.notifierService = platformService
         .lookupRegisteredObjectByName(ToolkitNotifierFactoryImpl.TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,

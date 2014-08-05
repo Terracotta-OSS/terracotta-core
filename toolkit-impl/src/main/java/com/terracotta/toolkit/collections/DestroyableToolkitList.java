@@ -8,6 +8,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
@@ -28,8 +29,8 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
-                                ToolkitListImpl<E> list, String name) {
-    super(factory);
+                                ToolkitListImpl<E> list, String name, PlatformService platformService) {
+    super(factory, platformService);
     this.lookup = lookup;
     this.list = list;
     this.name = name;

@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
+import com.tc.exception.InvalidSequenceIDException;
 import com.tc.l2.ha.TransactionBatchListener;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -26,7 +27,6 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.InvalidSequenceIDException;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 

@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperCollection;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
@@ -29,8 +30,8 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
-                               String name) {
-    super(factory);
+                               String name, PlatformService platformService) {
+    super(factory, platformService);
     this.lookup = lookup;
     this.map = map;
     this.name = name;

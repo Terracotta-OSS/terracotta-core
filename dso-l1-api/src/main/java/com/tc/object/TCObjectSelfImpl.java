@@ -3,12 +3,9 @@
  */
 package com.tc.object;
 
-import com.tc.object.LogicalOperation;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.field.TCField;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -21,9 +18,9 @@ import java.lang.ref.WeakReference;
 public class TCObjectSelfImpl implements TCObjectSelf {
 
   protected volatile transient ObjectID oid;
-  private volatile transient TCClass  tcClazz;
-  private volatile transient boolean  isNew;
-  private volatile transient long     version;
+  private volatile transient TCClass    tcClazz;
+  private volatile transient boolean    isNew;
+  private volatile transient long       version;
 
   // DO NOT ADD ANY CONSTRUCTORS AS THEY WILL BE SKIPPED WHILE MERGE
 
@@ -147,24 +144,7 @@ public class TCObjectSelfImpl implements TCObjectSelf {
 
   @Override
   public void setValue(String fieldName, Object obj) {
-    try {
-      final TransparentAccess ta = (TransparentAccess) getPeerObject();
-      if (ta == null) { throw new AssertionError(); }
-      final TCField field = getTCClass().getField(fieldName);
-      if (field == null) {
-        // logger.warn("Data for field:" + fieldName + " was recieved but that field does not exist in class:");
-        return;
-      }
-      if (obj instanceof ObjectID) {
-        // no references should ever be cleared, as no references itself
-        throw new AssertionError();
-      } else {
-        ta.__tc_setfield(field.getName(), obj);
-      }
-    } catch (final Exception e) {
-      // TODO: More elegant exception handling.
-      throw new com.tc.object.dna.api.DNAException(e);
-    }
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   // ====================================================
@@ -334,7 +314,7 @@ public class TCObjectSelfImpl implements TCObjectSelf {
 
   @Override
   public String getExtendingClassName() {
-    return getTCClass().getExtendingClassName();
+    return getClassName();
   }
 
   @Override
@@ -349,16 +329,16 @@ public class TCObjectSelfImpl implements TCObjectSelf {
 
   @Override
   public boolean isIndexed() {
-    return getTCClass().isIndexed();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public boolean isLogical() {
-    return getTCClass().isLogical();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public boolean isEnum() {
-    return getTCClass().isEnum();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 }

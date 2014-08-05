@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.platform.PlatformService;
 
 import java.io.IOException;
 
@@ -34,7 +35,7 @@ public class SerializedClusterObjectImplApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) {
+  public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna, PlatformService platformService) {
     throw new UnsupportedOperationException();
   }
 

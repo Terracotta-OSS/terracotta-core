@@ -82,11 +82,6 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   }
 
   @Override
-  public void stopProcessing() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();

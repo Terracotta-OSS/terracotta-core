@@ -5,14 +5,13 @@ package com.terracotta.toolkit.roots.impl;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.TCToolkitObject;
-import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 
 import java.util.HashMap;
@@ -26,8 +25,8 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
 
   private final PlatformService                 platformService;
 
-  public ToolkitTypeRootImpl() {
-    platformService = PlatformServiceProvider.getPlatformService();
+  public ToolkitTypeRootImpl(PlatformService platformService) {
+    this.platformService = platformService;
   }
 
   @Override

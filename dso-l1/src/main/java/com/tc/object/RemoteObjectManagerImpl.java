@@ -277,34 +277,27 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   public synchronized void preFetchObject(final ObjectID id) throws AbortedOperationException {
     waitUntilRunningAbortable();
     if (this.dnaCache.containsKey(id) || this.objectLookupStates.containsKey(id)) { return; }
-    final ObjectLookupState ols = new ObjectLookupState(getNextRequestID(), id, this.defaultDepth, ObjectID.NULL_ID);
+    final ObjectLookupState ols = new ObjectLookupState(getNextRequestID(), id, this.defaultDepth);
     ols.makePrefetchRequest();
     sendRequest(ols);
   }
 
   @Override
   public DNA retrieve(final ObjectID id) throws AbortedOperationException {
-    return basicRetrieve(id, this.defaultDepth, ObjectID.NULL_ID);
-  }
-
-  @Override
-  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext)
-      throws AbortedOperationException {
-    return basicRetrieve(id, this.defaultDepth, parentContext);
+    return basicRetrieve(id, this.defaultDepth);
   }
 
   @Override
   public DNA retrieve(final ObjectID id, final int depth) throws AbortedOperationException {
-    return basicRetrieve(id, depth, ObjectID.NULL_ID);
+    return basicRetrieve(id, depth);
   }
 
-  public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext)
+  public synchronized DNA basicRetrieve(final ObjectID id, final int depth)
       throws AbortedOperationException {
     boolean isInterrupted = false;
     if (id.getGroupID() != this.groupID.toInt()) { throw new AssertionError("Looking up in the wrong Remote Manager : "
                                                                             + this.groupID + " id : " + id
-                                                                            + " depth : " + depth + " parent : "
-                                                                            + parentContext); }
+                                                                            + " depth : " + depth); }
     boolean inMemory = true;
     long startTime = System.currentTimeMillis();
     long totalTime = 0;
@@ -315,7 +308,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         waitUntilRunningAbortable();
         ObjectLookupState ols = this.objectLookupStates.get(id);
         if (ols == null) {
-          ols = new ObjectLookupState(getNextRequestID(), id, depth, parentContext);
+          ols = new ObjectLookupState(getNextRequestID(), id, depth);
           ols.makeLookupRequest();
           sendRequest(ols);
         } else if (ols.isMissing()) {
@@ -330,8 +323,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         if (current - startTime >= RETRIEVE_WAIT_INTERVAL) {
           totalTime += current - startTime;
           startTime = current;
-          this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
-                           + " parent : " + parentContext);
+          this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth);
         }
         try {
           wait(RETRIEVE_WAIT_INTERVAL);
@@ -434,11 +426,6 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private Set<ObjectID> addRequestedObjectIDsTo(final ObjectLookupState ctxt, final Set<ObjectID> oids) {
     oids.add(ctxt.getLookupID());
-    final ObjectID parent = ctxt.getParentID();
-    if (!parent.isNull()) {
-      // XXX:: This is a hacky way to let the L2 know about the parent but works for now.
-      oids.add(parent);
-    }
     return oids;
   }
 
@@ -674,18 +661,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     private final long            timestamp;
     private final int             depth;
     private final ObjectID        lookupID;
-    private final ObjectID        parent;
 
-    ObjectLookupState(final ObjectRequestID requestID, final ObjectID id, final int depth, final ObjectID parent) {
+    ObjectLookupState(final ObjectRequestID requestID, final ObjectID id, final int depth) {
       this.lookupID = id;
-      this.parent = parent;
       this.timestamp = System.currentTimeMillis();
       this.requestID = requestID;
       this.depth = depth;
-    }
-
-    public ObjectID getParentID() {
-      return this.parent;
     }
 
     public ObjectID getLookupID() {
@@ -703,7 +684,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     @Override
     public String toString() {
       return getClass().getName() + "[" + new Date(this.timestamp) + ", requestID =" + this.requestID + ", lookupID ="
-             + this.lookupID + ", parent = " + this.parent + ", depth = " + this.depth + ", state = " + getState()
+             + this.lookupID + ", depth = " + this.depth + ", state = " + getState()
              + "]";
     }
   }

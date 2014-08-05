@@ -49,7 +49,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   private volatile ClientID                              currentClientID;
   private volatile DsoNodeInternal                       currentNode;
 
-  private final DsoClusterTopologyImpl                   topology             = new DsoClusterTopologyImpl();
+  private final DsoClusterTopologyImpl                   topology             = new DsoClusterTopologyImpl(this);
   private final CopyOnWriteArrayList<DsoClusterListener> listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
   private final Object                                   nodeJoinsClusterSync = new Object();
 

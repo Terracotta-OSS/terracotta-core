@@ -4,6 +4,8 @@
  */
 package com.tc.util;
 
+import com.tc.exception.InvalidSequenceIDException;
+
 import java.util.ArrayList;
 import java.util.Random;
 

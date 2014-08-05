@@ -3,18 +3,12 @@
  */
 package com.tc.object;
 
-import com.tc.object.ObjectID;
-import com.tc.object.TCObject;
-import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.field.TCField;
+import com.tc.platform.PlatformService;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  * Interface for peer to java.lang.Class. The Class of every object under management is represented by an instance of
@@ -36,27 +30,6 @@ public interface TCClass {
    * @return Peer class, never null
    */
   public Class getPeerClass();
-
-  /**
-   * If the class is an inner class, get the field referring to the parent "this object.
-   * 
-   * @return The field referring to the parent this
-   */
-  public Field getParentField();
-
-  /**
-   * If the class is an inner class, get the name of the field referring to the parent "this" object.
-   * 
-   * @return The field name referring to the parent this
-   */
-  public String getParentFieldName();
-
-  /**
-   * Get all portable fields in the class
-   * 
-   * @return Fields, never null
-   */
-  public TCField[] getPortableFields();
 
   /**
    * Traverse a graph of objects to find the portable ones
@@ -82,34 +55,9 @@ public interface TCClass {
   public String getName();
 
   /**
-   * @return If this is an array, the type of array elements
-   */
-  public Class getComponentType();
-
-  /**
-   * @return True if this is a logically instrumented class
-   */
-  public boolean isLogical();
-
-  /**
    * @return The client object manager for this client
    */
   public ClientObjectManager getObjectManager();
-
-  /**
-   * @return TCClass of the super class of the peer
-   */
-  public TCClass getSuperclass();
-
-  /**
-   * @return True if this is a non-static inner class and has a parent
-   */
-  public boolean isNonStaticInner();
-
-  /**
-   * @return True if this is an enum
-   */
-  public boolean isEnum();
 
   /**
    * @return True if should use a non-default constructor when creating new instances
@@ -124,20 +72,8 @@ public interface TCClass {
    * @throws IOException Reading DNA
    * @throws ClassNotFoundException Can't instantiate a class
    */
-  public Object getNewInstanceFromNonDefaultConstructor(DNA dna) throws IOException, ClassNotFoundException;
-
-  /**
-   * Get TCField for this class
-   * 
-   * @param name Field name
-   * @return TCField
-   */
-  public TCField getField(String name);
-
-  /**
-   * @return True if this is an array and indexed
-   */
-  public boolean isIndexed();
+  public Object getNewInstanceFromNonDefaultConstructor(DNA dna, PlatformService platformService) throws IOException,
+      ClassNotFoundException;
 
   /**
    * Reconstitute object from DNA
@@ -168,40 +104,4 @@ public interface TCClass {
    */
   public TCObject createTCObject(ObjectID id, Object peer, boolean isNew);
 
-  /**
-   * @return True if this class uses a proxy class
-   */
-  public boolean isProxyClass();
-
-  /**
-   * Returns special generated name for classes extending logical classes
-   * 
-   * @return Special generated logical extending class name or just the normal class name if not extending logical
-   */
-  public String getExtendingClassName();
-
-  /**
-   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
-   * 
-   * @param fieldOffset The index
-   * @return true if the field is portable and false otherwise
-   */
-  public boolean isPortableField(long fieldOffset);
-
-  /**
-   * Returns true if the resolve lock should be held while clearing references
-   */
-  public boolean useResolveLockWhileClearing();
-
-  /**
-   * List of method handles for the post create methods for this type. This list will include the post create methods
-   * for all superclasses and may be empty (but never null)
-   */
-  public List<Method> getPostCreateMethods();
-
-  /**
-   * List of method handles for the pre create methods for this type. This list will include the post create methods for
-   * all superclasses and may be empty (but never null)
-   */
-  public List<Method> getPreCreateMethods();
 }

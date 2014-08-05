@@ -1,23 +1,5 @@
 package com.tc.object;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
-import com.tc.abortable.AbortedOperationException;
-import com.tc.net.GroupID;
-import com.tc.object.bytecode.Manager;
-import com.tc.object.servermap.ExpirableMapEntry;
-import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
-import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
-import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.object.servermap.localcache.ServerMapLocalCache;
-
-import java.util.Map;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.fail;
@@ -30,32 +12,53 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.net.GroupID;
+import com.tc.object.servermap.ExpirableMapEntry;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.object.servermap.localcache.ServerMapLocalCache;
+import com.tc.platform.PlatformService;
+
+import java.util.Map;
+
 /**
  * @author tim
  */
 public class TCObjectServerMapImplTest {
-  private Manager manager;
   private ClientObjectManager clientObjectManager;
   private RemoteServerMapManager serverMapManager;
   private ObjectID objectID;
   private L1ServerMapLocalCacheManager globalLocalCacheManager;
+  private PlatformService              platformService;
   private ServerMapLocalCache serverMapLocalCache;
 
   @Before
   public void setUp() throws Exception {
-    manager = mock(Manager.class);
+    platformService = mock(PlatformService.class);
     clientObjectManager = mock(ClientObjectManager.class);
     serverMapManager = mock(RemoteServerMapManager.class);
     objectID = new ObjectID(1);
     globalLocalCacheManager = mock(L1ServerMapLocalCacheManager.class);
     serverMapLocalCache = mock(ServerMapLocalCache.class);
     when(globalLocalCacheManager.getOrCreateLocalCache(any(ObjectID.class), any(ClientObjectManager.class),
-        any(Manager.class), anyBoolean(), any(L1ServerMapLocalCacheStore.class), any(PinnedEntryFaultCallback.class))).thenReturn(serverMapLocalCache);
+                                                       any(PlatformService.class), anyBoolean(),
+                                                       any(L1ServerMapLocalCacheStore.class),
+                                                       any(PinnedEntryFaultCallback.class)))
+        .thenReturn(serverMapLocalCache);
   }
 
   @Test
   public void testGetAllVersioned() throws Exception {
-    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(manager, clientObjectManager,
+    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(platformService, clientObjectManager,
         serverMapManager, objectID, null, mock(TCClass.class), false, globalLocalCacheManager);
     when(clientObjectManager.lookup(objectID)).thenReturn(tcObjectServerMap);
     when(clientObjectManager.lookup(new ObjectID(2))).thenReturn(tcObjectServerMap);
@@ -88,7 +91,7 @@ public class TCObjectServerMapImplTest {
 
   @Test
   public void testCleanupReplaceOnTimeout() throws Exception {
-    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(manager, clientObjectManager,
+    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(platformService, clientObjectManager,
         serverMapManager, objectID, null, mock(TCClass.class), false, globalLocalCacheManager) {
       @Override
       public boolean logicalInvokeWithResult(final LogicalOperation method, final Object[] parameters) throws AbortedOperationException {
@@ -111,7 +114,7 @@ public class TCObjectServerMapImplTest {
 
   @Test
   public void testCleanupOnRemoveTimeout() throws Exception {
-    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(manager, clientObjectManager,
+    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(platformService, clientObjectManager,
         serverMapManager, objectID, null, mock(TCClass.class), false, globalLocalCacheManager) {
       @Override
       public boolean logicalInvokeWithResult(final LogicalOperation method, final Object[] parameters) throws AbortedOperationException {
@@ -131,7 +134,7 @@ public class TCObjectServerMapImplTest {
 
   @Test
   public void testCleanupOnPutIfAbsentTimeout() throws Exception {
-    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(manager, clientObjectManager,
+    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(platformService, clientObjectManager,
         serverMapManager, objectID, null, mock(TCClass.class), false, globalLocalCacheManager) {
       @Override
       public boolean logicalInvokeWithResult(final LogicalOperation method, final Object[] parameters) throws AbortedOperationException {

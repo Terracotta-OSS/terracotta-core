@@ -30,18 +30,8 @@ public class ReflectionUtil {
     // Disallow any object to be instantiated.
   }
 
-  public static Constructor newConstructor(Class clazz, Class logicalSuperClass) {
-    Constructor useConstructor = refConstructor;
-    if (logicalSuperClass != null) {
-      try {
-        useConstructor = logicalSuperClass.getDeclaredConstructor(new Class[0]);
-      } catch (SecurityException e) {
-        throw new TCRuntimeException(e);
-      } catch (NoSuchMethodException e) {
-        throw new TCRuntimeException(e);
-      }
-    }
-    return rf.newConstructorForSerialization(clazz, useConstructor);
+  public static Constructor newConstructor(Class clazz) {
+    return rf.newConstructorForSerialization(clazz, refConstructor);
   }
 
 }

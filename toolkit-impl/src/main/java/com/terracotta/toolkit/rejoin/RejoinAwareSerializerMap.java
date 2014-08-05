@@ -16,12 +16,12 @@ import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 public class RejoinAwareSerializerMap<K, V> implements SerializerMap<K, V>, RejoinLifecycleListener {
   private volatile SerializerMap<K, V> delegateMap;
-  private final PlatformService        plateformService;
+  private final PlatformService        platformService;
 
   public RejoinAwareSerializerMap(PlatformService plateformService) {
     super();
-    this.plateformService = plateformService;
-    this.delegateMap = lookUpORCreate();
+    this.platformService = plateformService;
+    this.delegateMap = lookupOrCreate();
   }
 
   @Override
@@ -46,19 +46,19 @@ public class RejoinAwareSerializerMap<K, V> implements SerializerMap<K, V>, Rejo
 
   @Override
   public void onRejoinComplete() {
-    SerializerMapImpl<K, V> afterRejoin = lookUpORCreate();
+    SerializerMapImpl<K, V> afterRejoin = lookupOrCreate();
     Preconditions.checkNotNull(afterRejoin);
     this.delegateMap = afterRejoin;
 
   }
 
-  private SerializerMapImpl lookUpORCreate() {
-    return RootsUtil.lookupOrCreateRootInGroup(plateformService, new GroupID(0),
+  private SerializerMapImpl lookupOrCreate() {
+    return RootsUtil.lookupOrCreateRootInGroup(platformService, new GroupID(0),
                                                ToolkitTypeConstants.SERIALIZER_MAP_ROOT_NAME,
                                                new RootObjectCreator<SerializerMapImpl>() {
                                                  @Override
                                                  public SerializerMapImpl create() {
-                                                   return new SerializerMapImpl();
+                                                   return new SerializerMapImpl(platformService);
                                                  }
                                                });
   }

@@ -9,7 +9,6 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.LocalCacheAddCallBack;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
-import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
@@ -24,9 +23,9 @@ import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionC
 import com.tc.object.servermap.localcache.impl.LocalStoreKeySet.LocalStoreKeySetFilter;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.UnlockedSharedObjectException;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -83,7 +82,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private volatile boolean                           localCacheEnabled;
   private final L1ServerMapLocalCacheStore           localStore;
   private final ClientObjectManager                  objectManager;
-  private final Manager                              manager;
   private final ServerMapLocalCacheRemoveCallback    removeCallback;
 
   private final ConcurrentMap<ObjectID, Object>      removedObjectIDs                 = new ConcurrentHashMap<ObjectID, Object>();
@@ -96,14 +94,16 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private final Set<PinnedEntryInvalidationListener> pinnedEntryInvalidationListeners = new CopyOnWriteArraySet<PinnedEntryInvalidationListener>();
 
+  private final PlatformService                      platformService;
+
   /**
    * Not public constructor, should be created only by the global local cache manager
    */
-  ServerMapLocalCacheImpl(ClientObjectManager objectManager, Manager manager,
+  ServerMapLocalCacheImpl(ClientObjectManager objectManager, PlatformService platformService,
                           L1ServerMapLocalCacheManager globalLocalCacheManager, boolean islocalCacheEnbaled,
                           ServerMapLocalCacheRemoveCallback removeCallback, L1ServerMapLocalCacheStore localStore) {
     this.objectManager = objectManager;
-    this.manager = manager;
+    this.platformService = platformService;
     this.l1LocalCacheManager = globalLocalCacheManager;
     this.localCacheEnabled = islocalCacheEnbaled;
     this.removeCallback = removeCallback;
@@ -180,8 +180,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       ClientTransaction txn = this.objectManager.getTransactionManager().getCurrentTransaction();
       if (txn == null) { throw new UnlockedSharedObjectException(
                                                                  "Attempt to access a shared object outside the scope of a shared lock.",
-                                                                 Thread.currentThread().getName(), manager
-                                                                     .getClientID().toLong()); }
+                                                                 Thread.currentThread().getName(), platformService
+                                                                     .getClientId()); }
       keyToListeners.put(key, listener);
       txn.addTransactionCompleteListener(listener);
     }
@@ -407,13 +407,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public void pinLockIfNecessary(AbstractLocalCacheStoreValue added) {
     if (PINNING_ENABLED && added.isStrongConsistentValue()) {
-      manager.pinLock(added.getLockId(), ((LocalCacheStoreStrongValue) added).getLockAwardID());
+      platformService.pinLock(added.getLockId(), ((LocalCacheStoreStrongValue) added).getLockAwardID());
     }
   }
 
   public void unpinLockIfNecessary(AbstractLocalCacheStoreValue removed) {
     if (PINNING_ENABLED && removed != null && removed.isStrongConsistentValue()) {
-      manager.unpinLock(removed.getLockId(), (((LocalCacheStoreStrongValue) removed).getLockAwardID()));
+      platformService.unpinLock(removed.getLockId(), (((LocalCacheStoreStrongValue) removed).getLockAwardID()));
     }
   }
 
@@ -482,7 +482,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (value.isValueNull()) { return true; }
     LocalCacheStoreStrongValue strongValue = (LocalCacheStoreStrongValue) value;
     LockID lockId = strongValue.getLockId();
-    boolean ret = manager.isLockAwardValid(lockId, strongValue.getLockAwardID());
+    boolean ret = platformService.isLockAwardValid(lockId, strongValue.getLockAwardID());
     return ret;
   }
 

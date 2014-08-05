@@ -7,8 +7,8 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -17,6 +17,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.platform.PlatformService;
 
 import java.io.IOException;
 import java.util.Map;
@@ -82,8 +83,8 @@ public class SerializerMapImplApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
-    throw new UnsupportedOperationException();
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna, PlatformService platformService) {
+    return new SerializerMapImpl(platformService);
   }
 
 }

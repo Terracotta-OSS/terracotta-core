@@ -97,12 +97,13 @@ public interface PlatformService {
 
   SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, int resultPageSize, boolean waitForTxn, SearchRequestID queryId)
-      throws AbortedOperationException;
+                                  int maxResults, int batchSize, int resultPageSize, boolean waitForTxn,
+                                  SearchRequestID queryId) throws AbortedOperationException;
 
   SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, boolean waitForTxn, SearchRequestID queryId) throws AbortedOperationException;
+                                  int maxResults, int batchSize, boolean waitForTxn, SearchRequestID queryId)
+      throws AbortedOperationException;
 
   void preFetchObject(final ObjectID id) throws AbortedOperationException;
 
@@ -113,8 +114,6 @@ public interface PlatformService {
   void addRejoinLifecycleListener(RejoinLifecycleListener listener);
 
   void removeRejoinLifecycleListener(RejoinLifecycleListener listener);
-
-  boolean isRejoinEnabled();
 
   void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
 
@@ -151,4 +150,16 @@ public interface PlatformService {
   void unregisterManagementService(Object serviceID);
 
   void sendEvent(TCManagementEvent event);
+
+  LockID generateLockIdentifier(Object obj);
+
+  long getLockAwardIDFor(LockID lock);
+
+  boolean isLockAwardValid(LockID lock, long awardID);
+
+  void pinLock(LockID lock, long awardID);
+
+  void unpinLock(LockID lock, long awardID);
+
+  TCObject lookupExistingOrNull(Object obj);
 }

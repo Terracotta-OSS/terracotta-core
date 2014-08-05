@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.ToolkitListImpl;
 import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
@@ -21,11 +22,9 @@ import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 public class ToolkitListFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<DestroyableToolkitList, ToolkitListImpl> {
 
-  private static final ListIsolatedTypeFactory FACTORY = new ListIsolatedTypeFactory();
-
   public ToolkitListFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
     super(toolkit, context.getToolkitTypeRootsFactory()
-        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_LIST_ROOT_NAME, FACTORY,
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_LIST_ROOT_NAME, new ListIsolatedTypeFactory(context.getPlatformService()),
                                          context.getPlatformService()));
   }
 
@@ -36,17 +35,23 @@ public class ToolkitListFactoryImpl extends
 
   private static class ListIsolatedTypeFactory implements
       IsolatedToolkitTypeFactory<DestroyableToolkitList, ToolkitListImpl> {
+    private final PlatformService platformService;
+
+    ListIsolatedTypeFactory(PlatformService platformService) {
+      this.platformService = platformService;
+    }
+
     @Override
     public DestroyableToolkitList createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitList> factory,
                                                             IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                                             String name, Configuration config,
                                                             ToolkitListImpl tcClusteredObject) {
-      return new DestroyableToolkitList(factory, lookup, tcClusteredObject, name);
+      return new DestroyableToolkitList(factory, lookup, tcClusteredObject, name, platformService);
     }
 
     @Override
     public ToolkitListImpl createTCClusteredObject(Configuration config) {
-      return new ToolkitListImpl();
+      return new ToolkitListImpl(platformService);
     }
   }
 

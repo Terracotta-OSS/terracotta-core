@@ -1,13 +1,13 @@
 package com.terracotta.toolkit.mockl2.test;
+
 /*
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 
-
 import com.tc.exception.ImplementMe;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
@@ -32,13 +32,9 @@ public class MockTCObject implements TCObject {
   private Exception      hydrateException = null;
 
   public MockTCObject(final ObjectID id, final Object obj) {
-    this(id, obj, false, false);
-  }
-
-  public MockTCObject(final ObjectID id, final Object obj, final boolean isIndexed, final boolean isLogical) {
     this.peer = obj;
     this.id = id;
-    this.tcClazz = new MockTCClass(isIndexed, isLogical);
+    this.tcClazz = new MockTCClass();
   }
 
   public List getHistory() {
@@ -133,7 +129,7 @@ public class MockTCObject implements TCObject {
 
   public static class MethodCall {
     public LogicalOperation method;
-    public Object[] parameters;
+    public Object[]         parameters;
 
     public MethodCall(final LogicalOperation method, final Object[] parameters) {
       this.method = method;
@@ -297,7 +293,7 @@ public class MockTCObject implements TCObject {
 
   @Override
   public String getExtendingClassName() {
-    return tcClazz.getExtendingClassName();
+    throw new ImplementMe();
   }
 
   @Override
@@ -312,16 +308,16 @@ public class MockTCObject implements TCObject {
 
   @Override
   public boolean isIndexed() {
-    return tcClazz.isIndexed();
+    throw new AssertionError();
   }
 
   @Override
   public boolean isLogical() {
-    return tcClazz.isLogical();
+    throw new AssertionError();
   }
 
   @Override
   public boolean isEnum() {
-    return tcClazz.isEnum();
+    throw new AssertionError();
   }
 }

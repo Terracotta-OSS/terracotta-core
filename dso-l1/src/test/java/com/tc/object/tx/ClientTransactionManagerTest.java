@@ -12,9 +12,9 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
+import com.tc.object.LogicalOperation;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
-import com.tc.object.LogicalOperation;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -61,55 +61,6 @@ public class ClientTransactionManagerTest extends TestCase {
   @Override
   public void tearDown() throws Exception {
     if (error.get() != null) { throw new RuntimeException(error.get()); }
-  }
-
-  public void testCheckWriteAccess() throws Exception {
-    // Test that we get an exception when we have no TXN started
-    try {
-      clientTxnMgr.checkWriteAccess(new Object());
-      fail();
-    } catch (UnlockedSharedObjectException usoe) {
-      // expected
-    }
-
-    // Test that we get an exception when checking while only holding a read lock
-    clientTxnMgr.begin(new StringLockID("lock"), LockLevel.READ, false);
-    try {
-      clientTxnMgr.checkWriteAccess(new Object());
-      fail();
-    } catch (UnlockedSharedObjectException roe) {
-      // expected
-    }
-    clientTxnMgr.commit(new StringLockID("lock"), LockLevel.READ, false, null);
-
-    clientTxnMgr.begin(new StringLockID("test"), LockLevel.WRITE, false);
-    clientTxnMgr.checkWriteAccess(new Object());
-    clientTxnMgr.commit(new StringLockID("test"), LockLevel.WRITE, false, null);
-
-    clientTxnMgr.begin(new StringLockID("test"), LockLevel.SYNCHRONOUS_WRITE, false);
-    clientTxnMgr.checkWriteAccess(new Object());
-    clientTxnMgr.commit(new StringLockID("test"), LockLevel.SYNCHRONOUS_WRITE, false, null);
-
-    clientTxnMgr.begin(new StringLockID("test"), LockLevel.CONCURRENT, false);
-    clientTxnMgr.checkWriteAccess(new Object());
-    clientTxnMgr.commit(new StringLockID("test"), LockLevel.CONCURRENT, false, null);
-  }
-
-  public void testDoIllegalReadChange() throws Exception {
-    clientTxnMgr.begin(new StringLockID("lock"), LockLevel.READ, false);
-
-    try {
-      clientTxnMgr.fieldChanged(new MockTCObject(new ObjectID(1), new Object()), null, null, null, -1);
-      assertFalse(true);
-    } catch (UnlockedSharedObjectException e) {
-      // expected
-
-      // System.out.println("THIS IS A GOOD THING");
-      // e.printStackTrace();
-      // System.out.println("THIS IS A GOOD THING");
-    }
-
-    clientTxnMgr.commit(new StringLockID("lock"), LockLevel.READ, false, null);
   }
 
   public void testInvalidAtomicSequence() throws Exception {
@@ -180,7 +131,7 @@ public class ClientTransactionManagerTest extends TestCase {
   }
 
   public void doSomeChange() {
-    clientTxnMgr.logicalInvoke(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD, new Object[0]);
+    clientTxnMgr.logicalInvoke(new MockTCObject(new ObjectID(1), new Object()), LogicalOperation.ADD, new Object[0]);
   }
 
   public void testAtomicTxn() throws Exception {
@@ -257,7 +208,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
   public void testLogicalInvokeResultWithoutTransaction() throws AbortedOperationException {
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object()), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (UnlockedSharedObjectException e) {
@@ -268,7 +219,7 @@ public class ClientTransactionManagerTest extends TestCase {
   public void testLogicalInvokeWithResultNotSupportedForAtomicTransaction() throws AbortedOperationException {
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, true);
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object()), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (UnsupportedOperationException e) {
@@ -292,7 +243,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object()), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (AbortedOperationException e) {
@@ -321,7 +272,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     try {
-      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), LogicalOperation.ADD,
+      clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object()), LogicalOperation.ADD,
                                            new Object[0]);
       Assert.fail();
     } catch (PlatformRejoinException e) {
@@ -348,7 +299,7 @@ public class ClientTransactionManagerTest extends TestCase {
     thread.start();
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     Assert
-        .assertTrue(clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true),
+.assertTrue(clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object()),
                                                          LogicalOperation.ADD, new Object[0]));
 
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
@@ -371,7 +322,7 @@ public class ClientTransactionManagerTest extends TestCase {
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
 
     Assert
-        .assertFalse(clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true),
+.assertFalse(clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object()),
                                                           LogicalOperation.ADD, new Object[0]));
 
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());

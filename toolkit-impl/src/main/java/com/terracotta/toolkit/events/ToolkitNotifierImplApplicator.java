@@ -15,6 +15,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.platform.PlatformService;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,8 +62,8 @@ public class ToolkitNotifierImplApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
-    throw new UnsupportedOperationException();
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna, PlatformService platformService) {
+    return new ToolkitNotifierImpl(platformService);
   }
 
 }

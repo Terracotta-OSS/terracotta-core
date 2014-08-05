@@ -1,16 +1,16 @@
 package com.terracotta.toolkit;
 
-import org.junit.Test;
-import org.terracotta.toolkit.internal.ToolkitInternal;
-
-import com.tc.platform.PlatformService;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.junit.Test;
+import org.terracotta.toolkit.internal.ToolkitInternal;
+
+import com.tc.abortable.AbortableOperationManager;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 public class NonStopToolkitImplTest {
 
@@ -20,7 +20,8 @@ public class NonStopToolkitImplTest {
     FutureTask<ToolkitInternal> toolkitDelegateFutureTask = mock(FutureTask.class);
     when(toolkitDelegateFutureTask.get()).thenThrow(new ExecutionException("oops", new RuntimeException()));
 
-    NonStopToolkitImpl nonStopToolkit = new NonStopToolkitImpl(toolkitDelegateFutureTask, mock(PlatformService.class));
+    NonStopToolkitImpl nonStopToolkit = new NonStopToolkitImpl(toolkitDelegateFutureTask,
+                                                               mock(AbortableOperationManager.class), "uuid");
     nonStopToolkit.shutdown();
   }
 
@@ -31,7 +32,8 @@ public class NonStopToolkitImplTest {
     ToolkitInternal toolkitInternal = mock(ToolkitInternal.class);
     when(toolkitDelegateFutureTask.get()).thenReturn(toolkitInternal);
 
-    NonStopToolkitImpl nonStopToolkit = new NonStopToolkitImpl(toolkitDelegateFutureTask, mock(PlatformService.class));
+    NonStopToolkitImpl nonStopToolkit = new NonStopToolkitImpl(toolkitDelegateFutureTask,
+                                                               mock(AbortableOperationManager.class), "uuid");
     nonStopToolkit.shutdown();
 
     verify(toolkitInternal).shutdown();

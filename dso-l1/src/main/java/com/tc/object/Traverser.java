@@ -21,6 +21,7 @@ import java.util.Map;
  */
 public class Traverser {
   private static final TraverseTest    NULL_TEST = new NullTraverseTest();
+
   private final PortableObjectProvider portableObjectProvider;
 
   public Traverser(PortableObjectProvider portableObjectProvider) {
@@ -30,7 +31,7 @@ public class Traverser {
   private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest) {
     Class clazz = start.getClass();
 
-    while (clazz != null) {
+    while (clazz != null && clazz != Object.class) {
       TraversedReferences portableObjects = new TraversedReferencesImpl();
       portableObjects = portableObjectProvider.getPortableObjects(clazz, start, portableObjects);
 

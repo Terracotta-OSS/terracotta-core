@@ -5,6 +5,8 @@ package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.collections.ToolkitSortedSet;
 
+import com.tc.platform.PlatformService;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -16,8 +18,8 @@ public class ToolkitSortedSetImpl<E extends Comparable<? super E>> extends Toolk
     ToolkitSortedSet<E> {
   private final DestroyableToolkitSortedMap<E, Integer> sortedMap;
 
-  public ToolkitSortedSetImpl(DestroyableToolkitSortedMap<E, Integer> sortedMap) {
-    super(sortedMap);
+  public ToolkitSortedSetImpl(DestroyableToolkitSortedMap<E, Integer> sortedMap, PlatformService platformService) {
+    super(sortedMap, platformService);
     this.sortedMap = sortedMap;
 
   }

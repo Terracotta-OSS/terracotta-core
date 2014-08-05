@@ -35,11 +35,10 @@ public class ToolkitNotifierFactoryImpl extends
                                                                                          .getLogger(ToolkitNotifierFactoryImpl.class);
   public static final String                       TOOLKIT_NOTIFIER_EXECUTOR_SERVICE = "toolkitNotifierExecutorService";
 
-  private static final NotifierIsolatedTypeFactory FACTORY                           = new NotifierIsolatedTypeFactory();
-
   public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
     super(toolkit, context.getToolkitTypeRootsFactory()
-        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME, FACTORY,
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME,
+                                         new NotifierIsolatedTypeFactory(context.getPlatformService()),
                                          context.getPlatformService()));
 
     final ExecutorService notifierService = createExecutorService(context.getPlatformService());
@@ -90,17 +89,23 @@ public class ToolkitNotifierFactoryImpl extends
   private static class NotifierIsolatedTypeFactory implements
       IsolatedToolkitTypeFactory<DestroyableToolkitNotifier, ToolkitNotifierImpl> {
 
+    private final PlatformService plaformService;
+
+    NotifierIsolatedTypeFactory(PlatformService plaformService) {
+      this.plaformService = plaformService;
+    }
+
     @Override
     public DestroyableToolkitNotifier createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitNotifier> factory,
                                                                 IsolatedClusteredObjectLookup<ToolkitNotifierImpl> lookup,
                                                                 String name, Configuration config,
                                                                 ToolkitNotifierImpl tcClusteredObject) {
-      return new DestroyableToolkitNotifier(factory, lookup, tcClusteredObject, name);
+      return new DestroyableToolkitNotifier(factory, lookup, tcClusteredObject, name, plaformService);
     }
 
     @Override
     public ToolkitNotifierImpl createTCClusteredObject(Configuration config) {
-      return new ToolkitNotifierImpl();
+      return new ToolkitNotifierImpl(plaformService);
     }
 
   }

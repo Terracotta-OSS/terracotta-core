@@ -18,13 +18,11 @@ import com.tc.net.core.SecurityInfo;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
-import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.ServerURL;
@@ -37,57 +35,35 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper {
 
-  private static final TCLogger             logger                      = CustomerLogging.getDSOGenericLogger();
-  private final L1ConfigurationSetupManager configSetupManager;
+  private static final TCLogger                    logger                      = CustomerLogging.getDSOGenericLogger();
+  private final L1ConfigurationSetupManager        configSetupManager;
 
-  // ====================================================================================================================
-  /**
-   * The lock for both {@link #userDefinedBootSpecs} and {@link #classSpecs} Maps
-   */
-  private final Object                      specLock                    = new Object();
+  private final Map<String, TransparencyClassSpec> classSpecs                  = new ConcurrentHashMap<String, TransparencyClassSpec>();
 
-  /**
-   * A map of class names to TransparencyClassSpec for individual classes
-   * 
-   * @GuardedBy {@link #specLock}
-   */
-  private final Map                         classSpecs                  = new HashMap();
-  // ====================================================================================================================
-
-  private final Portability                 portability;
-  private int                               faultCount                  = -1;
-  private final Set<String>                 tunneledMBeanDomains        = Collections
-                                                                            .synchronizedSet(new HashSet<String>());
-  private ReconnectConfig                   l1ReconnectConfig           = null;
-  private static final long                 CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
-                                                                            .getProperties()
-                                                                            .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
+  private final Portability                        portability;
+  private int                                      faultCount                  = -1;
+  private final Set<String>                        tunneledMBeanDomains        = Collections
+                                                                                   .synchronizedSet(new HashSet<String>());
+  private ReconnectConfig                          l1ReconnectConfig           = null;
+  private static final long                        CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
+                                                                                   .getProperties()
+                                                                                   .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
-                                           final L1ConfigurationSetupManager configSetupManager)
-      throws ConfigurationSetupException {
+                                           final L1ConfigurationSetupManager configSetupManager) {
     this(configSetupManager);
   }
 
-  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
-      throws ConfigurationSetupException {
+  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager) {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
-
-    try {
-      doPreInstrumentedAutoconfig();
-      doAutoconfig();
-    } catch (Exception e) {
-      throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
-    }
   }
 
   @Override
@@ -105,30 +81,9 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return configSetupManager.commonL1Config();
   }
 
-  private void doPreInstrumentedAutoconfig() {
-    getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
-    markAllSpecsPreInstrumented();
-  }
-
-  private void doAutoconfig() throws Exception {
-    getOrCreateSpec("java.lang.Object");
-  }
-
   @Override
   public SecurityInfo getSecurityInfo() {
     return configSetupManager.getSecurityInfo();
-  }
-
-  private void markAllSpecsPreInstrumented() {
-    // Technically, synchronization isn't needed here if this method is only called
-    // during construction, in a 1.5 JVM, and if specLock is final, because the JMM guarantees
-    // initialization safety w/o synchronization under those conditions
-    synchronized (specLock) {
-      for (Iterator i = classSpecs.values().iterator(); i.hasNext();) {
-        TransparencyClassSpec s = (TransparencyClassSpec) i.next();
-        s.markPreInstrumented();
-      }
-    }
   }
 
   @Override
@@ -142,66 +97,17 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   @Override
-  public String getPreCreateMethodIfDefined(final String className) {
-    TransparencyClassSpec spec = getSpec(className);
-    if (spec != null) {
-      return spec.getPreCreateMethod();
-    } else {
-      return null;
-    }
-  }
+  public TransparencyClassSpec getOrCreateSpec(final String className, final String applicator) {
+    if (applicator == null) throw new NullPointerException();
 
-  @Override
-  public String getPostCreateMethodIfDefined(final String className) {
-    TransparencyClassSpec spec = getSpec(className);
-    if (spec != null) {
-      return spec.getPostCreateMethod();
-    } else {
-      return null;
-    }
-  }
-
-  private TransparencyClassSpec basicGetOrCreateSpec(final String className, final String applicator,
-                                                     final boolean rememberSpec) {
-    synchronized (specLock) {
+    synchronized (classSpecs) {
       TransparencyClassSpec spec = getSpec(className);
       if (spec == null) {
-        if (applicator != null) {
-          spec = new TransparencyClassSpecImpl(className, this, applicator);
-        } else {
-          spec = new TransparencyClassSpecImpl(className, this);
-        }
-        if (rememberSpec) {
-          addSpec(spec);
-        }
+        spec = new TransparencyClassSpecImpl(className, applicator);
+        classSpecs.put(spec.getClassName(), spec);
       }
       return spec;
     }
-  }
-
-  @Override
-  public TransparencyClassSpec getOrCreateSpec(final String className) {
-    return basicGetOrCreateSpec(className, null, true);
-  }
-
-  @Override
-  public TransparencyClassSpec getOrCreateSpec(final String className, final String applicator) {
-    if (applicator == null) throw new AssertionError();
-    return basicGetOrCreateSpec(className, applicator, true);
-  }
-
-  private void addSpec(final TransparencyClassSpec spec) {
-    synchronized (specLock) {
-      Assert.eval(!classSpecs.containsKey(spec.getClassName()));
-      Assert.assertNotNull(spec);
-      classSpecs.put(spec.getClassName(), spec);
-    }
-  }
-
-  @Override
-  public boolean isLogical(final String className) {
-    TransparencyClassSpec spec = getSpec(className);
-    return spec != null && spec.isLogical();
   }
 
   @Override
@@ -244,30 +150,14 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
 
   @Override
   public TransparencyClassSpec getSpec(String className) {
-    synchronized (specLock) {
-      // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
-      className = className.replace('/', '.');
-      return (TransparencyClassSpec) classSpecs.get(className);
-    }
-  }
-
-  @Override
-  public TransparencyClassSpec[] getAllSpecs() {
-    synchronized (specLock) {
-      return (TransparencyClassSpec[]) classSpecs.values().toArray(new TransparencyClassSpec[classSpecs.size()]);
-    }
+    // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
+    className = className.replace('/', '.');
+    return classSpecs.get(className);
   }
 
   @Override
   public String toString() {
     return "<StandardDSOClientConfigHelperImpl: " + configSetupManager + ">";
-  }
-
-  @Override
-  public String getLogicalExtendingClassName(final String className) {
-    TransparencyClassSpec spec = getSpec(className);
-    if (spec == null || !spec.isLogical()) { return null; }
-    return spec.getLogicalExtendingClassName();
   }
 
   @Override
@@ -498,13 +388,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       setupL1ReconnectProperties(securityManager);
     }
     return l1ReconnectConfig;
-  }
-
-  @Override
-  public boolean useResolveLockWhenClearing(final Class clazz) {
-    // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
-    // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
-    return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
   }
 
   @Override

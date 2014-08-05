@@ -28,10 +28,12 @@ public class ToolkitAtomicLongFactoryImpl implements ToolkitObjectFactory<Toolki
   private final WeakValueMap<ToolkitAtomicLongImpl> localCache;
   private final Lock                                lock;
   private volatile Set<String>                      beforeRejoinSet = Collections.EMPTY_SET;
+  private final PlatformService                     platformService;
 
   public ToolkitAtomicLongFactoryImpl(ToolkitStore atomicLongs, WeakValueMapManager manager,
                                       PlatformService platformService) {
     this.atomicLongs = atomicLongs;
+    this.platformService = platformService;
     this.longIdGenerator = new ToolkitIDGeneratorImpl(ToolkitTypeConstants.TOOLKIT_LONG_UID_NAME, atomicLongs);
     this.localCache = manager.createWeakValueMap();
     this.lock = new ReentrantLock();
@@ -81,7 +83,7 @@ public class ToolkitAtomicLongFactoryImpl implements ToolkitObjectFactory<Toolki
   }
 
   private ToolkitAtomicLong createToolkitType(String name) {
-    ToolkitAtomicLongImpl atomicLong = new ToolkitAtomicLongImpl(name, atomicLongs, longIdGenerator);
+    ToolkitAtomicLongImpl atomicLong = new ToolkitAtomicLongImpl(name, atomicLongs, longIdGenerator, platformService);
     localCache.put(name, atomicLong);
     return atomicLong;
   }

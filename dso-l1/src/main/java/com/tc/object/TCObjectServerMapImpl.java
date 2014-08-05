@@ -13,7 +13,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.locks.LockID;
@@ -30,6 +29,7 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionID;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerEventType;
@@ -77,7 +77,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private final GroupID                       groupID;
   private final ClientObjectManager           objectManager;
   private final RemoteServerMapManager        serverMapManager;
-  private final Manager                       manager;
   private volatile ServerMapLocalCache        cache;
   private volatile boolean                    isEventual;
   private volatile boolean                    localCacheEnabled;
@@ -88,16 +87,18 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private volatile PinnedEntryFaultCallback   callback;
   private volatile boolean                    createdOnServer;
 
-  public TCObjectServerMapImpl(final Manager manager, final ClientObjectManager objectManager,
+  private final PlatformService               platformService;
+
+  public TCObjectServerMapImpl(final PlatformService platformService, final ClientObjectManager objectManager,
                                final RemoteServerMapManager serverMapManager, final ObjectID id, final Object peer,
                                final TCClass tcc, final boolean isNew,
                                final L1ServerMapLocalCacheManager globalLocalCacheManager) {
     super(id, peer, tcc, isNew);
+    this.platformService = platformService;
     this.tcObjectSelfStore = globalLocalCacheManager;
     this.groupID = new GroupID(id.getGroupID());
     this.objectManager = objectManager;
     this.serverMapManager = serverMapManager;
-    this.manager = manager;
     this.globalLocalCacheManager = globalLocalCacheManager;
     if (serverMapLocalStore != null) {
       setupLocalCache(serverMapLocalStore, callback);
@@ -108,7 +109,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       localLocks[i] = new ReentrantLock();
     }
     if (isNew) {
-      manager.addTransactionCompleteListener(new TransactionCompleteListener() {
+      platformService.addTransactionCompleteListener(new TransactionCompleteListener() {
 
         @Override
         public void transactionComplete(TransactionID txnID) {
@@ -150,7 +151,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     lock.lock();
     try {
       ObjectID valueObjectID = invokeLogicalPut(key, value);
-      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, valueObjectID,
+      addStrongValueToCache(this.platformService.generateLockIdentifier(lockID), key, value, valueObjectID,
                             MapOperationType.PUT);
     } finally {
       lock.unlock();
@@ -173,7 +174,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     lock.lock();
     try {
       final ObjectID valueObjectID = invokeLogicalPutVersioned(key, value, version);
-      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, valueObjectID,
+      addStrongValueToCache(this.platformService.generateLockIdentifier(lockID), key, value, valueObjectID,
           MapOperationType.PUT);
     } finally {
       lock.unlock();
@@ -404,7 +405,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   private void updateCacheOnRemove(final L lockID, final Object key) {
-    final LockID id = this.manager.generateLockIdentifier(lockID);
+    final LockID id = this.platformService.generateLockIdentifier(lockID);
     addStrongValueToCache(id, key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
   }
 
@@ -500,7 +501,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       Object value = getValueForKeyFromServer(map, key, false, false);
 
       if (value != null) {
-        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
+        addStrongValueToCache(this.platformService.generateLockIdentifier(lockID), key, value,
                               objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
       return value;
@@ -610,7 +611,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void addStrongValueToCache(LockID lockId, Object key, Object value, ObjectID valueObjectID,
                                     MapOperationType mapOperation) {
     final LocalCacheStoreStrongValue localCacheValue = new LocalCacheStoreStrongValue(lockId, value, valueObjectID,
-                                                                                      manager.getLockAwardIDFor(lockId));
+                                                                                      platformService
+                                                                                          .getLockAwardIDFor(lockId));
     addToCache(key, localCacheValue, valueObjectID, mapOperation);
   }
 
@@ -1057,7 +1059,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore, PinnedEntryFaultCallback callback) {
-    this.cache = globalLocalCacheManager.getOrCreateLocalCache(getObjectID(), objectManager, manager,
+    this.cache = globalLocalCacheManager.getOrCreateLocalCache(getObjectID(), objectManager, platformService,
                                                                localCacheEnabled, serverMapLocalStore, callback);
   }
 

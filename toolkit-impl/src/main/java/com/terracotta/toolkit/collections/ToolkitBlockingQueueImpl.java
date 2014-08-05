@@ -6,6 +6,7 @@ package com.terracotta.toolkit.collections;
 import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
+import com.tc.platform.PlatformService;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -24,8 +25,9 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
   private final ToolkitReadWriteLock lock;
   private final Condition            condition;
 
-  public ToolkitBlockingQueueImpl(ToolkitObjectFactory factory, DestroyableToolkitList<E> backingList, int capacity) {
-    super(factory);
+  public ToolkitBlockingQueueImpl(ToolkitObjectFactory factory, DestroyableToolkitList<E> backingList, int capacity,
+                                  PlatformService platformService) {
+    super(factory, platformService);
     this.backingList = backingList;
     this.capacity = capacity;
     this.lock = backingList.getReadWriteLock();

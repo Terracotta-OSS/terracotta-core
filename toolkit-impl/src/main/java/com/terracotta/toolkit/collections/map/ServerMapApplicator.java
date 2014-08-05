@@ -22,6 +22,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.locks.LockLevel;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.object.DestroyApplicator;
@@ -62,7 +63,7 @@ public class ServerMapApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) {
+  public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna, PlatformService platformService) {
     try {
       final DNACursor cursor = dna.getCursor();
 
@@ -117,7 +118,7 @@ public class ServerMapApplicator extends BaseApplicator {
         }
       }
       config.setString(ToolkitConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());
-      return new ServerMap(config, name);
+      return new ServerMap(config, name, platformService);
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }

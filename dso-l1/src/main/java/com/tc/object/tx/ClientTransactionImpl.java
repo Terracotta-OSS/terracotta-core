@@ -4,8 +4,8 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
@@ -69,24 +69,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   @Override
   public Map getChangeBuffers() {
     return this.objectChanges;
-  }
-
-  @Override
-  protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
-    getOrCreateChangeBuffer(source).literalValueChanged(newValue);
-    // To prevent it gcing on us.
-    addReferenced(oldValue);
-    addReferenced(newValue);
-  }
-
-  @Override
-  protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
-    getOrCreateChangeBuffer(source).fieldChanged(classname, fieldname, newValue, index);
-  }
-
-  @Override
-  protected void basicArrayChanged(TCObject source, int startPos, Object array, int length) {
-    getOrCreateChangeBuffer(source).arrayChanged(startPos, array, length);
   }
 
   @Override

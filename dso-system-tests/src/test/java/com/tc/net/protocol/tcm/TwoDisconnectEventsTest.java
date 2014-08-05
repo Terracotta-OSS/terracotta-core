@@ -25,8 +25,7 @@ import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.bytecode.NullManager;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
+import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
@@ -116,7 +115,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
 
       } finally {
         client.getCommunicationsManager().shutdown();
-        client.stopForTests();
+        client.shutdown();
       }
     } finally {
       server.stop();
@@ -172,7 +171,6 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
-                                                                 NullManager.getInstance(),
                                                                  new DsoClusterImpl(mock),
                                                                  new NullAbortableOperationManager(),
                                                                  mock);

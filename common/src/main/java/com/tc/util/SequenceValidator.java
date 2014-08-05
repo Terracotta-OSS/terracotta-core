@@ -3,6 +3,7 @@
  */
 package com.tc.util;
 
+import com.tc.exception.InvalidSequenceIDException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 

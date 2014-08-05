@@ -4,18 +4,15 @@
  */
 package com.tc.object;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.applicator.BaseApplicator;
 import com.tc.object.applicator.ChangeApplicator;
-import com.tc.object.bytecode.Manager;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
+import com.tc.platform.PlatformService;
 
 import java.lang.reflect.Constructor;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,25 +24,26 @@ public class TCClassFactoryImpl implements TCClassFactory {
       TCLogger.class                                                        };
 
   protected final ConcurrentMap<Class<?>, TCClass> classes                   = new ConcurrentHashMap<Class<?>, TCClass>();
-  protected final TCFieldFactory                   fieldFactory;
   protected final DSOClientConfigHelper            config;
   protected final ClassProvider                    classProvider;
   protected final DNAEncoding                      encoding;
   private final L1ServerMapLocalCacheManager       globalLocalCacheManager;
   private final RemoteServerMapManager             remoteServerMapManager;
-  private final Manager                            manager;
+  private volatile PlatformService                 platformService;
 
-  public TCClassFactoryImpl(final TCFieldFactory fieldFactory, final DSOClientConfigHelper config,
-                            final ClassProvider classProvider, final DNAEncoding dnaEncoding, Manager manager,
-                            final L1ServerMapLocalCacheManager globalLocalCacheManager,
+  public TCClassFactoryImpl(final DSOClientConfigHelper config, final ClassProvider classProvider,
+                            final DNAEncoding dnaEncoding, final L1ServerMapLocalCacheManager globalLocalCacheManager,
                             final RemoteServerMapManager remoteServerMapManager) {
-    this.fieldFactory = fieldFactory;
     this.config = config;
     this.classProvider = classProvider;
     this.encoding = dnaEncoding;
-    this.manager = manager;
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.remoteServerMapManager = remoteServerMapManager;
+  }
+
+  @Override
+  public void setPlatformService(PlatformService platformService) {
+    this.platformService = platformService;
   }
 
   @Override
@@ -63,60 +61,19 @@ public class TCClassFactoryImpl implements TCClassFactory {
   protected TCClass createTCClass(final Class clazz, final ClientObjectManager objectManager, final String className) {
     TCClass rv;
     if (className.equals(TCClassFactory.SERVER_MAP_CLASSNAME)) {
-      rv = new ServerMapTCClassImpl(this.manager, this.globalLocalCacheManager, this.remoteServerMapManager,
-                                    this.fieldFactory, this, objectManager, clazz,
-                                    getLogicalSuperClassWithDefaultConstructor(clazz),
-                                    this.config.getLogicalExtendingClassName(className),
-                                    this.config.isLogical(className), this.config.isUseNonDefaultConstructor(clazz),
-                                    this.config.useResolveLockWhenClearing(clazz),
-                                    this.config.getPostCreateMethodIfDefined(className),
-                                    this.config.getPreCreateMethodIfDefined(className));
+      rv = new ServerMapTCClassImpl(this.platformService, this.globalLocalCacheManager, this.remoteServerMapManager,
+                                    this, objectManager, clazz, this.config.isUseNonDefaultConstructor(clazz));
     } else {
-      rv = new TCClassImpl(this.fieldFactory, this, objectManager, clazz,
-                           getLogicalSuperClassWithDefaultConstructor(clazz),
-                           this.config.getLogicalExtendingClassName(className), this.config.isLogical(className),
-                           this.config.isUseNonDefaultConstructor(clazz),
-                           this.config.useResolveLockWhenClearing(clazz),
-                           this.config.getPostCreateMethodIfDefined(className),
-                           this.config.getPreCreateMethodIfDefined(className));
+      rv = new TCClassImpl(this, objectManager, clazz, this.config.isUseNonDefaultConstructor(clazz));
     }
     return rv;
-  }
-
-  public Class getLogicalSuperClassWithDefaultConstructor(Class clazz) {
-    TransparencyClassSpec spec = this.config.getSpec(clazz.getName());
-    if (spec == null) { return null; }
-
-    while (clazz != null) {
-      if (spec == null) { return null; }
-      if (spec.isLogical()) {
-        Constructor c = null;
-        try {
-          c = clazz.getDeclaredConstructor(new Class[0]);
-        } catch (final SecurityException e) {
-          throw new TCRuntimeException(e);
-        } catch (final NoSuchMethodException e) {
-          // c is already null
-        }
-        if (c != null) { return clazz; }
-      }
-      clazz = clazz.getSuperclass();
-      if (clazz != null) {
-        spec = this.config.getSpec(clazz.getName());
-      } else {
-        spec = null;
-      }
-    }
-    return null;
   }
 
   @Override
   public ChangeApplicator createApplicatorFor(final TCClass clazz) {
     final Class applicatorClazz = this.config.getChangeApplicator(clazz.getPeerClass());
 
-    if (applicatorClazz == null) {
-      return new BaseApplicator(this.encoding);
-    }
+    if (applicatorClazz == null) { return new BaseApplicator(this.encoding); }
 
     TCLogger logger = TCLogging.getLogger(ChangeApplicator.class.getName() + "." + applicatorClazz.getName());
 

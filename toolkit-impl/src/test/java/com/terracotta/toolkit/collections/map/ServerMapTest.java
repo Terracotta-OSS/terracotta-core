@@ -1,5 +1,21 @@
 package com.terracotta.toolkit.collections.map;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,7 +24,6 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.internal.matchers.And;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.collections.ToolkitMap;
@@ -39,7 +54,6 @@ import com.terracotta.toolkit.factory.impl.ToolkitCacheDistributedTypeFactory;
 import com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedMapValue;
-import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.search.SearchFactory;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchCommand;
@@ -53,35 +67,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.collection.IsMapContaining.hasEntry;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
 /**
  * @author tim
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(PlatformServiceProvider.class)
 public class ServerMapTest {
   private PlatformService platformService;
   private Configuration configuration;
   private SerializationStrategy serializationStrategy;
   private TCObjectServerMap tcObjectServerMap;
-  private MetaDataDescriptor metaDataDescriptor;
 
   @Before
   public void setUp() throws Exception {
@@ -94,7 +88,6 @@ public class ServerMapTest {
     when(serializationStrategy.serialize(any(), anyBoolean())).thenReturn(new byte[1]);
     when(platformService.lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME, SerializationStrategy.class))
         .thenReturn(serializationStrategy);
-    metaDataDescriptor = mock(MetaDataDescriptor.class);
     when(platformService.createMetaDataDescriptor(anyString())).then(new Answer<Object>() {
       @Override
       public Object answer(final InvocationOnMock invocation) throws Throwable {
@@ -112,10 +105,6 @@ public class ServerMapTest {
         return null;
       }
     });
-
-
-    mockStatic(PlatformServiceProvider.class);
-    when(PlatformServiceProvider.getPlatformService()).thenReturn(platformService);
   }
 
   @Test
@@ -207,7 +196,7 @@ public class ServerMapTest {
   }
 
   private ServerMap getServerMap() {
-    ServerMap serverMap = new ServerMap(configuration, "foo");
+    ServerMap serverMap = new ServerMap(configuration, "foo", platformService);
     serverMap.__tc_managed(tcObjectServerMap);
     serverMap.setLockStrategy(ConfigFieldsInternal.LOCK_STRATEGY.LONG_LOCK_STRATEGY);
     serverMap.registerAttributeExtractor(mock(ToolkitAttributeExtractor.class));

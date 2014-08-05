@@ -17,6 +17,7 @@ import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
@@ -40,11 +41,12 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
   private final transient ToolkitLock     concurrentLock;
   private final List<MutateOperation>     pendingChanges = new ArrayList();
 
-  public ToolkitMapImpl() {
-    this(new KeyValueHolder(new ConcurrentHashMap<K, V>()));
+  public ToolkitMapImpl(PlatformService platformService) {
+    this(new KeyValueHolder(new ConcurrentHashMap<K, V>()), platformService);
   }
 
-  public ToolkitMapImpl(KeyValueHolder keyValueHolder) {
+  public ToolkitMapImpl(KeyValueHolder keyValueHolder, PlatformService platformService) {
+    super(platformService);
     this.keyValueHolder = keyValueHolder;
     concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT", platformService);
   }

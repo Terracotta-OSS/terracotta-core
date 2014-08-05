@@ -9,6 +9,7 @@ import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.platform.PlatformService;
 
 import java.io.IOException;
 
@@ -53,7 +54,9 @@ public interface ChangeApplicator {
    * 
    * @param objectManager The client-side object manager
    * @param dna The DNA for the new object
+   * @param platformService
    * @return The new instance
    */
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException;
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna, PlatformService platformService)
+      throws IOException, ClassNotFoundException;
 }

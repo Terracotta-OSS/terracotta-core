@@ -6,25 +6,17 @@ package com.tc.object.change;
 
 import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
-import com.tc.object.change.event.ArrayElementChangeEvent;
-import com.tc.object.change.event.LiteralChangeEvent;
 import com.tc.object.change.event.LogicalChangeEvent;
-import com.tc.object.change.event.PhysicalChangeEvent;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author orion
@@ -33,43 +25,18 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   private final SetOnceFlag                      dnaCreated = new SetOnceFlag();
   private final TCObject                         tcObject;
 
-  private final Map                              physicalEvents;
   private final List<LogicalChangeEvent>         logicalEvents;
-  private final Map                              arrayEvents;
-  private final List                             literalValueChangedEvents;
   private final List<MetaDataDescriptorInternal> metaData;
 
   public TCChangeBufferImpl(TCObject object) {
     this.tcObject = object;
-
-    // This stuff is slightly yucky, but the "null"-ness of these event collections is relevant for determining whether
-    // physical updates to logical classes should be ignore or not
-    if (object.isIndexed()) {
-      physicalEvents = null;
-      literalValueChangedEvents = null;
-      logicalEvents = null;
-      arrayEvents = new LinkedHashMap();
-    } else if (object.isLogical()) {
-      physicalEvents = null;
-      literalValueChangedEvents = null;
-      logicalEvents = new LinkedList();
-      arrayEvents = null;
-    } else {
-      physicalEvents = new HashMap();
-      literalValueChangedEvents = new LinkedList();
-      logicalEvents = null;
-      arrayEvents = null;
-    }
-
+    logicalEvents = new ArrayList<LogicalChangeEvent>();
     metaData = new ArrayList<MetaDataDescriptorInternal>();
   }
 
   @Override
   public boolean isEmpty() {
-    if ((physicalEvents != null) && (!physicalEvents.isEmpty())) { return false; }
-    if ((literalValueChangedEvents != null) && (!literalValueChangedEvents.isEmpty())) { return false; }
     if ((logicalEvents != null) && (!logicalEvents.isEmpty())) { return false; }
-    if ((arrayEvents != null) && (!arrayEvents.isEmpty())) { return false; }
     if (!metaData.isEmpty()) return false;
 
     return true;
@@ -78,17 +45,8 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   @Override
   public void writeTo(DNAWriter writer) {
     if (dnaCreated.attemptSet()) {
-      if (arrayEvents != null) {
-        writeEventsToDNA(arrayEvents.values(), writer);
-      }
-      if (physicalEvents != null) {
-        writeEventsToDNA(physicalEvents.values(), writer);
-      }
       if (logicalEvents != null) {
         writeEventsToDNA(logicalEvents, writer);
-      }
-      if (literalValueChangedEvents != null) {
-        writeEventsToDNA(literalValueChangedEvents, writer);
       }
 
       for (MetaDataDescriptorInternal md : metaData) {
@@ -112,51 +70,17 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
   @Override
   public void literalValueChanged(Object newValue) {
-    literalValueChangedEvents.add(new LiteralChangeEvent(newValue));
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void fieldChanged(String classname, String fieldname, Object newValue, int index) {
-    Assert.eval(newValue != null);
-    if (index >= 0) {
-      // We could add some form of threshold for array change events where instead of encoding the individual updates,
-      // we could just send the data for the entire array (like we do when a managed array is brand new)
-
-      // could use a better collection that maintain put order for repeated additions
-      Integer key = Integer.valueOf(index);
-      arrayEvents.remove(key);
-      arrayEvents.put(key, new ArrayElementChangeEvent(index, newValue));
-    } else {
-      if (logicalEvents != null) {
-        // this shouldn't happen
-        throw new AssertionError("Physical field change for " + classname + "." + fieldname + " on "
-                                 + tcObject.getClassName() + " which is logically managed");
-      }
-
-      // XXX: only fully qualify fieldnames when necessary (ie. when a variable name is shadowed)
-      // XXX: When and if this change is made, you also want to look at GenericTCField
-      // fieldname = classname + "." + fieldname;
-
-      // Assert.eval(fieldname.indexOf('.') >= 0);
-      // this will replace any existing event for this field. Last change made to any field within the same TXN wins
-      physicalEvents.put(fieldname, new PhysicalChangeEvent(fieldname, newValue));
-    }
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void arrayChanged(int startPos, Object array, int newLength) {
-    // could use a better collection that maintain put order for repeated additions
-    Integer key = Integer.valueOf(-startPos); // negative int is used for sub-arrays
-    ArrayElementChangeEvent oldEvent = (ArrayElementChangeEvent) arrayEvents.remove(key);
-    if (oldEvent != null) {
-      Object oldArray = oldEvent.getValue();
-      int oldLength = oldEvent.getLength();
-      if (oldLength > newLength) {
-        System.arraycopy(array, 0, oldArray, 0, newLength);
-        array = oldArray;
-      }
-    }
-    arrayEvents.put(key, new ArrayElementChangeEvent(startPos, array, newLength));
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override

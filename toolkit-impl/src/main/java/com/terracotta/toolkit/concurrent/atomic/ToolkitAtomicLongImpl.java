@@ -7,6 +7,7 @@ import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.store.ToolkitStore;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.util.ToolkitIDGenerator;
 import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
@@ -24,7 +25,7 @@ public class ToolkitAtomicLongImpl implements ToolkitAtomicLong, RejoinCallback 
   private final AtomicInteger                                currentRejoinCount = new AtomicInteger();
 
   public ToolkitAtomicLongImpl(String name, ToolkitStore<String, ToolkitAtomicLongState> clusteredMap,
-                               ToolkitIDGenerator longIdGenerator) {
+                               ToolkitIDGenerator longIdGenerator, PlatformService platformService) {
     this.atomicLongs = clusteredMap;
     this.name = name;
     this.lock = atomicLongs.createLockForKey(name).writeLock();
@@ -39,7 +40,7 @@ public class ToolkitAtomicLongImpl implements ToolkitAtomicLong, RejoinCallback 
     }
     this.longIdGenerator = longIdGenerator;
     this.uid = state.getUid();
-    this.status = new ToolkitObjectStatusImpl();
+    this.status = new ToolkitObjectStatusImpl(platformService);
     this.currentRejoinCount.set(status.getCurrentRejoinCount());
   }
 

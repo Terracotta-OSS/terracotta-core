@@ -54,7 +54,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate,
                           PlatformService platformService, ToolkitInternal toolkit) {
-    super(factory);
+    super(factory, platformService);
     this.name = name;
     this.aggregateServerMap = delegate;
     this.activeDelegate = aggregateServerMap;
@@ -739,6 +739,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     return activeDelegate.getVersionedValue(key);
   }
 
+  @Override
   public Map<K, VersionedValue<V>> getAllVersioned(Collection<K> key) {
     return activeDelegate.getAllVersioned(key);
   }

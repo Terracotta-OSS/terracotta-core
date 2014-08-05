@@ -3,6 +3,13 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -14,14 +21,11 @@ import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
-import com.tc.invalidation.Invalidations;
 import com.tc.net.GroupID;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LongLockID;
@@ -42,6 +46,7 @@ import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionContext;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
+import com.tc.platform.PlatformService;
 import com.tc.stats.Stats;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
@@ -64,13 +69,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class ServerMapLocalCacheImplTest extends TestCase {
   private volatile ServerMapLocalCacheImpl cache;
   private final ObjectID                   mapID                   = new ObjectID(50000);
@@ -80,7 +78,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
   private L1ServerMapLocalCacheStore       localCacheStore;
   private MockTCObjectSelfCallback         mockTCObjectSelfCallback;
   private final Map<LockID, Long>          lockIDandAwardIDMapping = new HashMap();
-  private Manager                          mng;
+  private PlatformService                  ps;
 
   @Override
   protected void setUp() throws Exception {
@@ -101,8 +99,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     ClientTransactionManager ctm = Mockito.mock(ClientTransactionManager.class);
     Mockito.when(com.getTransactionManager()).thenReturn(ctm);
     Mockito.when(ctm.getCurrentTransaction()).thenReturn(clientTransaction);
-    mng = Mockito.mock(ManagerImpl.class);
-    Mockito.when(mng.isLockAwardValid(Matchers.any(LockID.class), Matchers.anyLong())).thenAnswer(new Answer() {
+    ps = Mockito.mock(PlatformService.class);
+    Mockito.when(ps.isLockAwardValid(Matchers.any(LockID.class), Matchers.anyLong())).thenAnswer(new Answer() {
       @Override
       public Object answer(InvocationOnMock invocation) {
         Object[] args = invocation.getArguments();
@@ -111,7 +109,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     });
     localCacheStore = new L1ServerMapLocalCacheStoreHashMap(maxElementsInMemory);
     cache = (ServerMapLocalCacheImpl) globalLocalCacheManager
-        .getOrCreateLocalCache(mapID, com, mng, true, localCacheStore, Mockito.mock(PinnedEntryFaultCallback.class));
+        .getOrCreateLocalCache(mapID, com, ps, true, localCacheStore, Mockito.mock(PinnedEntryFaultCallback.class));
   }
 
   public void testDev6522() throws InterruptedException, BrokenBarrierException {
@@ -137,20 +135,20 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     lockIDandAwardIDMapping.put(lockOid, 1L);
     MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
                                                   mapID, MapOperationType.PUT, 1L);
-    Mockito.verify(mng, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     barier.await();
     barier.await();
-    Mockito.verify(mng, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    Mockito.verify(mng, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
 
     // should call pin again even with same lock id and award id (outgoing old value will unpin)
     MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
                                                   mapID, MapOperationType.PUT, 1L);
-    Mockito.verify(mng, Mockito.times(3)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(3)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     barier.await();
     barier.await();
-    Mockito.verify(mng, Mockito.times(4)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    Mockito.verify(mng, Mockito.times(3)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(4)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(3)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     // should pin for different lock id and key
     lockId = 101;
     strongOid = 2 * lockId;
@@ -161,11 +159,11 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
                                                   mapID, MapOperationType.PUT, 1L);
 
-    Mockito.verify(mng, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     barier.await();
     barier.await();
-    Mockito.verify(mng, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    Mockito.verify(mng, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
 
   }
 
@@ -181,12 +179,12 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     lockIDandAwardIDMapping.put(lockOid, 1L);
     MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
                                                   mapID, MapOperationType.PUT, 1L);
-    Mockito.verify(mng, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    Mockito.verify(mng, Mockito.never()).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.never()).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     barier.await();
     barier.await();
-    Mockito.verify(mng, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
-    Mockito.verify(mng, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+    Mockito.verify(ps, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
 
   }
 
@@ -202,10 +200,10 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       lockIDandAwardIDMapping.put(lockOid, 1L);
       MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
                                                     mapID, MapOperationType.PUT, 1L);
-      Mockito.verify(mng, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+      Mockito.verify(ps, Mockito.times(1)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
       barier.await();
       barier.await();
-      Mockito.verify(mng, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+      Mockito.verify(ps, Mockito.times(2)).pinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
     }
 
     int pinned = 0;
@@ -214,11 +212,11 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       long lockId = 100 + j;
       LockID lockOid = new LongLockID(lockId);
       try {
-        Mockito.verify(mng, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+        Mockito.verify(ps, Mockito.times(1)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
         pinned++;
       } catch (TooManyActualInvocations e) {
         // for evicted key unpin should be 2
-        Mockito.verify(mng, Mockito.times(2)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
+        Mockito.verify(ps, Mockito.times(2)).unpinLock(lockOid, lockIDandAwardIDMapping.get(lockOid));
         unpinned++;
       }
     }
@@ -686,8 +684,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     L1ServerMapLocalCacheStore localStore = mock(L1ServerMapLocalCacheStore.class);
     when(localStore.remove("foo")).thenReturn(eventual);
     
-    Manager manager = mock(Manager.class);
-    ServerMapLocalCacheImpl cache = new ServerMapLocalCacheImpl(objectManager, manager, null, true, 
+    PlatformService platformService = mock(PlatformService.class);
+    ServerMapLocalCacheImpl cache = new ServerMapLocalCacheImpl(objectManager, platformService, null, true,
             mock(ServerMapLocalCacheRemoveCallback.class), localStore);
 
     LocalCacheStoreStrongValue strong = mock(LocalCacheStoreStrongValue.class);
@@ -696,7 +694,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     
     cache.addToCache("foo", strong, MapOperationType.PUT);
     
-    verify(manager, times(1)).pinLock(any(LockID.class), anyLong());
+    verify(platformService, times(1)).pinLock(any(LockID.class), anyLong());
   }
           
   public class MyClientTransaction implements ClientTransaction {

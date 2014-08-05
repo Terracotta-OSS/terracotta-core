@@ -9,6 +9,7 @@ import org.terracotta.toolkit.object.Destroyable;
 import org.terracotta.toolkit.object.ToolkitLockedObject;
 import org.terracotta.toolkit.object.ToolkitObject;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
@@ -24,9 +25,9 @@ public class ToolkitSetImpl<E> implements ToolkitSet<E>, RejoinAwareToolkitObjec
   private final RejoinAwareToolkitMap<E, Integer> toolkitMap;
   protected final ToolkitObjectStatusImpl         status;
 
-  public ToolkitSetImpl(RejoinAwareToolkitMap<E, Integer> toolkitMap) {
+  public ToolkitSetImpl(RejoinAwareToolkitMap<E, Integer> toolkitMap, PlatformService plaformService) {
     this.toolkitMap = toolkitMap;
-    this.status = new ToolkitObjectStatusImpl();
+    this.status = new ToolkitObjectStatusImpl(plaformService);
   }
 
   @Override

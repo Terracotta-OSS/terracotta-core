@@ -5,6 +5,8 @@ package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
 
+import com.tc.platform.PlatformService;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -17,8 +19,8 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
     ToolkitSortedMap<K, V> {
   private final SortedKeyValueHolder<K, V> sortedKeyValueHolder;
 
-  public ToolkitSortedMapImpl() {
-    super(new SortedKeyValueHolder(new ConcurrentSkipListMap<K, V>()));
+  public ToolkitSortedMapImpl(PlatformService platformService) {
+    super(new SortedKeyValueHolder(new ConcurrentSkipListMap<K, V>()), platformService);
     this.sortedKeyValueHolder = (SortedKeyValueHolder<K, V>) keyValueHolder;
   }
 

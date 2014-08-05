@@ -27,7 +27,6 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.feature.ManagementInternalFeature;
 import org.terracotta.toolkit.internal.feature.NonStopInternalFeature;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
@@ -54,24 +53,25 @@ import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 import java.util.concurrent.FutureTask;
 
 public class NonStopToolkitImpl implements ToolkitInternal {
-  protected final NonStopManagerImpl           nonStopManager;
-  protected final NonStopConfigRegistryImpl    nonStopConfigManager          = new NonStopConfigRegistryImpl();
-  private final NonstopTimeoutBehaviorResolver nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
+  protected final NonStopManagerImpl                 nonStopManager;
+  protected final NonStopConfigRegistryImpl          nonStopConfigManager          = new NonStopConfigRegistryImpl();
+  private final NonstopTimeoutBehaviorResolver       nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
 
-  private final AbortableOperationManager      abortableOperationManager;
-  protected final NonStopClusterListener       nonStopClusterListener;
-  private final NonStopFeature                 nonStopFeature;
-  private final NonStopInternalFeature         nonStopInternalFeature;
-  private final AsyncToolkitInitializer        asyncToolkitInitializer;
-  private final NonStopContextImpl             context;
-  private final NonStopClusterInfo             nonStopClusterInfo;
-  private final PlatformService                platformService;
-  private final NonStopInitializationService   nonStopInitiailzationService;
-  private final ManagementInternalFeature      managementInternalFeature;
+  private final AbortableOperationManager            abortableOperationManager;
+  protected final NonStopClusterListener             nonStopClusterListener;
+  private final NonStopFeature                       nonStopFeature;
+  private final NonStopInternalFeature               nonStopInternalFeature;
+  private final AsyncToolkitInitializer              asyncToolkitInitializer;
+  private final NonStopContextImpl                   context;
+  private final NonStopClusterInfo                   nonStopClusterInfo;
+  private final NonStopInitializationService         nonStopInitiailzationService;
+  private final NonStopManagementInternalFeatureImpl managementInternalFeature;
+  private final String                               uuid;
 
-  public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
-    this.platformService = platformService;
-    this.abortableOperationManager = platformService.getAbortableOperationManager();
+  public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask,
+                            AbortableOperationManager abortableOperationManager, String uuid) {
+    this.abortableOperationManager = abortableOperationManager;
+    this.uuid = uuid;
     this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
     this.nonStopConfigManager.registerForType(NonStopConfigRegistryImpl.DEFAULT_CONFIG,
                                               NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
@@ -86,7 +86,11 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     this.nonStopInternalFeature = new NonStopInternalFeatureImpl(context);
 
     this.nonStopInitiailzationService = new NonStopInitializationService(context);
-    this.managementInternalFeature = new ManagementInternalFeatureImpl(platformService);
+    this.managementInternalFeature = new NonStopManagementInternalFeatureImpl();
+  }
+
+  public void setPlatformService(Object platformService) {
+    this.managementInternalFeature.setPlatformService((PlatformService) platformService);
   }
 
   private ToolkitInternal getInitializedToolkit() {
@@ -332,7 +336,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public String getClientUUID() {
-    return platformService.getUUID();
+    return uuid;
   }
 
   @Override
@@ -358,8 +362,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   }
 
   private <T extends ToolkitObject> T getNonStopProxy(final String name,
-                                                         final AbstractToolkitObjectLookupAsync<T> toolkitObjectLookup,
-                                                         final ToolkitObjectType objectType, Class clazz) {
+                                                      final AbstractToolkitObjectLookupAsync<T> toolkitObjectLookup,
+                                                      final ToolkitObjectType objectType, Class clazz) {
     NonStopConfigurationLookup nonStopConfigurationLookup = getNonStopConfigurationLookup(name, objectType);
 
     nonStopInitiailzationService.initialize(toolkitObjectLookup, nonStopConfigurationLookup.getNonStopConfiguration());

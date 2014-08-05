@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitSortedMap;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
@@ -18,11 +19,10 @@ import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 public class ToolkitSortedMapFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<DestroyableToolkitSortedMap, ToolkitSortedMapImpl> {
 
-  private static final SortedMapIsolatedTypeFactory FACTORY = new SortedMapIsolatedTypeFactory();
-
   public ToolkitSortedMapFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
     super(toolkit, context.getToolkitTypeRootsFactory()
-        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_MAP_ROOT_NAME, FACTORY,
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_MAP_ROOT_NAME,
+                                         new SortedMapIsolatedTypeFactory(context.getPlatformService()),
                                          context.getPlatformService()));
   }
 
@@ -34,17 +34,23 @@ public class ToolkitSortedMapFactoryImpl extends
   private static class SortedMapIsolatedTypeFactory implements
       IsolatedToolkitTypeFactory<DestroyableToolkitSortedMap, ToolkitSortedMapImpl> {
 
+    private final PlatformService platformService;
+
+    SortedMapIsolatedTypeFactory(PlatformService platformService) {
+      this.platformService = platformService;
+    }
+
     @Override
     public DestroyableToolkitSortedMap createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitSortedMap> factory,
                                                                  IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup,
                                                                  String name, Configuration config,
                                                                  ToolkitSortedMapImpl tcClusteredObject) {
-      return new DestroyableToolkitSortedMap(factory, lookup, tcClusteredObject, name);
+      return new DestroyableToolkitSortedMap(factory, lookup, tcClusteredObject, name, platformService);
     }
 
     @Override
     public ToolkitSortedMapImpl createTCClusteredObject(Configuration config) {
-      return new ToolkitSortedMapImpl();
+      return new ToolkitSortedMapImpl(platformService);
     }
 
   }

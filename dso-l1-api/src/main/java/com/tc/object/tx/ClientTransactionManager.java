@@ -6,9 +6,8 @@ package com.tc.object.tx;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
 import com.tc.object.ClearableCallback;
-import com.tc.object.ClientIDProvider;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -79,26 +78,6 @@ public interface ClientTransactionManager extends ClearableCallback {
   public void createRoot(String name, ObjectID id);
 
   /**
-   * Record change in literal value in current transaction
-   * 
-   * @param source TCObject for literal value
-   * @param newValue New value
-   * @param oldValue Old value
-   */
-  public void literalValueChanged(TCObject source, Object newValue, Object oldValue);
-
-  /**
-   * Record field change in current transaction
-   * 
-   * @param source TCObject for field
-   * @param classname Class name
-   * @param fieldname Field name
-   * @param newValue New object
-   * @param index Into array if field is an array
-   */
-  public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index);
-
-  /**
    * Record a logical method invocation
    * 
    * @param source TCObject for object
@@ -134,28 +113,6 @@ public interface ClientTransactionManager extends ClearableCallback {
   public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID);
 
   /**
-   * Check whether current transaction has write access
-   * 
-   * @param context The object context
-   * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
-   */
-  public void checkWriteAccess(Object context);
-
-  /**
-   * Add reference to tco in current transaction
-   * 
-   * @param tco TCObject
-   */
-  public void addReference(TCObject tco);
-
-  /**
-   * Get channel provider for this txn manager
-   * 
-   * @return Provider
-   */
-  public ClientIDProvider getClientIDProvider();
-
-  /**
    * Enable transaction logging
    */
   public void enableTransactionLogging();
@@ -173,33 +130,11 @@ public interface ClientTransactionManager extends ClearableCallback {
   public boolean isTransactionLoggingDisabled();
 
   /**
-   * Check whether object creation is in progress
-   */
-  public boolean isObjectCreationInProgress();
-
-  /**
-   * Record an array change in the current transaction
-   * 
-   * @param src The TCObject for the array
-   * @param startPos Start index in the array
-   * @param array The new partial array or value
-   * @param length Partial array length
-   */
-  public void arrayChanged(TCObject src, int startPos, Object array, int length);
-
-  /**
    * Add meta data descriptor to current transaction
    * 
    * @param md Descriptor
    */
   public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md);
-
-  /**
-   * Check if lockID is on top of the transaction stack
-   * 
-   * @param lockName
-   */
-  public boolean isLockOnTopStack(LockID lock);
 
   /**
    * @returns the current open transaction for the calling thread, null if no open transaction

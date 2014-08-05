@@ -19,13 +19,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
-  private static final String SPI_INIT                                                         = "com.terracotta.toolkit.express.SpiInit";
+  private static final String CLIENT_HANDLE_IMPL                                               = "com.terracotta.toolkit.express.ClientHandleImpl";
   public static final String  SECRET_PROVIDER                                                  = "com.terracotta.express.SecretProvider";
-  public static final String  DSO_CONTEXT_IMPL                                                 = "com.tc.object.bytecode.hook.impl.DSOContextImpl";
 
   private static final String EE_SECRET_DELEGATE                                               = "com.terracotta.toolkit.DelegatingSecretProvider";
   private static final String SECRET_PROVIDER_CLASS                                            = "org.terracotta.toolkit.SecretProvider";
@@ -37,14 +35,13 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     //
   }
 
-  private final ClusteredStateLoader            clusteredStateLoader;
-  private final AppClassLoader                  appClassLoader;
-  private volatile DSOContextControl            contextControl;
-  private final AtomicInteger                   refCount             = new AtomicInteger(0);
-  private boolean                               shutdown             = false;
-  private volatile Object                       dsoContext;
-  private final Set<String>                     tunneledMBeanDomains = new HashSet<String>();
-  private volatile boolean                      isInitialized        = false;
+  private final ClusteredStateLoader  clusteredStateLoader;
+  private final AppClassLoader        appClassLoader;
+  private final ClientCreatorCallable clientCreator;
+  private final Set<String>           tunneledMBeanDomains = new HashSet<String>();
+  private volatile ClientHandle       clientHandle;
+  private volatile boolean            shutdown             = false;
+  private volatile boolean            isInitialized        = false;
 
   TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader, boolean rejoinEnabled,
                                Set<String> tunneledMBeanDomains, final String productId, Map<String, Object> env) {
@@ -55,22 +52,20 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       this.appClassLoader = new AppClassLoader(appLoader);
       this.clusteredStateLoader = createClusteredStateLoader(appLoader);
 
-      Class bootClass = clusteredStateLoader.loadClass(StandaloneL1Boot.class.getName());
+      Class bootClass = clusteredStateLoader.loadClass(CreateClient.class.getName());
       Constructor<?> cstr = bootClass.getConstructor(String.class, Boolean.TYPE, ClassLoader.class, Boolean.TYPE,
                                                      String.class, Map.class);
 
-      // XXX: It's be nice to not use Object here, but exposing the necessary type (DSOContext) seems wrong too)
       if (isUrlConfig && isRequestingSecuredEnv(tcConfig)) {
         if (env != null) {
           env.put(TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP,
                   newSecretProviderDelegate(clusteredStateLoader, env.get(TerracottaInternalClientImpl.SECRET_PROVIDER)));
         }
       }
-      Callable<Object> boot = (Callable<Object>) cstr.newInstance(tcConfig, isUrlConfig, clusteredStateLoader,
-                                                                  rejoinEnabled, productId, env);
-
-      Object context = boot.call();
-      this.dsoContext = context;
+      Callable<ClientCreatorCallable> boot = (Callable<ClientCreatorCallable>) cstr.newInstance(tcConfig, isUrlConfig,
+                                                                                      clusteredStateLoader,
+                                                                                      rejoinEnabled, productId, env);
+      this.clientCreator = boot.call();
     } catch (Exception e) {
       throw new ToolkitRuntimeException(e);
     }
@@ -81,13 +76,9 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     if (isInitialized) { return; }
 
     try {
-      Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
-      Method method = dsoContextClass.getMethod("init");
+      Class clientHandleImpl = clusteredStateLoader.loadClass(CLIENT_HANDLE_IMPL);
+      clientHandle = (ClientHandle) clientHandleImpl.getConstructor(Object.class).newInstance(clientCreator.call());
 
-      method.invoke(dsoContext);
-
-      Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
-      contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(dsoContext);
       isInitialized = true;
       join(tunneledMBeanDomains);
       setSecretHackOMFG();
@@ -106,11 +97,11 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       appClassLoader.loadClass("com.terracotta.management.keychain.KeyChain");
       final Class<?> omfg = appClassLoader.loadClass("net.sf.ehcache.thrift.server.tc.TkSecurityManager");
       final Field secret = omfg.getDeclaredField("SECRET");
-      if(secret.getType() == byte[].class) {
+      if (secret.getType() == byte[].class) {
         secret.setAccessible(true);
-        Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
-        Method method = dsoContextClass.getMethod("getSecret");
-        secret.set(null, method.invoke(dsoContext));
+        Class secretProviderClass = clusteredStateLoader.loadClass("com.terracotta.management.security.SecretProvider");
+        Method method = secretProviderClass.getMethod("getSecret");
+        secret.set(null, method.invoke(null));
       }
     } catch (ClassNotFoundException e) {
       // That's fine, moving on
@@ -121,26 +112,24 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public Object getPlatformService() {
-    try {
-      Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
-      Method method = dsoContextClass.getMethod("getPlatformService");
-      return method.invoke(dsoContext);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return clientHandle.getPlatformService();
   }
 
   @Override
-  public boolean isDedicatedClient() {
-    return true;
+  public Object getAbortableOperationManager() {
+    return clientCreator.getAbortableOperationManager();
   }
 
   @Override
-  public synchronized void join(Set<String> tunnelledMBeanDomainsParam) throws ClientShutdownException {
+  public String getUuid() {
+    return clientCreator.getUuid();
+  }
+
+  private synchronized void join(Set<String> tunnelledMBeanDomainsParam) throws ClientShutdownException {
     if (shutdown) throw new ClientShutdownException();
-    refCount.incrementAndGet();
+
     if (isInitialized) {
-      contextControl.activateTunnelledMBeanDomains(tunnelledMBeanDomainsParam);
+      clientHandle.activateTunnelledMBeanDomains(tunnelledMBeanDomainsParam);
     } else {
       if (tunnelledMBeanDomainsParam != null) {
         this.tunneledMBeanDomains.addAll(tunnelledMBeanDomainsParam);
@@ -151,9 +140,9 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   @Override
   public <T> T instantiate(String className, Class[] cstrArgTypes, Object[] cstrArgs) throws Exception {
     try {
-    Class clazz = clusteredStateLoader.loadClass(className);
-    Constructor cstr = clazz.getConstructor(cstrArgTypes);
-    return (T) cstr.newInstance(cstrArgs);
+      Class clazz = clusteredStateLoader.loadClass(className);
+      Constructor cstr = clazz.getConstructor(cstrArgTypes);
+      return (T) cstr.newInstance(cstrArgs);
     } catch (InvocationTargetException e) {
       Throwable targetEx = e.getTargetException();
       throw (targetEx instanceof ToolkitRuntimeException) ? (ToolkitRuntimeException) targetEx
@@ -173,29 +162,14 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public synchronized void shutdown() {
-    final boolean shutdownClient;
-    if (isDedicatedClient()) {
-      shutdownClient = true;
-    } else {
-      // decrement the reference counter by 1 as its shared client
-      // destroy real client when count == 0;
-      int count = refCount.decrementAndGet();
-      if (count < 0) {
-        //
-        throw new IllegalStateException(
-                                        "shutdown() called too many times, this represents a bug in the caller. count = "
-                                            + count);
+    shutdown = true;
+    try {
+      if (clientHandle != null) {
+        clientHandle.shutdown();
       }
-      shutdownClient = count == 0;
-    }
-
-    if (shutdownClient) {
-      shutdown = true;
-      try {
-        contextControl.shutdown();
-      } finally {
-        appClassLoader.clear();
-      }
+    } finally {
+      clientHandle = null;
+      appClassLoader.clear();
     }
   }
 
@@ -238,8 +212,10 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     } else {
       loader = new ClusteredStateLoaderImpl(appClassLoader, isEmbeddedEhcacheRequired());
     }
-    loader.addExtraClass(SpiInit.class.getName(), getClassBytes(SpiInit.class));
-    loader.addExtraClass(StandaloneL1Boot.class.getName(), getClassBytes(StandaloneL1Boot.class));
+    loader.addExtraClass(ClientHandleImpl.class.getName(), getClassBytes(ClientHandleImpl.class));
+    loader.addExtraClass(CreateClient.class.getName(), getClassBytes(CreateClient.class));
+    loader.addExtraClass(CreateClient.ClientCreatorCallableImpl.class.getName(),
+                         getClassBytes(CreateClient.ClientCreatorCallableImpl.class));
     return loader;
   }
 
@@ -266,7 +242,8 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public boolean isOnline() {
-    return contextControl.isOnline();
+    ClientHandle handle = clientHandle;
+    return handle == null ? false : handle.isOnline();
   }
 
   @Override

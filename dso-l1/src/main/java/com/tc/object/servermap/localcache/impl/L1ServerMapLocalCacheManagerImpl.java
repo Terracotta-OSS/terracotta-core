@@ -5,14 +5,12 @@ package com.tc.object.servermap.localcache.impl;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
-import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.TCObjectSelfStore;
-import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
@@ -22,6 +20,7 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.PinnedEntryInvalidationListener;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.BitSetObjectIDSet;
@@ -96,7 +95,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   @Override
   public synchronized ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager,
-                                                                Manager manager, boolean localCacheEnabled,
+                                                                PlatformService platformService,
+                                                                boolean localCacheEnabled,
                                                                 L1ServerMapLocalCacheStore serverMapLocalStore,
                                                                 PinnedEntryFaultCallback callback) {
     if (shutdown.get()) {
@@ -110,7 +110,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     if (localStores.containsKey(serverMapLocalStore)) {
       serverMapLocalCache = localStores.get(serverMapLocalStore);
     } else {
-      serverMapLocalCache = new ServerMapLocalCacheImpl(objectManager, manager, this, localCacheEnabled,
+      serverMapLocalCache = new ServerMapLocalCacheImpl(objectManager, platformService, this, localCacheEnabled,
                                                         removeCallback, serverMapLocalStore);
 
       if (FAULT_INVALIDATED_PINNED_ENTRIES) {

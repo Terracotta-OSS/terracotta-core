@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.object.applicator.ChangeApplicator;
+import com.tc.platform.PlatformService;
 
 public interface TCClassFactory {
 
@@ -13,5 +14,7 @@ public interface TCClassFactory {
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager);
 
   public ChangeApplicator createApplicatorFor(TCClass clazz);
+
+  public void setPlatformService(PlatformService platformService);
 
 }

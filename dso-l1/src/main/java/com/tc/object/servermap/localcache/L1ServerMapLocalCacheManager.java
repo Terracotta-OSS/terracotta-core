@@ -6,8 +6,8 @@ package com.tc.object.servermap.localcache;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelfStore;
-import com.tc.object.bytecode.Manager;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
+import com.tc.platform.PlatformService;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;
@@ -25,7 +25,8 @@ public interface L1ServerMapLocalCacheManager extends TCObjectSelfStore {
    * @param serverMapLocalStore
    * @param callback
    */
-  public ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager, Manager manager,
+  public ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager,
+                                                   PlatformService platformService,
                                                    boolean localCacheEnabled,
                                                    L1ServerMapLocalCacheStore serverMapLocalStore,
                                                    PinnedEntryFaultCallback callback);

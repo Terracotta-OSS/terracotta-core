@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperCollection;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSortedMap;
@@ -32,8 +33,8 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory,
                                      IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup,
-                                     ToolkitSortedMapImpl<K, V> map, String name) {
-    super(factory);
+                                     ToolkitSortedMapImpl<K, V> map, String name, PlatformService platformService) {
+    super(factory, platformService);
     this.lookup = lookup;
     this.map = map;
     this.name = name;

@@ -69,11 +69,6 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   @Override
-  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
-    return retrieve(id);
-  }
-
-  @Override
   public ObjectID retrieveRootID(final String name, GroupID gid) {
     this.retrieveRootIDCalls.add(name);
     try {

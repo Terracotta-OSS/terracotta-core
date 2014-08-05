@@ -76,7 +76,8 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
             // make sure config is complete
             effectiveConfig = distributedTypeFactory.newConfigForCreationInCluster(configuration);
             // need to create stripe objects
-            stripeObjects = distributedTypeFactory.createStripeObjects(name, effectiveConfig, roots.length);
+            stripeObjects = distributedTypeFactory.createStripeObjects(name, effectiveConfig, roots.length,
+                                                                       platformService);
             injectStripeObjects(name, stripeObjects);
             created = true;
           }

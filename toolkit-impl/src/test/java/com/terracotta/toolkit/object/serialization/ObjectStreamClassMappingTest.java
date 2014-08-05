@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,8 +46,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
-
-import static org.junit.Assert.assertEquals;
 
 public class ObjectStreamClassMappingTest {
 
@@ -307,11 +307,6 @@ public class ObjectStreamClassMappingTest {
     }
 
     @Override
-    public boolean isRejoinEnabled() {
-      return false;
-    }
-
-    @Override
     public void throttlePutIfNecessary(ObjectID object) {
       //
     }
@@ -388,6 +383,36 @@ public class ObjectStreamClassMappingTest {
 
     @Override
     public void sendEvent(TCManagementEvent event) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public LockID generateLockIdentifier(Object obj) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getLockAwardIDFor(LockID lock) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isLockAwardValid(LockID lock, long awardID) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void pinLock(LockID lock, long awardID) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unpinLock(LockID lock, long awardID) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TCObject lookupExistingOrNull(Object obj) {
       throw new UnsupportedOperationException();
     }
   }

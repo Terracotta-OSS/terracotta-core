@@ -9,10 +9,12 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.ApplicatorDNAEncodingImpl;
+import com.tc.object.LogicalOperation;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNAEncodingInternal;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.locks.LockID;
@@ -59,8 +61,8 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 /*
- * This test really belongs in the TC Messaging module but it's dependencies
- * currently prevent that.  It needs some heavy refactoring.
+ * This test really belongs in the TC Messaging module but it's dependencies currently prevent that. It needs some heavy
+ * refactoring.
  */
 public class TransactionBatchTest extends TestCase {
 
@@ -78,8 +80,7 @@ public class TransactionBatchTest extends TestCase {
   private ClientTransactionBatchWriter newWriter(final ObjectStringSerializer serializer) {
     return new ClientTransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
                                             this.messageFactory,
-                                            FoldingConfigHelper.createFromProperties(TCPropertiesImpl
-                                                .getProperties()));
+                                            FoldingConfigHelper.createFromProperties(TCPropertiesImpl.getProperties()));
   }
 
   private ClientTransactionBatchWriter newWriter(final ObjectStringSerializer serializer, final boolean foldEnabled,
@@ -149,7 +150,8 @@ public class TransactionBatchTest extends TestCase {
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
 
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     final MockTCObject mtco = new MockTCObject(new ObjectID(2), this);
     mtco.setNew(true);
@@ -227,8 +229,8 @@ public class TransactionBatchTest extends TestCase {
     final CounterManager counterManager = new CounterManagerImpl();
     final SampledRateCounter transactionSizeCounter = (SampledRateCounter) counterManager
         .createCounter(new SampledRateCounterConfig(1, 10, false));
-    final DSOGlobalServerStats stats = new DSOGlobalServerStatsImpl(null, null, null, null,
-        null, null, transactionSizeCounter, null, null, null);
+    final DSOGlobalServerStats stats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null,
+                                                                    transactionSizeCounter, null, null, null);
     return stats;
   }
 
@@ -243,19 +245,23 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     // txn3 has more objects than 1 & 2, but contains all from the previous, it can be folded
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn3 = new ClientTransactionImpl(0);
     txn3.setTransactionContext(tc);
-    txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn3.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn3.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
+    txn3.logicalInvoke(new MockTCObject(new ObjectID(2), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
@@ -278,7 +284,8 @@ public class TransactionBatchTest extends TestCase {
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn4 = new ClientTransactionImpl(0);
     txn4.setTransactionContext(tc);
-    txn4.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn4.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     fi = writer.addTransaction(txn4, sequenceGenerator, tidGenerator);
     assertTrue(fi.isFolded());
@@ -356,17 +363,22 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(3), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(2), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(3), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(3), this), "class", "class.field", ObjectID.NULL_ID, -1);
-
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(2), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(3), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
     final long startSeq = sequenceGenerator.getCurrentSequence();
@@ -393,12 +405,14 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL, threeLocks);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL, threeLocks);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
@@ -423,12 +437,14 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
@@ -453,7 +469,8 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txnWithRoot = new ClientTransactionImpl(0);
@@ -499,7 +516,8 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
@@ -511,8 +529,11 @@ public class TransactionBatchTest extends TestCase {
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn3 = new ClientTransactionImpl(0);
     txn3.setTransactionContext(tc);
-    txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn3.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn3.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
+
+    txn3.logicalInvoke(new MockTCObject(new ObjectID(2), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
@@ -543,12 +564,14 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
     final MockTCObject mtco = new MockTCObject(new ObjectID(2), new Object());
     mtco.setNew(true);
     txn2.createObject(mtco);
@@ -576,17 +599,19 @@ public class TransactionBatchTest extends TestCase {
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
-    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
-
+    txn1.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                      LogicalChangeID.NULL_ID);
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
-    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn2.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn3 = new ClientTransactionImpl(0);
     txn3.setTransactionContext(tc);
-    txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn3.logicalInvoke(new MockTCObject(new ObjectID(1), this), LogicalOperation.PUT, new Object[] {},
+                       LogicalChangeID.NULL_ID);
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();

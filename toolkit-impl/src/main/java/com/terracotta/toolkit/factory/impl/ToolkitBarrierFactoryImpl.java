@@ -29,10 +29,12 @@ public class ToolkitBarrierFactoryImpl implements ToolkitObjectFactory<ToolkitBa
   private final WeakValueMap<ToolkitBarrierImpl> localCache;
   private final Lock                             lock;
   private volatile Set<String>                   beforeRejoinBarriers = Collections.emptySet();
+  private final PlatformService                  platformService;
 
   public ToolkitBarrierFactoryImpl(ToolkitStore clusteredMap, WeakValueMapManager manager,
                                    PlatformService platformService) {
     this.barriers = clusteredMap;
+    this.platformService = platformService;
     this.barrierIdGenerator = new ToolkitIDGeneratorImpl(ToolkitTypeConstants.TOOLKIT_BARRIER_UID_NAME, barriers);
     this.localCache = manager.createWeakValueMap();
     this.lock = new ReentrantLock();
@@ -90,7 +92,7 @@ public class ToolkitBarrierFactoryImpl implements ToolkitObjectFactory<ToolkitBa
   }
 
   private ToolkitBarrier createToolkitType(String name, int parties) {
-    ToolkitBarrierImpl barrier = new ToolkitBarrierImpl(name, parties, barriers, barrierIdGenerator);
+    ToolkitBarrierImpl barrier = new ToolkitBarrierImpl(name, parties, barriers, barrierIdGenerator, platformService);
     localCache.put(name, barrier);
     return barrier;
   }

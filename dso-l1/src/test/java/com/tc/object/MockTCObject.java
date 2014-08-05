@@ -27,13 +27,9 @@ public class MockTCObject implements TCObject {
   private Exception      hydrateException = null;
 
   public MockTCObject(final ObjectID id, final Object obj) {
-    this(id, obj, false, false);
-  }
-
-  public MockTCObject(final ObjectID id, final Object obj, final boolean isIndexed, final boolean isLogical) {
     this.peer = obj;
     this.id = id;
-    this.tcClazz = new MockTCClass(isIndexed, isLogical);
+    this.tcClazz = new MockTCClass();
   }
 
   public List getHistory() {
@@ -128,7 +124,7 @@ public class MockTCObject implements TCObject {
 
   @Override
   public String getExtendingClassName() {
-    return tcClazz.getExtendingClassName();
+    return getClassName();
   }
 
   @Override
@@ -143,17 +139,17 @@ public class MockTCObject implements TCObject {
 
   @Override
   public boolean isIndexed() {
-    return tcClazz.isIndexed();
+    return false;
   }
 
   @Override
   public boolean isLogical() {
-    return tcClazz.isLogical();
+    throw new AssertionError();
   }
 
   @Override
   public boolean isEnum() {
-    return tcClazz.isEnum();
+    return false;
   }
 
   public static class MethodCall {

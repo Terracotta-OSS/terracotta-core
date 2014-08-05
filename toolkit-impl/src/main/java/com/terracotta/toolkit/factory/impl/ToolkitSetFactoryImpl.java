@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitMap;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
@@ -18,11 +19,9 @@ import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 public class ToolkitSetFactoryImpl extends AbstractPrimaryToolkitObjectFactory<ToolkitSetImpl, ToolkitMapImpl> {
 
-  private static final SetIsolatedTypeFactory FACTORY = new SetIsolatedTypeFactory();
-
   public ToolkitSetFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
     super(toolkit, context.getToolkitTypeRootsFactory()
-        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SET_ROOT_NAME, FACTORY,
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SET_ROOT_NAME, new SetIsolatedTypeFactory(context.getPlatformService()),
                                          context.getPlatformService()));
   }
 
@@ -33,17 +32,23 @@ public class ToolkitSetFactoryImpl extends AbstractPrimaryToolkitObjectFactory<T
 
   private static class SetIsolatedTypeFactory implements IsolatedToolkitTypeFactory<ToolkitSetImpl, ToolkitMapImpl> {
 
+    private final PlatformService platformService;
+
+    SetIsolatedTypeFactory(PlatformService platformService) {
+      this.platformService = platformService;
+    }
+
     @Override
     public ToolkitSetImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitSetImpl> factory,
                                                     IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, String name,
                                                     Configuration config, ToolkitMapImpl tcClusteredObject) {
-      DestroyableToolkitMap map = new DestroyableToolkitMap(factory, lookup, tcClusteredObject, name);
-      return new ToolkitSetImpl(map);
+      DestroyableToolkitMap map = new DestroyableToolkitMap(factory, lookup, tcClusteredObject, name, platformService);
+      return new ToolkitSetImpl(map, platformService);
     }
 
     @Override
     public ToolkitMapImpl createTCClusteredObject(Configuration config) {
-      return new ToolkitMapImpl();
+      return new ToolkitMapImpl(platformService);
     }
 
   }

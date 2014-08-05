@@ -13,7 +13,6 @@ import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObjectFactory;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObjectFactoryImpl;
-import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,8 +29,8 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   private volatile boolean                       destroyed = false;
   protected final PlatformService                platformService;
 
-  public AbstractTCToolkitObject() {
-    platformService = PlatformServiceProvider.getPlatformService();
+  public AbstractTCToolkitObject(PlatformService platformService) {
+    this.platformService = platformService;
     SerializationStrategy registeredSerializer = platformService
         .lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME,
                                       SerializationStrategy.class);

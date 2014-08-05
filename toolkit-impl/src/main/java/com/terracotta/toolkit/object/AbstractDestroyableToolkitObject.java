@@ -6,6 +6,7 @@ package com.terracotta.toolkit.object;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.factory.impl.AbstractPrimaryToolkitObjectFactory;
 import com.terracotta.toolkit.rejoin.RejoinCallback;
@@ -18,12 +19,12 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
   protected final DestroyApplicator                   destroyApplicator;
   protected final ToolkitObjectStatusImpl             status;
 
-  public AbstractDestroyableToolkitObject(ToolkitObjectFactory<T> factory) {
+  public AbstractDestroyableToolkitObject(ToolkitObjectFactory<T> factory, PlatformService platformService) {
     if (!(factory instanceof AbstractPrimaryToolkitObjectFactory)) { throw new IllegalStateException(); }
 
     this.factory = (AbstractPrimaryToolkitObjectFactory) factory;
     this.destroyApplicator = new DestroyApplicatorImpl(this);
-    status = new ToolkitObjectStatusImpl();
+    status = new ToolkitObjectStatusImpl(platformService);
   }
 
   public final DestroyApplicator getDestroyApplicator() {

@@ -23,10 +23,9 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
-import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
+import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
@@ -94,8 +93,7 @@ public interface DSOClientBuilder {
                                                 final AbortableOperationManager abortableOperationManager,
                                                 final TaskRunner taskRunner);
 
-  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
-                                                      final RemoteObjectManager remote,
+  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final RemoteObjectManager remote,
                                                       final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
                                                       final L1ServerMapLocalCacheManager globalLocalCacheManager,
@@ -105,7 +103,8 @@ public interface DSOClientBuilder {
   RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                               final DSOClientMessageChannel dsoChannel,
                                                               final SessionManager sessionManager,
-                                                              SearchResultManager resultManager, final AbortableOperationManager abortableOperationManager);
+                                                              SearchResultManager resultManager,
+                                                              final AbortableOperationManager abortableOperationManager);
 
   SearchResultManager createSearchResultManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                 final SessionManager sessionManager,
@@ -124,8 +123,7 @@ public interface DSOClientBuilder {
                                               final ClientIDProvider clientIDProvider,
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
-                                              final Portability portability,
-                                              TCObjectSelfStore tcObjectSelfStore,
+                                              final Portability portability, TCObjectSelfStore tcObjectSelfStore,
                                               AbortableOperationManager abortableOperationManager);
 
   ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
@@ -170,7 +168,7 @@ public interface DSOClientBuilder {
   void registerForOperatorEvents(L1Management management);
 
   TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
-                                      final DNAEncoding dnaEncoding, final Manager manager,
+                                      final DNAEncoding dnaEncoding,
                                       final L1ServerMapLocalCacheManager globalLocalCacheManager,
                                       final RemoteServerMapManager remoteServerMapManager);
 

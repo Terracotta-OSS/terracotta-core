@@ -13,6 +13,7 @@ import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.LogicalOperation;
 import com.tc.object.TCObject;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
@@ -32,7 +33,8 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
   private volatile transient ToolkitReadWriteLock lock;
   private final transient ToolkitLock             concurrentLock;
 
-  public ToolkitListImpl() {
+  public ToolkitListImpl(PlatformService platformService) {
+    super(platformService);
     concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT", platformService);
   }
 

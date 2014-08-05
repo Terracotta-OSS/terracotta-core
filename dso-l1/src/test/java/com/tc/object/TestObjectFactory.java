@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNA;
+import com.tc.platform.PlatformService;
 
 public class TestObjectFactory implements TCObjectFactory {
 
@@ -27,22 +28,12 @@ public class TestObjectFactory implements TCObjectFactory {
   }
 
   @Override
-  public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException {
-    return peerObject;
-  }
-
-  @Override
-  public Object getNewArrayInstance(TCClass type, int size) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public Object getNewPeerObject(TCClass type) throws IllegalArgumentException, SecurityException {
     return peerObject;
   }
 
   @Override
-  public Object getNewPeerObject(TCClass type, DNA dna) {
+  public Object getNewPeerObject(TCClass type, DNA dna, PlatformService platformService) {
     return peerObject;
   }
 

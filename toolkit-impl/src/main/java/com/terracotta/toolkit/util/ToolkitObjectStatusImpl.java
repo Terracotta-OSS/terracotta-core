@@ -5,14 +5,13 @@ package com.terracotta.toolkit.util;
 
 import com.tc.platform.PlatformService;
 import com.tc.util.Assert;
-import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 public class ToolkitObjectStatusImpl implements ToolkitObjectStatus {
   private volatile boolean      isDestroyed;
   private final PlatformService service;
 
-  public ToolkitObjectStatusImpl() {
-    service = PlatformServiceProvider.getPlatformService();
+  public ToolkitObjectStatusImpl(PlatformService platformService) {
+    service = platformService;
   }
 
   public void setDestroyed() {

@@ -29,14 +29,12 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
-import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
+import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -120,7 +118,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter,
                                          stackHarnessFactory, null, connectionPolicy, 0, aConfig,
                                          new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         messageTypeFactoryMapping, reconnectionRejectedHandler, securityManager, productId);
+                                         messageTypeFactoryMapping, reconnectionRejectedHandler, securityManager,
+                                         productId);
   }
 
   @Override
@@ -287,11 +286,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   @Override
   public TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
-                                             final DNAEncoding dnaEncoding, final Manager manager,
+                                             final DNAEncoding dnaEncoding,
                                              final L1ServerMapLocalCacheManager localCacheManager,
                                              final RemoteServerMapManager remoteServerMapManager) {
-    return new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, dnaEncoding, manager,
-                                  localCacheManager, remoteServerMapManager);
+    return new TCClassFactoryImpl(config, classProvider, dnaEncoding, localCacheManager, remoteServerMapManager);
   }
 
   @Override
@@ -314,7 +312,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                                      final DSOClientMessageChannel dsoChannel,
                                                                      final SessionManager sessionManager,
-                                                                     SearchResultManager resultManager, final AbortableOperationManager abortableOperationManager) {
+                                                                     SearchResultManager resultManager,
+                                                                     final AbortableOperationManager abortableOperationManager) {
     return new NullRemoteSearchRequestManager();
   }
 

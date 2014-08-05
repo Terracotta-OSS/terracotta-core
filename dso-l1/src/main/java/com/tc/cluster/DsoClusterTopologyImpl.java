@@ -5,6 +5,7 @@ package com.tc.cluster;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
@@ -22,6 +23,12 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   private final ReentrantReadWriteLock                 nodesLock      = new ReentrantReadWriteLock();
   private final ReentrantReadWriteLock.ReadLock        nodesReadLock  = nodesLock.readLock();
   private final ReentrantReadWriteLock.WriteLock       nodesWriteLock = nodesLock.writeLock();
+
+  private final DsoClusterInternal                     dsoCluster;
+
+  public DsoClusterTopologyImpl(DsoClusterInternal dsoCluster) {
+    this.dsoCluster = dsoCluster;
+  }
 
   Collection<DsoNodeInternal> getInternalNodes() {
     nodesReadLock.lock();
@@ -105,7 +112,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   }
 
   private DsoNodeInternal registerDsoNodeBase(final ClientID clientId, boolean isLocalNode) {
-    final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.toLong(), isLocalNode);
+    final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.toLong(), isLocalNode, dsoCluster);
 
     nodesWriteLock.lock();
     try {

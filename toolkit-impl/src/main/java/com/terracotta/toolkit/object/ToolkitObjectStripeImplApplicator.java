@@ -10,8 +10,8 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -21,6 +21,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 
 import java.io.IOException;
@@ -63,7 +64,8 @@ public class ToolkitObjectStripeImplApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws ClassNotFoundException {
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna, PlatformService platformService)
+      throws ClassNotFoundException {
     UnclusteredConfiguration config = new UnclusteredConfiguration();
     TCToolkitObject[] components = null;
 

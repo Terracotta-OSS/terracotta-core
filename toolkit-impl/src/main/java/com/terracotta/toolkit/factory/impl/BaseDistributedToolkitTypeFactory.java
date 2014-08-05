@@ -4,6 +4,8 @@
 
 package com.terracotta.toolkit.factory.impl;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
@@ -34,8 +36,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 /**
  * @author Eugene Shelestovich
@@ -88,18 +88,20 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
   @Override
   public ToolkitObjectStripe<InternalToolkitMap<K, V>>[] createStripeObjects(final String name,
                                                                              final Configuration config,
-                                                                             final int numStripes) {
+                                                                             final int numStripes,
+                                                                             PlatformService platformService) {
     // creating stripe objects for first time
     ToolkitObjectStripe<InternalToolkitMap<K, V>>[] rv = new ToolkitObjectStripe[numStripes];
     Configuration[] stripesConfig = distributeConfigAmongStripes(config, numStripes);
     for (int i = 0; i < rv.length; i++) {
       rv[i] = new ToolkitObjectStripeImpl<InternalToolkitMap<K, V>>(
-          stripesConfig[i], getComponentsForStripe(name, stripesConfig[i]));
+          stripesConfig[i], getComponentsForStripe(name, stripesConfig[i], platformService));
     }
     return rv;
   }
 
-  private ServerMap[] getComponentsForStripe(final String name, final Configuration config) {
+  private ServerMap[] getComponentsForStripe(final String name, final Configuration config,
+                                             PlatformService platformService) {
     int numSegments = (Integer)InternalCacheConfigurationType.CONCURRENCY.getValueIfExistsOrDefault(config);
     if (numSegments <= 0) return EMPTY_SERVER_MAP_ARRAY;
 
@@ -115,7 +117,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
       }
     }
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = new ServerMap(segmentConfigs[i], name);
+      rv[i] = new ServerMap(segmentConfigs[i], name, platformService);
     }
     return rv;
   }

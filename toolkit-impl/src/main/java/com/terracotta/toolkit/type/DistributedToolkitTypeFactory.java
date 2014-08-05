@@ -34,7 +34,8 @@ public interface DistributedToolkitTypeFactory<T extends DistributedToolkitType<
   /**
    * Create the stripe objects
    */
-  ToolkitObjectStripe<S>[] createStripeObjects(String name, Configuration configuration, int numStripes);
+  ToolkitObjectStripe<S>[] createStripeObjects(String name, Configuration configuration, int numStripes,
+                                               PlatformService platformService);
 
   /**
    * @throws IllegalArgumentException if the existingObject has conflicting configuration with the passed in parameter

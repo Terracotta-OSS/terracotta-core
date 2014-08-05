@@ -9,9 +9,8 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.license.ProductID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.util.UUID;
@@ -25,11 +24,12 @@ public class StandardClientFactory extends AbstractClientFactory {
   public DistributedObjectClient createClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                               final ClassProvider classProvider,
                                               final PreparedComponentsFromL2Connection connectionComponents,
-                                              final Manager manager, final DsoClusterInternal dsoCluster,
+                                              final DsoClusterInternal dsoCluster,
                                               final TCSecurityManager securityManager,
                                               final AbortableOperationManager abortableOperationManager,
-                                              final RejoinManagerInternal rejoinManager, UUID uuid, final ProductID productId) {
-    return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
+                                              final RejoinManagerInternal rejoinManager, UUID uuid,
+                                              final ProductID productId) {
+    return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, dsoCluster,
                                        securityManager, abortableOperationManager, rejoinManager, uuid, productId);
   }
 

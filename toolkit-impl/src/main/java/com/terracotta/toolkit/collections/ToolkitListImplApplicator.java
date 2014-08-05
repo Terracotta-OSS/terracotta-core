@@ -8,8 +8,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.applicator.BaseApplicator;
@@ -18,8 +18,9 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import java.io.IOException;
+import com.tc.platform.PlatformService;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ToolkitListImplApplicator extends BaseApplicator {
@@ -29,6 +30,11 @@ public class ToolkitListImplApplicator extends BaseApplicator {
     super(encoding, logger);
   }
   
+  @Override
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna, PlatformService platformService) {
+    return new ToolkitListImpl(platformService);
+  }
+
   @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {

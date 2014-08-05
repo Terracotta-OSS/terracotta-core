@@ -5,7 +5,6 @@
 package com.tcclient.cluster;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.bytecode.ManagerUtil;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -17,15 +16,17 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
   private final boolean            isLocalNode;
 
   private volatile DsoNodeMetaData metaData;
+  private final DsoClusterInternal dsoCluster;
 
-  public DsoNodeImpl(final String id, final long channelId) {
-    this(id, channelId, false);
+  public DsoNodeImpl(final String id, final long channelId, DsoClusterInternal dsoCluster) {
+    this(id, channelId, false, dsoCluster);
   }
 
-  public DsoNodeImpl(final String id, final long channelId, boolean isLocalNode) {
+  public DsoNodeImpl(final String id, final long channelId, boolean isLocalNode, DsoClusterInternal dsoCluster) {
     this.id = id;
     this.channelId = channelId;
     this.isLocalNode = isLocalNode;
+    this.dsoCluster = dsoCluster;
   }
 
   @Override
@@ -67,10 +68,7 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
       if (isLocalNode()) {
         metaData = resolveLocalIPAndHostname();
       } else {
-        // Doing this through the manager API to not have to keep a reference
-        // to the cluster instance in the node instance. This makes it easier to
-        // share DsoNodeImpl instances.
-        metaData = getOrRetrieveMetaData(((DsoClusterInternal) ManagerUtil.getManager().getDsoCluster()));
+        metaData = getOrRetrieveMetaData(dsoCluster);
       }
     }
     return metaData;

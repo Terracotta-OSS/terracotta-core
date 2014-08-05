@@ -8,6 +8,7 @@ import org.terracotta.toolkit.events.ToolkitNotificationEvent;
 import org.terracotta.toolkit.events.ToolkitNotificationListener;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
@@ -29,8 +30,8 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   public DestroyableToolkitNotifier(ToolkitObjectFactory factory,
                                     IsolatedClusteredObjectLookup<ToolkitNotifierImpl> lookup,
-                                    ToolkitNotifierImpl<T> notifierImpl, String name) {
-    super(factory);
+                                    ToolkitNotifierImpl<T> notifierImpl, String name, PlatformService platformService) {
+    super(factory, platformService);
     this.lookup = lookup;
     this.name = name;
     this.notifier = notifierImpl;

@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
-import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.cache.TimestampedValue;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
@@ -16,8 +15,6 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.servermap.ExpirableMapEntry;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.util.FindbugsSuppressWarnings;
-import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
-import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -32,11 +29,6 @@ import java.io.ObjectOutput;
  */
 public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externalizable, Manageable,
     LocalCacheAddCallBack, ExpirableMapEntry {
-
-  private static final ToolkitLock   UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK = ToolkitLockingApi
-                                                                                   .createConcurrentTransactionLock("servermap-update-last-accessed-time-concurrent-lock",
-                                                                                                                    PlatformServiceProvider
-                                                                                                                        .getPlatformService());
 
   private static final int           NEVER_EXPIRE                              = Integer.MAX_VALUE;
   /**
@@ -269,15 +261,9 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   }
 
   public void updateLastAccessedTime(Object key, TCObjectServerMap tcObjectServerMap, int usedAtTime) {
-
-    UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.lock();
-    try {
-      synchronized (getResolveLock()) {
-        this.lastAccessedTime = usedAtTime;
-        tcObjectServerMap.doLogicalSetLastAccessedTime(key, getObjectID(), usedAtTime);
-      }
-    } finally {
-      UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.unlock();
+    synchronized (getResolveLock()) {
+      this.lastAccessedTime = usedAtTime;
+      tcObjectServerMap.doLogicalSetLastAccessedTime(key, getObjectID(), usedAtTime);
     }
   }
 

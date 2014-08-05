@@ -6,37 +6,29 @@ package com.tc.object;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.field.TCField;
 import com.tc.util.Conversion;
-import com.tc.util.Util;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Implementation of TCObject interface.
  */
 public abstract class TCObjectImpl implements TCObject {
-  private static final TCLogger logger                    = TCLogging.getLogger(TCObjectImpl.class);
+  private static final TCLogger LOGGER        = TCLogging.getLogger(TCObjectImpl.class);
 
-  private static final int      ACCESSED_OFFSET           = 1 << 0;
-  private static final int      IS_NEW_OFFSET             = 1 << 1;
-  private static final int      AUTOLOCKS_DISABLED_OFFSET = 1 << 2;
+  private static final int      IS_NEW_OFFSET = 1 << 0;
 
   // This initial negative version number is important since GID is assigned in the server from 0.
-  private long                  version                   = -1;
+  private long                  version       = -1;
 
-  private final ObjectID      objectID;
+  private final ObjectID        objectID;
   private final TCClass         tcClazz;
   private WeakReference         peerObject;
-  private byte                  flags                     = 0;
+  private byte                  flags         = 0;
 
   protected TCObjectImpl(final ObjectID id, final Object peer, final TCClass clazz, final boolean isNew) {
     this.objectID = id;
@@ -50,7 +42,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   @Override
   public boolean isShared() {
-    return true;
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   public boolean isNull() {
@@ -104,10 +96,10 @@ public abstract class TCObjectImpl implements TCObject {
       try {
         getTCClass().hydrate(this, from, po, force);
       } catch (final ClassNotFoundException e) {
-        logger.warn("Re-throwing Exception: ", e);
+        LOGGER.warn("Re-throwing Exception: ", e);
         throw e;
       } catch (final IOException e) {
-        logger.warn("Re-throwing Exception: ", e);
+        LOGGER.warn("Re-throwing Exception: ", e);
         throw new DNAException(e);
       }
     }
@@ -141,49 +133,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   @Override
   public void setValue(final String fieldName, final Object obj) {
-    try {
-      final TransparentAccess ta = (TransparentAccess) getPeerObject();
-      if (ta == null) {
-        // Object was GC'd so return which should lead to a re-retrieve
-        return;
-      }
-      clearReference(fieldName);
-      final TCField field = getTCClass().getField(fieldName);
-      if (field == null) {
-        logger.warn("Data for field:" + fieldName + " was recieved but that field does not exist in class:");
-        return;
-      }
-      if (obj instanceof ObjectID) {
-        setReference(fieldName, (ObjectID) obj);
-        ta.__tc_setfield(field.getName(), null);
-      } else {
-        // clean this up
-        ta.__tc_setfield(field.getName(), obj);
-      }
-    } catch (final Exception e) {
-      logger.error("Error setting field [" + fieldName + "] to value of type " + typeOf(obj) + " on instance of "
-                   + getTCClass().getPeerClass().getName() + " that has fields: " + fieldDesc());
-
-      // TODO: More elegant exception handling.
-      throw new com.tc.object.dna.api.DNAException(e);
-    }
-  }
-
-  private String fieldDesc() {
-    List<String> fields = new ArrayList<String>();
-    Class c = getTCClass().getPeerClass();
-    while (c != null) {
-      for (Field f : c.getDeclaredFields()) {
-        fields.add(c.getName() + "." + f.getName() + "(" + f.getType().getName() + ")");
-      }
-      c = c.getSuperclass();
-    }
-    return fields.toString();
-  }
-
-  private static String typeOf(Object obj) {
-    if (obj == null) { return "null"; }
-    return obj.getClass().getSimpleName();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
@@ -196,33 +146,29 @@ public abstract class TCObjectImpl implements TCObject {
     throw new AssertionError("shouldn't be called");
   }
 
-  public void clearArrayReference(final int index) {
-    clearReference(Integer.toString(index));
-  }
-
   @Override
   public void clearReference(final String fieldName) {
-    // do nothing
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void resolveReference(final String fieldName) {
-    // do nothing
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void resolveAllReferences() {
-    // override me
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void literalValueChanged(final Object newValue, final Object oldValue) {
-    throw new UnsupportedOperationException();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void setLiteralValue(final Object newValue) {
-    throw new UnsupportedOperationException();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
@@ -243,28 +189,13 @@ public abstract class TCObjectImpl implements TCObject {
 
   @Override
   public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
-    try {
-      markAccessed();
-      if (index == NULL_INDEX) {
-        // Assert.eval(fieldname.indexOf('.') >= 0);
-        clearReference(fieldname);
-      } else {
-        clearArrayReference(index);
-      }
-      getObjectManager().getTransactionManager().fieldChanged(this, classname, fieldname, newValue, index);
-    } catch (final Throwable t) {
-      Util.printLogAndRethrowError(t, logger);
-    }
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
                                          final int index) {
     throw new AssertionError();
-  }
-
-  public boolean isFieldPortableByOffset(final long fieldOffset) {
-    return getTCClass().isPortableField(fieldOffset);
   }
 
   @Override
@@ -275,77 +206,72 @@ public abstract class TCObjectImpl implements TCObject {
   @Override
   public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
                                   final int index) {
-    objectFieldChanged(classname, fieldname, Boolean.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Byte.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Character.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Double.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Float.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Integer.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Long.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
-    objectFieldChanged(classname, fieldname, Short.valueOf(newValue), index);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
-    markAccessed();
-    for (int i = 0; i < length; i++) {
-      clearArrayReference(startPos + i);
-    }
-    getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
-    markAccessed();
-    getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void markAccessed() {
-    setFlag(ACCESSED_OFFSET, true);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public void clearAccessed() {
-    setFlag(ACCESSED_OFFSET, false);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public boolean recentlyAccessed() {
-    return getFlag(ACCESSED_OFFSET);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public int accessCount(final int factor) {
-    throw new UnsupportedOperationException();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
@@ -365,17 +291,17 @@ public abstract class TCObjectImpl implements TCObject {
   // but we don't ever want autolocks for that particular instance
   @Override
   public void disableAutoLocking() {
-    setFlag(AUTOLOCKS_DISABLED_OFFSET, true);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public boolean autoLockingDisabled() {
-    return getFlag(AUTOLOCKS_DISABLED_OFFSET);
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public String getExtendingClassName() {
-    return getTCClass().getExtendingClassName();
+    return getClassName();
   }
 
   @Override
@@ -390,16 +316,16 @@ public abstract class TCObjectImpl implements TCObject {
 
   @Override
   public boolean isIndexed() {
-    return getTCClass().isIndexed();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public boolean isLogical() {
-    return getTCClass().isLogical();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 
   @Override
   public boolean isEnum() {
-    return getTCClass().isEnum();
+    throw new AssertionError(); // XXX: remove method when possible
   }
 }

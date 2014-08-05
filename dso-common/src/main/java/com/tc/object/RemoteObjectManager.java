@@ -23,8 +23,6 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
 
   public DNA retrieve(ObjectID id, int depth) throws AbortedOperationException;
 
-  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) throws AbortedOperationException;
-
   public ObjectID retrieveRootID(String name, GroupID gid);
 
   public void addRoot(String name, ObjectID id, NodeID nodeID);

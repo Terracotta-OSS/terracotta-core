@@ -15,8 +15,8 @@ import com.tc.net.NodeID;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
@@ -33,12 +33,10 @@ import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.text.Banner;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
-import com.tc.util.ClassUtils;
 import com.tc.util.StringUtil;
 import com.tc.util.Util;
 import com.tc.util.VicariousThreadLocal;
@@ -252,18 +250,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         .toLong(), details);
   }
 
-  @Override
-  public void checkWriteAccess(final Object context) {
-    if (isTransactionLoggingDisabled()) { return; }
-
-    try {
-      // First check if we have any TXN context at all (else exception thrown)
-      getTransaction(context);
-    } catch (final UnlockedSharedObjectException usoe) {
-      throw checkAndReportUnlockedSharedObjectException(usoe, null, context);
-    }
-  }
-
   /**
    * In order to support ReentrantLock, the TransactionContext that is going to be removed when doing a commit may not
    * always be at the top of a stack because an reentrant lock could issue a lock within a synchronized block (although
@@ -371,13 +357,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     return ttc.peekContext();
   }
 
-  @Override
-  public boolean isLockOnTopStack(final LockID lock) {
-    final TransactionContext tc = peekContext();
-    if (tc == null) { return false; }
-    return (tc.getLockID().equals(lock));
-  }
-
   private void pushTxContext(final ClientTransaction currentTransaction, final LockID lockID, final TxnType type) {
     final ThreadTransactionContext ttc = getThreadTransactionContext();
     ttc.pushContext(lockID, type, type);
@@ -403,13 +382,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       aborted = true;
     } catch (PlatformRejoinException t) {
       rejoinInProgress = true;
-    } catch (final Throwable t) {
-      Banner.errorBanner("Terracotta client shutting down due to error " + t);
-      logger.error(t);
-      this.remoteTxnManager.stopProcessing();
-      if (t instanceof Error) { throw (Error) t; }
-      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
-      throw new RuntimeException(t);
     }
 
     popTransaction(lock);
@@ -523,130 +495,12 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public void apply(final TxnType txType, final List<LockID> lockIDs, final Collection objectChanges, final Map newRoots) {
+  public void apply(final TxnType txType, final List<LockID> lockIDs, final Collection objectChanges, Map newRoots) {
     try {
       disableTransactionLogging();
       basicApply(objectChanges, newRoots, false);
     } finally {
       enableTransactionLogging();
-    }
-  }
-
-  @Override
-  public void literalValueChanged(final TCObject source, final Object newValue, final Object oldValue) {
-    if (isTransactionLoggingDisabled()) { return; }
-
-    try {
-      disableTransactionLogging();
-
-      final Object pojo = source.getPeerObject();
-      ClientTransaction tx;
-
-      try {
-        tx = getTransaction(pojo);
-      } catch (final UnlockedSharedObjectException usoe) {
-        throw checkAndReportUnlockedSharedObjectException(usoe, "Failed To Change Value in:  "
-                                                                + newValue.getClass().getName(), pojo);
-      }
-
-      tx.literalValueChanged(source, newValue, oldValue);
-
-    } finally {
-      enableTransactionLogging();
-    }
-
-  }
-
-  @Override
-  public void fieldChanged(final TCObject source, final String classname, final String fieldname,
-                           final Object newValue, final int index) {
-    if (isTransactionLoggingDisabled()) { return; }
-
-    try {
-      disableTransactionLogging();
-
-      final Object pojo = source.getPeerObject();
-
-      ClientTransaction tx;
-      try {
-        tx = getTransaction(pojo);
-      } catch (final UnlockedSharedObjectException usoe) {
-        throw checkAndReportUnlockedSharedObjectException(usoe, "Failed To Modify Field:  " + fieldname + " in "
-                                                                + classname, pojo, classname, fieldname);
-      }
-
-      logFieldChanged0(source, classname, fieldname, newValue, tx);
-
-      if (newValue != null && LiteralValues.isLiteralInstance(newValue)) {
-        tx.fieldChanged(source, classname, fieldname, newValue, index);
-      } else {
-        if (newValue != null) {
-          this.clientObjectManager.checkPortabilityOfField(newValue, fieldname, pojo);
-        }
-
-        final TCObject tco = this.clientObjectManager.lookupOrCreate(newValue);
-
-        tx.fieldChanged(source, classname, fieldname, tco.getObjectID(), index);
-
-        // record the reference in this transaction -- This is to solve the race condition of transactions
-        // that reference objects newly "created" in other transactions that may not commit before us
-        if (newValue != null) {
-          tx.createObject(tco);
-        }
-      }
-    } finally {
-      enableTransactionLogging();
-    }
-  }
-
-  @Override
-  public void arrayChanged(final TCObject source, final int startPos, final Object array, final int length) {
-    if (isTransactionLoggingDisabled()) { return; }
-    try {
-      disableTransactionLogging();
-      final Object pojo = source.getPeerObject();
-      ClientTransaction tx;
-
-      try {
-        tx = getTransaction(pojo);
-      } catch (final UnlockedSharedObjectException usoe) {
-        throw checkAndReportUnlockedSharedObjectException(usoe, "Failed To Modify Array: " + pojo.getClass().getName(),
-                                                          pojo);
-      }
-
-      if (!ClassUtils.isPrimitiveArray(array)) {
-        final Object[] objArray = (Object[]) array;
-        for (int i = 0; i < length; i++) {
-
-          final Object element = objArray[i];
-          if (!LiteralValues.isLiteralInstance(element)) {
-            if (element != null) {
-              this.clientObjectManager.checkPortabilityOfField(element, String.valueOf(i), pojo);
-            }
-
-            final TCObject tco = this.clientObjectManager.lookupOrCreate(element);
-            objArray[i] = tco.getObjectID();
-            // record the reference in this transaction -- This is to solve the race condition of transactions
-            // that reference objects newly "created" in other transactions that may not commit before us
-            if (element != null) {
-              tx.createObject(tco);
-            }
-          }
-        }
-      }
-
-      tx.arrayChanged(source, startPos, array, length);
-
-    } finally {
-      enableTransactionLogging();
-    }
-  }
-
-  private void logFieldChanged0(final TCObject source, final String classname, final String fieldname,
-                                final Object newValue, final ClientTransaction tx) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("fieldChanged(source=" + source + ", classname=" + classname + ", fieldname=" + fieldname
-                   + ", newValue=" + newValue + ", tx=" + tx);
     }
   }
 
@@ -680,7 +534,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
           }
 
           final TCObject tco = this.clientObjectManager.lookupOrCreate(p);
-          tco.markAccessed();
           parameters[i] = tco.getObjectID();
           if (p != null) {
             // record the reference in this transaction -- This is to solve the race condition of transactions
@@ -692,27 +545,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       tx.logicalInvoke(source, method, parameters, id);
     } finally {
       enableTransactionLogging();
-    }
-  }
-
-  private RuntimeException checkAndReportUnlockedSharedObjectException(final UnlockedSharedObjectException usoe,
-                                                                       final String details, final Object context) {
-    if (this.clientLockManager.isLockedByCurrentThread(LockLevel.READ)) {
-      final ReadOnlyException roe = makeReadOnlyException(details);
-      return roe;
-    } else {
-      return usoe;
-    }
-  }
-
-  private RuntimeException checkAndReportUnlockedSharedObjectException(final UnlockedSharedObjectException usoe,
-                                                                       final String details, final Object context,
-                                                                       final String classname, final String fieldname) {
-    if (this.clientLockManager.isLockedByCurrentThread(LockLevel.READ)) {
-      final ReadOnlyException roe = makeReadOnlyException(details);
-      return roe;
-    } else {
-      return usoe;
     }
   }
 
@@ -761,19 +593,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public void addReference(final TCObject tco) {
-    final ClientTransaction txn = getTransactionOrNull();
-    if (txn != null) {
-      txn.createObject(tco);
-    }
-  }
-
-  @Override
-  public ClientIDProvider getClientIDProvider() {
-    return this.cidProvider;
-  }
-
-  @Override
   public void disableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     if (txnStack == null) {
@@ -796,11 +615,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   public boolean isTransactionLoggingDisabled() {
     final Object txnStack = this.txnLogging.get();
     return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
-  }
-
-  @Override
-  public boolean isObjectCreationInProgress() {
-    return this.clientObjectManager.isCreationInProgress();
   }
 
   public static class ThreadTransactionLoggingStack {

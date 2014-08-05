@@ -7,10 +7,10 @@ package com.tc.object;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
-import com.tc.object.LogicalOperation;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.platform.PlatformService;
 import com.tc.util.Assert;
 
 import java.lang.ref.ReferenceQueue;
@@ -24,42 +24,12 @@ public class TestClientObjectManager implements ClientObjectManager {
   public final Map                 object2TCObject = new IdentityHashMap();
   private final ReferenceQueue     referenceQueue  = new ReferenceQueue();
   private final Object             root            = new IdentityHashMap();
-  private boolean                  isManaged;
   private int                      idSequence      = 1;
   private ClientTransactionManager txManager;
 
   public void add(final Object id, final TCObject tc) {
     this.objects.put(id, tc);
     this.object2TCObject.put(tc.getPeerObject(), tc);
-  }
-
-  public void setIsManaged(final boolean b) {
-    this.isManaged = b;
-  }
-
-  public boolean getIsManaged() {
-    return this.isManaged;
-  }
-
-  @Override
-  public boolean isManaged(final Object pojo) {
-    return this.object2TCObject.containsKey(pojo) || this.isManaged;
-  }
-
-  @Override
-  public boolean isPortableInstance(final Object pojo) {
-    return true;
-  }
-
-  @Override
-  public boolean isPortableClass(final Class clazz) {
-    return true;
-  }
-
-  public void sharedIfManaged(final Object pojo) {
-    if (isManaged(pojo)) {
-      lookupOrCreate(pojo);
-    }
   }
 
   @Override
@@ -99,11 +69,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public TCObject lookupIfLocal(final ObjectID id) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public TCObject lookup(final ObjectID id) {
     System.out.println(this + ".lookup(" + id + ")");
     return (TCObject) this.objects.get(id);
@@ -112,11 +77,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   @Override
   public TCObject lookupQuiet(final ObjectID id) {
     return lookup(id);
-  }
-
-  @Override
-  public WeakReference createNewPeer(final TCClass clazz, final int size, final ObjectID id, final ObjectID parentID) {
-    throw new ImplementMe();
   }
 
   @Override
@@ -130,11 +90,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public Object lookupObject(final ObjectID id, final ObjectID parentContext) {
-    return ((TCObject) this.objects.get(id)).getPeerObject();
-  }
-
-  @Override
   public TCClass getOrCreateClass(final Class clazz) {
     throw new ImplementMe();
   }
@@ -142,6 +97,11 @@ public class TestClientObjectManager implements ClientObjectManager {
   @Override
   public void setTransactionManager(final ClientTransactionManager txManager) {
     this.txManager = txManager;
+  }
+
+  @Override
+  public void setPlatformService(PlatformService platformService) {
+    throw new ImplementMe();
   }
 
   @Override
@@ -179,12 +139,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo)
-      throws TCNonPortableObjectError {
-    return;
-  }
-
-  @Override
   public void checkPortabilityOfLogicalAction(final LogicalOperation method, final Object[] params, final int index,
                                               final Object pojo) throws TCNonPortableObjectError {
     return;
@@ -201,38 +155,13 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public Object lookupOrCreateRoot(final String name, final Object obj, final boolean dsoFinal) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public boolean isCreationInProgress() {
     return false;
   }
 
   @Override
-  public Object lookupObjectNoDepth(final ObjectID id) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public Object lookupOrCreateRootNoDepth(final String rootName, final Object object) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public Object createOrReplaceRoot(final String rootName, final Object r) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public WeakReference newWeakObjectReference(final ObjectID objectID, final Object peer) {
     return new WeakObjectReference(objectID, peer, this.referenceQueue);
-  }
-
-  @Override
-  public boolean isLocal(final ObjectID objectID) {
-    throw new ImplementMe();
   }
 
   @Override

@@ -8,6 +8,7 @@ import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitListImpl;
@@ -24,11 +25,11 @@ public class ToolkitBlockingQueueFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<ToolkitBlockingQueueImpl, ToolkitObjectStripe<ToolkitListImpl>> {
 
   public static final String              CAPACITY_FIELD_NAME = "capacity";
-  private static final CBQIsolatedFactory FACTORY             = new CBQIsolatedFactory();
 
   public ToolkitBlockingQueueFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
     super(toolkit, context.getToolkitTypeRootsFactory()
-        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_BLOCKING_QUEUE_ROOT_NAME, FACTORY,
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_BLOCKING_QUEUE_ROOT_NAME,
+                                         new CBQIsolatedFactory(context.getPlatformService()),
                                          context.getPlatformService()));
   }
 
@@ -39,6 +40,12 @@ public class ToolkitBlockingQueueFactoryImpl extends
 
   private static class CBQIsolatedFactory implements
       IsolatedToolkitTypeFactory<ToolkitBlockingQueueImpl, ToolkitObjectStripe<ToolkitListImpl>> {
+
+    private final PlatformService plaformService;
+
+    CBQIsolatedFactory(PlatformService plaformService) {
+      this.plaformService = plaformService;
+    }
 
     @Override
     public ToolkitBlockingQueueImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitBlockingQueueImpl> factory,
@@ -65,14 +72,15 @@ public class ToolkitBlockingQueueFactoryImpl extends
                                                                           return toolkitObjectStripe.iterator().next();
                                                                         }
 
-                                                                      }, tcClusteredObject.iterator().next(), name);
+                                                                      }, tcClusteredObject.iterator().next(), name,
+                                                                      plaformService);
 
-      return new ToolkitBlockingQueueImpl(factory, listWrapper, actualCapacity);
+      return new ToolkitBlockingQueueImpl(factory, listWrapper, actualCapacity, plaformService);
     }
 
     @Override
     public ToolkitObjectStripeImpl<ToolkitListImpl> createTCClusteredObject(Configuration config) {
-      ToolkitListImpl[] components = new ToolkitListImpl[] { new ToolkitListImpl() };
+      ToolkitListImpl[] components = new ToolkitListImpl[] { new ToolkitListImpl(plaformService) };
       return new ToolkitObjectStripeImpl<ToolkitListImpl>(config, components);
     }
 

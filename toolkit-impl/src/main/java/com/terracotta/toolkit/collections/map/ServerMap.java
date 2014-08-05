@@ -40,6 +40,7 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
@@ -105,7 +106,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final AtomicReference<ToolkitMap<String, String>> attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
 
-  public ServerMap(Configuration config, String name) {
+  private final ToolkitLock                                 updateLastAccessTimeLock;
+  
+  public ServerMap(Configuration config, String name, PlatformService platformService) {
+    super(platformService);
     this.name = name;
     this.expireConcurrentLock = ToolkitLockingApi
         .createConcurrentTransactionLock("servermap-static-expire-concurrent-lock", platformService);
@@ -149,6 +153,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         return createBaseMetaData();
       }
     };
+    
+    updateLastAccessTimeLock = ToolkitLockingApi
+        .createConcurrentTransactionLock("servermap-update-last-accessed-time-concurrent-lock", platformService);
+
   }
 
   @Override
@@ -371,7 +379,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void markUsed(Object key, SerializedMapValue serializedMapValue, int usedAtTime) {
     if (shouldUpdateIdleTimer(usedAtTime, maxTTISeconds, serializedMapValue.internalGetLastAccessedTime())) {
-      serializedMapValue.updateLastAccessedTime(key, tcObjectServerMap, usedAtTime);
+      updateLastAccessTimeLock.lock();
+      try {
+        serializedMapValue.updateLastAccessedTime(key, tcObjectServerMap, usedAtTime);
+      } finally {
+        updateLastAccessTimeLock.unlock();
+      }
     }
   }
 
@@ -881,7 +894,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private V internalPutIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
     if (isEventual()) {
-      K portableKey = (K) assertKeyLiteral(key);
+      K portableKey = assertKeyLiteral(key);
 
       int retryCount = 1;
       while (true) {

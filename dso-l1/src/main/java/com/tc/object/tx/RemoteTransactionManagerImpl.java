@@ -289,12 +289,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   @Override
-  public void stopProcessing() {
-    this.sequencer.shutdown();
-    this.channel.close();
-  }
-
-  @Override
   public void requestImmediateShutdown() {
     this.immediateShutdownRequested = true;
     synchronized (lock) {

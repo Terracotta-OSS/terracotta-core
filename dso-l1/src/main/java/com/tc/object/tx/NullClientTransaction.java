@@ -4,8 +4,8 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.Notify;
@@ -38,17 +38,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicCreate(TCObject source) {
-    // null do nothing
-  }
-
-  @Override
   protected void basicCreateRoot(String name, ObjectID rootID) {
-    // null do nothing
-  }
-
-  @Override
-  protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     // null do nothing
   }
 
@@ -78,18 +68,8 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicArrayChanged(TCObject source, int startPos, Object array, int length) {
-    // null do nothing
-  }
-
-  @Override
   public int getNotifiesCount() {
     return 0;
-  }
-
-  @Override
-  protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
-    // do nothing
   }
 
   @Override
@@ -110,6 +90,11 @@ public class NullClientTransaction extends AbstractClientTransaction {
   @Override
   public int getSession() {
     return 0;
+  }
+
+  @Override
+  protected void basicCreate(TCObject object) {
+    //
   }
 
 }

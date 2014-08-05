@@ -7,8 +7,8 @@ package com.tc.object;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConnectionInfoConfig;
+import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
@@ -118,13 +118,7 @@ public class ClientShutdownManager {
   }
 
   private void shutdown() {
-    client.shutdown();
-
-  }
-
-  public RemoteTransactionManager getRemoteTransactionManager() {
-    return rtxManager;
-
+    client.shutdownResources();
   }
 
 }
