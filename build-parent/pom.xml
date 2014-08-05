@@ -92,7 +92,7 @@
         <!-- temporary direct dependency during QA evaluation  -->
         <groupId>com.terracottatech</groupId>
         <artifactId>fast-restartable-store</artifactId>
-        <version>1.1.18-SNAPSHOT</version>
+        <version>1.1.19-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
