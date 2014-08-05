@@ -29,9 +29,7 @@ public class Traverser {
   }
 
   private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest) {
-    Class clazz = start.getClass();
-
-    while (clazz != null && clazz != Object.class) {
+    for (Class clazz = start.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
       TraversedReferences portableObjects = new TraversedReferencesImpl();
       portableObjects = portableObjectProvider.getPortableObjects(clazz, start, portableObjects);
 
@@ -51,7 +49,6 @@ public class Traverser {
           throw new TCRuntimeException(e);
         }
       }
-      clazz = clazz.getSuperclass();
     }
 
   }
