@@ -41,15 +41,15 @@ public class ProxyExceptionMapper implements ExceptionMapper<ProxyException> {
     // only add the "Accept-Encoding" header on the proxy request when the original request contains
     // them, otherwise we're going to stream compressed data to a client which may not support that.
     String acceptEncoding = request.getHeaders().getFirst("Accept-Encoding");
-    boolean compress = acceptEncoding.contains("gzip") || acceptEncoding.contains("deflate");
+    boolean compress = acceptEncoding != null && (acceptEncoding.contains("gzip") || acceptEncoding.contains("deflate"));
 
     if ("GET".equals(method)) {
       return buildResponse(remoteManagementSource.resource(uriToGo, compress).get());
     } else if ("POST".equals(method)) {
-      String e = ((ContainerRequest)request).readEntity(String.class);
+      byte[] e = ((ContainerRequest)request).readEntity(byte[].class);
       return buildResponse(remoteManagementSource.resource(uriToGo, compress).post(Entity.entity(e, request.getMediaType())));
     } else if ("PUT".equals(method)) {
-      String e = ((ContainerRequest)request).readEntity(String.class);
+      byte[] e = ((ContainerRequest)request).readEntity(byte[].class);
       return buildResponse(remoteManagementSource.resource(uriToGo, compress).put(Entity.entity(e, request.getMediaType())));
     } else if ("DELETE".equals(method)) {
       return buildResponse(remoteManagementSource.resource(uriToGo, compress).delete());
