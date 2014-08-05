@@ -95,12 +95,9 @@ public abstract class TCObjectImpl implements TCObject {
       if (po == null) { return; }
       try {
         getTCClass().hydrate(this, from, po, force);
-      } catch (final ClassNotFoundException e) {
-        LOGGER.warn("Re-throwing Exception: ", e);
-        throw e;
-      } catch (final IOException e) {
-        LOGGER.warn("Re-throwing Exception: ", e);
-        throw new DNAException(e);
+      } catch (final IOException ioe) {
+        LOGGER.warn(ioe);
+        throw new DNAException(ioe);
       }
     }
   }
