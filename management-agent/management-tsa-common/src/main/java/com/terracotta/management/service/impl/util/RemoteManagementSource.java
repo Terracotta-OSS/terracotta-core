@@ -75,6 +75,7 @@ public class RemoteManagementSource {
     // as a Jersey bug breaks SSE flow when they are enabled.
     // Only the non-SSE resources will register them for now.
     this.client = ClientBuilder.newBuilder().build();
+    client.register(SseFeature.class);
   }
 
   // test ctor
@@ -160,7 +161,6 @@ public class RemoteManagementSource {
   private Invocation.Builder sseResource(URI uri) {
     WebTarget resource = client.target(uri);
     Builder builder = resource.request();
-    resource.register(SseFeature.class);
     if (TSAConfig.isSslEnabled()) {
       SecurityContextService.SecurityContext securityContext = securityContextService.getSecurityContext();
       builder = builder.header(IACredentials.REQ_TICKET, securityContext.getRequestTicket())
