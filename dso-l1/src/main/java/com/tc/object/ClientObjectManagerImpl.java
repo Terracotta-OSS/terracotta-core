@@ -483,7 +483,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     final LocalLookupContext lookupContext = getLocalLookupContext();
 
-    if (lookupContext.getCallStackCount().incrementAndGet() == 1) {
+    if (lookupContext.getCallStackCount().getAndIncrement() == 0) {
       // first time
       this.clientTxManager.disableTransactionLogging();
     }
