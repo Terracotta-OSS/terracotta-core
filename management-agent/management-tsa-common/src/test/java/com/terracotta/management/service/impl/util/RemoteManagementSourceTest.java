@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.SubGenericType;
 
 import com.terracotta.management.security.impl.DfltSecurityContextService;
@@ -28,8 +29,10 @@ import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -432,6 +435,31 @@ public class RemoteManagementSourceTest {
 
     verify(listener, times(1)).onError(any(InterruptedException.class));
     verify(listener, times(0)).onEvent(any(InboundEvent.class));
+  }
+
+
+  @Test
+  public void testCollectEntitiesFromFutures_futureReturningNullIsNotAddedToResultingCollection() throws Exception {
+    LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
+    Client client = mock(Client.class);
+    Future<MyRepresentable> future = mock(Future.class);
+
+    RemoteManagementSource remoteManagementSource = new RemoteManagementSource(localManagementSource, new TimeoutServiceImpl(1000L), new DfltSecurityContextService(), client);
+
+    Collection<MyRepresentable> result = remoteManagementSource.collectEntitiesFromFutures(Collections.singletonMap("server1", future), 1000, "myMethod", 1000);
+    assertThat(result.isEmpty(), is(true));
+  }
+
+  static class MyRepresentable implements Representable {
+    private String agentId;
+    @Override
+    public String getAgentId() {
+      return agentId;
+    }
+    @Override
+    public void setAgentId(String agentId) {
+      this.agentId = agentId;
+    }
   }
 
 }

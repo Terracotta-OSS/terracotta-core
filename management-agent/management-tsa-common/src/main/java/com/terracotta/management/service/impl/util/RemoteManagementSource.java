@@ -416,13 +416,13 @@ public class RemoteManagementSource {
     @Override
     public Collection<T> get() throws InterruptedException, ExecutionException {
       T t = delegate.get();
-      return Collections.singleton(t);
+      return t == null ? null : Collections.singleton(t);
     }
 
     @Override
     public Collection<T> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       T t = delegate.get(timeout, unit);
-      return Collections.singleton(t);
+      return t == null ? null : Collections.singleton(t);
     }
 
     public static <T extends Representable> Map<String, Future<Collection<T>>> adapt(Map<String, Future<T>> futures) {
