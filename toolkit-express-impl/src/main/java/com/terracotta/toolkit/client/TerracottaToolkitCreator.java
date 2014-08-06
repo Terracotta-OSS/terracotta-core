@@ -92,7 +92,9 @@ public class TerracottaToolkitCreator {
     Callable<ToolkitInternal> callable = new Callable<ToolkitInternal>() {
       @Override
       public ToolkitInternal call() throws Exception {
-        return createInternalToolkit(defaultToolkitCacheManagerProvider);
+        ToolkitInternal toolkit = createInternalToolkit(defaultToolkitCacheManagerProvider);
+        if (isNonStop) nonStopPlatformServiceHelper.setPlatformService(internalClient.getPlatformService());
+        return toolkit;
       }
     };
     final FutureTask<ToolkitInternal> futureTask = new FutureTask<ToolkitInternal>(callable);
@@ -123,8 +125,6 @@ public class TerracottaToolkitCreator {
     } else {
       className = TOOLKIT_IMPL_CLASSNAME;
     }
-
-    nonStopPlatformServiceHelper.setPlatformService(internalClient.getPlatformService());
 
     return internalClient.instantiate(className,
                                       new Class[] { TerracottaL1Instance.class,
@@ -157,7 +157,7 @@ public class TerracottaToolkitCreator {
                                                     new Object[] { futureTask,
                                                         internalClient.getAbortableOperationManager(),
                                                         internalClient.getUuid() });
-    
+
     nonStopPlatformServiceHelper.setToolkit(tk);
     return tk;
   }
@@ -166,6 +166,8 @@ public class TerracottaToolkitCreator {
     return new TCL1Instance(internalClient);
   }
 
+  // Sets the platform service on the toolkit when both it and the toolkit instance are available (they are created in
+  // concurrent threads)
   private static class NonStopPlatformServiceHelper {
     private boolean         set = false;
     private Object          platformService;
