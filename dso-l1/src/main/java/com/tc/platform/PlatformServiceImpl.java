@@ -151,7 +151,7 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
     this.lockManager.lock(lock, level);
-    this.txManager.begin(lock, level, true);
+    txManagerBeginUnlockOnException(lock, level, true);
   }
 
   @Override
@@ -224,7 +224,10 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     LockID lock = generateLockIdentifier(lockID);
-    lock(lock, level);
+    if (clusteredLockingEnabled(lock)) {
+      this.lockManager.lock(lock, level);
+      txManagerBeginUnlockOnException(lock, level, false);
+    }
     addContext(new LockInfo(lockID, level));
   }
 
@@ -232,7 +235,10 @@ public class PlatformServiceImpl implements PlatformService {
   public void beginLockInterruptibly(Object lockID, LockLevel level) throws InterruptedException,
       AbortedOperationException {
     LockID lock = generateLockIdentifier(lockID);
-    lockInterruptibly(lock, level);
+    if (clusteredLockingEnabled(lock)) {
+      this.lockManager.lockInterruptibly(lock, level);
+      txManagerBeginUnlockOnException(lock, level, false);
+    }
     addContext(new LockInfo(lockID, level));
   }
 
@@ -243,7 +249,7 @@ public class PlatformServiceImpl implements PlatformService {
     final boolean granted;
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level)) {
-        this.txManager.begin(lock, level, false);
+        txManagerBeginUnlockOnException(lock, level, false);
         granted = true;
       } else {
         granted = false;
@@ -268,7 +274,7 @@ public class PlatformServiceImpl implements PlatformService {
 
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level, timeUnit.toMillis(timeout))) {
-        this.txManager.begin(lock, level, false);
+        txManagerBeginUnlockOnException(lock, level, false);
         granted = true;
       } else {
         granted = false;
@@ -579,24 +585,9 @@ public class PlatformServiceImpl implements PlatformService {
     return this.lockIdFactory.generateLockIdentifier(obj);
   }
 
-  private void lock(final LockID lock, final LockLevel level) throws AbortedOperationException {
-    if (clusteredLockingEnabled(lock)) {
-      this.lockManager.lock(lock, level);
-      this.txManager.begin(lock, level, false);
-    }
-  }
-
   private boolean clusteredLockingEnabled(final LockID lock) {
     return !((lock instanceof UnclusteredLockID) || this.txManager.isTransactionLoggingDisabled() || this.objectManager
         .isCreationInProgress());
-  }
-
-  private void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException,
-      AbortedOperationException {
-    if (clusteredLockingEnabled(lock)) {
-      this.lockManager.lockInterruptibly(lock, level);
-      this.txManager.begin(lock, level, false);
-    }
   }
 
   private void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
@@ -634,6 +625,18 @@ public class PlatformServiceImpl implements PlatformService {
   private void logicalAddAllAtInvoke(int index, final Collection<?> collection, final TCObject tcobj) {
     for (Object obj : collection) {
       tcobj.logicalInvoke(LogicalOperation.ADD_AT, new Object[] { index++, obj });
+    }
+  }
+
+  private void txManagerBeginUnlockOnException(LockID lock, LockLevel level, boolean atomic)
+      throws AbortedOperationException {
+    try {
+      this.txManager.begin(lock, level, atomic);
+    } catch (Throwable t) {
+      this.lockManager.unlock(lock, level);
+      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+      if (t instanceof Error) { throw (Error) t; }
+      throw new RuntimeException(t);
     }
   }
 
