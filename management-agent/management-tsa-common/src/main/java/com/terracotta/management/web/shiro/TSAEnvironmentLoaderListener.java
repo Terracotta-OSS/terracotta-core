@@ -6,6 +6,7 @@ package com.terracotta.management.web.shiro;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.terracotta.management.ServiceLocator;
 
 import com.tc.properties.TCPropertiesConsts;
@@ -59,6 +60,14 @@ import javax.servlet.ServletContextEvent;
  * @param <T>
  */
 public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
+
+  static {
+    // Optionally remove existing handlers attached to j.u.l root logger
+    SLF4JBridgeHandler.removeHandlersForRootLogger();  // (since SLF4J 1.6.5)
+    // add SLF4JBridgeHandler to j.u.l's root logger, should be done once during
+    // the initialization phase of your application
+    SLF4JBridgeHandler.install();
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(TSAEnvironmentLoaderListener.class);
 
