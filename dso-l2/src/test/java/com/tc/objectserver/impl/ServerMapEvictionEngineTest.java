@@ -14,14 +14,12 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.context.ServerTransactionCompleteContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 
 import java.util.Collections;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ServerMapEvictionEngineTest {
@@ -48,7 +46,5 @@ public class ServerMapEvictionEngineTest {
         Collections.singletonMap((Object) new UTF8ByteDataHolder("test"), mock(EvictableEntry.class)), "foo");
     ServerTransactionID stxID = new ServerTransactionID(ServerID.NULL_ID, new TransactionID(1));
     serverMapEvictionEngine.transactionCompleted(stxID);
-
-    verify(lwmUpdateSink).add(new ServerTransactionCompleteContext(stxID));
   }
 }

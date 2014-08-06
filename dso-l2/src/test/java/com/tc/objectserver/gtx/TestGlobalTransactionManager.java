@@ -10,6 +10,7 @@ import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.sequence.Sequence;
 
 import java.util.HashSet;
@@ -103,5 +104,10 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   @Override
   public Map<LogicalChangeID, LogicalChangeResult> getApplyResults(ServerTransactionID stxnID) {
     return null;
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    return out;
   }
 }

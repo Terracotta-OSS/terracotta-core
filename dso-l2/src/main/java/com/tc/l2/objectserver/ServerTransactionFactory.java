@@ -4,6 +4,9 @@
  */
 package com.tc.l2.objectserver;
 
+import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.PostInit;
+import com.tc.async.api.Sink;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -17,6 +20,9 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.EvictableEntry;
+import com.tc.objectserver.context.ServerTransactionCompleteContext;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.RemoveAllDNA;
 import com.tc.objectserver.tx.RemoveAllMetaDataReader;
 import com.tc.objectserver.tx.RemoveEventListeningClientDNA;
@@ -30,13 +36,14 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ServerTransactionFactory {
+public class ServerTransactionFactory extends AbstractServerTransactionListener implements PostInit {
 
   private static final LockID[]                NULL_LOCK_ID          = new LockID[0];
   private static final long[]                  EMPTY_HIGH_WATER_MARK = new long[0];
 
   private final AtomicLong                     tid                   = new AtomicLong();
   private final NodeID                         nodeId;
+  private Sink                                 lwmUpdateSink;
 
   public ServerTransactionFactory(final NodeID nodeId) {
     this.nodeId = nodeId;
@@ -48,6 +55,18 @@ public class ServerTransactionFactory {
                                                                             syncMsg.getDNAs(), syncMsg.getRootsMap(),
                                                                             syncMsg.messageFrom());
     return txn;
+  }
+
+  @Override
+  public void initializeContext(final ConfigurationContext context) {
+    lwmUpdateSink = context.getStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE).getSink();
+  }
+
+  @Override
+  public void transactionCompleted(final ServerTransactionID stxID) {
+    if (stxID.isServerGeneratedTransaction()) {
+      lwmUpdateSink.add(new ServerTransactionCompleteContext(stxID));
+    }
   }
 
   private TransactionID getNextTransactionID() {

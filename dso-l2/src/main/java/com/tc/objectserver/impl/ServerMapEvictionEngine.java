@@ -221,8 +221,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     if ( persistent ) {
       evictionTransactionPersistor.removeEviction(stxID);
     }
-
-    lowWaterMarkUpdateSink.add(new ServerTransactionCompleteContext(stxID));
   }
   
   public synchronized void addEvictionListener(EvictionListener listener) {

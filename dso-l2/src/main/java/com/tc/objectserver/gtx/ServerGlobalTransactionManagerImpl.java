@@ -15,6 +15,7 @@ import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.context.LowWaterMarkCallbackContext;
 import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
 
@@ -173,11 +174,6 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   @Override
   public void registerCallbackOnLowWaterMarkReached(final Runnable callback) {
-    if (getLowGlobalTransactionIDWatermark().isNull()) {
-      // Just execute the callback right away if there are no live transactions in the system.
-      callbackSink.add(new LowWaterMarkCallbackContext(callback));
-      return;
-    }
     GlobalTransactionID gid = new GlobalTransactionID(getGlobalTransactionIDSequence().current());
     synchronized (lwmCallbacks) {
       if (!lwmCallbacks.containsKey(gid)) {
@@ -185,6 +181,7 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
       }
       lwmCallbacks.get(gid).add(callback);
     }
+    processCallbacks();
   }
 
   @Override
@@ -199,4 +196,19 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     return gdesc.getApplyResults();
   }
 
+  @Override
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    out.print(getClass().getName()).flush();
+    out.indent().print("Lowest GID: ").print(getLowGlobalTransactionIDWatermark()).flush();
+    synchronized (lwmCallbacks) {
+      out.indent().print("Callbacks: ").flush();
+      for (Map.Entry<GlobalTransactionID, List<Runnable>> globalTransactionIDListEntry : lwmCallbacks.entrySet()) {
+        out.indent()
+            .indent()
+            .print("GID: " + globalTransactionIDListEntry.getKey() + " ")
+            .print("Callback: " + globalTransactionIDListEntry.getValue()).flush();
+      }
+    }
+    return out;
+  }
 }

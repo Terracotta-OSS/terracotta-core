@@ -741,6 +741,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledCumulativeCounterConfig);
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory(thisServerNodeID);
+    toInit.add(serverTransactionFactory);
 
     // cache server event related objects
     final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer();
@@ -756,6 +757,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                        gidSequenceProvider, globalTransactionIDSequence,
                                                                                        lwmCallbackStage.getSink(),
                                                                                        persistor.getPersistenceTransactionProvider(), serverEventbuffer);
+
+    registerForDump(new CallbackDumpAdapter(gtxm));
 
     final TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, gtxm, txnStageCoordinator);
@@ -773,6 +776,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                resentTransactionSequencer);
 
     this.metaDataManager.setTransactionManager(transactionManager);
+    transactionManager.addTransactionListener(serverTransactionFactory);
 
     final CallbackDumpAdapter txnMgrDumpAdapter = new CallbackDumpAdapter(this.transactionManager);
     this.dumpHandler.registerForDump(txnMgrDumpAdapter);

@@ -10,12 +10,13 @@ import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.sequence.Sequence;
 
 import java.util.Map;
 import java.util.Set;
 
-public interface ServerGlobalTransactionManager extends GlobalTransactionIDGenerator {
+public interface ServerGlobalTransactionManager extends GlobalTransactionIDGenerator, PrettyPrintable {
 
   /**
    * Changes state to APPLY_INITIATED and returns true if the specified transaction hasn't been initiated apply. If not
