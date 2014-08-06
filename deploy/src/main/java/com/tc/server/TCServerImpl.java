@@ -118,6 +118,9 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public static final String                HTTP_SECURITY_ROLE                           = "terracotta";
 
+  public static final String                CONNECTOR_NAME_TERRACOTTA                    = "terracotta";
+  public static final String                CONNECTOR_NAME_MANAGEMENT                    = "management";
+
   public static final File                  TC_MANAGEMENT_API_LOCKFILE                   = new File(
                                                                                                     System
                                                                                                         .getProperty("java.io.tmpdir"),
@@ -514,6 +517,10 @@ public class TCServerImpl extends SEDA implements TCServer {
       TCServerImpl.this.terracottaConnector = new TerracottaConnector(
                                                                       TCServerImpl.this.configurationSetupManager
                                                                           .getSecurity() != null);
+      // connectors are named so that webapps can respond only on a specific one
+      // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
+      TCServerImpl.this.terracottaConnector.setName(CONNECTOR_NAME_TERRACOTTA);
+
       startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
       Stage stage = getStageManager().createStage("dso-http-bridge",
                                                   new HttpConnectionHandler(TCServerImpl.this.terracottaConnector), 1,
@@ -522,10 +529,6 @@ public class TCServerImpl extends SEDA implements TCServer {
 
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
-
-      File warTempDir = new File(commonL2Config.dataPath(), "jetty");
-      prepareJettyWarTempDir(warTempDir);
-      addManagementWebApp(warTempDir);
 
       if (isActive()) {
         updateActivateTime();
@@ -537,6 +540,11 @@ public class TCServerImpl extends SEDA implements TCServer {
       if (updateCheckEnabled()) {
         UpdateCheckAction.start(updateCheckPeriodDays(), getMaxDataSize());
       }
+
+      // this is the last thing to do
+      File warTempDir = new File(commonL2Config.dataPath(), "jetty");
+      prepareJettyWarTempDir(warTempDir);
+      addManagementWebApp(warTempDir, commonL2Config);
 
       String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
       if (l2Identifier != null) {
@@ -607,11 +615,8 @@ public class TCServerImpl extends SEDA implements TCServer {
                                        objectStatsRecorder, l2State, this, this, securityManager);
   }
 
-  private void startHTTPServer(final CommonL2Config commonL2Config, final TerracottaConnector tcConnector)
+  private void bindManagementHttpPort(final CommonL2Config commonL2Config)
       throws Exception {
-    this.httpServer = new Server();
-    this.httpServer.setSendServerVersion(false);
-    this.httpServer.addConnector(tcConnector);
 
     Connector managementConnector;
     if (commonL2Config.isSecure()) {
@@ -621,15 +626,33 @@ public class TCServerImpl extends SEDA implements TCServer {
       SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
       scc.setPort(commonL2Config.managementPort().getIntValue());
       scc.setHost(commonL2Config.managementPort().getBind());
+      // connectors are named so that webapps can respond only on a specific one
+      // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
+      scc.setName(CONNECTOR_NAME_MANAGEMENT);
       managementConnector = scc;
     } else {
       SelectChannelConnector scc = new SelectChannelConnector();
       scc.setPort(commonL2Config.managementPort().getIntValue());
       scc.setHost(commonL2Config.managementPort().getBind());
+      // connectors are named so that webapps can respond only on a specific one
+      // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
+      scc.setName(CONNECTOR_NAME_MANAGEMENT);
       managementConnector = scc;
     }
 
     this.httpServer.addConnector(managementConnector);
+    if (this.httpServer.isStarted()) {
+      managementConnector.start();
+    }
+
+    consoleLogger.info("Management server started on " + managementConnector.getHost() + ":" + managementConnector.getLocalPort());
+  }
+
+  private void startHTTPServer(final CommonL2Config commonL2Config, final TerracottaConnector tcConnector)
+      throws Exception {
+    this.httpServer = new Server();
+    this.httpServer.setSendServerVersion(false);
+    this.httpServer.addConnector(tcConnector);
 
     this.contextHandlerCollection = new ContextHandlerCollection();
 
@@ -704,6 +727,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     context.setServletHandler(servletHandler);
+    context.setConnectorNames(new String[] { CONNECTOR_NAME_TERRACOTTA });
     contextHandlerCollection.addHandler(context);
 
     this.httpServer.setHandler(contextHandlerCollection);
@@ -711,16 +735,15 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     try {
       this.httpServer.start();
-      consoleLogger.info("Management server started on " + managementConnector.getHost() + ":" + managementConnector.getLocalPort());
     } catch (Exception e) {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;
     }
   }
 
-  private void addManagementWebApp(File warTempDir) throws Exception {
+  private void addManagementWebApp(File warTempDir, CommonL2Config commonL2Config) throws Exception {
     if (!TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
-      logger.info("RestManagement is disabled.");
+      consoleLogger.warn("REST Management is disabled per configuration.");
       return;
     }
     // register REST webapp
@@ -756,6 +779,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         logger.info("deploying management REST services from archive " + warFile);
         WebAppContext restContext = new WebAppContext();
         restContext.setTempDirectory(warTempDir);
+        restContext.setConnectorNames(new String[] { CONNECTOR_NAME_MANAGEMENT });
 
         // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
         List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
@@ -766,16 +790,18 @@ public class TCServerImpl extends SEDA implements TCServer {
         restContext.setWar(warFile);
         contextHandlerCollection.addHandler(restContext);
 
+        // make sure the REST webapp is started before binding the port
         if (contextHandlerCollection.isStarted()) {
           restContext.start();
         }
+        bindManagementHttpPort(commonL2Config);
       } finally {
         fileUnlock();
       }
     } else {
-        // there is no more hope of deploying the web app
-        logger.info("impossible to deploy the webapp due to invalid installation dir location");
-        logger.info(failureReason);
+      // there is no more hope of deploying the web app
+      consoleLogger.warn("Cannot deploy REST management due to invalid installation dir location");
+      consoleLogger.warn(failureReason);
     }
   }
 
