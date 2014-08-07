@@ -4,7 +4,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.Sink;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -16,7 +15,6 @@ import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.EvictionListener;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.context.ServerTransactionCompleteContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -77,7 +75,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
   private TransactionBatchManager             transactionBatchManager;
   private EvictionTransactionPersistor        evictionTransactionPersistor;
-  private Sink                                lowWaterMarkUpdateSink;
 
   public ServerMapEvictionEngine(final ObjectManager objectManager,
                                  final ServerTransactionFactory serverTransactionFactory,
@@ -91,7 +88,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   public void initializeContext(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.transactionBatchManager = scc.getTransactionBatchManager();
-    this.lowWaterMarkUpdateSink = scc.getStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE).getSink();
 
     // if running in persistence mode, we need to save each in-flight transaction to FRS and delete it when complete
     scc.getTransactionManager().addTransactionListener(this);
