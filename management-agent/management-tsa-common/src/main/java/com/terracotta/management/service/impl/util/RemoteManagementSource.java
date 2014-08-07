@@ -18,12 +18,20 @@ import org.terracotta.management.resource.SubGenericType;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
 import com.terracotta.management.security.IACredentials;
+import com.terracotta.management.security.SSLContextFactory;
 import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.web.utils.TSAConfig;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +46,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.AsyncInvoker;
 import javax.ws.rs.client.Client;
@@ -66,15 +77,54 @@ public class RemoteManagementSource {
   private final Client client;
   private final Map<RemoteTSAEventListener, Collection<Future<EventInput>>> eventListenerFutures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>());
 
-  public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService) {
+  public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService, SSLContextFactory sslContextFactory) {
     this.localManagementSource = localManagementSource;
     this.timeoutService = timeoutService;
     this.securityContextService = securityContextService;
 
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+    if (sslContextFactory != null) {
+      try {
+        clientBuilder.sslContext(sslContextFactory.create());
+      } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException(
+            "Failure instantiating Jersey client due to invalid KeyManagerFactory algorithm.", e);
+      } catch (IOException e) {
+        throw new RuntimeException("Failure instantiating Jersey client due to inability to load keyStore.", e);
+      } catch (KeyStoreException e) {
+        throw new RuntimeException("Failure instantiating Jersey client due to invalid KeyStore type.", e);
+      } catch (CertificateException e) {
+        throw new RuntimeException("Failure instantiating Jersey client due to invalid certificates in a KeyStore.",
+            e);
+      } catch (UnrecoverableKeyException e) {
+        throw new RuntimeException("Failure instantiating Jersey client due to bad key in a KeyStore.", e);
+      } catch (KeyManagementException e) {
+        throw new RuntimeException(
+            "Failure instantiating Jersey client due to one or more invalid keys in a KeyStore.", e);
+      } catch (URISyntaxException e) {
+        throw new RuntimeException("Failure instantiating Jersey client due to bad store location.", e);
+      }
+
+      HostnameVerifier hostnameVerifier;
+      if (Boolean.getBoolean("tc.ssl.disableHostnameVerifier")) {
+        hostnameVerifier = new HostnameVerifier() {
+          @Override
+          public boolean verify(String hostname, SSLSession session) {
+            return true;
+          }
+        };
+      } else {
+        //DEV-8842 : returning false every time means :
+        // we don't allow the hostname to be different from what is configured in the cert.
+        hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+      }
+      clientBuilder.hostnameVerifier(hostnameVerifier);
+    }
+
     // do not register the EncodingFilter, GZipEncoder and DeflateEncoder here
     // as a Jersey bug breaks SSE flow when they are enabled.
     // Only the non-SSE resources will register them for now.
-    this.client = ClientBuilder.newBuilder().build();
+    this.client = clientBuilder.build();
     client.register(SseFeature.class);
   }
 

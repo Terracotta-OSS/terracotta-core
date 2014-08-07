@@ -96,11 +96,9 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
       SecurityContextService securityContextService = new DfltSecurityContextService();
 
       LocalManagementSource localManagementSource = new LocalManagementSource();
-      remoteManagementSource = new RemoteManagementSource(localManagementSource, timeoutService, securityContextService);
 
       RemoteAgentBridgeService remoteAgentBridgeService = new RemoteAgentBridgeServiceImpl();
 
-      serviceLocator.loadService(RemoteManagementSource.class, remoteManagementSource);
       serviceLocator.loadService(TimeoutService.class, timeoutService);
       serviceLocator.loadService(SecurityContextService.class, securityContextService);
 
@@ -113,11 +111,12 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
       RequestTicketMonitor requestTicketMonitor;
       RequestIdentityAsserter identityAsserter;
 
+      SSLContextFactory sslCtxtFactory;
       if (sslEnabled) {
         kcAccessor = TSAConfig.getKeyChain();
         String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
         Integer securityTimeout = TSAConfig.getSecurityTimeout();
-        SSLContextFactory sslCtxtFactory = TSAConfig.getSSLContextFactory();
+        sslCtxtFactory = TSAConfig.getSSLContextFactory();
 
         contextService = new DfltContextService();
         userService = new DfltUserService();
@@ -127,6 +126,7 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
         requestTicketMonitor = new DfltRequestTicketMonitor();
         identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
       } else {
+        sslCtxtFactory = null;
         identityAssertionServiceClient = null;
         kcAccessor = null;
         contextService = new NullContextService();
@@ -134,6 +134,9 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
         requestTicketMonitor = new NullRequestTicketMonitor();
         identityAsserter = new NullIdentityAsserter();
       }
+
+      remoteManagementSource = new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, sslCtxtFactory);
+      serviceLocator.loadService(RemoteManagementSource.class, remoteManagementSource);
 
       serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
       serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);

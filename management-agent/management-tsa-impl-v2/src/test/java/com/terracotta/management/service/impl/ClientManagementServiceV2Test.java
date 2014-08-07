@@ -56,7 +56,7 @@ public class ClientManagementServiceV2Test {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
 
     when(localManagementSource.getRemoteServerUrls()).thenReturn(new HashMap<String, String>() {{
