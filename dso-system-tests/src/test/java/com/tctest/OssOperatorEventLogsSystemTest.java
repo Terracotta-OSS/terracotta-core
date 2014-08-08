@@ -3,14 +3,11 @@
  */
 package com.tctest;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.l2.state.StateManager;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
-import com.tc.test.JMXUtils;
+import com.tc.server.util.ServerStat;
 import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
@@ -23,14 +20,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import javax.management.MBeanServerConnection;
-import javax.management.remote.JMXConnector;
-
 public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
   private final String      serverName = "server-1";
   private TcConfigBuilder   configBuilder;
   private ExternalDsoServer server_1;
-  private int               jmxPort_1;
+  private int               managementPort_1;
 
   @Override
   protected boolean cleanTempDir() {
@@ -41,14 +35,14 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
   protected void setUp() throws Exception {
     configBuilder = new TcConfigBuilder("/com/tctest/operator-event-logs-system-test.xml");
     configBuilder.randomizePorts();
-    jmxPort_1 = configBuilder.getJmxPort(0);
+    managementPort_1 = configBuilder.getManagementPort(0);
     server_1 = createServer(serverName);
   }
 
   public void testDatabaseState() throws Exception {
     server_1.start();
     System.out.println("server1 started");
-    waitTillBecomeActive(jmxPort_1);
+    waitTillBecomeActive(managementPort_1);
     System.out.println("server1 became active");
 
     TerracottaOperatorEvent movedToActiveOpEvent = TerracottaOperatorEventFactory
@@ -72,35 +66,18 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
     Assert.fail("Operator event was not logged");
   }
 
-  private boolean isActive(int jmxPort) {
-    TCServerInfoMBean mbean = null;
-    boolean isActive = false;
-    JMXConnector jmxConnector = null;
-
+  private boolean isActive(int managementPort) {
     try {
-      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      mbean = MBeanServerInvocationProxy
-          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-      isActive = mbean.isActive();
+      ServerStat serverStat = ServerStat.getStats("localhost", managementPort, null, null, false, false);
+      return "ACTIVE-COORDINATOR".equals(serverStat.getState());
     } catch (Exception e) {
       return false;
-    } finally {
-      if (jmxConnector != null) {
-        try {
-          jmxConnector.close();
-        } catch (Exception e) {
-          System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
-        }
-      }
     }
-
-    return isActive;
   }
 
-  private void waitTillBecomeActive(int jmxPort) {
+  private void waitTillBecomeActive(int managementPort) {
     while (true) {
-      if (isActive(jmxPort)) break;
+      if (isActive(managementPort)) break;
       ThreadUtil.reallySleep(1000);
     }
   }

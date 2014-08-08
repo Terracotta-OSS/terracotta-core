@@ -21,6 +21,7 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServerImpl;
+import com.tc.test.config.builder.ClusterManager;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 
@@ -77,6 +78,8 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
   }
 
   public void testDSOServerAndJMXBindAddress() throws Exception {
+    System.setProperty("com.tc.management.war", ClusterManager.findWarLocation("org.terracotta", "management-tsa-war",
+        ClusterManager.guessMavenArtifactVersion()));
     PortChooser pc = new PortChooser();
 
     ManagedObjectStateFactory.disableSingleton(true);
@@ -119,7 +122,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     }
   }
 
-  private void testSocketConnect(String host, int[] ports, boolean testNegative) throws IOException {
+  private void testSocketConnect(final String host, int[] ports, boolean testNegative) throws Exception {
     InetAddress addr = InetAddress.getByName(host);
     if (addr.isAnyLocalAddress()) {
       // should be able to connect on both localhost and local IP
@@ -127,8 +130,18 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       testSocketConnect(localAddr(), ports, false);
     } else {
       // positive case
-      for (int port : ports) {
-        testSocket(host, port, false);
+      for (final int port : ports) {
+        WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            try {
+              testSocket(host, port, false);
+              return true;
+            } catch (IOException e) {
+              return false;
+            }
+          }
+        });
       }
 
       if (testNegative) {

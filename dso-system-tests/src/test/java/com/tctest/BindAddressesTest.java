@@ -3,12 +3,9 @@
  */
 package com.tctest;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.exception.TCRuntimeException;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
-import com.tc.test.JMXUtils;
+import com.tc.server.util.ServerStat;
 import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
@@ -18,9 +15,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
-import javax.management.MBeanServerConnection;
-import javax.management.remote.JMXConnector;
 
 public class BindAddressesTest extends BaseDSOTestCase {
   private static final int          NUM_OF_SERVERS = 4;
@@ -62,13 +56,13 @@ public class BindAddressesTest extends BaseDSOTestCase {
 
     servers[0].start();
     System.out.println("server-1 started");
-    waitTillBecomeActive(jmxPorts[0]);
+    waitTillBecomeActive(managementPorts[0]);
     System.out.println("server-1 became active");
 
     for (int i = 1; i < NUM_OF_SERVERS; i++) {
       servers[i] = createServer("server-" + (i + 1));
       servers[i].start();
-      waitTillBecomePassiveStandBy(jmxPorts[i]);
+      waitTillBecomePassiveStandBy(managementPorts[i]);
       System.out.println("server-" + (i + 1) + " became passive");
     }
   }
@@ -140,55 +134,21 @@ public class BindAddressesTest extends BaseDSOTestCase {
   }
 
   private boolean isActive(int bindPort) {
-    TCServerInfoMBean mbean = null;
-    boolean isActive = false;
-    JMXConnector jmxConnector = null;
-
     try {
-      jmxConnector = JMXUtils.getJMXConnector("localhost", bindPort);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      mbean = MBeanServerInvocationProxy
-          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-      isActive = mbean.isActive();
+      ServerStat serverStat = ServerStat.getStats("localhost", bindPort, null, null, false, false);
+      return "ACTIVE-COORDINATOR".equals(serverStat.getState());
     } catch (Exception e) {
       return false;
-    } finally {
-      if (jmxConnector != null) {
-        try {
-          jmxConnector.close();
-        } catch (Exception e) {
-          System.out.println("Exception while trying to close the JMX connector for port no: " + bindPort);
-        }
-      }
     }
-
-    return isActive;
   }
 
-  private boolean isPassiveStandBy(int jmxPort) {
-    TCServerInfoMBean mbean = null;
-    boolean isPassiveStandBy = false;
-    JMXConnector jmxConnector = null;
-
+  private boolean isPassiveStandBy(int managementPort) {
     try {
-      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      mbean = MBeanServerInvocationProxy
-          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-      isPassiveStandBy = mbean.isPassiveStandby();
+      ServerStat serverStat = ServerStat.getStats("localhost", managementPort, null, null, false, false);
+      return "PASSIVE-STANDBY".equals(serverStat.getState());
     } catch (Exception e) {
       return false;
-    } finally {
-      if (jmxConnector != null) {
-        try {
-          jmxConnector.close();
-        } catch (Exception e) {
-          System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
-        }
-      }
     }
-
-    return isPassiveStandBy;
   }
 
   private void waitTillBecomeActive(int adminPort) {

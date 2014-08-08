@@ -5,18 +5,16 @@ package com.tctest;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.TCSocketAddress;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
-import com.tc.test.JMXUtils;
+import com.tc.server.util.ServerStat;
 import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.Assert;
+import com.tc.util.PortChooser;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -28,15 +26,12 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import javax.management.MBeanServerConnection;
-import javax.management.remote.JMXConnector;
-
 public class TCStopBindAddressTest extends BaseDSOTestCase {
   private static final String SERVER_NAME_1      = "server1";
   private File                tcConfig           = null;
   private TcConfigBuilder     configBuilder;
   private ExternalDsoServer   server1;
-  private int                 jmxPort1;
+  private int                 managementPort1;
   private final long          SHUTDOWN_WAIT_TIME = TimeUnit.NANOSECONDS.convert(120, TimeUnit.SECONDS);
 
   @Override
@@ -56,25 +51,28 @@ public class TCStopBindAddressTest extends BaseDSOTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    PortChooser portChooser = new PortChooser();
+    managementPort1 = portChooser.chooseRandomPort();
+    int tsaPort = portChooser.chooseRandomPort();
     tcConfig = getTempFile("tc-stop-bind-address-test.xml");
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                     + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
-                    + "\n <server name=\"server1\" jmx-enabled=\"true\" host=\""
+                    + "\n <server name=\"server1\" host=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + " \" bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">" + "\n     " + " <tsa-port bind=\""
-                    + InetAddress.getLocalHost().getHostAddress() + "\">9510</tsa-port>" + "\n     "
-                    + " <jmx-port bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">9520</jmx-port>" + "\n</server>"
+                    + InetAddress.getLocalHost().getHostAddress() + "\">" + tsaPort + "</tsa-port>" + "\n     "
+                    + " <management-port bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">" + managementPort1
+                    + "</management-port>" + "\n</server>"
                     + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
 
-    jmxPort1 = 9520;
 
     server1 = createServer("server1");
 
-    server1.start();
+    server1.startWithoutWait();
     System.out.println("XXX server1 started");
-    waitTillBecomeActive(jmxPort1);
+    waitTillBecomeActive(managementPort1);
     System.out.println("XXX server1 became active");
 
   }
@@ -116,10 +114,10 @@ public class TCStopBindAddressTest extends BaseDSOTestCase {
     }
   }
 
-  private void waitUntilShutdown(int jmxPort) throws Exception {
+  private void waitUntilShutdown(int managementPort) throws Exception {
     long start = System.nanoTime();
     long timeout = start + SHUTDOWN_WAIT_TIME;
-    while (isRunning(jmxPort)) {
+    while (isRunning(managementPort)) {
       Thread.sleep(1000);
       if (System.nanoTime() > timeout) {
         System.out.println("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME);
@@ -147,30 +145,13 @@ public class TCStopBindAddressTest extends BaseDSOTestCase {
     }
   }
 
-  private boolean isActive(int jmxPort) {
-    TCServerInfoMBean mbean = null;
-    boolean isActive = false;
-    JMXConnector jmxConnector = null;
-
+  private boolean isActive(int managementPort) {
     try {
-      jmxConnector = JMXUtils.getJMXConnector(TCSocketAddress.LOOPBACK_IP, jmxPort);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      mbean = MBeanServerInvocationProxy
-          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-      isActive = mbean.isActive();
+      ServerStat serverStat = ServerStat.getStats("localhost", managementPort, null, null, false, false);
+      return "ACTIVE-COORDINATOR".equals(serverStat.getState());
     } catch (Exception e) {
       return false;
-    } finally {
-      if (jmxConnector != null) {
-        try {
-          jmxConnector.close();
-        } catch (Exception e) {
-          System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
-        }
-      }
     }
-
-    return isActive;
   }
 
   private void waitTillBecomeActive(int jmxPort) {
