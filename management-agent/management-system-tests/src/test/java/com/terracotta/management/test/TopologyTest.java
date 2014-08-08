@@ -101,8 +101,8 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     }
 
     protected void waitUntilAllServerAgentsUp() {
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(0));
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(1));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(0));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(1));
     }
 
     protected void testResources(int group, int member, String resourcePath) throws IOException {
@@ -110,7 +110,7 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     }
 
     protected void testResources(int group, int member, String resourcePath, boolean[] failures) throws IOException {
-      int port = getGroupData(group).getTsaGroupPort(member);
+      int port = getGroupData(group).getManagementPort(member);
 
       JSONArray content = getTsaJSONArrayContent(ConfigHelper.HOST, port, resourcePath);
 
@@ -197,7 +197,7 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
       CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaGroupPort(0)));
 
       for (int i = 0; i < MEMBER_COUNT; i++) {
-        int port = getGroupData(0).getTsaGroupPort(i);
+        int port = getGroupData(0).getManagementPort(i);
         String host = ConfigHelper.HOST;
 
         JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies/clients");

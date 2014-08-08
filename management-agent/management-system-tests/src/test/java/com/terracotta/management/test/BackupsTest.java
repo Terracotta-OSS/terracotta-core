@@ -45,7 +45,7 @@ public class BackupsTest extends AbstractTsaAgentTestBase {
 
     private void testResources(int group, int member) throws IOException {
       // /agents/backups POST
-      String response = httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(group).getTsaGroupPort(member) + "/tc-management-api/agents/backups");
+      String response = httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(group).getManagementPort(member) + "/tc-management-api/agents/backups");
       System.out.println(">>> >>> >>> " + response);
       JSONArray responseArray = (JSONArray)JSONValue.parse(response);
 
@@ -56,7 +56,7 @@ public class BackupsTest extends AbstractTsaAgentTestBase {
       assertThat(backup.get("error"), notNullValue());
 
       // /agents/backups GET
-      JSONArray backupsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member), "/tc-management-api/agents/backups");
+      JSONArray backupsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member), "/tc-management-api/agents/backups");
       assertThat(backupsArray.size(), is(0));
     }
   }

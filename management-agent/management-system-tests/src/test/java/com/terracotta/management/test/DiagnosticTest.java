@@ -85,12 +85,12 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
     }
 
     private void waitUntilAllServerAgentsUp() {
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(0));
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(1));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(0));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(1));
     }
 
     private void testGroupThreadDump(int group, int member, boolean[] failures) throws IOException {
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
           "/tc-management-api/agents/diagnostics/threadDump");
       assertThat(contentArray.size(), is(MEMBER_COUNT + (failures[0] ? 0 : 1)));
 
@@ -134,7 +134,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       Map<String, String> headers = new HashMap<String, String>() {{
         put("Accept", "application/zip");
       }};
-      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
           "/tc-management-api/agents/diagnostics/threadDumpArchive/servers", headers);
 
       ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
@@ -156,7 +156,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       Map<String, String> headers = new HashMap<String, String>() {{
         put("Accept", "application/zip");
       }};
-      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
           "/tc-management-api/agents/diagnostics/threadDumpArchive/clients", headers);
 
       ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
@@ -178,7 +178,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       Map<String, String> headers = new HashMap<String, String>() {{
         put("Accept", "application/zip");
       }};
-      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
           "/tc-management-api/agents/diagnostics/threadDumpArchive", headers);
 
       ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
@@ -198,7 +198,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
 
     private void testSingleServerThreadDump(int group, int member) throws IOException {
       String serverName = getGroupData(group).getServerNames()[member];
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
           "/tc-management-api/agents/diagnostics/threadDump/servers;names=" + serverName);
 
       assertThreadDumpEntity(serverName, contentArray);
@@ -227,7 +227,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
     protected void doTsaTest() throws Throwable {
       assertThat(serverContainsAnyOfThoseLogs(0, 0, "DGC finished", "Running DGC"), is(false));
 
-      httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(0) + "/tc-management-api/agents/diagnostics/dgc");
+      httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getManagementPort(0) + "/tc-management-api/agents/diagnostics/dgc");
 
       assertTrueWithin(5000L, new Callable<Boolean>() {
         @Override
@@ -249,7 +249,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
     protected void doTsaTest() throws Throwable {
       assertThat(serverContainsAnyOfThoseLogs(0, 0, "Server dump"), is(false));
 
-      httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(0) + "/tc-management-api/agents/diagnostics/dumpClusterState");
+      httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getManagementPort(0) + "/tc-management-api/agents/diagnostics/dumpClusterState");
 
       assertTrueWithin(5000L, new Callable<Boolean>() {
         @Override

@@ -42,7 +42,7 @@ public class LogsTest extends AbstractTsaAgentTestBase {
 
       createLogEvents();
 
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(0),
+      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(0),
           "/tc-management-api/agents/logs?sinceWhen=" + testStart);
 
       assertThat(contentArray.size(), is(not(0)));
@@ -63,7 +63,7 @@ public class LogsTest extends AbstractTsaAgentTestBase {
 
     private void checkServerFilteredLogs(int serverIndex, long testStart) throws IOException {
       String serverName = getGroupData(0).getServerNames()[serverIndex];
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(serverIndex),
           "/tc-management-api/agents/logs;names=" + serverName + "?sinceWhen=" + testStart);
 
       assertThat(contentArray.size(), is(not(0)));
@@ -85,7 +85,7 @@ public class LogsTest extends AbstractTsaAgentTestBase {
 
     private void createLogEvents() throws IOException {
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
-        httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(serverIndex) +
+        httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getManagementPort(serverIndex) +
                  "/tc-management-api/agents/diagnostics/dumpClusterState");
       }
     }

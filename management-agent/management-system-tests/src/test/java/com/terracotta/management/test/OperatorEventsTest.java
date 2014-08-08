@@ -27,12 +27,12 @@ public class OperatorEventsTest extends AbstractTsaAgentTestBase {
     @Override
     protected void doTsaTest() throws Throwable {
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
-        getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+        getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(serverIndex),
             "/tc-management-api/agents/operatorEvents");
       }
 
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
-        getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+        getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(serverIndex),
                 "/tc-management-api/agents/operatorEvents?sinceWhen=1377125095225&filterOutRead=true");
       }
 

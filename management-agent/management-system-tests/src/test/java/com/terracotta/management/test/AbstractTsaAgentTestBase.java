@@ -1,14 +1,11 @@
 package com.terracotta.management.test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.TerracottaClientConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration;
-
 import org.apache.commons.codec.Encoder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -19,7 +16,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.hamcrest.CoreMatchers;
 import org.json.simple.JSONArray;
@@ -42,6 +39,9 @@ import com.tc.util.runtime.Os;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
@@ -98,7 +98,9 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     @Override
     protected final void doTest() throws Throwable {
-      httpClient = HttpClients.createDefault();
+      HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+      httpClientBuilder.disableContentCompression();
+      httpClient = httpClientBuilder.build();
 
       // wait for the TSA agent to finish up initialization
       boolean initSuccessful = false;
@@ -106,7 +108,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       for (int i = 0; i < 20; i++) {
         try {
           for (int j = 0; j < getGroupData(0).getServerCount(); j++) {
-            httpGet("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(j)
+            httpGet("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getManagementPort(j)
                     + "/tc-management-api/agents");
           }
           initSuccessful = true;
@@ -252,7 +254,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     }
 
     protected boolean serverContainsAllOfThoseLogs(int group, int member, String... logs) throws IOException {
-      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
                                                    "/tc-management-api/agents/logs");
       boolean[] contains = new boolean[logs.length];
 
@@ -275,7 +277,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     }
 
     protected boolean serverContainsAnyOfThoseLogs(int group, int member, String... logs) throws IOException {
-      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member),
                                                    "/tc-management-api/agents/logs");
       for (Object aLogsArray : logsArray) {
         JSONObject o = (JSONObject) aLogsArray;

@@ -41,7 +41,7 @@ public class MonitoringTest extends AbstractTsaAgentTestBase {
       CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaGroupPort(0)));
 
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
-        JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+        JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(serverIndex),
             "/tc-management-api/agents/statistics/servers");
 
         assertThat(contentArray.size(), is(MEMBER_COUNT));
@@ -51,7 +51,7 @@ public class MonitoringTest extends AbstractTsaAgentTestBase {
         }
 
         String serverName = getGroupData(0).getServerNames()[serverIndex];
-        JSONArray singleServerStats = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+        JSONArray singleServerStats = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(serverIndex),
             "/tc-management-api/agents/statistics/servers;names=" + serverName);
         assertThat(singleServerStats.size(), is(1));
 
@@ -59,7 +59,7 @@ public class MonitoringTest extends AbstractTsaAgentTestBase {
         assertThat((String)statistics.get("sourceId"), equalTo(serverName));
         checkServerStatisticContent(statistics);
 
-        contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+        contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(serverIndex),
             "/tc-management-api/agents/statistics/clients");
 
         assertThat(contentArray.size(), is(1));

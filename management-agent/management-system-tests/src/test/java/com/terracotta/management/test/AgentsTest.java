@@ -67,14 +67,14 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
     }
 
     private void waitUntilAllServerAgentsUp() {
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(0));
-      waitUntilServerAgentUp(getGroupData(0).getTsaGroupPort(1));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(0));
+      waitUntilServerAgentUp(getGroupData(0).getManagementPort(1));
     }
 
     private void testResources(int group, int member) throws IOException {
       // /agents
       // [{"version":"4.1.0-SNAPSHOT","agentId":"embedded","agencyOf":"TSA","rootRepresentables":{"urls":"http://localhost:41857,http://localhost:23787"}}]
-      JSONArray agentsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member), "/tc-management-api/agents");
+      JSONArray agentsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getManagementPort(member), "/tc-management-api/agents");
       assertThat(agentsArray.size(), is(1));
 
       JSONObject content = (JSONObject)agentsArray.get(0);
@@ -89,7 +89,7 @@ public class AgentsTest extends AbstractTsaAgentTestBase {
       assertThat((String)content.get("version"), is(guessVersion()));
       assertThat((String)content.get("agencyOf"), is("TSA"));
 
-      JSONArray agentsInfoArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(member), "/tc-management-api/agents/info");
+      JSONArray agentsInfoArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getManagementPort(member), "/tc-management-api/agents/info");
       assertThat(agentsInfoArray.size(), is(1));
 
       // /agents/info
