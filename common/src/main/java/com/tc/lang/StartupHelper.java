@@ -47,10 +47,12 @@ public class StartupHelper {
     void execute() throws Throwable;
   }
 
-  private static void setThreadGroup(Thread thread, ThreadGroup group) {
-    String fieldName = Vm.isIBM() ? "threadGroup" : "group";
+   private static void setThreadGroup(Thread thread, ThreadGroup group) {
+    String fieldName = "group";
     Class c = Thread.class;
-
+    if(Vm.isIBM() && isFieldPresent("threadGroup",c)){
+      fieldName = "threadGroup";
+    }    
     try {
       Field groupField = c.getDeclaredField(fieldName);
       groupField.setAccessible(true);
@@ -59,5 +61,17 @@ public class StartupHelper {
       if (e instanceof RuntimeException) { throw (RuntimeException) e; }
       throw new RuntimeException(e);
     }
+  }
+  
+  private static boolean isFieldPresent(String fieldName,Class targetClass){
+    boolean found = false; 
+    Field[] fields = targetClass.getDeclaredFields();
+    for(Field field : fields){
+      if(field.getName().equals(fieldName)){
+        found = true;
+        break;
+      }
+    }
+    return found;
   }
 }
