@@ -4,6 +4,7 @@
  */
 package com.tc.server;
 
+import com.tc.config.schema.messaging.http.ManagementNotListeningOnThatPortServlet;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -107,6 +108,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public static final String                VERSION_SERVLET_PATH                         = "/version";
   public static final String                CONFIG_SERVLET_PATH                          = "/config";
+  public static final String                MANAGEMENT_NOT_LISTENING_ON_THAT_PORT_SERVLET_PATH                          = "/tc-management-api/*";
   public static final String                GROUP_INFO_SERVLET_PATH                      = "/groupinfo";
   public static final String                GROUPID_MAP_SERVLET_PATH                     = "/groupidmap";
   public static final String                STATISTICS_GATHERER_SERVLET_PREFIX           = "/statistics-gatherer";
@@ -700,6 +702,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     createAndAddServlet(servletHandler, VersionServlet.class.getName(), VERSION_SERVLET_PATH);
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), CONFIG_SERVLET_PATH);
+    createAndAddServlet(servletHandler, ManagementNotListeningOnThatPortServlet.class.getName(), MANAGEMENT_NOT_LISTENING_ON_THAT_PORT_SERVLET_PATH);
     createAndAddServlet(servletHandler, GroupInfoServlet.class.getName(), GROUP_INFO_SERVLET_PATH);
     createAndAddServlet(servletHandler, GroupIDMapServlet.class.getName(), GROUPID_MAP_SERVLET_PATH);
     createAndAddServlet(servletHandler, L1ReconnectPropertiesServlet.class.getName(),
