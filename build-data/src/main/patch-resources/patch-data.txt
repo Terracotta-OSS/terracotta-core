@@ -1,0 +1,10 @@
+terracotta.patch.level=${patch.level}
+terracotta.patch.host=${build.host}
+terracotta.patch.user=${user.name}
+terracotta.patch.timestamp=${build.timestamp}
+terracotta.patch.revision=${build.revision}
+terracotta.patch.branch=${build.branch}
+terracotta.patch.url=${build.svn.url}
+terracotta.patch.ee.revision=${build.ee.revision}
+terracotta.patch.ee.branch=${build.ee.branch}
+terracotta.patch.ee.url=${build.ee.svn.url}

@@ -41,4 +41,46 @@
       </plugin>       
     </plugins>
   </build>
+  
+  <profiles>
+    <profile>
+      <id>patch</id>
+      <build>
+        <resources>
+          <resource>
+            <directory>${basedir}/src/main/filtered-resources</directory>
+            <filtering>true</filtering>
+          </resource>        
+          <resource>
+            <directory>${basedir}/src/main/patch-resources</directory>
+            <filtering>true</filtering>
+          </resource>
+        </resources>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>read-patch-def-file</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    def patchDefFile = new File(project.basedir, "../../bigmemory-max-kit/src/packaging/patch/patch-def.xml")
+                    def patchDef = new XmlSlurper().parse(patchDefFile)
+                    def patchLevel = patchDef.level.text()
+                    project.properties['patch.level'] = patchLevel
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
