@@ -43,7 +43,7 @@ public class ObjectIDSetMaintainer implements KeyValueStorageMutationListener<Lo
   private static ObjectIDSetType getObjectIDSetType() {
     String type = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_OBJECTMANAGER_OIDSET_TYPE, true);
     if (type == null) {
-      return ObjectIDSetType.BITSET_BASED_SET;
+      return ObjectIDSetType.EXPANDING_BITSET_BASED_SET;
     } else {
       return ObjectIDSetType.valueOf(type);
     }
