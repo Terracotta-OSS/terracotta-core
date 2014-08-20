@@ -368,9 +368,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       if (active && !change.isDelta() && isClient) {
         // Only New objects reference are added here
         if ( !this.stateManager.addReference(sourceID, mo.getID()) ) {
-          throw new AssertionError("impossible state");
+          logger.debug("resent object creation " + mo.getID());
+        }
       }
-    }
     }
 
     final Map<String, ObjectID> newRoots = txn.getNewRoots();
