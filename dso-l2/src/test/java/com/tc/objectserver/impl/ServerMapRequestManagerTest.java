@@ -3,9 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
@@ -205,8 +203,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     final ObjectID mapID = new ObjectID(1);
     final Object portableKey1 = "key1";
     final ObjectID portableValue1ObjID = new ObjectID(1001);
-    when(clientStateManager.addReferences(eq(clientID), (Set<ObjectID>)argThat(hasItem(portableValue1ObjID)))).thenReturn(Collections
-        .singleton(portableValue1ObjID));
+    when(clientStateManager.addReference(eq(clientID), any(ObjectID.class))).thenReturn(true);
 
     ServerMapGetValueRequest mapGetValueRequest = new ServerMapGetValueRequest(requestID1,
                                                                                Collections.singleton(portableKey1));
@@ -217,18 +214,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     ManagedObject managedObject = mock(ManagedObject.class);
     when(managedObject.getManagedObjectState()).thenReturn(managedObjectState);
     serverMapRequestManager.sendResponseFor(mapID, managedObject);
+    
+    verify(objectManager).lookupObjectsFor(eq(clientID), any(ServerMapRequestPrefetchObjectsContext.class));
   }
-
-  // private static Matcher<ObjectRequestServerContextImpl> hasState(final LOOKUP_STATE state) {
-  // return new ArgumentMatcher<ObjectRequestServerContextImpl>() {
-  // @Override
-  // public boolean matches(final Object o) {
-  // if (o instanceof ObjectRequestServerContextImpl) {
-  // return state == ((ObjectRequestServerContextImpl)o).getLookupState();
-  // } else {
-  // return false;
-  // }
-  // }
-  // };
-  // }
 }

@@ -84,7 +84,6 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
       for (ObjectID oid : new ArrayList<ObjectID>(resp.getObjectIDs())) {
         ManagedObject mo = lookedUp.getObjects().get(oid);
         if (mo != null) {
-          // state.addReference(clientid, oid);
           TCByteBufferOutputStream out = new TCByteBufferOutputStream();
           mo.toDNA(out, serializer, DNAType.L1_FAULT);
           resp.replace(oid, out);

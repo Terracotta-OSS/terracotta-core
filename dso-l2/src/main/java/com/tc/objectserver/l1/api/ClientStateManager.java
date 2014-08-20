@@ -33,8 +33,10 @@ public interface ClientStateManager {
 
   /**
    * The the server representation of the client's state now knows that clientID has a reference to objectID
+   * 
+   * @return boolean true of the reference was added.  False if the object was already referenced
    */
-  public void addReference(NodeID nodeID, ObjectID objectID);
+  public boolean addReference(NodeID nodeID, ObjectID objectID);
 
   /**
    * From the local state of the l1 named nodeID remove all the objectIDs that are references and also remove from the

@@ -71,7 +71,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         }
 
         @Override
-        public void addReference(NodeID nodeID, ObjectID objectID) {
+        public boolean addReference(NodeID nodeID, ObjectID objectID) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

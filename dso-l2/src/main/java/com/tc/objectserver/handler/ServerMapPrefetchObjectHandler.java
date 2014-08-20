@@ -16,6 +16,7 @@ import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
+import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
@@ -78,21 +79,17 @@ public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
           logger.debug("Prefetch LookupMissingObjectIDs = " + results.getMissingObjectIds() + " , clientID = "
                        + clientID);
         }
+        final ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) channel
+            .createMessage(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE);
+        notFound.initialize(results.getMissingObjectIds(),-1);
+        notFound.send();
+        
         clientManager.removeReferences(clientID, results.getMissingObjectIds(), Collections.EMPTY_SET);
       }
       responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
       responseMessage.send();
-      if (logger.isDebugEnabled()) {
-        debugStats(results);
-      }
     }
     results.releaseAll(this.objectManager);
-  }
-
-  private void debugStats(ServerMapRequestPrefetchObjectsContext results) {
-    for (ServerMapGetValueResponse msg : results.getAnswers()) {
-      logger.debug(msg);
-    }
   }
 
   private MessageChannel getActiveChannel(final ClientID clientID) {

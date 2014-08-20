@@ -28,8 +28,8 @@ public class TestClientStateManager implements ClientStateManager {
   }
 
   @Override
-  public void addReference(final NodeID nodeID, final ObjectID objectID) {
-    this.addReferenceCalls.add(new AddReferenceContext(nodeID, objectID));
+  public boolean addReference(final NodeID nodeID, final ObjectID objectID) {
+    return this.addReferenceCalls.add(new AddReferenceContext(nodeID, objectID));
   }
 
   public static class AddReferenceContext {

@@ -29,6 +29,7 @@ import junit.framework.TestCase;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import org.mockito.Matchers;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -252,5 +253,19 @@ public class ClientStateManagerTest extends TestCase {
         Sets.<ObjectID>newHashSet(), new Invalidations());
 
     assertThat(prunedChanges, contains(dna));
+  }
+  
+  public void testAddReference() throws Exception {
+    ClientStateManager clientStateManager = new ClientStateManagerImpl();
+    ClientID clientID = new ClientID(1);
+    ObjectID oid = new ObjectID(1);
+    clientStateManager.startupNode(clientID);
+    ObjectReferenceAddListener listener = mock(ObjectReferenceAddListener.class);
+    clientStateManager.registerObjectReferenceAddListener(listener);
+    assertTrue(clientStateManager.addReference(clientID, oid));
+    assertFalse(clientStateManager.addReference(clientID, oid));
+    verify(listener).objectReferenceAdded(Matchers.eq(oid));
+    ClientID client2 = new ClientID(2);
+    assertFalse(clientStateManager.addReference(client2, oid));
   }
 }

@@ -11,7 +11,7 @@ import java.util.Set;
 
 public interface ClientState {
 
-  public void addReference(ObjectID id);
+  public boolean addReference(ObjectID id);
 
   public boolean containsReference(ObjectID id);
 

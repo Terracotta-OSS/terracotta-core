@@ -224,10 +224,8 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
           if ( logger.isDebugEnabled() ) {
             logger.debug("sending " + portableValue);
           }
-          boolean shouldPrefetch = shouldPrefetch(clientID, portableValue);
-          if (shouldPrefetch) {
-            clientStateManager.addReference(clientID, portableValue);
-          }
+          
+          boolean shouldPrefetch = (enablePrefetch && clientStateManager.addReference(clientID, portableValue));
 
           response.put(portableKey, portableValue, shouldPrefetch, wrappedValue.getCreationTime(),
                        wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive(),

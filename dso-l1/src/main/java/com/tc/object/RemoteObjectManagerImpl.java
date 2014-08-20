@@ -433,7 +433,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     final RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(requestID, oids, requestDepth);
     rmom.send();
   }
-
+  
   private RequestManagedObjectMessage createRequestManagedObjectMessage(final ObjectRequestID requestID,
                                                                         final Set<ObjectID> oids, final int requestDepth) {
     final RequestManagedObjectMessage rmom = this.rmomFactory.newRequestManagedObjectMessage(this.groupID);
@@ -527,7 +527,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     for (Object missingOID : missingOIDs) {
       final ObjectID oid = (ObjectID) missingOID;
       final ObjectLookupState ols = this.objectLookupStates.get(oid);
-      this.logger.warn("Received Missing Object ID from server : " + oid + " ObjectLookup State : " + ols);
+      this.logger.debug("Received Missing Object ID from server : " + oid + " ObjectLookup State : " + ols);
       if (ols == null) {
         /**
          * DEV-5697 : This is possible if prefetch from the server and the look from the client are racing and the

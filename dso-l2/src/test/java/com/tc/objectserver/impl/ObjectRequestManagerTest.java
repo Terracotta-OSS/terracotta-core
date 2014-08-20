@@ -758,7 +758,7 @@ public class ObjectRequestManagerTest extends TestCase {
     private final Map<NodeID, Set<ObjectID>> clientStateMap = new HashMap<NodeID, Set<ObjectID>>();
 
     @Override
-    public void addReference(final NodeID nodeID, final ObjectID objectID) {
+    public boolean addReference(final NodeID nodeID, final ObjectID objectID) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 

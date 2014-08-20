@@ -107,12 +107,15 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
   }
 
   @Override
-  public void addReference(final NodeID id, final ObjectID objectID) {
+  public boolean addReference(final NodeID id, final ObjectID objectID) {
     final ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.lock();
       try {
-        c.addReference(objectID);
+        if (!c.addReference(objectID) ) {
+          return false;
+        }
+        
       } finally {
         c.unlock();
       }
@@ -121,7 +124,9 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       }
     } else {
       logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + id);
+      return false;
     }
+    return true;
   }
 
   @Override
@@ -140,7 +145,6 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
 
   }
-
   /**
    * From the local state of the l1 named nodeID remove all the objectIDs that are references and also remove from the
    * requested list any refrence already present
@@ -340,8 +344,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
 
     @Override
-    public void addReference(final ObjectID id) {
-      this.managed.add(id);
+    public boolean addReference(final ObjectID id) {
+      return this.managed.add(id);
     }
 
     @Override
