@@ -13,10 +13,7 @@ import com.terracotta.management.service.RemoteAgentBridgeService;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.management.JMX;
 import javax.management.MBeanServerConnection;
@@ -67,8 +64,11 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
       Map<String, String> attributes = new HashMap<String, String>();
       String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
       String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
+      String[] uuids = (String[])mBeanServerConnection.getAttribute(objectName, "ClientUUIDs");
+      String uuidsAsString = stringArrayToString(uuids);
       attributes.put("Version", version);
       attributes.put("Agency", agency);
+      attributes.put("ClientUUIDs", uuidsAsString);
       return attributes;
     } catch (ServiceExecutionException see) {
       throw see;
@@ -100,6 +100,18 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
       }
     }
     throw new ServiceExecutionException("Cannot find node : " + nodeName);
+  }
+
+  static String stringArrayToString(String[] uuids) {
+    String uuidsAsString = "";
+    for (String uuid : uuids) {
+      if(!uuidsAsString.equals("")) {
+        uuidsAsString = uuidsAsString + "," + uuid;
+      } else {
+        uuidsAsString = uuid;
+      }
+    }
+    return uuidsAsString;
   }
 
 }
