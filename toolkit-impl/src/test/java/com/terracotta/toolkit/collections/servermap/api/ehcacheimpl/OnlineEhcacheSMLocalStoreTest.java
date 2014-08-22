@@ -209,7 +209,7 @@ public class OnlineEhcacheSMLocalStoreTest {
     when(base.getCacheConfiguration()).thenReturn(config);
     
     OnlineEhcacheSMLocalStore instance = new OnlineEhcacheSMLocalStore(base);
-    instance.clear();
+    instance.cleanLocalState();
     
     verify(base).removeAll(Matchers.eq(true));
   }
