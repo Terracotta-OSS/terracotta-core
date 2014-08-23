@@ -51,7 +51,6 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testGet() {
-    System.out.println("put");
     Object key = "test";
     Object value = "value";
     Element old = new Element(key,value);
@@ -75,7 +74,6 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testGetKeys() {
-    System.out.println("put");
     List<Object> keys = new ArrayList<Object>(5);
     for (int x=0;x<5;x++) {
       keys.add(Integer.toString(x));
@@ -99,12 +97,12 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testPut() throws Exception {
-    System.out.println("put");
     Object key = "test";
     Object value = "value";
     Element old = new Element("test","old");
     
     InternalEhcache base = mock(InternalEhcache.class);
+    when(base.removeAndReturnElement(Matchers.any())).thenReturn(old);
     when(base.putIfAbsent(Matchers.any(Element.class))).thenReturn(old);
     when(base.replace(Matchers.eq(old), Matchers.any(Element.class))).thenReturn(true);
     
@@ -116,8 +114,8 @@ public class OnlineEhcacheSMLocalStoreTest {
     Object result = instance.put(key, value);
     assertEquals(old.getObjectValue(), result);
     
-    verify(base).putIfAbsent(Matchers.any(Element.class));
-    verify(base).replace(Matchers.eq(old), Matchers.any(Element.class));
+//    verify(base).putIfAbsent(Matchers.any(Element.class));
+//    verify(base).replace(Matchers.eq(old), Matchers.any(Element.class));
   }
 
   /**
@@ -125,7 +123,6 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testRemove_Object() {
-    System.out.println("put");
     Object key = "test";
     Object value = "value";
     Element old = new Element(key,value);
@@ -149,7 +146,6 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testRemove_Object_Object() {
-    System.out.println("put");
     Object key = "test";
     Object value = "value";
     Element old = new Element(key,value);
@@ -175,7 +171,6 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testClear() {
-    System.out.println("put");
     Object key = "test";
     Object value = "value";
     Element old = new Element(key,value);
@@ -197,7 +192,6 @@ public class OnlineEhcacheSMLocalStoreTest {
    */
   @Test
   public void testCleanLocalState() {
-    System.out.println("put");
     Object key = "test";
     Object value = "value";
     Element old = new Element(key,value);
