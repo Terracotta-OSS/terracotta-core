@@ -60,8 +60,7 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
   public Object put(Object key, Object value) throws ServerMapLocalStoreFullException {
     try {
       Object encodedKey = encode(key);
-      Element newElement = new Element(encodedKey,value);
-      Element oldElement = localStoreCache.removeAndReturnElement(newElement);
+      Element oldElement = localStoreCache.removeAndReturnElement(encodedKey);
       localStoreCache.put(new Element(encodedKey,value));
       return oldElement == null ? null : oldElement.getObjectValue();
     } catch (CacheException e) {
