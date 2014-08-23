@@ -102,7 +102,7 @@ public class OnlineEhcacheSMLocalStoreTest {
     Element old = new Element("test","old");
     
     InternalEhcache base = mock(InternalEhcache.class);
-    when(base.removeAndReturnElement(Matchers.any())).thenReturn(old);
+    when(base.removeAndReturnElement(Matchers.eq(key))).thenReturn(old);
     when(base.putIfAbsent(Matchers.any(Element.class))).thenReturn(old);
     when(base.replace(Matchers.eq(old), Matchers.any(Element.class))).thenReturn(true);
     
