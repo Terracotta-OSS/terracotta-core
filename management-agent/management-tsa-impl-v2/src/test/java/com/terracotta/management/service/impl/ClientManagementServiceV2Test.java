@@ -16,7 +16,6 @@ import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,17 +68,31 @@ public class ClientManagementServiceV2Test {
     when(localManagementSource.getClientID(eq(new ObjectName("x:id=objName1")))).thenReturn("1");
     when(localManagementSource.getClientID(eq(new ObjectName("x:id=objName2")))).thenReturn("2");
     when(localManagementSource.getClientID(eq(new ObjectName("x:id=objName3")))).thenReturn("3");
-    when(localManagementSource.getVersion()).thenReturn("1.2.3");
-    when(localManagementSource.getClientAttributes(eq(new ObjectName("x:id=objName1")))).thenReturn(Collections.<String, Object>singletonMap("Name", "Client1"));
-    when(localManagementSource.getClientAttributes(eq(new ObjectName("x:id=objName2")))).thenReturn(Collections.<String, Object>singletonMap("Name", "Client2"));
-    when(localManagementSource.getClientAttributes(eq(new ObjectName("x:id=objName3")))).thenReturn(Collections.<String, Object>singletonMap("Name", "Client3"));
+    when(localManagementSource.getClientAttributes(eq(new ObjectName("x:id=objName1")))).thenReturn(
+        new HashMap<String, Object>() {{
+          put("Name", "Client1");
+          put("MavenArtifactsVersion", "1.2.3_1");
+        }}
+    );
+    when(localManagementSource.getClientAttributes(eq(new ObjectName("x:id=objName2")))).thenReturn(
+        new HashMap<String, Object>() {{
+          put("Name", "Client2");
+          put("MavenArtifactsVersion", "1.2.3_2");
+        }}
+    );
+    when(localManagementSource.getClientAttributes(eq(new ObjectName("x:id=objName3")))).thenReturn(
+        new HashMap<String, Object>() {{
+          put("Name", "Client3");
+          put("MavenArtifactsVersion", "1.2.3_3");
+        }}
+    );
 
     ClientManagementServiceV2 clientManagementService = new ClientManagementServiceV2(l1MBeansSource, executorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
 
     ResponseEntityV2<ClientEntityV2> response = clientManagementService.getClients(new HashSet<String>(Arrays.asList("2")), null);
     assertThat(response.getEntities().size(), is(1));
 
-    assertThat(response.getEntities().iterator().next().getProductVersion(), equalTo("1.2.3"));
+    assertThat(response.getEntities().iterator().next().getProductVersion(), equalTo("1.2.3_2"));
     assertThat(response.getEntities().iterator().next().getAttributes().get("Name"), CoreMatchers.<Object>equalTo("Client2"));
   }
 

@@ -102,8 +102,9 @@ public class ClientManagementServiceV2 {
       @Override
       public ClientEntityV2 queryClient(ObjectName clientObjectName, String clientId) {
         ClientEntityV2 clientEntityV2 = new ClientEntityV2();
-        clientEntityV2.setProductVersion(localManagementSource.getVersion());
-        clientEntityV2.getAttributes().putAll(localManagementSource.getClientAttributes(clientObjectName));
+        Map<String, Object> clientAttributes = localManagementSource.getClientAttributes(clientObjectName);
+        clientEntityV2.setProductVersion((String)clientAttributes.remove("MavenArtifactsVersion"));
+        clientEntityV2.getAttributes().putAll(clientAttributes);
         return clientEntityV2;
       }
 

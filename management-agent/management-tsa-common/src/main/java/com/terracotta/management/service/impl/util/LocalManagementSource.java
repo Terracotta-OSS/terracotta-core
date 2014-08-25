@@ -391,6 +391,7 @@ public class LocalManagementSource {
       result.put("Version", mBeanServer.getAttribute(l1InfoObjectName, "Version"));
       result.put("BuildID", mBeanServer.getAttribute(l1InfoObjectName, "BuildID"));
       result.put("ClientUUID", mBeanServer.getAttribute(l1InfoObjectName, "ClientUUID"));
+      result.put("MavenArtifactsVersion", mBeanServer.getAttribute(l1InfoObjectName, "MavenArtifactsVersion"));
 
       return result;
     } catch (JMException jme) {

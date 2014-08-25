@@ -95,8 +95,9 @@ public class ClientManagementService {
       @Override
       public ClientEntity queryClient(ObjectName clientObjectName, String clientId) {
         ClientEntity clientEntity = new ClientEntity();
-        clientEntity.setVersion(localManagementSource.getVersion());
-        clientEntity.getAttributes().putAll(localManagementSource.getClientAttributes(clientObjectName));
+        Map<String, Object> clientAttributes = localManagementSource.getClientAttributes(clientObjectName);
+        clientEntity.setVersion((String)clientAttributes.remove("MavenArtifactsVersion"));
+        clientEntity.getAttributes().putAll(clientAttributes);
         return clientEntity;
       }
 
