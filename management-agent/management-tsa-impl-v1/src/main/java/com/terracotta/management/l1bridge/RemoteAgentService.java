@@ -85,6 +85,9 @@ public class RemoteAgentService implements AgentService {
       e.setAgentId(id);
       e.setAgencyOf(props.get("Agency"));
       e.setVersion(props.get("Version"));
+      e.getRootRepresentables().putAll(props);
+      e.getRootRepresentables().remove("Agency");
+      e.getRootRepresentables().remove("Version");
       result.add(e);
     }
 

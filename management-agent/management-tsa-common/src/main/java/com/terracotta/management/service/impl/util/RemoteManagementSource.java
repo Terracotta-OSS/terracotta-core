@@ -40,7 +40,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -371,7 +370,7 @@ public class RemoteManagementSource {
     }
   }
 
-  public static String toCsv(Set<String> strings) {
+  public static String toCsv(Collection<String> strings) {
     if (strings == null) {
       return null;
     }

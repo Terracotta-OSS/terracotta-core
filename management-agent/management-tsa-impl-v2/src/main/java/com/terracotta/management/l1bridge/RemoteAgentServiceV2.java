@@ -90,6 +90,8 @@ public class RemoteAgentServiceV2 implements AgentServiceV2 {
       AgentEntityV2 entityV2 = new AgentEntityV2();
       entityV2.setAgentId(id);
       entityV2.setAgencyOf(props.get("Agency"));
+      entityV2.getRootRepresentables().putAll(props);
+      entityV2.getRootRepresentables().remove("Agency");
       result.getEntities().add(entityV2);
     }
 

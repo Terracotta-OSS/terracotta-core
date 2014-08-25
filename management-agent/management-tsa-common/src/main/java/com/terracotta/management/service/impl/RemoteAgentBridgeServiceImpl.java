@@ -13,12 +13,19 @@ import com.terracotta.management.service.RemoteAgentBridgeService;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.management.JMX;
+import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+
+import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
 
 /**
  * @author Ludovic Orban
@@ -62,13 +69,14 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
       ObjectName objectName = findRemoteAgentEndpoint(nodeName);
 
       Map<String, String> attributes = new HashMap<String, String>();
-      String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
-      String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
-      String[] uuids = (String[])mBeanServerConnection.getAttribute(objectName, "ClientUUIDs");
-      String uuidsAsString = stringArrayToString(uuids);
-      attributes.put("Version", version);
-      attributes.put("Agency", agency);
-      attributes.put("ClientUUIDs", uuidsAsString);
+
+      MBeanAttributeInfo[] attributeInfos = mBeanServerConnection.getMBeanInfo(objectName).getAttributes();
+      for (MBeanAttributeInfo attributeInfo : attributeInfos) {
+        String attributeName = attributeInfo.getName();
+        Object attributeValue = mBeanServerConnection.getAttribute(objectName, attributeName);
+        attributes.put(attributeName, toString(attributeValue));
+      }
+
       return attributes;
     } catch (ServiceExecutionException see) {
       throw see;
@@ -102,16 +110,14 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
     throw new ServiceExecutionException("Cannot find node : " + nodeName);
   }
 
-  static String stringArrayToString(String[] uuids) {
-    String uuidsAsString = "";
-    for (String uuid : uuids) {
-      if(!uuidsAsString.equals("")) {
-        uuidsAsString = uuidsAsString + "," + uuid;
-      } else {
-        uuidsAsString = uuid;
-      }
+  static String toString(Object obj) {
+    if (obj == null) {
+      return null;
     }
-    return uuidsAsString;
+    if (obj instanceof String[]) {
+      return toCsv(Arrays.asList((String[])obj));
+    }
+    return obj.toString();
   }
 
 }
