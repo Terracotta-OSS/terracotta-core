@@ -30,6 +30,7 @@ import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 
 import java.io.IOException;
+import org.junit.Assert;
 
 public class TransactionBatchManagerImplTest extends TCTestCase {
 
@@ -72,6 +73,15 @@ public class TransactionBatchManagerImplTest extends TCTestCase {
     inOrder.verify(filter).addTransactionBatch(any(IncomingTransactionBatchContext.class));
     inOrder.verify(syncWriteSink).add(any(EventContext.class));
   }
+  
+  public void testBatchAcks() throws Exception {
+    ClientID client = new ClientID(1);
+    mgr.defineBatch(client, 4);
+    mgr.batchComponentComplete(client, new TransactionID(1));
+    mgr.batchComponentComplete(client, new TransactionID(2));
+    mgr.batchComponentComplete(client, new TransactionID(3));
+    Assert.assertTrue(mgr.batchComponentComplete(client, new TransactionID(4)));
+  }
 
   private void batch(boolean sync) throws IOException {
     ServerTransaction txn = txn(1, sync);
@@ -79,7 +89,7 @@ public class TransactionBatchManagerImplTest extends TCTestCase {
     when(batchReader.getBatchID()).thenReturn(new TxnBatchID(1));
     when(batchReader.getNextTransaction()).thenReturn(txn).thenReturn(null);
   }
-
+  
   private ServerTransaction txn(long id, boolean syncWrite) {
     ServerTransaction serverTransaction = mock(ServerTransaction.class);
     when(serverTransaction.getTransactionID()).thenReturn(new TransactionID(id));

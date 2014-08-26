@@ -258,9 +258,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
     
     private void resetAckCount() {
-      this.ackCount = Integer.SIZE - Integer.numberOfLeadingZeros(txnCount) > batchCount ? 
-          txnCount >> (batchCount) : 1;
-      if ( this.ackCount <= 0 ) {
+      this.ackCount = Integer.SIZE - Integer.numberOfLeadingZeros(txnCount) > batchCount-1 ? 
+          txnCount >> (batchCount-1) : 1;
+      if ( this.ackCount < 0 || (this.ackCount == 0 && ( (this.batchCount | this.txnCount) != 0 ) ) ) {
         throw new AssertionError(this.toString());
       }
       logger.debug(this);
@@ -283,15 +283,14 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         return (this.txnCount == 0) ? BatchState.SHUTDOWN : BatchState.CONTINUE;
       }
 
-      if ( --this.ackCount == 0 ) {
+      if ( --this.ackCount <= 0 ) {
         if (this.batchCount <= 0) {
           // this is possible when the passive server moves to active.
           logger.info("Not decrementing batchCount : " + txnID + " : " + toString());
         } else {
-          if ( this.batchCount-- > 1 ) {
-            resetAckCount();
-          }
+          this.batchCount--;
         }
+        resetAckCount();
         return BatchState.COMPLETE;
       } else {
         return BatchState.CONTINUE;
