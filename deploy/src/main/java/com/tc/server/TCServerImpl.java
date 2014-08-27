@@ -811,8 +811,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void fileLock() throws InterruptedException, IOException {
     while (true) {
       // check if the lock file is older than 60s, in that case assume another VM crashed and delete it
-      if (TC_MANAGEMENT_API_LOCKFILE.lastModified() != 0L
-          && System.currentTimeMillis() - TC_MANAGEMENT_API_LOCKFILE.lastModified() >= 60000) {
+      if (TC_MANAGEMENT_API_LOCKFILE.lastModified() != 0L && System.currentTimeMillis() - TC_MANAGEMENT_API_LOCKFILE.lastModified() >= 20000) {
+        consoleLogger.debug("removing Management Server lock file after waiting 20 seconds");
         TC_MANAGEMENT_API_LOCKFILE.delete();
       }
 
