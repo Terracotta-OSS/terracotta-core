@@ -2,6 +2,7 @@ package com.tc.object;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -152,5 +153,40 @@ public class TCObjectServerMapImplTest {
       // expected
     }
     verify(globalLocalCacheManager).removeTCObjectSelfTemp(value, true);
+  }
+
+  @Test
+  public void testExpireWithOID() throws Exception {
+    final ObjectID oid = new ObjectID(1);
+    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(platformService, clientObjectManager,
+        serverMapManager, objectID, null, mock(TCClass.class), false, globalLocalCacheManager) {
+      @Override
+      public void logicalInvoke(final LogicalOperation method, final Object[] parameters) {
+        assertThat(parameters[1], is((Object) oid));
+      }
+    };
+
+    TCObjectSelf value = mock(TCObjectSelf.class);
+    when(value.getObjectID()).thenReturn(oid);
+
+    tcObjectServerMap.doLogicalExpire("foo", "bar", value);
+    tcObjectServerMap.doLogicalExpireUnlocked(null, "bar", value);
+  }
+
+  @Test
+  public void testSetLastAccessedTimeOID() throws Exception {
+    final ObjectID oid = new ObjectID(1);
+    TCObjectServerMap tcObjectServerMap = new TCObjectServerMapImpl(platformService, clientObjectManager,
+        serverMapManager, objectID, null, mock(TCClass.class), false, globalLocalCacheManager) {
+      @Override
+      public void logicalInvoke(final LogicalOperation method, final Object[] parameters) {
+        assertThat(parameters[1], is((Object) oid));
+      }
+    };
+
+    TCObjectSelf value = mock(TCObjectSelf.class);
+    when(value.getObjectID()).thenReturn(oid);
+
+    tcObjectServerMap.doLogicalSetLastAccessedTime("foo", value, 1234L);
   }
 }
