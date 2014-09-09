@@ -183,6 +183,9 @@ public abstract class ManagementToolUtil {
 
     String host = computeHost(l2TVSConfigurationSetupManager.commonl2Config());
     int port = computeManagementPort(l2TVSConfigurationSetupManager.commonl2Config());
+    if (!secured && l2TVSConfigurationSetupManager.isSecure()) {
+      secured = true;
+    }
     return targetFor(host, port, username, password, secured, ignoreUntrusted);
   }
 
