@@ -38,6 +38,7 @@ import javax.ws.rs.client.WebTarget;
 public abstract class ManagementToolUtil {
   private static final String DEFAULT_HOST = "localhost";
   private static final int DEFAULT_PORT = 9540;
+  private static final int DEFAULT_TSA_PORT = 9510;
 
   private static boolean securityManagerInitDone = false;
 
@@ -161,10 +162,14 @@ public abstract class ManagementToolUtil {
   }
 
   private static int computeManagementPort(Server l2Config) {
-    if (l2Config.getManagementPort() != null) {
+    if (l2Config.isSetManagementPort()) {
       return l2Config.getManagementPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.getManagementPort().getIntValue();
     } else {
-      return L2DSOConfigObject.computeManagementPortFromTSAPort(l2Config.getTsaPort().getIntValue());
+      int tsaPort = DEFAULT_TSA_PORT;
+      if (l2Config.isSetTsaPort()) {
+        tsaPort = l2Config.getTsaPort().getIntValue();
+      }
+      return L2DSOConfigObject.computeManagementPortFromTSAPort(tsaPort);
     }
   }
 
@@ -223,7 +228,11 @@ public abstract class ManagementToolUtil {
     if (l2Config.managementPort() != null) {
       return l2Config.managementPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.managementPort().getIntValue();
     } else {
-      return L2DSOConfigObject.computeManagementPortFromTSAPort(l2Config.tsaPort().getIntValue());
+      int tsaPort = DEFAULT_TSA_PORT;
+      if (l2Config.tsaPort() != null) {
+        tsaPort = l2Config.tsaPort().getIntValue();
+      }
+      return L2DSOConfigObject.computeManagementPortFromTSAPort(tsaPort);
     }
   }
 
