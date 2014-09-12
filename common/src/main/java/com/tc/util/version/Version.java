@@ -13,15 +13,21 @@ public class Version implements Comparable<Version> {
   // \d+ - 1 or more digits
   // \. - a dot
   // \d+ - 1 or more digits
+  // \. - a dot
+  // \d+ - 1 or more digits
+  // \. - a dot
+  // \d+ - 1 or more digits
   // _ - an underscore
   // \w+ - letters and/or numbers
   // - - just a dash
   // \w+ - letters and numbers
-  private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)?)?)?(?:_(\\w+))?(?:-(\\w+))?$");
+  private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)?)?(?:\\.(\\d+)?)?(?:\\.(\\d+)?)?)?(?:_(\\w+))?(?:-(\\w+))?$");
 
   private final int            major;
   private final int            minor;
   private final int            micro;
+  private final int            patch;
+  private final int            build;
   private final String         specifier;
   private final String         qualifier;
 
@@ -39,15 +45,32 @@ public class Version implements Comparable<Version> {
       String microStr = m.group(3);
       if (microStr != null) {
         micro = Integer.parseInt(microStr);
+        String patchStr = m.group(4);
+        if (patchStr != null) {
+          patch = Integer.parseInt(patchStr);
+          String buildStr = m.group(5);
+          if (buildStr != null) {
+            build = Integer.parseInt(buildStr);
+          } else {
+            build = 0;
+          }
+        } else {
+          patch = 0;
+          build = 0;
+        }
       } else {
         micro = 0;
+        patch = 0;
+        build = 0;
       }
     } else {
       minor = 0;
       micro = 0;
+      patch = 0;
+      build = 0;
     }
-    specifier = m.group(4);
-    qualifier = m.group(5);
+    specifier = m.group(6);
+    qualifier = m.group(7);
   }
 
   public static boolean isValidVersionString(String version) {
@@ -71,6 +94,14 @@ public class Version implements Comparable<Version> {
     return this.micro;
   }
 
+  private int patch() {
+    return patch;
+  }
+
+  private int build() {
+    return build;
+  }
+
   /**
    * May be null
    */
@@ -92,6 +123,12 @@ public class Version implements Comparable<Version> {
 
     int microDiff = micro - otherVersion.micro();
     if (microDiff != 0) { return microDiff; }
+
+    int patchDiff = patch - otherVersion.patch();
+    if (patchDiff != 0) { return patchDiff; }
+
+    int buildDiff = build - otherVersion.build();
+    if (buildDiff != 0) { return buildDiff; }
 
     if (specifier == null) {
       if (otherVersion.specifier != null) { return 1; }
@@ -130,6 +167,15 @@ public class Version implements Comparable<Version> {
 
   @Override
   public String toString() {
-    return major + "." + minor + "." + micro + (specifier == null ? "" : "." + specifier) + (qualifier == null ? "" : "." + qualifier);
+    StringBuilder versionString = new StringBuilder().append(major);
+    versionString.append(".").append(minor).append(".").append(micro)
+                  .append(".").append(patch).append(".").append(build);
+    if (specifier != null) {
+      versionString.append("_" + specifier);
+    }
+    if (qualifier != null) {
+      versionString.append("-" + qualifier);
+    }
+    return versionString.toString();
   }
 }

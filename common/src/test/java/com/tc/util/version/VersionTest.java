@@ -11,7 +11,7 @@ import junit.framework.TestCase;
 
 public class VersionTest extends TestCase {
 
-  private void helpTestParse(String str, int major, int minor, int micro, final String specifier, String qualifier) {
+  private void helpTestParse(String str, int major, int minor, int micro, int patch, int build, final String specifier, String qualifier) {
     Version v = new Version(str);
     assertEquals("major", major, v.major());
     assertEquals("minor", minor, v.minor());
@@ -21,12 +21,13 @@ public class VersionTest extends TestCase {
   }
   
   public void testVersionParse() {
-    helpTestParse("1", 1, 0, 0, null, null);
-    helpTestParse("1.2", 1, 2, 0, null, null);
-    helpTestParse("1.2.3", 1, 2, 3, null, null);
-    helpTestParse("1.2.3-foo", 1, 2, 3, null, "foo");
-    helpTestParse("1.2.3_preview-foo", 1, 2, 3, "preview", "foo");
-    helpTestParse("1.2.3_preview", 1, 2, 3, "preview", null);
+    helpTestParse("1", 1, 0, 0, 0, 0, null, null);
+    helpTestParse("1.2", 1, 2, 0, 0, 0, null, null);
+    helpTestParse("1.2.3", 1, 2, 3, 0, 0, null, null);
+    helpTestParse("1.2.3-foo", 1, 2, 3, 0, 0, null, "foo");
+    helpTestParse("1.2.3_preview-foo", 1, 2, 3, 0, 0, "preview", "foo");
+    helpTestParse("1.2.3_preview", 1, 2, 3, 0, 0, "preview", null);
+    helpTestParse("4.3.0.0.1", 4, 3, 0, 0, 1, null, null);
   }
   
   private void helpTestInvalid(String input) {
@@ -40,7 +41,6 @@ public class VersionTest extends TestCase {
   
   public void testVersionInvalid() {
     helpTestInvalid("foo");
-    helpTestInvalid("1.1.1.1");
     helpTestInvalid("1.1.1.SNAPSHOT");
     helpTestInvalid("[1.0.0,1.1.0)");
     helpTestInvalid("1.0.thisdoesntlookright");
@@ -78,6 +78,9 @@ public class VersionTest extends TestCase {
     helpTestCompare("1.0_preview1", "1.0_preview2", -1);
     helpTestCompare("1.0_preview1-SNAPSHOT", "1.0_preview2", -1);
     helpTestCompare("1.0_preview2-SNAPSHOT", "1.0_preview1", 1);
+    helpTestCompare("4.3.1.0.1", "4.3.1.0.2", -1);
+    helpTestCompare("4.3.0", "4.3.0.0.1", -1);
+    helpTestCompare("4.3.0.0.256", "4.4.0", -1);
   }
   
   public void testSortList() {
@@ -90,6 +93,6 @@ public class VersionTest extends TestCase {
     stuff.add(new Version("2.1.0-SNAPSHOT"));
     stuff.add(new Version("1.1.0_preview"));
     Collections.sort(stuff);
-    assertEquals("[1.0.0, 1.1.0.preview, 1.1.0.SNAPSHOT, 1.1.0, 1.2.0, 2.1.0.SNAPSHOT, 2.1.0]", stuff.toString());
+    assertEquals("[1.0.0.0.0, 1.1.0.0.0_preview, 1.1.0.0.0-SNAPSHOT, 1.1.0.0.0, 1.2.0.0.0, 2.1.0.0.0-SNAPSHOT, 2.1.0.0.0]", stuff.toString());
   }
 }

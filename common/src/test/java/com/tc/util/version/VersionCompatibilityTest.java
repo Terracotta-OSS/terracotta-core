@@ -3,8 +3,6 @@
  */
 package com.tc.util.version;
 
-import com.tc.util.ProductInfo;
-
 import junit.framework.TestCase;
 
 public class VersionCompatibilityTest extends TestCase {
@@ -105,12 +103,38 @@ public class VersionCompatibilityTest extends TestCase {
   }
 
   public void testDotDrop() {
-    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1"), v("1.0.1")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1"), v("1.0.0")));
+  }
+
+  public void testPatchBump() {
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.2.25")));
+  }
+
+  public void testPatchDrop() {
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.0.25")));
+  }
+
+  public void testBuildBump() {
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.1.142")));
+  }
+
+  public void testBuildDrop() {
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.1.25")));
+  }
+
+  public void testSpecifierAdd() {
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.1.134_fix1")));
+  }
+
+  public void testSpecifierDrop() {
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134_fix1"), v("1.0.1.1.134")));
   }
 
   public void testSnapshots() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.0.0-SNAPSHOT")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0.1.34"), v("1.0.0-SNAPSHOT")));
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0-SNAPSHOT"), v("1.0.0")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0-SNAPSHOT"), v("1.0.0.1.54")));
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0-SNAPSHOT"), v("1.0.0-SNAPSHOT")));
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.0.1-SNAPSHOT")));
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0-SNAPSHOT"), v("1.0.1")));
