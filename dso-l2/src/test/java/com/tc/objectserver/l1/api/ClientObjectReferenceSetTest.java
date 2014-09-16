@@ -57,7 +57,8 @@ public class ClientObjectReferenceSetTest extends TCTestCase {
     System.err.println("XXX ServerMap Eviction continuously running");
     for (int i = 0; i < 10; i++) {
       ThreadUtil.reallySleep(r.nextInt(50));
-      int current = currentObjectID.intValue();
+//  minus one because this thread can race past the incrementing thread above, current - 1 is known to have been put into set
+      int current = currentObjectID.intValue() - 1;
       int id = r.nextInt(current);
       System.err.println("XXX CurrentObjectIDSeq=" + current + "; toCheck=" + id + ", " + current);
       Assert.eval(clientObjRefSet.contains(new ObjectID(id)));
