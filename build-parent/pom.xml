@@ -43,6 +43,7 @@
     <toolkit-api-internal.version>1.17</toolkit-api-internal.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.10.0-SNAPSHOT</ehcache.version>
+    <ehcache-ee.version>2.10.0-SNAPSHOT</ehcache-ee.version>
     <tcconfig.version>9.1</tcconfig.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
