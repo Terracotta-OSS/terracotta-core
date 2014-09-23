@@ -237,12 +237,6 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
     return responses;
   }
-  
-  private boolean shouldPrefetch(ClientID cid, ObjectID object) {
- //  if the client is fetching the key-value, assume the client needs the value faulted in.  check for sure
- //    before sending.  See ServerMapRequestPrefetchObjectsContext
-    return enablePrefetch && !clientStateManager.hasReference(cid, object);
-  }
 
   private void sendResponseForGetAllSize(final ObjectID mapID, final ServerMapRequestSizeContext request,
                                          final ConcurrentDistributedServerMapManagedObjectState cdsmState) {
