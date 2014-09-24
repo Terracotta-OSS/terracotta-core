@@ -1,9 +1,17 @@
 package com.terracotta.toolkit.collections;
 
+import com.tc.exception.TCNotRunningException;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.spi.LoggingEvent;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
+import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
@@ -60,6 +68,7 @@ public class AggregateServerMapTest {
   private PlatformService platformService;
   private ServerMapLocalStoreFactory serverMapLocalStoreFactory;
   private Configuration configuration;
+  private final ArrayList list = new ArrayList();
 
   @Before
   public void setUp() throws Exception {
@@ -70,7 +79,25 @@ public class AggregateServerMapTest {
     platformService = mock(PlatformService.class);
     when(platformService.getTaskRunner()).thenReturn(taskRunner);
     when(platformService.getTCProperties()).thenReturn(TCPropertiesImpl.getProperties());
+    AppenderSkeleton appender = new AppenderSkeleton() {
 
+      @Override
+      public boolean requiresLayout() {
+        return false;
+      }
+
+      @Override
+      public void close() {
+        // throw new ImplementMe();
+      }
+
+      @Override
+      protected void append(LoggingEvent event) {
+        list.add(event);
+      }
+    };
+
+    LogManager.getLogger(AggregateServerMap.class).addAppender(appender);
     ServerMapLocalStore serverMapLocalStore = mock(ServerMapLocalStore.class);
     serverMapLocalStoreFactory = mock(ServerMapLocalStoreFactory.class);
     when(serverMapLocalStoreFactory.getOrCreateServerMapLocalStore(any(ServerMapLocalStoreConfig.class))).thenReturn(serverMapLocalStore);
@@ -195,5 +222,48 @@ public class AggregateServerMapTest {
     when(tcObject.getObjectID()).thenReturn(new ObjectID(oid));
     when(serverMap.__tc_managed()).thenReturn(tcObject);
     return serverMap;
+  }
+
+  @Test
+  public void testDoHandleEvictionsTCNotRunningExceptionLogging() {
+    final List<ServerMap> serverMapList = mockServerMaps(256);
+    ToolkitObjectStripe[] stripeObjects = createObjectStripes(configuration, serverMapList, 64);
+    AggregateServerMap<String, String> asm = new AggregateServerMap<String, String>(ToolkitObjectType.CACHE, mock(SearchFactory.class),
+            mock(DistributedClusteredObjectLookup.class), "foo", stripeObjects, configuration,
+            mock(Callable.class), serverMapLocalStoreFactory, platformService, mock(ToolkitLock.class));
+
+    ToolkitCacheListener listener1 = new ToolkitCacheListener<Object>() {
+        @Override
+        public void onEviction(Object o) {
+            throw new TCNotRunningException(" Test Exception");
+        }
+
+        @Override
+        public void onExpiration(Object o) {
+        }
+    };
+
+    ToolkitCacheListener listener2 = new ToolkitCacheListener<Object>() {
+        @Override
+        public void onEviction(Object o) {
+        }
+
+        @Override
+        public void onExpiration(Object o) {
+          throw new IllegalStateException("Test Exception");
+        }
+    };
+
+    asm.addListener(listener1);
+    ServerEvent event1 = mock(ServerEvent.class);
+    when(event1.getType()).thenReturn(ServerEventType.EVICT);
+    asm.handleServerEvent(event1);
+    Assert.assertTrue(list.isEmpty());
+
+    asm.addListener(listener2);
+    ServerEvent event2 = mock(ServerEvent.class);
+    when(event2.getType()).thenReturn(ServerEventType.EXPIRE);
+    asm.handleServerEvent(event2);
+    Assert.assertSame("Cache listener threw an exception", ((LoggingEvent) list.get(0)).getMessage());
   }
 }
