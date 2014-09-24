@@ -127,14 +127,14 @@ public class TerracottaOperatorEventFactory {
    * zap events
    */
   public static TerracottaOperatorEvent createZapRequestReceivedEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventLevel.CRITICAL, EventSubsystem.CLUSTER_TOPOLOGY,
+    return new TerracottaOperatorEventImpl(EventLevel.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
                                            EventType.TOPOLOGY_ZAP_RECEIVED,
                                            MessageFormat.format(TerracottaOperatorEventResources
                                                .getZapRequestReceivedMessage(), arguments), "");
   }
 
   public static TerracottaOperatorEvent createZapRequestAcceptedEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventLevel.CRITICAL, EventSubsystem.CLUSTER_TOPOLOGY,
+    return new TerracottaOperatorEventImpl(EventLevel.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
                                            EventType.TOPOLOGY_ZAP_ACCEPTED,
                                            MessageFormat.format(TerracottaOperatorEventResources
                                                .getZapRequestAcceptedMessage(), arguments), "");

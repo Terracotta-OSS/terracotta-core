@@ -5,6 +5,7 @@ package com.tc.operatorevent;
 
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import org.junit.Test;
 
 import java.util.ResourceBundle;
 
@@ -96,5 +97,17 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
         .equals(this.resources.getObject("resource.fullcapacity")));
     Assert.assertTrue(TerracottaOperatorEventResources.getRestoredNormalResourceCapacity()
         .equals(this.resources.getObject("resource.capacityrestored")));
+  }
+
+  @Test
+  public void testZapRequestReceivedEventEventType() {
+      TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createZapRequestReceivedEvent(null);
+      Assert.assertEquals(event.getEventType(), TerracottaOperatorEvent.EventType.);
+  }
+
+  @Test
+  public void testZapRequestAcceptedEventEventType() {
+      TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createZapRequestAcceptedEvent(null);
+      Assert.assertEquals(event.getEventType(), TerracottaOperatorEvent.EventType.WARN);
   }
 }
