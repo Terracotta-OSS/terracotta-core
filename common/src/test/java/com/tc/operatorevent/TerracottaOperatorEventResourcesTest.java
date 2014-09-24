@@ -102,12 +102,12 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
   @Test
   public void testZapRequestReceivedEventEventType() {
       TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createZapRequestReceivedEvent(null);
-      Assert.assertEquals(event.getEventType(), TerracottaOperatorEvent.EventType.);
+      Assert.assertEquals(event.getEventLevel(), TerracottaOperatorEvent.EventLevel.WARN);
   }
 
   @Test
   public void testZapRequestAcceptedEventEventType() {
       TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createZapRequestAcceptedEvent(null);
-      Assert.assertEquals(event.getEventType(), TerracottaOperatorEvent.EventType.WARN);
+      Assert.assertEquals(event.getEventLevel(), TerracottaOperatorEvent.EventLevel.WARN);
   }
 }
