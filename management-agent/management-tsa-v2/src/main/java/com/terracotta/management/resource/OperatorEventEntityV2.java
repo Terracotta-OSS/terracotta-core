@@ -83,4 +83,9 @@ public class OperatorEventEntityV2 extends AbstractTsaEntityV2 {
   public void setRead(boolean read) {
     this.read = read;
   }
+
+  @Override
+  public String toString() {
+    return String.format("%s-%s:%s:%s:%d", sourceId, eventSubsystem, eventType, message, timestamp);
+  }
 }

@@ -3,9 +3,10 @@
  */
 package com.terracotta.management.service.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.ResponseEntityV2;
-import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.resource.OperatorEventEntityV2;
 import com.terracotta.management.resource.services.utils.TimeStringParser;
@@ -17,13 +18,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.core.Response;
-
 /**
  * @author Ludovic Orban
  */
 public class OperatorEventsServiceImplV2 implements OperatorEventsServiceV2 {
-
+  private static final Logger LOG = LoggerFactory.getLogger(OperatorEventsServiceImplV2.class);
   private final ServerManagementServiceV2 serverManagementService;
 
   public OperatorEventsServiceImplV2(ServerManagementServiceV2 serverManagementService) {
@@ -54,38 +53,17 @@ public class OperatorEventsServiceImplV2 implements OperatorEventsServiceV2 {
   }
   @Override
   public boolean markOperatorEvents(Collection<OperatorEventEntityV2> operatorEventEntities, boolean read) throws ServiceExecutionException {
-    
-    boolean rc = true;
+    boolean result = true;
     for (OperatorEventEntityV2 operatorEventEntity : operatorEventEntities) {
       try {
-        if (operatorEventEntity.getEventLevel() == null) {
-          throw new ServiceExecutionException("eventLevel must not be null");
-        }
-        if (operatorEventEntity.getEventSubsystem() == null) {
-          throw new ServiceExecutionException("eventSubsystem must not be null");
-        }
-        if (operatorEventEntity.getEventType() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
-        }
-        if (operatorEventEntity.getCollapseString() == null) {
-          throw new ServiceExecutionException("collapseString must not be null");
-        }
-        if (operatorEventEntity.getSourceId() == null) {
-          throw new ServiceExecutionException("sourceId must not be null");
-        }
-        if (operatorEventEntity.getTimestamp() == 0L) {
-          throw new ServiceExecutionException("timestamp must not be 0");
-        }
-
-        rc &= serverManagementService.markOperatorEvent(operatorEventEntity, read);
-      } catch (ServiceExecutionException see) {
-        throw new ResourceRuntimeException("Failed to mark TSA operator event as read", see, Response.Status.BAD_REQUEST.getStatusCode());
+        result &= serverManagementService.markOperatorEvent(operatorEventEntity, read);
+      } catch (Exception e) {
+        result = false;
+        LOG.debug("Failed to mark operator event: " + operatorEventEntity, e);
       }
     }
-    
-    return rc;
+    return result;
   }
-
 
   @Override
   public Map<String, Integer> getUnreadCount(Set<String> serverNames) throws ServiceExecutionException {
