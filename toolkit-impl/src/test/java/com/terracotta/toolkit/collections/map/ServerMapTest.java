@@ -31,22 +31,36 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import com.tc.exception.ImplementMe;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.VersionedObject;
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.LiteralAction;
+import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.platform.PlatformService;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
@@ -60,6 +74,7 @@ import com.terracottatech.search.SearchCommand;
 import com.terracottatech.search.SearchMetaData;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -83,7 +98,9 @@ public class ServerMapTest {
     tcObjectServerMap = mock(TCObjectServerMap.class);
     when(tcObjectServerMap.getObjectID()).thenReturn(new ObjectID(1));
     platformService = mock(PlatformService.class);
-    when(platformService.getTCProperties()).thenReturn(TCPropertiesImpl.getProperties());
+    TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    tcProperties.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED, "false");
+    when(platformService.getTCProperties()).thenReturn(tcProperties);
     serializationStrategy = mock(SerializationStrategy.class);
     when(serializationStrategy.serialize(any(), anyBoolean())).thenReturn(new byte[1]);
     when(platformService.lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME, SerializationStrategy.class))
@@ -107,6 +124,54 @@ public class ServerMapTest {
     });
   }
 
+  @Test
+  public void testInvalidateOnChangeTrueForEventualMap() throws Exception {
+    ServerMap serverMap = getServerMap();
+    TestDNAWriter writer = new TestDNAWriter();
+    DNAEncoding encoding = mock(DNAEncoding.class);
+    TCLogger logger = mock(TCLogger.class);
+    ServerMapApplicator applicator = new ServerMapApplicator(encoding, logger);
+
+    applicator.dehydrate(null, null, writer, serverMap);
+    PhysicalAction targetAction = new PhysicalAction("invalidateOnChange", true, false);
+
+    Assert.assertTrue(writer.containsPhysicalAction(targetAction));
+
+  }
+
+  @Test
+  public void testInvalidateOnChangeTrueForStrongServerMap() throws Exception {
+    TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    tcProperties.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED, "true");
+    when(platformService.getTCProperties()).thenReturn(tcProperties);
+    ServerMap serverMap = getStrongServerMap();
+    TestDNAWriter writer = new TestDNAWriter();
+    DNAEncoding encoding = mock(DNAEncoding.class);
+    TCLogger logger = mock(TCLogger.class);
+    ServerMapApplicator applicator = new ServerMapApplicator(encoding, logger);
+
+    applicator.dehydrate(null, null, writer, serverMap);
+    PhysicalAction targetAction = new PhysicalAction("invalidateOnChange", true, false);
+
+    Assert.assertTrue(writer.containsPhysicalAction(targetAction));
+
+  }
+
+  @Test
+  public void testInvalidateOnChangeFalseForStrongServerMap() throws Exception {
+    ServerMap serverMap = getStrongServerMap();
+    TestDNAWriter writer = new TestDNAWriter();
+    DNAEncoding encoding = mock(DNAEncoding.class);
+    TCLogger logger = mock(TCLogger.class);
+    ServerMapApplicator applicator = new ServerMapApplicator(encoding, logger);
+
+    applicator.dehydrate(null, null, writer, serverMap);
+    PhysicalAction targetAction = new PhysicalAction("invalidateOnChange", false, false);
+
+    Assert.assertTrue(writer.containsPhysicalAction(targetAction));
+
+  }
+  
   @Test
   public void testCreateRemoveBufferedOperation() throws Exception {
     ServerMap serverMap = getServerMap();
@@ -204,6 +269,15 @@ public class ServerMapTest {
     return serverMap;
   }
 
+  private ServerMap getStrongServerMap() {
+    ServerMap serverMap = new ServerMap(strongConfiguration(), "foo", platformService);
+    serverMap.__tc_managed(tcObjectServerMap);
+    serverMap.setLockStrategy(ConfigFieldsInternal.LOCK_STRATEGY.LONG_LOCK_STRATEGY);
+    serverMap.registerAttributeExtractor(mock(ToolkitAttributeExtractor.class));
+    serverMap.setSearchAttributeTypes(mock(ToolkitMap.class));
+    return serverMap;
+  }
+
   private static <T> Matcher<T> and(Matcher<T> ... matchers) {
     return new And((List) Arrays.asList(matchers));
   }
@@ -236,6 +310,14 @@ public class ServerMapTest {
     return factory.newConfigForCreationInCluster(new ToolkitCacheConfigBuilder().build());
   }
 
+  private static Configuration strongConfiguration() {
+    ToolkitCacheDistributedTypeFactory factory = new ToolkitCacheDistributedTypeFactory(
+                                                                                        mock(SearchFactory.class),
+                                                                                        mock(ServerMapLocalStoreFactory.class));
+    return factory.newConfigForCreationInCluster((new ToolkitCacheConfigBuilder().consistency(Consistency.STRONG))
+        .build());
+  }
+
   private static SerializedMapValue<String> mockSerializedMapValue(String value) throws IOException, ClassNotFoundException {
     SerializedMapValue<String> smv = mock(SerializedMapValue.class);
     when(smv.getDeserializedValue(any(SerializationStrategy.class), anyBoolean(), any(L1ServerMapLocalCacheStore.class), any(), anyBoolean()))
@@ -249,5 +331,148 @@ public class ServerMapTest {
         .thenReturn(value);
     when(smv.isExpired(anyInt(), anyInt(), anyInt())).thenReturn(expired);
     return smv;
+  }
+}
+
+class TestDNAWriter implements DNAWriter {
+  private final List actions = new ArrayList();
+
+  public TestDNAWriter() {
+    //
+  }
+
+  @Override
+  public void setIgnoreMissing(final boolean ignoreMissing) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void addLogicalAction(final LogicalOperation method, final Object[] parameters, LogicalChangeID logicalChangeID) {
+    this.actions.add(new LogicalAction(method, parameters, logicalChangeID));
+  }
+
+  @Override
+  public void addPhysicalAction(final String field, final Object value) {
+    addPhysicalAction(field, value, value instanceof ObjectID);
+  }
+
+  @Override
+  public void addArrayElementAction(final int index, final Object value) {
+    this.actions.add(new PhysicalAction(value, index));
+  }
+
+  @Override
+  public void addEntireArray(final Object value) {
+    this.actions.add(new PhysicalAction(value));
+  }
+
+  @Override
+  public void addLiteralValue(final Object value) {
+    this.actions.add(new LiteralAction(value));
+  }
+
+  @Override
+  public void setParentObjectID(final ObjectID id) {
+    //
+  }
+
+  @Override
+  public void setArrayLength(final int length) {
+    //
+  }
+
+  @Override
+  public void addPhysicalAction(final String fieldName, final Object value, final boolean canBeReference) {
+    this.actions.add(new PhysicalAction(fieldName, value, canBeReference));
+  }
+
+  @Override
+  public int getActionCount() {
+    return this.actions.size();
+  }
+
+  public boolean containsPhysicalAction(final PhysicalAction targetAction) {
+    for (final Iterator i = this.actions.iterator(); i.hasNext();) {
+      final Object action = i.next();
+      if (!(action instanceof PhysicalAction)) {
+        continue;
+      }
+      final PhysicalAction physicalAction = (PhysicalAction) action;
+      if (identicalPhysicalAction(targetAction, physicalAction)) { return true; }
+    }
+    return false;
+  }
+
+  private boolean identicalPhysicalAction(final PhysicalAction a1, final PhysicalAction a2) {
+    if (a1 == null || a2 == null) { return false; }
+
+    if (!a1.isEntireArray() && !a2.isEntireArray()) {
+      if (a1.getFieldName() == null || a2.getFieldName() == null) { return false; }
+    }
+
+    if (a1.isEntireArray() != a2.isEntireArray()) { return false; }
+
+    if (a1.getObject() == null && a2.getObject() == null) { return true; }
+    if (a1.getObject() == null && a2.getObject() != null) { return false; }
+    if (a1.getObject() != null && a2.getObject() == null) { return false; }
+
+    if (a1.isEntireArray()) {
+      return compareArrays(a1.getObject(), a2.getObject());
+    } else if (a1.getObject() instanceof Object[] && a2.getObject() instanceof Object[]) {
+      return compareArrays(a1.getObject(), a2.getObject());
+    } else {
+      if (a1.getFieldName().equals(a2.getFieldName())) { return (a1.getObject().equals(a2.getObject())); }
+    }
+    return false;
+  }
+
+  private boolean compareArrays(Object o1, Object o2) {
+    if (o1 instanceof boolean[]) { return Arrays.equals((boolean[]) o1, (boolean[]) o2); }
+    if (o1 instanceof byte[]) { return Arrays.equals((byte[]) o1, (byte[]) o2); }
+    if (o2 instanceof char[]) { return Arrays.equals((char[]) o1, (char[]) o2); }
+    if (o2 instanceof double[]) { return Arrays.equals((double[]) o1, (double[]) o2); }
+    if (o2 instanceof float[]) { return Arrays.equals((float[]) o1, (float[]) o2); }
+    if (o2 instanceof int[]) { return Arrays.equals((int[]) o1, (int[]) o2); }
+    if (o2 instanceof long[]) { return Arrays.equals((long[]) o1, (long[]) o2); }
+    if (o2 instanceof short[]) { return Arrays.equals((short[]) o1, (short[]) o2); }
+
+    return Arrays.equals((Object[]) o1, (Object[]) o2);
+  }
+
+  @Override
+  public void addSubArrayAction(final int start, final Object array, final int length) {
+    actions.add(new PhysicalAction(array, start));
+  }
+
+  @Override
+  public void copyTo(final TCByteBufferOutput dest) {
+    throw new ImplementMe();
+
+  }
+
+  @Override
+  public DNAWriter createAppender() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void finalizeHeader() {
+    //
+  }
+
+  @Override
+  public boolean isContiguous() {
+    return true;
+  }
+
+  @Override
+  public void markSectionEnd() {
+    //
+  }
+
+  @Override
+  public void addLogicalAction(LogicalOperation method, Object[] parameters) {
+    this.actions.add(new LogicalAction(method, parameters));
+
   }
 }

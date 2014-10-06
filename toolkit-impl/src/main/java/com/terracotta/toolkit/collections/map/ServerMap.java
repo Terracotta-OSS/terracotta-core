@@ -218,7 +218,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public boolean invalidateOnChange() {
-    return isEventual()
+    return this.consistency == Consistency.EVENTUAL
            || new TerracottaProperties(platformService)
                .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED, true);
   }
