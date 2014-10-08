@@ -29,7 +29,7 @@
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <productKeyPath/>
     <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
-    <container-test-framework.version>1.7.0-SNAPSHOT</container-test-framework.version>
+    <container-test-framework.version>2.0.0</container-test-framework.version>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
@@ -86,6 +86,16 @@
         <artifactId>linked-child-process</artifactId>
         <version>${tc.linked-child-process.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.terracotta.test</groupId>
+        <artifactId>container-test-framework</artifactId>
+        <version>${container-test-framework.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.test</groupId>
+        <artifactId>test-framework</artifactId>
+        <version>${terracotta.core.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -131,7 +141,6 @@
     <dependency>
       <groupId>org.terracotta.test</groupId>
       <artifactId>test-framework</artifactId>
-      <version>${terracotta.core.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
