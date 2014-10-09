@@ -24,7 +24,7 @@
 
   <properties>
     <group>system</group>
-    <tcmaven.version>1.13.0-SNAPSHOT</tcmaven.version>
+    <tcmaven.version>2.0.0</tcmaven.version>
     <terracotta.core.version>4.3.0-SNAPSHOT</terracotta.core.version>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <productKeyPath/>
@@ -348,6 +348,29 @@
             </lifecycleMappingMetadata>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.terracotta.maven.plugins</groupId>
+          <artifactId>tc-maven-plugin</artifactId>
+          <version>${tcmaven.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.terracotta</groupId>
+              <artifactId>terracotta-ee</artifactId>
+              <version>${terracotta.core.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.terracotta.qa</groupId>
+              <artifactId>license-wrapper</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
+              <groupId>org.terracotta</groupId>
+              <artifactId>management-tsa-war</artifactId>
+              <version>${terracotta.core.version}</version>
+              <type>war</type>
+            </dependency>
+          </dependencies>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -472,6 +495,7 @@
     </profile>
 
     <profile>
+      <!-- Not sure this is used anywhere anymore -->
       <id>single-server</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
@@ -483,19 +507,6 @@
           <plugin>
             <groupId>org.terracotta.maven.plugins</groupId>
             <artifactId>tc-maven-plugin</artifactId>
-            <version>${tcmaven.version}</version>
-            <dependencies>
-              <dependency>
-                <groupId>org.terracotta</groupId>
-                <artifactId>terracotta-ee</artifactId>
-                <version>${terracotta.core.version}</version>
-              </dependency>
-              <dependency>
-                <groupId>org.terracotta.qa</groupId>
-                <artifactId>license-wrapper</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-              </dependency>
-            </dependencies>
             <executions>
               <execution>
                 <id>server1start</id>
