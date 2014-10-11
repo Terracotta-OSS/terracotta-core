@@ -11,6 +11,10 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 public class BitSetObjectIDSetTest extends ObjectIDSetTestBase {
   @Override
   protected ObjectIDSet create() {
@@ -20,6 +24,22 @@ public class BitSetObjectIDSetTest extends ObjectIDSetTestBase {
   @Override
   protected ObjectIDSet create(final Collection<ObjectID> copy) {
     return new BitSetObjectIDSet(copy);
+  }
+
+  @Test
+  public void testCloneExpanding() throws Exception {
+    ExpandingBitSetObjectIDSet expanding = new ExpandingBitSetObjectIDSet();
+    for (int i = -1000000; i < 1000000; i++) {
+      expanding.add(new ObjectID(i));
+    }
+
+    BitSetObjectIDSet bitSetOIDSet = new BitSetObjectIDSet(expanding);
+    Iterator<ObjectID> iter = bitSetOIDSet.iterator();
+    for (int i = -1000000; i < 1000000; i++) {
+      assertTrue(iter.hasNext());
+      assertEquals(i, iter.next().toLong());
+    }
+    assertFalse(iter.hasNext());
   }
 
   @Test

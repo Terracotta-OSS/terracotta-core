@@ -468,8 +468,11 @@ public class BitSetObjectIDSet extends ObjectIDSet {
     long start = range.getStart();
     for (long l : range.getBitmap()) {
       BitSet bitSet = new BitSet(start, l);
-      size += bitSet.size();
-      ranges.add(bitSet);
+      start += Long.SIZE;
+      if (!bitSet.isEmpty()) {
+        size += bitSet.size();
+        ranges.add(bitSet);
+      }
     }
   }
 
