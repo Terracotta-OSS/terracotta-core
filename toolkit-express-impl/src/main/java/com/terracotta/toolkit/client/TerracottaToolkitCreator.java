@@ -92,7 +92,16 @@ public class TerracottaToolkitCreator {
     Callable<ToolkitInternal> callable = new Callable<ToolkitInternal>() {
       @Override
       public ToolkitInternal call() throws Exception {
-        ToolkitInternal toolkit = createInternalToolkit(defaultToolkitCacheManagerProvider);
+        ToolkitInternal toolkit = null;
+        try{
+          toolkit = createInternalToolkit(defaultToolkitCacheManagerProvider);
+        } catch (Exception e) {
+          if(defaultToolkitCacheManagerProvider != null){
+            NonStopPlatformServiceHelper.getMethod(defaultToolkitCacheManagerProvider, "shutdownDefaultCacheManager")
+                .invoke(defaultToolkitCacheManagerProvider);
+          }
+          throw e;
+        }
         if (isNonStop) nonStopPlatformServiceHelper.setPlatformService(internalClient.getPlatformService());
         return toolkit;
       }

@@ -23,4 +23,8 @@ public class ToolkitCacheManagerProvider {
     return defaultToolkitCacheManager;
   }
 
+  public void shutdownDefaultCacheManager() {
+    defaultToolkitCacheManager.shutdown();
+  }
+
 }
