@@ -200,6 +200,8 @@ import com.tc.util.sequence.BatchSequenceReceiver;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tcclient.cluster.DsoClusterInternal;
+import com.tc.logging.CallbackOnExitHandler;
+import com.tc.logging.CallbackOnExitState;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -434,6 +436,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final SessionProvider sessionProvider = sessionManager;
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
+    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackOnExitHandler() {
+      @Override
+      public void callbackOnExit(CallbackOnExitState state) {
+        dsoCluster.fireNodeError();
+      }
+    });
     final StageManager stageManager = getStageManager();
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
 
