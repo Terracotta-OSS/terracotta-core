@@ -3,6 +3,7 @@
  */
 package com.terracotta.management.service.impl.util;
 
+import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.filter.EncodingFilter;
 import org.glassfish.jersey.media.sse.EventInput;
@@ -25,6 +26,8 @@ import com.terracotta.management.web.utils.TSAConfig;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -42,8 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -69,6 +74,7 @@ public class RemoteManagementSource {
 
   private static final String CONNECTION_TIMEOUT_HEADER_NAME = "X-Terracotta-Connection-Timeout";
   private static final String READ_TIMEOUT_HEADER_NAME = "X-Terracotta-Read-Timeout";
+  private static final String CLEAN_ME_MARKER = "___CLEAN_ME___";
 
   private final LocalManagementSource localManagementSource;
   private final TimeoutService timeoutService;
@@ -146,11 +152,17 @@ public class RemoteManagementSource {
   public <T, S, R extends T> R getFromRemoteL2(String serverName, URI uri, Class<T> type, Class<S> subType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    Builder resource = resource(fullUri);
+    AtomicBoolean flag = new AtomicBoolean(false);
+    client.property(CLEAN_ME_MARKER, flag);
     try {
-      return (R) resource(fullUri).get(new SubGenericType<T, S>(type, subType));
+      return (R) resource.get(new SubGenericType<T, S>(type, subType));
     } catch (WebApplicationException wae) {
       ErrorEntity errorEntity = createErrorEntity(wae);
       throw new ManagementSourceException("GET " + fullUri + " failed", errorEntity);
+    } finally {
+      flag.set(true);
+      cleanup(client, CLEAN_ME_MARKER);
     }
   }
 
@@ -161,11 +173,17 @@ public class RemoteManagementSource {
   public void postToRemoteL2(String serverName, URI uri) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    Builder resource = resource(fullUri);
+    AtomicBoolean flag = new AtomicBoolean(false);
+    client.property(CLEAN_ME_MARKER, flag);
     try {
-      resource(fullUri).post(null);
+      resource.post(null);
     } catch (WebApplicationException wae) {
       ErrorEntity errorEntity = createErrorEntity(wae);
       throw new ManagementSourceException("POST(1) " + fullUri + " failed", errorEntity);
+    } finally {
+      flag.set(true);
+      cleanup(client, CLEAN_ME_MARKER);
     }
   }
 
@@ -176,11 +194,17 @@ public class RemoteManagementSource {
   public <T extends Representable, R> R postToRemoteL2(String serverName, URI uri, Collection<T> entities, Class<R> returnType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    Builder resource = resource(fullUri);
+    AtomicBoolean flag = new AtomicBoolean(false);
+    client.property(CLEAN_ME_MARKER, flag);
     try {
-      return resource(fullUri).post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), returnType);
+      return resource.post(Entity.entity(entities, MediaType.APPLICATION_JSON_TYPE), returnType);
     } catch (WebApplicationException wae) {
       ErrorEntity errorEntity = createErrorEntity(wae);
       throw new ManagementSourceException("POST(2) " + fullUri + " failed", errorEntity);
+    } finally {
+      flag.set(true);
+      cleanup(client, CLEAN_ME_MARKER);
     }
   }
 
@@ -191,11 +215,45 @@ public class RemoteManagementSource {
   public <T, S, R extends T> R postToRemoteL2(String serverName, URI uri, Class<T> returnType, Class<S> returnSubType) throws ManagementSourceException {
     String serverUrl = localManagementSource.getRemoteServerUrls().get(serverName);
     URI fullUri = UriBuilder.fromUri(serverUrl).uri(uri).build();
+    Builder resource = resource(fullUri);
+    AtomicBoolean flag = new AtomicBoolean(false);
+    client.property(CLEAN_ME_MARKER, flag);
     try {
-      return (R) resource(fullUri).post(null, new SubGenericType<T, S>(returnType, returnSubType));
+      return (R) resource.post(null, new SubGenericType<T, S>(returnType, returnSubType));
     } catch (WebApplicationException wae) {
       ErrorEntity errorEntity = createErrorEntity(wae);
       throw new ManagementSourceException("POST(3) " + fullUri + " failed", errorEntity);
+    } finally {
+      flag.set(true);
+      cleanup(client, CLEAN_ME_MARKER);
+    }
+  }
+
+  static final AtomicBoolean NOTIFICATION_LOGGED = new AtomicBoolean(false);
+  static void cleanup(Client client, String markerProperty) {
+    try {
+      Field listenersField = client.getClass().getDeclaredField("listeners");
+      listenersField.setAccessible(true);
+      LinkedBlockingDeque<?> lbdq = (LinkedBlockingDeque<?>)listenersField.get(client);
+      Iterator<?> it = lbdq.iterator();
+      while (it.hasNext()) {
+        Object listener = it.next();
+        Field confRuntimeField = listener.getClass().getDeclaredField("val$crt");
+        confRuntimeField.setAccessible(true);
+        Object clientRuntime = confRuntimeField.get(listener);
+        Method getConfigMethod = clientRuntime.getClass().getMethod("getConfig");
+        getConfigMethod.setAccessible(true);
+        ClientConfig clientConfig = (ClientConfig)getConfigMethod.invoke(clientRuntime);
+
+        AtomicBoolean cleanme = (AtomicBoolean)clientConfig.getProperty(markerProperty);
+        if (cleanme.get()) {
+          it.remove();
+        }
+      }
+    } catch (Exception e) {
+      if (NOTIFICATION_LOGGED.compareAndSet(false, true)) {
+        LOG.error("Unable to cleanup Jersey 2.6 Client listeners, you may run into a memory leak!", e);
+      }
     }
   }
 
