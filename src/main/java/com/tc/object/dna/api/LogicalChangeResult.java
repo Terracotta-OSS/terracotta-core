@@ -26,24 +26,28 @@ public class LogicalChangeResult implements TCSerializable {
   @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     if (result instanceof Boolean) {
-      serialOutput.writeInt(0);
+      serialOutput.writeByte(0);
       serialOutput.writeBoolean((Boolean) result);
-    } else if (result instanceof String) {
-      serialOutput.writeInt(1);
-      serialOutput.writeString((String) result);
+    } else if (result instanceof byte[]) {
+      serialOutput.writeByte(1);
+      final byte[] bytes = (byte[]) result;
+      serialOutput.writeInt(bytes.length);
+      serialOutput.write(bytes);
     } else {
       // it's a null...
-      serialOutput.writeInt(2);
+      serialOutput.writeByte(2);
     }
   }
 
   @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    int resultType = serialInput.readInt();
+    byte resultType = serialInput.readByte();
     if (resultType == 0) {
       result = serialInput.readBoolean();
     } else if (resultType == 1) {
-      result = serialInput.readString();
+      byte[] bytes = new byte[serialInput.readInt()];
+      serialInput.read(bytes);
+      result = bytes;
     }
     return this;
   }
