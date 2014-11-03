@@ -5,15 +5,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Maps;
 import com.tc.exception.TCNotRunningException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
+import com.tc.util.concurrent.TaskRunner;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -26,6 +36,17 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   private final Map<String, Map<ServerEventDestination, Set<ServerEventType>>> registry = Maps.newHashMap();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final long timeoutInterval;
+  private final TaskRunner runner;
+
+
+  public ServerEventListenerManagerImpl(TaskRunner runner) {
+    this.runner = runner;
+    TCProperties props = TCPropertiesImpl.getProperties();
+    timeoutInterval = props.getLong(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_TIMEOUT_INTERVAL, (3 * 60));
+  }
+
+
 
   @Override
   public void dispatch(final ServerEvent event, final NodeID remoteNode) {
@@ -54,7 +75,23 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
         final Set<ServerEventType> eventTypes = destination.getValue();
         if (eventTypes.contains(type)) {
           handlerFound = true;
-          target.handleServerEvent(event);
+          //now to submit and get a future
+          ScheduledFuture future = runner.newTimer().schedule(new Runnable() {
+            @Override
+            public void run() {
+              target.handleServerEvent(event);
+            }
+          }, 0, TimeUnit.MILLISECONDS);
+          try {
+            future.get(timeoutInterval, TimeUnit.SECONDS);
+          } catch (InterruptedException e) {
+            throw new TCRuntimeException("Interrupted exception thrown while dispatching server event", e);
+          } catch (ExecutionException e) {
+            throw new TCRuntimeException("Execution exception thrown while dispatching server event", e);
+          } catch (TimeoutException e) {
+            throw new TCRuntimeException("Dispatching events timed out", e);
+
+          }
         }
       }
 

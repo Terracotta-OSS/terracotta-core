@@ -883,6 +883,7 @@ public interface TCPropertiesConsts {
   String                     L2_SERVER_EVENT_BATCHER_QUEUE_SIZE                             = "l2.serverEvent.batcher.queueSize";
   String                     L1_SERVER_EVENT_DELIVERY_THREADS                               = "l1.serverEvent.delivery.threads";
   String                     L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE                            = "l1.serverEvent.delivery.queueSize";
+  String                     L1_SERVER_EVENT_DELIVERY_TIMEOUT_INTERVAL                      = "l1.serverEvent.delivery.timeout.intervalInSec";
 
   /*********************************************************************************************************************
    * <code>

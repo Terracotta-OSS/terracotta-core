@@ -337,10 +337,11 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   @Override
-  public ServerEventListenerManager createServerEventListenerManager(final DSOClientMessageChannel dsoChannel) {
+  public ServerEventListenerManager createServerEventListenerManager(final DSOClientMessageChannel dsoChannel,
+                                                                     final TaskRunner runner) {
     final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    return new ServerEventListenerManagerImpl();
+    return new ServerEventListenerManagerImpl(runner);
   }
 }

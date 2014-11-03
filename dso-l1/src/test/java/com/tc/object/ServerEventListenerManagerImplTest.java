@@ -6,12 +6,19 @@ import static com.tc.server.ServerEventType.PUT;
 import static com.tc.server.ServerEventType.REMOVE;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tc.exception.TCRuntimeException;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +31,10 @@ import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 
 import java.util.EnumSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Eugene Shelestovich
@@ -33,11 +44,77 @@ public class ServerEventListenerManagerImplTest {
   private ServerEventListenerManagerImpl manager;
   private ServerEventDestination[] destinations;
   private final NodeID remoteNode = new GroupID(1);
+  private final TaskRunner mockrunner = mock(TaskRunner.class);
+
+  private static class NormalTimer  implements Timer {
+      @Override
+      public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+        command.run();
+        return mock(ScheduledFuture.class);
+      }
+      @Override
+      public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+        return null;
+      }
+
+      @Override
+      public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+        return null;
+      }
+
+      @Override
+      public void execute(Runnable command) {
+
+      }
+      @Override
+      public void cancel() {
+      }
+  }
+
+  private class RougeTimer implements Timer {
+    private final ScheduledFuture future = mock(ScheduledFuture.class);
+
+    @Override
+    public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+      command.run();
+      try {
+        when(future.get(anyLong(), any(TimeUnit.class))).thenThrow(TimeoutException.class);
+      } catch (InterruptedException e) {
+        //
+      } catch (ExecutionException e) {
+        //
+      } catch (TimeoutException e) {
+        //
+      }
+      return future;
+    }
+
+    @Override
+    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+      return null;
+    }
+
+    @Override
+    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+      return null;
+    }
+
+    @Override
+    public void execute(Runnable command) {
+
+    }
+    @Override
+    public void cancel() {
+    }
+  }
+
 
   @Before
   public void setUp() throws Exception {
-    manager = new ServerEventListenerManagerImpl();
-
+    TCProperties properties = TCPropertiesImpl.getProperties();
+    properties.setProperty(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_TIMEOUT_INTERVAL, "1");
+    manager = new ServerEventListenerManagerImpl(mockrunner);
+    when(mockrunner.newTimer()).thenReturn(new NormalTimer());
     // destinations
     destinations = new ServerEventDestination[5];
     destinations[0] = createDestination("cache1");
@@ -191,5 +268,16 @@ public class ServerEventListenerManagerImplTest {
     doThrow(new TCNotRunningException()).when(destinations[0]).resendEventRegistrations();
     // Should not throw
     manager.unpause(remoteNode, 0);
+  }
+
+
+  @Test(expected= TCRuntimeException.class)
+  public void testLongRunningDispatch() throws Exception {
+    when(mockrunner.newTimer()).thenReturn(new RougeTimer());
+    final ServerEvent event1 = new BasicServerEvent(EVICT, "key-1", "cache1");
+
+    manager.registerListener(destinations[0], EnumSet.of(EVICT, PUT));
+    manager.dispatch(event1, remoteNode);
+
   }
 }
