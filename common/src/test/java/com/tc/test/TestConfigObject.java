@@ -382,4 +382,8 @@ public class TestConfigObject {
   public void setSpringTest(boolean springTest) {
     this.springTest = springTest;
   }
+
+  public void setL2ClasspathForLogging(String tcLoggingFilePath){
+    this.properties.setProperty(L2_CLASSPATH, l2Classpath() + File.pathSeparatorChar + tcLoggingFilePath);
+  }
 }

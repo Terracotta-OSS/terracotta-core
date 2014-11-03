@@ -161,6 +161,7 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
           testServerManager = setupTestServerManager();
           pauseManager.setTestServerManager(testServerManager);
           writeProxyTcConfigFile();
+          TestConfigObject.getInstance().setL2ClasspathForLogging(getTCLoggingFilePath());
           startServers();
         }
 
