@@ -490,7 +490,7 @@ public enum LiteralValues {
    */
   public static boolean isLiteral(String className) {
     LiteralValues i = valueForClassName(className);
-    return i != OBJECT && i != ARRAY;
+    return i != OBJECT;
   }
 
   /**
@@ -504,7 +504,7 @@ public enum LiteralValues {
   public static boolean isLiteralInstance(Object obj) {
     if (obj == null) { return false; }
     LiteralValues i = valueFor(obj);
-    return i != OBJECT && i != ARRAY;
+    return i != OBJECT;
   }
 
   // for tests
