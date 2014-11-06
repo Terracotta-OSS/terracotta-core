@@ -1,6 +1,4 @@
 terracotta.patch.level=${patch.level}
-terracotta.patch.host=${build.host}
-terracotta.patch.user=${user.name}
 terracotta.patch.timestamp=${build.timestamp}
 terracotta.patch.revision=${build.revision}
 terracotta.patch.branch=${build.branch}

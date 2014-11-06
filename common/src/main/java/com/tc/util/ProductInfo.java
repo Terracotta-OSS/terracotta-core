@@ -43,8 +43,6 @@ public final class ProductInfo {
   private static final String               BUILD_DATA_ROOT_KEY        = "terracotta.build.";
   private static final String               BUILD_DATA_VERSION_KEY     = "version";
   private static final String               BUILD_DATA_TIMESTAMP_KEY   = "timestamp";
-  private static final String               BUILD_DATA_HOST_KEY        = "host";
-  private static final String               BUILD_DATA_USER_KEY        = "user";
   private static final String               BUILD_DATA_REVISION_KEY    = "revision";
   private static final String               BUILD_DATA_EE_REVISION_KEY = "ee.revision";
   private static final String               BUILD_DATA_BRANCH_KEY      = "branch";
@@ -57,8 +55,6 @@ public final class ProductInfo {
 
   private final String                      moniker;
   private final String                      timestamp;
-  private final String                      host;
-  private final String                      user;
   private final String                      branch;
   private final String                      edition;
   private final String                      revision;
@@ -66,8 +62,6 @@ public final class ProductInfo {
   private final String                      kitID;
 
   private final String                      patchLevel;
-  private final String                      patchHost;
-  private final String                      patchUser;
   private final String                      patchTimestamp;
   private final String                      patchRevision;
   private final String                      patchEERevision;
@@ -108,16 +102,12 @@ public final class ProductInfo {
                                                                                        + edition); }
 
     this.timestamp = getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
-    this.host = getBuildProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
-    this.user = getBuildProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
     this.branch = getBuildProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
     this.revision = getBuildProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
     this.ee_revision = getBuildProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
 
     // Get all patch build properties
     this.patchLevel = getPatchProperty(properties, PATCH_DATA_LEVEL_KEY, UNKNOWN_VALUE);
-    this.patchHost = getPatchProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
-    this.patchUser = getPatchProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
     this.patchTimestamp = getPatchProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
     this.patchRevision = getPatchProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
     this.patchEERevision = getPatchProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
@@ -265,14 +255,6 @@ public final class ProductInfo {
     return timestamp;
   }
 
-  public String buildHost() {
-    return host;
-  }
-
-  public String buildUser() {
-    return user;
-  }
-
   public String buildBranch() {
     return branch;
   }
@@ -302,14 +284,6 @@ public final class ProductInfo {
 
   public String patchLevel() {
     return patchLevel;
-  }
-
-  public String patchHost() {
-    return patchHost;
-  }
-
-  public String patchUser() {
-    return patchUser;
   }
 
   public String patchTimestamp() {
@@ -342,7 +316,7 @@ public final class ProductInfo {
 
   public String buildID() {
     if (buildID == null) {
-      buildID = buildTimestampAsString() + " (Revision " + revision + " by " + user + "@" + host + " from " + branch + ")";
+      buildID = buildTimestampAsString() + " (Revision " + revision + " from " + branch + ")";
     }
     return buildID;
   }
@@ -356,7 +330,7 @@ public final class ProductInfo {
   }
 
   public String patchBuildID() {
-    return patchTimestampAsString() + " (Revision " + patchRevision + " by " + patchUser + "@" + patchHost + " from "
+    return patchTimestampAsString() + " (Revision " + patchRevision + " from "
            + patchBranch + ")";
   }
 
