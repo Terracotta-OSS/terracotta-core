@@ -70,7 +70,7 @@ public class NonStopClusterInfo implements ClusterInfo {
             }
           };
           synchronized (NonStopClusterInfo.this) {
-            for (ClusterListener listener : listeners) {
+            for (ClusterListener listener : new ArrayList<ClusterListener>(listeners)) {
               listener.onClusterEvent(nodeErrorEvent);
             }
           }
