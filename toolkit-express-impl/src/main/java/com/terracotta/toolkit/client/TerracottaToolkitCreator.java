@@ -7,6 +7,8 @@ import org.terracotta.toolkit.ToolkitInstantiationException;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.toolkit.express.TerracottaInternalClient;
 import com.terracotta.toolkit.express.TerracottaInternalClientStaticFactory;
 
@@ -44,6 +46,10 @@ public class TerracottaToolkitCreator {
   private final ClassLoader                  loader;
   private final boolean                      isNonStop;
   private final NonStopPlatformServiceHelper nonStopPlatformServiceHelper;
+  private static final boolean               NONSTOP_INIT_ENABLED                       = TCPropertiesImpl
+                                                                                            .getProperties()
+                                                                                            .getBoolean(TCPropertiesConsts.TOOLKIT_NONSTOP_INIT_ENABLED,
+                                                                                                        false);
 
   public TerracottaToolkitCreator(TerracottaClientConfig config, Properties properties, boolean enterprise) {
     this.enterprise = enterprise;
@@ -59,6 +65,7 @@ public class TerracottaToolkitCreator {
   public ToolkitInternal createToolkit() {
     try {
       final Object defaultToolkitCacheManagerProvider = initializeDefaultCacheManagerProvider();
+      if (!NONSTOP_INIT_ENABLED) return instantiateNonStopToolkit(createInternalToolkitSynchronously(defaultToolkitCacheManagerProvider));
       FutureTask<ToolkitInternal> futureTask;
       if (isNonStop) {
         futureTask = createInternalToolkitAsynchronously(defaultToolkitCacheManagerProvider, NON_STOP_INIT_THREAD_NAME,
@@ -85,6 +92,23 @@ public class TerracottaToolkitCreator {
     return timeoutInMills;
   }
 
+  private ToolkitInternal createInternalToolkitSynchronously(final Object defaultToolkitCacheManagerProvider)
+      throws Exception {
+    ToolkitInternal toolkit = null;
+    try {
+      toolkit = createInternalToolkit(defaultToolkitCacheManagerProvider);
+    } catch (Exception e) {
+      if (defaultToolkitCacheManagerProvider != null) {
+        NonStopPlatformServiceHelper.getMethod(defaultToolkitCacheManagerProvider, "shutdownDefaultCacheManager")
+            .invoke(defaultToolkitCacheManagerProvider);
+      }
+      throw e;
+    }
+    if (isNonStop) nonStopPlatformServiceHelper.setPlatformService(internalClient.getPlatformService());
+    return toolkit;
+
+  }
+
   private FutureTask<ToolkitInternal> createInternalToolkitAsynchronously(final Object defaultToolkitCacheManagerProvider,
                                                                           String threadName, long timeoutInMills) {
     final CountDownLatch latch = new CountDownLatch(1);
@@ -92,18 +116,7 @@ public class TerracottaToolkitCreator {
     Callable<ToolkitInternal> callable = new Callable<ToolkitInternal>() {
       @Override
       public ToolkitInternal call() throws Exception {
-        ToolkitInternal toolkit = null;
-        try{
-          toolkit = createInternalToolkit(defaultToolkitCacheManagerProvider);
-        } catch (Exception e) {
-          if(defaultToolkitCacheManagerProvider != null){
-            NonStopPlatformServiceHelper.getMethod(defaultToolkitCacheManagerProvider, "shutdownDefaultCacheManager")
-                .invoke(defaultToolkitCacheManagerProvider);
-          }
-          throw e;
-        }
-        if (isNonStop) nonStopPlatformServiceHelper.setPlatformService(internalClient.getPlatformService());
-        return toolkit;
+        return createInternalToolkitSynchronously(defaultToolkitCacheManagerProvider);
       }
     };
     final FutureTask<ToolkitInternal> futureTask = new FutureTask<ToolkitInternal>(callable);
@@ -164,6 +177,26 @@ public class TerracottaToolkitCreator {
                                                         internalClient.loadClass(ABORTABLE_OPERATION_MANAGER),
                                                         String.class },
                                                     new Object[] { futureTask,
+                                                        internalClient.getAbortableOperationManager(),
+                                                        internalClient.getUuid() });
+
+    nonStopPlatformServiceHelper.setToolkit(tk);
+    return tk;
+  }
+
+  private ToolkitInternal instantiateNonStopToolkit(ToolkitInternal toolkit) throws Exception {
+    String className;
+    if (enterprise) {
+      className = ENTERPRISE_NON_STOP_TOOLKIT_IMPL_CLASSNAME;
+    } else {
+      className = NON_STOP_TOOLKIT_IMPL_CLASSNAME;
+    }
+
+    ToolkitInternal tk = internalClient.instantiate(className,
+                                                    new Class[] { ToolkitInternal.class,
+                                                        internalClient.loadClass(ABORTABLE_OPERATION_MANAGER),
+                                                        String.class },
+                                                    new Object[] { toolkit,
                                                         internalClient.getAbortableOperationManager(),
                                                         internalClient.getUuid() });
 

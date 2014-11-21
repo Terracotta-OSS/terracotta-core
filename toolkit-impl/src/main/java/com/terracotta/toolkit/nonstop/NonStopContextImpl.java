@@ -4,7 +4,7 @@
 package com.terracotta.toolkit.nonstop;
 
 import com.tc.abortable.AbortableOperationManager;
-import com.terracotta.toolkit.AsyncToolkitInitializer;
+import com.terracotta.toolkit.ToolkitInitializer;
 
 // TODO: make a builder
 public class NonStopContextImpl implements NonStopContext {
@@ -17,7 +17,7 @@ public class NonStopContextImpl implements NonStopContext {
 
   private final NonstopTimeoutBehaviorResolver nonstopTimeoutBehaviorResolver;
 
-  private final AsyncToolkitInitializer        asyncToolkitInitializer;
+  private final ToolkitInitializer             toolkitInitializer;
 
   private final NonStopClusterListener         nonStopClusterListener;
 
@@ -26,13 +26,13 @@ public class NonStopContextImpl implements NonStopContext {
   public NonStopContextImpl(NonStopManager nonStopManager, NonStopConfigRegistryImpl nonStopConfigRegistryImpl,
                             AbortableOperationManager abortableOperationManager,
                             NonstopTimeoutBehaviorResolver nonstopTimeoutBehaviorResolver,
-                            AsyncToolkitInitializer asyncToolkitInitializer,
+                            ToolkitInitializer toolkitInitializer,
                             NonStopClusterListener nonStopClusterListener) {
     this.nonStopManager = nonStopManager;
     this.nonStopConfigRegistryImpl = nonStopConfigRegistryImpl;
     this.abortableOperationManager = abortableOperationManager;
     this.nonstopTimeoutBehaviorResolver = nonstopTimeoutBehaviorResolver;
-    this.asyncToolkitInitializer = asyncToolkitInitializer;
+    this.toolkitInitializer = toolkitInitializer;
     this.nonStopClusterListener = nonStopClusterListener;
   }
 
@@ -57,8 +57,8 @@ public class NonStopContextImpl implements NonStopContext {
   }
 
   @Override
-  public AsyncToolkitInitializer getAsyncToolkitInitializer() {
-    return asyncToolkitInitializer;
+  public ToolkitInitializer getToolkitInitializer() {
+    return toolkitInitializer;
   }
 
   @Override

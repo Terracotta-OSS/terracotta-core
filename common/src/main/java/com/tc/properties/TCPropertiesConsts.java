@@ -898,6 +898,7 @@ public interface TCPropertiesConsts {
   public static final String TOOLKIT_LOCAL_BUFFER_PUTS_BATCH_BYTE_SIZE                      = "toolkit.bulkload.minbatchbytesize";
   public static final String TOOLKIT_LOCAL_BUFFER_PUTS_BATCH_TIME_MILLIS                    = "toolkit.bulkload.throttle.timeInmillis";
   public static final String TOOLKIT_LOCAL_BUFFER_PUTS_THROTTLE_BYTE_SIZE                   = "toolkit.bulkload.throttle.threshold";
+  public static final String TOOLKIT_NONSTOP_INIT_ENABLED                                   = "toolkit.nonstop.init.enabled";
 
   /*
    * For enabling CAS logging

@@ -6,7 +6,7 @@ package com.terracotta.toolkit.nonstop;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 
 import com.tc.abortable.AbortableOperationManager;
-import com.terracotta.toolkit.AsyncToolkitInitializer;
+import com.terracotta.toolkit.ToolkitInitializer;
 
 public interface NonStopContext {
 
@@ -18,7 +18,7 @@ public interface NonStopContext {
 
   NonstopTimeoutBehaviorResolver getNonstopTimeoutBehaviorResolver();
 
-  AsyncToolkitInitializer getAsyncToolkitInitializer();
+  ToolkitInitializer getToolkitInitializer();
 
   NonStopClusterListener getNonStopClusterListener();
 
