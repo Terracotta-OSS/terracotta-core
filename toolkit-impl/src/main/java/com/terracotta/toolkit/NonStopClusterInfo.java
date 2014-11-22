@@ -19,14 +19,14 @@ import java.util.Set;
 
 public class NonStopClusterInfo implements ClusterInfo {
   private static final TCLogger         LOGGER         = TCLogging.getLogger(NonStopClusterInfo.class);
-  private final ToolkitInitializer    toolkitInitializer;
+  private final AsyncToolkitInitializer asyncToolkitInitializer;
   private volatile ClusterInfo          delegate;
   private final Thread                  initializer;
   private final List<ClusterListener>   listeners      = new ArrayList<ClusterListener>();
   private volatile ClusterEvent         nodeErrorEvent = null;
 
-  public NonStopClusterInfo(ToolkitInitializer toolkitInitializer) {
-    this.toolkitInitializer = toolkitInitializer;
+  public NonStopClusterInfo(AsyncToolkitInitializer asyncToolkitInitializer) {
+    this.asyncToolkitInitializer = asyncToolkitInitializer;
     initializer = createThreadToInitDelegate();
     initializer.setDaemon(true);
     initializer.start();
@@ -78,7 +78,7 @@ public class NonStopClusterInfo implements ClusterInfo {
       }
 
       private Toolkit getToolkit() {
-        return toolkitInitializer.getToolkit();
+        return asyncToolkitInitializer.getToolkit();
       }
     };
   }

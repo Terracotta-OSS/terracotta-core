@@ -61,7 +61,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   protected final NonStopClusterListener             nonStopClusterListener;
   private final NonStopFeature                       nonStopFeature;
   private final NonStopInternalFeature               nonStopInternalFeature;
-  private final ToolkitInitializer                   toolkitInitializer;
+  private final AsyncToolkitInitializer              asyncToolkitInitializer;
   private final NonStopContextImpl                   context;
   private final NonStopClusterInfo                   nonStopClusterInfo;
   private final NonStopInitializationService         nonStopInitiailzationService;
@@ -77,31 +77,12 @@ public class NonStopToolkitImpl implements ToolkitInternal {
                                               NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
                                                   .toArray(new ToolkitObjectType[0]));
     this.nonStopFeature = new NonStopFeatureImpl(this, abortableOperationManager);
-    this.toolkitInitializer = new AsyncToolkitInitializer(toolkitDelegateFutureTask, abortableOperationManager);
-    this.nonStopClusterInfo = new NonStopClusterInfo(toolkitInitializer);
+    this.asyncToolkitInitializer = new AsyncToolkitInitializer(toolkitDelegateFutureTask, abortableOperationManager);
+    this.nonStopClusterInfo = new NonStopClusterInfo(asyncToolkitInitializer);
     this.nonStopClusterListener = new NonStopClusterListener(abortableOperationManager, nonStopClusterInfo);
     this.context = new NonStopContextImpl(nonStopManager, nonStopConfigManager, abortableOperationManager,
-                                          nonstopTimeoutBehaviorFactory, toolkitInitializer,
+                                          nonstopTimeoutBehaviorFactory, asyncToolkitInitializer,
                                           nonStopClusterListener);
-    this.nonStopInternalFeature = new NonStopInternalFeatureImpl(context);
-
-    this.nonStopInitiailzationService = new NonStopInitializationService(context);
-    this.managementInternalFeature = new NonStopManagementInternalFeatureImpl();
-  }
-
-  public NonStopToolkitImpl(ToolkitInternal toolkit, AbortableOperationManager abortableOperationManager, String uuid) {
-    this.abortableOperationManager = abortableOperationManager;
-    this.uuid = uuid;
-    this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
-    this.nonStopConfigManager.registerForType(NonStopConfigRegistryImpl.DEFAULT_CONFIG,
-                                              NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
-                                                  .toArray(new ToolkitObjectType[0]));
-    this.nonStopFeature = new NonStopFeatureImpl(this, abortableOperationManager);
-    this.toolkitInitializer = new SyncToolkitInitializer(toolkit);
-    this.nonStopClusterInfo = new NonStopClusterInfo(toolkitInitializer);
-    this.nonStopClusterListener = new NonStopClusterListener(abortableOperationManager, nonStopClusterInfo);
-    this.context = new NonStopContextImpl(nonStopManager, nonStopConfigManager, abortableOperationManager,
-                                          nonstopTimeoutBehaviorFactory, toolkitInitializer, nonStopClusterListener);
     this.nonStopInternalFeature = new NonStopInternalFeatureImpl(context);
 
     this.nonStopInitiailzationService = new NonStopInitializationService(context);
@@ -113,7 +94,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   }
 
   private ToolkitInternal getInitializedToolkit() {
-    return toolkitInitializer.getToolkit();
+    return asyncToolkitInitializer.getToolkit();
   }
 
   @Override
@@ -330,7 +311,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   public ToolkitLock getLock(final String name, final ToolkitLockTypeInternal lockType) {
     NonStopConfigurationLookup nonStopConfigurationLookup = getNonStopConfigurationLookup(name, ToolkitObjectType.LOCK);
 
-    ToolkitLockLookup toolkitObjectLookup = new ToolkitLockLookup(toolkitInitializer, name, lockType);
+    ToolkitLockLookup toolkitObjectLookup = new ToolkitLockLookup(asyncToolkitInitializer, name, lockType);
     return new NonStopLockImpl(context, nonStopConfigurationLookup, toolkitObjectLookup);
   }
 
