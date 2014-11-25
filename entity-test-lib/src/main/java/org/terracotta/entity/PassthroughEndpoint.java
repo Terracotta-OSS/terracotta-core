@@ -1,9 +1,8 @@
 package org.terracotta.entity;
 
-import org.terracotta.connection.entity.EntityConfiguration;
-
 import com.google.common.util.concurrent.Futures;
 
+import java.io.Serializable;
 import java.util.concurrent.Future;
 
 /**
@@ -17,12 +16,12 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   @Override
-  public void setEntityConfiguration(final EntityConfiguration entityConfiguration) {
+  public void setEntityConfiguration(final Serializable entityConfiguration) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
-  public EntityConfiguration getEntityConfiguration() {
+  public Serializable getEntityConfiguration() {
     throw new UnsupportedOperationException("Implement me!");
   }
 
