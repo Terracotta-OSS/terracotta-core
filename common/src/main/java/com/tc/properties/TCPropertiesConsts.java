@@ -912,4 +912,11 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String VERSION_COMPATIBILITY_CHECK                                    = "version.compatibility.check";
 
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Secure Communication protocol for TCServer
+   * disabled.secure.protocols - List of comma separated protocols which needs to be disabled from comunication usage.
+   * </code>
+   ********************************************************************************************************************/
+  public static final String DISABLED_SECURE_PROTOCOLS                                      = "disabled.secure.protocols";
 }

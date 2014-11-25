@@ -95,6 +95,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -625,6 +626,8 @@ public class TCServerImpl extends SEDA implements TCServer {
       SslContextFactory sslContextFactory = new SslContextFactory();
       sslContextFactory.setSslContext(securityManager.getSslContext());
 
+      // TAB-5271
+      sslContextFactory.setExcludeProtocols(getVulnerableProtocols());
       SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
       scc.setPort(commonL2Config.managementPort().getIntValue());
       scc.setHost(commonL2Config.managementPort().getBind());
@@ -1060,5 +1063,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     protected void loadUsers() {
       /**/
     }
+  }
+
+  private String[] getVulnerableProtocols() {
+    String csProtocols = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.DISABLED_SECURE_PROTOCOLS);
+    HashSet<String> protocolSet = new HashSet<String>();
+    protocolSet.addAll(Arrays.asList(csProtocols.split(",")));
+    return protocolSet.toArray(new String[protocolSet.size()]);
   }
 }
