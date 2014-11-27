@@ -14,6 +14,7 @@ public class TerracottaClientConfig {
   private final boolean     nonStop;
   private final String      productId;
   private final ClassLoader classLoader;
+  private final boolean     asyncInit;
 
   TerracottaClientConfig(TerracottaClientConfigParams params) {
     this.tcConfigSnippetOrUrl = params.getTcConfigSnippetOrUrl();
@@ -23,6 +24,7 @@ public class TerracottaClientConfig {
     this.nonStop = params.isNonStop();
     this.productId = params.getProductId();
     this.classLoader = params.getClassLoader();
+    this.asyncInit = params.isAsyncInit();
   }
 
   public String getTcConfigSnippetOrUrl() {
@@ -51,5 +53,9 @@ public class TerracottaClientConfig {
 
   public ClassLoader getClassLoader() {
     return classLoader;
+  }
+
+  public boolean isAsyncInit() {
+    return this.asyncInit;
   }
 }

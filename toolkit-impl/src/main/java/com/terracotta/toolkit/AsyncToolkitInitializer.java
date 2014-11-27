@@ -13,7 +13,7 @@ import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-public class AsyncToolkitInitializer {
+public class AsyncToolkitInitializer implements ToolkitInitializer {
 
   private final FutureTask<ToolkitInternal> toolkitDelegateFutureTask;
   private final AbortableOperationManager   abortableOperationManager;
@@ -27,6 +27,7 @@ public class AsyncToolkitInitializer {
   /**
    * waits until the toolkit is initialized and returns the toolkit.
    */
+  @Override
   public ToolkitInternal getToolkit() {
     return getToolkit(true);
   }
@@ -54,6 +55,7 @@ public class AsyncToolkitInitializer {
   /**
    * returns toolkit If initialized or Null
    */
+  @Override
   public ToolkitInternal getToolkitOrNull() {
     if (toolkitDelegateFutureTask.isDone()) {
       return getToolkit(false);

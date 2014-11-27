@@ -27,6 +27,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
   private static final String     PRODUCT_ID_KEY                   = "productId";
   private static final String     CLASSLOADER                      = "classloader";
   private static final Properties EMPTY_PROPERTIES                 = new Properties();
+  private static final boolean    NONSTOP_INIT_ENABLED             = Boolean.getBoolean("toolkit.nonstop.init.enabled");
 
   @Override
   public boolean canHandleToolkitType(String type, String subName) {
@@ -63,6 +64,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
     TerracottaClientConfigParams terracottaClientConfigParams = new TerracottaClientConfigParams()
         .rejoin(isRejoinEnabled(properties)).nonStopEnabled(isNonStopEnabled(type))
         .classLoader(getClassLoader(properties));
+    terracottaClientConfigParams.setAsyncInit(NONSTOP_INIT_ENABLED);
     String tcConfigSnippet = properties.getProperty(TC_CONFIG_SNIPPET_KEY, "");
     if (tcConfigSnippet == null || tcConfigSnippet.trim().equals("")) {
       // if no tcConfigSnippet, assume url

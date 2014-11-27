@@ -7,28 +7,28 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.terracotta.toolkit.AsyncToolkitInitializer;
+import com.terracotta.toolkit.ToolkitInitializer;
 
 public class ToolkitLockLookup implements ToolkitObjectLookup<ToolkitLock> {
   private final ToolkitLockTypeInternal lockType;
   private final String                  name;
-  private final AsyncToolkitInitializer asyncToolkitInitializer;
+  private final ToolkitInitializer      toolkitInitializer;
 
-  public ToolkitLockLookup(AsyncToolkitInitializer asyncToolkitInitializer, String name,
+  public ToolkitLockLookup(ToolkitInitializer toolkitInitializer, String name,
                            ToolkitLockTypeInternal lockType) {
-    this.asyncToolkitInitializer = asyncToolkitInitializer;
+    this.toolkitInitializer = toolkitInitializer;
     this.name = name;
     this.lockType = lockType;
   }
 
   @Override
   public ToolkitLock getInitializedObject() {
-    return asyncToolkitInitializer.getToolkit().getLock(name, lockType);
+    return toolkitInitializer.getToolkit().getLock(name, lockType);
   }
 
   @Override
   public ToolkitLock getInitializedObjectOrNull() {
-    ToolkitInternal toolkitInternal = asyncToolkitInitializer.getToolkitOrNull();
+    ToolkitInternal toolkitInternal = toolkitInitializer.getToolkitOrNull();
     if (toolkitInternal != null) {
       return toolkitInternal.getLock(name, lockType);
     } else {

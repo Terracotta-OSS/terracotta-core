@@ -13,6 +13,7 @@ public class TerracottaClientConfigParams {
   private boolean     nonStop;
   private String      productId;
   private ClassLoader clasLoader;
+  private boolean     asyncInit;
 
   public String getTcConfigSnippetOrUrl() {
     return tcConfigSnippetOrUrl;
@@ -103,6 +104,14 @@ public class TerracottaClientConfigParams {
 
   public void setClassLoader(ClassLoader loader) {
     this.clasLoader = loader;
+  }
+  
+  public void setAsyncInit(boolean asyncInit) {
+    this.asyncInit = asyncInit;
+  }
+
+  public boolean isAsyncInit() {
+    return this.asyncInit;
   }
 
 }
