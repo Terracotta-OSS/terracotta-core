@@ -319,6 +319,18 @@
         <module>devwork/security-modules</module>
       </modules>
     </profile>
+
+    <profile>
+      <id>wan40</id>
+      <activation>
+        <file>
+          <exists>devwork/wan40</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/wan40</module>
+      </modules>
+    </profile>
   </profiles>
 
   <distributionManagement>
