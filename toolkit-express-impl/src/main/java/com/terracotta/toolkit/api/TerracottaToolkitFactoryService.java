@@ -64,7 +64,8 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
     TerracottaClientConfigParams terracottaClientConfigParams = new TerracottaClientConfigParams()
         .rejoin(isRejoinEnabled(properties)).nonStopEnabled(isNonStopEnabled(type))
         .classLoader(getClassLoader(properties));
-    terracottaClientConfigParams.setAsyncInit(NONSTOP_INIT_ENABLED);
+    terracottaClientConfigParams.setAsyncInit(Boolean.valueOf(properties.getProperty("toolkit.nonstop.init.enabled",
+                                                                                     "false")));
     String tcConfigSnippet = properties.getProperty(TC_CONFIG_SNIPPET_KEY, "");
     if (tcConfigSnippet == null || tcConfigSnippet.trim().equals("")) {
       // if no tcConfigSnippet, assume url
