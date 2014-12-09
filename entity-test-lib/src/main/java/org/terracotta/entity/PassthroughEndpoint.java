@@ -26,16 +26,6 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   @Override
-  public String getTypeName() {
-    throw new UnsupportedOperationException("Implement me!");
-  }
-
-  @Override
-  public void setTypeName(final String typeName) {
-    throw new UnsupportedOperationException("Implement me!");
-  }
-
-  @Override
   public void registerListener(final EndpointListener listener) {
     throw new UnsupportedOperationException("Implement me!");
   }
