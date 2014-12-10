@@ -63,7 +63,7 @@ public class TerracottaToolkitCreator {
       final Object defaultToolkitCacheManagerProvider = initializeDefaultCacheManagerProvider();
       if (!nonstopInitEnabled) {
         if (isNonStop) return instantiateNonStopToolkit(createInternalToolkitSynchronously(defaultToolkitCacheManagerProvider));
-        else createInternalToolkitSynchronously(defaultToolkitCacheManagerProvider);
+        else return createInternalToolkitSynchronously(defaultToolkitCacheManagerProvider);
       }
       FutureTask<ToolkitInternal> futureTask;
       if (isNonStop) {
