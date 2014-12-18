@@ -15,12 +15,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class AbstractMessageTransport implements MessageTransport, ConnectionIDProvider {
 
-  private static final int           DISCONNECTED          = 1;
-  private static final int           FORCED_DISCONNECT     = 2;
-  private static final int           CONNECTED             = 3;
-  private static final int           CONNECT_ATTEMPT       = 4;
-  private static final int           CLOSED                = 5;
-  private static final int           RECONNECTION_REJECTED = 6;
+  private enum TransportEvent {
+    DISCONNECTED,
+    FORCED_DISCONNECT,
+    CONNECTED,
+    CONNECT_ATTEMPT,
+    CLOSED,
+    RECONNECTION_REJECTED
+  }
 
   protected ConnectionIdLogger       logger;
   private final CopyOnWriteArrayList listeners             = new CopyOnWriteArrayList();
@@ -60,12 +62,12 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   protected void fireTransportConnectAttemptEvent() {
-    fireTransportEvent(CONNECT_ATTEMPT);
+    fireTransportEvent(TransportEvent.CONNECT_ATTEMPT);
   }
 
   protected final void fireTransportConnectedEvent() {
     logFireTransportConnectEvent();
-    fireTransportEvent(CONNECTED);
+    fireTransportEvent(TransportEvent.CONNECTED);
   }
 
   private void logFireTransportConnectEvent() {
@@ -75,22 +77,22 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   protected final void fireTransportForcedDisconnectEvent() {
-    fireTransportEvent(FORCED_DISCONNECT);
+    fireTransportEvent(TransportEvent.FORCED_DISCONNECT);
   }
 
   protected final void fireTransportDisconnectedEvent() {
-    fireTransportEvent(DISCONNECTED);
+    fireTransportEvent(TransportEvent.DISCONNECTED);
   }
 
   protected final void fireTransportClosedEvent() {
-    fireTransportEvent(CLOSED);
+    fireTransportEvent(TransportEvent.CLOSED);
   }
 
   protected final void fireTransportReconnectionRejectedEvent() {
-    fireTransportEvent(RECONNECTION_REJECTED);
+    fireTransportEvent(TransportEvent.RECONNECTION_REJECTED);
   }
 
-  private void fireTransportEvent(int type) {
+  private void fireTransportEvent(TransportEvent type) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       MessageTransportListener listener = (MessageTransportListener) i.next();
       switch (type) {
@@ -112,8 +114,6 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
         case RECONNECTION_REJECTED:
           listener.notifyTransportReconnectionRejected(this);
           break;
-        default:
-          throw new AssertionError("Unknown transport event: " + type);
       }
     }
   }

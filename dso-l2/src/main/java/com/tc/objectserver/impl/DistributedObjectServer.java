@@ -571,31 +571,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
 
-    final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
     final int stageWorkerThreadCount = L2Utils.getOptimalStageWorkerThreads();
 
-    final NetworkStackHarnessFactory networkStackHarnessFactory;
-    final boolean useOOOLayer = this.l1ReconnectConfig.getReconnectEnabled();
-    if (useOOOLayer) {
-      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
-                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     this.l1ReconnectConfig);
-    } else {
-      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    }
-
-    final MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
-
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
-    this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
-                                                               messageRouter, networkStackHarnessFactory,
-                                                               this.connectionPolicy, commWorkerThreadCount,
-                                                               new HealthCheckerConfigImpl(tcProperties
-                                                                   .getPropertiesFor("l2.healthcheck.l1"), "TSA Server"),
-                                                               this.thisServerNodeID,
-                                                               new TransportHandshakeErrorNullHandler(),
-                                                               getMessageTypeClassMappings(), Collections.EMPTY_MAP,
-                                                               tcSecurityManager);
+    this.communicationsManager = createCommunicationsManager(messageRouter);
 
 
     this.clientStateManager = new ClientStateManagerImpl();
@@ -1084,6 +1063,32 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     startGroupManagers();
     this.l2Coordinator.start();
     setLoggerOnExit();
+  }
+
+  protected CommunicationsManagerImpl createCommunicationsManager(TCMessageRouter messageRouter) {
+    final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
+
+    final NetworkStackHarnessFactory networkStackHarnessFactory;
+    final boolean useOOOLayer = this.l1ReconnectConfig.getReconnectEnabled();
+    if (useOOOLayer) {
+      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
+          new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+          this.l1ReconnectConfig);
+    } else {
+      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
+    }
+
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
+
+    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
+                                                               messageRouter, networkStackHarnessFactory,
+                                                               this.connectionPolicy, commWorkerThreadCount,
+                                                               new HealthCheckerConfigImpl(tcProperties
+                                                                   .getPropertiesFor("l2.healthcheck.l1"), "TSA Server"),
+                                                               this.thisServerNodeID,
+                                                               new TransportHandshakeErrorNullHandler(),
+                                                               getMessageTypeClassMappings(), Collections.EMPTY_MAP,
+                                                               tcSecurityManager);
   }
 
   /**
