@@ -98,7 +98,8 @@ public class DistributedObjectClientFactory {
 
                                                                    @Override
                                                                    public Void call() throws Exception {
-                                                                     clientRef.get().shutdown();
+                                                                     if (clientRef.get() != null) clientRef.get()
+                                                                         .shutdown();
                                                                      return null;
                                                                    }
                                                                  });
