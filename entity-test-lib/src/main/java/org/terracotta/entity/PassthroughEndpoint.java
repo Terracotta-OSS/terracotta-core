@@ -54,7 +54,8 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     @Override
     public Future<?> invoke() {
       try {
-        return Futures.immediateFuture(entity.invoke(payload));
+        byte[] value = entity.invoke(payload);
+        return returnsValue ? Futures.immediateFuture(value) : Futures.immediateFuture(null);
       } catch (Exception e) {
         return Futures.immediateFailedCheckedFuture(e);
       }
