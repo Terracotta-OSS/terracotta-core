@@ -13,21 +13,17 @@ import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
-import com.tc.object.metadata.NVPairSerializer;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.terracottatech.search.NVPair;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author teck
  */
 public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
-
-  private static final NVPairSerializer NVPAIR_SERIALIZER = new NVPairSerializer();
 
   private final MessageMonitor          monitor;
   private final SetOnceFlag             processed         = new SetOnceFlag();
@@ -273,7 +269,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   protected void putNVPair(final byte name, final NVPair nvPair, final ObjectStringSerializer serializer) {
     nvCount++;
     out.write(name);
-    NVPAIR_SERIALIZER.serialize(nvPair, out, serializer);
   }
 
   protected void putNVPair(final byte name, final byte value) {

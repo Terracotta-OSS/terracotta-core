@@ -4,14 +4,14 @@
  */
 package com.tc.object.dna.impl;
 
-import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.ObjectID;
-import com.tc.object.dna.api.DNAEncodingInternal;
-import com.tc.object.dna.api.DNAWriterInternal;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import com.tc.io.TCByteBufferOutputStream;
+import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNAEncodingInternal;
+import com.tc.object.dna.api.DNAWriter;
 
 public class ObjectDNAImplTest extends DNAImplTest {
 
@@ -35,9 +35,8 @@ public class ObjectDNAImplTest extends DNAImplTest {
   }
 
   @Override
-  protected DNAWriterInternal createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
-                                              ObjectStringSerializer serializer, DNAEncodingInternal encoding,
-                                              boolean isDelta) {
+  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
+                                      ObjectStringSerializer serializer, DNAEncodingInternal encoding, boolean isDelta) {
     return new ObjectDNAWriterImpl(out, id, type, serializer, encoding, version, isDelta);
   }
 

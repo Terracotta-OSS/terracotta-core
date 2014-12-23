@@ -70,15 +70,11 @@ public final class TCMessageType {
   public static final int           TYPE_OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE = 61;
   public static final int           TYPE_GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE      = 63;
   public static final int           TYPE_GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE     = 64;
-  public static final int           TYPE_SEARCH_QUERY_REQUEST_MESSAGE                 = 65;
-  public static final int           TYPE_SEARCH_QUERY_RESPONSE_MESSAGE                = 66;
   public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
   public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
   public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
   public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 70;
   public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
-  public static final int           TYPE_SEARCH_RESULTS_REQUEST_MESSAGE               = 75;
-  public static final int           TYPE_SEARCH_RESULTS_RESPONSE_MESSAGE              = 76;
   public static final int           TYPE_LIST_REGISTERED_SERVICES_MESSAGE             = 80;
   public static final int           TYPE_LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE    = 81;
   public static final int           TYPE_INVOKE_REGISTERED_SERVICE_MESSAGE            = 82;
@@ -124,10 +120,6 @@ public final class TCMessageType {
   public static final TCMessageType OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE      = new TCMessageType();
   public static final TCMessageType GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
-  public static final TCMessageType SEARCH_QUERY_REQUEST_MESSAGE                      = new TCMessageType();
-  public static final TCMessageType SEARCH_RESULTS_REQUEST_MESSAGE                    = new TCMessageType();
-  public static final TCMessageType SEARCH_QUERY_RESPONSE_MESSAGE                     = new TCMessageType();
-  public static final TCMessageType SEARCH_RESULTS_RESPONSE_MESSAGE                   = new TCMessageType();
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();

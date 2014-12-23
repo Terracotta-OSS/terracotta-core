@@ -49,7 +49,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   static final byte                           LITERAL_VALUE_ACTION_TYPE            = 5;
   static final byte                           PHYSICAL_ACTION_TYPE_REF_OBJECT      = 6;
   static final byte                           SUB_ARRAY_ACTION_TYPE                = 7;
-  static final byte                           META_DATA_ACTION_TYPE                = 8;
 
   private static final TCLogger               logger                               = ServiceUtil
                                                                                        .loadService(TCLoggingService.class)

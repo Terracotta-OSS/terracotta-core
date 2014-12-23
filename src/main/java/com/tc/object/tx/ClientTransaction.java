@@ -3,13 +3,12 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.ObjectID;
 import com.tc.object.LogicalOperation;
+import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
-import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
@@ -202,11 +201,6 @@ public interface ClientTransaction {
    * @return Collection of referenced objects
    */
   public Collection getReferencesOfObjectsInTxn();
-
-  /**
-   * Add a new MetaData descriptor to the given object
-   */
-  public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md);
 
   /**
    * Get all Notify calls

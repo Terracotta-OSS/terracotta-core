@@ -12,7 +12,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggingService;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
@@ -147,16 +146,11 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
     final List dnas = new ArrayList();
     final int numDNA = this.in.readInt();
-    final List<MetaDataReader> metaDataReaders = new ArrayList<MetaDataReader>();
     
     for (int i = 0; i < numDNA; i++) {
       final DNAImpl dna = new DNAImpl(this.serializer, true);
       dna.deserializeFrom(this.in);
 
-     if( dna.getMetaDataReader() != DNAImpl.NULL_META_DATA_READER) {
-       metaDataReaders.add(dna.getMetaDataReader());
-     }
-      
       if (dna.isDelta() && dna.getActionCount() < 1) {
         // This is really unexpected and indicates an error in the client, but the server
         // should not be harmed by it (other than extra processing)
@@ -171,11 +165,10 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.marks.put(txnID, new MarkInfo(this.numTxns - this.txnToRead, start, end));
 
     this.txnToRead--;
-    MetaDataReader [] metaDataReadersArr = metaDataReaders.toArray(new MetaDataReader[metaDataReaders.size()]);
     return this.txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, isEviction, locks, this.source,
                                                    dnas,
                                                    this.serializer, newRoots, txnType, notifies,
-                                                   metaDataReadersArr, numApplictionTxn, highwaterMarks);
+                                                   numApplictionTxn, highwaterMarks);
   }
 
   @Override

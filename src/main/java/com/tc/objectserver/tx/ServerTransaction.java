@@ -6,7 +6,6 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransaction;
 import com.tc.object.locks.LockID;
@@ -50,8 +49,6 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public Collection getNotifies();
 
-  public MetaDataReader[] getMetaDataReaders();
-
   public boolean isActiveTxn();
 
   public boolean isResent();
@@ -64,8 +61,6 @@ public interface ServerTransaction extends GlobalTransaction {
 
   // Used in active-active
   public long[] getHighWaterMarks();
-
-  public boolean isSearchEnabled();
 
   public boolean isEviction();
 }
