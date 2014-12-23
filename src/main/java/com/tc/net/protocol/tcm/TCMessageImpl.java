@@ -16,7 +16,6 @@ import com.tc.object.locks.LockIDSerializer;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.terracottatech.search.NVPair;
 
 import java.io.IOException;
 
@@ -264,11 +263,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     nvCount++;
     out.write(name);
     out.writeBoolean(value);
-  }
-
-  protected void putNVPair(final byte name, final NVPair nvPair, final ObjectStringSerializer serializer) {
-    nvCount++;
-    out.write(name);
   }
 
   protected void putNVPair(final byte name, final byte value) {

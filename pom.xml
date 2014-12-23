@@ -23,12 +23,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.terracottatech</groupId>
-      <artifactId>search</artifactId>
-      <version>1.4.8</version>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
