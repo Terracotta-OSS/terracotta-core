@@ -15,7 +15,7 @@ public interface RequestManagedObjectMessage extends ObjectRequestServerContext,
 
   public ObjectIDSet getRemoved();
 
-  public void initialize(ObjectRequestID requestID, ObjectIDSet requestedObjectIDs, int requestDepth,
+  public void initialize(ObjectRequestID requestID, ObjectIDSet requestedObjectIDs,
                          ObjectIDSet removeObjects);
 
   public void send();

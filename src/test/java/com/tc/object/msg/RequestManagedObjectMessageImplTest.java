@@ -44,7 +44,7 @@ public class RequestManagedObjectMessageImplTest {
                                                                                                            false),
                                                                               channel, type);
     ObjectIDSet oids = new BasicObjectIDSet("ImDoingTesting", 1);
-    msg.initialize(ctxt.getRequestID(), oids, ctxt.getRequestDepth(), removedIDs);
+    msg.initialize(ctxt.getRequestID(), oids, removedIDs);
 
     msg.dehydrate();
 
@@ -82,11 +82,6 @@ public class RequestManagedObjectMessageImplTest {
     @Override
     public ObjectIDSet getRequestedObjectIDs() {
       throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getRequestDepth() {
-      return 10;
     }
   }
 }

@@ -14,7 +14,4 @@ public interface ObjectRequestContext {
   public ClientID getClientID();
 
   public SortedSet<ObjectID> getRequestedObjectIDs();
-
-  public int getRequestDepth();
-
 }

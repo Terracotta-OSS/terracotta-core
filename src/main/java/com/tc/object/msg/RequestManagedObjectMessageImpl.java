@@ -23,13 +23,11 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private final static byte MANAGED_OBJECT_ID          = 1;
   private final static byte MANAGED_OBJECTS_REMOVED_ID = 2;
   private final static byte REQUEST_ID                 = 4;
-  private final static byte REQUEST_DEPTH_ID           = 5;
   private final static byte REQUESTING_THREAD_NAME     = 6;
 
   private ObjectIDSet       objectIDs;
   private ObjectIDSet       removed;
   private ObjectRequestID   requestID;
-  private int               requestDepth;
   private String            threadName;
 
   public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -47,7 +45,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     putNVPair(MANAGED_OBJECT_ID, objectIDs);
     putNVPair(MANAGED_OBJECTS_REMOVED_ID, removed);
     putNVPair(REQUEST_ID, this.requestID.toLong());
-    putNVPair(REQUEST_DEPTH_ID, this.requestDepth);
     putNVPair(REQUESTING_THREAD_NAME, this.threadName);
   }
 
@@ -62,9 +59,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
         return true;
       case REQUEST_ID:
         this.requestID = new ObjectRequestID(getLongValue());
-        return true;
-      case REQUEST_DEPTH_ID:
-        this.requestDepth = getIntValue();
         return true;
       case REQUESTING_THREAD_NAME:
         this.threadName = getStringValue();
@@ -90,17 +84,11 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   }
 
   @Override
-  public void initialize(ObjectRequestID rid, ObjectIDSet requestedObjectIDs, int depth, ObjectIDSet removeObjects) {
+  public void initialize(ObjectRequestID rid, ObjectIDSet requestedObjectIDs, ObjectIDSet removeObjects) {
     this.requestID = rid;
     this.objectIDs = requestedObjectIDs;
     this.removed = removeObjects;
-    this.requestDepth = depth;
     this.threadName = Thread.currentThread().getName();
-  }
-
-  @Override
-  public int getRequestDepth() {
-    return this.requestDepth;
   }
 
   @Override
