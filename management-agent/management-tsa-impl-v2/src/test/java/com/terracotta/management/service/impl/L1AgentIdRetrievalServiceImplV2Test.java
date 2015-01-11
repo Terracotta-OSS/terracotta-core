@@ -1,15 +1,17 @@
 package com.terracotta.management.service.impl;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.terracotta.management.resource.ResponseEntityV2;
+
 import com.terracotta.management.resource.ClientEntityV2;
 import com.terracotta.management.service.RemoteAgentBridgeService;
-import junit.framework.TestCase;
-import org.terracotta.management.resource.ResponseEntityV2;
 
 import java.util.HashMap;
 import java.util.HashSet;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import junit.framework.TestCase;
 
 public class L1AgentIdRetrievalServiceImplV2Test extends TestCase {
 
@@ -37,7 +39,7 @@ public class L1AgentIdRetrievalServiceImplV2Test extends TestCase {
     when(clientManagementService.getClients(null, null)).thenReturn(clientEntityV2ResponseEntityV2);
 
     L1AgentIdRetrievalServiceImplV2 l1AgentIdRetrievalServiceImplV2 =  new L1AgentIdRetrievalServiceImplV2(remoteAgentBridgeService, clientManagementService);
-    String agentIdFromRemoteAddress = l1AgentIdRetrievalServiceImplV2.getAgentIdFromRemoteAddress("localhost_777");
+    String agentIdFromRemoteAddress = l1AgentIdRetrievalServiceImplV2.getAgentIdFromRemoteAddress("localhost_777", null);
 
     assertEquals(expectedAgentId,agentIdFromRemoteAddress);
   }
@@ -55,7 +57,7 @@ public class L1AgentIdRetrievalServiceImplV2Test extends TestCase {
     when(clientManagementService.getClients(null, null)).thenReturn(clientEntityV2ResponseEntityV2);
 
     L1AgentIdRetrievalServiceImplV2 l1AgentIdRetrievalServiceImplV2 =  new L1AgentIdRetrievalServiceImplV2(null, clientManagementService);
-    String agentIdFromRemoteAddress = l1AgentIdRetrievalServiceImplV2.getAgentIdFromRemoteAddress("localhost_999");
+    String agentIdFromRemoteAddress = l1AgentIdRetrievalServiceImplV2.getAgentIdFromRemoteAddress("localhost_999", null);
 
     assertEquals("localhost_999",agentIdFromRemoteAddress);
   }

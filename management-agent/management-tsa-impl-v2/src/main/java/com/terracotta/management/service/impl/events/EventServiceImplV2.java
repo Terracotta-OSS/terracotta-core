@@ -3,7 +3,6 @@
  */
 package com.terracotta.management.service.impl.events;
 
-import com.terracotta.management.service.L1AgentIdRetrievalServiceV2;
 import org.glassfish.jersey.media.sse.InboundEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +16,13 @@ import com.tc.management.RemoteManagement;
 import com.tc.management.TCManagementEvent;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
+import com.terracotta.management.service.L1AgentIdRetrievalServiceV2;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
  * @author Ludovic Orban
@@ -70,9 +72,10 @@ public class EventServiceImplV2 implements EventServiceV2 {
         if (payload instanceof EventEntityV2) {
           eventEntity = (EventEntityV2)payload;
           String remoteAddress = (String) context.get(ManagementEventListener.CONTEXT_SOURCE_JMX_ID);
+          String clientID = (String) context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME);
           eventEntity.getRootRepresentables().put("RemoteAddress", remoteAddress);
           try {
-            eventEntity.setAgentId(l1AgentIdRetrievalService.getAgentIdFromRemoteAddress(remoteAddress));
+            eventEntity.setAgentId(l1AgentIdRetrievalService.getAgentIdFromRemoteAddress(remoteAddress, clientID));
           } catch (ServiceExecutionException e) {
             LOG.warn("Could not retrieve agentId for remoteAddress " + remoteAddress,e);
           }

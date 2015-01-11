@@ -1,14 +1,16 @@
 package com.terracotta.management.service.impl;
 
-import com.terracotta.management.resource.ClientEntityV2;
-import com.terracotta.management.service.L1AgentIdRetrievalServiceV2;
-import com.terracotta.management.service.RemoteAgentBridgeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.ResponseEntityV2;
 
+import com.terracotta.management.resource.ClientEntityV2;
+import com.terracotta.management.service.L1AgentIdRetrievalServiceV2;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,13 +30,14 @@ public class L1AgentIdRetrievalServiceImplV2 implements L1AgentIdRetrievalServic
   }
 
   @Override
-  public String getAgentIdFromRemoteAddress(String remoteAddress) throws ServiceExecutionException {
+  public String getAgentIdFromRemoteAddress(String remoteAddress, String clientID) throws ServiceExecutionException {
     //by default, keep the remoteAddress as the agentId
     String agentId = remoteAddress;
+    Set<String> clientIDSet = (clientID != null) ? Collections.singleton(clientID) : null;
 
     remoteAddress = remoteAddress.replaceAll("_",":");
 
-    ResponseEntityV2<ClientEntityV2> clients = clientManagementService.getClients(null, null);
+    ResponseEntityV2<ClientEntityV2> clients = clientManagementService.getClients(clientIDSet, null);
     Collection<ClientEntityV2> entities = clients.getEntities();
     String clientUUID = null;
     for (ClientEntityV2 entity : entities) {
@@ -44,7 +47,8 @@ public class L1AgentIdRetrievalServiceImplV2 implements L1AgentIdRetrievalServic
       }
     }
     if (clientUUID == null) {
-      LOG.warn("Could not determine clientUUID for remoteAddress " + remoteAddress);
+      String clientIDPart = clientID != null ? (", ClientID[" + clientID + "]") : null;
+      LOG.warn("Could not determine clientUUID for remoteAddress " + remoteAddress + clientIDPart);
     } else {
       Set<String> remoteAgentNodeNames = remoteAgentBridgeService.getRemoteAgentNodeNames();
       for (String remoteAgentNodeName : remoteAgentNodeNames) {

@@ -11,5 +11,5 @@ import org.terracotta.management.ServiceExecutionException;
  *
  */
 public interface L1AgentIdRetrievalServiceV2 {
-  String getAgentIdFromRemoteAddress(String remoteAddress) throws ServiceExecutionException;
+  String getAgentIdFromRemoteAddress(String remoteAddress, String clientID) throws ServiceExecutionException;
 }
