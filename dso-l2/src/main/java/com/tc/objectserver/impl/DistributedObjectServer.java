@@ -7,6 +7,9 @@ package com.tc.objectserver.impl;
 import org.apache.commons.io.FileUtils;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -292,9 +295,6 @@ import java.util.Timer;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -892,7 +892,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
     ServerManagementHandler serverManagementHandler = new ServerManagementHandler();
-    final Stage managementStage = stageManager.createStage(ServerConfigurationContext.MANAGEMENT_STAGE, serverManagementHandler, 1, maxStageSize);
+    final Stage managementStage = stageManager.createStage(ServerConfigurationContext.MANAGEMENT_STAGE,
+                                                           serverManagementHandler, TCPropertiesImpl.getProperties()
+                                                               .getInt(TCPropertiesConsts.L2_REMOTEJMX_MAXTHREADS) / 2,
+                                                           maxStageSize);
 
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
                       transactionAck, clientHandshake, txnLwmStage, jmxRemoteTunnelStage, clusterMetaDataStage,
