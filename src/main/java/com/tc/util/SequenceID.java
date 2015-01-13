@@ -8,7 +8,7 @@ import java.util.Comparator;
 public class SequenceID extends AbstractIdentifier {
 
   public static final SequenceID NULL_ID    = new SequenceID();
-  public static final Comparator COMPARATOR = new SequenceIDComparator();
+  public static final Comparator<SequenceID> COMPARATOR = new SequenceIDComparator();
 
   public SequenceID(long l) {
     super(l);
@@ -27,11 +27,11 @@ public class SequenceID extends AbstractIdentifier {
     return new SequenceID(toLong() + 1);
   }
 
-  public static class SequenceIDComparator implements Comparator {
+  public static class SequenceIDComparator implements Comparator<SequenceID> {
     @Override
-    public int compare(Object o1, Object o2) {
-      long l1 = ((SequenceID) o1).toLong();
-      long l2 = ((SequenceID) o2).toLong();
+    public int compare(SequenceID id1, SequenceID id2) {
+      long l1 = id1.toLong();
+      long l2 = id2.toLong();
       if (l1 < l2) return -1;
       else if (l1 > l2) return 1;
       else return 0;

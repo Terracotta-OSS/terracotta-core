@@ -7,7 +7,7 @@ public interface TCLoggingService {
 
   TCLogger getLogger(String name);
 
-  TCLogger getLogger(Class c);
+  TCLogger getLogger(Class<?> c);
 
 
 }
