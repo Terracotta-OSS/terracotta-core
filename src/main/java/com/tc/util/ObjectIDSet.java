@@ -18,6 +18,8 @@ import java.util.SortedSet;
  */
 public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, TCSerializable {
 
+  public static final ObjectIDSet EMPTY_OBJECT_ID_SET = unmodifiableObjectIDSet(new BasicObjectIDSet());
+  
   protected static final Comparator<Range> RANGE_COMPARATOR = new Comparator<Range>() {
     @Override
     public int compare(final Range o1, final Range o2) {
@@ -194,17 +196,17 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
     }
 
     @Override
-    public boolean addAll(final Collection coll) {
+    public boolean addAll(final Collection<? extends ObjectID> coll) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean removeAll(final Collection coll) {
+    public boolean removeAll(final Collection<?> coll) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(final Collection coll) {
+    public boolean retainAll(final Collection<?> coll) {
       throw new UnsupportedOperationException();
     }
 
