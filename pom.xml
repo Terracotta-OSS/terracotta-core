@@ -331,6 +331,18 @@
         <module>devwork/wan40</module>
       </modules>
     </profile>
+
+    <profile>
+      <id>terracotta-sessions</id>
+      <activation>
+        <file>
+          <exists>devwork/terracotta-sessions</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/terracotta-sessions</module>
+      </modules>
+    </profile>
   </profiles>
 
   <distributionManagement>
