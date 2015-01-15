@@ -22,7 +22,7 @@
   
   <properties>
     <build.edition>opensource</build.edition>
-    <maven-forge-plugin.version>1.2.13</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.2.18</maven-forge-plugin.version>
     <tc-shader.version>1.2</tc-shader.version>
     <skip.deploy>false</skip.deploy>
   </properties>
