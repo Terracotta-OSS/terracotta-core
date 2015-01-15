@@ -5,6 +5,7 @@ package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 
 import java.util.Collection;
@@ -14,7 +15,7 @@ import java.util.Collection;
  */
 public interface RequestManagedObjectResponseMessage extends TCMessage {
 
-  public Collection getObjects();
+  public Collection<DNA> getObjects();
   
   public void initialize(TCByteBuffer[] dnas, int count, ObjectStringSerializer aSerializer, long bid, int tot);
 

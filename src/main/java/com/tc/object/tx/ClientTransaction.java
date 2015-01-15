@@ -6,6 +6,7 @@ package com.tc.object.tx;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
@@ -33,14 +34,14 @@ public interface ClientTransaction {
    * 
    * @return Map of ObjectID to TCChangeBuffer
    */
-  public Map getChangeBuffers();
+  public Map<ObjectID, TCChangeBuffer> getChangeBuffers();
 
   /**
    * Get new roots in this transaction
    * 
    * @return Map of Root name to ObjectID
    */
-  public Map getNewRoots();
+  public Map<String, ObjectID> getNewRoots();
 
   /**
    * Get initial lock identifier
@@ -54,7 +55,7 @@ public interface ClientTransaction {
    * 
    * @return All locks
    */
-  public List getAllLockIDs();
+  public List<LockID> getAllLockIDs();
 
   /**
    * Indicate place in sequence of transactions
@@ -200,14 +201,14 @@ public interface ClientTransaction {
    * 
    * @return Collection of referenced objects
    */
-  public Collection getReferencesOfObjectsInTxn();
+  public Collection<Object> getReferencesOfObjectsInTxn();
 
   /**
    * Get all Notify calls
    * 
    * @return List of notify/notifyAll() calls in this transaction
    */
-  public List getNotifies();
+  public List<Notify> getNotifies();
 
   /**
    * Adds a Transaction Complete Listener which will be called when the Transaction is complete.
@@ -219,7 +220,7 @@ public interface ClientTransaction {
    * 
    * @return List of TransactionCompleteListeners
    */
-  public List getTransactionCompleteListeners();
+  public List<TransactionCompleteListener> getTransactionCompleteListeners();
 
   public boolean isAtomic();
 

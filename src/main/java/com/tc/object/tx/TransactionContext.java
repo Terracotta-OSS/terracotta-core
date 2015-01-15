@@ -42,7 +42,7 @@ public interface TransactionContext {
   /**
    * @return All lock identifiers that have been involved in the transaction
    */
-  public List getAllLockIDs();
+  public List<LockID> getAllLockIDs();
 
   /**
    * Remove a lock previously involved in the transaction

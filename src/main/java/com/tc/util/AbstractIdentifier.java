@@ -12,7 +12,7 @@ import java.io.Serializable;
  * 
  * @author steve
  */
-public abstract class AbstractIdentifier implements Comparable, Serializable {
+public abstract class AbstractIdentifier implements Comparable<AbstractIdentifier>, Serializable {
   private static final long serialVersionUID = 1396710277826990138L;
   private static final long NULL_ID          = -1;
   private final long        id;
@@ -78,8 +78,7 @@ public abstract class AbstractIdentifier implements Comparable, Serializable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    AbstractIdentifier other = (AbstractIdentifier) o;
+  public int compareTo(AbstractIdentifier other) {
     return (id < other.id ? -1 : (id == other.id ? 0 : 1));
   }
 }

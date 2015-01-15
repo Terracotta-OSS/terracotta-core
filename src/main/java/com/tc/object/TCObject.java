@@ -175,7 +175,7 @@ public interface TCObject extends Cacheable {
    * @param weakReference
    * @throws ClassNotFoundException If class not found
    */
-  public void hydrate(DNA from, boolean force, WeakReference peer) throws ClassNotFoundException;
+  public void hydrate(DNA from, boolean force, WeakReference<Object> peer) throws ClassNotFoundException;
 
   /**
    * Fault in field object if necessary

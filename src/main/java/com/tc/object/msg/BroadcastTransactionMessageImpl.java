@@ -66,12 +66,12 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID lowWatermark;
   private ObjectStringSerializer serializer;
 
-  private final List                                      changes               = new ArrayList();
-  private final Collection                                notifies              = new ArrayList();
-  private final Map                                       newRoots              = new HashMap();
-  private final List<LockID>                              lockIDs               = new ArrayList();
-  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults  = new HashMap();
-  private final List<ServerEvent>                         events                = new ArrayList();
+  private final List<DNA>                                 changes               = new ArrayList<DNA>();
+  private final Collection<ClientServerExchangeLockContext> notifies            = new ArrayList<ClientServerExchangeLockContext>();
+  private final Map<String, ObjectID>                     newRoots              = new HashMap<String, ObjectID>();
+  private final List<LockID>                              lockIDs               = new ArrayList<LockID>();
+  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults  = new HashMap<LogicalChangeID, LogicalChangeResult>();
+  private final List<ServerEvent>                         serverEvents                = new ArrayList<ServerEvent>();
 
   public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                          final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -108,15 +108,14 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       DNAImpl dna = (DNAImpl) change;
       putNVPair(DNA_ID, dna);
     }
-    for (final Object o : this.newRoots.keySet()) {
-      String key = (String) o;
-      ObjectID value = (ObjectID) this.newRoots.get(key);
+    for (String key : this.newRoots.keySet()) {
+      ObjectID value = this.newRoots.get(key);
       putNVPair(ROOT_NAME_ID_PAIR, new RootIDPair(key, value));
     }
     for (final Entry<LogicalChangeID, LogicalChangeResult> entry : logicalChangeResults.entrySet()) {
       putNVPair(LOGICAL_CHANGE_RESULT, new LogicalChangeResultPair(entry.getKey(), entry.getValue()));
     }
-    for (final ServerEvent event : events) {
+    for (final ServerEvent event : serverEvents) {
       putNVPair(SERVER_EVENT, new ServerEventSerializableContext(event));
     }
   }
@@ -128,7 +127,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.transactionType = TxnType.typeFor(getByteValue());
         return true;
       case DNA_ID:
-        this.changes.add(getObject(new DNAImpl(this.serializer, false)));
+        DNA dna = (DNA) getObject(new DNAImpl(this.serializer, false));
+        this.changes.add(dna);
         return true;
       case SERIALIZER_ID:
         this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
@@ -137,7 +137,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.lockIDs.add(getLockIDValue());
         return true;
       case NOTIFIED:
-        this.notifies.add(this.getObject(new ClientServerExchangeLockContext()));
+        ClientServerExchangeLockContext cselc = (ClientServerExchangeLockContext) this.getObject(new ClientServerExchangeLockContext());
+        this.notifies.add(cselc);
         return true;
       case CHANGE_ID:
         this.changeID = getLongValue();
@@ -164,7 +165,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         return true;
       case SERVER_EVENT:
         final ServerEventSerializableContext ctx = (ServerEventSerializableContext) getObject(new ServerEventSerializableContext());
-        events.add(ctx.getEvent());
+        serverEvents.add(ctx.getEvent());
         return true;
       default:
         return false;
@@ -172,10 +173,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public void initialize(final List chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
+  public void initialize(final List<DNA> chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
                          final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
                          final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
-                         final Collection theNotifies, final Map roots,
+                         final Collection<ClientServerExchangeLockContext> theNotifies, final Map<String, ObjectID> roots,
                          final Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
                          final Collection<ServerEvent> events) {
     Assert.assertNotNull(txnType);
@@ -192,11 +193,11 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     this.notifies.addAll(theNotifies);
     this.newRoots.putAll(roots);
     this.logicalChangeResults.putAll(logicalInvokeResults);
-    this.events.addAll(events);
+    this.serverEvents.addAll(events);
   }
 
   @Override
-  public List getLockIDs() {
+  public List<LockID> getLockIDs() {
     return this.lockIDs;
   }
 
@@ -206,8 +207,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public Collection getObjectChanges() {
-    final Collection versionizedChanges = new ArrayList(this.changes.size());
+  public Collection<DNA> getObjectChanges() {
+    final Collection<DNA> versionizedChanges = new ArrayList<DNA>(this.changes.size());
     for (final Object change : this.changes) {
       versionizedChanges.add(new VersionizedDNAWrapper((DNA) change, this.globalTransactionID.toLong()));
     }
@@ -241,8 +242,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public Collection getNotifies() {
-    return new ArrayList(this.notifies);
+  public Collection<ClientServerExchangeLockContext> getNotifies() {
+    return new ArrayList<ClientServerExchangeLockContext>(this.notifies);
   }
 
   @Override
@@ -262,7 +263,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public Map getNewRoots() {
+  public Map<String, ObjectID> getNewRoots() {
     return this.newRoots;
   }
 
@@ -271,6 +272,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     private ObjectID rootID;
 
     public RootIDPair() {
+      
     }
 
     public RootIDPair(final String rootName, final ObjectID rootID) {
@@ -343,6 +345,6 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   @Override
   public List<ServerEvent> getEvents() {
-    return events;
+    return serverEvents;
   }
 }

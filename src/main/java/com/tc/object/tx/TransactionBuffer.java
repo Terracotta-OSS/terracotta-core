@@ -17,8 +17,8 @@ public interface TransactionBuffer {
 
   public TransactionID getFoldedTransactionID();
 
-  public void addTransactionCompleteListeners(List transactionCompleteListeners);
+  public void addTransactionCompleteListeners(List<TransactionCompleteListener> transactionCompleteListeners);
 
-  public List getTransactionCompleteListeners();
+  public List<TransactionCompleteListener> getTransactionCompleteListeners();
 
 }
