@@ -88,7 +88,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
         stripeID = (StripeID) getNodeIDValue();
         return true;
       case STRIPE_ID_MAP:
-        stripeIDMap = ((GroupToStripeMapSerializer) getObject(new GroupToStripeMapSerializer())).getMap();
+        stripeIDMap = getObject(new GroupToStripeMapSerializer()).getMap();
         return true;
       default:
         return false;

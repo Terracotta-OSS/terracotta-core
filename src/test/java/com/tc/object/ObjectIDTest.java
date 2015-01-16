@@ -33,19 +33,20 @@ public class ObjectIDTest {
     assertNotSame(id, clone);
     assertEquals(id, clone);
 
-    Set set = new HashSet();
+    Set<ObjectID> set = new HashSet<ObjectID>();
     set.add(clone);
 
     assertTrue(set.contains(id));
     set.remove(id);
     assertEquals(0, set.size());
 
-    Map map = new HashMap();
+    Map<ObjectID, Object> map = new HashMap<ObjectID, Object>();
     Object o = new Object();
     map.put(id, o);
     assertEquals(o, map.get(clone));
   }
 
+  @SuppressWarnings("unused")
   @Test
   public void testGroupIDObjectID() {
     SecureRandom sr = new SecureRandom();

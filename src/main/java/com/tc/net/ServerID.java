@@ -73,7 +73,7 @@ public class ServerID implements NodeID, Serializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public ServerID deserializeFrom(TCByteBufferInput in) throws IOException {
     this.name = in.readString();
     int length = in.readInt();
     this.uid = new byte[length];
@@ -101,8 +101,7 @@ public class ServerID implements NodeID, Serializable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    NodeID n = (NodeID) o;
+  public int compareTo(NodeID n) {
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
     ServerID target = (ServerID) n;
     byte[] targetUid = target.getUID();

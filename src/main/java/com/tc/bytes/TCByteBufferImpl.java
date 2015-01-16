@@ -24,10 +24,10 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   private final ByteBuffer          buffer;
   private final TCByteBuffer        root;
-  private final LinkedBlockingQueue bufPool;
+  private final LinkedBlockingQueue<TCByteBuffer> bufPool;
   private State                     state       = INIT;
 
-  TCByteBufferImpl(int capacity, boolean direct, LinkedBlockingQueue poolQueue) {
+  TCByteBufferImpl(int capacity, boolean direct, LinkedBlockingQueue<TCByteBuffer> poolQueue) {
     if (direct) {
       buffer = ByteBuffer.allocateDirect(capacity);
     } else {

@@ -66,7 +66,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   protected void basicDeserializeFrom(final TCByteBufferInput in) throws IOException {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
-    nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+    nodeIDSerializer = nodeIDSerializer.deserializeFrom(in);
     this.servertxnID = new ServerTransactionID(nodeIDSerializer.getNodeID(), new TransactionID(in.readLong()));
     this.oids = new BasicObjectIDSet();
     this.oids.deserializeFrom(in);

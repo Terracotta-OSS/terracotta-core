@@ -6,7 +6,6 @@ package com.tc.util;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * A general purpose assertion utility. By default it is on, but you can disable the throwing of exceptions by giving
@@ -181,8 +180,8 @@ public class Assert {
     if (!isEnabled()) return;
     assertNotNull(array);
 
-    for (int i = 0; i < array.length; ++i)
-      assertNotBlank(array[i]);
+    for (String s : array)
+      assertNotBlank(s);
   }
 
   /**
@@ -341,11 +340,10 @@ public class Assert {
    * @param elementClass The expected super type of all items in collection
    * @param allowNullElements Flag for whether null elements are allowed or not
    */
-  public static void assertConsistentCollection(Collection collection, Class elementClass, boolean allowNullElements) {
+  public static <T> void assertConsistentCollection(Collection<T> collection, Class<T> elementClass, boolean allowNullElements) {
     assertNotNull("Collection", collection);
     assertNotNull("Element class", elementClass);
-    for (Iterator pos = collection.iterator(); pos.hasNext();) {
-      Object element = pos.next();
+    for (T element : collection) {
       if (!allowNullElements) {
         assertNotNull(element);
       }
@@ -365,8 +363,8 @@ public class Assert {
    */
   public static void assertContainsElement(Object[] objectArray, Object requiredElement) {
     assertNotNull(objectArray);
-    for (int pos = 0; pos < objectArray.length; pos++) {
-      if (objectArray[pos] == requiredElement) return;
+    for (Object element : objectArray) {
+      if (element == requiredElement) return;
     }
     if (isEnabled()) {
       throw failure("Element<" + requiredElement + "> not found in array "
@@ -376,8 +374,8 @@ public class Assert {
 
   public static void assertDoesNotContainsElement(Object[] objectArray, Object element) {
     assertNotNull(objectArray);
-    for (int pos = 0; pos < objectArray.length; pos++) {
-      if (objectArray[pos] == element) {
+    for (Object o : objectArray) {
+      if (o == element) {
         failure("Element<" + element + "> was found in array " + StringUtil.toString(objectArray, ",", "<", ">"));
       }
     }

@@ -8,6 +8,7 @@ import java.util.Iterator;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.BasicObjectIDSet;
 import com.tc.util.ObjectIDSet;
@@ -30,14 +31,15 @@ public class GCResultMessageTest {
     ObjectIDSet oidset1 = (ObjectIDSet) gcmsg1.getGCedObjectIDs();
     assertEquals(oidset.size(), oidset1.size());
 
-    Iterator it = oidset.iterator();
-    Iterator it1 = oidset1.iterator();
+    Iterator<ObjectID> it = oidset.iterator();
+    Iterator<ObjectID> it1 = oidset1.iterator();
     while (it.hasNext()) {
       assertEquals(it.next(), it1.next());
     }
     assertFalse(it1.hasNext());
   }
 
+  @SuppressWarnings("resource")
   private GCResultMessage writeAndRead(GCResultMessage gcmsg) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     gcmsg.serializeTo(bo);

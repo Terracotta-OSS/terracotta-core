@@ -49,6 +49,7 @@ public class DNAImplTest {
     serializeDeserialize(false, true);
   }
 
+  @SuppressWarnings("resource")
   protected void serializeDeserialize(final boolean parentID, final boolean isDelta) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 

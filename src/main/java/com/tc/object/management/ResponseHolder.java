@@ -13,7 +13,7 @@ import java.io.IOException;
 /**
  *
  */
-public class ResponseHolder implements TCSerializable {
+public class ResponseHolder implements TCSerializable<ResponseHolder> {
 
   private byte[] serializedResponse;
   private byte[] serializedException;
@@ -65,7 +65,7 @@ public class ResponseHolder implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public ResponseHolder deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int responseLength = serialInput.readInt();
     serializedResponse = new byte[responseLength];
     serialInput.readFully(serializedResponse);

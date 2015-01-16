@@ -32,6 +32,8 @@ public class ServerLockContextStateMachine {
         break;
       case TRY_PENDING:
         return true;
+      default:
+        throw new IllegalArgumentException(newState.getType().name());
     }
 
     if (expectedState == newState) { return true; }
@@ -46,6 +48,7 @@ public class ServerLockContextStateMachine {
     switch (oldState.getLockLevel()) {
       case WRITE:
         return State.WAITER;
+      case READ:
       default:
         // should never come here
         throw new IllegalStateException("Should never come here");

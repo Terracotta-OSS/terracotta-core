@@ -153,8 +153,8 @@ public class TCByteBufferOutputStreamTest {
     int max = initial + random.nextInt(1024) + 1;
     TCByteBufferOutputStream output = new TCByteBufferOutputStream(initial, max, false);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    List data = new ArrayList();
-    List marks = new ArrayList();
+    List<byte[]> data = new ArrayList<byte[]>();
+    List<Mark> marks = new ArrayList<Mark>();
 
     try {
       for (int i = 0; i < 1000; i++) {
@@ -181,8 +181,8 @@ public class TCByteBufferOutputStreamTest {
         }
       }
       for (int i = 0, n = marks.size(); i < n; i++) {
-        Mark mark = (Mark) marks.get(i);
-        byte[] b = (byte[]) data.get(i);
+        Mark mark = marks.get(i);
+        byte[] b = data.get(i);
         if (b.length == 1) {
           mark.write(b[0]);
         } else {

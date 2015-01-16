@@ -183,8 +183,8 @@ public final class TCMessageType {
   private static TCMessageType[] init() throws IllegalArgumentException, IllegalAccessException {
     final Field[] fields = TCMessageType.class.getDeclaredFields();
 
-    final Map mtFields = new HashMap();
-    final Map intFields = new HashMap();
+    final Map<String, Field> mtFields = new HashMap<String, Field>();
+    final Map<String, Integer> intFields = new HashMap<String, Integer>();
 
     for (final Field field : fields) {
       final String fName = field.getName();
@@ -229,8 +229,8 @@ public final class TCMessageType {
       }
     }
 
-    for (final Iterator iter = mtFields.values().iterator(); iter.hasNext();) {
-      final Field field = (Field) iter.next();
+    for (final Iterator<Field> iter = mtFields.values().iterator(); iter.hasNext();) {
+      final Field field = iter.next();
       final String name = field.getName();
       final TCMessageType type = (TCMessageType) field.get(TCMessageType.class);
 
@@ -240,7 +240,7 @@ public final class TCMessageType {
         throw new RuntimeException("TCMessageType: Missing " + intName + " integer constant");
       }
 
-      final int val = ((Integer) intFields.remove(intName)).intValue();
+      final int val = intFields.remove(intName).intValue();
 
       type.setType(val);
       type.setTypeName(name);

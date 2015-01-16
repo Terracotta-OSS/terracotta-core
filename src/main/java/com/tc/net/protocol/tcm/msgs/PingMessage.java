@@ -32,12 +32,13 @@ public class PingMessage extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
+  @SuppressWarnings("resource")
   public PingMessage(MessageMonitor monitor) {
     this( new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
   }
 
-  public void initialize(long sequence) {
-    this.sequence = sequence;
+  public void initialize(long seq) {
+    this.sequence = seq;
   }
 
   public PingMessage createResponse() {

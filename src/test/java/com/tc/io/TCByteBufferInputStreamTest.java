@@ -496,8 +496,8 @@ public class TCByteBufferInputStreamTest {
     TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
 
     try {
-      List marks = new ArrayList();
-      List bytes = new ArrayList();
+      List<Mark> marks = new ArrayList<Mark>();
+      List<byte[]> bytes = new ArrayList<byte[]>();
       while (bbis.available() > 0) {
         marks.add(bbis.mark());
         byte[] randBytes = new byte[this.random.nextInt(bbis.available() + 1)];
@@ -506,9 +506,9 @@ public class TCByteBufferInputStreamTest {
         marks.add(bbis.mark());
       }
       for (int i = 0, j = 0; i < marks.size(); i++) {
-        Mark start = (Mark) marks.get(i++);
-        Mark end = (Mark) marks.get(i);
-        byte[] expectedBytes = (byte[]) bytes.get(j++);
+        Mark start = marks.get(i++);
+        Mark end = marks.get(i);
+        byte[] expectedBytes = bytes.get(j++);
         TCByteBuffer[] got = bbis.toArray(start, end);
         byte[] gotBytes = drain(got);
         assertThat(gotBytes, equalTo(expectedBytes));

@@ -9,7 +9,7 @@ import com.tc.io.TCSerializable;
 
 import java.io.IOException;
 
-public class LogicalChangeResult implements TCSerializable {
+public class LogicalChangeResult implements TCSerializable<LogicalChangeResult> {
   private Object result;
 
   public static LogicalChangeResult SUCCESS = new LogicalChangeResult(true);
@@ -40,7 +40,7 @@ public class LogicalChangeResult implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public LogicalChangeResult deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     byte resultType = serialInput.readByte();
     if (resultType == 0) {
       result = serialInput.readBoolean();

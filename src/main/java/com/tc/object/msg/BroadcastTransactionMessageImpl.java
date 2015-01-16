@@ -127,17 +127,17 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.transactionType = TxnType.typeFor(getByteValue());
         return true;
       case DNA_ID:
-        DNA dna = (DNA) getObject(new DNAImpl(this.serializer, false));
+        DNA dna = getObject(new DNAImpl(this.serializer, false));
         this.changes.add(dna);
         return true;
       case SERIALIZER_ID:
-        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
+        this.serializer = getObject(new ObjectStringSerializerImpl());
         return true;
       case LOCK_ID:
         this.lockIDs.add(getLockIDValue());
         return true;
       case NOTIFIED:
-        ClientServerExchangeLockContext cselc = (ClientServerExchangeLockContext) this.getObject(new ClientServerExchangeLockContext());
+        ClientServerExchangeLockContext cselc = getObject(new ClientServerExchangeLockContext());
         this.notifies.add(cselc);
         return true;
       case CHANGE_ID:
@@ -156,15 +156,15 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.lowWatermark = new GlobalTransactionID(getLongValue());
         return true;
       case ROOT_NAME_ID_PAIR:
-        RootIDPair rootIDPair = (RootIDPair) getObject(new RootIDPair());
+        RootIDPair rootIDPair = getObject(new RootIDPair());
         this.newRoots.put(rootIDPair.getRootName(), rootIDPair.getRootID());
         return true;
       case LOGICAL_CHANGE_RESULT:
-        LogicalChangeResultPair resultPair = (LogicalChangeResultPair) getObject(new LogicalChangeResultPair());
+        LogicalChangeResultPair resultPair = getObject(new LogicalChangeResultPair());
         this.logicalChangeResults.put(resultPair.getId(), resultPair.getResult());
         return true;
       case SERVER_EVENT:
-        final ServerEventSerializableContext ctx = (ServerEventSerializableContext) getObject(new ServerEventSerializableContext());
+        final ServerEventSerializableContext ctx = getObject(new ServerEventSerializableContext());
         serverEvents.add(ctx.getEvent());
         return true;
       default:
@@ -267,7 +267,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     return this.newRoots;
   }
 
-  private static class RootIDPair implements TCSerializable {
+  private static class RootIDPair implements TCSerializable<RootIDPair> {
     private String rootName;
     private ObjectID rootID;
 
@@ -288,7 +288,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
 
     @Override
-    public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+    public RootIDPair deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
       this.rootName = serialInput.readString();
       this.rootID = new ObjectID(serialInput.readLong());
       return this;
@@ -303,7 +303,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
-  private static class LogicalChangeResultPair implements TCSerializable {
+  private static class LogicalChangeResultPair implements TCSerializable<LogicalChangeResultPair> {
     private LogicalChangeID id;
     private LogicalChangeResult result;
 
@@ -323,9 +323,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
 
     @Override
-    public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+    public LogicalChangeResultPair deserializeFrom(TCByteBufferInput serialInput) throws IOException {
       this.id = new LogicalChangeID(serialInput.readLong());
-      this.result = (LogicalChangeResult) (new LogicalChangeResult()).deserializeFrom(serialInput);
+      this.result = new LogicalChangeResult().deserializeFrom(serialInput);
       return this;
     }
 

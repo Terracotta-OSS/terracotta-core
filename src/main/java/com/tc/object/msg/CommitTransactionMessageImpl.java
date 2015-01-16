@@ -3,7 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.lang.Recyclable;
@@ -21,7 +20,7 @@ import java.io.IOException;
 /**
  * @author steve
  */
-public class CommitTransactionMessageImpl extends DSOMessageBase implements EventContext, CommitTransactionMessage {
+public class CommitTransactionMessageImpl extends DSOMessageBase implements CommitTransactionMessage {
   private static final byte      BATCH_TRANSACTION_DATA_ID = 1;
   private static final byte      SERIALIZER_ID             = 2;
 
@@ -60,7 +59,7 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
         return true;
       }
       case SERIALIZER_ID:
-        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
+        this.serializer = getObject(new ObjectStringSerializerImpl());
         return true;
 
       default: {

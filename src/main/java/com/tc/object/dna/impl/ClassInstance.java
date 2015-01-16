@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ClassInstance implements Serializable {
-  private final static Map         PRIMITIVE_TYPE_MAP = new HashMap();
+  private final static Map<String, Class<?>>         PRIMITIVE_TYPE_MAP = new HashMap<String, Class<?>>();
 
   private final UTF8ByteDataHolder name;
 
@@ -26,8 +26,8 @@ public class ClassInstance implements Serializable {
     PRIMITIVE_TYPE_MAP.put(Void.TYPE.getName(), Void.TYPE);
   }
 
-  private static Class getPrimitiveClass(String className) {
-    return (Class) PRIMITIVE_TYPE_MAP.get(className);
+  private static Class<?> getPrimitiveClass(String className) {
+    return PRIMITIVE_TYPE_MAP.get(className);
   }
 
   // Used in tests
@@ -39,9 +39,9 @@ public class ClassInstance implements Serializable {
     name = className;
   }
 
-  public Class asClass(ClassProvider classProvider) throws ClassNotFoundException {
+  public Class<?> asClass(ClassProvider classProvider) throws ClassNotFoundException {
     String className = name.asString();
-    Class clazz = getPrimitiveClass(className);
+    Class<?> clazz = getPrimitiveClass(className);
     if (clazz != null) { return clazz; }
     return classProvider.getClassFor(className);
   }

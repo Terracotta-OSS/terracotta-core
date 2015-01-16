@@ -50,7 +50,7 @@ public class RemoteCallHolder extends RemoteCallDescriptor {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public RemoteCallHolder deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     super.deserializeFrom(serialInput);
     int arraySize = serialInput.readInt();
     serializedArgs = new byte[arraySize];

@@ -415,7 +415,7 @@ public class Conversion {
     }
   }
 
-  public static String memoryBytesAsSize(final long bytes) throws NumberFormatException, MetricsFormatException {
+  public static String memoryBytesAsSize(final long bytes) throws NumberFormatException {
     if (bytes < KILO.asBytes()) {
       return bytes + "b";
     } else if (bytes < MEGA.asBytes()) {

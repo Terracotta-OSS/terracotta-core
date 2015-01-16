@@ -24,7 +24,7 @@ import com.tc.util.Conversion;
 
 import java.io.IOException;
 
-public class DNAImpl implements DNA, DNACursor, TCSerializable {
+public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
   private static final DNAEncodingInternal DNA_STORAGE_ENCODING  = new StorageDNAEncodingImpl();
 
   private final ObjectStringSerializer     serializer;
@@ -245,7 +245,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public DNAImpl deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.wasDeserialized = true;
 
     final Mark mark = serialInput.mark();

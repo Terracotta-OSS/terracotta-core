@@ -9,7 +9,7 @@ import com.tc.io.TCSerializable;
 
 import java.io.IOException;
 
-public interface ObjectStringSerializer extends TCSerializable {
+public interface ObjectStringSerializer extends TCSerializable<ObjectStringSerializer> {
 
   String readString(TCDataInput in) throws IOException;
 

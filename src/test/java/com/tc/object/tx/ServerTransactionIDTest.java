@@ -61,7 +61,7 @@ public class ServerTransactionIDTest {
     assertNotEquals(idNull, id1);
     assertNotEquals(idNull, id2);
 
-    Map map = new HashMap();
+    Map<ServerTransactionID, String> map = new HashMap<ServerTransactionID, String>();
     assertEquals(0, map.size());
     map.put(id1, "one");
     assertEquals(1, map.size());

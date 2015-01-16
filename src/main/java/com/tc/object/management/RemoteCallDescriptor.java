@@ -17,7 +17,7 @@ import java.util.Arrays;
 /**
  *
  */
-public class RemoteCallDescriptor implements TCSerializable {
+public class RemoteCallDescriptor implements TCSerializable<RemoteCallDescriptor> {
 
   private NodeID l1Node;
   private ServiceID serviceID;
@@ -66,9 +66,9 @@ public class RemoteCallDescriptor implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    l1Node = ((NodeIDSerializer)new NodeIDSerializer().deserializeFrom(serialInput)).getNodeID();
-    serviceID = (ServiceID)new ServiceID().deserializeFrom(serialInput);
+  public RemoteCallDescriptor deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+    l1Node = new NodeIDSerializer().deserializeFrom(serialInput).getNodeID();
+    serviceID = new ServiceID().deserializeFrom(serialInput);
     methodName = serialInput.readString();
     int argTypeNamesCount = serialInput.readInt();
     if (argTypeNamesCount > -1) {

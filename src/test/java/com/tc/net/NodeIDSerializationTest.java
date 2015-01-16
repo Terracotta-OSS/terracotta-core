@@ -37,6 +37,7 @@ public class NodeIDSerializationTest {
     assertTrue(n8 instanceof StripeID);
   }
 
+  @SuppressWarnings("resource")
   private NodeID dupBySerialization(NodeID orig) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(orig);
@@ -73,6 +74,7 @@ public class NodeIDSerializationTest {
     assertTrue(n8 instanceof StripeID);
   }
 
+  @SuppressWarnings("resource")
   private NodeID dupByTCSerializable(NodeID orig) throws Exception {
     NodeIDSerializer serializer = new NodeIDSerializer(orig);
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
@@ -81,7 +83,7 @@ public class NodeIDSerializationTest {
 
     TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
     serializer = new NodeIDSerializer();
-    NodeID dup = ((NodeIDSerializer) serializer.deserializeFrom(in)).getNodeID();
+    NodeID dup = serializer.deserializeFrom(in).getNodeID();
     return dup;
   }
 

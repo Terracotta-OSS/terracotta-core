@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 
 public class ClientHandshakeMessageTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void testMessage() throws Exception {
 

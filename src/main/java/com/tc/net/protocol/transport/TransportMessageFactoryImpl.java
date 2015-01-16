@@ -74,6 +74,7 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
    * the flags set for the present layers in the communication stack All other kinds of packet will have it as -1 and
    * this wouldn't be send to the server
    */
+  @SuppressWarnings("resource")
   private static TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
                                                        TransportHandshakeError errorContext, TCConnection source,
                                                        boolean isMaxConnectionsExceeded, int maxConnections, short protocol,

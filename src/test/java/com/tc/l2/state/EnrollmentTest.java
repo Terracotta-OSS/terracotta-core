@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 public class EnrollmentTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void testSerialization() throws Exception {
     Enrollment e = new Enrollment(new ServerID("30001", new byte[] { 54, -125, 34, -4 }), true, new long[] {Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE});

@@ -8,6 +8,7 @@ import com.tc.logging.TCLoggingService;
 import com.tc.util.Assert;
 import com.tc.util.ServiceUtil;
 import com.tc.util.VicariousThreadLocal;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -43,35 +44,29 @@ public class TCByteBufferFactory {
   
 
   // always use ThreadLocal variables for accessing the buffer pools.
-  private static final LinkedBlockingQueue directCommonFreePool    = new LinkedBlockingQueue(commonPoolMaxBufCount);
-  private static final LinkedBlockingQueue nonDirectCommonFreePool = new LinkedBlockingQueue(commonPoolMaxBufCount);
+  private static final LinkedBlockingQueue<TCByteBuffer> directCommonFreePool    = new LinkedBlockingQueue<TCByteBuffer>(commonPoolMaxBufCount);
+  private static final LinkedBlockingQueue<TCByteBuffer> nonDirectCommonFreePool = new LinkedBlockingQueue<TCByteBuffer>(commonPoolMaxBufCount);
 
   private static final Set<ThreadGroup> handledGroups = Collections.newSetFromMap(new WeakHashMap<ThreadGroup, Boolean>());
   
-  private static final ThreadLocal         directFreePool          = new VicariousThreadLocal() {
+  private static final ThreadLocal<LinkedBlockingQueue<TCByteBuffer>> directFreePool = new VicariousThreadLocal<LinkedBlockingQueue<TCByteBuffer>>() {
                                                                      @Override
-                                                                     protected Object initialValue() {
+                                                                     protected LinkedBlockingQueue<TCByteBuffer> initialValue() {
                                                                        if (handledGroups.contains(Thread.currentThread().getThreadGroup())) {
-                                                                         return new LinkedBlockingQueue(poolMaxBufCount);
+                                                                         return new LinkedBlockingQueue<TCByteBuffer>(poolMaxBufCount);
                                                                        } else {
-                                                                         logger.debug("Buf pool direct for "
-                                                                                      + Thread.currentThread()
-                                                                                          .getName()
-                                                                                      + " - using Common Pool");
+                                                                         logger.debug("Buf pool direct for " + Thread.currentThread().getName() + " - using Common Pool");
                                                                          return directCommonFreePool;
                                                                        }
                                                                      }
                                                                    };
-  private static final ThreadLocal         nonDirectFreePool       = new VicariousThreadLocal() {
+  private static final ThreadLocal<LinkedBlockingQueue<TCByteBuffer>> nonDirectFreePool = new VicariousThreadLocal<LinkedBlockingQueue<TCByteBuffer>>() {
                                                                      @Override
-                                                                     protected Object initialValue() {
+                                                                     protected LinkedBlockingQueue<TCByteBuffer> initialValue() {
                                                                        if (handledGroups.contains(Thread.currentThread().getThreadGroup())) {
-                                                                         return new LinkedBlockingQueue(poolMaxBufCount);
+                                                                         return new LinkedBlockingQueue<TCByteBuffer>(poolMaxBufCount);
                                                                        } else {
-                                                                         logger.debug("Buf pool nonDirect for "
-                                                                                      + Thread.currentThread()
-                                                                                          .getName()
-                                                                                      + " - using Common Pool");
+                                                                         logger.debug("Buf pool nonDirect for " + Thread.currentThread().getName() + " - using Common Pool");
                                                                          return nonDirectCommonFreePool;
                                                                        }
                                                                      }
@@ -79,8 +74,7 @@ public class TCByteBufferFactory {
 
   private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
     try {
-      LinkedBlockingQueue poolQueue = (direct ? ((LinkedBlockingQueue) (directFreePool.get()))
-          : ((LinkedBlockingQueue) (nonDirectFreePool.get())));
+      LinkedBlockingQueue<TCByteBuffer> poolQueue = direct ? directFreePool.get() : nonDirectFreePool.get();
       TCByteBuffer rv = new TCByteBufferImpl(capacity, direct, poolQueue);
       // Assert.assertEquals(0, rv.position());
       // Assert.assertEquals(capacity, rv.capacity());
@@ -202,13 +196,12 @@ public class TCByteBufferFactory {
     if (disablePooling) return null;
     TCByteBuffer buf = null;
 
-    LinkedBlockingQueue poolQueue = direct ? ((LinkedBlockingQueue) (directFreePool.get()))
-        : ((LinkedBlockingQueue) (nonDirectFreePool.get()));
+    LinkedBlockingQueue<TCByteBuffer> poolQueue = direct ? directFreePool.get() : nonDirectFreePool.get();
 
     Assert.assertNotNull(poolQueue);
 
     try {
-      if ((buf = (TCByteBuffer) poolQueue.poll(0, TimeUnit.MILLISECONDS)) != null) {
+      if ((buf = poolQueue.poll(0, TimeUnit.MILLISECONDS)) != null) {
         buf.checkedOut();
       }
     } catch (InterruptedException e) {

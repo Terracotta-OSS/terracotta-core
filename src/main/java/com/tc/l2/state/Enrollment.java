@@ -17,7 +17,7 @@ import com.tc.util.ServiceUtil;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class Enrollment implements TCSerializable {
+public class Enrollment implements TCSerializable<Enrollment> {
 
   private static final TCLogger logger = ServiceUtil.loadService(TCLoggingService.class).getLogger(Enrollment.class);
   private NodeID                nodeID;
@@ -47,9 +47,9 @@ public class Enrollment implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public Enrollment deserializeFrom(TCByteBufferInput in) throws IOException {
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
-    nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+    nodeIDSerializer = nodeIDSerializer.deserializeFrom(in);
     this.nodeID = nodeIDSerializer.getNodeID();
     this.isNew = in.readBoolean();
     this.weights = new long[in.readInt()];

@@ -65,7 +65,7 @@ public class ClientID implements NodeID, Serializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public ClientID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readLong();
     return this;
   }
@@ -81,8 +81,7 @@ public class ClientID implements NodeID, Serializable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    NodeID n = (NodeID) o;
+  public int compareTo(NodeID n) {
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
     ClientID c = (ClientID) n;
     return (int) (toLong() - c.toLong());

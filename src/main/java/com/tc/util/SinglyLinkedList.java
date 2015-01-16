@@ -23,14 +23,14 @@ import java.util.NoSuchElementException;
  */
 public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implements Iterable<E> {
 
-  public interface LinkedNode<L extends LinkedNode> {
+  public interface LinkedNode<L extends LinkedNode<L>> {
 
     public L getNext();
 
     public L setNext(L next);
   }
 
-  public interface SinglyLinkedListIterator<I extends LinkedNode> extends Iterator<I> {
+  public interface SinglyLinkedListIterator<I extends LinkedNode<I>> extends Iterator<I> {
 
     @Override
     public boolean hasNext();

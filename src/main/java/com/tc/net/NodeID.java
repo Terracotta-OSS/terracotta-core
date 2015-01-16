@@ -9,7 +9,7 @@ import com.tc.io.TCSerializable;
  * This interface represents a Node be it an L2 or and L1 and is mostly used an an unified way of identifying an
  * external entity.
  */
-public interface NodeID extends TCSerializable, Comparable {
+public interface NodeID extends TCSerializable<NodeID>, Comparable<NodeID> {
 
   public static final byte CLIENT_NODE_TYPE = 0x01;
   public static final byte SERVER_NODE_TYPE = 0x02;

@@ -3,7 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -16,7 +15,7 @@ import com.tc.object.session.SessionID;
 /**
  * Base class for DSO network messages
  */
-public class DSOMessageBase extends TCMessageImpl implements EventContext {
+public abstract class DSOMessageBase extends TCMessageImpl {
 
   private final SessionID localSessionID;
 

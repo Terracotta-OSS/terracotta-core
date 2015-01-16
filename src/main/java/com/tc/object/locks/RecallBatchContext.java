@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class RecallBatchContext implements TCSerializable {
+public class RecallBatchContext implements TCSerializable<RecallBatchContext> {
   private Collection<ClientServerExchangeLockContext> contexts;
   private LockID                                      lockID;
 
@@ -30,14 +30,14 @@ public class RecallBatchContext implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public RecallBatchContext deserializeFrom(TCByteBufferInput in) throws IOException {
     LockIDSerializer ls = new LockIDSerializer();
     ls.deserializeFrom(in);
     this.lockID = ls.getLockID();
     int length = in.readInt();
     contexts = new ArrayList<ClientServerExchangeLockContext>();
     for (int i = 0; i < length; i++) {
-      contexts.add((ClientServerExchangeLockContext) (new ClientServerExchangeLockContext().deserializeFrom(in)));
+      contexts.add((new ClientServerExchangeLockContext().deserializeFrom(in)));
     }
     return this;
   }

@@ -22,13 +22,14 @@ public class SerializerDNAEncodingImplTest {
     return new SerializerDNAEncodingImpl();
   }
 
+  @SuppressWarnings("resource")
   @Test
   public void testClassSerialize() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAEncoding encoding = getSerializerEncoder();
     encoding.encode(getClass(), output);
-    Class c = Object.class;
+    Class<?> c = Object.class;
     UTF8ByteDataHolder name = new UTF8ByteDataHolder(c.getName());
     ClassInstance ci = new ClassInstance(name);
     encoding.encode(ci, output);
@@ -37,7 +38,7 @@ public class SerializerDNAEncodingImplTest {
 
     encoding = getSerializerEncoder();
     TCByteBufferInputStream input = new TCByteBufferInputStream(data);
-    c = (Class) encoding.decode(input);
+    c = (Class<?>) encoding.decode(input);
     assertEquals(getClass(), c);
     ClassInstance holder = (ClassInstance) encoding.decode(input);
     assertEquals(ci, holder);

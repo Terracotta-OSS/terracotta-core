@@ -16,7 +16,7 @@ import java.util.SortedSet;
 /**
  * @author tim
  */
-public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, TCSerializable {
+public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, TCSerializable<ObjectIDSet> {
 
   public static final ObjectIDSet EMPTY_OBJECT_ID_SET = unmodifiableObjectIDSet(new BasicObjectIDSet());
   
@@ -90,7 +90,7 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
   }
 
   @Override
-  public final Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public final ObjectIDSet deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
       long start = serialInput.readLong();

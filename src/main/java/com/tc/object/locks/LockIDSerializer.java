@@ -10,7 +10,7 @@ import com.tc.object.locks.LockID.LockIDType;
 
 import java.io.IOException;
 
-public class LockIDSerializer implements TCSerializable {
+public class LockIDSerializer implements TCSerializable<LockIDSerializer> {
   private LockID lockID;
 
   public LockIDSerializer() {
@@ -26,10 +26,10 @@ public class LockIDSerializer implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public LockIDSerializer deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     byte type = serialInput.readByte();
     LockID tempLockID = getImpl(type);
-    lockID = (LockID) tempLockID.deserializeFrom(serialInput);
+    lockID = tempLockID.deserializeFrom(serialInput);
     return this;
   }
 
@@ -48,6 +48,8 @@ public class LockIDSerializer implements TCSerializable {
           return new DsoVolatileLockID();
         case ENTITY:
           return new EntityLockID();
+        default:
+          throw new AssertionError("Unknown type : " + type);
       }
     } catch (ArrayIndexOutOfBoundsException e) {
       // stupid javac can't cope with the assertion throw being here...

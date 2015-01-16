@@ -11,7 +11,7 @@ import java.io.IOException;
 public class LongLockID implements LockID {
   private static final long serialVersionUID = 0x2845dcae50983bcdL;
 
-  private long id;
+  private long              id;
 
   public LongLockID() {
     // to make TCSerializable happy
@@ -31,7 +31,7 @@ public class LongLockID implements LockID {
   public String toString() {
     return getClass().getSimpleName() + "(" + id + ")";
   }
-  
+
   /**
    * @return String value of id value
    */
@@ -52,11 +52,11 @@ public class LongLockID implements LockID {
     }
     return false;
   }
-  
+
   @Override
-  public int compareTo(Object o) {
+  public int compareTo(LockID o) {
     if (o instanceof LongLockID) {
-      LongLockID other = (LongLockID)o;
+      LongLockID other = (LongLockID) o;
       if (this.id < other.id) {
         return -1;
       } else if (this.id > other.id) {
@@ -64,18 +64,14 @@ public class LongLockID implements LockID {
       } else {
         return 0;
       }
-    } else if (o instanceof LockID) {
-      if (((LockID)o).getLockType() == LockIDType.DSO_LITERAL) {
-        throw new ClassCastException("Can't compare LiteralLockID types.");
-      }
-      return toString().compareTo(o.toString());
     }
-    
-    throw new ClassCastException(o + " is not an instance of LockID");
+
+    if (o.getLockType() == LockIDType.DSO_LITERAL) { throw new ClassCastException("Can't compare LiteralLockID types."); }
+    return toString().compareTo(o.toString());
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public LongLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readLong();
     return this;
   }

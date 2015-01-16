@@ -16,6 +16,6 @@ public interface ClassProvider {
    * @return Class
    * @throws ClassNotFoundException If class not found through loader
    */
-  Class getClassFor(String className) throws ClassNotFoundException;
+  Class<?> getClassFor(String className) throws ClassNotFoundException;
 
 }

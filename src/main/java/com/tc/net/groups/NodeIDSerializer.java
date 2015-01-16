@@ -19,7 +19,7 @@ import java.io.IOException;
  * Having it here makes it easy to abstract the differences from everywhere else. The downside is that when a new
  * implementation comes around this class needs to be updated.
  */
-public class NodeIDSerializer implements TCSerializable {
+public class NodeIDSerializer implements TCSerializable<NodeIDSerializer> {
 
   private NodeID            nodeID;
 
@@ -51,7 +51,7 @@ public class NodeIDSerializer implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public NodeIDSerializer deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     byte type = serialInput.readByte();
     this.nodeID = getImpl(type);
     this.nodeID.deserializeFrom(serialInput);

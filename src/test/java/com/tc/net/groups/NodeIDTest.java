@@ -4,6 +4,7 @@
 package com.tc.net.groups;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
@@ -20,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 public class NodeIDTest {
   
+  @SuppressWarnings("resource")
   @Test
   public void test() throws Exception {
     byte[] b1 = new byte[] { 34, 55, 2 , (byte) 255, 0 };
@@ -46,7 +48,7 @@ public class NodeIDTest {
     assertFalse(n5.equals(n4));
     assertFalse(n5.equals(n6));
     
-    HashSet set = new HashSet();
+    Set<NodeID> set = new HashSet<NodeID>();
     assertTrue(set.add(n1));
     assertTrue(set.add(n2));
     assertTrue(set.add(n3));

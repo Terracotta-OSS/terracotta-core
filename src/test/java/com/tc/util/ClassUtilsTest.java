@@ -5,10 +5,6 @@
 package com.tc.util;
 
 import java.net.Socket;
-import java.text.ParseException;
-
-import com.tc.util.ClassUtils.ClassSpec;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -58,7 +54,6 @@ public class ClassUtilsTest {
 
   @Test
   public void testIsPrimitiveArray() {
-
     assertTrue(ClassUtils.isPrimitiveArray(new byte[0]));
     assertTrue(ClassUtils.isPrimitiveArray(new boolean[1]));
     assertTrue(ClassUtils.isPrimitiveArray(new char[2]));
@@ -75,40 +70,6 @@ public class ClassUtilsTest {
 
     assertFalse(ClassUtils.isPrimitiveArray(null));
     assertFalse(ClassUtils.isPrimitiveArray(new Object()));
-  }
-
-  @Test
-  public void testParseFullyQualifiedFieldName() throws Exception {
-    String shortFieldName = "baz";
-    String fullyQualifiedClassname = "foo.Bar";
-    String fullyQualifiedFieldname = fullyQualifiedClassname + "." + shortFieldName;
-    ClassUtils.parseFullyQualifiedFieldName(fullyQualifiedFieldname);
-
-    ClassSpec spec = ClassUtils.parseFullyQualifiedFieldName(fullyQualifiedFieldname);
-    assertEquals(shortFieldName, spec.getShortFieldName());
-    assertEquals(fullyQualifiedClassname, spec.getFullyQualifiedClassName());
-
-    try {
-      spec = ClassUtils.parseFullyQualifiedFieldName(shortFieldName);
-      fail("Expected a ParseException");
-    } catch (ParseException e) {
-      // expected
-    }
-
-    try {
-      spec = ClassUtils.parseFullyQualifiedFieldName("foo.");
-      fail("Excpected a ParseException");
-    } catch (ParseException e) {
-      // expected
-    }
-
-    try {
-      spec = ClassUtils.parseFullyQualifiedFieldName(".foo");
-      fail("Excpected a ParseException");
-    } catch (ParseException e) {
-      // expected
-    }
-
   }
 
 }

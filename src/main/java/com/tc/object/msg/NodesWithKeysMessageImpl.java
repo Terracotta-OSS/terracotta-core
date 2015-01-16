@@ -75,7 +75,10 @@ public class NodesWithKeysMessageImpl extends DSOMessageBase implements NodesWit
   protected void dehydrateValues() {
     putNVPair(OBJECT_ID, objectID.toLong());
     putNVPair(KEYS_SIZE, keys.size());
+    
+    @SuppressWarnings("resource")
     final TCByteBufferOutputStream outStream = getOutputStream();
+
     for (final Object key : this.keys) {
       outStream.writeString(key.toString());
     }

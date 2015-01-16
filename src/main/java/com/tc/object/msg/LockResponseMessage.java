@@ -79,6 +79,8 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
           putNVPair(CONTEXT, cselc);
         }
         break;
+      default:
+        throw new AssertionError(responseType);
     }
   }
 
@@ -116,7 +118,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
         }
         return true;
       case CONTEXT:
-        contexts.add((ClientServerExchangeLockContext) getObject(new ClientServerExchangeLockContext()));
+        contexts.add(getObject(new ClientServerExchangeLockContext()));
         return true;
       case LOCK_LEASE_MILLIS:
         leaseTimeInMs = getIntValue();

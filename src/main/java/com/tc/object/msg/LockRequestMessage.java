@@ -6,7 +6,6 @@ package com.tc.object.msg;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -102,8 +101,8 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
         break;
       case RECALL_COMMIT:
         putNVPair(LOCK_ID, lockID);
-        for (Object element : contexts) {
-          putNVPair(CONTEXT, (TCSerializable) element);
+        for (ClientServerExchangeLockContext context : contexts) {
+          putNVPair(CONTEXT, context);
         }
         break;
       case BATCHED_RECALL_COMMIT:
@@ -111,6 +110,8 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
           putNVPair(BATCHED_RECALL_CONTEXT, batchContext);
         }
         break;
+      default:
+        throw new AssertionError("unexpected type: " + requestType);
     }
   }
 
@@ -162,10 +163,10 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
         waitMillis = getLongValue();
         return true;
       case CONTEXT:
-        contexts.add((ClientServerExchangeLockContext) getObject(new ClientServerExchangeLockContext()));
+        contexts.add(getObject(new ClientServerExchangeLockContext()));
         return true;
       case BATCHED_RECALL_CONTEXT:
-        recallContexts.add((RecallBatchContext) getObject(new RecallBatchContext()));
+        recallContexts.add(getObject(new RecallBatchContext()));
         return true;
       default:
         return false;

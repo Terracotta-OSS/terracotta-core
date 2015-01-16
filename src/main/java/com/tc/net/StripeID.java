@@ -61,7 +61,7 @@ public class StripeID implements NodeID, Serializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public StripeID deserializeFrom(TCByteBufferInput in) throws IOException {
     this.name = in.readString();
     return this;
   }
@@ -78,10 +78,9 @@ public class StripeID implements NodeID, Serializable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    NodeID n = (NodeID) o;
+  public int compareTo(NodeID n) {
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
-    StripeID target = (StripeID) o;
+    StripeID target = (StripeID) n;
     return name.compareTo(target.name);
   }
 

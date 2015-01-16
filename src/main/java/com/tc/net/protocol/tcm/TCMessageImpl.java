@@ -10,7 +10,6 @@ import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
-import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
 import com.tc.util.AbstractIdentifier;
@@ -189,15 +188,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   /**
-   * Subclasses *really* must implement this to set appropriate instance variables with the value of the given name.
+   * Subclasses must implement this to set appropriate instance variables with the value of the given name.
    * Return false if the given name is unknown to your message class
    * 
    * @param name
    */
-  protected boolean hydrateValue(final byte name) throws IOException {
-    if (false) { throw new IOException("silence compiler warning"); }
-    return false;
-  }
+  protected abstract boolean hydrateValue(final byte name) throws IOException;
 
   protected boolean getBooleanValue() throws IOException {
     return bbis.readBoolean();
@@ -232,14 +228,14 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   protected NodeID getNodeIDValue() throws IOException {
-    return ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
+    return getObject(new NodeIDSerializer()).getNodeID();
   }
 
   protected LockID getLockIDValue() throws IOException {
-    return ((LockIDSerializer) getObject(new LockIDSerializer())).getLockID();
+    return getObject(new LockIDSerializer()).getLockID();
   }
 
-  protected Object getObject(final TCSerializable target) throws IOException {
+  protected <T extends TCSerializable<T>> T getObject(final T target) throws IOException {
     return target.deserializeFrom(bbis);
   }
 
@@ -325,7 +321,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     new LockIDSerializer(lid).serializeTo(out);
   }
 
-  protected void putNVPair(final byte name, final TCSerializable object) {
+  protected void putNVPair(final byte name, final TCSerializable<?> object) {
     nvCount++;
     out.write(name);
     object.serializeTo(out);

@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  *
  */
-public final class ServiceID implements TCSerializable {
+public final class ServiceID implements TCSerializable<ServiceID> {
 
   private static final AtomicInteger ID_GEN = new AtomicInteger();
 
@@ -63,7 +63,7 @@ public final class ServiceID implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public ServiceID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     id = serialInput.readInt();
     className = serialInput.readString();
     return this;

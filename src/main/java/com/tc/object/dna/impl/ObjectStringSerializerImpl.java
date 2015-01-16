@@ -77,7 +77,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   }
 
   @Override
-  public synchronized Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public synchronized ObjectStringSerializer deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     final int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
       addStringAndID(serialInput.readString(), serialInput.readInt());

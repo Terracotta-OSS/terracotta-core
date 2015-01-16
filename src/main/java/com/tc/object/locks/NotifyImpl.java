@@ -96,9 +96,9 @@ public class NotifyImpl implements Notify {
    * @throws IOException If error reading in
    */
   @Override
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public Notify deserializeFrom(TCByteBufferInput in) throws IOException {
     LockIDSerializer lidsr = new LockIDSerializer();
-    LockID lid = ((LockIDSerializer) lidsr.deserializeFrom(in)).getLockID();
+    LockID lid = lidsr.deserializeFrom(in).getLockID();
     initialize(lid, new ThreadID(in.readLong()), in.readBoolean());
     return this;
   }

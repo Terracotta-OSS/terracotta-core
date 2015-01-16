@@ -54,6 +54,7 @@ public class ObjectSyncMessageTest {
     assertEquals(osm.getSequenceID(), osm1.getSequenceID());
   }
 
+  @SuppressWarnings("resource")
   private ObjectSyncMessage writeAndRead(ObjectSyncMessage osm) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     osm.serializeTo(bo);

@@ -13,7 +13,7 @@ import com.tc.object.locks.ServerLockContext.Type;
 
 import java.io.IOException;
 
-public class ClientServerExchangeLockContext implements TCSerializable {
+public class ClientServerExchangeLockContext implements TCSerializable<ClientServerExchangeLockContext> {
   private LockID   lockID;
   private NodeID   nodeID;
   private ThreadID threadID;
@@ -80,7 +80,7 @@ public class ClientServerExchangeLockContext implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput input) throws IOException {
+  public ClientServerExchangeLockContext deserializeFrom(TCByteBufferInput input) throws IOException {
     LockIDSerializer ls = new LockIDSerializer();
     ls.deserializeFrom(input);
     this.lockID = ls.getLockID();

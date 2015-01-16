@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UTFDataFormatException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -30,9 +29,9 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   private final DataOutputStream dos;
 
   // The "buffers" list is accessed by index in the Mark class, thus it should not be a linked list
-  private List                   buffers                    = new ArrayList();
+  private List<TCByteBuffer>     buffers                    = new ArrayList<TCByteBuffer>();
 
-  private final List             localBuffers               = new ArrayList();
+  private final List<TCByteBuffer> localBuffers             = new ArrayList<TCByteBuffer>();
 
   private TCByteBuffer           current;
   private boolean                closed;
@@ -129,7 +128,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
 
     if (!reuseCurrent) {
-      current = (TCByteBuffer) buffers.remove(buffers.size() - 1);
+      current = buffers.remove(buffers.size() - 1);
       current.position(current.limit());
     }
   }
@@ -179,7 +178,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   public TCByteBuffer[] toArray() {
     close();
     TCByteBuffer[] rv = new TCByteBuffer[buffers.size()];
-    return (TCByteBuffer[]) buffers.toArray(rv);
+    return buffers.toArray(rv);
   }
 
   @Override
@@ -220,7 +219,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
 
     current = null;
 
-    List finalBufs = new ArrayList();
+    List<TCByteBuffer> finalBufs = new ArrayList<TCByteBuffer>();
 
     final int num = buffers.size();
     int index = 0;
@@ -228,11 +227,11 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     // fixup "small" buffers consolidating them into buffers as close to maxBlockSize as possible
     while (index < num) {
       final int startIndex = index;
-      int size = ((TCByteBuffer) buffers.get(startIndex)).limit();
+      int size = buffers.get(startIndex).limit();
 
       if (size < maxBlockSize) {
         while (index < (num - 1)) {
-          int nextSize = ((TCByteBuffer) buffers.get(index + 1)).limit();
+          int nextSize = buffers.get(index + 1).limit();
           if ((size + nextSize) <= maxBlockSize) {
             size += nextSize;
             index++;
@@ -247,7 +246,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
 
         final int end = index;
         for (int i = startIndex; i <= end; i++) {
-          consolidated.put((TCByteBuffer) buffers.get(i));
+          consolidated.put(buffers.get(i));
         }
         Assert.assertEquals(size, consolidated.position());
         consolidated.flip();
@@ -440,7 +439,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     private TCByteBuffer getBuffer(int index) {
       int buffersSize = buffers.size();
       if (index < buffersSize) {
-        return (TCByteBuffer) buffers.get(index);
+        return buffers.get(index);
       } else if (index == buffersSize) {
         return current;
       } else {
@@ -514,8 +513,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   @Override
   public void recycle() {
     if (localBuffers.size() > 0) {
-      for (Iterator i = localBuffers.iterator(); i.hasNext();) {
-        TCByteBuffer buffer = (TCByteBuffer) i.next();
+      for (TCByteBuffer buffer : localBuffers) {
         buffer.recycle();
       }
     }

@@ -229,7 +229,7 @@ public class AssertTest {
       // Expected
     }
     String foo = "foo";
-    Object[] objectArray = new Object[] { new Object(), foo, null, Integer.valueOf(1), new ArrayList() };
+    Object[] objectArray = new Object[] { new Object(), foo, null, Integer.valueOf(1), new ArrayList<Object>() };
     for (Object element : objectArray) {
       Assert.assertContainsElement(objectArray, element);
     }

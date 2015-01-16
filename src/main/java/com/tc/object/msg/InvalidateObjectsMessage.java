@@ -49,7 +49,8 @@ public class InvalidateObjectsMessage extends DSOMessageBase {
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case INVALIDATIONS:
-        invalidations = (Map<ObjectID, ObjectIDSet>) getObject(new InvalidationSerializer());
+        MapSerializer<ObjectID, ObjectIDSet> ms = getObject(new InvalidationSerializer());         
+        invalidations = ms.getMappings();
         return true;
       default:
         return false;
@@ -89,7 +90,7 @@ public class InvalidateObjectsMessage extends DSOMessageBase {
 
     @Override
     protected ObjectIDSet deserializeValue(final TCByteBufferInput serialInput) throws IOException {
-      return (ObjectIDSet) new BasicObjectIDSet().deserializeFrom(serialInput);
+      return new BasicObjectIDSet().deserializeFrom(serialInput);
     }
   }
 }

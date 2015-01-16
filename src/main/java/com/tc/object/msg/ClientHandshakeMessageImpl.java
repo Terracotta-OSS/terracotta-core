@@ -176,13 +176,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case MANAGED_OBJECT_IDS:
-        objectIDs = (ObjectIDSet) getObject(new BasicObjectIDSet());
+        objectIDs = getObject(new BasicObjectIDSet());
         return true;
       case OBJECTS_TO_VALIDATE:
-        objectsToValidate = (ObjectIDSet) getObject(new BasicObjectIDSet());
+        objectsToValidate = getObject(new BasicObjectIDSet());
         return true;
       case LOCK_CONTEXT:
-        this.lockContexts.add((ClientServerExchangeLockContext) getObject(new ClientServerExchangeLockContext()));
+        this.lockContexts.add(getObject(new ClientServerExchangeLockContext()));
         return true;
       case TRANSACTION_SEQUENCE_IDS:
         this.sequenceIDs.add(new SequenceID(getLongValue()));

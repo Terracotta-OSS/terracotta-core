@@ -51,7 +51,7 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
         int msgCount = wpmg.getWireProtocolHeader().getMessageCount();
         Assert.eval(msgCount > 1);
 
-        for (Iterator i = wpmg.getMessageIterator(); i.hasNext();) {
+        for (Iterator<TCNetworkMessage> i = wpmg.getMessageIterator(); i.hasNext();) {
           WireProtocolMessage wpm = (WireProtocolMessage) i.next();
           sink.putMessage(wpm);
         }

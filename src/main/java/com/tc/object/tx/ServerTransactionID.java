@@ -16,7 +16,7 @@ import com.tc.util.Assert;
  * A class that represents a particular client transaction from the server's perspective (ie. the combination of NodeID
  * and a client TransactionID)
  */
-public class ServerTransactionID implements Comparable {
+public class ServerTransactionID implements Comparable<ServerTransactionID> {
   public static final ServerTransactionID NULL_ID = new ServerTransactionID(ClientID.NULL_ID, TransactionID.NULL_ID);
 
   private final TransactionID             txnID;
@@ -93,6 +93,7 @@ public class ServerTransactionID implements Comparable {
   /**
    * Utility method for deserialization.
    */
+  @SuppressWarnings("resource")
   public static ServerTransactionID createFrom(byte[] data) {
     try {
       TCByteBufferInputStream in = new TCByteBufferInputStream(TCByteBufferFactory.wrap(data));
@@ -105,8 +106,7 @@ public class ServerTransactionID implements Comparable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    ServerTransactionID other = (ServerTransactionID) o;
+  public int compareTo(ServerTransactionID other) {
     int cmp = sourceID.compareTo(other.sourceID);
     if (cmp == 0) {
       return txnID.compareTo(other.txnID);

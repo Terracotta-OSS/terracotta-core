@@ -60,7 +60,7 @@ public class GroupID implements NodeID, Serializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public GroupID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     groupNumber = serialInput.readInt();
     return this;
   }
@@ -76,10 +76,9 @@ public class GroupID implements NodeID, Serializable {
   }
 
   @Override
-  public int compareTo(Object o) {
-    NodeID n = (NodeID) o;
+  public int compareTo(NodeID n) {
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
-    GroupID g = (GroupID) o;
+    GroupID g = (GroupID) n;
     return toInt() - g.toInt();
   }
 

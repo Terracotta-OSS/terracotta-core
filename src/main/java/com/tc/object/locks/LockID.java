@@ -13,7 +13,7 @@ import java.io.Serializable;
  * LockID implementations must implement this interface and be well behaved Map key types. That this must have equals
  * and hashCode methods that honor the JDK contracts.
  */
-public interface LockID extends TCSerializable, Serializable, Comparable {
+public interface LockID extends TCSerializable<LockID>, Serializable, Comparable<LockID> {
   /**
    * Enum of all known LockID types - this is used in TCSerialization code
    */

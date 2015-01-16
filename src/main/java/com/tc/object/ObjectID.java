@@ -6,12 +6,10 @@ package com.tc.object;
 
 import com.tc.util.AbstractIdentifier;
 
-import java.io.Serializable;
-
 /**
  * Object representing the ID of any managed object
  */
-public class ObjectID extends AbstractIdentifier implements Serializable {
+public class ObjectID extends AbstractIdentifier {
 
   /**
    * The NULL ObjectID

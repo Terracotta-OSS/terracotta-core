@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializable {
+public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializable<JmxRemoteTunnelMessage> {
 
   private static final byte TUNNEL_MESSAGE = 0;
   private static final byte FLAG           = 1;
@@ -31,7 +31,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
   private static final byte DATA_FLAG      = 1 << 1;
   private static final byte FIN_FLAG       = 1 << 2;
 
-  private Object            tunneledMessage;
+  private JmxRemoteTunnelMessage tunneledMessage;
   private byte              flag;
 
   public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -84,7 +84,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
   }
 
   @Override
-  public synchronized Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public synchronized JmxRemoteTunnelMessage deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     try {
       flag = serialInput.readByte();
       final int length = serialInput.readInt();
@@ -92,7 +92,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
       serialInput.read(serializedObject);
       final ByteArrayInputStream bis = new ByteArrayInputStream(serializedObject);
       final ObjectInputStream ois = new ObjectInputStream(bis);
-      return ois.readObject();
+      return (JmxRemoteTunnelMessage) ois.readObject();
     } catch (ClassNotFoundException cnfe) {
       throw new TCRuntimeException(cnfe);
     }
@@ -114,7 +114,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
     return flag == FIN_FLAG;
   }
 
-  synchronized void setTunneledMessage(final Object tunneledMessage) {
+  synchronized void setTunneledMessage(JmxRemoteTunnelMessage tunneledMessage) {
     this.tunneledMessage = tunneledMessage;
   }
 

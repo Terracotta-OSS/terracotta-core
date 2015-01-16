@@ -40,7 +40,7 @@ public class DsoVolatileLockID implements LockID {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public DsoVolatileLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     objectId = serialInput.readLong();
     fieldName = serialInput.readString();
     return this;
@@ -76,23 +76,19 @@ public class DsoVolatileLockID implements LockID {
   public String toString() {
     return "DsoVolatileLockID(" + new ObjectID(objectId) + "." + fieldName + ")";
   }
-  
+
   @Override
-  public int compareTo(Object o) {
+  public int compareTo(LockID o) {
     if (o instanceof DsoVolatileLockID) {
-      DsoVolatileLockID other = (DsoVolatileLockID)o;
+      DsoVolatileLockID other = (DsoVolatileLockID) o;
       if ((objectId == other.objectId) && fieldName.equals(other.fieldName)) {
         return 0;
       } else {
         return (objectId + "." + fieldName).compareTo(other.objectId + "." + other.fieldName);
       }
-    } else if (o instanceof LockID) {
-      if (((LockID)o).getLockType() == LockIDType.DSO_LITERAL) {
-        throw new ClassCastException("Can't compare LiteralLockID types.");
-      }
-      return toString().compareTo(o.toString());
     }
-    
-    throw new ClassCastException(o + " is not an instance of LockID");
+
+    if (o.getLockType() == LockIDType.DSO_LITERAL) { throw new ClassCastException("Can't compare LiteralLockID types."); }
+    return toString().compareTo(o.toString());
   }
 }

@@ -12,6 +12,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggingService;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
@@ -81,7 +82,9 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   }
 
   private TCByteBuffer[] getHeaderBuffers(final int txnsCount) {
+    @SuppressWarnings("resource")
     final TCByteBufferOutputStream tos = new TCByteBufferOutputStream(HEADER_SIZE, false);
+    
     tos.writeLong(this.batchID.toLong());
     tos.writeInt(txnsCount);
     tos.writeBoolean(this.containsSyncWriteTransaction);
@@ -122,10 +125,10 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     final LockID[] locks = new LockID[numLocks];
     for (int i = 0; i < numLocks; i++) {
       final LockIDSerializer lidsr = new LockIDSerializer();
-      locks[i] = ((LockIDSerializer) lidsr.deserializeFrom(this.in)).getLockID();
+      locks[i] = lidsr.deserializeFrom(this.in).getLockID();
     }
 
-    final Map newRoots = new HashMap();
+    final Map<String, ObjectID> newRoots = new HashMap<String, ObjectID>();
     final int numNewRoots = this.in.readInt();
     for (int i = 0; i < numNewRoots; i++) {
       final String name = this.in.readString();
@@ -134,7 +137,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
       newRoots.put(name, id);
     }
 
-    final List notifies = new LinkedList();
+    final List<Notify> notifies = new LinkedList<Notify>();
     final int numNotifies = this.in.readInt();
     for (int i = 0; i < numNotifies; i++) {
       final Notify n = new NotifyImpl();
@@ -144,7 +147,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
     final long[] highwaterMarks = readLongArray(this.in);
 
-    final List dnas = new ArrayList();
+    final List<DNA> dnas = new ArrayList<DNA>();
     final int numDNA = this.in.readInt();
     
     for (int i = 0; i < numDNA; i++) {

@@ -29,6 +29,7 @@ import java.util.Arrays;
 
 public class VersionizedDNAWrapperTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void testResettingDNACursor() throws Exception {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();

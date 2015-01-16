@@ -98,7 +98,7 @@ public class TestLoggingService implements TCLoggingService {
   }
 
   @Override
-  public TCLogger getLogger(Class c) {
+  public TCLogger getLogger(Class<?> c) {
     return getLogger(c.getName());
   }
 }

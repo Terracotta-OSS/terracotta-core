@@ -64,7 +64,9 @@ public class NodesWithKeysResponseMessageImpl extends DSOMessageBase implements 
     putNVPair(THREAD_ID, threadID.toLong());
     putNVPair(KEY_SET_SIZE, response.size());
     for (Map.Entry<Object, Set<NodeID>> entry : response.entrySet()) {
+      @SuppressWarnings("resource")
       TCByteBufferOutputStream out = getOutputStream();
+
       out.writeString(entry.getKey().toString());
       out.writeInt(entry.getValue().size());
       for (NodeID nodeID : entry.getValue()) {

@@ -17,6 +17,8 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -58,7 +60,7 @@ public class BroadcastTransactionMessageTest {
 
   @Test
   public void testBasics() throws Exception {
-    List changes = new LinkedList();
+    List<DNA> changes = new LinkedList<DNA>();
     // / XXX: TODO: Add changes to test.
 
     ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
@@ -70,7 +72,7 @@ public class BroadcastTransactionMessageTest {
     TxnType txnType = TxnType.NORMAL;
     GlobalTransactionID lowGlobalTransactionIDWatermark = new GlobalTransactionID(1);
 
-    Collection notified = new LinkedList();
+    Collection<ClientServerExchangeLockContext> notified = new LinkedList<ClientServerExchangeLockContext>();
     for (int i = 0; i < 100; i++) {
       notified.add(new ClientServerExchangeLockContext(new StringLockID(String.valueOf(i + 1)),
           clientID, new ThreadID(i + 1), State.WAITER));
@@ -84,7 +86,7 @@ public class BroadcastTransactionMessageTest {
         new BasicServerEvent(PUT, "key-2", "cache3"), new BasicServerEvent(REMOVE, "key-3", "cache2"));
 
     this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
-                        lowGlobalTransactionIDWatermark, notified, new HashMap(),
+                        lowGlobalTransactionIDWatermark, notified, new HashMap<String, ObjectID>(),
         logicalChangeResults, events);
     this.msg.dehydrate();
 

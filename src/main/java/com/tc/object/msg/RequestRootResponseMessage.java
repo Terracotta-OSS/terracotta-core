@@ -3,7 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -18,7 +17,7 @@ import java.io.IOException;
 /**
  * @author steve
  */
-public class RequestRootResponseMessage extends DSOMessageBase implements EventContext {
+public class RequestRootResponseMessage extends DSOMessageBase {
   private final static byte ROOT_NAME = 1;
   private final static byte ROOT_ID   = 2;
 

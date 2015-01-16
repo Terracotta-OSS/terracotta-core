@@ -75,11 +75,11 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     return this.nodeID;
   }
 
-  public void initializeNodeID(ServerID aNodeID, final String version, final long[] weights) {
+  public void initializeNodeID(ServerID aNodeID, final String ver, final long[] weightsArray) {
     this.messageType = NODE_ID;
     this.nodeID = aNodeID;
-    this.version = version;
-    this.weights = weights;
+    this.version = ver;
+    this.weights = weightsArray;
   }
 
   public String getVersion() {
@@ -105,6 +105,8 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
       case HANDSHAKE_MESSAGE_ID:
         putNVPair(HANDSHAKE_MESSAGE_ID, message);
         return;
+      default:
+        throw new AssertionError();
     }
   }
 

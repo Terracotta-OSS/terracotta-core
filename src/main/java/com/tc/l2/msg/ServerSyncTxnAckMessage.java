@@ -16,7 +16,6 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -25,21 +24,21 @@ import java.util.Set;
 public class ServerSyncTxnAckMessage extends ServerTxnAckMessage implements EventContext {
 
   private static final int SERVER_SYNC_TXN_ACK_MSG_TYPE = 0;
-  private Set              serverTxnIDs;
+  private Set<ServerTransactionID> serverTxnIDs;
   private transient NodeID nodeID;
 
   public ServerSyncTxnAckMessage() {
     super(-1);
   }
 
-  public ServerSyncTxnAckMessage(NodeID nodeID, MessageID messageID, Set serverTxnIDs) {
+  public ServerSyncTxnAckMessage(NodeID nodeID, MessageID messageID, Set<ServerTransactionID> serverTxnIDs) {
     super(SERVER_SYNC_TXN_ACK_MSG_TYPE, messageID);
     this.nodeID = nodeID;
     this.serverTxnIDs = serverTxnIDs;
   }
 
   @Override
-  public Set getAckedServerTxnIDs() {
+  public Set<ServerTransactionID> getAckedServerTxnIDs() {
     return serverTxnIDs;
   }
 
@@ -53,10 +52,10 @@ public class ServerSyncTxnAckMessage extends ServerTxnAckMessage implements Even
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(SERVER_SYNC_TXN_ACK_MSG_TYPE, getType());
     int size = in.readInt();
-    serverTxnIDs = new HashSet(size);
+    serverTxnIDs = new HashSet<ServerTransactionID>(size);
     for (int i = 0; i < size; i++) {
       NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
-      nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+      nodeIDSerializer = nodeIDSerializer.deserializeFrom(in);
       NodeID cid = nodeIDSerializer.getNodeID();
       long clientTxID = in.readLong();
       serverTxnIDs.add(new ServerTransactionID(cid, new TransactionID(clientTxID)));
@@ -67,8 +66,7 @@ public class ServerSyncTxnAckMessage extends ServerTxnAckMessage implements Even
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(SERVER_SYNC_TXN_ACK_MSG_TYPE, getType());
     out.writeInt(serverTxnIDs.size());
-    for (Iterator i = serverTxnIDs.iterator(); i.hasNext();) {
-      ServerTransactionID sTxID = (ServerTransactionID) i.next();
+    for (ServerTransactionID sTxID : serverTxnIDs) {
       NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(sTxID.getSourceID());
       nodeIDSerializer.serializeTo(out);
       out.writeLong(sTxID.getClientTransactionID().toLong());

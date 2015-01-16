@@ -52,6 +52,7 @@ public class StringCompressionUtil {
    * @param uncompressed Uncompressed byte[]
    * @return The compressed byte[] and size
    */
+  @SuppressWarnings("resource")
   public static CompressedData compressBin(byte[] uncompressed) {
     TCByteArrayOutputStream byteArrayOS = new TCByteArrayOutputStream(4096);
     // Stride is 512 bytes by default, should I increase ?
@@ -61,7 +62,7 @@ public class StringCompressionUtil {
       dos.close();
       byte[] compressed = byteArrayOS.getInternalArray();
       return new CompressedData(compressed, byteArrayOS.size(), uncompressed.length);
-    } catch(IOException e) {
+    } catch (IOException e) {
       throw new AssertionError(e.getMessage());
     }
   }

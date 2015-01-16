@@ -67,6 +67,7 @@ public class VicariousThreadLocal<T> extends ThreadLocal<T> {
     /**
      * Compare-and-set of {@link #strongRefs}.
      */
+    @SuppressWarnings("rawtypes")
     private static final AtomicReferenceFieldUpdater<VicariousThreadLocal,Holder> strongRefsUpdater =
         AtomicReferenceFieldUpdater.newUpdater(VicariousThreadLocal.class, Holder.class, "strongRefs");
     

@@ -80,6 +80,7 @@ public class LockIdSerializerTest {
     Assert.assertEquals(lock, passThrough(lock));
   }
 
+  @SuppressWarnings("unused")
   public void unclusteredLockTest(Object literal) {
     try {
       new DsoLiteralLockID(literal);

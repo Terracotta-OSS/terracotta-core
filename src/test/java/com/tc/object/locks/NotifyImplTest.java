@@ -5,7 +5,6 @@ package com.tc.object.locks;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Set;
@@ -18,8 +17,8 @@ public class NotifyImplTest {
 
   @Test
   public void testEqualsAndHashCode() throws Exception {
-    Set set = new HashSet();
-    Collection pairs = new LinkedList();
+    Set<Notify> set = new HashSet<Notify>();
+    Collection<Notify[]> pairs = new LinkedList<Notify[]>();
     Random r = new Random();
     
     for (int i=0; i<1000; i++) {
@@ -54,8 +53,8 @@ public class NotifyImplTest {
       pairs.add(new Notify[] {fa, fb});
     }
     
-    for (Iterator i=pairs.iterator(); i.hasNext();) {
-      Notify[] pair = (Notify[]) i.next();
+    for (Object element : pairs) {
+      Notify[] pair = (Notify[]) element;
       assertEquals(pair[0], pair[1]);
       assertEquals(pair[0].hashCode(), pair[1].hashCode());
       set.add(pair[0]);

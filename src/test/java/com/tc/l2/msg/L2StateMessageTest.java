@@ -42,6 +42,7 @@ public class L2StateMessageTest {
     assertEquals(l2sm.toString(), l2sm1.toString());
   }
 
+  @SuppressWarnings("resource")
   private L2StateMessage writeAndRead(L2StateMessage l2sm) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     l2sm.serializeTo(bo);
@@ -55,35 +56,35 @@ public class L2StateMessageTest {
 
   @Test
   public void testBasicSerialization() throws Exception {
-    L2StateMessage l2sm = (L2StateMessage) L2StateMessage.createElectionStartedMessage(enrollment);
+    L2StateMessage l2sm = L2StateMessage.createElectionStartedMessage(enrollment);
     L2StateMessage l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createElectionResultMessage(enrollment);
+    l2sm = L2StateMessage.createElectionResultMessage(enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createElectionWonMessage(enrollment);
+    l2sm = L2StateMessage.createElectionWonMessage(enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createMoveToPassiveStandbyMessage(enrollment);
+    l2sm = L2StateMessage.createMoveToPassiveStandbyMessage(enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createElectionStartedMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createElectionStartedMessage(l2StateMessage, enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createResultConflictMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createResultConflictMessage(l2StateMessage, enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = (L2StateMessage) L2StateMessage.createResultAgreedMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createResultAgreedMessage(l2StateMessage, enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
   }

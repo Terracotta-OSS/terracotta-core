@@ -14,7 +14,6 @@ import com.tc.object.session.SessionID;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements ObjectsNotFoundMessage {
@@ -22,7 +21,7 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
   private final static byte BATCH_ID    = 0;
   private final static byte MISSING_OID = 1;
 
-  private Set               missingOids;
+  private Set<ObjectID>     missingOids;
   private long              batchID;
 
   public ObjectsNotFoundMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -36,7 +35,7 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
   }
 
   @Override
-  public void initialize(Set missingObjectIDs, long batchId) {
+  public void initialize(Set<ObjectID> missingObjectIDs, long batchId) {
     this.missingOids = missingObjectIDs;
     this.batchID = batchId;
   }
@@ -44,8 +43,7 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
   @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_ID, batchID);
-    for (Iterator i = missingOids.iterator(); i.hasNext();) {
-      ObjectID oid = (ObjectID) i.next();
+    for (ObjectID oid : missingOids) {
       putNVPair(MISSING_OID, oid.toLong());
     }
   }
@@ -58,7 +56,7 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
         return true;
       case MISSING_OID:
         if (missingOids == null) {
-          missingOids = new HashSet();
+          missingOids = new HashSet<ObjectID>();
         }
         this.missingOids.add(new ObjectID(getLongValue()));
         return true;
@@ -73,7 +71,7 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
   }
 
   @Override
-  public Set getMissingObjectIDs() {
+  public Set<ObjectID> getMissingObjectIDs() {
     return missingOids;
   }
 

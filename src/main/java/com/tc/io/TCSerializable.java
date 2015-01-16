@@ -9,8 +9,8 @@ import java.io.IOException;
 /**
  * @author teck
  */
-public interface TCSerializable {
+public interface TCSerializable<T> {
   public void serializeTo(TCByteBufferOutput serialOutput);
 
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException;
+  public T deserializeFrom(TCByteBufferInput serialInput) throws IOException;
 }

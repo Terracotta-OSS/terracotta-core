@@ -92,7 +92,10 @@ public class KeysForOrphanedValuesMessageImpl extends DSOMessageBase implements 
 
     if (valueObjectIDs != null) {
       final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+      
+      @SuppressWarnings("resource")
       final TCObjectOutputStream objectOut = new TCObjectOutputStream(bytesOut);
+      
       objectOut.writeInt(valueObjectIDs.size());
       for (ObjectID objectID : valueObjectIDs) {
         objectOut.writeLong(objectID.toLong());

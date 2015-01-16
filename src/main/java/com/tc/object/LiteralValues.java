@@ -343,7 +343,7 @@ public enum LiteralValues {
 
     @Override
     public int calculateDsoHashCodeForLiteral(Object value) {
-      return ((Class) value).getCanonicalName().hashCode();
+      return ((Class<?>) value).getCanonicalName().hashCode();
     }
 
   },
@@ -351,7 +351,7 @@ public enum LiteralValues {
 
     @Override
     public int calculateDsoHashCodeForLiteral(Object value) {
-      Enum e = (Enum) value;
+      Enum<?> e = (Enum<?>) value;
       int hash = 17;
       hash = (31 * hash) + e.name().hashCode();
       hash = (31 * hash) + e.getDeclaringClass().getCanonicalName().hashCode();
@@ -463,7 +463,7 @@ public enum LiteralValues {
    * @return Literal value code for the pojo's class
    */
   public static LiteralValues valueFor(Object pojo) {
-    Class clazz = pojo.getClass();
+    Class<?> clazz = pojo.getClass();
     LiteralValues i = valueForClassName(clazz.getName());
     if (i == OBJECT && ClassUtils.isDsoEnum(pojo.getClass())) { return ENUM; }
     return i;

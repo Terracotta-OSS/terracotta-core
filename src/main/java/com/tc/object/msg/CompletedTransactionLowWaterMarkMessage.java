@@ -3,7 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -15,7 +14,7 @@ import com.tc.object.tx.TransactionID;
 
 import java.io.IOException;
 
-public class CompletedTransactionLowWaterMarkMessage extends DSOMessageBase implements EventContext {
+public class CompletedTransactionLowWaterMarkMessage extends DSOMessageBase {
 
   private static final byte LOW_WATER_MARK = 0;
 

@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TCByteBufferInputStream extends InputStream implements TCDataInput, TCByteBufferInput {
+public class TCByteBufferInputStream extends InputStream implements TCByteBufferInput {
   private static final int            EOF                     = -1;
   private static final TCByteBuffer[] EMPTY_BYTE_BUFFER_ARRAY = new TCByteBuffer[] {};
 
@@ -175,7 +175,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     if (available() < limit) { throw new IllegalArgumentException("Not enough data left in stream: " + limit + " > "
                                                                   + available()); }
 
-    List newData = new ArrayList();
+    List<TCByteBuffer> newData = new ArrayList<TCByteBuffer>();
     int num = limit;
     while (num > 0) {
       TCByteBuffer current = this.data[this.index];
@@ -189,7 +189,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     }
 
     this.data = new TCByteBuffer[newData.size()];
-    this.data = (TCByteBuffer[]) newData.toArray(this.data);
+    this.data = newData.toArray(this.data);
     this.numBufs = this.data.length;
     this.totalLength = limit;
     this.position = 0;
@@ -216,6 +216,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     }
   }
 
+  @SuppressWarnings("sync-override")
   @Override
   public void mark(int readlimit) {
     throw new UnsupportedOperationException();
@@ -294,6 +295,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     this.index++;
   }
 
+  @SuppressWarnings("sync-override")
   @Override
   public void reset() {
     throw new UnsupportedOperationException();

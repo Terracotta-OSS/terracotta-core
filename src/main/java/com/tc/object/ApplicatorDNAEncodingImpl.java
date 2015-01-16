@@ -11,31 +11,15 @@ import com.tc.object.compression.CompressedData;
 import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.impl.BaseDNAEncodingImpl;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.util.Assert;
 import com.tc.util.ServiceUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 
 public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
-
-  private static final Constructor COMPRESSED_STRING_CONSTRUCTOR;
+  
   private static final TCLogger    logger = ServiceUtil.loadService(TCLoggingService.class)
                                               .getLogger(ApplicatorDNAEncodingImpl.class);
-
-  static {
-    Constructor cstr = null;
-
-    try {
-      cstr = String.class
-          .getDeclaredConstructor(new Class[] { Boolean.TYPE, char[].class, Integer.TYPE, Integer.TYPE });
-    } catch (final NoSuchMethodException e) {
-      logger.info("Compressed String constructor not present");
-    }
-
-    COMPRESSED_STRING_CONSTRUCTOR = cstr;
-  }
 
   /**
    * Used in the Applicators. The policy is set to APPLICATOR.
@@ -81,20 +65,11 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   }
 
   private String constructCompressedString(final char[] compressedChars, final int stringLength, final int stringHash) {
-    if (COMPRESSED_STRING_CONSTRUCTOR == null) {
-      final byte[] utf8bytes = StringCompressionUtil.unpackAndDecompress(compressedChars);
-      try {
-        return new String(utf8bytes, "UTF-8");
-      } catch (final UnsupportedEncodingException e) {
-        throw new AssertionError(e);
-      }
-    }
-
+    final byte[] utf8bytes = StringCompressionUtil.unpackAndDecompress(compressedChars);
     try {
-      return (String) COMPRESSED_STRING_CONSTRUCTOR.newInstance(new Object[] { Boolean.TRUE, compressedChars,
-          Integer.valueOf(stringLength), Integer.valueOf(stringHash) });
-    } catch (final Exception e) {
-      throw Assert.failure(e.getMessage(), e);
+      return new String(utf8bytes, "UTF-8");
+    } catch (final UnsupportedEncodingException e) {
+      throw new AssertionError(e);
     }
   }
 

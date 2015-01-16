@@ -117,9 +117,9 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     switch (type) {
       case ENUM:
         output.writeByte(TYPE_ID_ENUM);
-        final Class enumClass = ((Enum) value).getDeclaringClass();
+        final Class<?> enumClass = ((Enum<?>) value).getDeclaringClass();
         writeString(enumClass.getName(), output, serializer);
-        writeString(((Enum) value).name(), output, serializer);
+        writeString(((Enum<?>) value).name(), output, serializer);
         break;
       case ENUM_HOLDER:
         output.writeByte(TYPE_ID_ENUM_HOLDER);
@@ -127,7 +127,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
         break;
       case JAVA_LANG_CLASS:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS);
-        final Class c = (Class) value;
+        final Class<?> c = (Class<?>) value;
         writeString(c.getName(), output, serializer);
         break;
       case JAVA_LANG_CLASS_HOLDER:
@@ -200,6 +200,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
       case ARRAY:
         encodeArray(value, output);
         break;
+      case OBJECT:
       default:
         throw Assert.failure("Illegal type (" + type + "):" + value);
     }
@@ -356,7 +357,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
       output.writeInt(length);
     }
 
-    final Class type = value.getClass().getComponentType();
+    final Class<?> type = value.getClass().getComponentType();
     if (type.isPrimitive()) {
       output.writeByte(ARRAY_TYPE_PRIMITIVE);
       switch (primitiveClassMap.get(type)) {
@@ -454,7 +455,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     }
   }
 
-  private void checkSize(final Class type, final int threshold, final int len) {
+  private void checkSize(final Class<?> type, final int threshold, final int len) {
     if (len >= threshold) {
       logger.warn("Attempt to read a " + type + " array of len: " + len + "; threshold=" + threshold);
     }
@@ -594,14 +595,19 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     final byte[] data = readStringBytes(input, serializer);
 
     if (useStringEnumRead(type)) {
-      final Class enumType = new ClassInstance(name).asClass(this.classProvider);
+      final Class<?> enumType = new ClassInstance(name).asClass(this.classProvider);
       final String enumName = new String(data, "UTF-8");
-      return Enum.valueOf(enumType, enumName);
+      return makeEnum(enumType, enumName);
     } else {
       final ClassInstance clazzInstance = new ClassInstance(name);
       final UTF8ByteDataHolder enumName = new UTF8ByteDataHolder(data);
       return new EnumInstance(clazzInstance, enumName);
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T extends Enum<T>> T makeEnum(final Class<?> enumType, final String enumName) {
+    return Enum.valueOf((Class<T>) enumType, enumName);
   }
 
   protected abstract boolean useStringEnumRead(byte type);

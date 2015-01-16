@@ -7,7 +7,7 @@ import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 
-public interface GroupMessage extends TCSerializable {
+public interface GroupMessage extends TCSerializable<GroupMessage> {
 
   public int getType();
     

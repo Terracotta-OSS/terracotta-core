@@ -17,13 +17,13 @@ public class StackTest {
 
   @Test
   public void test() throws Exception {
-    Stack tcStack = new Stack();
-    java.util.Stack javaStack = new java.util.Stack();
+    Stack<Object> tcStack = new Stack<Object>();
+    java.util.Stack<Object> javaStack = new java.util.Stack<Object>();
 
     doRandomTests(tcStack, javaStack);
   }
 
-  private void doRandomTests(Stack tcStack, java.util.Stack javaStack) {
+  private void doRandomTests(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();
     Random r = new Random(seed);
@@ -58,26 +58,26 @@ public class StackTest {
     }
   }
 
-  private void callSearch(Stack tcStack, java.util.Stack javaStack, Random r) {
+  private void callSearch(Stack<Object> tcStack, java.util.Stack<Object> javaStack, Random r) {
     Integer subject = Integer.valueOf(r.nextInt(10000));
     assertEquals(javaStack.search(subject), tcStack.search(subject));
   }
 
-  private void callSize(Stack tcStack, java.util.Stack javaStack) {
+  private void callSize(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     assertEquals(javaStack.size(), tcStack.size());
   }
 
-  private void callEmpty(Stack tcStack, java.util.Stack javaStack) {
+  private void callEmpty(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     assertEquals(javaStack.empty(), tcStack.empty());
   }
 
-  private void callPush(Stack tcStack, java.util.Stack javaStack, Random r) {
+  private void callPush(Stack<Object> tcStack, java.util.Stack<Object> javaStack, Random r) {
     Integer subject = Integer.valueOf(r.nextInt(10000));
     assertEquals(javaStack.push(subject), tcStack.push(subject));
     assertEquals(javaStack.size(), tcStack.size());
   }
 
-  private void callPeek(Stack tcStack, java.util.Stack javaStack) {
+  private void callPeek(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     boolean thrownException = false;
     Object jo = null, to = null;
     Exception je = null, te = null;
@@ -100,7 +100,7 @@ public class StackTest {
     }
   }
 
-  private void callPop(Stack tcStack, java.util.Stack javaStack) {
+  private void callPop(Stack<Object> tcStack, java.util.Stack<Object> javaStack) {
     boolean thrownException = false;
     Object jo = null, to = null;
     Exception je = null, te = null;

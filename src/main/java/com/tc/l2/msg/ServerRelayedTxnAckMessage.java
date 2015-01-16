@@ -6,7 +6,6 @@ package com.tc.l2.msg;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import com.tc.async.api.EventContext;
@@ -44,7 +43,7 @@ public class ServerRelayedTxnAckMessage extends ServerTxnAckMessage implements E
   }
 
   @Override
-  public Set getAckedServerTxnIDs() {
+  public Set<ServerTransactionID> getAckedServerTxnIDs() {
     return serverTxnIDs;
   }
 
@@ -58,10 +57,10 @@ public class ServerRelayedTxnAckMessage extends ServerTxnAckMessage implements E
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(SERVER_RELAYED_TXN_ACK_MSG_TYPE, getType());
     int size = in.readInt();
-    serverTxnIDs = new HashSet(size);
+    serverTxnIDs = new HashSet<ServerTransactionID>(size);
     for (int i = 0; i < size; i++) {
       NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
-      nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+      nodeIDSerializer = nodeIDSerializer.deserializeFrom(in);
       NodeID cid = nodeIDSerializer.getNodeID();
       long clientTxID = in.readLong();
       serverTxnIDs.add(new ServerTransactionID(cid, new TransactionID(clientTxID)));
@@ -72,8 +71,7 @@ public class ServerRelayedTxnAckMessage extends ServerTxnAckMessage implements E
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(SERVER_RELAYED_TXN_ACK_MSG_TYPE, getType());
     out.writeInt(serverTxnIDs.size());
-    for (Iterator i = serverTxnIDs.iterator(); i.hasNext();) {
-      ServerTransactionID sTxID = (ServerTransactionID) i.next();
+    for (ServerTransactionID sTxID : serverTxnIDs) {
       NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(sTxID.getSourceID());
       nodeIDSerializer.serializeTo(out);
       out.writeLong(sTxID.getClientTransactionID().toLong());

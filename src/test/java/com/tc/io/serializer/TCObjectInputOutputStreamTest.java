@@ -9,7 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import com.tc.object.ObjectID;
@@ -24,13 +23,14 @@ import static org.junit.Assert.assertTrue;
 
 public class TCObjectInputOutputStreamTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void testBasic() throws IOException, ClassNotFoundException {
     ByteArrayOutputStream bao = new ByteArrayOutputStream(1024);
 
     TCObjectOutputStream os = new TCObjectOutputStream(bao);
 
-    ArrayList l = getLiteralObjects();
+    List<Object> l = getLiteralObjects();
 
     os.write(new byte[] { -5, 5 });
     os.write(42);
@@ -86,18 +86,17 @@ public class TCObjectInputOutputStreamTest {
     assertEquals("yo yo yo", is.readString());
     assertEquals(null, is.readString());
     assertEquals(createString(100000), is.readString());
-    assertEquals(l, readObjects(is, new ArrayList()));
+    assertEquals(l, readObjects(is, new ArrayList<Object>()));
   }
 
-  private void writeObjects(TCObjectOutputStream os, ArrayList l) {
+  private void writeObjects(TCObjectOutputStream os, List<Object> l) {
     os.writeInt(l.size());
-    for (Iterator i = l.iterator(); i.hasNext();) {
-      Object element = i.next();
-      os.writeObject(element);
+    for (Object o : l) {
+      os.writeObject(o);
     }
   }
 
-  private List readObjects(TCObjectInputStream is, ArrayList l) throws IOException, ClassNotFoundException {
+  private List<Object> readObjects(TCObjectInputStream is, List<Object> l) throws IOException, ClassNotFoundException {
     int count = is.readInt();
     for (int i = 0; i < count; i++) {
       l.add(is.readObject());
@@ -105,8 +104,8 @@ public class TCObjectInputOutputStreamTest {
     return l;
   }
 
-  private ArrayList getLiteralObjects() {
-    ArrayList l = new ArrayList();
+  private List<Object> getLiteralObjects() {
+    List<Object> l = new ArrayList<Object>();
     l.add(new Integer(1009));
     l.add("Hello there ");
     l.add(new Long(909999999));

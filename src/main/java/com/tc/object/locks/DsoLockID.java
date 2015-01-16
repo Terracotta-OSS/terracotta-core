@@ -35,7 +35,7 @@ public class DsoLockID implements LockID {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public DsoLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     objectId = serialInput.readLong();
     return this;
   }
@@ -69,25 +69,21 @@ public class DsoLockID implements LockID {
   public ObjectID getObjectID() {
     return new ObjectID(objectId);
   }
-  
+
   @Override
-  public int compareTo(Object o) {
-    if (o instanceof DsoLockID) {
-      DsoLockID other = (DsoLockID)o;
-      if (this.objectId < other.objectId) {
+  public int compareTo(LockID other) {
+    if (other instanceof DsoLockID) {
+      DsoLockID dsoLockID = (DsoLockID) other;
+      if (this.objectId < dsoLockID.objectId) {
         return -1;
-      } else if (this.objectId > other.objectId) {
+      } else if (this.objectId > dsoLockID.objectId) {
         return 1;
       } else {
         return 0;
       }
-    } else if (o instanceof LockID) {
-      if (((LockID)o).getLockType() == LockIDType.DSO_LITERAL) {
-        throw new ClassCastException("Can't compare LiteralLockID types.");
-      }
-      return toString().compareTo(o.toString());
     }
-    
-    throw new ClassCastException(o + " is not an instance of LockID");
+
+    if (other.getLockType() == LockIDType.DSO_LITERAL) { throw new ClassCastException("Can't compare LiteralLockID types."); }
+    return toString().compareTo(other.toString());
   }
 }

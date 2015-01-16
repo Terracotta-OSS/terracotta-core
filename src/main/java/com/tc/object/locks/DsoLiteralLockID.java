@@ -41,7 +41,7 @@ public class DsoLiteralLockID implements LockID {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public DsoLiteralLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     LiteralValues type = LiteralValues.values()[serialInput.readByte()];
     switch (type) {
       case INTEGER:
@@ -86,8 +86,10 @@ public class DsoLiteralLockID implements LockID {
       case ARRAY:
       case ENUM:
         throw new AssertionError("Illegal type found in serialized DsoLiteralLockID stream " + type);
+      default:
+        throw new AssertionError("Null type found in serialized DsoLiteralLockID stream " + type);
     }
-    throw new AssertionError("Null type found in serialized DsoLiteralLockID stream " + type);
+
   }
 
   @Override
@@ -135,6 +137,7 @@ public class DsoLiteralLockID implements LockID {
       case JAVA_LANG_CLASS:
       case ARRAY:
       case ENUM:
+      default:
         throw new AssertionError("Illegal type passed to DsoLiteralLockID constructor " + type);
     }
   }
@@ -156,7 +159,7 @@ public class DsoLiteralLockID implements LockID {
   }
 
   @Override
-  public int compareTo(Object o) {
+  public int compareTo(LockID other) {
     throw new ClassCastException("DsoLiteralLockID instances can't be compared");
   }
 
@@ -164,9 +167,10 @@ public class DsoLiteralLockID implements LockID {
     LiteralValues type = LiteralValues.valueFor(literal);
     switch (type) {
       case ENUM:
-        Class clazz = literal.getClass();
+        Class<? extends Object> clazz = literal.getClass();
         ClassInstance classInstance = new ClassInstance(new UTF8ByteDataHolder(clazz.getName()));
-        return new EnumInstance(classInstance, new UTF8ByteDataHolder(((Enum) literal).name()));
+        return new EnumInstance(classInstance, new UTF8ByteDataHolder(((Enum<?>) literal).name()));
+      //$CASES-OMITTED$
       default:
         return literal;
     }

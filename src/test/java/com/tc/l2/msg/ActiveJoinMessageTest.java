@@ -25,6 +25,7 @@ public class ActiveJoinMessageTest {
     assertEquals(ajm.getServerID(), ajm1.getServerID());
   }
 
+  @SuppressWarnings("resource")
   private ActiveJoinMessage writeAndRead(ActiveJoinMessage ajm) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     ajm.serializeTo(bo);

@@ -9,6 +9,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectDNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
@@ -31,7 +32,7 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
   private final static byte      DNA_COUNT     = 4;
   private final static byte      DNA_DATA      = 5;
 
-  private Collection             objects;
+  private Collection<DNA>        objects;
   private ObjectStringSerializer serializer;
   private int                    total;
   private long                   batchID;
@@ -50,7 +51,7 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
   }
 
   @Override
-  public Collection getObjects() {
+  public Collection<DNA> getObjects() {
     return Collections.unmodifiableCollection(objects);
   }
 
@@ -103,7 +104,7 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
       }
       case DNA_COUNT:
         dnaCount = getIntValue();
-        this.objects = new ArrayList(dnaCount);
+        this.objects = new ArrayList<DNA>(dnaCount);
         return true;
       case BATCH_ID:
         this.batchID = getLongValue();
@@ -112,7 +113,7 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
         this.total = getIntValue();
         return true;
       case SERIALIZER_ID:
-        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
+        this.serializer = getObject(new ObjectStringSerializerImpl());
         return true;
       default:
         return false;

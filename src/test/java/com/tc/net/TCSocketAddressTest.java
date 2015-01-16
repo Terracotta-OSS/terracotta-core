@@ -8,10 +8,8 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -25,6 +23,7 @@ public class TCSocketAddressTest {
     assertTrue(tsa1.hashCode() == tsa2.hashCode());
   }
 
+  @SuppressWarnings("unused")
   @Test
   public void testPortRanges() {
     try {
@@ -65,7 +64,7 @@ public class TCSocketAddressTest {
     TCSocketAddress tsa2 = new TCSocketAddress(InetAddress.getByName("1.2.3.4"), 9000);
     TCSocketAddress tsa3 = new TCSocketAddress(InetAddress.getByName("1.2.3.4"), 9000);
 
-    Map map = new HashMap();
+    Map<TCSocketAddress, Object> map = new HashMap<TCSocketAddress, Object>();
 
     Object val1 = new Object();
     Object val2 = new Object();

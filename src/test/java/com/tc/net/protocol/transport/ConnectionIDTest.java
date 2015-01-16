@@ -41,6 +41,7 @@ public class ConnectionIDTest {
     checkSerializeDeserialize(id);
   }
 
+  @SuppressWarnings("resource")
   private static void checkSerializeDeserialize(ConnectionID id) throws IOException {
     TCByteBufferOutputStream outputStream = new TCByteBufferOutputStream();
     id.writeTo(outputStream);

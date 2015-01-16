@@ -18,6 +18,7 @@ public enum LockLevel {
       case WRITE:
       case SYNCHRONOUS_WRITE:
         return true;
+      //$CASES-OMITTED$
       default:
         return false;
     }
@@ -27,6 +28,7 @@ public enum LockLevel {
     switch (this) {
       case READ:
         return true;
+      //$CASES-OMITTED$
       default:
         return false;
     }
@@ -46,8 +48,10 @@ public enum LockLevel {
         return SYNCHRONOUS_WRITE_LEVEL;
       case CONCURRENT:
         return CONCURRENT_LEVEL;
+      default:
+        throw new AssertionError("Enum semantics broken in LockLevel?");
     }
-    throw new AssertionError("Enum semantics broken in LockLevel?");
+
   }
 
   public static LockLevel fromInt(int integer) {

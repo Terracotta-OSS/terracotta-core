@@ -34,10 +34,10 @@ public class ClusterMembershipMessage extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(final int eventType, final NodeID nodeID, final ProductID productId) {
-    this.eventType = eventType;
-    this.nodeID = nodeID;
-    this.productId = productId;
+  public void initialize(final int type, final NodeID nid, final ProductID pid) {
+    this.eventType = type;
+    this.nodeID = nid;
+    this.productId = pid;
   }
 
   @Override

@@ -13,8 +13,6 @@ import com.tc.net.groups.MessageID;
 
 import java.io.IOException;
 
-import com.tc.net.groups.GroupMessage;
-
 public class L2StateMessage extends AbstractGroupMessage implements EventContext {
 
   public static final int START_ELECTION          = 0; // Sent during the start of an election by the initiator

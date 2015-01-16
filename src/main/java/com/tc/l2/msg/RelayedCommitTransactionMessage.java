@@ -77,7 +77,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
-    nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+    nodeIDSerializer = nodeIDSerializer.deserializeFrom(in);
     this.nodeID = nodeIDSerializer.getNodeID();
     this.serializer = new ObjectStringSerializerImpl();
     this.serializer.deserializeFrom(in);

@@ -5,8 +5,8 @@ package com.tc.object.locks;
 
 import com.tc.io.TCSerializable;
 
-public interface Notify extends TCSerializable {
-//
+public interface Notify extends TCSerializable<Notify> {
+  
   public boolean isNull();
   
   public LockID getLockID();

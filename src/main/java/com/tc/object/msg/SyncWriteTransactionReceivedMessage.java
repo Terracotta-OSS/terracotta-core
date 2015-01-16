@@ -49,7 +49,7 @@ public class SyncWriteTransactionReceivedMessage extends DSOMessageBase {
         batchID = getLongValue();
         return true;
       case TXN_SET:
-        syncTxnSet = (SyncSetSerializer) getObject(new SyncSetSerializer());
+        syncTxnSet = getObject(new SyncSetSerializer());
         return true;
       default:
         return false;
@@ -69,7 +69,7 @@ public class SyncWriteTransactionReceivedMessage extends DSOMessageBase {
     return syncTxnSet.getSet();
   }
 
-  private static class SyncSetSerializer implements TCSerializable {
+  private static class SyncSetSerializer implements TCSerializable<SyncSetSerializer> {
     private Set<TransactionID> syncTxnSet;
 
     public SyncSetSerializer() {
@@ -81,7 +81,7 @@ public class SyncWriteTransactionReceivedMessage extends DSOMessageBase {
     }
 
     @Override
-    public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+    public SyncSetSerializer deserializeFrom(TCByteBufferInput serialInput) throws IOException {
       syncTxnSet = new HashSet<TransactionID>();
       int size = serialInput.readInt();
       for (int i = 0; i < size; i++) {

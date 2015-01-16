@@ -4,26 +4,11 @@
  */
 package com.tc.util;
 
-import java.text.ParseException;
-
 /**
  * Class utility methods
  */
 public class ClassUtils {
-
-  /**
-   * Convert fully-qualified field name like "mypackage.MyClass.myField" into a specification which
-   * contains the fully-qualified class name and the field name.
-   * @param fieldName Fully-qualified field name
-   * @return Specification of class/field names
-   * @throws ParseException If the fieldName is not properly formatted
-   */
-  public static ClassSpec parseFullyQualifiedFieldName(String fieldName) throws ParseException {
-    ClassSpecImpl rv = new ClassSpecImpl();
-    rv.parseFullyQualifiedFieldName(fieldName);
-    return rv;
-  }
-
+  
   /**
    * Get the dimension of an array
    * @param arrayClass The array class
@@ -31,7 +16,7 @@ public class ClassUtils {
    * @throws NullPointerException If arrayClass is null
    * @throws IllegalArgumentException If arrayClass is not an array class
    */
-  public static int arrayDimensions(Class arrayClass) {
+  public static int arrayDimensions(Class<?> arrayClass) {
     verifyIsArray(arrayClass); // guarantees c is non-null and an array class
     return arrayClass.getName().lastIndexOf("[") + 1;
   }
@@ -43,7 +28,7 @@ public class ClassUtils {
    * @throws NullPointerException If arrayClass is null
    * @throws IllegalArgumentException If arrayClass is not an array class
    */
-  public static Class baseComponentType(Class c) {
+  public static Class<?> baseComponentType(Class<?> c) {
     verifyIsArray(c);   // guarantees c is non-null and an array class
     while (c.isArray()) {
       c = c.getComponentType();
@@ -51,7 +36,7 @@ public class ClassUtils {
     return c;
   }
 
-  private static void verifyIsArray(Class arrayClass) {
+  private static void verifyIsArray(Class<?> arrayClass) {
     if (arrayClass == null) { throw new NullPointerException(); }
     if (!arrayClass.isArray()) { throw new IllegalArgumentException(arrayClass + " is not an array type"); }
   }
@@ -63,7 +48,7 @@ public class ClassUtils {
    */
   public static boolean isPrimitiveArray(Object test) {
     if (test == null) { return false; }
-    Class c = test.getClass();
+    Class<?> c = test.getClass();
     if (!c.isArray()) { return false; }
     return c.getComponentType().isPrimitive();
   }
@@ -73,7 +58,7 @@ public class ClassUtils {
    * @param c Class
    * @return True if enum
    */
-  public static boolean isDsoEnum(Class c) {
+  public static boolean isDsoEnum(Class<?> c) {
     // we don't just return c.isEnum() since that is false for specialized enum types
 
     while(c.getSuperclass() != null) {
@@ -81,56 +66,6 @@ public class ClassUtils {
       c = c.getSuperclass();
     }
     return false;
-  }
-
-  /**
-   * Holder for a class name and field name which together fully identify a field
-   * @see ClassUtils#parseFullyQualifiedFieldName(String)
-   */
-  public interface ClassSpec {
-    /**
-     * @return Full class name
-     */
-    public String getFullyQualifiedClassName();
-
-    /**
-     * @return Short field name
-     */
-    public String getShortFieldName();
-  }
-
-  private static class ClassSpecImpl implements ClassSpec {
-
-    private String fullyQualifiedClassName;
-    private String shortFieldName;
-
-    private void parseFullyQualifiedFieldName(String fieldName) throws ParseException {
-      if (fieldName == null) throwNotFullyQualifiedFieldName(null, 0);
-      int lastDot = fieldName.lastIndexOf('.');
-      if (lastDot <= 0) throwNotFullyQualifiedFieldName(fieldName, 0);
-      if (lastDot + 1 == fieldName.length()) throwNotFullyQualifiedFieldName(fieldName, lastDot);
-      fullyQualifiedClassName = fieldName.substring(0, lastDot);
-      shortFieldName = fieldName.substring(lastDot + 1);
-    }
-
-    private void throwNotFullyQualifiedFieldName(String fieldName, int position) throws ParseException {
-      throw new ParseException("Not a fully qualified fieldname: " + fieldName, position);
-    }
-
-    @Override
-    public String getFullyQualifiedClassName() {
-      return this.fullyQualifiedClassName;
-    }
-
-    @Override
-    public String getShortFieldName() {
-      return this.shortFieldName;
-    }
-
-    @Override
-    public String toString() {
-      return "ClassSpec[classname=" + fullyQualifiedClassName + ", shortFieldName=" + shortFieldName + "]";
-    }
   }
 
 }

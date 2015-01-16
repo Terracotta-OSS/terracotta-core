@@ -35,7 +35,7 @@ public class EntityLockID implements LockID {
   }
 
   @Override
-  public int compareTo(final Object o) {
+  public int compareTo(final LockID o) {
     if (o instanceof EntityLockID) {
       return className.compareTo(((EntityLockID) o).getClassName()) + entityName.compareTo(((EntityLockID) o).getEntityName());
     }
@@ -49,7 +49,7 @@ public class EntityLockID implements LockID {
   }
 
   @Override
-  public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public EntityLockID deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     return new EntityLockID(serialInput.readString(), serialInput.readString());
   }
 

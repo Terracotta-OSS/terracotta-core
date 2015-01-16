@@ -44,7 +44,7 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   }
 
   @Override
-  final public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  final public GroupMessage deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.type = serialInput.readInt();
     this.id = new MessageID(serialInput.readLong());
     this.requestID = new MessageID(serialInput.readLong());

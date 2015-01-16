@@ -56,24 +56,20 @@ public class StringLockID implements LockID {
     }
     return false;
   }
-  
+
   @Override
-  public int compareTo(Object o) {
+  public int compareTo(LockID o) {
     if (o instanceof StringLockID) {
-      StringLockID other = (StringLockID)o;
+      StringLockID other = (StringLockID) o;
       return id.compareTo(other.id);
-    } else if (o instanceof LockID) {
-      if (((LockID)o).getLockType() == LockIDType.DSO_LITERAL) {
-        throw new ClassCastException("Can't compare LiteralLockID types.");
-      }
-      return toString().compareTo(o.toString());
     }
-    
-    throw new ClassCastException(o + " is not an instance of LockID");
+
+    if (o.getLockType() == LockIDType.DSO_LITERAL) { throw new ClassCastException("Can't compare LiteralLockID types."); }
+    return toString().compareTo(o.toString());
   }
 
   @Override
-  public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public StringLockID deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readString();
     return this;
   }

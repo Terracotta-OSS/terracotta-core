@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
  */
 public class CommitTransactionMessageTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void testMessage() throws Exception {
     Random rnd = new Random();

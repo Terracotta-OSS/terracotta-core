@@ -29,6 +29,7 @@ public class ObjectListSyncMessageTest {
     }
   }
 
+  @SuppressWarnings("resource")
   private ObjectListSyncMessage writeAndRead(ObjectListSyncMessage olsm) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     olsm.serializeTo(bo);

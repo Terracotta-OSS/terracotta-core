@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  *
  */
-public abstract class TCSerializableCollection<T extends TCSerializable> extends AbstractCollection<T> implements TCSerializable {
+public abstract class TCSerializableCollection<T extends TCSerializable<T>> extends AbstractCollection<T> implements TCSerializable<TCSerializableCollection<T>> {
   private final Set<T> authority = new HashSet<T>();
 
   public Set<T> getAuthority() {
@@ -47,14 +47,15 @@ public abstract class TCSerializableCollection<T extends TCSerializable> extends
       t.serializeTo(serialOutput);
     }
   }
-
+  
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public TCSerializableCollection<T> deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     clear();
     int count = serialInput.readInt();
     for (int i=0;i<count;i++) {
-      add((T)newObject().deserializeFrom(serialInput));
+      add(newObject().deserializeFrom(serialInput));
     }
+    
     return this;
   }
 

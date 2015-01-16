@@ -17,7 +17,7 @@ import java.util.Map;
  * helper class to hide the serialization and de-serialization of Map<GroupID, StripeID> implementations from external
  * world.
  */
-public class GroupToStripeMapSerializer implements TCSerializable {
+public class GroupToStripeMapSerializer implements TCSerializable<GroupToStripeMapSerializer> {
 
   private final Map<GroupID, StripeID> groupToStripeMap;
 
@@ -25,7 +25,7 @@ public class GroupToStripeMapSerializer implements TCSerializable {
     groupToStripeMap = new HashMap<GroupID, StripeID>();
   }
 
-  public GroupToStripeMapSerializer(Map groupToStripeMap) {
+  public GroupToStripeMapSerializer(Map<GroupID, StripeID> groupToStripeMap) {
     this.groupToStripeMap = groupToStripeMap;
   }
 
@@ -34,7 +34,7 @@ public class GroupToStripeMapSerializer implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public GroupToStripeMapSerializer deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int size = serialInput.readInt();
     for (int i = 0; i < size; ++i) {
       NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();

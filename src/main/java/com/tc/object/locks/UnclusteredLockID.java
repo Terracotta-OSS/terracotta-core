@@ -26,7 +26,7 @@ public class UnclusteredLockID implements LockID {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) {
+  public UnclusteredLockID deserializeFrom(TCByteBufferInput serialInput) {
     throw new AssertionError("UnclusteredLockID instances should not be being serialized");
   }
 
@@ -46,7 +46,7 @@ public class UnclusteredLockID implements LockID {
   }
 
   @Override
-  public int compareTo(final Object o) {
+  public int compareTo(final LockID o) {
     throw new AssertionError("UnclusteredLockID should not be compared or stored into sorted collections");
   }
 

@@ -79,7 +79,7 @@ public class VersionizedDNAWrapper implements DNA {
   private static class ResetableDNACursor implements DNACursor {
 
     private final DNACursor cursor;
-    private final List      actions = new ArrayList();
+    private final List<Object>      actions = new ArrayList<Object>();
     private int             index   = -1;
 
     public ResetableDNACursor(DNACursor cursor) {

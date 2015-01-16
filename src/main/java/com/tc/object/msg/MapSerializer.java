@@ -3,15 +3,13 @@ package com.tc.object.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 /**
  * @author tim
  */
-public abstract class MapSerializer<K, V> implements TCSerializable {
+public abstract class MapSerializer<K, V> implements TCSerializable<MapSerializer<K, V>> {
   private final Map<K, V> map;
 
   protected MapSerializer(final Map<K, V> map) {
@@ -36,11 +34,15 @@ public abstract class MapSerializer<K, V> implements TCSerializable {
   }
 
   @Override
-  public Map<K, V> deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public MapSerializer<K, V> deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
       map.put(deserializeKey(serialInput), deserializeValue(serialInput));
     }
+    return this;
+  }
+  
+  public Map<K, V> getMappings() {
     return map;
   }
 }

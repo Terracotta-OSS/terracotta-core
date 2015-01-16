@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 
 public class RequestManagedObjectMessageImplTest {
 
+  @SuppressWarnings("resource")
   @Test
   public void testBasics() throws Exception {
     MessageChannel channel = mock(MessageChannel.class);
@@ -54,15 +55,15 @@ public class RequestManagedObjectMessageImplTest {
                                                                                    .getPayload());
     msg2.hydrate();
 
-    Set ids = new HashSet();
+    Set<ObjectID> ids = new HashSet<ObjectID>();
     ids.add(new ObjectID(1));
 
     checkMessageValues(ctxt, removedIDs, ids, msg2);
   }
 
-  private void checkMessageValues(TestObjectRequestContext ctxt, Set removedIDs, Set ids,
+  private void checkMessageValues(TestObjectRequestContext ctxt, Set<ObjectID> removedIDs, Set<ObjectID> ids,
                                   RequestManagedObjectMessageImpl msg) {
-    assertEquals(ids, new HashSet(msg.getRequestedObjectIDs()));
+    assertEquals(ids, new HashSet<ObjectID>(msg.getRequestedObjectIDs()));
     assertEquals(ctxt.getRequestID(), msg.getRequestID());
     assertEquals(removedIDs, msg.getRemoved());
   }

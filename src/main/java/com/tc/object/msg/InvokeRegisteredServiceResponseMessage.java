@@ -53,7 +53,7 @@ public class InvokeRegisteredServiceResponseMessage extends AbstractManagementMe
       switch (name) {
         case RESPONSE:
           try {
-            responseHolder = (ResponseHolder)getObject(new ResponseHolder());
+            responseHolder = getObject(new ResponseHolder());
           } catch (TCManagementSerializationException se) {
             responseHolder = new ResponseHolder(se);
           }

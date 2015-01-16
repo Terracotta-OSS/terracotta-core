@@ -13,7 +13,7 @@ import java.io.IOException;
 public class NullObjectStringSerializer implements ObjectStringSerializer {
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) {
+  public ObjectStringSerializer deserializeFrom(TCByteBufferInput serialInput) {
     return this;
   }
 

@@ -31,7 +31,7 @@ public class StorageDNAEncodingImpl extends BaseDNAEncodingImpl {
   private static class FailureClassProvider implements ClassProvider {
 
     @Override
-    public Class getClassFor(final String className) throws ClassNotFoundException {
+    public Class<?> getClassFor(final String className) throws ClassNotFoundException {
       throw new ClassNotFoundException();
     }
 

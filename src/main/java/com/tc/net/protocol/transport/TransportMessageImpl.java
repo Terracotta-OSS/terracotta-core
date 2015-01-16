@@ -10,8 +10,6 @@ import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCProtocolException;
 import com.tc.util.Assert;
 
-import java.io.IOException;
-
 class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage, SynAckMessage, AckMessage,
     HealthCheckerProbeMessage {
   
@@ -50,6 +48,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   private final int          callbackPort;
   private final long         timestamp;
 
+  @SuppressWarnings("resource")
   TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] payload) throws TCProtocolException {
     super(source, header, payload);
 

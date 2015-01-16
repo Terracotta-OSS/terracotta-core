@@ -3,7 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
@@ -18,8 +17,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
 
-public class RequestManagedObjectMessageImpl extends DSOMessageBase implements EventContext,
-    RequestManagedObjectMessage {
+public class RequestManagedObjectMessageImpl extends DSOMessageBase implements RequestManagedObjectMessage {
   private final static byte MANAGED_OBJECT_ID          = 1;
   private final static byte MANAGED_OBJECTS_REMOVED_ID = 2;
   private final static byte REQUEST_ID                 = 4;
@@ -52,10 +50,10 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case MANAGED_OBJECT_ID:
-        this.objectIDs = (ObjectIDSet) getObject(new BasicObjectIDSet());
+        this.objectIDs = getObject(new BasicObjectIDSet());
         return true;
       case MANAGED_OBJECTS_REMOVED_ID:
-        this.removed = (ObjectIDSet) getObject(new BasicObjectIDSet());
+        this.removed = getObject(new BasicObjectIDSet());
         return true;
       case REQUEST_ID:
         this.requestID = new ObjectRequestID(getLongValue());

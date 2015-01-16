@@ -33,7 +33,7 @@ public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
     // This method assumes the Class is visible in this VM and can be loaded by the same class loader as this
     // object.
     @Override
-    public Class getClassFor(final String className) {
+    public Class<?> getClassFor(final String className) {
       try {
         return Class.forName(className);
       } catch (final ClassNotFoundException e) {

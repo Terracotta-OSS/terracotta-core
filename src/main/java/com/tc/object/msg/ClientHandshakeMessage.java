@@ -4,7 +4,6 @@
 package com.tc.object.msg;
 
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.ObjectID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.ObjectIDSet;
@@ -12,7 +11,6 @@ import com.tc.util.SequenceID;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface ClientHandshakeMessage extends TCMessage {
 

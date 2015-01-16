@@ -19,8 +19,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.tc.net.groups.GroupMessage;
-
 public class ClusterStateMessage extends AbstractGroupMessage {
 
   public static final int        OBJECT_ID                    = 0x00;

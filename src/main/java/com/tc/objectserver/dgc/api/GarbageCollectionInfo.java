@@ -11,7 +11,7 @@ import com.tc.objectserver.core.impl.GarbageCollectionID;
 
 import java.io.IOException;
 
-public class GarbageCollectionInfo implements TCSerializable {
+public class GarbageCollectionInfo implements TCSerializable<GarbageCollectionInfo> {
   public static enum Type {
     NULL_GC, FULL_GC, INLINE_CLEANUP, INLINE_GC
   }
@@ -228,8 +228,7 @@ public class GarbageCollectionInfo implements TCSerializable {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-
+  public GarbageCollectionInfo deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     long iterationCount = serialInput.readLong();
     String uuidString = serialInput.readString();
     this.gcID = new GarbageCollectionID(iterationCount, uuidString);
