@@ -6,6 +6,7 @@ package com.tc.l2.msg;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
+import com.tc.object.tx.ServerTransactionID;
 
 import java.util.Set;
 
@@ -19,7 +20,7 @@ public abstract class ServerTxnAckMessage extends AbstractGroupMessage {
     super(type, requestID);
   }
 
-  public abstract Set getAckedServerTxnIDs();
+  public abstract Set<ServerTransactionID> getAckedServerTxnIDs();
 
   public abstract NodeID getDestinationID();
 

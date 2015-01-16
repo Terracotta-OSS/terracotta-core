@@ -23,7 +23,7 @@ import java.util.Map;
 
 public interface BroadcastTransactionMessage extends TCMessage {
 
-  void initialize(List<DNA> chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
+  void initialize(List<? extends DNA> prunedChanges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
                   NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
                   GlobalTransactionID lowGlobalTransactionIDWatermark, Collection<ClientServerExchangeLockContext> notifies, Map<String, ObjectID> newRoots,
                   Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,

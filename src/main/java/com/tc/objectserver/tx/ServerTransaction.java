@@ -6,9 +6,11 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransaction;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
@@ -37,7 +39,7 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public ServerTransactionID getServerTransactionID();
 
-  public List getChanges();
+  public List<? extends DNA> getChanges();
 
   public Map<String, ObjectID> getNewRoots();
 
@@ -47,7 +49,7 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public ObjectIDSet getNewObjectIDs();
 
-  public Collection getNotifies();
+  public Collection<Notify> getNotifies();
 
   public boolean isActiveTxn();
 

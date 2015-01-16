@@ -26,8 +26,9 @@ public enum ServerLockLevel {
       case SYNCHRONOUS_WRITE:
       case WRITE:
         return ServerLockLevel.WRITE;
+      case CONCURRENT:
       default:
-        throw new AssertionError("Unknown State: " + lockLevel);
+        throw new AssertionError("Unexpected lock level: " + lockLevel);
     }
   }  
 }

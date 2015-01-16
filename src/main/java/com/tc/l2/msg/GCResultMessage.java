@@ -8,6 +8,7 @@ import com.tc.async.api.EventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.Assert;
 import com.tc.util.BasicObjectIDSet;
@@ -52,7 +53,7 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     this.gcedOids.serializeTo(out);
   }
 
-  public SortedSet getGCedObjectIDs() {
+  public SortedSet<ObjectID> getGCedObjectIDs() {
     return gcedOids;
   }
 

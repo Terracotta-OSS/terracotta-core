@@ -173,7 +173,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public void initialize(final List<DNA> chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
+  public void initialize(final List<? extends DNA> chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
                          final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
                          final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
                          final Collection<ClientServerExchangeLockContext> theNotifies, final Map<String, ObjectID> roots,

@@ -26,7 +26,6 @@ import com.tc.object.tx.TxnType;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +45,8 @@ public class ServerTransactionBatchWriter {
     this.serializer = serializer;
   }
 
+
+  @SuppressWarnings("resource")
   public TCByteBuffer[] writeTransactionBatch(final List<ServerTransaction> txns) throws IOException,
       ClassNotFoundException {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream(32, 4096, false);
@@ -73,11 +74,10 @@ public class ServerTransactionBatchWriter {
     writeDNAs(out, txn.getChanges());
   }
 
-  private void writeDNAs(final TCByteBufferOutputStream out, final List<DNA> changes) throws IOException,
+  private void writeDNAs(final TCByteBufferOutputStream out, final List<? extends DNA> changes) throws IOException,
       ClassNotFoundException {
     out.writeInt(changes.size());
-    for (Object element : changes) {
-      final DNA dna = (DNA) element;
+    for (DNA dna : changes) {
       writeDNA(out, dna);
     }
   }
@@ -150,18 +150,16 @@ public class ServerTransactionBatchWriter {
     }
   }
 
-  private void writeNotifies(final TCByteBufferOutputStream out, final Collection notifies) {
+  private void writeNotifies(final TCByteBufferOutputStream out, final Collection<Notify> notifies) {
     out.writeInt(notifies.size());
-    for (final Iterator i = notifies.iterator(); i.hasNext();) {
-      final Notify n = (Notify) i.next();
+    for (final Notify n : notifies) {
       n.serializeTo(out);
     }
   }
 
-  private void writeRootsMap(final TCByteBufferOutputStream out, final Map newRoots) {
+  private void writeRootsMap(final TCByteBufferOutputStream out, final Map<String, ObjectID> newRoots) {
     out.writeInt(newRoots.size());
-    for (final Iterator i = newRoots.entrySet().iterator(); i.hasNext();) {
-      final Entry<String, ObjectID> e = (Entry<String, ObjectID>) i.next();
+    for (Entry<String, ObjectID> e : newRoots.entrySet()) {
       out.writeString(e.getKey());
       out.writeLong(e.getValue().toLong());
     }

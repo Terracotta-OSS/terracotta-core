@@ -12,6 +12,7 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectDNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,7 +39,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   private int                    dnaCount;
   private TCByteBuffer[]         dnas;
   private ObjectStringSerializer serializer;
-  private Map                    rootsMap;
+  private Map<String, ObjectID>  rootsMap;
   private long                   sequenceID;
   private ServerTransactionID    servertxnID;
 
@@ -99,19 +99,18 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   private void writeRootsMap(final TCByteBufferOutput out) {
     out.writeInt(this.rootsMap.size());
-    for (final Iterator i = this.rootsMap.entrySet().iterator(); i.hasNext();) {
-      final Entry e = (Entry) i.next();
-      out.writeString((String) e.getKey());
-      out.writeLong(((ObjectID) e.getValue()).toLong());
+    for (Entry<String, ObjectID> entry : this.rootsMap.entrySet()) {      
+      out.writeString(entry.getKey());
+      out.writeLong(entry.getValue().toLong());
     }
   }
 
   private void readRootsMap(final TCByteBufferInput in) throws IOException {
     final int size = in.readInt();
     if (size == 0) {
-      this.rootsMap = Collections.EMPTY_MAP;
+      this.rootsMap = Collections.emptyMap();
     } else {
-      this.rootsMap = new HashMap(size);
+      this.rootsMap = new HashMap<String, ObjectID>(size);
       for (int i = 0; i < size; i++) {
         this.rootsMap.put(in.readString(), new ObjectID(in.readLong()));
       }
@@ -132,7 +131,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     return this.oids;
   }
 
-  public Map getRootsMap() {
+  public Map<String, ObjectID> getRootsMap() {
     return this.rootsMap;
   }
 
@@ -140,10 +139,11 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
    * This method calls returns a list of DNAs that can be applied to ManagedObjects. This method could only be called
    * once. It throws an AssertionError if you ever call this twice
    */
-  public List getDNAs() {
+  @SuppressWarnings("resource")
+  public List<DNA> getDNAs() {
     Assert.assertNotNull(this.dnas);
     final TCByteBufferInputStream toi = new TCByteBufferInputStream(this.dnas);
-    final ArrayList objectDNAs = new ArrayList(this.dnaCount);
+    final List<DNA> objectDNAs = new ArrayList<DNA>(this.dnaCount);
     for (int i = 0; i < this.dnaCount; i++) {
       final ObjectDNAImpl dna = new ObjectDNAImpl(this.serializer, false);
       try {

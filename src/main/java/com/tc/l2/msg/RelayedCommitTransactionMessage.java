@@ -22,7 +22,6 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -32,7 +31,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
 
   private TCByteBuffer[]         batchData;
   private ObjectStringSerializer serializer;
-  private Map                    sid2gid;
+  private Map<ServerTransactionID, GlobalTransactionID> sid2gid;
   private NodeID                 nodeID;
   private long                   sequenceID;
   private TCMessageImpl          messageWrapper;
@@ -51,7 +50,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   }
 
   public RelayedCommitTransactionMessage(NodeID nodeID, TCByteBuffer[] batchData, ObjectStringSerializer serializer,
-                                         Map sid2gid, long seqID, GlobalTransactionID lowWaterMark) {
+                                         Map<ServerTransactionID, GlobalTransactionID> sid2gid, long seqID, GlobalTransactionID lowWaterMark) {
     super(RELAYED_COMMIT_TXN_MSG_TYPE);
     this.nodeID = nodeID;
     this.batchData = batchData;
@@ -96,9 +95,9 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return false;
   }
 
-  private Map readServerTxnIDGlobalTxnIDMapping(TCByteBufferInput in) throws IOException {
+  private Map<ServerTransactionID, GlobalTransactionID> readServerTxnIDGlobalTxnIDMapping(TCByteBufferInput in) throws IOException {
     int size = in.readInt();
-    Map mapping = new HashMap();
+    Map<ServerTransactionID, GlobalTransactionID> mapping = new HashMap<ServerTransactionID, GlobalTransactionID>();
     NodeID cid = nodeID;
     for (int i = 0; i < size; i++) {
       TransactionID txnid = new TransactionID(in.readLong());
@@ -123,18 +122,17 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   private void writeServerTxnIDGlobalTxnIDMapping(TCByteBufferOutput out) {
     out.writeInt(sid2gid.size());
     NodeID cid = nodeID;
-    for (Iterator i = sid2gid.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      ServerTransactionID sid = (ServerTransactionID) e.getKey();
+    for (Entry<ServerTransactionID, GlobalTransactionID> e : sid2gid.entrySet()) {
+      ServerTransactionID sid = e.getKey();
       Assert.assertEquals(cid, sid.getSourceID());
       out.writeLong(sid.getClientTransactionID().toLong());
-      GlobalTransactionID gid = (GlobalTransactionID) e.getValue();
+      GlobalTransactionID gid = e.getValue();
       out.writeLong(gid.toLong());
     }
   }
 
   public GlobalTransactionID getGlobalTransactionIDFor(ServerTransactionID serverTransactionID) {
-    GlobalTransactionID gid = (GlobalTransactionID) this.sid2gid.get(serverTransactionID);
+    GlobalTransactionID gid = this.sid2gid.get(serverTransactionID);
     if (gid == null) { throw new AssertionError("No Mapping found for : " + serverTransactionID); }
     return gid;
   }

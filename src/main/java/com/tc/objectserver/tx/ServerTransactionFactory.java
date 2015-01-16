@@ -5,8 +5,11 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.Notify;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -19,9 +22,9 @@ public interface ServerTransactionFactory {
 
   public ServerTransaction createServerTransaction(TxnBatchID batchID, TransactionID txnID, SequenceID sequenceID,
                                                    boolean isEviction,
-                                                   LockID[] locks, NodeID source, List dnas,
-                                                   ObjectStringSerializer serializer, Map newRoots, TxnType txnType,
-                                                   List notifies,
+                                                   LockID[] locks, NodeID source, List<? extends DNA> dnas,
+                                                   ObjectStringSerializer serializer, Map<String, ObjectID> newRoots, TxnType txnType,
+                                                   List<Notify> notifies,
                                                    int numApplictionTxn, long[] highwaterMarks);
 
 }
