@@ -7,6 +7,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.net.StripeID;
 import com.tc.net.groups.GroupToStripeMapSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -31,7 +32,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private static final byte      STRIPE_ID         = 6;
   private static final byte      STRIPE_ID_MAP     = 7;
 
-  private final Set<ClientID>    allNodes          = new HashSet<ClientID>();
+  private final Set<NodeID>      allNodes          = new HashSet<NodeID>();
   private boolean                persistentServer;
   private ClientID               thisNodeId;
   private String                 serverVersion;
@@ -55,8 +56,8 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   protected void dehydrateValues() {
     putNVPair(PERSISTENT_SERVER, persistentServer);
 
-    for (ClientID clientID : allNodes) {
-      putNVPair(ALL_NODES, clientID);
+    for (NodeID nodeID : allNodes) {
+      putNVPair(ALL_NODES, nodeID);
     }
 
     putNVPair(THIS_NODE_ID, thisNodeId);
@@ -73,7 +74,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
         persistentServer = getBooleanValue();
         return true;
       case ALL_NODES:
-        allNodes.add((ClientID) getNodeIDValue());
+        allNodes.add(getNodeIDValue());
         return true;
       case THIS_NODE_ID:
         thisNodeId = (ClientID) getNodeIDValue();
@@ -96,7 +97,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   }
 
   @Override
-  public void initialize(final boolean persistent, final Set<ClientID> allNodeIDs, final ClientID thisNodeID,
+  public void initialize(final boolean persistent, final Set<? extends NodeID> allNodeIDs, final ClientID thisNodeID,
                          final String sv, final GroupID l2GroupID, StripeID l2StripeID, Map<GroupID, StripeID> sidMap) {
     this.persistentServer = persistent;
     this.allNodes.addAll(allNodeIDs);

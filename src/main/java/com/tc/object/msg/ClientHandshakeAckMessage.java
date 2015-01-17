@@ -5,6 +5,7 @@ package com.tc.object.msg;
 
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.TCMessage;
 
@@ -15,7 +16,7 @@ public interface ClientHandshakeAckMessage extends TCMessage {
 
   public boolean getPersistentServer();
 
-  public void initialize(boolean persistent, Set<ClientID> allNodes, ClientID thisNodeID, String serverVersion,
+  public void initialize(boolean persistent, Set<? extends NodeID> allNodes, ClientID thisNodeID, String serverVersion,
                          GroupID thisGroup, StripeID stripeID, Map<GroupID, StripeID> stripeIDMap);
 
   public ClientID[] getAllNodes();
