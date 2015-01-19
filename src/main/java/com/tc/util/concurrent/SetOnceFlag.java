@@ -19,8 +19,6 @@ import java.io.Serializable;
  * @author teck
  */
 public final class SetOnceFlag implements Serializable {
-  // XXX: review Serialization semantics. Is it possible to get a SetOnceFlag that can be
-  // reset (ie. via serialize/deserialize)
 
   private volatile boolean set;
 
