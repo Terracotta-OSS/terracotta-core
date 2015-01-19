@@ -53,8 +53,7 @@ public class NotifyImplTest {
       pairs.add(new Notify[] {fa, fb});
     }
     
-    for (Object element : pairs) {
-      Notify[] pair = (Notify[]) element;
+    for (Notify[] pair : pairs) {
       assertEquals(pair[0], pair[1]);
       assertEquals(pair[0].hashCode(), pair[1].hashCode());
       set.add(pair[0]);

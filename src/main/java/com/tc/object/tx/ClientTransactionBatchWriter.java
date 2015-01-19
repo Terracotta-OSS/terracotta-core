@@ -571,8 +571,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       // By definition on the second and subsequent calls will have repeated object references in it, so put() to the
       // map here to not store dupes.
       try {
-        for (Object element : txn.getReferencesOfObjectsInTxn()) {
-          this.references.put(element, null);
+        for (Object reference : txn.getReferencesOfObjectsInTxn()) {
+          this.references.put(reference, null);
         }
 
         final int start = this.output.getBytesWritten();

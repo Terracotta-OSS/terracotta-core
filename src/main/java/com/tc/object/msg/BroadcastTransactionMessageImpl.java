@@ -88,12 +88,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   @Override
   protected void dehydrateValues() {
     putNVPair(TRANSACTION_TYPE_ID, this.transactionType.getType());
-    for (final Object element : this.lockIDs) {
-      LockID lockID = (LockID) element;
+    for (LockID lockID : this.lockIDs) {
       putNVPair(LOCK_ID, lockID);
     }
-    for (final Object notify : this.notifies) {
-      ClientServerExchangeLockContext notified = (ClientServerExchangeLockContext) notify;
+    for (ClientServerExchangeLockContext notified : this.notifies) {
       putNVPair(NOTIFIED, notified);
     }
 
@@ -104,17 +102,19 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     putNVPair(GLOBAL_TRANSACTION_ID, this.globalTransactionID.toLong());
     putNVPair(LOW_WATERMARK, this.lowWatermark.toLong());
 
-    for (final Object change : this.changes) {
-      DNAImpl dna = (DNAImpl) change;
+    for (DNA change : this.changes) {
+      DNAImpl dna = (DNAImpl) change; // XXX: this cast isn't great. DNA should probably be TCSerializable!
       putNVPair(DNA_ID, dna);
     }
-    for (String key : this.newRoots.keySet()) {
-      ObjectID value = this.newRoots.get(key);
-      putNVPair(ROOT_NAME_ID_PAIR, new RootIDPair(key, value));
+    
+    for (Map.Entry<String, ObjectID> root : this.newRoots.entrySet()) {
+      putNVPair(ROOT_NAME_ID_PAIR, new RootIDPair(root.getKey(), root.getValue()));
     }
+    
     for (final Entry<LogicalChangeID, LogicalChangeResult> entry : logicalChangeResults.entrySet()) {
       putNVPair(LOGICAL_CHANGE_RESULT, new LogicalChangeResultPair(entry.getKey(), entry.getValue()));
     }
+    
     for (final ServerEvent event : serverEvents) {
       putNVPair(SERVER_EVENT, new ServerEventSerializableContext(event));
     }
