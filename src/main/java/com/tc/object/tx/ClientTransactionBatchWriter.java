@@ -606,7 +606,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
         DNAWriter writer = this.writers.get(oid);
         if (writer == null) {
-          writer = new DNAWriterImpl(this.output, oid, tco.getExtendingClassName(), this.serializer, this.encoding,
+          writer = new DNAWriterImpl(this.output, oid, tco.getClassName(), this.serializer, this.encoding,
                                      !isNew);
 
           this.writers.put(oid, writer);
