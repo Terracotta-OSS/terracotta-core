@@ -66,7 +66,6 @@ public class LongLockID implements LockID {
       }
     }
 
-    if (o.getLockType() == LockIDType.DSO_LITERAL) { throw new ClassCastException("Can't compare LiteralLockID types."); }
     return toString().compareTo(o.toString());
   }
 

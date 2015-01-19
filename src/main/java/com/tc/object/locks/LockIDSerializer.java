@@ -40,12 +40,6 @@ public class LockIDSerializer implements TCSerializable<LockIDSerializer> {
           return new LongLockID();
         case STRING:
           return new StringLockID();
-        case DSO:
-          return new DsoLockID();
-        case DSO_LITERAL:
-          return new DsoLiteralLockID();
-        case DSO_VOLATILE:
-          return new DsoVolatileLockID();
         case ENTITY:
           return new EntityLockID();
         default:

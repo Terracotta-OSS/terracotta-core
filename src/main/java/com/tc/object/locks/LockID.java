@@ -18,7 +18,7 @@ public interface LockID extends TCSerializable<LockID>, Serializable, Comparable
    * Enum of all known LockID types - this is used in TCSerialization code
    */
   static enum LockIDType {
-    ENTITY, STRING, LONG, DSO, DSO_LITERAL, DSO_VOLATILE;
+    ENTITY, STRING, LONG,
   }
 
   /**
