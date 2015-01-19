@@ -760,11 +760,11 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
     public boolean hasCommonality(final Collection<LockID> locks, final Collection<ObjectID> oids) {
       if (objectIDs.size() > oids.size()) {
-        for (Object oid : oids) {
+        for (ObjectID oid : oids) {
           if (objectIDs.contains(oid)) { return true; }
         }
       } else {
-        for (Object oid : objectIDs) {
+        for (ObjectID oid : objectIDs) {
           if (oids.contains(oid)) { return true; }
         }
       }
