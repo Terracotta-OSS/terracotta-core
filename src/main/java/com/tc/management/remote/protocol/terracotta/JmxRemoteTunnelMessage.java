@@ -5,10 +5,7 @@ package com.tc.management.remote.protocol.terracotta;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.TCByteBufferInput;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -22,7 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializable<JmxRemoteTunnelMessage> {
+public class JmxRemoteTunnelMessage extends DSOMessageBase {
 
   private static final byte TUNNEL_MESSAGE = 0;
   private static final byte FLAG           = 1;
@@ -31,7 +28,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
   private static final byte DATA_FLAG      = 1 << 1;
   private static final byte FIN_FLAG       = 1 << 2;
 
-  private JmxRemoteTunnelMessage tunneledMessage;
+  private Object            tunneledMessage;
   private byte              flag;
 
   public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -50,7 +47,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
   protected boolean hydrateValue(final byte name) throws IOException {
     switch (name) {
       case TUNNEL_MESSAGE:
-        setTunneledMessage(getObject(this));
+        setTunneledMessage(deserializeMessage(getBytesArray()));
         return true;
       case FLAG:
         setFlag(getByteValue());
@@ -63,36 +60,26 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
   @Override
   protected void dehydrateValues() {
     putNVPair(FLAG, flag);
-    putNVPair(TUNNEL_MESSAGE, this);
+    putNVPair(TUNNEL_MESSAGE, serializeMessage(tunneledMessage));
   }
 
-  @Override
-  public synchronized void serializeTo(TCByteBufferOutput serialOutput) {
+  private static byte[] serializeMessage(Object msg) {
     try {
       final ByteArrayOutputStream bao = new ByteArrayOutputStream(1024);
       final ObjectOutputStream oos = new ObjectOutputStream(bao);
-      oos.writeObject(tunneledMessage);
+      oos.writeObject(msg);
       oos.close();
-
-      final byte serializedObject[] = bao.toByteArray();
-      serialOutput.writeByte(flag);
-      serialOutput.writeInt(serializedObject.length);
-      serialOutput.write(serializedObject);
+      return bao.toByteArray();
     } catch (IOException ioe) {
       throw new TCRuntimeException(ioe);
     }
   }
 
-  @Override
-  public synchronized JmxRemoteTunnelMessage deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  private static Object deserializeMessage(byte[] msgBytes) throws IOException {
     try {
-      flag = serialInput.readByte();
-      final int length = serialInput.readInt();
-      final byte serializedObject[] = new byte[length];
-      serialInput.read(serializedObject);
-      final ByteArrayInputStream bis = new ByteArrayInputStream(serializedObject);
+      final ByteArrayInputStream bis = new ByteArrayInputStream(msgBytes);
       final ObjectInputStream ois = new ObjectInputStream(bis);
-      return (JmxRemoteTunnelMessage) ois.readObject();
+      return ois.readObject();
     } catch (ClassNotFoundException cnfe) {
       throw new TCRuntimeException(cnfe);
     }
@@ -114,7 +101,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializ
     return flag == FIN_FLAG;
   }
 
-  synchronized void setTunneledMessage(JmxRemoteTunnelMessage tunneledMessage) {
+  synchronized void setTunneledMessage(final Object tunneledMessage) {
     this.tunneledMessage = tunneledMessage;
   }
 

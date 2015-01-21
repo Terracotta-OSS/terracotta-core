@@ -62,11 +62,9 @@ public interface MessageChannel {
 
   public void send(TCNetworkMessage message);
 
-  public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
-      IOException, CommStackMismatchException;
+  public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
-  public NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
-      IOException, CommStackMismatchException;
+  public NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
   public void close();
   
