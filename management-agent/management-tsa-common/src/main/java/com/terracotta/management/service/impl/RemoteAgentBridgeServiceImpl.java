@@ -3,6 +3,8 @@
  */
 package com.terracotta.management.service.impl;
 
+import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -24,8 +26,6 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-
-import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
 
 /**
  * @author Ludovic Orban
@@ -100,7 +100,8 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
   }
 
   private ObjectName findRemoteAgentEndpoint(String nodeName) throws IOException, MalformedObjectNameException, ServiceExecutionException {
-    Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
+    String pattern = "*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",node=" + nodeName + ",*";
+    Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName(pattern), null);
     for (ObjectName objectName : objectNames) {
       String node = objectName.getKeyProperty("node");
       if (nodeName.equals(node)) {
