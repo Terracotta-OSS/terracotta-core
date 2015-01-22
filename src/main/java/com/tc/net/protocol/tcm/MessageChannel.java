@@ -21,15 +21,13 @@ import java.net.UnknownHostException;
  * 
  * @author teck
  */
-public interface MessageChannel {
+public interface MessageChannel extends ChannelIDProvider {
 
   public TCSocketAddress getLocalAddress();
 
   public TCSocketAddress getRemoteAddress();
 
   public void addListener(ChannelEventListener listener);
-
-  public ChannelID getChannelID();
   
   public boolean isOpen();
 
