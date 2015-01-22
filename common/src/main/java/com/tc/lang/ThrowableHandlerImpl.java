@@ -25,8 +25,6 @@ import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -85,6 +83,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     callbackOnExitDefaultHandlers.add(callbackOnExitHandler);
   }
 
+  @Override
   public void addCallbackOnExitExceptionHandler(Class c, CallbackOnExitHandler exitHandler) {
     callbackOnExitExceptionHandlers.put(c, exitHandler);
   }
@@ -116,7 +115,9 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     }
 
     final CallbackOnExitState throwableState = new CallbackOnExitState(t);
-    scheduleExit(throwableState);
+
+    // TAB-5348
+    // scheduleExit(throwableState);
 
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
@@ -169,20 +170,6 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
         exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
       }
     }
-  }
-
-  private synchronized void scheduleExit(final CallbackOnExitState throwableState) {
-    if (isExitScheduled) { return; }
-    isExitScheduled = true;
-
-    TimerTask timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        exit(throwableState);
-      }
-    };
-    Timer timer = new Timer("Dump On Timeout Timer");
-    timer.schedule(timerTask, TIME_OUT);
   }
 
   private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {
