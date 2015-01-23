@@ -12,7 +12,6 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.util.SequenceID;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +29,11 @@ public interface ClientTransaction {
   public void setTransactionContext(TransactionContext transactionContext);
 
   /**
-   * Get all change buffers associated with this transaction
+   * Get the change buffer associated with this transaction
    * 
-   * @return Map of ObjectID to TCChangeBuffer
+   * @return changebuffer
    */
-  public Map<ObjectID, TCChangeBuffer> getChangeBuffers();
+  public TCChangeBuffer getChangeBuffer();
 
   /**
    * Get new roots in this transaction
@@ -85,36 +84,6 @@ public interface ClientTransaction {
    * @param rootID ObjectID for root value
    */
   public void createRoot(String name, ObjectID rootID);
-
-  /**
-   * Record field changed
-   * 
-   * @param source TCObject for value
-   * @param classname Class name
-   * @param fieldname Field name
-   * @param newValue New field value
-   * @param index Index into array if array field
-   */
-  public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index);
-
-  /**
-   * Record literal value changed
-   * 
-   * @param source TCObject for instance
-   * @param newValue New value for instance
-   * @param oldValue Old value for instance
-   */
-  public void literalValueChanged(TCObject source, Object newValue, Object oldValue);
-
-  /**
-   * Record array change
-   * 
-   * @param source TCObject for instance
-   * @param startPos Index into array
-   * @param array Partial array or value
-   * @param length Length of array
-   */
-  public void arrayChanged(TCObject source, int startPos, Object array, int length);
 
   /**
    * Record logical invocation
@@ -187,21 +156,9 @@ public interface ClientTransaction {
   public void setAlreadyCommitted();
 
   /**
-   * @return True if has changes in transaction
-   */
-  public boolean hasChanges();
-
-  /**
    * @return Count of notify's in transaction
    */
   public int getNotifiesCount();
-
-  /**
-   * Get all references of objects included in the transaction
-   * 
-   * @return Collection of referenced objects
-   */
-  public Collection<Object> getReferencesOfObjectsInTxn();
 
   /**
    * Get all Notify calls

@@ -4,8 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
-import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
@@ -22,16 +20,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
    */
   public Collection<TransactionID> addTransactionIDsTo(Collection<TransactionID> c);
 
-  /**
-   * Add the given transaction to this batch.
-   * 
-   * @param logicalChangeSequence
-   * @return true if the transaction was folded
-   */
-  public FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                   TransactionIDGenerator transactionIDGenerator);
-  
-  public TransactionBuffer addSimpleTransaction(ClientTransaction txn);
+  public TransactionBuffer addTransaction(ClientTransaction txn);
 
   public TransactionBuffer removeTransaction(TransactionID txID);
   
