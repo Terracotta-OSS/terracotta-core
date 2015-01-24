@@ -17,15 +17,10 @@ public class ObjectDNAImplTest extends DNAImplTest {
 
   private final long version = 69;
 
-  @Test @Override
-  public void testParentID() throws Exception {
-    super.serializeDeserialize(true, false);
-    assertEquals(version, dna.getVersion());
-  }
 
   @Test @Override
   public void testArrayLength() throws Exception {
-    super.serializeDeserialize(false, false);
+    super.serializeDeserialize(false);
     assertEquals(version, dna.getVersion());
   }
 

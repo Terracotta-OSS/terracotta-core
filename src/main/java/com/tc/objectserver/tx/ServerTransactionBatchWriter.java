@@ -86,7 +86,6 @@ public class ServerTransactionBatchWriter {
       ClassNotFoundException {
     final DNAWriter dnaWriter = new DNAWriterImpl(out, dna.getObjectID(), dna.getTypeName(), this.serializer,
                                                           DNA_STORAGE_ENCODING, dna.isDelta());
-    writeParentObjectID(dnaWriter, dna.getParentObjectID());
     // It is assumed that if this DNA is shared/accessed by multiple threads (simultaneously or other wise) that the DNA
     // is thread safe and the DNA gives out multiple iteratable cursors or the cursor is resettable
     final DNACursor cursor = dna.getCursor();
@@ -110,12 +109,6 @@ public class ServerTransactionBatchWriter {
       } else {
         throw new AssertionError("Unknown action type : " + action + " in dna : " + dna);
       }
-    }
-  }
-
-  private void writeParentObjectID(final DNAWriter dnaWriter, final ObjectID parentObjectID) {
-    if (!parentObjectID.isNull()) {
-      dnaWriter.setParentObjectID(parentObjectID);
     }
   }
 

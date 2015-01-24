@@ -35,7 +35,6 @@ public class VersionizedDNAWrapperTest {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
     final ObjectID id = new ObjectID(1);
-    final ObjectID pid = new ObjectID(2);
     final String type = getClass().getName();
 
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
@@ -45,7 +44,6 @@ public class VersionizedDNAWrapperTest {
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     final LogicalAction action2 = new LogicalAction(LogicalOperation.PUT, new Object[] { "key", "value" });
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
-    dnaWriter.setParentObjectID(pid);
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
     dnaWriter.addLogicalAction(action2.getLogicalOperation(), action2.getParameters(), LogicalChangeID.NULL_ID);
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());

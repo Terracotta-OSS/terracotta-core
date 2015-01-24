@@ -23,10 +23,9 @@ public interface DNA {
   public static final long NULL_VERSION     = -1;
 
   public static final byte HAS_ARRAY_LENGTH = 1 << 0;
-  public static final byte HAS_PARENT_ID    = 1 << 1;
-  public static final byte IS_DELTA         = 1 << 2;
-  public static final byte HAS_VERSION      = 1 << 3;
-  public static final byte IGNORE_MISSING_OBJECT = 1 << 4;
+  public static final byte IS_DELTA         = 1 << 1;
+  public static final byte HAS_VERSION      = 1 << 2;
+  public static final byte IGNORE_MISSING_OBJECT = 1 << 3;
 
   /**
    * Get the version of this DNA based on the global transaction ID, may be {@link #NULL_VERSION}.
@@ -72,13 +71,6 @@ public interface DNA {
    */
   public ObjectID getObjectID() throws DNAException;
 
-  /**
-   * If this object is an inner class, get the parent object identifier
-   * 
-   * @return The parent object if one exists
-   * @throws DNAException Exception thrown if the id cannot be resolved
-   */
-  public ObjectID getParentObjectID() throws DNAException;
 
   /**
    * Gets a DNACursor to spin through the field values.

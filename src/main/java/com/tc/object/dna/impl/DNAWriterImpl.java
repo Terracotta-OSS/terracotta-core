@@ -15,9 +15,6 @@ import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DNAWriterImpl implements DNAWriter {
 
   private static final int               UNINITIALIZED  = -1;
@@ -26,14 +23,12 @@ public class DNAWriterImpl implements DNAWriter {
   private final Mark                     headerMark;
   private final ObjectStringSerializer   serializer;
   private final DNAEncodingInternal      encoding;
-  private final List<Appender>           appenders      = new ArrayList<Appender>(5);
 
   private byte                           flags          = 0;
   private int                            firstLength    = UNINITIALIZED;
   private int                            totalLength    = UNINITIALIZED;
   private int                            lastStreamPos  = UNINITIALIZED;
   private int                            actionCount    = 0;
-  private boolean                        contiguous     = true;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
                        ObjectStringSerializer serializer, DNAEncodingInternal encoding, boolean isDelta) {
@@ -71,33 +66,11 @@ public class DNAWriterImpl implements DNAWriter {
   }
 
   @Override
-  public DNAWriter createAppender() {
-    if (contiguous) {
-      contiguous = output.getBytesWritten() == lastStreamPos;
-    }
-    Appender appender = new Appender(this, output);
-    appenders.add(appender);
-    return appender;
-  }
-
-  @Override
-  public boolean isContiguous() {
-    return contiguous;
-  }
-
-  @Override
   public void markSectionEnd() {
     if (lastStreamPos != UNINITIALIZED) { throw new IllegalStateException("lastStreamPos=" + lastStreamPos); }
     if (totalLength != UNINITIALIZED) { throw new IllegalStateException("totalLength=" + totalLength); }
     lastStreamPos = output.getBytesWritten();
     firstLength = totalLength = output.getBytesWritten() - headerMark.getPosition();
-  }
-
-  private void appenderSectionEnd(int appenderLength) {
-    if (contiguous) {
-      lastStreamPos = output.getBytesWritten();
-    }
-    totalLength += appenderLength;
   }
 
   @Override
@@ -202,13 +175,6 @@ public class DNAWriterImpl implements DNAWriter {
   }
 
   @Override
-  public void setParentObjectID(ObjectID id) {
-    checkVariableHeaderEmpty();
-    flags = Conversion.setFlag(flags, DNA.HAS_PARENT_ID, true);
-    output.writeLong(id.toLong());
-  }
-
-  @Override
   public void setArrayLength(int length) {
     checkVariableHeaderEmpty();
     flags = Conversion.setFlag(flags, DNA.HAS_ARRAY_LENGTH, true);
@@ -217,7 +183,6 @@ public class DNAWriterImpl implements DNAWriter {
 
   private void checkVariableHeaderEmpty() {
     Assert.assertEquals(0, actionCount);
-    Assert.assertFalse(Conversion.getFlag(flags, DNA.HAS_PARENT_ID));
     Assert.assertFalse(Conversion.getFlag(flags, DNA.HAS_ARRAY_LENGTH));
   }
 
@@ -229,110 +194,6 @@ public class DNAWriterImpl implements DNAWriter {
   @Override
   public void copyTo(TCByteBufferOutput dest) {
     headerMark.copyTo(dest, firstLength);
-
-    for (Appender appender : appenders) {
-      appender.copyTo(dest);
-    }
-  }
-
-  private static class Appender implements DNAWriter {
-    private final DNAWriterImpl            parent;
-    private final TCByteBufferOutputStream output;
-    private final Mark                     startMark;
-    private int                            appendSectionLength = UNINITIALIZED;
-
-    Appender(DNAWriterImpl parent, TCByteBufferOutputStream output) {
-      this.parent = parent;
-      this.output = output;
-      this.startMark = output.mark();
-    }
-
-    @Override
-    public void setIgnoreMissing(final boolean ignoreMissing) {
-      // TODO: Is this actually correct?
-      parent.setIgnoreMissing(ignoreMissing);
-    }
-
-    @Override
-    public void addArrayElementAction(int index, Object value) {
-      parent.addArrayElementAction(index, value);
-    }
-
-    @Override
-    public void addEntireArray(Object value) {
-      parent.addEntireArray(value);
-    }
-
-    @Override
-    public void addLiteralValue(Object value) {
-      parent.addLiteralValue(value);
-    }
-
-    @Override
-    public void addLogicalAction(LogicalOperation method, Object[] parameters, LogicalChangeID logicalChangeID) {
-      parent.addLogicalAction(method, parameters, logicalChangeID);
-    }
-
-    @Override
-    public void addLogicalAction(LogicalOperation method, Object[] parameters) {
-      parent.addLogicalAction(method, parameters);
-    }
-
-    @Override
-    public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
-      parent.addPhysicalAction(fieldName, value, canBeReferenced);
-    }
-
-    @Override
-    public void addPhysicalAction(String fieldName, Object value) {
-      parent.addPhysicalAction(fieldName, value);
-    }
-
-    @Override
-    public void addSubArrayAction(int start, Object array, int length) {
-      parent.addSubArrayAction(start, array, length);
-    }
-
-    @Override
-    public int getActionCount() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setArrayLength(int length) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setParentObjectID(ObjectID id) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public DNAWriter createAppender() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isContiguous() {
-      return parent.isContiguous();
-    }
-
-    @Override
-    public void markSectionEnd() {
-      appendSectionLength = output.getBytesWritten() - startMark.getPosition();
-      parent.appenderSectionEnd(appendSectionLength);
-    }
-
-    @Override
-    public void copyTo(TCByteBufferOutput dest) {
-      startMark.copyTo(dest, appendSectionLength);
-    }
-
-    @Override
-    public void finalizeHeader() {
-      throw new UnsupportedOperationException();
-    }
   }
 
   @Override

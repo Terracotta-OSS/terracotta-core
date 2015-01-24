@@ -39,7 +39,6 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
 
   // Header info; parsed on deserializeFrom()
   private ObjectID                         id;
-  private ObjectID                         parentID;
   private String                           typeName;
   private int                              arrayLength;
   private long                             version;
@@ -70,11 +69,6 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
   @Override
   public ObjectID getObjectID() throws DNAException {
     return this.id;
-  }
-
-  @Override
-  public ObjectID getParentObjectID() throws DNAException {
-    return this.parentID;
   }
 
   @Override
@@ -284,12 +278,6 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
       this.version = this.input.readLong();
     } else {
       this.version = DNA.NULL_VERSION;
-    }
-
-    if (Conversion.getFlag(flags, DNA.HAS_PARENT_ID)) {
-      this.parentID = new ObjectID(this.input.readLong());
-    } else {
-      this.parentID = ObjectID.NULL_ID;
     }
 
     if (Conversion.getFlag(flags, DNA.HAS_ARRAY_LENGTH)) {

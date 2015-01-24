@@ -5,7 +5,6 @@
 package com.tc.object.dna.impl;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -18,7 +17,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
@@ -34,26 +32,20 @@ public class DNAImplTest {
   protected DNAImpl dna;
 
   @Test
-  public void testParentID() throws Exception {
-    serializeDeserialize(true, false);
-  }
-
-  @Test
   public void testArrayLength() throws Exception {
-    serializeDeserialize(false, false);
+    serializeDeserialize(false);
   }
 
   @Test
   public void testDelta() throws Exception {
-    serializeDeserialize(false, true);
+    serializeDeserialize(true);
   }
 
   @SuppressWarnings("resource")
-  protected void serializeDeserialize(final boolean parentID, final boolean isDelta) throws Exception {
+  protected void serializeDeserialize(final boolean isDelta) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
     final ObjectID id = new ObjectID(1);
-    final ObjectID pid = new ObjectID(2);
     final String type = getClass().getName();
     final int arrayLen = 42;
 
@@ -65,15 +57,11 @@ public class DNAImplTest {
     final LogicalAction action2 = new LogicalAction(LogicalOperation.PUT, new Object[] { "key", "value" });
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
  
-    if (parentID) {
-      dnaWriter.setParentObjectID(pid);
-    } else {
-      dnaWriter.setArrayLength(arrayLen);
-    }
+
+    dnaWriter.setArrayLength(arrayLen);
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
     dnaWriter.addLogicalAction(action2.getLogicalOperation(), action2.getParameters());
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
-    assertTrue(dnaWriter.isContiguous());
     dnaWriter.markSectionEnd();
 
     // collapse this DNA into contiguous buffer
@@ -107,15 +95,8 @@ public class DNAImplTest {
     if (count != 4) { throw new AssertionError("not enough action seen: " + count); }
 
     assertEquals(id, this.dna.getObjectID());
-    if (parentID) {
-      assertEquals(pid, this.dna.getParentObjectID());
-      assertEquals(DNA.NULL_ARRAY_SIZE, this.dna.getArraySize());
-      assertFalse(this.dna.hasLength());
-    } else {
-      assertEquals(ObjectID.NULL_ID, this.dna.getParentObjectID());
-      assertTrue(this.dna.hasLength());
-      assertEquals(arrayLen, this.dna.getArraySize());
-    }
+    assertTrue(this.dna.hasLength());
+    assertEquals(arrayLen, this.dna.getArraySize());
 
     Assert.assertEquals(isDelta, this.dna.isDelta());
 

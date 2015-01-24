@@ -246,13 +246,11 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private final TCByteBufferOutputStream        output;
     private final ObjectStringSerializer          serializer;
     private final DNAEncodingInternal             encoding;
-    private final Mark                            startMark;
     private final SetOnceFlag                     committed            = new SetOnceFlag();
 
     private final Map<ObjectID, DNAWriter>        writers              = new LinkedHashMap<ObjectID, DNAWriter>();
     private final TransactionID                   txnID;
 
-    private boolean                               needsCopy            = false;
     private int                                   headerLength         = UNINITIALIZED_LENGTH;
     private int                                   txnCount             = 0;
     private Mark                                  changesCountMark;
@@ -267,7 +265,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       this.output = output;
       this.serializer = serializer;
       this.encoding = encoding;
-      this.startMark = output.mark();
       this.txnID = txnID;
     }
 
@@ -290,20 +287,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
         }
       }
 
-      if (!this.needsCopy) {
-        dest.write(this.output.toArray());
-        return;
-      }
-
-      final int expect = this.output.getBytesWritten();
-      final int begin = dest.getBytesWritten();
-
-      this.startMark.copyTo(dest, this.headerLength);
-      for (DNAWriter writer : this.writers.values()) {
-        writer.copyTo(dest);
-      }
-
-      Assert.assertEquals(expect, dest.getBytesWritten() - begin);
+      dest.write(this.output.toArray());
+      return;
     }
 
     String dump() {
@@ -353,7 +338,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
         this.writers.put(oid, writer);
       } else {
-        writer = writer.createAppender();
+        throw new AssertionError("writer already exists for " + oid);
       }
 
       // this isNew() check and flipping of the new flag are safe here only because transaction writing is completely
@@ -367,10 +352,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       buffer.writeTo(writer);
 
       writer.markSectionEnd();
-
-      if (!writer.isContiguous()) {
-        this.needsCopy = true;
-      }
     }
 
     private void writeFirst(final ClientTransaction txn) {

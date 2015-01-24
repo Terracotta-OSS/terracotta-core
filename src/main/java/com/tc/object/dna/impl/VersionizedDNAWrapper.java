@@ -57,11 +57,6 @@ public class VersionizedDNAWrapper implements DNA {
   }
 
   @Override
-  public ObjectID getParentObjectID() throws DNAException {
-    return dna.getParentObjectID();
-  }
-
-  @Override
   public DNACursor getCursor() {
     return (resetSupported ? new ResetableDNACursor(dna.getCursor()) : dna.getCursor());
   }
