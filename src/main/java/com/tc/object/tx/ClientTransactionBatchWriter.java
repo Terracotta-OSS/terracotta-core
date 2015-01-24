@@ -36,21 +36,19 @@ import java.util.Map.Entry;
 
 public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
-  private final GroupID                                         groupID;
-  private final CommitTransactionMessageFactory                 commitTransactionMessageFactory;
-  private final TxnBatchID                                      batchID;
-  private final LinkedHashMap<TransactionID, TransactionBuffer> transactionData        = new LinkedHashMap<TransactionID, TransactionBuffer>();
-  private final ObjectStringSerializer                          serializer;
-  private final DNAEncodingInternal                             encoding;
-  private final List<TCByteBufferOutputStream>                  batchDataOutputStreams = new ArrayList<TCByteBufferOutputStream>();
+  private final GroupID                         groupID;
+  private final CommitTransactionMessageFactory commitTransactionMessageFactory;
+  private final TxnBatchID                      batchID;
+  private final LinkedHashMap<TransactionID, TransactionBuffer> transactionData = new LinkedHashMap<TransactionID, TransactionBuffer>();
+  private final ObjectStringSerializer          serializer;
+  private final DNAEncodingInternal             encoding;
+  private final List<TCByteBufferOutputStream>  batchDataOutputStreams = new ArrayList<TCByteBufferOutputStream>();
 
-  private short                                                 outstandingWriteCount  = 0;
-  private final int                                                   bytesWritten           = 0;
-  private int                                                   numTxnsBeforeFolding   = 0;
-  private final int                                             numTxnsAfterFolding    = 0;
-  private boolean                                               containsSyncWriteTxn   = false;
-  private boolean                                               committed              = false;
-  private int                                                   holders                = 0;
+  private short                                 outstandingWriteCount  = 0;
+  private int                                   numTxns   = 0;
+  private boolean                               containsSyncWriteTxn   = false;
+  private boolean                               committed              = false;
+  private int                                   holders                = 0;
 
   public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
                                       final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
@@ -64,9 +62,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   @Override
   public synchronized String toString() {
-    return super.toString() + "[" + this.batchID + ", isEmpty=" + isEmpty() + ", numTxnsBeforeFolding= "
-           + this.numTxnsBeforeFolding + " numTxnAfterfoldingTxn= " + this.numTxnsAfterFolding + " size="
-           + this.bytesWritten + "]";
+    return super.toString() + "[" + this.batchID + ", isEmpty=" + isEmpty() + ", numTxns=" + this.numTxns + "]";
   }
 
   @Override
@@ -87,13 +83,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public synchronized int numberOfTxnsBeforeFolding() {
-    return this.numTxnsBeforeFolding;
-  }
-
-  @Override
-  public synchronized int byteSize() {
-    return this.bytesWritten;
+  public synchronized int numberOfTxns() {
+    return this.numTxns;
   }
 
   @Override
@@ -144,7 +135,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
     if (committed) { throw new AssertionError("Already committed"); }
 
-    this.numTxnsBeforeFolding++;
+    this.numTxns++;
 
     if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
       this.containsSyncWriteTxn = true;
@@ -281,7 +272,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
 
     @Override
-    public TransactionID getFoldedTransactionID() {
+    public TransactionID getTransactionID() {
       return this.txnID;
     }
 
@@ -316,7 +307,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
 
     String dump() {
-      return " { " + this.sequenceID + " , Objects in (Folded) Txn : " + this.writers.size() + " }";
+      return " { " + this.sequenceID + " , Objects in Txn : " + this.writers.size() + " }";
     }
 
     SequenceID getSequenceID() {
@@ -346,12 +337,11 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       writeChange(txn.getChangeBuffer());
     }
 
-    private void writeChange(TCChangeBuffer buffer) {
+    private void writeChange(TCChangeBuffer buffer) { 
       if (buffer == null) {
-        // XXX: This isn't great. An txn with no actions or new objects does this at the moment. And the NullTransaction
+        // XXX: This isn't great. An txn with no actions or new objects does this at the moment
         return;
       }
-      
       
       final TCObject tco = buffer.getTCObject();
       final ObjectID oid = tco.getObjectID();

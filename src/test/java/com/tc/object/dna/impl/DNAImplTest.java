@@ -23,7 +23,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.Assert;
@@ -65,10 +64,7 @@ public class DNAImplTest {
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     final LogicalAction action2 = new LogicalAction(LogicalOperation.PUT, new Object[] { "key", "value" });
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
-    final PhysicalAction action4 = new PhysicalAction("class.field3", new ObjectID(4), true);
-    final PhysicalAction action5 = new PhysicalAction("class.field4", new ObjectID(5), true);
-    final LogicalAction action6 = new LogicalAction(LogicalOperation.PUT_IF_ABSENT, new Object[] { "key", "value" }, new LogicalChangeID(6));
-
+ 
     if (parentID) {
       dnaWriter.setParentObjectID(pid);
     } else {
@@ -80,21 +76,7 @@ public class DNAImplTest {
     assertTrue(dnaWriter.isContiguous());
     dnaWriter.markSectionEnd();
 
-    // simulate folding
-    DNAWriter appender = dnaWriter.createAppender();
-    assertTrue(dnaWriter.isContiguous());
-    appender.addPhysicalAction(action4.getFieldName(), action4.getObject());
-    appender.markSectionEnd();
-
-    // fold in more actions without any meta data
-    appender = dnaWriter.createAppender();
-    appender.addPhysicalAction(action5.getFieldName(), action5.getObject());
-    appender.markSectionEnd();
-
-    appender = dnaWriter.createAppender();
-    appender.addLogicalAction(action6.getLogicalOperation(), action6.getParameters(), action6.getLogicalChangeID());
-    appender.markSectionEnd();
-    // collapse this folded DNA into contiguous buffer
+    // collapse this DNA into contiguous buffer
     dnaWriter.finalizeHeader();
     out = new TCByteBufferOutputStream();
     dnaWriter.copyTo(out);
@@ -116,22 +98,13 @@ public class DNAImplTest {
         case 3:
           compareAction(action3, cursor.getPhysicalAction());
           break;
-        case 4:
-          compareAction(action4, cursor.getPhysicalAction());
-          break;
-        case 5:
-          compareAction(action5, cursor.getPhysicalAction());
-          break;
-        case 6:
-          compareAction(action6, cursor.getLogicalAction());
-          break;
         default:
           fail("count got to " + count);
       }
       count++;
     }
 
-    if (count != 7) { throw new AssertionError("not enough action seen: " + count); }
+    if (count != 4) { throw new AssertionError("not enough action seen: " + count); }
 
     assertEquals(id, this.dna.getObjectID());
     if (parentID) {

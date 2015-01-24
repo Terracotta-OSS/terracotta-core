@@ -25,6 +25,6 @@ public interface ServerTransactionFactory {
                                                    LockID[] locks, NodeID source, List<? extends DNA> dnas,
                                                    ObjectStringSerializer serializer, Map<String, ObjectID> newRoots, TxnType txnType,
                                                    List<Notify> notifies,
-                                                   int numApplictionTxn, long[] highwaterMarks);
+                                                   int numTxn, long[] highwaterMarks);
 
 }

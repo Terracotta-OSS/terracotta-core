@@ -15,7 +15,7 @@ public interface TransactionBuffer {
 
   public int getTxnCount();
 
-  public TransactionID getFoldedTransactionID();
+  public TransactionID getTransactionID();
 
   public void addTransactionCompleteListeners(List<TransactionCompleteListener> transactionCompleteListeners);
 

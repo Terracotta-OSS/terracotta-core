@@ -63,7 +63,7 @@ public class ServerTransactionBatchWriter {
       ClassNotFoundException {
     out.writeLong(txn.getTransactionID().toLong());
     out.writeByte(txn.getTransactionType().getType());
-    out.writeInt(txn.getNumApplicationTxn());
+    out.writeInt(txn.getTxnCount());
     out.writeLong(txn.getClientSequenceID().toLong());
     out.writeBoolean(txn.isEviction());
 

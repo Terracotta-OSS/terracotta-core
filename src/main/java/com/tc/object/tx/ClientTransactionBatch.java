@@ -31,9 +31,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
    */
   public void send();
 
-  public int numberOfTxnsBeforeFolding();
-
-  public int byteSize();
+  public int numberOfTxns();
 
   public boolean isNull();
 
