@@ -6,8 +6,6 @@ package com.tc.object;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 
-import java.lang.ref.WeakReference;
-
 /**
  * Terracotta class attached to each shared instance Object
  */
@@ -26,12 +24,11 @@ public interface TCObject {
   public ObjectID getObjectID();
 
   /**
-   * Takes a DNA strand and hydrates the object with it.
+   * Takes a DNA strand applies it
    * 
-   * @param weakReference
    * @throws ClassNotFoundException If class not found
    */
-  public void hydrate(DNA from, WeakReference<Object> peer) throws ClassNotFoundException;
+  public void hydrate(DNA from) throws ClassNotFoundException;
 
   /**
    * Get version of this object instance
