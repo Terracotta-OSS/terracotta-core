@@ -3,6 +3,7 @@
  */
 package com.tc.object.msg;
 
+import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.ObjectID;
@@ -21,7 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public interface BroadcastTransactionMessage extends TCMessage {
+public interface BroadcastTransactionMessage extends TCMessage, Recyclable {
 
   void initialize(List<? extends DNA> prunedChanges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
                   NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
@@ -50,4 +51,6 @@ public interface BroadcastTransactionMessage extends TCMessage {
   Map<String, ObjectID> getNewRoots();
 
   List<ServerEvent> getEvents();
+
+  Map<LogicalChangeID, LogicalChangeResult> getLogicalChangeResults();
 }

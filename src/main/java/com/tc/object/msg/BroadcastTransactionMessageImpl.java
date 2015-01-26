@@ -339,6 +339,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   }
 
+  @Override
   public Map<LogicalChangeID, LogicalChangeResult> getLogicalChangeResults() {
     return logicalChangeResults;
   }
