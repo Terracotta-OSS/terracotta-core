@@ -33,11 +33,10 @@ public interface TCObject {
   /**
    * Takes a DNA strand and hydrates the object with it.
    * 
-   * @param force true if the DNA should be applied w/o any version checking
    * @param weakReference
    * @throws ClassNotFoundException If class not found
    */
-  public void hydrate(DNA from, boolean force, WeakReference<Object> peer) throws ClassNotFoundException;
+  public void hydrate(DNA from, WeakReference<Object> peer) throws ClassNotFoundException;
 
   /**
    * Get version of this object instance
