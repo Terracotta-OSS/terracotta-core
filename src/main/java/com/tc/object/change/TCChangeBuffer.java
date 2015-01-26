@@ -16,12 +16,6 @@ public interface TCChangeBuffer {
 
   public boolean isEmpty();
 
-  public void literalValueChanged(Object newValue);
-
-  public void fieldChanged(String classname, String fieldname, Object newValue, int index);
-
-  public void arrayChanged(int startPos, Object array, int length);
-
   public void logicalInvoke(LogicalOperation method, Object[] parameters, LogicalChangeID id);
 
   public void writeTo(DNAWriter writer);
