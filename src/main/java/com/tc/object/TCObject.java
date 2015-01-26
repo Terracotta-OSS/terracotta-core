@@ -26,11 +26,6 @@ public interface TCObject {
   public ObjectID getObjectID();
 
   /**
-   * @return The Object that this TCObject is wrapping. This value will be null if the peer Object is null.
-   */
-  public Object getPeerObject();
-
-  /**
    * Takes a DNA strand and hydrates the object with it.
    * 
    * @param weakReference
