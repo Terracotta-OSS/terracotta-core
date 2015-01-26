@@ -58,14 +58,6 @@ public interface TCObject {
   public boolean isNew();
 
   /**
-   * Invoke logical method
-   * 
-   * @param method Method indicator, as defined in {@link com.tc.object.SerializationUtil}
-   * @param params The parameter values
-   */
-  public void logicalInvoke(LogicalOperation method, Object[] params);
-
-  /**
    * Unset the "is new" flag. This should only be done by one thread ever (namely the thread that first ever commits
    * this object)
    */
