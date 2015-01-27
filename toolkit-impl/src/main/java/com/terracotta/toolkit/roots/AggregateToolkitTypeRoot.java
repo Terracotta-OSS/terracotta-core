@@ -21,7 +21,7 @@ public interface AggregateToolkitTypeRoot<T extends ToolkitObject, S extends TCT
   /**
    * Gets an already created instance identified by <tt>name</tt> or creates one if none exists.
    */
-  T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
+  T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory<T> factory, String name,
                            Configuration configuration);
 
   /**

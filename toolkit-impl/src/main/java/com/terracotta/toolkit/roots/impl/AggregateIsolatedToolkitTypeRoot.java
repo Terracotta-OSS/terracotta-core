@@ -47,7 +47,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   }
 
   @Override
-  public T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
+  public T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory<T> factory, String name,
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
     synchronized (isolatedTypes) {

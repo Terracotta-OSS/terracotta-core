@@ -52,7 +52,7 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
   }
 
   @Override
-  public T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
+  public T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory<T> factory, String name,
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
     distributedTypeFactory.validateConfig(configuration);
