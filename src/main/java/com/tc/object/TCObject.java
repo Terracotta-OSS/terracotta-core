@@ -6,6 +6,8 @@ package com.tc.object;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 
+import java.io.IOException;
+
 /**
  * Terracotta class attached to each shared instance Object
  */
@@ -24,11 +26,11 @@ public interface TCObject {
   public ObjectID getObjectID();
 
   /**
-   * Takes a DNA strand applies it
+   * Takes a DNA strand and applies it
    * 
    * @throws ClassNotFoundException If class not found
    */
-  public void hydrate(DNA from) throws ClassNotFoundException;
+  public void apply(DNA dna) throws ClassNotFoundException, IOException;
 
   /**
    * Get version of this object instance
@@ -53,7 +55,7 @@ public interface TCObject {
    * Unset the "is new" flag. This should only be done by one thread ever (namely the thread that first ever commits
    * this object)
    */
-  public void setNotNew();
+   public void setNotNew();
 
   /**
    * Dehydate the entire state of the peer object to the given writer
@@ -61,7 +63,5 @@ public interface TCObject {
   public void dehydrate(DNAWriter writer);
 
   public String getClassName();
-
-  public Class<?> getPeerClass();
   
 }
