@@ -3,8 +3,6 @@
  */
 package com.terracotta.management.l1bridge;
 
-import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
-import com.terracotta.management.l1bridge.util.RemoteCallerV2Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -40,18 +38,12 @@ public class RemoteCallerV2 extends RemoteCaller {
 
   public RemoteCallerV2(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService, ExecutorService executorService, RequestTicketMonitor ticketMonitor, UserService userService, TimeoutService timeoutService) {
     super(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService);
-    this.remoteCallerUtility = new RemoteCallerV2Util();
-  }
-
-  //For testing
-  public RemoteCallerV2(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService, ExecutorService executorService, RequestTicketMonitor ticketMonitor, UserService userService, TimeoutService timeoutService,RemoteCallerUtility remoteCallerUtility) {
-    super(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService,remoteCallerUtility);
   }
 
   public <T extends AbstractEntityV2> ResponseEntityV2<T> fanOutResponseCall(final String serviceAgency, Set<String> nodes, final String serviceName, final Method method, final Object[] args) throws ServiceExecutionException {
     final UserInfo userInfo = contextService.getUserInfo();
     Map<String, Future<ResponseEntityV2<T>>> futures = new HashMap<String, Future<ResponseEntityV2<T>>>();
-    final Set<String> clientUUIDs = fetchClientUUIDs();
+
     for (final String node : nodes) {
       if (node.equals(AbstractEntityV2.EMBEDDED_AGENT_ID)) { continue; }
       try {
@@ -70,7 +62,7 @@ public class RemoteCallerV2 extends RemoteCaller {
             }
 
             RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
-                serviceName, method.getName(), method.getParameterTypes(), args,clientUUIDs);
+                serviceName, method.getName(), method.getParameterTypes(), args);
             byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
             return deserializeAndRewriteAgentId(bytes, node);
           }
@@ -127,15 +119,5 @@ public class RemoteCallerV2 extends RemoteCaller {
     } else {
       super.rewriteAgentId(obj, agentId);
     }
-  }
-
-  protected Set<String> fetchClientUUIDs(){
-    Set<String> clientUUIDs = null;
-    try {
-      clientUUIDs = this.remoteCallerUtility.fetchClientUUIDs();
-    } catch (ServiceExecutionException e) {
-      LOG.error("Failed to fetch client UUIDS ", e);
-    }
-    return clientUUIDs;
   }
 }

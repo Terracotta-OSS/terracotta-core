@@ -132,7 +132,6 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     serviceClasses.put(ShutdownService.class, new ShutdownServiceImpl(serverManagementService));
     serviceClasses.put(JmxService.class, new JmxServiceImpl(serverManagementService));
     serviceClasses.put(LicenseService.class, new LicenseServiceImpl(serverManagementService));
-    serviceClasses.put(ClientManagementService.class, clientManagementService);
 
     /// L1 bridge and Security Services ///
     RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, serverManagementService);

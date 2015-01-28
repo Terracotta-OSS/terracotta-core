@@ -130,7 +130,6 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
     serviceClasses.put(ShutdownServiceV2.class, new ShutdownServiceImplV2(serverManagementService));
     serviceClasses.put(JmxServiceV2.class, new JmxServiceImplV2(serverManagementService));
     serviceClasses.put(LicenseServiceV2.class, new LicenseServiceImplV2(serverManagementService));
-    serviceClasses.put(ClientManagementServiceV2.class,clientManagementService);
 
     /// L1 bridge and Security Services ///
 

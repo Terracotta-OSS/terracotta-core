@@ -3,7 +3,6 @@
  */
 package com.terracotta.management.l1bridge;
 
-import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
@@ -37,14 +36,6 @@ public class RemoteAgentService implements AgentService {
                             UserService userService, TimeoutService timeoutService, L1MBeansSource l1MBeansSource) {
     this.l1MBeansSource = l1MBeansSource;
     this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService);
-  }
-
-  //For testing
-  public RemoteAgentService(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
-                            ExecutorService executorService, RequestTicketMonitor ticketMonitor,
-                            UserService userService, TimeoutService timeoutService, L1MBeansSource l1MBeansSource,RemoteCallerUtility remoteCallerUtility) {
-    this.l1MBeansSource = l1MBeansSource;
-    this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService,remoteCallerUtility);
   }
 
   @Override

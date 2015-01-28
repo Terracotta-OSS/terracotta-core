@@ -1,6 +1,5 @@
 package com.terracotta.management.l1bridge;
 
-import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +20,6 @@ import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -117,9 +115,8 @@ public class RemoteAgentServiceTest {
     ame.setAgencyOf("Tst");
     ame.setVersion("1.2.3");
     when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), any(RemoteCallDescriptor.class))).thenReturn(serialize(Collections.singleton(ame)));
-    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
-    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
-    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource,remoteCallerUtility);
+
+    RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
 
     Collection<AgentMetadataEntity> agents = remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
     assertThat(agents.size(), is(1));
