@@ -25,6 +25,8 @@ import com.tc.util.Conversion;
 import java.io.IOException;
 
 public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
+  private static final LogicalOperation[] LOGICAL_OPERATION_VALUES = LogicalOperation.values();
+
   private static final DNAEncodingInternal DNA_STORAGE_ENCODING  = new StorageDNAEncodingImpl();
 
   private final ObjectStringSerializer     serializer;
@@ -170,7 +172,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
     if (!input.readBoolean()) {
       logicalChangeID = new LogicalChangeID(input.readLong());
     }
-    final LogicalOperation method = LogicalOperation.values()[this.input.readInt()];
+    final LogicalOperation method = LOGICAL_OPERATION_VALUES[this.input.readInt()];
     final int paramCount = this.input.read();
     if (paramCount < 0) { throw new AssertionError("Invalid param count:" + paramCount); }
     final Object[] params = new Object[paramCount];
