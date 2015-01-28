@@ -42,7 +42,7 @@ public class VersionizedDNAWrapperTest {
     final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, "loader description");
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
-    final LogicalAction action2 = new LogicalAction(LogicalOperation.PUT, new Object[] { "key", "value" });
+    final LogicalAction action2 = new LogicalAction(LogicalOperation.INVOKE_WITH_PAYLOAD, new Object[] { "key", "value" });
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
     dnaWriter.addLogicalAction(action2.getLogicalOperation(), action2.getParameters(), LogicalChangeID.NULL_ID);
