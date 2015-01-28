@@ -54,7 +54,7 @@ public class DNAImplTest {
     final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, isDelta);
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
-    final LogicalAction action2 = new LogicalAction(LogicalOperation.INVOKE_WITH_PAYLOAD, new Object[] { "key", "value" });
+    final LogicalAction action2 = new LogicalAction(LogicalOperation.FOR_TESTING_ONLY, new Object[] { "key", "value" });
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
  
 
