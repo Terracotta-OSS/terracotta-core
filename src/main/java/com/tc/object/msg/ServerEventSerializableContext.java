@@ -19,6 +19,8 @@ import java.io.IOException;
  */
 class ServerEventSerializableContext implements TCSerializable<ServerEventSerializableContext> {
 
+  private static final ServerEventType[] SERVER_EVENT_TYPE_VALUES = ServerEventType.values();
+
   private static final DNAEncoding serializer = new SerializerDNAEncodingImpl();
 
   private ServerEvent event;
@@ -54,7 +56,7 @@ class ServerEventSerializableContext implements TCSerializable<ServerEventSerial
   public ServerEventSerializableContext deserializeFrom(TCByteBufferInput in) throws IOException {
     try {
       int index = (Integer) serializer.decode(in);
-      final ServerEventType type = ServerEventType.values()[index];
+      final ServerEventType type = SERVER_EVENT_TYPE_VALUES[index];
       final String destination = (String) serializer.decode(in);
       final Object key = serializer.decode(in);
       final byte[] value = (byte[]) serializer.decode(in);

@@ -31,6 +31,9 @@ import java.util.Set;
  */
 public class LockRequestMessage extends DSOMessageBase implements MultiThreadedEventContext {
 
+  private static final RequestType[] REQUEST_TYPE_VALUES = RequestType.values();
+  private static final ServerLockLevel[] SERVER_LOCK_LEVEL_VALUES = ServerLockLevel.values();
+  
   private final static byte LOCK_ID                = 1;
   private final static byte LOCK_LEVEL             = 2;
   private final static byte THREAD_ID              = 3;
@@ -144,7 +147,7 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
         return true;
       case LOCK_LEVEL:
         try {
-          lockLevel = ServerLockLevel.values()[getByteValue()];
+          lockLevel = SERVER_LOCK_LEVEL_VALUES[getByteValue()];
         } catch (ArrayIndexOutOfBoundsException e) {
           return false;
         }
@@ -154,7 +157,7 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
         return true;
       case REQUEST_TYPE:
         try {
-          requestType = RequestType.values()[getByteValue()];
+          requestType = REQUEST_TYPE_VALUES[getByteValue()];
         } catch (ArrayIndexOutOfBoundsException e) {
           return false;
         }

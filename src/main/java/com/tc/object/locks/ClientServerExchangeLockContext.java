@@ -14,6 +14,8 @@ import com.tc.object.locks.ServerLockContext.Type;
 import java.io.IOException;
 
 public class ClientServerExchangeLockContext implements TCSerializable<ClientServerExchangeLockContext> {
+  private static final State[] STATE_VALUES = State.values();
+  
   private LockID   lockID;
   private NodeID   nodeID;
   private ThreadID threadID;
@@ -88,7 +90,7 @@ public class ClientServerExchangeLockContext implements TCSerializable<ClientSer
     ns.deserializeFrom(input);
     nodeID = ns.getNodeID();
     threadID = new ThreadID(input.readLong());
-    state = State.values()[input.readInt()];
+    state = STATE_VALUES[input.readInt()];
     if (state.getType() == Type.WAITER || state.getType() == Type.TRY_PENDING) {
       this.timeout = input.readLong();
     } else {

@@ -22,6 +22,9 @@ import java.util.Collection;
 
 public class LockResponseMessage extends DSOMessageBase implements MultiThreadedEventContext {
 
+  private static final ServerLockLevel[] SERVER_LOCK_LEVEL_VALUES = ServerLockLevel.values();
+  private static final ResponseType[] RESPONSE_TYPE_VALUES = ResponseType.values();
+  
   private static final byte TYPE              = 1;
   private static final byte THREAD_ID         = 2;
   private static final byte LOCK_ID           = 3;
@@ -97,7 +100,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
     switch (name) {
       case TYPE:
         try {
-          responseType = ResponseType.values()[getByteValue()];
+          responseType = RESPONSE_TYPE_VALUES[getByteValue()];
         } catch (ArrayIndexOutOfBoundsException e) {
           return false;
         }
@@ -112,7 +115,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
         return true;
       case LOCK_LEVEL:
         try {
-          lockLevel = ServerLockLevel.values()[getByteValue()];
+          lockLevel = SERVER_LOCK_LEVEL_VALUES[getByteValue()];
         } catch (ArrayIndexOutOfBoundsException e) {
           return false;
         }

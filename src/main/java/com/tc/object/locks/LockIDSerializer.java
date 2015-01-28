@@ -11,6 +11,8 @@ import com.tc.object.locks.LockID.LockIDType;
 import java.io.IOException;
 
 public class LockIDSerializer implements TCSerializable<LockIDSerializer> {
+  private static final LockIDType[] LOCK_ID_TYPE_VALUES = LockIDType.values();
+  
   private LockID lockID;
 
   public LockIDSerializer() {
@@ -35,7 +37,7 @@ public class LockIDSerializer implements TCSerializable<LockIDSerializer> {
 
   private LockID getImpl(byte type) {
     try {
-      switch (LockIDType.values()[type]) {
+      switch (LOCK_ID_TYPE_VALUES[type]) {
         case LONG:
           return new LongLockID();
         case STRING:
