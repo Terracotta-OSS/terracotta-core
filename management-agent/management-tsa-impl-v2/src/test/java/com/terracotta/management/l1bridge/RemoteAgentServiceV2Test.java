@@ -1,5 +1,6 @@
 package com.terracotta.management.l1bridge;
 
+import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -60,8 +62,9 @@ public class RemoteAgentServiceV2Test {
       put("Agency", "Tst");
       put("Version", "1.2.3");
     }});
-
-    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource,remoteCallerUtility);
 
     ResponseEntityV2<AgentEntityV2> agents = remoteAgentService.getAgents(Collections.<String>emptySet());
     assertThat(agents.getEntities().size(), is(1));
@@ -114,8 +117,9 @@ public class RemoteAgentServiceV2Test {
     ResponseEntityV2<AgentMetadataEntityV2> responseEntity = new ResponseEntityV2<AgentMetadataEntityV2>();
     responseEntity.getEntities().add(ame);
     when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), any(RemoteCallDescriptor.class))).thenReturn(serialize(responseEntity));
-
-    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteAgentServiceV2 remoteAgentService = new RemoteAgentServiceV2(remoteAgentBridgeService, new NullContextService(), executorService, new NullRequestTicketMonitor(), new NullUserService(), new TimeoutServiceImpl(1000), l1MBeansSource,remoteCallerUtility);
 
     ResponseEntityV2<AgentMetadataEntityV2> agents = remoteAgentService.getAgentsMetadata(Collections.<String>emptySet());
     assertThat(agents.getEntities().size(), is(1));

@@ -4,6 +4,7 @@
  */
 package com.terracotta.management.l1bridge;
 
+import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
 import org.terracotta.management.resource.ErrorEntity;
 import org.terracotta.management.resource.ResponseEntityV2;
 
@@ -40,6 +41,18 @@ public class RemoteServiceStubGeneratorV2 {
     this.l1MBeansSource = l1MBeansSource;
     this.remoteCaller = new RemoteCallerV2(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
   }
+
+  //for testing
+  public RemoteServiceStubGeneratorV2(RequestTicketMonitor requestTicketMonitor, UserService userService,
+                                      ContextService contextService, RemoteRequestValidator requestValidator,
+                                      RemoteAgentBridgeService remoteAgentBridgeService, ExecutorService executorService,
+                                      TimeoutService timeoutService, L1MBeansSource l1MBeansSource,RemoteCallerUtility remoteCallerUtility) {
+    this.requestValidator = requestValidator;
+    this.l1MBeansSource = l1MBeansSource;
+    this.remoteCaller = new RemoteCallerV2(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
+  }
+
+
 
   public <T> T newRemoteService(Class<T> clazz, String agency) {
     return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { clazz }, new RemoteInvocationHandler(clazz.getName(), agency));

@@ -1,5 +1,6 @@
 package com.terracotta.management.l1bridge;
 
+import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -52,6 +53,7 @@ public class RemoteServiceStubGeneratorTest {
     executorService.shutdown();
   }
 
+
   @Test
   public void testPassiveProxyingToActive() throws Exception {
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
@@ -80,7 +82,9 @@ public class RemoteServiceStubGeneratorTest {
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource,remoteCallerUtility);
 
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteRequestValidator.getValidatedNodes()).thenReturn(new HashSet<String>(Arrays.asList("node_cache", "node1_session", "node2_session")));
@@ -111,12 +115,12 @@ public class RemoteServiceStubGeneratorTest {
   public void testAgencyFilteringWithSingleNode() throws Exception {
     List<CacheRepresentable> caches = Arrays.asList(new CacheRepresentable("cache-1"), new CacheRepresentable("cache-2"), new CacheRepresentable("cache-3"));
     final byte[] serializedCaches = serialize(caches);
-
     RemoteRequestValidator remoteRequestValidator = mock(RemoteRequestValidator.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     L1MBeansSource l1MBeansSource = mock(L1MBeansSource.class);
-    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource);
-
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(new NullRequestTicketMonitor(), new NullUserService(), new NullContextService(), remoteRequestValidator, remoteAgentBridgeService, executorService, new TimeoutServiceImpl(1000), l1MBeansSource,remoteCallerUtility);
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteRequestValidator.getValidatedNodes()).thenReturn(new HashSet<String>(Arrays.asList("node_cache")));
     when(remoteRequestValidator.getSingleValidatedNode()).thenReturn("node_cache");

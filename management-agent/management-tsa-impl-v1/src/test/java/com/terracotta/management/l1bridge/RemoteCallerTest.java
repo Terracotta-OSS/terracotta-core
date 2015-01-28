@@ -1,5 +1,6 @@
 package com.terracotta.management.l1bridge;
 
+import com.terracotta.management.l1bridge.util.RemoteCallerUtility;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -42,6 +43,7 @@ import static org.mockito.Mockito.when;
  * @author Ludovic Orban
  */
 public class RemoteCallerTest {
+
 
   private final static byte[] SERIALIZED_AGENT_ENTITY;
   private final static byte[] SERIALIZED_AGENT_ENTITY_COLLECTION;
@@ -86,14 +88,14 @@ public class RemoteCallerTest {
     TimeoutService timeoutService = mock(TimeoutService.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, null, Executors.newCachedThreadPool(),
-        null, null, timeoutService);
+            null, null, timeoutService);
 
     Map<String, String> agentNodeDetails = new HashMap<String, String>();
     agentNodeDetails.put("Version", "123");
     agentNodeDetails.put("Agency", "test");
 
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("localhost.home_59822");}};
-            when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
 
     when(remoteAgentBridgeService.getRemoteAgentNodeDetails("localhost.home_59822")).thenReturn(agentNodeDetails);
     when(timeoutService.getCallTimeout()).thenReturn(1000L);
@@ -113,7 +115,9 @@ public class RemoteCallerTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
     RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
     UserService userService = mock(UserService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
 
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
@@ -134,7 +138,9 @@ public class RemoteCallerTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
     RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
     UserService userService = mock(UserService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
 
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
@@ -158,7 +164,9 @@ public class RemoteCallerTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
     RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
     UserService userService = mock(UserService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
 
     when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
@@ -205,7 +213,9 @@ public class RemoteCallerTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
     RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
     UserService userService = mock(UserService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
 
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");}};
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
@@ -255,7 +265,9 @@ public class RemoteCallerTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
     RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
     UserService userService = mock(UserService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
 
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");add("test-nodename-4");}};
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
@@ -311,7 +323,9 @@ public class RemoteCallerTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
     RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
     UserService userService = mock(UserService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+    RemoteCallerUtility remoteCallerUtility = mock(RemoteCallerUtility.class);
+    when(remoteCallerUtility.fetchClientUUIDs()).thenReturn(new HashSet<String>());
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService,remoteCallerUtility);
 
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");add("test-nodename-4");}};
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
