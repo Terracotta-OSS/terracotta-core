@@ -8,27 +8,9 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * A general purpose assertion utility. By default it is on, but you can disable the throwing of exceptions by giving
- * the system property "tcassert" a value of 'false'.
+ * A general purpose assertion utility
  */
 public class Assert {
-
-  private static final String  ASSERT_PROPERTY_NAME = "tcassert";
-
-  // When (if) we want to run *without* assertions enabled by default, use the line below to initialize instead
-  // private static final boolean enabled = Boolean.getBoolean(ASSERT_PROPERTY_NAME);
-  //
-  // NOTE: We need to be VERY careful about casually turning off assertions. It's one thing to make the assertions not
-  // throw errors (which the current disable/enable mechanism does). It's entirely something different to remove the
-  // calls to assertions. At the time of this writing, there are state modifying method calls in the code base that are
-  // parameters to these assert method. Removing the call altogether would most certainly change the logic of the system
-  // in potentially silent and catastrophic ways
-  private static final boolean enabled              = Boolean.valueOf(System.getProperty(ASSERT_PROPERTY_NAME, "true"))
-                                                        .booleanValue();
-
-  private static boolean isEnabled() {
-    return enabled;
-  }
 
   /**
    * This returns an exception, instead of throwing one, so that you can do (e.g.): <code>
@@ -65,7 +47,7 @@ public class Assert {
    * @param expr Expression
    */
   public static void eval(boolean expr) {
-    if ((!expr) && isEnabled()) { throw failure("Assertion failed"); }
+    if (!expr) { throw failure("Assertion failed"); }
     return;
   }
 
@@ -76,7 +58,7 @@ public class Assert {
    * @param message Message for assertion error if false
    */
   public static void eval(Object message, boolean expr) {
-    if ((!expr) && isEnabled()) { throw failure("Assertion failed: " + StringUtil.safeToString(message)); }
+    if (!expr) { throw failure("Assertion failed: " + StringUtil.safeToString(message)); }
     return;
   }
 
@@ -135,7 +117,7 @@ public class Assert {
    * @param what Message for error
    */
   public static void assertNull(Object what, Object o) {
-    if ((o != null) && isEnabled()) { throw failure(StringUtil.safeToString(what) + " was not null"); }
+    if (o != null) { throw failure(StringUtil.safeToString(what) + " was not null"); }
   }
 
   /**
@@ -145,7 +127,7 @@ public class Assert {
    * @param what Message for error
    */
   public static void assertNotNull(Object what, Object o) {
-    if ((o == null) && isEnabled()) { throw new NullPointerException(StringUtil.safeToString(what) + " is null"); }
+    if (o == null) { throw new NullPointerException(StringUtil.safeToString(what) + " is null"); }
   }
 
   /**
@@ -163,7 +145,6 @@ public class Assert {
    * @param array Array
    */
   public static void assertNoNullElements(Object[] array) {
-    if (!isEnabled()) return;
     assertNotNull(array);
 
     for (int i = 0; i < array.length; i++) {
@@ -177,7 +158,6 @@ public class Assert {
    * @param array Array of strings
    */
   public static void assertNoBlankElements(String[] array) {
-    if (!isEnabled()) return;
     assertNotNull(array);
 
     for (String s : array)
@@ -192,7 +172,7 @@ public class Assert {
    */
   public static void assertNotEmpty(Object what, String s) {
     assertNotNull(what, s);
-    if ((s.length() == 0) && isEnabled()) throw new IllegalArgumentException(StringUtil.safeToString(what)
+    if (s.length() == 0) throw new IllegalArgumentException(StringUtil.safeToString(what)
                                                                              + " is empty");
   }
 
@@ -213,7 +193,7 @@ public class Assert {
    */
   public static void assertNotBlank(Object what, String s) {
     assertNotEmpty(what, s);
-    if ((s.trim().length() == 0) && isEnabled()) throw new IllegalArgumentException(StringUtil.safeToString(what)
+    if (s.trim().length() == 0) throw new IllegalArgumentException(StringUtil.safeToString(what)
                                                                                     + " is blank");
   }
 
@@ -248,7 +228,7 @@ public class Assert {
    * @param actual Actual value
    */
   public static void assertEquals(int expected, int actual) {
-    if (expected != actual && isEnabled()) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+    if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
 
   /**
@@ -269,7 +249,7 @@ public class Assert {
    * @param msg Message, should be non-null
    */
   public static void assertEquals(Object msg, int expected, int actual) {
-    if (expected != actual && isEnabled()) { throw new TCAssertionError(msg + ": Expected <" + expected + "> but got <"
+    if (expected != actual) { throw new TCAssertionError(msg + ": Expected <" + expected + "> but got <"
                                                                         + actual + ">"); }
   }
 
@@ -280,7 +260,7 @@ public class Assert {
    * @param actual Actual value
    */
   public static void assertEquals(double expected, double actual) {
-    if (expected != actual && isEnabled()) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+    if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
 
   /**
@@ -291,7 +271,7 @@ public class Assert {
    * @param epsilon Maximum allowed difference between expected and actual
    */
   public static void assertEquals(double expected, double actual, double epsilon) {
-    if (Math.abs(actual - expected) > Math.abs(epsilon) && isEnabled()) { throw new TCAssertionError("Expected <" + expected
+    if (Math.abs(actual - expected) > Math.abs(epsilon)) { throw new TCAssertionError("Expected <" + expected
         + "> but got <" + actual + ">"); }
   }
 
@@ -302,7 +282,7 @@ public class Assert {
    * @param actual Actual value
    */
   public static void assertEquals(boolean expected, boolean actual) {
-    if (expected != actual && isEnabled()) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+    if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
 
   /**
@@ -313,7 +293,7 @@ public class Assert {
    */
   public static void assertEquals(byte[] expected, byte[] actual) {
     boolean expr = (expected == null) ? actual == null : Arrays.equals(expected, actual);
-    if (!expr && isEnabled()) { throw new TCAssertionError("Got differing byte[]s"); }
+    if (!expr) { throw new TCAssertionError("Got differing byte[]s"); }
   }
 
   /**
@@ -328,7 +308,7 @@ public class Assert {
 
   public static void assertEquals(Object msg, Object expected, Object actual) {
     boolean expr = (expected == null) ? actual == null : expected.equals(actual);
-    if (!expr && isEnabled()) { throw new TCAssertionError((msg != null ? (msg + ": ") : "") + "Expected <"
+    if (!expr) { throw new TCAssertionError((msg != null ? (msg + ": ") : "") + "Expected <"
                                                            + expected + "> but got <" + actual + ">"); }
   }
 
@@ -366,10 +346,9 @@ public class Assert {
     for (Object element : objectArray) {
       if (element == requiredElement) return;
     }
-    if (isEnabled()) {
-      throw failure("Element<" + requiredElement + "> not found in array "
-          + StringUtil.toString(objectArray, ",", "<", ">"));
-    }
+
+    throw failure("Element<" + requiredElement + "> not found in array "
+                  + StringUtil.toString(objectArray, ",", "<", ">"));
   }
 
   public static void assertDoesNotContainsElement(Object[] objectArray, Object element) {
@@ -385,9 +364,7 @@ public class Assert {
    * Throw assertion error with generic message
    */
   public static void fail() {
-    if (isEnabled()) {
-      throw failure("generic failure");
-    }
+    throw failure("generic failure");
   }
 
   /**
@@ -396,35 +373,6 @@ public class Assert {
    * @param message Message
    */
   public static void fail(String message) {
-    if (isEnabled()) {
-      throw failure(message);
-    }
-  }
-
-  /**
-   * Assert precondition
-   *
-   * @param v Precondition
-   */
-  public static void pre(boolean v) {
-    if (!v && isEnabled()) throw new TCAssertionError("Precondition failed");
-  }
-
-  /**
-   * Assert postcondition
-   *
-   * @param v Postcondition
-   */
-  public static void post(boolean v) {
-    if (!v && isEnabled()) throw new TCAssertionError("Postcondition failed");
-  }
-
-  /**
-   * Assert invariant
-   *
-   * @param v Invariant
-   */
-  public static void inv(boolean v) {
-    if (!v && isEnabled()) throw new TCAssertionError("Invariant failed");
+    throw failure(message);
   }
 }
