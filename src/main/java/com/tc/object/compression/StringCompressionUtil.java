@@ -186,14 +186,6 @@ public class StringCompressionUtil {
       throw new AssertionError(e);
     }
   }
-  
-  public static String uncompressedBinToString(byte[] uncompressedBytes) {
-    try {
-      return new String(uncompressedBytes, "UTF-8");
-    } catch(UnsupportedEncodingException e) {
-      throw new AssertionError(e.getMessage());
-    }
-  }
 
   
   /**

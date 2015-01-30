@@ -34,12 +34,6 @@ public class GarbageCollectionInfo implements TCSerializable<GarbageCollectionIn
   private long                              rescue2Time           = NOT_INITIALIZED;
   private Type                              type                  = Type.NULL_GC;
 
-  public static final GarbageCollectionInfo NULL_INFO             = new GarbageCollectionInfo(
-                                                                                              new GarbageCollectionID(
-                                                                                                                      NULL_INITIALIZED,
-                                                                                                                      "NULL INITIALIZED"),
-                                                                                              Type.NULL_GC);
-
   public GarbageCollectionInfo() {
     // for serialization
   }

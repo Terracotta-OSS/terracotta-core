@@ -41,12 +41,6 @@ public class L1JmxReady extends DSOMessageBase {
     this.tunneledDomains = domains;
   }
 
-  public L1JmxReady createResponse() {
-    L1JmxReady rv = (L1JmxReady) getChannel().createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
-    rv.uuid = getUUID();
-    return rv;
-  }
-
   @Override
   protected void dehydrateValues() {
     putNVPair(UUID, uuid.toString());

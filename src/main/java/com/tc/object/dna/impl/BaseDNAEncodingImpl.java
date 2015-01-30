@@ -68,8 +68,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   protected static final byte                 TYPE_ID_ARRAY                        = 14;
   protected static final byte                 TYPE_ID_JAVA_LANG_CLASS              = 15;
   protected static final byte                 TYPE_ID_JAVA_LANG_CLASS_HOLDER       = 16;
-  protected static final byte                 TYPE_ID_JAVA_LANG_CLASSLOADER        = 20;
-  protected static final byte                 TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
   protected static final byte                 TYPE_ID_ENUM                         = 22;
   protected static final byte                 TYPE_ID_ENUM_HOLDER                  = 23;
   protected static final byte                 TYPE_ID_STRING_COMPRESSED            = 25;

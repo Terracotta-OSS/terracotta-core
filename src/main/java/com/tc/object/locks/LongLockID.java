@@ -32,13 +32,6 @@ public class LongLockID implements LockID {
     return getClass().getSimpleName() + "(" + id + ")";
   }
 
-  /**
-   * @return String value of id value
-   */
-  public String asString() {
-    return Long.toString(id);
-  }
-
   @Override
   public int hashCode() {
     return ((int) id) ^ ((int) (id >>> 32));

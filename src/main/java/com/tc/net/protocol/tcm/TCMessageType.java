@@ -54,17 +54,17 @@ public final class TCMessageType {
   public static final int           TYPE_COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE   = 45;
   public static final int           TYPE_GROUP_WRAPPER_MESSAGE                        = 46;
   public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                      = 47;
-  public static final int           TYPE_NODES_WITH_OBJECTS_MESSAGE                   = 48;
-  public static final int           TYPE_NODES_WITH_OBJECTS_RESPONSE_MESSAGE          = 49;
-  public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_MESSAGE             = 50;
-  public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE    = 51;
-  public static final int           TYPE_NODE_META_DATA_MESSAGE                       = 52;
-  public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE              = 53;
+  // public static final int           TYPE_NODES_WITH_OBJECTS_MESSAGE                   = 48;
+  // public static final int           TYPE_NODES_WITH_OBJECTS_RESPONSE_MESSAGE          = 49;
+  // public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_MESSAGE             = 50;
+  // public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE    = 51;
+  // public static final int           TYPE_NODE_META_DATA_MESSAGE                       = 52;
+  // public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE              = 53;
   // public static final int TYPE_STRIPE_ID_MAP_MESSAGE = 54;
   public static final int           TYPE_SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE      = 55;
   public static final int           TYPE_TUNNELED_DOMAINS_CHANGED_MESSAGE             = 60;
-  public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
-  public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
+  // public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
+  // public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
   public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
   public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 70;
   public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
@@ -98,14 +98,6 @@ public final class TCMessageType {
   public static final TCMessageType COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE        = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                             = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();
-  public static final TCMessageType NODES_WITH_OBJECTS_MESSAGE                        = new TCMessageType();
-  public static final TCMessageType NODES_WITH_OBJECTS_RESPONSE_MESSAGE               = new TCMessageType();
-  public static final TCMessageType NODES_WITH_KEYS_MESSAGE                           = new TCMessageType();
-  public static final TCMessageType NODES_WITH_KEYS_RESPONSE_MESSAGE                  = new TCMessageType();
-  public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_MESSAGE                  = new TCMessageType();
-  public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE         = new TCMessageType();
-  public static final TCMessageType NODE_META_DATA_MESSAGE                            = new TCMessageType();
-  public static final TCMessageType NODE_META_DATA_RESPONSE_MESSAGE                   = new TCMessageType();
   public static final TCMessageType SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE           = new TCMessageType();
   public static final TCMessageType TUNNELED_DOMAINS_CHANGED_MESSAGE                  = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
@@ -117,10 +109,6 @@ public final class TCMessageType {
 
   public static TCMessageType getInstance(final int i) {
     return typeMap.get(i);
-  }
-
-  public static TCMessageType[] getAllMessageTypes() {
-    return allTypes.clone();
   }
 
   public int getType() {
@@ -142,7 +130,6 @@ public final class TCMessageType {
   //
   // //////////////////////////////////////////////////////
   private static final Map<Integer, TCMessageType> typeMap    = new HashMap<Integer, TCMessageType>();
-  private static final TCMessageType[]   allTypes;
   private static final String            typePrefix = "TYPE_";
 
   private int                            type;
@@ -287,10 +274,10 @@ public final class TCMessageType {
 
     return rv;
   }
-
+  
   static {
     try {
-      allTypes = init();
+      init();
     } catch (final Exception e) {
       e.printStackTrace();
       throw new TCRuntimeException(e);

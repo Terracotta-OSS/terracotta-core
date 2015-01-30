@@ -7,7 +7,6 @@ package com.tc.object;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -505,23 +504,6 @@ public enum LiteralValues {
     if (obj == null) { return false; }
     LiteralValues i = valueFor(obj);
     return i != OBJECT;
-  }
-
-  // for tests
-  public static Collection<String> getTypes() {
-    return Collections.unmodifiableSet(literalsMap.keySet());
-  }
-
-  /**
-   * Calculate a stable hash code for the object. Many literals (like Integer) have stable
-   * hash codes already, but some (like Class) do not.
-   * 
-   * @param value must refer to an object for which {@link #isLiteralInstance()} returns true.
-   *        This implies that value must be non-null.
-   */
-  public static int calculateDsoHashCode(Object value) {
-    final LiteralValues type = valueFor(value);
-    return type.calculateDsoHashCodeForLiteral(value);
   }
 
 }

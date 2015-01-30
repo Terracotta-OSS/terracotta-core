@@ -12,11 +12,6 @@ import java.io.IOException;
  * Terracotta class attached to each shared instance Object
  */
 public interface TCObject {
-  /** Indicates null object identifier */
-  public static final Long NULL_OBJECT_ID = Long.valueOf(-1);
-
-  /** Indicates null field index */
-  public static final int  NULL_INDEX     = -1;
 
   /**
    * Get the object identifier

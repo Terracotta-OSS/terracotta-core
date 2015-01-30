@@ -12,9 +12,6 @@ import java.io.IOException;
 public class StringLockID implements LockID {
   private static final long        serialVersionUID = 0x159578a476cef87dL;
 
-  @Deprecated
-  public final static StringLockID NULL_ID          = new StringLockID("null id");
-
   private String                   id;
 
   public StringLockID() {
@@ -29,13 +26,6 @@ public class StringLockID implements LockID {
   public StringLockID(final String id) {
     Assert.eval(id != null);
     this.id = id;
-  }
-
-  /**
-   * @return String value of id value
-   */
-  public String asString() {
-    return this.id;
   }
 
   @Override

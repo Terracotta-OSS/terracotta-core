@@ -15,31 +15,6 @@ import java.io.IOException;
 public interface DNAEncoding {
 
   /**
-   * When the policy is set to SERIALIZER then the DNAEncoding.decode() will return the exact Objects that where
-   * encoded. For Example if UTF8ByteDataHolder is serialized to a stream, then when it is deserialized, you get an
-   * UTF8ByteDataHolder object. Same goes for String or ClassHolder etc.
-   * <p>
-   * You may want such a policy in TCObjectInputStream, for example.
-   */
-  public static final byte SERIALIZER = 0x00;
-  /**
-   * When the policy is set to STORAGE then the DNAEncoding.decode() may return Objects that represent the original
-   * objects for performance/memory. For Example if String is serialized to a stream, then when it is deserialized, you
-   * may get UTF8ByteDataHolder instead.
-   * <p>
-   * As the name says, you may want such a policy for storage in the L2.
-   */
-  public static final byte STORAGE    = 0x01;
-  /**
-   * When the policy is set to APPLICATOR then the DNAEncoding.decode() will return the original Objects that were
-   * encoded in the original stream. For Example if UTF8ByteDataHolder is serialized to a stream, then when it is
-   * deserialized, you get a String object.
-   * <p>
-   * You may want such a policy in TCObjectInputStream, for example.
-   */
-  public static final byte APPLICATOR = 0x02;
-
-  /**
    * Encode an object onto an output stream
    * 
    * @param value The object
