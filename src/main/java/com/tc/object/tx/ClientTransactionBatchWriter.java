@@ -8,7 +8,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
-import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
@@ -36,7 +35,6 @@ import java.util.Map.Entry;
 
 public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
-  private final GroupID                         groupID;
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
   private final LinkedHashMap<TransactionID, TransactionBuffer> transactionData = new LinkedHashMap<TransactionID, TransactionBuffer>();
@@ -50,10 +48,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private boolean                               committed              = false;
   private int                                   holders                = 0;
 
-  public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
+  public ClientTransactionBatchWriter(final TxnBatchID batchID,
                                       final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
-                                      final CommitTransactionMessageFactory commitTransactionMessageFactory) {
-    this.groupID = groupID;
+                                      final CommitTransactionMessageFactory commitTransactionMessageFactory) {   
     this.batchID = batchID;
     this.encoding = encoding;
     this.commitTransactionMessageFactory = commitTransactionMessageFactory;
@@ -190,7 +187,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   public void send() {
     final CommitTransactionMessage msg;
     synchronized (this) {
-      msg = this.commitTransactionMessageFactory.newCommitTransactionMessage(this.groupID);
+      msg = this.commitTransactionMessageFactory.newCommitTransactionMessage();
       msg.setBatch(this, this.serializer);
     }
     msg.send();

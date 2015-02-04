@@ -3,8 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.NodeID;
-
 public interface LockRequestMessageFactory {
-  public LockRequestMessage newLockRequestMessage(NodeID nodeID);
+  public LockRequestMessage newLockRequestMessage();
 }

@@ -6,10 +6,7 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
-import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.net.StripeID;
-import com.tc.net.groups.GroupToStripeMapSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -17,9 +14,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements ClientHandshakeAckMessage {
@@ -28,17 +23,11 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private static final byte      ALL_NODES         = 2;
   private static final byte      THIS_NODE_ID      = 3;
   private static final byte      SERVER_VERSION    = 4;
-  private static final byte      GROUP_ID          = 5;
-  private static final byte      STRIPE_ID         = 6;
-  private static final byte      STRIPE_ID_MAP     = 7;
 
   private final Set<NodeID>      allNodes          = new HashSet<NodeID>();
   private boolean                persistentServer;
   private ClientID               thisNodeId;
   private String                 serverVersion;
-  private GroupID                groupID;
-  private StripeID               stripeID;
-  private Map<GroupID, StripeID> stripeIDMap       = new HashMap<GroupID, StripeID>(0);
 
   public ClientHandshakeAckMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                        final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -62,9 +51,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
     putNVPair(THIS_NODE_ID, thisNodeId);
     putNVPair(SERVER_VERSION, serverVersion);
-    putNVPair(GROUP_ID, groupID);
-    putNVPair(STRIPE_ID, stripeID);
-    putNVPair(STRIPE_ID_MAP, new GroupToStripeMapSerializer(stripeIDMap));
   }
 
   @Override
@@ -82,15 +68,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
       case SERVER_VERSION:
         serverVersion = getStringValue();
         return true;
-      case GROUP_ID:
-        groupID = (GroupID) getNodeIDValue();
-        return true;
-      case STRIPE_ID:
-        stripeID = (StripeID) getNodeIDValue();
-        return true;
-      case STRIPE_ID_MAP:
-        stripeIDMap = getObject(new GroupToStripeMapSerializer()).getMap();
-        return true;
       default:
         return false;
     }
@@ -98,15 +75,12 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
   @Override
   public void initialize(final boolean persistent, final Set<? extends NodeID> allNodeIDs, final ClientID thisNodeID,
-                         final String sv, final GroupID l2GroupID, StripeID l2StripeID, Map<GroupID, StripeID> sidMap) {
+                         final String sv) {
     this.persistentServer = persistent;
     this.allNodes.addAll(allNodeIDs);
 
     this.thisNodeId = thisNodeID;
     this.serverVersion = sv;
-    this.groupID = l2GroupID;
-    this.stripeID = l2StripeID;
-    this.stripeIDMap = sidMap;
   }
 
   @Override
@@ -127,20 +101,5 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   @Override
   public String getServerVersion() {
     return serverVersion;
-  }
-
-  @Override
-  public GroupID getGroupID() {
-    return groupID;
-  }
-
-  @Override
-  public StripeID getStripeID() {
-    return this.stripeID;
-  }
-
-  @Override
-  public Map<GroupID, StripeID> getStripeIDMap() {
-    return this.stripeIDMap;
   }
 }

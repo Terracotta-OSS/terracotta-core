@@ -3,10 +3,8 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.NodeID;
-
 public interface CompletedTransactionLowWaterMarkMessageFactory {
   
-  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(NodeID remoteID);
+  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage();
 
 }
