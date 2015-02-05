@@ -11,12 +11,12 @@ import java.util.concurrent.Future;
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ServerEntity entity;
 
-  public PassthroughEndpoint(final ServerEntity entity) {
+  public PassthroughEndpoint(ServerEntity entity) {
     this.entity = entity;
   }
 
   @Override
-  public void setEntityConfiguration(final Serializable entityConfiguration) {
+  public void setEntityConfiguration(Serializable entityConfiguration) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
@@ -26,7 +26,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   @Override
-  public void registerListener(final EndpointListener listener) {
+  public void registerListener(EndpointListener listener) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
@@ -40,13 +40,13 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     private byte[] payload = null;
 
     @Override
-    public InvocationBuilder returnsValue(final boolean returnsValue) {
+    public InvocationBuilder returnsValue(boolean returnsValue) {
       this.returnsValue = returnsValue;
       return this;
     }
 
     @Override
-    public InvocationBuilder payload(final byte[] payload) {
+    public InvocationBuilder payload(byte[] payload) {
       this.payload = payload;
       return this;
     }
