@@ -3,13 +3,13 @@
  */
 package com.tc.objectserver.control;
 
+import com.tc.util.runtime.Vm;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
-import com.tc.util.runtime.Vm;
 
 public class VerboseGCHelper {
 
@@ -47,7 +47,7 @@ public class VerboseGCHelper {
     File verboseGcDir = new File(tempDir, "server-verboseGC");
     verboseGcDir.mkdirs();
     if (!verboseGcDir.exists()) { throw new AssertionError("Failed to create verbose gc logs dir"); }
-    File verboseGcOutputFile = new File(verboseGcDir, "verboseGC-" + (serverName == null ? "" : "(" + serverName + ")")
+    File verboseGcOutputFile = new File(verboseGcDir, "verboseGC-" + (serverName == null ? "" : serverName)
                                                       + mainClassName + "-started-" + getTimestamp() + ".log");
     if (verboseGcOutputFile.exists()) { throw new AssertionError("Verbose gc file: "
                                                                  + verboseGcOutputFile.getAbsolutePath()
