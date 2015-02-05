@@ -30,11 +30,11 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   private static class Serialize {
     private final TCDataOutput out;
 
-    public Serialize(final TCDataOutput out) {
+    public Serialize(TCDataOutput out) {
       this.out = out;
     }
 
-    public boolean writeToTcDataOutput(final Object key, final int value) {
+    public boolean writeToTcDataOutput(Object key, int value) {
       this.out.writeString((String) key);
       this.out.writeInt(value);
       return true;
@@ -46,11 +46,11 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   private static class BytesSerialize {
     private final TCDataOutput out;
 
-    public BytesSerialize(final TCDataOutput out) {
+    public BytesSerialize(TCDataOutput out) {
       this.out = out;
     }
 
-    public boolean write(final Object key, final int value) {
+    public boolean write(Object key, int value) {
       BytesKey bk = (BytesKey) key;
       byte[] b = bk.getBytes();
 
@@ -62,7 +62,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   }
 
   @Override
-  public synchronized void serializeTo(final TCByteBufferOutput serialOutput) {
+  public synchronized void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeInt(this.stringToID.size());
     Serialize serializeProcedure =     new Serialize(serialOutput);
     for (Entry<Object, Integer> entry : stringToID.entrySet()) {
@@ -77,7 +77,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   }
 
   @Override
-  public synchronized ObjectStringSerializer deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public synchronized ObjectStringSerializer deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     final int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
       addStringAndID(serialInput.readString(), serialInput.readInt());
@@ -95,7 +95,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   }
 
   @Override
-  public synchronized void writeString(final TCDataOutput out, final String string) {
+  public synchronized void writeString(TCDataOutput out, String string) {
     int sid = -1;
     if (this.stringToID.containsKey(string)) {
       sid = idForString(string);
@@ -120,12 +120,12 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   }
 
   @Override
-  public synchronized void writeFieldName(final TCDataOutput out, final String fieldName) {
+  public synchronized void writeFieldName(TCDataOutput out, String fieldName) {
     writeString(out, fieldName);
   }
 
   @Override
-  public synchronized String readString(final TCDataInput in) throws IOException {
+  public synchronized String readString(TCDataInput in) throws IOException {
     final int id = in.readInt();
 
     final String string = stringForID(id);
@@ -148,7 +148,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   }
 
   @Override
-  public synchronized String readFieldName(final TCDataInput in) throws IOException {
+  public synchronized String readFieldName(TCDataInput in) throws IOException {
     final int stringID = in.readInt();
 
     final String fieldName = stringForID(stringID);
@@ -156,7 +156,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     return fieldName;
   }
 
-  private void addStringAndID(String name, final int id) {
+  private void addStringAndID(String name, int id) {
     name = name.intern();
     this.stringToID.put(name, id);
     this.idToString.put(id, name);
@@ -167,15 +167,15 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     this.idToBytes.put(id, b);
   }
 
-  private String stringForID(final int id) {
+  private String stringForID(int id) {
     return (String) this.idToString.get(id);
   }
 
-  private int idForString(final String string) {
+  private int idForString(String string) {
     return this.stringToID.get(string);
   }
 
-  private int createID(final String string) {
+  private int createID(String string) {
     Assert.assertNotNull(string);
     final int newID = this.stringToID.size() + 1;
     this.stringToID.put(string, newID);

@@ -12,7 +12,7 @@ import java.util.Map;
 public abstract class MapSerializer<K, V> implements TCSerializable<MapSerializer<K, V>> {
   private final Map<K, V> map;
 
-  protected MapSerializer(final Map<K, V> map) {
+  protected MapSerializer(Map<K, V> map) {
     this.map = map;
   }
 
@@ -25,7 +25,7 @@ public abstract class MapSerializer<K, V> implements TCSerializable<MapSerialize
   protected abstract V deserializeValue(TCByteBufferInput serialInput) throws IOException;
 
   @Override
-  public void serializeTo(final TCByteBufferOutput serialOutput) {
+  public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeInt(map.size());
     for (Map.Entry<K, V> kvEntry : map.entrySet()) {
       serializeKey(kvEntry.getKey(), serialOutput);
@@ -34,7 +34,7 @@ public abstract class MapSerializer<K, V> implements TCSerializable<MapSerialize
   }
 
   @Override
-  public MapSerializer<K, V> deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public MapSerializer<K, V> deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
       map.put(deserializeKey(serialInput), deserializeValue(serialInput));

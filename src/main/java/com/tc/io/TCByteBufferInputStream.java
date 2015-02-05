@@ -91,7 +91,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
    * on the size difference between the original stream and the slice you want)
    */
   @Override
-  public TCByteBufferInput duplicateAndLimit(final int limit) {
+  public TCByteBufferInput duplicateAndLimit(int limit) {
     checkClosed();
 
     if (limit > available()) { throw new IllegalArgumentException("Not enough data left in stream: " + limit + " > "

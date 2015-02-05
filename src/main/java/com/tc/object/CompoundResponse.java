@@ -16,8 +16,8 @@ public class CompoundResponse {
     private final long version;
     private Object data;
 
-    public CompoundResponse(final Object data, final long creationTime, final long lastAccessedTime,
-                            final long timeToIdle, final long timeToLive, final long version) {
+    public CompoundResponse(Object data, long creationTime, long lastAccessedTime,
+                            long timeToIdle, long timeToLive, long version) {
       this.creationTime = creationTime;
       this.lastAccessedTime = lastAccessedTime;
       this.timeToIdle = timeToIdle;
@@ -55,7 +55,7 @@ public class CompoundResponse {
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 

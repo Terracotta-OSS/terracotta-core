@@ -60,7 +60,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.head == null;
   }
 
-  public void addFirst(final E first) {
+  public void addFirst(E first) {
     first.setNext(this.head);
     this.head = first;
     if (this.tail == null) {
@@ -83,7 +83,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.head;
   }
 
-  public void addLast(final E last) {
+  public void addLast(E last) {
     if (this.tail == null) {
       addFirst(last);
       return;
@@ -113,7 +113,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.tail;
   }
 
-  public E remove(final E obj) {
+  public E remove(E obj) {
     E current = null;
     E next = this.head;
 
@@ -175,7 +175,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     }
 
     @Override
-    public void addNext(final E e) {
+    public void addNext(E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.next);
       this.current.setNext(e);
@@ -186,7 +186,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     }
 
     @Override
-    public void addPrevious(final E e) {
+    public void addPrevious(E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.current);
       if (this.prev == null) {

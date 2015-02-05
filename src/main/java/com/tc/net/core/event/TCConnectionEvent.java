@@ -14,7 +14,7 @@ public class TCConnectionEvent {
 
   private final TCConnection connection;
 
-  public TCConnectionEvent(final TCConnection connection) {
+  public TCConnectionEvent(TCConnection connection) {
     this.connection = connection;
   }
 

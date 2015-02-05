@@ -75,7 +75,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     return this.nodeID;
   }
 
-  public void initializeNodeID(ServerID aNodeID, final String ver, final long[] weightsArray) {
+  public void initializeNodeID(ServerID aNodeID, String ver, long[] weightsArray) {
     this.messageType = NODE_ID;
     this.nodeID = aNodeID;
     this.version = ver;

@@ -16,7 +16,7 @@ public class TCConnectionErrorEvent extends TCConnectionEvent {
   private final Exception        exception;
   private final TCNetworkMessage context;
 
-  public TCConnectionErrorEvent(TCConnection connection, final Exception exception, final TCNetworkMessage context) {
+  public TCConnectionErrorEvent(TCConnection connection, Exception exception, TCNetworkMessage context) {
     super(connection);
     this.exception = exception;
     this.context = context;

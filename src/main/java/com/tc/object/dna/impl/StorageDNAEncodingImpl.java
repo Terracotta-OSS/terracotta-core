@@ -14,24 +14,24 @@ public class StorageDNAEncodingImpl extends BaseDNAEncodingImpl {
   }
 
   @Override
-  protected boolean useStringEnumRead(final byte type) {
+  protected boolean useStringEnumRead(byte type) {
     return false;
   }
 
   @Override
-  protected boolean useClassProvider(final byte type, final byte typeToCheck) {
+  protected boolean useClassProvider(byte type, byte typeToCheck) {
     return false;
   }
 
   @Override
-  protected boolean useUTF8String(final byte type) {
+  protected boolean useUTF8String(byte type) {
     return false;
   }
 
   private static class FailureClassProvider implements ClassProvider {
 
     @Override
-    public Class<?> getClassFor(final String className) throws ClassNotFoundException {
+    public Class<?> getClassFor(String className) throws ClassNotFoundException {
       throw new ClassNotFoundException();
     }
 

@@ -51,7 +51,7 @@ public class ResourceManagerThrottleMessage extends DSOMessageBase {
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case EXCEPTION_ID:
         exception = getBooleanValue();

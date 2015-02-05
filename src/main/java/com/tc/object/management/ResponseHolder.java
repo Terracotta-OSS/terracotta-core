@@ -31,7 +31,7 @@ public class ResponseHolder implements TCSerializable<ResponseHolder> {
     serializedException = new byte[0];
   }
 
-  public Exception getException(final ClassLoader classLoader) throws ClassNotFoundException {
+  public Exception getException(ClassLoader classLoader) throws ClassNotFoundException {
     return (Exception)SerializationHelper.deserialize(serializedException, classLoader);
   }
 

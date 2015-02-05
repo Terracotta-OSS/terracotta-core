@@ -78,7 +78,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     header = getNewProtocolHeader();
   }
 
-  protected final TCNetworkMessage processIncomingData(TCConnection source, TCByteBuffer[] data, final int length)
+  protected final TCNetworkMessage processIncomingData(TCConnection source, TCByteBuffer[] data, int length)
       throws TCProtocolException {
     if (mode == MODE_HEADER) { return processHeaderData(source, data); }
 
@@ -97,7 +97,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     return TCByteBufferFactory.getFixedSizedInstancesForLength(false, length);
   }
 
-  private TCNetworkMessage processHeaderData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
+  private TCNetworkMessage processHeaderData(TCConnection source, TCByteBuffer[] data) throws TCProtocolException {
     Assert.eval(data.length == 1);
     Assert.eval(data[0] == this.header.getDataBuffer());
 
@@ -149,7 +149,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     }
   }
 
-  private TCNetworkMessage processPayloadData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
+  private TCNetworkMessage processPayloadData(TCConnection source, TCByteBuffer[] data) throws TCProtocolException {
     for (int i = 0; i < data.length; i++) {
       final TCByteBuffer buffer = data[i];
 

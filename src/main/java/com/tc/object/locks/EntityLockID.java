@@ -16,7 +16,7 @@ public class EntityLockID implements LockID {
     this("UNKNOWN", "UNKNOWN");
   }
 
-  public EntityLockID(final String className, final String entityName) {
+  public EntityLockID(String className, String entityName) {
     this.className = className;
     this.entityName = entityName;
   }
@@ -35,7 +35,7 @@ public class EntityLockID implements LockID {
   }
 
   @Override
-  public int compareTo(final LockID o) {
+  public int compareTo(LockID o) {
     if (o instanceof EntityLockID) {
       return className.compareTo(((EntityLockID) o).getClassName()) + entityName.compareTo(((EntityLockID) o).getEntityName());
     }
@@ -43,18 +43,18 @@ public class EntityLockID implements LockID {
   }
 
   @Override
-  public void serializeTo(final TCByteBufferOutput serialOutput) {
+  public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeString(className);
     serialOutput.writeString(entityName);
   }
 
   @Override
-  public EntityLockID deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public EntityLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     return new EntityLockID(serialInput.readString(), serialInput.readString());
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

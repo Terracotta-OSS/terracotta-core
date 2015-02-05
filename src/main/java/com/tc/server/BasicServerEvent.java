@@ -18,19 +18,19 @@ public final class BasicServerEvent implements VersionedServerEvent {
   private ServerEventType type;
   private byte[] value;
 
-  public BasicServerEvent(final ServerEventType type, final Object key, final String cacheName) {
+  public BasicServerEvent(ServerEventType type, Object key, String cacheName) {
     this(type, key, EMPTY_BYTE_ARRAY, DEFAULT_VERSION, cacheName);
   }
 
-  public BasicServerEvent(final ServerEventType type, final Object key, final byte[] value, final String cacheName) {
+  public BasicServerEvent(ServerEventType type, Object key, byte[] value, String cacheName) {
     this(type, key, value, DEFAULT_VERSION, cacheName);
   }
 
-  public BasicServerEvent(final ServerEventType type, final Object key, final long version, final String cacheName) {
+  public BasicServerEvent(ServerEventType type, Object key, long version, String cacheName) {
     this(type, key, EMPTY_BYTE_ARRAY, version, cacheName);
   }
 
-  public BasicServerEvent(final ServerEventType type, final Object key, final byte[] value, final long version, final String cacheName) {
+  public BasicServerEvent(ServerEventType type, Object key, byte[] value, long version, String cacheName) {
     this.type = type;
     this.key = key;
     this.value = value;
@@ -49,7 +49,7 @@ public final class BasicServerEvent implements VersionedServerEvent {
   }
 
   @Override
-  public void setType(final ServerEventType type) {
+  public void setType(ServerEventType type) {
     this.type = type;
   }
 
@@ -64,7 +64,7 @@ public final class BasicServerEvent implements VersionedServerEvent {
   }
 
   @Override
-  public void setValue(final byte[] value) {
+  public void setValue(byte[] value) {
     this.value = value;
   }
 
@@ -74,7 +74,7 @@ public final class BasicServerEvent implements VersionedServerEvent {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

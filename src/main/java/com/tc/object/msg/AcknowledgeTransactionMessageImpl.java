@@ -25,13 +25,13 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
   private TransactionID     requestID;
   private NodeID            requesterID;
 
-  public AcknowledgeTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out,
-                                           final MessageChannel channel, final TCMessageType type) {
+  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
+                                           MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public AcknowledgeTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
-                                           final TCMessageHeader header, final TCByteBuffer[] data) {
+  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                           TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -42,7 +42,7 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case REQUESTER_ID:
         requesterID = getNodeIDValue();
@@ -56,7 +56,7 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
   }
 
   @Override
-  public void initialize(final NodeID nid, final TransactionID txID) {
+  public void initialize(NodeID nid, TransactionID txID) {
     this.requesterID = nid;
     this.requestID = txID;
   }

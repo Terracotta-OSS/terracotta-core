@@ -107,7 +107,7 @@ public final class TCMessageType {
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_MESSAGE                 = new TCMessageType();
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE        = new TCMessageType();
 
-  public static TCMessageType getInstance(final int i) {
+  public static TCMessageType getInstance(int i) {
     return typeMap.get(i);
   }
 
@@ -139,11 +139,11 @@ public final class TCMessageType {
     // type and name are set automagically in init()
   }
 
-  private void setType(final int type) {
+  private void setType(int type) {
     this.type = type;
   }
 
-  private void setTypeName(final String typeName) {
+  private void setTypeName(String typeName) {
     this.typeName = typeName;
   }
 
@@ -153,7 +153,7 @@ public final class TCMessageType {
   }
 
   @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     if (obj instanceof TCMessageType) {
       final TCMessageType other = (TCMessageType) obj;
       return this.typeName.equals(other.typeName) && (this.type == other.type);

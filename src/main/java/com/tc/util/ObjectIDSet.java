@@ -22,23 +22,23 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
   
   protected static final Comparator<Range> RANGE_COMPARATOR = new Comparator<Range>() {
     @Override
-    public int compare(final Range o1, final Range o2) {
+    public int compare(Range o1, Range o2) {
       return (int) (o1.getStart() - o2.getStart());
     }
   };
 
   @Override
-  public SortedSet<ObjectID> subSet(final ObjectID fromElement, final ObjectID toElement) {
+  public SortedSet<ObjectID> subSet(ObjectID fromElement, ObjectID toElement) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
-  public SortedSet<ObjectID> headSet(final ObjectID toElement) {
+  public SortedSet<ObjectID> headSet(ObjectID toElement) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
-  public SortedSet<ObjectID> tailSet(final ObjectID fromElement) {
+  public SortedSet<ObjectID> tailSet(ObjectID fromElement) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
@@ -56,7 +56,7 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
   public Comparator<? super ObjectID> comparator() {
     return new Comparator<ObjectID>() {
       @Override
-      public int compare(final ObjectID o1, final ObjectID o2) {
+      public int compare(ObjectID o1, ObjectID o2) {
         return o1.compareTo(o2);
       }
     };
@@ -77,7 +77,7 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
   protected abstract Collection<? extends Range> ranges();
 
   @Override
-  public final void serializeTo(final TCByteBufferOutput serialOutput) {
+  public final void serializeTo(TCByteBufferOutput serialOutput) {
     Collection<? extends Range> ranges = ranges();
     serialOutput.writeInt(ranges.size());
     for (Range range : ranges) {
@@ -90,7 +90,7 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
   }
 
   @Override
-  public final ObjectIDSet deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public final ObjectIDSet deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
       long start = serialInput.readLong();
@@ -112,7 +112,7 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
     private final long start;
     private final long[] bitmap;
 
-    BasicRange(final long start, final long[] bitmap) {
+    BasicRange(long start, long[] bitmap) {
       this.start = start;
       this.bitmap = bitmap;
     }
@@ -137,19 +137,19 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
     }
   }
 
-  public static ObjectIDSet unmodifiableObjectIDSet(final ObjectIDSet s) {
+  public static ObjectIDSet unmodifiableObjectIDSet(ObjectIDSet s) {
     return new UnmodifiableObjectIDSet(s);
   }
 
   private static class UnmodifiableObjectIDSet extends ObjectIDSet {
     private final ObjectIDSet delegate;
 
-    private UnmodifiableObjectIDSet(final ObjectIDSet delegate) {
+    private UnmodifiableObjectIDSet(ObjectIDSet delegate) {
       this.delegate = delegate;
     }
 
     @Override
-    protected void insertRange(final Range range) {
+    protected void insertRange(Range range) {
       throw new UnsupportedOperationException("Implement me!");
     }
 
@@ -186,27 +186,27 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
     }
 
     @Override
-    public boolean add(final ObjectID id) {
+    public boolean add(ObjectID id) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean remove(final Object o) {
+    public boolean remove(Object o) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean addAll(final Collection<? extends ObjectID> coll) {
+    public boolean addAll(Collection<? extends ObjectID> coll) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean removeAll(final Collection<?> coll) {
+    public boolean removeAll(Collection<?> coll) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(final Collection<?> coll) {
+    public boolean retainAll(Collection<?> coll) {
       throw new UnsupportedOperationException();
     }
 

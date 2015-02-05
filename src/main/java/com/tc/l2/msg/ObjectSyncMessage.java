@@ -48,9 +48,9 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     super(-1);
   }
 
-  public ObjectSyncMessage(final ServerTransactionID stxnID, final ObjectIDSet dnaOids, final int count,
-                         final TCByteBuffer[] serializedDNAs, final ObjectStringSerializer objectSerializer,
-                         final Map<String, ObjectID> roots, final long sqID, final ObjectIDSet deletedObjectIds) {
+  public ObjectSyncMessage(ServerTransactionID stxnID, ObjectIDSet dnaOids, int count,
+                         TCByteBuffer[] serializedDNAs, ObjectStringSerializer objectSerializer,
+                         Map<String, ObjectID> roots, long sqID, ObjectIDSet deletedObjectIds) {
     super(MANAGED_OBJECT_SYNC_TYPE);
     this.servertxnID = stxnID;
     this.oids = dnaOids;
@@ -63,7 +63,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   }
 
   @Override
-  protected void basicDeserializeFrom(final TCByteBufferInput in) throws IOException {
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer = nodeIDSerializer.deserializeFrom(in);
@@ -81,7 +81,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   }
 
   @Override
-  protected void basicSerializeTo(final TCByteBufferOutput out) {
+  protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
     final NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(this.servertxnID.getSourceID());
     nodeIDSerializer.serializeTo(out);
@@ -97,7 +97,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     deletedOids.serializeTo(out);
   }
 
-  private void writeRootsMap(final TCByteBufferOutput out) {
+  private void writeRootsMap(TCByteBufferOutput out) {
     out.writeInt(this.rootsMap.size());
     for (Entry<String, ObjectID> entry : this.rootsMap.entrySet()) {      
       out.writeString(entry.getKey());
@@ -105,7 +105,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     }
   }
 
-  private void readRootsMap(final TCByteBufferInput in) throws IOException {
+  private void readRootsMap(TCByteBufferInput in) throws IOException {
     final int size = in.readInt();
     if (size == 0) {
       this.rootsMap = Collections.emptyMap();
@@ -117,7 +117,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     }
   }
 
-  private void recycle(final TCByteBuffer[] buffers) {
+  private void recycle(TCByteBuffer[] buffers) {
     for (final TCByteBuffer buffer : buffers) {
       buffer.recycle();
     }

@@ -47,7 +47,7 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
   private final TCConnection                sourceConnection;
   private final ArrayList<TCNetworkMessage> messagePayloads;
 
-  public static WireProtocolGroupMessageImpl wrapMessages(final ArrayList<TCNetworkMessage> msgPayloads,
+  public static WireProtocolGroupMessageImpl wrapMessages(ArrayList<TCNetworkMessage> msgPayloads,
                                                           TCConnection source) {
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.PROTOCOL_MSGGROUP);
@@ -79,15 +79,15 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
   }
 
   // used by the reader
-  protected WireProtocolGroupMessageImpl(final TCConnection source, final TCNetworkHeader header,
-                                         final TCByteBuffer[] messagePayloadByteBuffers) {
+  protected WireProtocolGroupMessageImpl(TCConnection source, TCNetworkHeader header,
+                                         TCByteBuffer[] messagePayloadByteBuffers) {
     this(source, header, messagePayloadByteBuffers, null);
   }
 
   // used by the writer
-  protected WireProtocolGroupMessageImpl(final TCConnection source, final TCNetworkHeader header,
-                                         final TCByteBuffer[] messagePayloadByteBuffers,
-                                         final ArrayList<TCNetworkMessage> messagePayloads) {
+  protected WireProtocolGroupMessageImpl(TCConnection source, TCNetworkHeader header,
+                                         TCByteBuffer[] messagePayloadByteBuffers,
+                                         ArrayList<TCNetworkMessage> messagePayloads) {
     super(header, messagePayloadByteBuffers);
     this.sourceConnection = source;
     this.messagePayloads = (messagePayloads != null ? messagePayloads
@@ -95,7 +95,7 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
     recordLength();
   }
 
-  private ArrayList<TCNetworkMessage> getMessagesFromByteBuffers(final TCByteBuffer[] messagePayloadByteBuffers) {
+  private ArrayList<TCNetworkMessage> getMessagesFromByteBuffers(TCByteBuffer[] messagePayloadByteBuffers) {
     ArrayList<TCNetworkMessage> messages = new ArrayList<TCNetworkMessage>();
 
     // XXX: should do without copying stuffs around by passing views to upper layers.

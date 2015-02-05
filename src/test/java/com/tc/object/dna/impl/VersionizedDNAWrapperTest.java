@@ -92,22 +92,22 @@ public class VersionizedDNAWrapperTest {
     assertFalse(cursor.next(encoding));
   }
 
-  protected DNAImpl createDNAImpl(final ObjectStringSerializer serializer, final boolean b) {
+  protected DNAImpl createDNAImpl(ObjectStringSerializer serializer, boolean b) {
     return new DNAImpl(serializer, b);
   }
 
-  protected DNAWriter createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
-                                      final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
-                                      final String string) {
+  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
+                                      ObjectStringSerializer serializer, DNAEncodingInternal encoding,
+                                      String string) {
     return new DNAWriterImpl(out, id, type, serializer, encoding, false);
   }
 
-  private void compareAction(final LogicalAction expect, final LogicalAction actual) {
+  private void compareAction(LogicalAction expect, LogicalAction actual) {
     assertEquals(expect.getLogicalOperation(), actual.getLogicalOperation());
     assertTrue(Arrays.equals(expect.getParameters(), actual.getParameters()));
   }
 
-  private void compareAction(final PhysicalAction expect, final PhysicalAction actual) {
+  private void compareAction(PhysicalAction expect, PhysicalAction actual) {
     assertEquals(expect.getFieldName(), actual.getFieldName());
     assertEquals(expect.getObject(), actual.getObject());
     assertEquals(expect.isReference(), actual.isReference());

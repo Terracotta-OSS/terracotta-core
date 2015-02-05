@@ -37,8 +37,8 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
-  protected TCMessageImpl(final MessageMonitor monitor, final TCByteBufferOutputStream output,
-                          final MessageChannel channel, final TCMessageType type) {
+  protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutputStream output,
+                          MessageChannel channel, TCMessageType type) {
     super(new TCMessageHeaderImpl(type), false);
     this.monitor = monitor;
     this.type = type;
@@ -59,8 +59,8 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * @param header
    * @param data
    */
-  protected TCMessageImpl(final MessageMonitor monitor, final MessageChannel channel, final TCMessageHeader header,
-                          final TCByteBuffer[] data) {
+  protected TCMessageImpl(MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
+                          TCByteBuffer[] data) {
     super(header, data);
     this.monitor = monitor;
     this.type = TCMessageType.getInstance(header.getMessageType());
@@ -79,7 +79,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return this.messageVersion;
   }
 
-  protected void setMessageVersion(final int version) {
+  protected void setMessageVersion(int version) {
     this.messageVersion = version;
   }
 
@@ -193,7 +193,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * 
    * @param name
    */
-  protected abstract boolean hydrateValue(final byte name) throws IOException;
+  protected abstract boolean hydrateValue(byte name) throws IOException;
 
   protected boolean getBooleanValue() throws IOException {
     return bbis.readBoolean();
@@ -235,7 +235,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return getObject(new LockIDSerializer()).getLockID();
   }
 
-  protected <T extends TCSerializable<T>> T getObject(final T target) throws IOException {
+  protected <T extends TCSerializable<T>> T getObject(T target) throws IOException {
     return target.deserializeFrom(bbis);
   }
 
@@ -255,92 +255,92 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return bytes;
   }
 
-  protected void putNVPair(final byte name, final boolean value) {
+  protected void putNVPair(byte name, boolean value) {
     nvCount++;
     out.write(name);
     out.writeBoolean(value);
   }
 
-  protected void putNVPair(final byte name, final byte value) {
+  protected void putNVPair(byte name, byte value) {
     nvCount++;
     out.write(name);
     out.writeByte(value);
   }
 
-  protected void putNVPair(final byte name, final char value) {
+  protected void putNVPair(byte name, char value) {
     nvCount++;
     out.write(name);
     out.writeChar(value);
   }
 
-  protected void putNVPair(final byte name, final double value) {
+  protected void putNVPair(byte name, double value) {
     nvCount++;
     out.write(name);
     out.writeDouble(value);
   }
 
-  protected void putNVPair(final byte name, final float value) {
+  protected void putNVPair(byte name, float value) {
     nvCount++;
     out.write(name);
     out.writeFloat(value);
   }
 
-  protected void putNVPair(final byte name, final int value) {
+  protected void putNVPair(byte name, int value) {
     nvCount++;
     out.write(name);
     out.writeInt(value);
   }
 
-  protected void putNVPair(final byte name, final long value) {
+  protected void putNVPair(byte name, long value) {
     nvCount++;
     out.write(name);
     out.writeLong(value);
   }
 
-  protected void putNVPair(final byte name, final short value) {
+  protected void putNVPair(byte name, short value) {
     nvCount++;
     out.write(name);
     out.writeShort(value);
   }
 
-  protected void putNVPair(final byte name, final String value) {
+  protected void putNVPair(byte name, String value) {
     nvCount++;
     out.write(name);
     out.writeString(value);
   }
 
-  protected void putNVPair(final byte name, final NodeID nodeID) {
+  protected void putNVPair(byte name, NodeID nodeID) {
     nvCount++;
     out.write(name);
     new NodeIDSerializer(nodeID).serializeTo(out);
   }
 
-  protected void putNVPair(final byte name, final LockID lid) {
+  protected void putNVPair(byte name, LockID lid) {
     nvCount++;
     out.write(name);
     new LockIDSerializer(lid).serializeTo(out);
   }
 
-  protected void putNVPair(final byte name, final TCSerializable<?> object) {
+  protected void putNVPair(byte name, TCSerializable<?> object) {
     nvCount++;
     out.write(name);
     object.serializeTo(out);
   }
 
-  protected void putNVPair(final byte name, final TCByteBuffer[] data) {
+  protected void putNVPair(byte name, TCByteBuffer[] data) {
     nvCount++;
     out.write(name);
     out.write(data);
   }
 
-  protected void putNVPair(final byte name, final byte[] bytes) {
+  protected void putNVPair(byte name, byte[] bytes) {
     nvCount++;
     out.write(name);
     out.writeInt(bytes.length);
     out.write(bytes);
   }
 
-  protected void putNVPair(final byte name, final AbstractIdentifier identifier) {
+  protected void putNVPair(byte name, AbstractIdentifier identifier) {
     nvCount++;
     out.write(name);
     out.writeLong(identifier.toLong());
@@ -375,7 +375,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /*
    * send with payload from a dehydrated message
    */
-  public void cloneAndSend(final TCMessageImpl message) {
+  public void cloneAndSend(TCMessageImpl message) {
     if (isSent.attemptSet()) {
       dehydrate(message.getPayload());
       basicSend();

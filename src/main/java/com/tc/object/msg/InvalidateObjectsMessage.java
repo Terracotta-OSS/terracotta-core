@@ -69,27 +69,27 @@ public class InvalidateObjectsMessage extends DSOMessageBase {
       this(new HashMap<ObjectID, ObjectIDSet>());
     }
 
-    private InvalidationSerializer(final Map<ObjectID, ObjectIDSet> map) {
+    private InvalidationSerializer(Map<ObjectID, ObjectIDSet> map) {
       super(map);
     }
 
     @Override
-    protected void serializeKey(final ObjectID key, final TCByteBufferOutput serialOutput) {
+    protected void serializeKey(ObjectID key, TCByteBufferOutput serialOutput) {
       serialOutput.writeLong(key.toLong());
     }
 
     @Override
-    protected void serializeValue(final ObjectIDSet value, final TCByteBufferOutput serialOutput) {
+    protected void serializeValue(ObjectIDSet value, TCByteBufferOutput serialOutput) {
       value.serializeTo(serialOutput);
     }
 
     @Override
-    protected ObjectID deserializeKey(final TCByteBufferInput serialInput) throws IOException {
+    protected ObjectID deserializeKey(TCByteBufferInput serialInput) throws IOException {
       return new ObjectID(serialInput.readLong());
     }
 
     @Override
-    protected ObjectIDSet deserializeValue(final TCByteBufferInput serialInput) throws IOException {
+    protected ObjectIDSet deserializeValue(TCByteBufferInput serialInput) throws IOException {
       return new BasicObjectIDSet().deserializeFrom(serialInput);
     }
   }

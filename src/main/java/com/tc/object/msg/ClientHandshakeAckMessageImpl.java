@@ -29,15 +29,15 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private ClientID               thisNodeId;
   private String                 serverVersion;
 
-  public ClientHandshakeAckMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                       final TCByteBufferOutputStream out, final MessageChannel channel,
-                                       final TCMessageType type) {
+  public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                       TCByteBufferOutputStream out, MessageChannel channel,
+                                       TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public ClientHandshakeAckMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                       final MessageChannel channel, final TCMessageHeader header,
-                                       final TCByteBuffer[] data) {
+  public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                       MessageChannel channel, TCMessageHeader header,
+                                       TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -54,7 +54,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case PERSISTENT_SERVER:
         persistentServer = getBooleanValue();
@@ -74,8 +74,8 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   }
 
   @Override
-  public void initialize(final boolean persistent, final Set<? extends NodeID> allNodeIDs, final ClientID thisNodeID,
-                         final String sv) {
+  public void initialize(boolean persistent, Set<? extends NodeID> allNodeIDs, ClientID thisNodeID,
+                         String sv) {
     this.persistentServer = persistent;
     this.allNodes.addAll(allNodeIDs);
 

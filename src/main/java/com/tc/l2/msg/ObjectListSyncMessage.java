@@ -32,8 +32,8 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, final boolean syncAllowed, final long dataStorageSize,
-                               final long offheapSize) {
+  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, boolean syncAllowed, long dataStorageSize,
+                               long offheapSize) {
     super(type, messageID);
     this.syncAllowed = syncAllowed;
     this.currentState = currentState;
@@ -124,7 +124,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
 
   public static ObjectListSyncMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
                                                                           State currentState, boolean syncAllowed,
-                                                                          final long dataStorageSize, final long offheapSize) {
+                                                                          long dataStorageSize, long offheapSize) {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, currentState,
         syncAllowed, dataStorageSize, offheapSize);
   }

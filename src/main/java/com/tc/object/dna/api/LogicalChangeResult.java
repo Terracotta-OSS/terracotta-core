@@ -66,7 +66,7 @@ public class LogicalChangeResult implements TCSerializable<LogicalChangeResult> 
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

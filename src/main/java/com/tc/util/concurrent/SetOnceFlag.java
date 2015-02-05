@@ -31,7 +31,7 @@ public final class SetOnceFlag implements Serializable {
    * 
    * @param setFlag true if the flag should be created already <code>set()</code>
    */
-  public SetOnceFlag(final boolean setFlag) {
+  public SetOnceFlag(boolean setFlag) {
     if (setFlag) {
       this.set = true;
     }

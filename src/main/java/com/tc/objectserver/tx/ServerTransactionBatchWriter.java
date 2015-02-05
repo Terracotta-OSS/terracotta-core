@@ -40,14 +40,14 @@ public class ServerTransactionBatchWriter {
   private final ObjectStringSerializer     serializer;
   private final TxnBatchID                 batchId;
 
-  public ServerTransactionBatchWriter(final TxnBatchID batchId, final ObjectStringSerializer serializer) {
+  public ServerTransactionBatchWriter(TxnBatchID batchId, ObjectStringSerializer serializer) {
     this.batchId = batchId;
     this.serializer = serializer;
   }
 
 
   @SuppressWarnings("resource")
-  public TCByteBuffer[] writeTransactionBatch(final List<ServerTransaction> txns) throws IOException,
+  public TCByteBuffer[] writeTransactionBatch(List<ServerTransaction> txns) throws IOException,
       ClassNotFoundException {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream(32, 4096, false);
     out.writeLong(this.batchId.toLong());
@@ -59,7 +59,7 @@ public class ServerTransactionBatchWriter {
     return out.toArray();
   }
 
-  private void writeTransaction(final TCByteBufferOutputStream out, final ServerTransaction txn) throws IOException,
+  private void writeTransaction(TCByteBufferOutputStream out, ServerTransaction txn) throws IOException,
       ClassNotFoundException {
     out.writeLong(txn.getTransactionID().toLong());
     out.writeByte(txn.getTransactionType().getType());
@@ -74,7 +74,7 @@ public class ServerTransactionBatchWriter {
     writeDNAs(out, txn.getChanges());
   }
 
-  private void writeDNAs(final TCByteBufferOutputStream out, final List<? extends DNA> changes) throws IOException,
+  private void writeDNAs(TCByteBufferOutputStream out, List<? extends DNA> changes) throws IOException,
       ClassNotFoundException {
     out.writeInt(changes.size());
     for (DNA dna : changes) {
@@ -82,7 +82,7 @@ public class ServerTransactionBatchWriter {
     }
   }
 
-  private void writeDNA(final TCByteBufferOutputStream out, final DNA dna) throws IOException,
+  private void writeDNA(TCByteBufferOutputStream out, DNA dna) throws IOException,
       ClassNotFoundException {
     final DNAWriter dnaWriter = new DNAWriterImpl(out, dna.getObjectID(), dna.getTypeName(), this.serializer,
                                                           DNA_STORAGE_ENCODING, dna.isDelta());
@@ -96,7 +96,7 @@ public class ServerTransactionBatchWriter {
 
   // TODO:: Move these "addAction" methods into DNAWrite (when tim-api is allowed to change) so it resides closer to
   // other related logics.
-  private void addActions(final DNAWriter dnaWriter, final DNACursor cursor, final DNAEncoding decoder, final DNA dna)
+  private void addActions(DNAWriter dnaWriter, DNACursor cursor, DNAEncoding decoder, DNA dna)
       throws IOException, ClassNotFoundException {
     while (cursor.next(decoder)) {
       final Object action = cursor.getAction();
@@ -112,15 +112,15 @@ public class ServerTransactionBatchWriter {
     }
   }
 
-  private void writeLiteralAction(final DNAWriter dnaWriter, final LiteralAction action) {
+  private void writeLiteralAction(DNAWriter dnaWriter, LiteralAction action) {
     dnaWriter.addLiteralValue(action.getObject());
   }
 
-  private void writeLogicalAction(final DNAWriter dnaWriter, final LogicalAction action) {
+  private void writeLogicalAction(DNAWriter dnaWriter, LogicalAction action) {
     dnaWriter.addLogicalAction(action.getLogicalOperation(), action.getParameters());
   }
 
-  private void writePhysicalAction(final DNAWriter dnaWriter, final PhysicalAction action) {
+  private void writePhysicalAction(DNAWriter dnaWriter, PhysicalAction action) {
     if (action.isTruePhysical()) {
       dnaWriter.addPhysicalAction(action.getFieldName(), action.getObject(), action.isReference());
     } else if (action.isArrayElement()) {
@@ -136,21 +136,21 @@ public class ServerTransactionBatchWriter {
 
   }
 
-  private void writeHighWaterMarks(final TCByteBufferOutputStream out, final long[] highWaterMarks) {
+  private void writeHighWaterMarks(TCByteBufferOutputStream out, long[] highWaterMarks) {
     out.writeInt(highWaterMarks.length);
     for (final long h : highWaterMarks) {
       out.writeLong(h);
     }
   }
 
-  private void writeNotifies(final TCByteBufferOutputStream out, final Collection<Notify> notifies) {
+  private void writeNotifies(TCByteBufferOutputStream out, Collection<Notify> notifies) {
     out.writeInt(notifies.size());
     for (final Notify n : notifies) {
       n.serializeTo(out);
     }
   }
 
-  private void writeRootsMap(final TCByteBufferOutputStream out, final Map<String, ObjectID> newRoots) {
+  private void writeRootsMap(TCByteBufferOutputStream out, Map<String, ObjectID> newRoots) {
     out.writeInt(newRoots.size());
     for (Entry<String, ObjectID> e : newRoots.entrySet()) {
       out.writeString(e.getKey());
@@ -158,7 +158,7 @@ public class ServerTransactionBatchWriter {
     }
   }
 
-  private void writeLockIDs(final TCByteBufferOutputStream out, final LockID[] lockIDs) {
+  private void writeLockIDs(TCByteBufferOutputStream out, LockID[] lockIDs) {
     out.writeInt(lockIDs.length);
     for (final LockID lockID : lockIDs) {
       final LockIDSerializer lidsr = new LockIDSerializer(lockID);
@@ -166,7 +166,7 @@ public class ServerTransactionBatchWriter {
     }
   }
 
-  private boolean containsSyncWriteTransaction(final List<ServerTransaction> txns) {
+  private boolean containsSyncWriteTransaction(List<ServerTransaction> txns) {
     for (final ServerTransaction serverTransaction : txns) {
       if (serverTransaction.getTransactionType() == TxnType.SYNC_WRITE) { return true; }
     }

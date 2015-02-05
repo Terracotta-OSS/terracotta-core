@@ -42,7 +42,7 @@ public class DNAImplTest {
   }
 
   @SuppressWarnings("resource")
-  protected void serializeDeserialize(final boolean isDelta) throws Exception {
+  protected void serializeDeserialize(boolean isDelta) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
     final ObjectID id = new ObjectID(1);
@@ -107,23 +107,23 @@ public class DNAImplTest {
   }
 
 
-  protected DNAImpl createDNAImpl(final ObjectStringSerializer serializer) {
+  protected DNAImpl createDNAImpl(ObjectStringSerializer serializer) {
     return new DNAImpl(serializer, true);
   }
 
-  protected DNAWriter createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
-                                              final ObjectStringSerializer serializer,
-                                              final DNAEncodingInternal encoding, final boolean isDelta) {
+  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
+                                              ObjectStringSerializer serializer,
+                                              DNAEncodingInternal encoding, boolean isDelta) {
     return new DNAWriterImpl(out, id, type, serializer, encoding, isDelta);
   }
 
-  private void compareAction(final LogicalAction expect, final LogicalAction actual) {
+  private void compareAction(LogicalAction expect, LogicalAction actual) {
     assertEquals(expect.getLogicalOperation(), actual.getLogicalOperation());
     assertTrue(Arrays.equals(expect.getParameters(), actual.getParameters()));
     assertEquals(expect.getLogicalChangeID(), actual.getLogicalChangeID());
   }
 
-  private void compareAction(final PhysicalAction expect, final PhysicalAction actual) {
+  private void compareAction(PhysicalAction expect, PhysicalAction actual) {
     assertEquals(expect.getFieldName(), actual.getFieldName());
     assertEquals(expect.getObject(), actual.getObject());
     assertEquals(expect.isReference(), actual.isReference());

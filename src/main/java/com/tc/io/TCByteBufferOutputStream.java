@@ -138,7 +138,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   }
 
   @Override
-  public void write(byte b[], final int offset, final int length) {
+  public void write(byte b[], int offset, int length) {
     checkClosed();
 
     if (b == null) { throw new NullPointerException(); }

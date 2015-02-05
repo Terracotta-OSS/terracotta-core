@@ -17,15 +17,15 @@ public class ClientHandshakeRefusedMessageImpl extends DSOMessageBase implements
   private static final byte REFUSAL_CAUSE = 1;
   private String            refusalCause;
 
-  public ClientHandshakeRefusedMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                           final TCByteBufferOutputStream out, final MessageChannel channel,
-                                           final TCMessageType type) {
+  public ClientHandshakeRefusedMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                           TCByteBufferOutputStream out, MessageChannel channel,
+                                           TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public ClientHandshakeRefusedMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                           final MessageChannel channel, final TCMessageHeader header,
-                                           final TCByteBuffer[] data) {
+  public ClientHandshakeRefusedMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                           MessageChannel channel, TCMessageHeader header,
+                                           TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 

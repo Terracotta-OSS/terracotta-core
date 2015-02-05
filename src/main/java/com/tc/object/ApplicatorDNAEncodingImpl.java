@@ -24,27 +24,27 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   /**
    * Used in the Applicators. The policy is set to APPLICATOR.
    */
-  public ApplicatorDNAEncodingImpl(final ClassProvider classProvider) {
+  public ApplicatorDNAEncodingImpl(ClassProvider classProvider) {
     super(classProvider);
   }
 
   @Override
-  protected boolean useStringEnumRead(final byte type) {
+  protected boolean useStringEnumRead(byte type) {
     return true;
   }
 
   @Override
-  protected boolean useClassProvider(final byte type, final byte typeToCheck) {
+  protected boolean useClassProvider(byte type, byte typeToCheck) {
     return true;
   }
 
   @Override
-  protected boolean useUTF8String(final byte type) {
+  protected boolean useUTF8String(byte type) {
     return true;
   }
 
   @Override
-  protected Object readCompressedString(final TCDataInput input) throws IOException {
+  protected Object readCompressedString(TCDataInput input) throws IOException {
     final int uncompressedByteLength = input.readInt();
     final byte[] data = readByteArray(input);
 
@@ -64,7 +64,7 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
     return s;
   }
 
-  private String constructCompressedString(final char[] compressedChars, final int stringLength, final int stringHash) {
+  private String constructCompressedString(char[] compressedChars, int stringLength, int stringHash) {
     final byte[] utf8bytes = StringCompressionUtil.unpackAndDecompress(compressedChars);
     try {
       return new String(utf8bytes, "UTF-8");

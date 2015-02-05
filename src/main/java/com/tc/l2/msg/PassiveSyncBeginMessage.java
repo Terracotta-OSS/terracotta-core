@@ -22,11 +22,11 @@ public class PassiveSyncBeginMessage extends AbstractGroupMessage {
     this(-1);
   }
 
-  public PassiveSyncBeginMessage(final int type) {
+  public PassiveSyncBeginMessage(int type) {
     super(type);
   }
 
-  public PassiveSyncBeginMessage(final int type, final MessageID requestID) {
+  public PassiveSyncBeginMessage(int type, MessageID requestID) {
     super(type, requestID);
   }
 
@@ -57,14 +57,14 @@ public class PassiveSyncBeginMessage extends AbstractGroupMessage {
   }
 
   @Override
-  protected void basicDeserializeFrom(final TCByteBufferInput in) throws IOException {
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     if (getType() == RESPONSE) {
       currentState = new State(in.readString());
     }
   }
 
   @Override
-  protected void basicSerializeTo(final TCByteBufferOutput out) {
+  protected void basicSerializeTo(TCByteBufferOutput out) {
     if (getType() == RESPONSE) {
       out.writeString(currentState.getName());
     }
@@ -84,7 +84,7 @@ public class PassiveSyncBeginMessage extends AbstractGroupMessage {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

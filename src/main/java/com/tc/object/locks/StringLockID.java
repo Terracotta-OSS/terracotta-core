@@ -23,7 +23,7 @@ public class StringLockID implements LockID {
    * 
    * @param id ID value
    */
-  public StringLockID(final String id) {
+  public StringLockID(String id) {
     Assert.eval(id != null);
     this.id = id;
   }
@@ -39,7 +39,7 @@ public class StringLockID implements LockID {
   }
 
   @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     if (obj instanceof StringLockID) {
       final StringLockID lid = (StringLockID) obj;
       return this.id.equals(lid.id);
@@ -58,13 +58,13 @@ public class StringLockID implements LockID {
   }
 
   @Override
-  public StringLockID deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public StringLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readString();
     return this;
   }
 
   @Override
-  public void serializeTo(final TCByteBufferOutput serialOutput) {
+  public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeString(this.id);
   }
 

@@ -23,7 +23,7 @@ public interface TCByteBufferInput extends TCDataInput {
    * Effectively the same thing as calling duplicate().limit(int), but potentially creating far less garbage (depending
    * on the size difference between the original stream and the slice you want)
    */
-  public TCByteBufferInput duplicateAndLimit(final int limit);
+  public TCByteBufferInput duplicateAndLimit(int limit);
 
   public TCByteBuffer[] toArray();
 

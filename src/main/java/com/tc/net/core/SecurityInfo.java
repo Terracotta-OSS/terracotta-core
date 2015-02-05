@@ -12,7 +12,7 @@ public class SecurityInfo {
     this(false, null);
   }
 
-  public SecurityInfo(final boolean secure, final String username) {
+  public SecurityInfo(boolean secure, String username) {
     this.secure = secure;
     this.username = username;
   }
@@ -34,7 +34,7 @@ public class SecurityInfo {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

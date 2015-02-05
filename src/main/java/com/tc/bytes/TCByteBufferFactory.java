@@ -102,7 +102,7 @@ public class TCByteBufferFactory {
    *        is true TODO :: Make this the only interface and make it return fixed size buffer also make sure only
    *        fixedBufferSize gets to the pool back.
    */
-  public static TCByteBuffer getInstance(final boolean direct, int size) {
+  public static TCByteBuffer getInstance(boolean direct, int size) {
 
     if (size > WARN_THRESHOLD) {
       logger.warn("Asking for a large amount of memory: " + size + " bytes");
@@ -118,7 +118,7 @@ public class TCByteBufferFactory {
     }
   }
 
-  private static TCByteBuffer getFromPoolOrCreate(final boolean direct) {
+  private static TCByteBuffer getFromPoolOrCreate(boolean direct) {
     return getFromPoolOrCreate(direct, 0, 1);
   }
 
@@ -149,7 +149,7 @@ public class TCByteBufferFactory {
    * @return an array of TCByteBuffer instances. The limit of the last buffer may be less then it's capacity to adjust
    *         for the given length
    */
-  public static TCByteBuffer[] getFixedSizedInstancesForLength(final boolean direct, final int length) {
+  public static TCByteBuffer[] getFixedSizedInstancesForLength(boolean direct, int length) {
     if (length > WARN_THRESHOLD) {
       logger.warn("Asking for a large amount of memory: " + length + " bytes");
     }
@@ -180,7 +180,7 @@ public class TCByteBufferFactory {
     return rv;
   }
 
-  private static int getBufferCountNeededForMessageSize(final int length) {
+  private static int getBufferCountNeededForMessageSize(int length) {
     int numBuffers = length / FIXED_BUFFER_SIZE;
     if ((length % FIXED_BUFFER_SIZE) != 0) {
       numBuffers++;
@@ -188,7 +188,7 @@ public class TCByteBufferFactory {
     return numBuffers;
   }
 
-  public static int getTotalBufferSizeNeededForMessageSize(final int length) {
+  public static int getTotalBufferSizeNeededForMessageSize(int length) {
     return (getBufferCountNeededForMessageSize(length) * FIXED_BUFFER_SIZE);
   }
 

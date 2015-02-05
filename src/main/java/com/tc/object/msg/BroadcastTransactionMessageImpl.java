@@ -73,15 +73,15 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults  = new HashMap<LogicalChangeID, LogicalChangeResult>();
   private final List<ServerEvent>                         serverEvents                = new ArrayList<ServerEvent>();
 
-  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                         final TCByteBufferOutputStream out, final MessageChannel channel,
-                                         final TCMessageType type) {
+  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                         TCByteBufferOutputStream out, MessageChannel channel,
+                                         TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                         final MessageChannel channel, final TCMessageHeader header,
-                                         final TCByteBuffer[] data) {
+  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                         MessageChannel channel, TCMessageHeader header,
+                                         TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -121,7 +121,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case TRANSACTION_TYPE_ID:
         this.transactionType = TxnType.typeFor(getByteValue());
@@ -173,12 +173,12 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public void initialize(final List<? extends DNA> chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
-                         final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
-                         final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
-                         final Collection<ClientServerExchangeLockContext> theNotifies, final Map<String, ObjectID> roots,
-                         final Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
-                         final Collection<ServerEvent> events) {
+  public void initialize(List<? extends DNA> chges, ObjectStringSerializer aSerializer, LockID[] lids,
+                         long cid, TransactionID txID, NodeID client, GlobalTransactionID gtx,
+                         TxnType txnType, GlobalTransactionID lowGlobalTransactionIDWatermark,
+                         Collection<ClientServerExchangeLockContext> theNotifies, Map<String, ObjectID> roots,
+                         Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
+                         Collection<ServerEvent> events) {
     Assert.assertNotNull(txnType);
 
     this.changes.addAll(chges);
@@ -275,20 +275,20 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       
     }
 
-    public RootIDPair(final String rootName, final ObjectID rootID) {
+    public RootIDPair(String rootName, ObjectID rootID) {
       this.rootName = rootName;
       this.rootID = rootID;
     }
 
     @Override
-    public void serializeTo(final TCByteBufferOutput serialOutput) {
+    public void serializeTo(TCByteBufferOutput serialOutput) {
       serialOutput.writeString(this.rootName);
       serialOutput.writeLong(this.rootID.toLong());
 
     }
 
     @Override
-    public RootIDPair deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+    public RootIDPair deserializeFrom(TCByteBufferInput serialInput) throws IOException {
       this.rootName = serialInput.readString();
       this.rootID = new ObjectID(serialInput.readLong());
       return this;

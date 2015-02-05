@@ -14,17 +14,17 @@ public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
   }
 
   @Override
-  protected boolean useStringEnumRead(final byte type) {
+  protected boolean useStringEnumRead(byte type) {
     return (type == TYPE_ID_ENUM);
   }
 
   @Override
-  protected boolean useClassProvider(final byte type, final byte typeToCheck) {
+  protected boolean useClassProvider(byte type, byte typeToCheck) {
     return (type == typeToCheck);
   }
 
   @Override
-  protected boolean useUTF8String(final byte type) {
+  protected boolean useUTF8String(byte type) {
     return (type == TYPE_ID_STRING);
   }
 
@@ -33,7 +33,7 @@ public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
     // This method assumes the Class is visible in this VM and can be loaded by the same class loader as this
     // object.
     @Override
-    public Class<?> getClassFor(final String className) {
+    public Class<?> getClassFor(String className) {
       try {
         return Class.forName(className);
       } catch (final ClassNotFoundException e) {

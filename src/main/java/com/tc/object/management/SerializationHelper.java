@@ -33,7 +33,7 @@ class SerializationHelper {
     }
   }
 
-  static Object deserialize(byte[] bytes, final ClassLoader classLoader) throws ClassNotFoundException {
+  static Object deserialize(byte[] bytes, ClassLoader classLoader) throws ClassNotFoundException {
     if (bytes.length == 0) {
       return null;
     }

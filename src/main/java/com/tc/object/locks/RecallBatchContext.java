@@ -25,7 +25,7 @@ public class RecallBatchContext implements TCSerializable<RecallBatchContext> {
     this.lockID = lockID;
   }
 
-  public void addToMessage(final LockRequestMessage lrm) {
+  public void addToMessage(LockRequestMessage lrm) {
     lrm.addRecallBatchContext(this);
   }
 

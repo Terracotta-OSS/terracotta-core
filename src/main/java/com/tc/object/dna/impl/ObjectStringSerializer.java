@@ -15,9 +15,9 @@ public interface ObjectStringSerializer extends TCSerializable<ObjectStringSeria
 
   String readFieldName(TCDataInput in) throws IOException;
 
-  void writeString(TCDataOutput out, final String string);
+  void writeString(TCDataOutput out, String string);
 
-  void writeFieldName(TCDataOutput out, final String fieldName);
+  void writeFieldName(TCDataOutput out, String fieldName);
 
   void writeStringBytes(TCDataOutput output, byte[] string);
 

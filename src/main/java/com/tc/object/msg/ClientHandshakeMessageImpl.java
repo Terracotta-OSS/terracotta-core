@@ -68,7 +68,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
-  public void setObjectIDs(final ObjectIDSet objectIDs) {
+  public void setObjectIDs(ObjectIDSet objectIDs) {
     this.objectIDs = objectIDs;
   }
 
@@ -78,7 +78,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
-  public void setObjectIDsToValidate(final ObjectIDSet objectIDsToValidate) {
+  public void setObjectIDsToValidate(ObjectIDSet objectIDsToValidate) {
     this.objectsToValidate = objectIDsToValidate;
   }
 

@@ -58,9 +58,9 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private final TCByteBuffer[]                         data;
   private final boolean                                containsSyncWriteTransaction;
 
-  public TransactionBatchReaderImpl(final TCByteBuffer[] data, final NodeID nodeID,
-                                    final ObjectStringSerializer serializer, final ServerTransactionFactory txnFactory,
-                                    final TransactionSizeCounterCallback counterCallback) throws IOException {
+  public TransactionBatchReaderImpl(TCByteBuffer[] data, NodeID nodeID,
+                                    ObjectStringSerializer serializer, ServerTransactionFactory txnFactory,
+                                    TransactionSizeCounterCallback counterCallback) throws IOException {
     this.data = data;
     this.txnFactory = txnFactory;
     this.in = new TCByteBufferInputStream(data);
@@ -81,7 +81,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return this.containsSyncWriteTransaction;
   }
 
-  private TCByteBuffer[] getHeaderBuffers(final int txnsCount) {
+  private TCByteBuffer[] getHeaderBuffers(int txnsCount) {
     @SuppressWarnings("resource")
     final TCByteBufferOutputStream tos = new TCByteBufferOutputStream(HEADER_SIZE, false);
     
@@ -91,7 +91,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return tos.toArray();
   }
 
-  private long[] readLongArray(final TCByteBufferInputStream input) throws IOException {
+  private long[] readLongArray(TCByteBufferInputStream input) throws IOException {
     final int size = input.readInt();
     final long larray[] = new long[size];
     for (int i = 0; i < larray.length; i++) {
@@ -190,7 +190,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   }
 
   @Override
-  public TCByteBuffer[] getBackingBuffers(final ServerTransactionID from, final ServerTransactionID to) {
+  public TCByteBuffer[] getBackingBuffers(ServerTransactionID from, ServerTransactionID to) {
     if (!from.getSourceID().equals(this.source) || !to.getSourceID().equals(this.source)) {
       // Not the same source
       throw new AssertionError("Source is not the same : " + this.source + " : " + from + " , " + to);
@@ -234,7 +234,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     private final int  index;
     private final Mark end;
 
-    public MarkInfo(final int index, final Mark start, final Mark end) {
+    public MarkInfo(int index, Mark start, Mark end) {
       this.index = index;
       this.start = start;
       this.end = end;

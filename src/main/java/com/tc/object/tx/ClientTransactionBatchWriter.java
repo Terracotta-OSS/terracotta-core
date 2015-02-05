@@ -48,9 +48,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private boolean                               committed              = false;
   private int                                   holders                = 0;
 
-  public ClientTransactionBatchWriter(final TxnBatchID batchID,
-                                      final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
-                                      final CommitTransactionMessageFactory commitTransactionMessageFactory) {   
+  public ClientTransactionBatchWriter(TxnBatchID batchID,
+                                      ObjectStringSerializer serializer, DNAEncodingInternal encoding,
+                                      CommitTransactionMessageFactory commitTransactionMessageFactory) {   
     this.batchID = batchID;
     this.encoding = encoding;
     this.commitTransactionMessageFactory = commitTransactionMessageFactory;
@@ -90,7 +90,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public synchronized TransactionBuffer removeTransaction(final TransactionID txID) {
+  public synchronized TransactionBuffer removeTransaction(TransactionID txID) {
     final TransactionBufferImpl removed = (TransactionBufferImpl) this.transactionData.remove(txID);
     if (removed == null) { throw new AssertionError("Attempt to remove a transaction that doesn't exist"); }
     // if we get some ACKs from the previous instance of the server after we resend this
@@ -104,11 +104,11 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public synchronized boolean contains(final TransactionID txID) {
+  public synchronized boolean contains(TransactionID txID) {
     return this.transactionData.containsKey(txID);
   }
 
-  private TransactionBuffer createBuffer(final ClientTransaction txn) {
+  private TransactionBuffer createBuffer(ClientTransaction txn) {
 
     final TransactionBuffer txnBuffer = createTransactionBuffer(txn.getSequenceID(), newOutputStream(),
                                                                 this.serializer, this.encoding, txn.getTransactionID());
@@ -119,15 +119,15 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   // Overridden in active-active
-  protected TransactionBuffer createTransactionBuffer(final SequenceID sid,
-                                                      final TCByteBufferOutputStream newOutputStream,
-                                                      final ObjectStringSerializer objectStringserializer,
-                                                      final DNAEncodingInternal dnaEncoding, final TransactionID txnID) {
+  protected TransactionBuffer createTransactionBuffer(SequenceID sid,
+                                                      TCByteBufferOutputStream newOutputStream,
+                                                      ObjectStringSerializer objectStringserializer,
+                                                      DNAEncodingInternal dnaEncoding, TransactionID txnID) {
     return new TransactionBufferImpl(this, sid, newOutputStream, objectStringserializer, dnaEncoding, txnID);
   }
 
   @Override
-  public synchronized TransactionBuffer addTransaction(final ClientTransaction txn) {
+  public synchronized TransactionBuffer addTransaction(ClientTransaction txn) {
     holders += 1;
 
     if (committed) { throw new AssertionError("Already committed"); }
@@ -167,7 +167,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     return out.toArray();
   }
 
-  protected void writeHeader(final TCByteBufferOutputStream out) {
+  protected void writeHeader(TCByteBufferOutputStream out) {
     out.writeLong(this.batchID.toLong());
     out.writeInt(this.transactionData.size());
     out.writeBoolean(this.containsSyncWriteTxn);
@@ -194,7 +194,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public synchronized Collection<TransactionID> addTransactionIDsTo(final Collection<TransactionID> c) {
+  public synchronized Collection<TransactionID> addTransactionIDsTo(Collection<TransactionID> c) {
     c.addAll(this.transactionData.keySet());
     return c;
   }
@@ -206,7 +206,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public Collection<SequenceID> addTransactionSequenceIDsTo(final Collection<SequenceID> sequenceIDs) {
+  public Collection<SequenceID> addTransactionSequenceIDsTo(Collection<SequenceID> sequenceIDs) {
     for (TransactionBuffer buf : this.transactionData.values()) {
       final TransactionBufferImpl tb = ((TransactionBufferImpl) buf);
       sequenceIDs.add(tb.getSequenceID());
@@ -254,9 +254,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private Mark                                  txnCountMark;
     private List<TransactionCompleteListener>     txnCompleteListers;
 
-    TransactionBufferImpl(final ClientTransactionBatchWriter parent, final SequenceID sequenceID,
-                          final TCByteBufferOutputStream output, final ObjectStringSerializer serializer,
-                          final DNAEncodingInternal encoding, final TransactionID txnID) {
+    TransactionBufferImpl(ClientTransactionBatchWriter parent, SequenceID sequenceID,
+                          TCByteBufferOutputStream output, ObjectStringSerializer serializer,
+                          DNAEncodingInternal encoding, TransactionID txnID) {
       this.parent = parent;
       this.sequenceID = sequenceID;
       this.output = output;
@@ -271,7 +271,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
 
     @Override
-    public void writeTo(final TCByteBufferOutputStream dest) {
+    public void writeTo(TCByteBufferOutputStream dest) {
       // XXX: make a writeInt() and writeLong() methods on Mark. Maybe ones that take offsets too
 
       // This check is needed since this buffer might need to be resent upon server crash
@@ -297,7 +297,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
 
     @Override
-    public int write(final ClientTransaction txn) {
+    public int write(ClientTransaction txn) {
       try {
         final int start = this.output.getBytesWritten();
 
@@ -315,7 +315,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       }
     }
 
-    private void appendChanges(final ClientTransaction txn) {
+    private void appendChanges(ClientTransaction txn) {
       writeChange(txn.getChangeBuffer());
     }
 
@@ -351,12 +351,12 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       writer.markSectionEnd();
     }
 
-    private void writeFirst(final ClientTransaction txn) {
+    private void writeFirst(ClientTransaction txn) {
       writeTransactionHeader(txn);
       writeChange(txn.getChangeBuffer());
     }
 
-    private void writeTransactionHeader(final ClientTransaction txn) {
+    private void writeTransactionHeader(ClientTransaction txn) {
       final int startPos = this.output.getBytesWritten();
 
       // /////////////////////////////////////////////////////////////////////////////////////////
@@ -409,12 +409,12 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
     }
 
-    protected void writeAdditionalHeaderInformation(final TCByteBufferOutputStream out, final ClientTransaction txn) {
+    protected void writeAdditionalHeaderInformation(TCByteBufferOutputStream out, ClientTransaction txn) {
       // This is here so that the format is compatible with active-active
       writeLongArray(out, new long[0]);
     }
 
-    protected void writeLongArray(final TCByteBufferOutputStream out, final long[] ls) {
+    protected void writeLongArray(TCByteBufferOutputStream out, long[] ls) {
       out.writeInt(ls.length);
       for (final long element : ls) {
         out.writeLong(element);

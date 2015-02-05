@@ -359,7 +359,7 @@ public class Conversion {
     private final String unit;
     private final long longValue;
 
-    MemorySizeUnits(final String unit, final long value) {
+    MemorySizeUnits(String unit, long value) {
       this.unit = unit;
       this.longValue = value;
     }
@@ -380,7 +380,7 @@ public class Conversion {
   }
 
   // XXX: FIX rename method
-  public static int memorySizeAsIntBytes(final String memorySizeInUnits) throws MetricsFormatException {
+  public static int memorySizeAsIntBytes(String memorySizeInUnits) throws MetricsFormatException {
     long rv = memorySizeAsLongBytes(memorySizeInUnits);
     if (rv > Integer.MAX_VALUE) {
       throw new MetricsFormatException(memorySizeInUnits + " is greater than integer range");
@@ -389,7 +389,7 @@ public class Conversion {
     }
   }
 
-  public static long memorySizeAsLongBytes(final String memorySizeInUnits) throws MetricsFormatException {
+  public static long memorySizeAsLongBytes(String memorySizeInUnits) throws MetricsFormatException {
     final String input = memorySizeInUnits.toLowerCase().trim();
     // XXX: review pattern matcher regex
     final Matcher matcher = MEMORY_SIZE_PATTERN.matcher(input);
@@ -415,7 +415,7 @@ public class Conversion {
     }
   }
 
-  public static String memoryBytesAsSize(final long bytes) throws NumberFormatException {
+  public static String memoryBytesAsSize(long bytes) throws NumberFormatException {
     if (bytes < KILO.asBytes()) {
       return bytes + "b";
     } else if (bytes < MEGA.asBytes()) {
@@ -430,7 +430,7 @@ public class Conversion {
     }
   }
 
-  public static String toJvmArgument(final long bytes) {
+  public static String toJvmArgument(long bytes) {
     if (bytes < 0) throw new IllegalArgumentException("Size in bytes cannot be negative");
 
     if (bytes < KILO.asBytes()) {
@@ -448,7 +448,7 @@ public class Conversion {
     }
   }
 
-  private static String toKilo(final long bytes) {
+  private static String toKilo(long bytes) {
     if (bytes % KILO.asBytes() == 0) {
       return bytes / KILO.asBytes() + "k";
     } else {
@@ -456,7 +456,7 @@ public class Conversion {
     }
   }
 
-  private static String toMega(final long bytes) {
+  private static String toMega(long bytes) {
     if (bytes % MEGA.asBytes() == 0) {
       return bytes / MEGA.asBytes() + "m";
     } else {

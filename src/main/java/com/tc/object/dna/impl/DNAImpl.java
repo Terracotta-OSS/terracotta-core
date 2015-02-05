@@ -51,7 +51,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
 
   private boolean                          wasDeserialized       = false;
 
-  public DNAImpl(final ObjectStringSerializer serializer, final boolean createOutput) {
+  public DNAImpl(ObjectStringSerializer serializer, boolean createOutput) {
     this.serializer = serializer;
     this.createOutput = createOutput;
   }
@@ -62,7 +62,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
   }
 
   // This method is there for debugging/logging stats. Should never be used otherwise.
-  public void setTypeClassName(final String className) {
+  public void setTypeClassName(String className) {
     if (this.typeName == null) {
       this.typeName = className;
     }
@@ -89,7 +89,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
   }
 
   @Override
-  public boolean next(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  public boolean next(DNAEncoding encoding) throws IOException, ClassNotFoundException {
     // yucky cast
     DNAEncodingInternal encodingInternal = (DNAEncodingInternal) encoding;
 
@@ -105,7 +105,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
     return hasNext;
   }
 
-  private void parseNext(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+  private void parseNext(DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final byte recordType = this.input.readByte();
 
     switch (recordType) {
@@ -137,29 +137,29 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
     // unreachable
   }
 
-  private void parseSubArray(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+  private void parseSubArray(DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final int startPos = this.input.readInt();
     final Object subArray = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(subArray, startPos);
   }
 
-  private void parseEntireArray(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+  private void parseEntireArray(DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final Object array = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(array);
   }
 
-  private void parseLiteralValue(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+  private void parseLiteralValue(DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final Object value = encoding.decode(this.input);
     this.currentAction = new LiteralAction(value);
   }
 
-  private void parseArrayElement(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+  private void parseArrayElement(DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final int index = this.input.readInt();
     final Object value = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
   }
 
-  private void parsePhysical(final DNAEncodingInternal encoding, final boolean isReference) throws IOException,
+  private void parsePhysical(DNAEncodingInternal encoding, boolean isReference) throws IOException,
       ClassNotFoundException {
     final String fieldName = this.serializer.readFieldName(this.input);
 
@@ -167,7 +167,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
     this.currentAction = new PhysicalAction(fieldName, value, value instanceof ObjectID || isReference);
   }
 
-  private void parseLogical(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+  private void parseLogical(DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     LogicalChangeID logicalChangeID = LogicalChangeID.NULL_ID;
     if (!input.readBoolean()) {
       logicalChangeID = new LogicalChangeID(input.readLong());
@@ -236,12 +236,12 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
    * This methods is synchronized coz both broadcast stage and L2 sync objects stage accesses it simultaneously
    */
   @Override
-  public synchronized void serializeTo(final TCByteBufferOutput serialOutput) {
+  public synchronized void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.write(this.dataOut);
   }
 
   @Override
-  public DNAImpl deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
+  public DNAImpl deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.wasDeserialized = true;
 
     final Mark mark = serialInput.mark();

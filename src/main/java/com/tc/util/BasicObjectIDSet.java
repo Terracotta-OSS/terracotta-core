@@ -42,13 +42,13 @@ public class BasicObjectIDSet extends ObjectIDSet {
   }
 
   @Override
-  protected void insertRange(final Range range) {
+  protected void insertRange(Range range) {
     for (Range smallRange : fragment(range)) {
       doRangeInsert(smallRange);
     }
   }
 
-  private void doRangeInsert(final Range range) {
+  private void doRangeInsert(Range range) {
     if (range.getBitmap().length != 1) {
       throw new IllegalArgumentException("Wrong range size for range " + range);
     }

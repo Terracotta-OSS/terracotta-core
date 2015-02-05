@@ -61,7 +61,7 @@ public class DNAWriterImpl implements DNAWriter {
   }
 
   @Override
-  public void setIgnoreMissing(final boolean ignoreMissing) {
+  public void setIgnoreMissing(boolean ignoreMissing) {
     flags = Conversion.setFlag(flags, DNA.IGNORE_MISSING_OBJECT, ignoreMissing);
   }
 

@@ -24,17 +24,17 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   private NodeID            nodeID;
   private ProductID         productId;
 
-  public ClusterMembershipMessage(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out, final MessageChannel channel,
-                                  final TCMessageType type) {
+  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
+                                  TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public ClusterMembershipMessage(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
-                                  final TCMessageHeader header, final TCByteBuffer[] data) {
+  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                  TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(final int type, final NodeID nid, final ProductID pid) {
+  public void initialize(int type, NodeID nid, ProductID pid) {
     this.eventType = type;
     this.nodeID = nid;
     this.productId = pid;
@@ -48,7 +48,7 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case EVENT_TYPE:
         eventType = getIntValue();
@@ -93,19 +93,19 @@ public class ClusterMembershipMessage extends DSOMessageBase {
     public static final int NODE_CONNECTED    = 0;
     public static final int NODE_DISCONNECTED = 1;
 
-    public static boolean isValidType(final int t) {
+    public static boolean isValidType(int t) {
       return t >= NODE_CONNECTED && t <= NODE_DISCONNECTED;
     }
 
-    public static boolean isNodeConnected(final int t) {
+    public static boolean isNodeConnected(int t) {
       return t == NODE_CONNECTED;
     }
 
-    public static boolean isNodeDisconnected(final int t) {
+    public static boolean isNodeDisconnected(int t) {
       return t == NODE_DISCONNECTED;
     }
 
-    public static String toString(final int eventType) {
+    public static String toString(int eventType) {
       switch (eventType) {
         case NODE_CONNECTED:
           return "NODE_CONNECTED";

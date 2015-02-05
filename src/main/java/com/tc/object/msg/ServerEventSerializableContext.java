@@ -28,12 +28,12 @@ class ServerEventSerializableContext implements TCSerializable<ServerEventSerial
   public ServerEventSerializableContext() {
   }
 
-  public ServerEventSerializableContext(final ServerEvent event) {
+  public ServerEventSerializableContext(ServerEvent event) {
     this.event = event;
   }
 
   @Override
-  public void serializeTo(final TCByteBufferOutput out) {
+  public void serializeTo(TCByteBufferOutput out) {
     serializer.encode(event.getType().ordinal(), out);
     serializer.encode(event.getCacheName(), out);
     serializer.encode(event.getKey(), out);
@@ -82,7 +82,7 @@ class ServerEventSerializableContext implements TCSerializable<ServerEventSerial
   /**
    * Transform a key from internal representation to a string, if necessary.
    */
-  private static Object extractStringIfNecessary(final Object key) {
+  private static Object extractStringIfNecessary(Object key) {
     final Object normalizedKey;
     if (key instanceof UTF8ByteDataHolder) {
       normalizedKey = ((UTF8ByteDataHolder) key).asString();

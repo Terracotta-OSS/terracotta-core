@@ -13,7 +13,7 @@ package com.tc.logging;
 public class TestLoggingService implements TCLoggingService {
 
   @Override
-  public TCLogger getLogger(final String name) {
+  public TCLogger getLogger(String name) {
     return new TCLogger() {
 
       private void log(String level, String message) {

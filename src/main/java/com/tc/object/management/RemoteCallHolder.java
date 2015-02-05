@@ -30,7 +30,7 @@ public class RemoteCallHolder extends RemoteCallDescriptor {
     this.serializedArgs = SerializationHelper.serialize(args);
   }
 
-  public Object[] getArgs(final ClassLoader classLoader) throws ClassNotFoundException {
+  public Object[] getArgs(ClassLoader classLoader) throws ClassNotFoundException {
     return (Object[])SerializationHelper.deserialize(serializedArgs, classLoader);
   }
 

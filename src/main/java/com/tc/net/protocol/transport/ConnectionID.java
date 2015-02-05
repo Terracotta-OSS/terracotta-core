@@ -40,7 +40,7 @@ public class ConnectionID {
     this(jvmID, channelID, serverID, username, password == null ? null : password.toCharArray(), null);
   }
 
-  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password, final ProductID productId) {
+  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password, ProductID productId) {
     this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
@@ -64,11 +64,11 @@ public class ConnectionID {
     this.password = null;
   }
 
-  public void setPassword(final char[] password) {
+  public void setPassword(char[] password) {
     this.password = password;
   }
 
-  public ConnectionID(String jvmID, long channelID, String username, char[] password, final ProductID productId) {
+  public ConnectionID(String jvmID, long channelID, String username, char[] password, ProductID productId) {
     this(jvmID, channelID, NULL_SERVER_ID, username, password, productId);
   }
 
@@ -136,7 +136,7 @@ public class ConnectionID {
     return getID(false);
   }
 
-  public String getID(final boolean withCredentials) {
+  public String getID(boolean withCredentials) {
     StringBuilder sb = new StringBuilder(withCredentials ? 128 : 64);
     sb.append(this.channelID).append(SEP).append(this.serverID).append(SEP).append(this.jvmID).append(SEP).append(productId);
     if (withCredentials) {

@@ -44,7 +44,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase {
   }
 
   @Override
-  protected boolean hydrateValue(final byte name) throws IOException {
+  protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case TUNNEL_MESSAGE:
         setTunneledMessage(deserializeMessage(getBytesArray()));
@@ -101,7 +101,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase {
     return flag == FIN_FLAG;
   }
 
-  synchronized void setTunneledMessage(final Object tunneledMessage) {
+  synchronized void setTunneledMessage(Object tunneledMessage) {
     this.tunneledMessage = tunneledMessage;
   }
 
@@ -109,7 +109,7 @@ public class JmxRemoteTunnelMessage extends DSOMessageBase {
     return tunneledMessage;
   }
 
-  private synchronized void setFlag(final byte flag) {
+  private synchronized void setFlag(byte flag) {
     this.flag = flag;
   }
 
