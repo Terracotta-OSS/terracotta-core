@@ -5,7 +5,6 @@ package com.tc.object.dna.impl;
 
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.EntityID;
-import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAEncodingInternal;
 
 public class ObjectDNAWriterImpl extends DNAWriterImpl {

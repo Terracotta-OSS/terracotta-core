@@ -4,11 +4,9 @@
 package com.tc.object.dna.impl;
 
 import com.tc.object.EntityID;
-import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 

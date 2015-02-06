@@ -23,10 +23,10 @@ public final class TCMessageType {
   // //////////////////////////////////////////////
   public static final int           TYPE_PING_MESSAGE                                 = 1;
   // public static final int TYPE_PONG_MESSAGE = 2;
-  public static final int           TYPE_REQUEST_ROOT_MESSAGE                         = 8;
+  // public static final int           TYPE_REQUEST_ROOT_MESSAGE                         = 8;
   public static final int           TYPE_LOCK_REQUEST_MESSAGE                         = 9;
   public static final int           TYPE_COMMIT_TRANSACTION_MESSAGE                   = 10;
-  public static final int           TYPE_REQUEST_ROOT_RESPONSE_MESSAGE                = 11;
+  // public static final int           TYPE_REQUEST_ROOT_RESPONSE_MESSAGE                = 11;
   public static final int           TYPE_REQUEST_MANAGED_OBJECT_MESSAGE               = 12;
   public static final int           TYPE_REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE      = 13;
   public static final int           TYPE_BROADCAST_TRANSACTION_MESSAGE                = 14;
@@ -74,13 +74,11 @@ public final class TCMessageType {
   public static final int           TYPE_INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE   = 83;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
-  public static final TCMessageType REQUEST_ROOT_MESSAGE                              = new TCMessageType();
   public static final TCMessageType LOCK_REQUEST_MESSAGE                              = new TCMessageType();
   public static final TCMessageType LOCK_RECALL_MESSAGE                               = new TCMessageType();
   public static final TCMessageType LOCK_RESPONSE_MESSAGE                             = new TCMessageType();
   public static final TCMessageType LOCK_QUERY_RESPONSE_MESSAGE                       = new TCMessageType();
   public static final TCMessageType COMMIT_TRANSACTION_MESSAGE                        = new TCMessageType();
-  public static final TCMessageType REQUEST_ROOT_RESPONSE_MESSAGE                     = new TCMessageType();
   public static final TCMessageType REQUEST_MANAGED_OBJECT_MESSAGE                    = new TCMessageType();
   public static final TCMessageType REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE           = new TCMessageType();
   public static final TCMessageType BROADCAST_TRANSACTION_MESSAGE                     = new TCMessageType();

@@ -6,7 +6,6 @@ package com.tc.object;
 import com.tc.net.ClientID;
 
 import java.util.Set;
-import java.util.SortedSet;
 
 public interface ObjectRequestContext {
 

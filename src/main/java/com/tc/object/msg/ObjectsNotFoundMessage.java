@@ -5,7 +5,6 @@ package com.tc.object.msg;
 
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.EntityID;
-import com.tc.object.ObjectID;
 
 import java.util.Set;
 

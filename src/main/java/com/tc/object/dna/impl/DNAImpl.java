@@ -55,6 +55,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
     this.createOutput = createOutput;
   }
 
+  @Override
   public DNACursor getCursor() {
     return this;
   }

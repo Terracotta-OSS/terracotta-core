@@ -24,13 +24,11 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnType;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
 
@@ -63,12 +61,9 @@ public class BroadcastTransactionMessageTest {
     // / XXX: TODO: Add changes to test.
 
     ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    LockID[] lockIDs = { new StringLockID("1") };
-    long cid = 10;
     TransactionID txID = new TransactionID(1);
     ClientID clientID = new ClientID(1);
     GlobalTransactionID gtx = new GlobalTransactionID(2);
-    TxnType txnType = TxnType.NORMAL;
     GlobalTransactionID lowGlobalTransactionIDWatermark = new GlobalTransactionID(1);
 
     Collection<ClientServerExchangeLockContext> notified = new LinkedList<ClientServerExchangeLockContext>();

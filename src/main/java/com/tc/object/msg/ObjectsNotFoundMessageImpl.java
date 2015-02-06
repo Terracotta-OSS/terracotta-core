@@ -10,7 +10,6 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityID;
-import com.tc.object.ObjectID;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;

@@ -9,7 +9,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext;
-import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
 

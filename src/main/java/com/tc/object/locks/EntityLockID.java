@@ -29,10 +29,12 @@ public class EntityLockID implements LockID {
     return LockIDType.ENTITY;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     entityID.serializeTo(serialOutput);
   }
 
+  @Override
   public EntityLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     return new EntityLockID(EntityID.NULL_ID.deserializeFrom(serialInput));
   }

@@ -6,16 +6,13 @@ package com.tc.object.msg;
 import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnType;
 import com.tc.server.ServerEvent;
 
 import java.util.Collection;

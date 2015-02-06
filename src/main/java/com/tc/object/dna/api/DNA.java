@@ -5,7 +5,6 @@
 package com.tc.object.dna.api;
 
 import com.tc.object.EntityID;
-import com.tc.object.ObjectID;
 
 /**
  * Represents the data of an object. Implementations of this interface are used to extract data from and apply
