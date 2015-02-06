@@ -15,6 +15,7 @@ import org.junit.Test;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ApplicatorDNAEncodingImpl;
+import com.tc.object.EntityID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
@@ -34,7 +35,7 @@ public class VersionizedDNAWrapperTest {
   public void testResettingDNACursor() throws Exception {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
-    final ObjectID id = new ObjectID(1);
+    final EntityID id = new EntityID("foo", "bar");
     final String type = getClass().getName();
 
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
@@ -96,10 +97,10 @@ public class VersionizedDNAWrapperTest {
     return new DNAImpl(serializer, b);
   }
 
-  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
+  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, EntityID id, String type,
                                       ObjectStringSerializer serializer, DNAEncodingInternal encoding,
                                       String string) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, false);
+    return new DNAWriterImpl(out, id, serializer, encoding, false);
   }
 
   private void compareAction(LogicalAction expect, LogicalAction actual) {

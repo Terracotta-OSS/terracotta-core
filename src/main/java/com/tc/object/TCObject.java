@@ -13,12 +13,7 @@ import java.io.IOException;
  */
 public interface TCObject {
 
-  /**
-   * Get the object identifier
-   * 
-   * @return Object identifier
-   */
-  public ObjectID getObjectID();
+  EntityID getEntityID();
 
   /**
    * Takes a DNA strand and applies it
@@ -58,5 +53,5 @@ public interface TCObject {
   public void dehydrate(DNAWriter writer);
 
   public String getClassName();
-  
+
 }

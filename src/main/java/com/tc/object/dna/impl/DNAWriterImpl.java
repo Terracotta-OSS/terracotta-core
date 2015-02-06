@@ -6,6 +6,7 @@ package com.tc.object.dna.impl;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
+import com.tc.object.EntityID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
@@ -30,12 +31,12 @@ public class DNAWriterImpl implements DNAWriter {
   private int                            lastStreamPos  = UNINITIALIZED;
   private int                            actionCount    = 0;
 
-  public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
+  public DNAWriterImpl(TCByteBufferOutputStream output, EntityID id,
                        ObjectStringSerializer serializer, DNAEncodingInternal encoding, boolean isDelta) {
-    this(output, id, className, serializer, encoding, DNA.NULL_VERSION, isDelta);
+    this(output, id, serializer, encoding, DNA.NULL_VERSION, isDelta);
   }
 
-  protected DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
+  protected DNAWriterImpl(TCByteBufferOutputStream output, EntityID id,
                           ObjectStringSerializer serializer, DNAEncodingInternal encoding, long version, boolean isDelta) {
     this.output = output;
     this.encoding = encoding;
@@ -46,11 +47,8 @@ public class DNAWriterImpl implements DNAWriter {
     output.writeInt(UNINITIALIZED); // reserve 4 bytes for # of actions
 
     output.writeByte(flags);
-    output.writeLong(id.toLong());
-
-    if (!isDelta) {
-      serializer.writeString(output, className);
-    }
+    output.writeString(id.getClassName());
+    output.writeString(id.getEntityName());
 
     flags = Conversion.setFlag(flags, DNA.IS_DELTA, isDelta);
 

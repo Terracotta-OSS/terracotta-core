@@ -3,6 +3,7 @@
  */
 package com.tc.object.dna.impl;
 
+import com.tc.object.EntityID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -47,13 +48,8 @@ public class VersionizedDNAWrapper implements DNA {
   }
 
   @Override
-  public String getTypeName() {
-    return dna.getTypeName();
-  }
-
-  @Override
-  public ObjectID getObjectID() throws DNAException {
-    return dna.getObjectID();
+  public EntityID getEntityID() {
+    return dna.getEntityID();
   }
 
   @Override

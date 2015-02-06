@@ -4,6 +4,7 @@
  */
 package com.tc.object.dna.api;
 
+import com.tc.object.EntityID;
 import com.tc.object.ObjectID;
 
 /**
@@ -53,24 +54,7 @@ public interface DNA {
    */
   public boolean isDelta();
 
-  /**
-   * Get the class name of the type for this piece of DNA
-   * 
-   * @return Class name
-   */
-  public String getTypeName();
-
-  /**
-   * Gets the id of the object represented by this DNA strand. The id is globally unique.
-   * <p>
-   * TODO: Potentially change the type from long to something which can be a composite key. We want to be able to
-   * generate new ids in the local VM without making a round trip to the object service.
-   * 
-   * @return The id in question
-   * @throws DNAException Exception thrown if the id cannot be resolved from the DNA strand.
-   */
-  public ObjectID getObjectID() throws DNAException;
-
+  EntityID getEntityID();
 
   /**
    * Gets a DNACursor to spin through the field values.

@@ -15,6 +15,7 @@ import org.junit.Test;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ApplicatorDNAEncodingImpl;
+import com.tc.object.EntityID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
@@ -45,7 +46,7 @@ public class DNAImplTest {
   protected void serializeDeserialize(boolean isDelta) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
-    final ObjectID id = new ObjectID(1);
+    final EntityID id = new EntityID("foo", "bar");
     final String type = getClass().getName();
     final int arrayLen = 42;
 
@@ -94,15 +95,11 @@ public class DNAImplTest {
 
     if (count != 4) { throw new AssertionError("not enough action seen: " + count); }
 
-    assertEquals(id, this.dna.getObjectID());
+    assertEquals(id, this.dna.getEntityID());
     assertTrue(this.dna.hasLength());
     assertEquals(arrayLen, this.dna.getArraySize());
 
     Assert.assertEquals(isDelta, this.dna.isDelta());
-
-    if (!isDelta) {
-      assertEquals(type, this.dna.getTypeName());
-    }
 
   }
 
@@ -111,10 +108,10 @@ public class DNAImplTest {
     return new DNAImpl(serializer, true);
   }
 
-  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
+  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, EntityID id, String type,
                                               ObjectStringSerializer serializer,
                                               DNAEncodingInternal encoding, boolean isDelta) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, isDelta);
+    return new DNAWriterImpl(out, id, serializer, encoding, isDelta);
   }
 
   private void compareAction(LogicalAction expect, LogicalAction actual) {

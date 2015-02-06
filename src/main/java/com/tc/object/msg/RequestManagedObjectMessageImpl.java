@@ -10,21 +10,22 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.EntityID;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.session.SessionID;
-import com.tc.util.BasicObjectIDSet;
-import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RequestManagedObjectMessageImpl extends DSOMessageBase implements RequestManagedObjectMessage {
-  private final static byte MANAGED_OBJECT_ID          = 1;
-  private final static byte MANAGED_OBJECTS_REMOVED_ID = 2;
+  private final static byte ENTITIES_REQUESTED = 1;
+  private final static byte ENTITIES_REMOVED = 2;
   private final static byte REQUEST_ID                 = 4;
   private final static byte REQUESTING_THREAD_NAME     = 6;
 
-  private ObjectIDSet       objectIDs;
-  private ObjectIDSet       removed;
+  private Set<EntityID> requestedEntities;
+  private Set<EntityID> removedEntities;
   private ObjectRequestID   requestID;
   private String            threadName;
 
@@ -40,8 +41,14 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
 
   @Override
   protected void dehydrateValues() {
-    putNVPair(MANAGED_OBJECT_ID, objectIDs);
-    putNVPair(MANAGED_OBJECTS_REMOVED_ID, removed);
+    putNVPair(ENTITIES_REQUESTED, requestedEntities.size());
+    for (EntityID entityID : requestedEntities) {
+      entityID.serializeTo(getOutputStream());
+    }
+    putNVPair(ENTITIES_REMOVED, removedEntities.size());
+    for (EntityID removedEntity : removedEntities) {
+      removedEntity.serializeTo(getOutputStream());
+    }
     putNVPair(REQUEST_ID, this.requestID.toLong());
     putNVPair(REQUESTING_THREAD_NAME, this.threadName);
   }
@@ -49,11 +56,17 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case MANAGED_OBJECT_ID:
-        this.objectIDs = getObject(new BasicObjectIDSet());
+      case ENTITIES_REQUESTED:
+        this.requestedEntities = new HashSet<>();
+        for (int i = getIntValue(); i > 0; i--) {
+          requestedEntities.add(EntityID.readFrom(getInputStream()));
+        }
         return true;
-      case MANAGED_OBJECTS_REMOVED_ID:
-        this.removed = getObject(new BasicObjectIDSet());
+      case ENTITIES_REMOVED:
+        this.removedEntities = new HashSet<>();
+        for (int i = getIntValue(); i > 0; i--) {
+          removedEntities.add(EntityID.readFrom(getInputStream()));
+        }
         return true;
       case REQUEST_ID:
         this.requestID = new ObjectRequestID(getLongValue());
@@ -72,20 +85,20 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   }
 
   @Override
-  public ObjectIDSet getRequestedObjectIDs() {
-    return this.objectIDs;
+  public Set<EntityID> getRequestedEntities() {
+    return this.requestedEntities;
   }
 
   @Override
-  public ObjectIDSet getRemoved() {
-    return this.removed;
+  public Set<EntityID> getRemoved() {
+    return this.removedEntities;
   }
 
   @Override
-  public void initialize(ObjectRequestID rid, ObjectIDSet requestedObjectIDs, ObjectIDSet removeObjects) {
+  public void initialize(ObjectRequestID rid, Set<EntityID> requestedEntities, Set<EntityID> removedEntities) {
     this.requestID = rid;
-    this.objectIDs = requestedObjectIDs;
-    this.removed = removeObjects;
+    this.requestedEntities = requestedEntities;
+    this.removedEntities = removedEntities;
     this.threadName = Thread.currentThread().getName();
   }
 

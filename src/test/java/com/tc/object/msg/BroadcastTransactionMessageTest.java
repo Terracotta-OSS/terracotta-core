@@ -17,7 +17,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -85,8 +84,8 @@ public class BroadcastTransactionMessageTest {
     final List<ServerEvent> events = Arrays.<ServerEvent>asList(new BasicServerEvent(EVICT, "key-1", "cache1"),
         new BasicServerEvent(PUT, "key-2", "cache3"), new BasicServerEvent(REMOVE, "key-3", "cache2"));
 
-    this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
-                        lowGlobalTransactionIDWatermark, notified, new HashMap<String, ObjectID>(),
+    this.msg.initialize(changes, serializer, txID, clientID, gtx,
+        lowGlobalTransactionIDWatermark, notified,
         logicalChangeResults, events);
     this.msg.dehydrate();
 
@@ -96,11 +95,8 @@ public class BroadcastTransactionMessageTest {
     this.msg.hydrate();
 
     assertEquals(changes, this.msg.getObjectChanges());
-    assertEquals(Arrays.asList(lockIDs), this.msg.getLockIDs());
-    assertEquals(cid, this.msg.getChangeID());
     assertEquals(txID, this.msg.getTransactionID());
     assertEquals(gtx, this.msg.getGlobalTransactionID());
-    assertEquals(txnType, this.msg.getTransactionType());
     assertEquals(lowGlobalTransactionIDWatermark, this.msg.getLowGlobalTransactionIDWatermark());
     assertEquals(notified, this.msg.getNotifies());
     Map<LogicalChangeID, LogicalChangeResult> msgResults = this.msg.getLogicalChangeResults();

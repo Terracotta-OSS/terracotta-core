@@ -9,6 +9,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.EntityID;
 import com.tc.object.ObjectID;
 import com.tc.object.session.SessionID;
 
@@ -19,9 +20,9 @@ import java.util.Set;
 public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements ObjectsNotFoundMessage {
 
   private final static byte BATCH_ID    = 0;
-  private final static byte MISSING_OID = 1;
+  private final static byte MISSING_EID = 1;
 
-  private Set<ObjectID>     missingOids;
+  private Set<EntityID> missingEids;
   private long              batchID;
 
   public ObjectsNotFoundMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -35,16 +36,17 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
   }
 
   @Override
-  public void initialize(Set<ObjectID> missingObjectIDs, long batchId) {
-    this.missingOids = missingObjectIDs;
+  public void initialize(Set<EntityID> missingEntityIDs, long batchId) {
+    this.missingEids = missingEntityIDs;
     this.batchID = batchId;
   }
 
   @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_ID, batchID);
-    for (ObjectID oid : missingOids) {
-      putNVPair(MISSING_OID, oid.toLong());
+    for (EntityID eid : missingEids) {
+      putNVPair(MISSING_EID, eid.getClassName());
+      getOutputStream().writeString(eid.getEntityName());
     }
   }
 
@@ -54,11 +56,11 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
       case BATCH_ID:
         this.batchID = getLongValue();
         return true;
-      case MISSING_OID:
-        if (missingOids == null) {
-          missingOids = new HashSet<ObjectID>();
+      case MISSING_EID:
+        if (missingEids == null) {
+          missingEids = new HashSet<>();
         }
-        this.missingOids.add(new ObjectID(getLongValue()));
+        this.missingEids.add(new EntityID(getStringValue(), getStringValue()));
         return true;
       default:
         return false;
@@ -71,8 +73,8 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
   }
 
   @Override
-  public Set<ObjectID> getMissingObjectIDs() {
-    return missingOids;
+  public Set<EntityID> getMissingEntityIDs() {
+    return missingEids;
   }
 
 }

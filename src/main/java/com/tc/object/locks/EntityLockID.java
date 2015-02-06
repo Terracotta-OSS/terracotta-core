@@ -2,6 +2,7 @@ package com.tc.object.locks;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.object.EntityID;
 
 import java.io.IOException;
 
@@ -9,24 +10,18 @@ import java.io.IOException;
  * @author twu
  */
 public class EntityLockID implements LockID {
-  private final String className;
-  private final String entityName;
+  private final EntityID entityID;
 
   EntityLockID() {
     this("UNKNOWN", "UNKNOWN");
   }
 
   public EntityLockID(String className, String entityName) {
-    this.className = className;
-    this.entityName = entityName;
+    this(new EntityID(className, entityName));
   }
 
-  public String getClassName() {
-    return className;
-  }
-
-  public String getEntityName() {
-    return entityName;
+  public EntityLockID(EntityID entityID) {
+    this.entityID = entityID;
   }
 
   @Override
@@ -34,23 +29,21 @@ public class EntityLockID implements LockID {
     return LockIDType.ENTITY;
   }
 
+  public void serializeTo(TCByteBufferOutput serialOutput) {
+    entityID.serializeTo(serialOutput);
+  }
+
+  public EntityLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+    return new EntityLockID(EntityID.NULL_ID.deserializeFrom(serialInput));
+  }
+
   @Override
   public int compareTo(LockID o) {
     if (o instanceof EntityLockID) {
-      return className.compareTo(((EntityLockID) o).getClassName()) + entityName.compareTo(((EntityLockID) o).getEntityName());
+      // TODO: this doesn't quite look right...
+      return entityID.getEntityName().compareTo(((EntityLockID) o).entityID.getEntityName());
     }
     throw new IllegalArgumentException("Not an EntityLockID.");
-  }
-
-  @Override
-  public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeString(className);
-    serialOutput.writeString(entityName);
-  }
-
-  @Override
-  public EntityLockID deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    return new EntityLockID(serialInput.readString(), serialInput.readString());
   }
 
   @Override
@@ -60,16 +53,20 @@ public class EntityLockID implements LockID {
 
     final EntityLockID that = (EntityLockID) o;
 
-    if (!className.equals(that.className)) return false;
-    if (!entityName.equals(that.entityName)) return false;
+    if (!entityID.equals(that.entityID)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = className.hashCode();
-    result = 31 * result + entityName.hashCode();
-    return result;
+    return entityID.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "EntityLockID{" +
+           "entityID=" + entityID +
+           '}';
   }
 }

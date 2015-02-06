@@ -5,6 +5,7 @@ package com.tc.object;
 
 import com.tc.net.ClientID;
 
+import java.util.Set;
 import java.util.SortedSet;
 
 public interface ObjectRequestContext {
@@ -13,5 +14,5 @@ public interface ObjectRequestContext {
 
   public ClientID getClientID();
 
-  public SortedSet<ObjectID> getRequestedObjectIDs();
+  public Set<EntityID> getRequestedEntities();
 }

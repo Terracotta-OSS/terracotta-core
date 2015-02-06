@@ -8,13 +8,13 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInput.Mark;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
+import com.tc.object.EntityID;
 import com.tc.object.LogicalOperation;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.LogicalChangeID;
@@ -40,8 +40,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
   private boolean                          isDelta;
 
   // Header info; parsed on deserializeFrom()
-  private ObjectID                         id;
-  private String                           typeName;
+  private EntityID                         id;
   private int                              arrayLength;
   private long                             version;
   private int                              dnaLength;
@@ -56,24 +55,6 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
     this.createOutput = createOutput;
   }
 
-  @Override
-  public String getTypeName() {
-    return this.typeName;
-  }
-
-  // This method is there for debugging/logging stats. Should never be used otherwise.
-  public void setTypeClassName(String className) {
-    if (this.typeName == null) {
-      this.typeName = className;
-    }
-  }
-
-  @Override
-  public ObjectID getObjectID() throws DNAException {
-    return this.id;
-  }
-
-  @Override
   public DNACursor getCursor() {
     return this;
   }
@@ -203,8 +184,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
       final StringBuffer buf = new StringBuffer();
       buf.append("DNAImpl\n");
       buf.append("{\n");
-      buf.append("  type->" + getTypeName() + "\n");
-      buf.append("  id->" + getObjectID() + "\n");
+      buf.append("  id->" + getEntityID() + "\n");
       buf.append("  version->" + getVersion() + "\n");
       buf.append("  isDelta->" + isDelta() + "\n");
       buf.append("  actionCount->" + this.actionCount + "\n");
@@ -268,13 +248,9 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
 
     final byte flags = this.input.readByte();
 
-    this.id = new ObjectID(this.input.readLong());
+    this.id = EntityID.readFrom(input);
 
     this.isDelta = Conversion.getFlag(flags, DNA.IS_DELTA);
-
-    if (!this.isDelta) {
-      this.typeName = this.serializer.readString(this.input);
-    }
 
     if (Conversion.getFlag(flags, DNA.HAS_VERSION)) {
       this.version = this.input.readLong();
@@ -299,6 +275,11 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable<DNAImpl> {
   @Override
   public boolean isDelta() {
     return this.isDelta;
+  }
+
+  @Override
+  public EntityID getEntityID() {
+    return id;
   }
 
   @Override

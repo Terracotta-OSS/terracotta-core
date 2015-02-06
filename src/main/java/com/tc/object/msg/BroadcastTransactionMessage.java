@@ -24,19 +24,13 @@ import java.util.Map;
 
 public interface BroadcastTransactionMessage extends TCMessage, Recyclable {
 
-  void initialize(List<? extends DNA> prunedChanges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
-                  NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
-                  GlobalTransactionID lowGlobalTransactionIDWatermark, Collection<ClientServerExchangeLockContext> notifies, Map<String, ObjectID> newRoots,
+  void initialize(List<? extends DNA> prunedChanges, ObjectStringSerializer aSerializer, TransactionID txID,
+                  NodeID commitID, GlobalTransactionID gtx,
+                  GlobalTransactionID lowGlobalTransactionIDWatermark, Collection<ClientServerExchangeLockContext> notifies,
                   Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
                   Collection<ServerEvent> events);
 
-  List<LockID> getLockIDs();
-
-  TxnType getTransactionType();
-
   Collection<DNA> getObjectChanges();
-
-  long getChangeID();
 
   TransactionID getTransactionID();
 
@@ -47,8 +41,6 @@ public interface BroadcastTransactionMessage extends TCMessage, Recyclable {
   GlobalTransactionID getLowGlobalTransactionIDWatermark();
 
   Collection<ClientServerExchangeLockContext> getNotifies();
-
-  Map<String, ObjectID> getNewRoots();
 
   List<ServerEvent> getEvents();
 

@@ -8,6 +8,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
+import com.tc.object.EntityID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
@@ -245,7 +246,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private final DNAEncodingInternal             encoding;
     private final SetOnceFlag                     committed            = new SetOnceFlag();
 
-    private final Map<ObjectID, DNAWriter>        writers              = new LinkedHashMap<ObjectID, DNAWriter>();
+    private final Map<EntityID, DNAWriter>        writers              = new LinkedHashMap<>();
     private final TransactionID                   txnID;
 
     private int                                   headerLength         = UNINITIALIZED_LENGTH;
@@ -326,16 +327,16 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       }
       
       final TCObject tco = buffer.getTCObject();
-      final ObjectID oid = tco.getObjectID();
+      final EntityID eid = tco.getEntityID();
       final boolean isNew = tco.isNew();
 
-      DNAWriter writer = this.writers.get(oid);
+      DNAWriter writer = this.writers.get(eid);
       if (writer == null) {
-        writer = new DNAWriterImpl(this.output, oid, tco.getClassName(), this.serializer, this.encoding, !isNew);
+        writer = new DNAWriterImpl(this.output, eid, this.serializer, this.encoding, !isNew);
 
-        this.writers.put(oid, writer);
+        this.writers.put(eid, writer);
       } else {
-        throw new AssertionError("writer already exists for " + oid);
+        throw new AssertionError("writer already exists for " + eid);
       }
 
       // this isNew() check and flipping of the new flag are safe here only because transaction writing is completely

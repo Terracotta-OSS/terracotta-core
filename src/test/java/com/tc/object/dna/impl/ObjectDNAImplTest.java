@@ -9,7 +9,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.ObjectID;
+import com.tc.object.EntityID;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 
@@ -30,7 +30,7 @@ public class ObjectDNAImplTest extends DNAImplTest {
   }
 
   @Override
-  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
+  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, EntityID id, String type,
                                       ObjectStringSerializer serializer, DNAEncodingInternal encoding, boolean isDelta) {
     return new ObjectDNAWriterImpl(out, id, type, serializer, encoding, version, isDelta);
   }
