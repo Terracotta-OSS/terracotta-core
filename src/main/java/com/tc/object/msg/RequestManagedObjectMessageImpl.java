@@ -95,10 +95,10 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   }
 
   @Override
-  public void initialize(ObjectRequestID rid, Set<EntityID> requestedEntities, Set<EntityID> removedEntities) {
+  public void initialize(ObjectRequestID rid, Set<EntityID> requested, Set<EntityID> removed) {
     this.requestID = rid;
-    this.requestedEntities = requestedEntities;
-    this.removedEntities = removedEntities;
+    this.requestedEntities = requested;
+    this.removedEntities = removed;
     this.threadName = Thread.currentThread().getName();
   }
 
