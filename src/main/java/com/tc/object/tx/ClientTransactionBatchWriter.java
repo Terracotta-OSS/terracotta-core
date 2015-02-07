@@ -343,7 +343,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       // serialized within the the batch writer. This ensure there is no race for more than one thread to commit the
       // same "new" object
       if (isNew) {
-        tco.dehydrate(writer);
         tco.setNotNew();
       }
 
