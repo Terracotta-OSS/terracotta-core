@@ -31,10 +31,12 @@ import java.util.concurrent.Executors;
 import javax.ws.rs.WebApplicationException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -192,7 +194,7 @@ public class ServerManagementServiceV2Test {
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
     when(localManagementSource.isActiveCoordinator()).thenReturn(true);
-    when(localManagementSource.getDsoAttributes(eq(new String[] {"stat1", "stat3"}))).thenReturn(new HashMap<String, Object>() {{
+    when(localManagementSource.getDsoAttributes(argThat(arrayContainingInAnyOrder("stat1", "stat3")))).thenReturn(new HashMap<String, Object>() {{
       put("stat1", "val1");
       put("stat3", "val3");
     }});
@@ -212,8 +214,10 @@ public class ServerManagementServiceV2Test {
       put("stat3", "val3");
     }}));
 
-    verify(remoteManagementSource).getFromRemoteL2(eq("s2"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s2?show=stat1,stat3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
-    verify(remoteManagementSource).getFromRemoteL2(eq("s3"), eq(new URI("tc-management-api/v2/agents/statistics/servers;names=s3?show=stat1,stat3")), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s2"),
+        argThat(IsEqualURI.equalToUri(new URI("tc-management-api/v2/agents/statistics/servers;names=s2?show=stat1,stat3"))), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
+    verify(remoteManagementSource).getFromRemoteL2(eq("s3"),
+        argThat(IsEqualURI.equalToUri(new URI("tc-management-api/v2/agents/statistics/servers;names=s3?show=stat1,stat3"))), eq(ResponseEntityV2.class), eq(StatisticsEntityV2.class));
   }
 
   @Test

@@ -1,5 +1,11 @@
 package com.terracotta.management.l1bridge;
 
+import com.terracotta.management.security.impl.NullContextService;
+import com.terracotta.management.security.impl.NullRequestTicketMonitor;
+import com.terracotta.management.security.impl.NullUserService;
+import com.terracotta.management.service.L1MBeansSource;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.impl.TimeoutServiceImpl;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -7,13 +13,6 @@ import org.junit.Test;
 import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 import org.terracotta.management.resource.AbstractEntityV2;
 import org.terracotta.management.resource.ResponseEntityV2;
-
-import com.terracotta.management.security.impl.NullContextService;
-import com.terracotta.management.security.impl.NullRequestTicketMonitor;
-import com.terracotta.management.security.impl.NullUserService;
-import com.terracotta.management.service.L1MBeansSource;
-import com.terracotta.management.service.RemoteAgentBridgeService;
-import com.terracotta.management.service.impl.TimeoutServiceImpl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -103,9 +102,12 @@ public class RemoteServiceStubGeneratorV2Test {
     DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
     DummySessionService sessionService = remoteServiceStubGenerator.newRemoteService(DummySessionService.class, "session");
 
-    assertThat(cacheService.getCaches().getEntities(), equalTo(caches.getEntities()));
+    assertThat(new HashSet<DummyCacheEntity>(cacheService.getCaches().getEntities()),
+        equalTo(new HashSet<DummyCacheEntity>(caches.getEntities())));
     assertThatAgentIdIsIn(cacheService.getCaches(), "node_cache");
-    assertThat(sessionService.getSessions().getEntities(), equalTo(merge(sessions1, sessions2).getEntities()));
+
+    assertThat(new HashSet<DummySessionEntity>(sessionService.getSessions().getEntities()),
+        equalTo(new HashSet<DummySessionEntity>(merge(sessions1, sessions2).getEntities())));
     assertThatAgentIdIsIn(sessionService.getSessions(), "node1_session", "node2_session");
   }
 

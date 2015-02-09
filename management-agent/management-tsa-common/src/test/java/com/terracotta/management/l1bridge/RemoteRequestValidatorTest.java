@@ -1,5 +1,10 @@
 package com.terracotta.management.l1bridge;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.hasItems;
@@ -86,10 +91,13 @@ public class RemoteRequestValidatorTest {
     } catch (ResourceRuntimeException rre) {
       e = rre;
     }
-    assertEquals("Agent IDs must be in " +
-            "'[localhost.home_1212, localhost.home_4343, localhost.home_4545, localhost.home_59822]' " +
-            "or 'embedded'.", e.getMessage());
-
+    assertThat(e, is(notNullValue()));
+    assertThat(e.getMessage(), startsWith("Agent IDs must be in"));
+    assertThat(e.getMessage(), containsString("localhost.home_1212"));
+    assertThat(e.getMessage(), containsString("localhost.home_4343"));
+    assertThat(e.getMessage(), containsString("localhost.home_4545"));
+    assertThat(e.getMessage(), containsString("localhost.home_59822"));
+    assertThat(e.getMessage(), endsWith("or 'embedded'."));
   }
 
   @Test

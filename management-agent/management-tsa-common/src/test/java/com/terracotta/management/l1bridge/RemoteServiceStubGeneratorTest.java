@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -103,8 +104,10 @@ public class RemoteServiceStubGeneratorTest {
 
     assertThat(cacheService.getCaches(), CoreMatchers.<Collection<CacheRepresentable>>equalTo(caches));
     assertThatAgentIdIsIn(cacheService.getCaches(), "node_cache");
-    assertThat(sessionService.getSessions(), CoreMatchers.<Collection<SessionRepresentable>>equalTo(merge(sessions1, sessions2)));
-    assertThatAgentIdIsIn(sessionService.getSessions(), "node1_session", "node2_session");
+
+    HashSet<SessionRepresentable> sessionsSet = new HashSet<SessionRepresentable>(sessionService.getSessions());
+    assertThat(sessionsSet, CoreMatchers.<Collection<SessionRepresentable>>equalTo(mergeToSet(sessions1, sessions2)));
+    assertThatAgentIdIsIn(sessionsSet, "node1_session", "node2_session");
   }
 
   @Test
@@ -137,6 +140,10 @@ public class RemoteServiceStubGeneratorTest {
     for (Representable representable : representables) {
       assertThat(representable.getAgentId(), Matchers.isOneOf(ids));
     }
+  }
+
+  private static <T> Set<T> mergeToSet(List<T> list1, List<T> list2) {
+    return new HashSet<T>(merge(list1, list2));
   }
 
   private static <T> List<T> merge(List<T> list1, List<T> list2) {
