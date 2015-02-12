@@ -235,9 +235,14 @@ public class RemoteManagementSource {
       Field listenersField = client.getClass().getDeclaredField("listeners");
       listenersField.setAccessible(true);
       LinkedBlockingDeque<?> lbdq = (LinkedBlockingDeque<?>)listenersField.get(client);
-      Iterator<?> it = lbdq.iterator();
-      while (it.hasNext()) {
-        Object listener = it.next();
+
+      // Oh joy, the LinkedBlockingDeque's iterator is buggy in JDK 6 and can
+      // make the next() method run into an infinite loop while holding forever
+      // the lock other threads try to acquire to perform a dequeue.
+      // See: https://bugs.openjdk.java.net/browse/JDK-6993789
+      // Hence, the iteration of toArray() instead.
+      Object[] listeners = lbdq.toArray();
+      for (Object listener : listeners) {
         Field confRuntimeField = listener.getClass().getDeclaredField("val$crt");
         confRuntimeField.setAccessible(true);
         Object clientRuntime = confRuntimeField.get(listener);
@@ -246,8 +251,8 @@ public class RemoteManagementSource {
         ClientConfig clientConfig = (ClientConfig)getConfigMethod.invoke(clientRuntime);
 
         AtomicBoolean cleanme = (AtomicBoolean)clientConfig.getProperty(markerProperty);
-        if (cleanme.get()) {
-          it.remove();
+        if (cleanme != null && cleanme.get()) {
+          lbdq.remove(listener);
         }
       }
     } catch (Exception e) {
