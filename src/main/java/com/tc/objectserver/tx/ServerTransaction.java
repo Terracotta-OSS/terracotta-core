@@ -41,8 +41,6 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public List<? extends DNA> getChanges();
 
-  public Map<String, ObjectID> getNewRoots();
-
   public TxnType getTransactionType();
 
   public ObjectIDSet getObjectIDs();

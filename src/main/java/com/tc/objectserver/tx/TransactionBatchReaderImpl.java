@@ -11,7 +11,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggingService;
 import com.tc.net.NodeID;
-import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -28,11 +27,9 @@ import com.tc.util.ServiceUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Note: If the format of the Transaction Batch changes, then it has to be reflected in three place.<br>
@@ -128,15 +125,6 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
       locks[i] = lidsr.deserializeFrom(this.in).getLockID();
     }
 
-    final Map<String, ObjectID> newRoots = new HashMap<String, ObjectID>();
-    final int numNewRoots = this.in.readInt();
-    for (int i = 0; i < numNewRoots; i++) {
-      final String name = this.in.readString();
-
-      final ObjectID id = new ObjectID(this.in.readLong());
-      newRoots.put(name, id);
-    }
-
     final List<Notify> notifies = new LinkedList<Notify>();
     final int numNotifies = this.in.readInt();
     for (int i = 0; i < numNotifies; i++) {
@@ -168,7 +156,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.txnToRead--;
     return this.txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, isEviction, locks, this.source,
                                                    dnas,
-                                                   this.serializer, newRoots, txnType, notifies,
+                                                   this.serializer, txnType, notifies,
                                                    numApplictionTxn);
   }
 

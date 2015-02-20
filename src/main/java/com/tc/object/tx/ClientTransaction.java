@@ -36,13 +36,6 @@ public interface ClientTransaction {
   public TCChangeBuffer getChangeBuffer();
 
   /**
-   * Get new roots in this transaction
-   * 
-   * @return Map of Root name to ObjectID
-   */
-  public Map<String, ObjectID> getNewRoots();
-
-  /**
    * Get initial lock identifier
    * 
    * @return Identifier
@@ -59,7 +52,7 @@ public interface ClientTransaction {
   /**
    * Indicate place in sequence of transactions
    * 
-   * @param sequenceID Identifier
+   * @param tid Identifier
    */
   public void setTransactionID(TransactionID tid);
 
@@ -78,20 +71,11 @@ public interface ClientTransaction {
   public void createObject(TCObject source);
 
   /**
-   * Record new root
-   * 
-   * @param name Root name
-   * @param rootID ObjectID for root value
-   */
-  public void createRoot(String name, ObjectID rootID);
-
-  /**
    * Record logical invocation
    * 
    * @param source Source of invoke
    * @param method Method identifier
    * @param parameters Parameter values
-   * @param methodName Method name
    */
   public void logicalInvoke(TCObject source, LogicalOperation method, Object[] parameters, LogicalChangeID id);
 

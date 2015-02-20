@@ -9,7 +9,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
 import com.tc.object.EntityID;
-import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dna.api.DNAEncodingInternal;
@@ -32,7 +31,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
@@ -382,15 +380,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       this.output.writeInt(locks.size());
       for (LockID lock : locks) {
         new LockIDSerializer(lock).serializeTo(this.output);
-      }
-
-      final Map<String, ObjectID> newRoots = txn.getNewRoots();
-      this.output.writeInt(newRoots.size());
-      for (Entry<String, ObjectID> entry : newRoots.entrySet()) {
-        final String name = entry.getKey();
-        final ObjectID id = entry.getValue();
-        this.output.writeString(name);
-        this.output.writeLong(id.toLong());
       }
 
       final List<Notify> notifies = txn.getNotifies();

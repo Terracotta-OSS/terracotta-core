@@ -68,7 +68,6 @@ public class ServerTransactionBatchWriter {
     out.writeBoolean(txn.isEviction());
 
     writeLockIDs(out, txn.getLockIDs());
-    writeRootsMap(out, txn.getNewRoots());
     writeNotifies(out, txn.getNotifies());
     writeDNAs(out, txn.getChanges());
   }

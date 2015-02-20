@@ -23,7 +23,7 @@ public interface ServerTransactionFactory {
   public ServerTransaction createServerTransaction(TxnBatchID batchID, TransactionID txnID, SequenceID sequenceID,
                                                    boolean isEviction,
                                                    LockID[] locks, NodeID source, List<? extends DNA> dnas,
-                                                   ObjectStringSerializer serializer, Map<String, ObjectID> newRoots, TxnType txnType,
+                                                   ObjectStringSerializer serializer, TxnType txnType,
                                                    List<Notify> notifies,
                                                    int numTxn);
 
