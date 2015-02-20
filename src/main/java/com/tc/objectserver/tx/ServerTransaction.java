@@ -57,8 +57,5 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public int getTxnCount();
 
-  // Used in active-active
-  public long[] getHighWaterMarks();
-
   public boolean isEviction();
 }

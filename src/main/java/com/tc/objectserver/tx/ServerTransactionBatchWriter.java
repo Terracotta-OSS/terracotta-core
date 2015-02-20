@@ -70,7 +70,6 @@ public class ServerTransactionBatchWriter {
     writeLockIDs(out, txn.getLockIDs());
     writeRootsMap(out, txn.getNewRoots());
     writeNotifies(out, txn.getNotifies());
-    writeHighWaterMarks(out, txn.getHighWaterMarks());
     writeDNAs(out, txn.getChanges());
   }
 

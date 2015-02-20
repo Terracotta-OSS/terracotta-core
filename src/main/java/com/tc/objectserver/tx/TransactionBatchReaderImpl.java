@@ -145,8 +145,6 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
       notifies.add(n);
     }
 
-    final long[] highwaterMarks = readLongArray(this.in);
-
     final List<DNA> dnas = new ArrayList<DNA>();
     final int numDNA = this.in.readInt();
     
@@ -171,7 +169,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return this.txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, isEviction, locks, this.source,
                                                    dnas,
                                                    this.serializer, newRoots, txnType, notifies,
-                                                   numApplictionTxn, highwaterMarks);
+                                                   numApplictionTxn);
   }
 
   @Override

@@ -399,26 +399,12 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
         n.serializeTo(this.output);
       }
 
-      writeAdditionalHeaderInformation(this.output, txn);
-
       this.changesCountMark = this.output.mark();
       this.output.writeInt(-1);
 
       Assert.assertEquals(UNINITIALIZED_LENGTH, this.headerLength);
       this.headerLength = this.output.getBytesWritten() - startPos;
 
-    }
-
-    protected void writeAdditionalHeaderInformation(TCByteBufferOutputStream out, ClientTransaction txn) {
-      // This is here so that the format is compatible with active-active
-      writeLongArray(out, new long[0]);
-    }
-
-    protected void writeLongArray(TCByteBufferOutputStream out, long[] ls) {
-      out.writeInt(ls.length);
-      for (final long element : ls) {
-        out.writeLong(element);
-      }
     }
 
     @Override
