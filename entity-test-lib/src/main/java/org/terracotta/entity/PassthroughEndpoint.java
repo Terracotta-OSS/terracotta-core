@@ -3,7 +3,6 @@ package org.terracotta.entity;
 import com.google.common.util.concurrent.Futures;
 import com.tc.entity.Request;
 
-import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -19,12 +18,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   @Override
-  public void setEntityConfiguration(Serializable entityConfiguration) {
-    throw new UnsupportedOperationException("Implement me!");
-  }
-
-  @Override
-  public Serializable getEntityConfiguration() {
+  public byte[] getEntityConfiguration() {
     throw new UnsupportedOperationException("Implement me!");
   }
 
@@ -39,7 +33,6 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   private class InvocationBuilderImpl implements InvocationBuilder {
-    private boolean returnsValue = false;
     private byte[] payload = null;
     private final Set<Request.Acks> acks = EnumSet.noneOf(Request.Acks.class);
 
@@ -68,22 +61,15 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     }
 
     @Override
-    public InvocationBuilder returnsValue(boolean returnsValue) {
-      this.returnsValue = returnsValue;
-      return this;
-    }
-
-    @Override
     public InvocationBuilder payload(byte[] payload) {
       this.payload = payload;
       return this;
     }
 
     @Override
-    public Future<?> invoke() {
+    public Future<byte[]> invoke() {
       try {
-        byte[] value = entity.invoke(payload);
-        return returnsValue ? Futures.immediateFuture(value) : Futures.immediateFuture(null);
+        return Futures.immediateFuture(entity.invoke(payload));
       } catch (Exception e) {
         return Futures.immediateFailedCheckedFuture(e);
       }
