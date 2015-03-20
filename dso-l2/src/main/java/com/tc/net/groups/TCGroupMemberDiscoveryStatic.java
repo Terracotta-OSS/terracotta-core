@@ -619,7 +619,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     @Override
     public void notifyChannelEvent(ChannelEvent event) {
-      if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+      if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT ||
+          event.getType() == ChannelEventType.CHANNEL_OPENED_EVENT) {
         synchronized (this) {
           this.connectedChannel = event.getChannel();
         }
