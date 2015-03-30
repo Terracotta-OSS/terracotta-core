@@ -16,8 +16,10 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.terracottatech.config.Auth;
 import com.terracottatech.config.BindPort;
@@ -49,7 +51,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   public static final short       DEFAULT_MANAGEMENTPORT_OFFSET_FROM_TSAPORT = 30;
   public static final int         MIN_PORTNUMBER                        = 0x0FFF;
   public static final int         MAX_PORTNUMBER                        = 0xFFFF;
-  public static final String      DEFAULT_DATA_STORAGE_SIZE                 = "512m";
+  public static final String      DEFAULT_DATA_STORAGE_SIZE                 = "2g";
 
   private final Security          securityConfig;
   private final GarbageCollection garbageCollection;
@@ -235,7 +237,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       if (server.isSetOffheap()) {
         server.getDataStorage().setSize(server.getOffheap().getMaxDataSize());
       } else {
-        logger.warn("Max data size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE);
+        CustomerLogging.getConsoleLogger().warn(Banner.makeBanner("Max data size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE, "WARNING"));
         server.getDataStorage().setSize(DEFAULT_DATA_STORAGE_SIZE);
       }
     }
