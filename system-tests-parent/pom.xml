@@ -29,7 +29,7 @@
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <productKeyPath/>
     <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
-    <container-test-framework.version>2.0.0</container-test-framework.version>
+    <container-test-framework.version>2.0.1-SNAPSHOT</container-test-framework.version>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
