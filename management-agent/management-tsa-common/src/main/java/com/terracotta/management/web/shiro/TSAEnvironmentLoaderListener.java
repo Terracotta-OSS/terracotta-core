@@ -47,6 +47,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -60,6 +62,8 @@ import javax.servlet.ServletContextEvent;
  * @param <T>
  */
 public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
+
+  private static final int REJECTION_TIMEOUT = Integer.getInteger("com.tc.management.threadPools.rejectionTimeout", 25);
 
   static {
     // Optionally remove existing handlers attached to j.u.l root logger
@@ -87,10 +91,34 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
       l1BridgeExecutorService = new ThreadPoolExecutor(maxThreads, maxThreads, 60L, TimeUnit.SECONDS,
           new ArrayBlockingQueue<Runnable>(maxThreads * 32, true), new ManagementThreadFactory("Management-Agent-L1"));
       l1BridgeExecutorService.allowCoreThreadTimeOut(true);
+      l1BridgeExecutorService.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+          try {
+            boolean accepted = l1BridgeExecutorService.getQueue().offer(r, REJECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            if (!accepted) {
+              throw new RejectedExecutionException("L1 Management thread pool saturated, job rejected");
+            }
+          } catch (InterruptedException ie) {
+            throw new RejectedExecutionException("L1 Management thread pool interrupted, job rejected", ie);
+          }
+        }
+      });
 
       tsaExecutorService = new ThreadPoolExecutor(maxThreads, maxThreads, 60L, TimeUnit.SECONDS,
           new ArrayBlockingQueue<Runnable>(maxThreads * 32, true), new ManagementThreadFactory("Management-Agent-L2"));
       tsaExecutorService.allowCoreThreadTimeOut(true);
+      tsaExecutorService.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+          try {
+            boolean accepted = l1BridgeExecutorService.getQueue().offer(r, REJECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            if (!accepted) {
+              throw new RejectedExecutionException("L2 Management thread pool saturated, job rejected");
+            }
+          } catch (InterruptedException ie) {
+            throw new RejectedExecutionException("L2 Management thread pool interrupted, job rejected", ie);
+          }
+        }
+      });
 
       TimeoutService timeoutService = new TimeoutServiceImpl(TSAConfig.getDefaultL1BridgeTimeout());
       SecurityContextService securityContextService = new DfltSecurityContextService();

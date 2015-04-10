@@ -3,6 +3,8 @@
  */
 package com.terracotta.management.l1bridge;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -44,6 +46,8 @@ public class RemoteCallerV2 extends RemoteCaller {
     final UserInfo userInfo = contextService.getUserInfo();
     Map<String, Future<ResponseEntityV2<T>>> futures = new HashMap<String, Future<ResponseEntityV2<T>>>();
 
+    long beforeSubmission = System.nanoTime();
+
     for (final String node : nodes) {
       if (node.equals(AbstractEntityV2.EMBEDDED_AGENT_ID)) { continue; }
       try {
@@ -54,8 +58,7 @@ public class RemoteCallerV2 extends RemoteCaller {
             String token = userService.putUserInfo(userInfo);
 
             if (serviceAgency != null) {
-              Map<String, String> nodeDetails = remoteAgentBridgeService.getRemoteAgentNodeDetails(node);
-              String nodeAgency = nodeDetails.get("Agency");
+              String nodeAgency = remoteAgentBridgeService.getRemoteAgentAgency(node);
               if (!serviceAgency.equals(nodeAgency)) {
                 return new ResponseEntityV2<T>();
               }
@@ -69,38 +72,45 @@ public class RemoteCallerV2 extends RemoteCaller {
         });
         futures.put(node, future);
       } catch (RejectedExecutionException ree) {
-        LOG.debug("L1 thread pool rejected task, throttling a bit before resuming fan-out call...", ree);
-        try {
-          Thread.sleep(100L);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-        }
+        ResponseEntityV2<T> rejectionResponse = new ResponseEntityV2<T>();
+        ExceptionEntityV2 ee = new ExceptionEntityV2(ree);
+        ee.setAgentId(node);
+        ee.setMessage(ree.getMessage() + " while calling " + serviceName + "." + method.getName());
+        rejectionResponse.getExceptionEntities().add(ee);
+        futures.put(node, new RejectionFuture<ResponseEntityV2<T>>(rejectionResponse));
       }
     }
 
-
-    long timeLeft = timeoutService.getCallTimeout();
+    long submissionTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeSubmission);
+    LOG.debug("fan-out call submission time : {}ms", submissionTime);
+    if (submissionTime > timeoutService.getCallTimeout() / 2) {
+      LOG.warn("Slow L1 management fan-out call submission detected ({}ms), is the JMX thread pool saturated? Try " +
+              "increasing the '" + TCPropertiesConsts.L2_REMOTEJMX_MAXTHREADS + "' TC server property (current value is {})",
+          submissionTime, TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_REMOTEJMX_MAXTHREADS));
+    }
+    long timeLeft = Math.max(timeoutService.getCallTimeout() - submissionTime, 0L);
     ResponseEntityV2<T> globalResult = new ResponseEntityV2<T>();
 
     for (Map.Entry<String, Future<ResponseEntityV2<T>>> entry : futures.entrySet()) {
       String node = entry.getKey();
       Future<ResponseEntityV2<T>> future = entry.getValue();
 
-      long before = System.nanoTime();
+      long beforeCollection = System.nanoTime();
+      long timeout = Math.max(1L, timeLeft);
       try {
-        ResponseEntityV2<T> resp = future.get(Math.max(1L, timeLeft), TimeUnit.MILLISECONDS);
+        ResponseEntityV2<T> resp = future.get(timeout, TimeUnit.MILLISECONDS);
         globalResult.getEntities().addAll(resp.getEntities());
         globalResult.getExceptionEntities().addAll(resp.getExceptionEntities());
       } catch (Exception e) {
         ExceptionEntityV2 e1 = new ExceptionEntityV2(e);
         e1.setAgentId(node);
-        e1.setMessage("Agent failed to respond to " + serviceName + "." + method.getName());
+        e1.setMessage("Agent failed to respond to " + serviceName + "." + method.getName() + " in " + timeout + "ms");
         globalResult.getExceptionEntities().add(e1);
 
         future.cancel(true);
-        LOG.debug("Future execution error in {}.{}", serviceName, method.getName(), e);
+        LOG.debug("Future execution error in {}.{} : agent '{}' failed to respond to call in {}ms", serviceName, method.getName(), node, timeout, e);
       } finally {
-        timeLeft -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - before);
+        timeLeft -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeCollection);
       }
     }
     return globalResult;

@@ -86,6 +86,24 @@ public class RemoteAgentBridgeServiceImpl implements RemoteAgentBridgeService {
   }
 
   @Override
+  public String getRemoteAgentAgency(String nodeName) throws ServiceExecutionException {
+    try {
+      ObjectName objectName = findRemoteAgentEndpoint(nodeName);
+
+      String agency = objectName.getKeyProperty("agency");
+      if (agency != null) {
+        return agency;
+      }
+
+      return getRemoteAgentNodeDetails(nodeName).get("Agency");
+    } catch (ServiceExecutionException see) {
+      throw see;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  @Override
   public byte[] invokeRemoteMethod(String nodeName, final RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException {
     try {
       ObjectName objectName = findRemoteAgentEndpoint(nodeName);

@@ -34,6 +34,16 @@ public interface RemoteAgentBridgeService {
   Map<String, String> getRemoteAgentNodeDetails(String remoteAgentName) throws ServiceExecutionException;
 
   /**
+   * Get the connected remote agent agency. This may or may not go over the network depending if 'agency'
+   * is registered as a key property of the RemoteAgentEndpoint's ObjectName.
+   *
+   * @param remoteAgentName the remote agent node name.
+   * @return the agent's agency.
+   * @throws ServiceExecutionException
+   */
+  String getRemoteAgentAgency(String remoteAgentName) throws ServiceExecutionException;
+
+  /**
    * Invoke an method on the remote agent.
    *
    * @param nodeName the remote agent node name.

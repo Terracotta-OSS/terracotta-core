@@ -133,9 +133,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
 
     /// L1 bridge and Security Services ///
 
-    L1AgentIdRetrievalServiceImplV2 l1AgentIdRetrievalServiceImplV2 = new L1AgentIdRetrievalServiceImplV2(remoteAgentBridgeService, clientManagementService);
-    serviceClasses.put(L1AgentIdRetrievalServiceV2.class, l1AgentIdRetrievalServiceImplV2);
-    serviceClasses.put(EventServiceV2.class, new EventServiceImplV2(remoteManagementSource, l1AgentIdRetrievalServiceImplV2));
+    serviceClasses.put(EventServiceV2.class, new EventServiceImplV2(remoteManagementSource));
 
     RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService, serverManagementService);
     RemoteServiceStubGeneratorV2 remoteServiceStubGenerator = new RemoteServiceStubGeneratorV2(requestTicketMonitor,

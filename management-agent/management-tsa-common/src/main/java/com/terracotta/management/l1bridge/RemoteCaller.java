@@ -140,8 +140,7 @@ public class RemoteCaller {
             String token = userService.putUserInfo(userInfo);
 
             if (serviceAgency != null) {
-              Map<String, String> nodeDetails = remoteAgentBridgeService.getRemoteAgentNodeDetails(node);
-              String nodeAgency = nodeDetails.get("Agency");
+              String nodeAgency = remoteAgentBridgeService.getRemoteAgentAgency(node);
               if (!nodeAgency.equals(serviceAgency)) {
                 return Collections.emptySet();
               }
