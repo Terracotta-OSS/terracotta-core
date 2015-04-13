@@ -210,18 +210,10 @@ public class RemoteCallerTest {
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");}};
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
 
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "test");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-2")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "test");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-3")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "test");
-    }});
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-1"))).thenReturn("test");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-2"))).thenReturn("test");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-3"))).thenReturn("test");
+
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
@@ -260,22 +252,10 @@ public class RemoteCallerTest {
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");add("test-nodename-4");}};
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
 
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "other");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-2")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "testAgency");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-3")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "testAgency");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-4")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "testAgency");
-    }});
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-1"))).thenReturn("other");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-2"))).thenReturn("testAgency");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-3"))).thenReturn("testAgency");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-4"))).thenReturn("testAgency");
 
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
@@ -316,28 +296,16 @@ public class RemoteCallerTest {
     Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");add("test-nodename-4");}};
     when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
 
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "testAgency");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-2")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "testAgency");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-3")).then(new Answer<Object>() {
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-1"))).thenReturn("testAgency");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-2"))).thenReturn("testAgency");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-3"))).then(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         Thread.sleep(200L);
-        return new HashMap<String, String>() {{
-          put("Version", "123");
-          put("Agency", "testAgency");
-        }};
+        return "testAgency";
       }
     });
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-4")).thenReturn(new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "testAgency");
-    }});
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("test-nodename-4"))).thenReturn("testAgency");
 
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));

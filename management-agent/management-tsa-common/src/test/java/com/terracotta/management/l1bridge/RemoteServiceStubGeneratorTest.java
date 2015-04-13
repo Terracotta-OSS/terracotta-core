@@ -1,5 +1,11 @@
 package com.terracotta.management.l1bridge;
 
+import com.terracotta.management.security.impl.NullContextService;
+import com.terracotta.management.security.impl.NullRequestTicketMonitor;
+import com.terracotta.management.security.impl.NullUserService;
+import com.terracotta.management.service.L1MBeansSource;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.impl.TimeoutServiceImpl;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -8,20 +14,12 @@ import org.junit.Test;
 import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 import org.terracotta.management.resource.Representable;
 
-import com.terracotta.management.security.impl.NullContextService;
-import com.terracotta.management.security.impl.NullRequestTicketMonitor;
-import com.terracotta.management.security.impl.NullUserService;
-import com.terracotta.management.service.L1MBeansSource;
-import com.terracotta.management.service.RemoteAgentBridgeService;
-import com.terracotta.management.service.impl.TimeoutServiceImpl;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -86,15 +84,9 @@ public class RemoteServiceStubGeneratorTest {
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteRequestValidator.getValidatedNodes()).thenReturn(new HashSet<String>(Arrays.asList("node_cache", "node1_session", "node2_session")));
     when(remoteRequestValidator.getSingleValidatedNode()).thenThrow(new RuntimeException("Multiple nodes were specified"));
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails(eq("node_cache"))).thenReturn(new HashMap<String, String>() {{
-      put("Agency", "cache");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails(eq("node1_session"))).thenReturn(new HashMap<String, String>() {{
-      put("Agency", "session");
-    }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails(eq("node2_session"))).thenReturn(new HashMap<String, String>() {{
-      put("Agency", "session");
-    }});
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("node_cache"))).thenReturn("cache");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("node1_session"))).thenReturn("session");
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("node2_session"))).thenReturn("session");
     when(remoteAgentBridgeService.invokeRemoteMethod(eq("node_cache"), any(RemoteCallDescriptor.class))).thenReturn(serializedCaches);
     when(remoteAgentBridgeService.invokeRemoteMethod(eq("node1_session"), any(RemoteCallDescriptor.class))).thenReturn(serializedSessions1);
     when(remoteAgentBridgeService.invokeRemoteMethod(eq("node2_session"), any(RemoteCallDescriptor.class))).thenReturn(serializedSessions2);
@@ -123,9 +115,7 @@ public class RemoteServiceStubGeneratorTest {
     when(l1MBeansSource.containsJmxMBeans()).thenReturn(true);
     when(remoteRequestValidator.getValidatedNodes()).thenReturn(new HashSet<String>(Arrays.asList("node_cache")));
     when(remoteRequestValidator.getSingleValidatedNode()).thenReturn("node_cache");
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails(eq("node_cache"))).thenReturn(new HashMap<String, String>() {{
-      put("Agency", "cache");
-    }});
+    when(remoteAgentBridgeService.getRemoteAgentAgency(eq("node_cache"))).thenReturn("cache");
     when(remoteAgentBridgeService.invokeRemoteMethod(eq("node_cache"), any(RemoteCallDescriptor.class))).thenReturn(serializedCaches);
 
     DummyCacheService cacheService = remoteServiceStubGenerator.newRemoteService(DummyCacheService.class, "cache");
