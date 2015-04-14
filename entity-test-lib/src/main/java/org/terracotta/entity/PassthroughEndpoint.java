@@ -24,12 +24,14 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   @Override
   public void registerListener(EndpointListener listener) {
-    throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
   public InvocationBuilder beginInvoke() {
     return new InvocationBuilderImpl();
+  }
+
+  private class FakeSourceID implements SourceID {
   }
 
   private class InvocationBuilderImpl implements InvocationBuilder {
@@ -69,7 +71,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     @Override
     public Future<byte[]> invoke() {
       try {
-        return Futures.immediateFuture(entity.invoke(payload));
+        return Futures.immediateFuture(entity.invoke(new FakeSourceID(), payload));
       } catch (Exception e) {
         return Futures.immediateFailedCheckedFuture(e);
       }
