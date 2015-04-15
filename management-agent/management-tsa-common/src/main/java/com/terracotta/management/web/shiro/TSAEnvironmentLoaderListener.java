@@ -1,5 +1,18 @@
-/*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
  */
 package com.terracotta.management.web.shiro;
 
@@ -12,27 +25,6 @@ import org.terracotta.management.ServiceLocator;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.management.ApplicationTsaService;
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
-import com.terracotta.management.security.ContextService;
-import com.terracotta.management.security.IdentityAssertionServiceClient;
-import com.terracotta.management.security.KeyChainAccessor;
-import com.terracotta.management.security.RequestIdentityAsserter;
-import com.terracotta.management.security.RequestTicketMonitor;
-import com.terracotta.management.security.SSLContextFactory;
-import com.terracotta.management.security.SecurityContextService;
-import com.terracotta.management.security.SecurityServiceDirectory;
-import com.terracotta.management.security.UserService;
-import com.terracotta.management.security.impl.ConstantSecurityServiceDirectory;
-import com.terracotta.management.security.impl.DfltContextService;
-import com.terracotta.management.security.impl.DfltRequestTicketMonitor;
-import com.terracotta.management.security.impl.DfltSecurityContextService;
-import com.terracotta.management.security.impl.DfltUserService;
-import com.terracotta.management.security.impl.NullContextService;
-import com.terracotta.management.security.impl.NullIdentityAsserter;
-import com.terracotta.management.security.impl.NullRequestTicketMonitor;
-import com.terracotta.management.security.impl.NullUserService;
-import com.terracotta.management.security.impl.RelayingJerseyIdentityAssertionServiceClient;
-import com.terracotta.management.security.impl.TSAIdentityAsserter;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.impl.RemoteAgentBridgeServiceImpl;
@@ -41,7 +33,6 @@ import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.utils.TSAConfig;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -58,8 +49,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 /**
- * @author Ludovic Orban
  * @param <T>
+ * @author Ludovic Orban
  */
 public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
 
@@ -82,7 +73,6 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
   @Override
   public void contextInitialized(ServletContextEvent sce) {
     try {
-      boolean sslEnabled = TSAConfig.isSslEnabled();
       ServiceLocator serviceLocator = new ServiceLocator();
 
       /// TSA services ///
@@ -121,61 +111,23 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
       });
 
       TimeoutService timeoutService = new TimeoutServiceImpl(TSAConfig.getDefaultL1BridgeTimeout());
-      SecurityContextService securityContextService = new DfltSecurityContextService();
 
       LocalManagementSource localManagementSource = new LocalManagementSource();
 
       RemoteAgentBridgeService remoteAgentBridgeService = new RemoteAgentBridgeServiceImpl();
 
       serviceLocator.loadService(TimeoutService.class, timeoutService);
-      serviceLocator.loadService(SecurityContextService.class, securityContextService);
 
-      // /Security Services ///
+      /// Security Services ///
+      SecuritySetup securitySetup = buildSecuritySetup(serviceLocator);
 
-      KeyChainAccessor kcAccessor;
-      IdentityAssertionServiceClient identityAssertionServiceClient;
-      ContextService contextService;
-      UserService userService;
-      RequestTicketMonitor requestTicketMonitor;
-      RequestIdentityAsserter identityAsserter;
-
-      SSLContextFactory sslCtxtFactory;
-      if (sslEnabled) {
-        kcAccessor = TSAConfig.getKeyChain();
-        String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
-        Integer securityTimeout = TSAConfig.getSecurityTimeout();
-        sslCtxtFactory = TSAConfig.getSSLContextFactory();
-
-        contextService = new DfltContextService();
-        userService = new DfltUserService();
-        URI securityServiceLocationUri = securityServiceLocation == null ? null : new URI(securityServiceLocation);
-        SecurityServiceDirectory securityServiceDirectory = new ConstantSecurityServiceDirectory(securityServiceLocationUri, securityTimeout);
-        identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceDirectory, contextService);
-        requestTicketMonitor = new DfltRequestTicketMonitor();
-        identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
-      } else {
-        sslCtxtFactory = null;
-        identityAssertionServiceClient = null;
-        kcAccessor = null;
-        contextService = new NullContextService();
-        userService = new NullUserService();
-        requestTicketMonitor = new NullRequestTicketMonitor();
-        identityAsserter = new NullIdentityAsserter();
-      }
-
-      remoteManagementSource = new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, sslCtxtFactory);
+      remoteManagementSource = securitySetup.buildRemoteManagementSource(localManagementSource, timeoutService);
       serviceLocator.loadService(RemoteManagementSource.class, remoteManagementSource);
-
-      serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
-      serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);
-      serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
-      serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
 
       ServiceLoader<ApplicationTsaService> loaders = ServiceLoader.load(ApplicationTsaService.class);
       for (ApplicationTsaService applicationEhCacheService : loaders) {
         Map<Class<T>, T> serviceClasses = applicationEhCacheService.getServiceClasses(tsaExecutorService,
-            timeoutService, localManagementSource, remoteManagementSource, securityContextService, requestTicketMonitor,
-            userService, contextService, remoteAgentBridgeService, l1BridgeExecutorService);
+            timeoutService, localManagementSource, remoteManagementSource, securitySetup.getSecurityContextService(), securitySetup.getRequestTicketMonitor(), securitySetup.getUserService(), securitySetup.getContextService(), remoteAgentBridgeService, l1BridgeExecutorService);
         for (Entry<Class<T>, T> entry : serviceClasses.entrySet()) {
           serviceLocator.loadService(entry.getKey(), entry.getValue());
         }
@@ -183,7 +135,7 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
 
       ServiceLocator.load(serviceLocator);
 
-      List<String> strings = localManagementSource.performSecurityChecks();
+      List<String> strings = securitySetup.performSecurityChecks();
       for (String string : strings) {
         LOG.warn(string);
       }
@@ -192,6 +144,10 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
     } catch (Exception e) {
       throw new RuntimeException("Error initializing TSAEnvironmentLoaderListener", e);
     }
+  }
+
+  protected SecuritySetup buildSecuritySetup(ServiceLocator serviceLocator) throws Exception {
+    return new SecuritySetup();
   }
 
   @Override
@@ -219,23 +175,23 @@ public class TSAEnvironmentLoaderListener<T> extends EnvironmentLoaderListener {
 
     private final ThreadGroup group = (System.getSecurityManager() != null) ?
         System.getSecurityManager().getThreadGroup() : Thread.currentThread().getThreadGroup();
-        private final String threadNamePrefix;
+    private final String threadNamePrefix;
 
-        private ManagementThreadFactory(String threadNamePrefix) {
-          this.threadNamePrefix = threadNamePrefix;
-        }
+    private ManagementThreadFactory(String threadNamePrefix) {
+      this.threadNamePrefix = threadNamePrefix;
+    }
 
-        @Override
-        public Thread newThread(Runnable r) {
-          Thread thread = new Thread(group, r, threadNamePrefix + "-" + threadNumberGenerator.getAndIncrement(), 0);
-          if (thread.isDaemon()) {
-            thread.setDaemon(false);
-          }
-          if (thread.getPriority() != Thread.NORM_PRIORITY) {
-            thread.setPriority(Thread.NORM_PRIORITY);
-          }
-          return thread;
-        }
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(group, r, threadNamePrefix + "-" + threadNumberGenerator.getAndIncrement(), 0);
+      if (thread.isDaemon()) {
+        thread.setDaemon(false);
+      }
+      if (thread.getPriority() != Thread.NORM_PRIORITY) {
+        thread.setPriority(Thread.NORM_PRIORITY);
+      }
+      return thread;
+    }
   }
 
 }

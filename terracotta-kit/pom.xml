@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+The contents of this file are subject to the Terracotta Public License Version
+2.0 (the "License"); You may not use this file except in compliance with the
+License. You may obtain a copy of the License at 
+
+     http://terracotta.org/legal/terracotta-public-license.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Covered Software is Terracotta Platform.
+
+The Initial Developer of the Covered Software is 
+     Terracotta, Inc., a Software AG company
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>terracotta-parent</artifactId>
+    <version>4.3.1-SNAPSHOT</version>
+    <relativePath>../terracotta-parent/pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.terracotta.internal</groupId>
+  <artifactId>terracotta-kit</artifactId>
+  <packaging>pom</packaging>
+  <name>Terracotta Kit</name>
+
+  <properties>
+    <product.name>terracotta-kit</product.name>
+    <kit.name>${product.name}-${project.version}</kit.name>
+    <root.dir>${project.build.directory}/${kit.name}</root.dir>
+
+    <ehcache.version>2.10.1-SNAPSHOT</ehcache.version>
+    <toolkit-api.version>2.1.0</toolkit-api.version>
+    <escrow-maven-plugin.version>1.0.0</escrow-maven-plugin.version>
+    <management-cli.version>${project.version}</management-cli.version>
+    <terracotta.license>LICENSE.txt</terracotta.license>
+
+    <jersey.version>1.16</jersey.version>
+  </properties>
+
+  <dependencies>
+	<dependency>
+		<groupId>org.terracotta</groupId>
+		<artifactId>management-cli-oss</artifactId>
+		<version>${project.version}</version>
+		<classifier>with-dependencies</classifier>
+        <type>zip</type>
+	</dependency>
+	<dependency>
+		<groupId>org.terracotta</groupId>
+		<artifactId>server-script</artifactId>
+		<version>${project.version}</version>
+	</dependency>
+	<dependency>
+		<groupId>org.terracotta</groupId>
+		<artifactId>terracotta</artifactId>
+		<version>${project.version}</version>
+	</dependency>
+
+    <!-- toolkit -->
+    <dependency>
+      <groupId>org.terracotta.toolkit</groupId>
+      <artifactId>terracotta-toolkit-api</artifactId>
+      <version>${toolkit-api.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.toolkit</groupId>
+      <artifactId>terracotta-toolkit-api-internal</artifactId>
+      <version>1.17</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-toolkit-runtime</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>management-tsa-war</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+    </dependency>
+
+    <!-- ehcache -->
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-kit</artifactId>
+      <version>${ehcache.version}</version>
+      <classifier>distribution</classifier>
+      <type>tar.gz</type>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-samples</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>build-data</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>terracotta-client-all</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <manifest>
+                  <addClasspath>false</addClasspath>
+                </manifest>
+                <manifestEntries>
+                  <Class-Path>ehcache/lib/ehcache-${ehcache.version}.jar ehcache/lib/slf4j-api-${slf4j.version}.jar toolkit/lib/terracotta-toolkit-runtime-${project.version}.jar</Class-Path>
+                </manifestEntries>
+              </archive>
+              <excludes>
+                <exclude>**</exclude>
+              </excludes>
+
+              <finalName>ehcache-terracotta-client-all</finalName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-server-lib</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <artifacts>
+                <param>org.terracotta:terracotta:${project.version}</param>
+              </artifacts>
+              <resolveTransitively>true</resolveTransitively>
+              <outputDir>${project.build.directory}/server-lib</outputDir>          
+            </configuration>
+
+          </execution> 
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeTypes>war</includeTypes>
+              <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
+            </configuration>
+
+          </execution>
+          <execution>
+            <id>unpack</id>
+            <phase>package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>net.sf.ehcache</groupId>
+                  <artifactId>ehcache-kit</artifactId>
+                  <version>${ehcache.version}</version>
+                  <classifier>distribution</classifier>
+                  <type>tar.gz</type>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>terracotta-samples</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>distribution</classifier>
+                  <type>tar.gz</type>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.directory}/code-samples</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.internal</groupId>
+                  <artifactId>build-data</artifactId>
+                  <version>${project.version}</version>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                </artifactItem>
+                 <artifactItem>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>server-script</artifactId>
+                  <version>${project.version}</version>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <finalName>terracotta-${project.version}</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
+          <attach>true</attach>
+          <tarLongFileMode>gnu</tarLongFileMode>
+          <filters>
+            <filter>${basedir}/src/assemble/filter.properties</filter>
+          </filters>
+          <descriptors>
+            <descriptor>${basedir}/src/assemble/distribution.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>create-distribution</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>      
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>tc-publish</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>finder-scan-kit</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sag-finder</goal>
+                </goals>
+                <configuration>
+                  <onlyRunWhenSagDepsIsTrue>true</onlyRunWhenSagDepsIsTrue>
+                  <scanDirectory>${project.build.directory}/terracotta-${project.version}</scanDirectory>
+                  <exclusionList>${basedir}/src/finder-exclusions.txt</exclusionList>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.terracotta.maven.plugins</groupId>
+            <artifactId>escrow-maven-plugin</artifactId>
+            <version>${escrow-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>verify-no-snapshots-for-release</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>scan</goal>
+                </goals>
+                <configuration>
+                  <checkSnapshot>true</checkSnapshot>
+                  <kitPath>${project.build.directory}/terracotta-${project.version}/terracotta-${project.version}</kitPath>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>        
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>includeJavadoc</id>
+      <activation>
+        <property>
+          <name>!skipJavadoc</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.terracotta</groupId>
+          <artifactId>terracotta-toolkit-runtime</artifactId>
+          <version>${project.version}</version>
+          <classifier>javadoc</classifier>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>unpack-javadoc</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>unpack</goal>
+                </goals>
+                <configuration>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>org.terracotta</groupId>
+                      <artifactId>terracotta-toolkit-runtime</artifactId>
+                      <version>${project.version}</version>
+                      <classifier>javadoc</classifier>
+                      <overWrite>false</overWrite>
+                      <outputDirectory>${project.build.directory}/toolkit-javadoc</outputDirectory>
+                    </artifactItem>
+                  </artifactItems>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- *********************************************** -->
+    <!--   profile to make a patch tarball from the kit  -->    
+    <!-- *********************************************** -->     
+    <profile>
+      <id>patch</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>create-patch-tarball</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <scriptpath>
+                    <element>${basedir}/src/scripts</element>
+                  </scriptpath>
+                  <source>
+                    def ant = new AntBuilder()
+                    File kitDir = new File(project.properties["root.dir"], "${kit.name}")
+                    def patchDefFile = new File(project.basedir, "src/packaging/patch/patch-def.xml")
+                    def patchDef = new XmlSlurper().parse(patchDefFile)
+                    def patchLevel = patchDef.level.text()
+                    def patchName = "${kit.name}-patch${patchLevel}"
+                    def patchFiles = patchDef.files.file.list().collect { it.text() }
+                    ant.tar(destfile: new File(project.build.directory, "${patchName}.tar.gz"), longfile: "gnu", compression: "gzip") {
+                      patchFiles.each { file -&gt;
+                        println file
+                        tarfileset(dir: kitDir) {
+                          include(name: file)
+                        }
+                      }
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

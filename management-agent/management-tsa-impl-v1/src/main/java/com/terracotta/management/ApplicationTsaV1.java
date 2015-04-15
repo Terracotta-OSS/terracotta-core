@@ -1,3 +1,19 @@
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
+ */
 package com.terracotta.management;
 
 import net.sf.ehcache.management.resource.services.ElementsResourceServiceImpl;
@@ -8,7 +24,6 @@ import net.sf.ehcache.management.service.EntityResourceFactory;
 import org.terracotta.management.application.DefaultApplication;
 import org.terracotta.management.resource.services.AgentService;
 import org.terracotta.management.resource.services.validator.RequestValidator;
-import org.terracotta.session.management.SessionsService;
 
 import com.terracotta.management.l1bridge.RemoteAgentService;
 import com.terracotta.management.l1bridge.RemoteRequestValidator;
@@ -55,7 +70,6 @@ import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.proxy.ProxyExceptionMapper;
-import com.terracotta.management.web.resource.services.IdentityAssertionResourceService;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,7 +91,6 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     s.add(OperatorEventsResourceServiceImpl.class);
     s.add(ShutdownResourceServiceImpl.class);
     s.add(TopologyResourceServiceImpl.class);
-    s.add(IdentityAssertionResourceService.class);
     s.add(JmxResourceServiceImpl.class);
     s.add(LicenseResourceServiceImpl.class);
     
@@ -91,9 +104,6 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     s.add(net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImpl.class);
     s.add(org.terracotta.management.resource.services.AgentsResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.QueryResourceServiceImpl.class);
-
-    s.add(org.terracotta.session.management.SessionsResourceServiceImpl.class);
-    
 
     return s;
   }
@@ -156,9 +166,6 @@ public class ApplicationTsaV1 extends DefaultApplication implements ApplicationT
     serviceClasses.put(CacheManagerService.class, remoteServiceStubGenerator.newRemoteService(CacheManagerService.class, "Ehcache"));
     serviceClasses.put(CacheService.class, remoteServiceStubGenerator.newRemoteService(CacheService.class, "Ehcache"));
     serviceClasses.put(EntityResourceFactory.class, remoteServiceStubGenerator.newRemoteService(EntityResourceFactory.class, "Ehcache"));
-
-    /// Sessions Services ///
-    serviceClasses.put(SessionsService.class, remoteServiceStubGenerator.newRemoteService(SessionsService.class, "Sessions"));
 
     return serviceClasses;
 

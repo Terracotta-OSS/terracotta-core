@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+The contents of this file are subject to the Terracotta Public License Version
+2.0 (the "License"); You may not use this file except in compliance with the
+License. You may obtain a copy of the License at 
+
+     http://terracotta.org/legal/terracotta-public-license.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Covered Software is Terracotta Platform.
+
+The Initial Developer of the Covered Software is 
+     Terracotta, Inc., a Software AG company
+-->
+
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
@@ -10,51 +27,6 @@
     <listener-class>com.terracotta.management.web.shiro.TSAEnvironmentLoaderListener</listener-class>
   </listener>
 
-  <filter>
-    <filter-name>noIaFilter</filter-name>
-    <filter-class>com.terracotta.management.web.shiro.TSANoIaFilter</filter-class>
-    <async-supported>true</async-supported>
-  </filter>
-
-  <filter>
-    <filter-name>securityFilter</filter-name>
-    <filter-class>com.terracotta.management.web.shiro.TSASecurityFilter</filter-class>
-    <async-supported>true</async-supported>
-  </filter>
-
-  <filter>
-    <filter-name>headersExtractorFilter</filter-name>
-    <filter-class>com.terracotta.management.web.shiro.HeadersExtractorFilter</filter-class>
-    <async-supported>true</async-supported>
-  </filter>
-
-  <filter-mapping>
-    <filter-name>noIaFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
-    <dispatcher>FORWARD</dispatcher>
-    <dispatcher>INCLUDE</dispatcher>
-    <dispatcher>ERROR</dispatcher>
-  </filter-mapping>
-
-  <filter-mapping>
-    <filter-name>securityFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
-    <dispatcher>FORWARD</dispatcher>
-    <dispatcher>INCLUDE</dispatcher>
-    <dispatcher>ERROR</dispatcher>
-  </filter-mapping>
-
-  <filter-mapping>
-    <filter-name>headersExtractorFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
-    <dispatcher>FORWARD</dispatcher>
-    <dispatcher>INCLUDE</dispatcher>
-    <dispatcher>ERROR</dispatcher>
-  </filter-mapping>
-
   <servlet>
     <servlet-name>jersey</servlet-name>
     <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
@@ -62,26 +34,6 @@
       <param-name>javax.ws.rs.Application</param-name>
       <param-value>com.terracotta.management.ApplicationTsa</param-value>
     </init-param>
-<!--     <init-param>
-      <description>
-        make sure com.sun.jersey.core.util.FeaturesAndProperties.FEATURE_XMLROOTELEMENT_PROCESSING is set to
-        true so that a list of @XmlRootElement(name = "configuration") is "configurations"
-      </description>
-      <param-name>com.sun.jersey.config.feature.XmlRootElementProcessing</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <init-param>
-      <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <init-param>
-      <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
-      <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
-    </init-param>
-    <init-param>
-      <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-      <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
-    </init-param> -->
     <load-on-startup>1</load-on-startup>
     <async-supported>true</async-supported>
   </servlet>

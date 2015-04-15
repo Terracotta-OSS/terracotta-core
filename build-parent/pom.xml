@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+The contents of this file are subject to the Terracotta Public License Version
+2.0 (the "License"); You may not use this file except in compliance with the
+License. You may obtain a copy of the License at 
+
+     http://terracotta.org/legal/terracotta-public-license.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Covered Software is Terracotta Platform.
+
+The Initial Developer of the Covered Software is 
+     Terracotta, Inc., a Software AG company
+-->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -25,25 +42,22 @@
     <group>unit</group>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <core-storage-api.version>1.3</core-storage-api.version>
+    <core-storage-api.version>1.3.2</core-storage-api.version>
     <heap-core-storage.version>1.1.2</heap-core-storage.version>
-    <bigmemory-core-storage.version>1.1.11</bigmemory-core-storage.version>
+    <bigmemory-core-storage.version>2.0.0</bigmemory-core-storage.version>
     <jetty.version>8.1.15.v20140411</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <search.version>1.4.13</search.version>
-    <security-version>2.0.14</security-version>
+    <search.version>1.4.14</search.version>
+    <shiro.version>1.2.3</shiro.version>
     <management-core-version>2.0.12</management-core-version>
-    <management.apps.parent.version>1.4.1-SNAPSHOT</management.apps.parent.version>
     <session-management.version>${project.version}</session-management.version>
-    <wan-management.version>4.3.1-SNAPSHOT</wan-management.version>
     <tc-messaging.version>1.0.0</tc-messaging.version>
     <terracotta-license.version>1.1.2</terracotta-license.version>
     <toolkit-api.version>2.7</toolkit-api.version> 
     <toolkit-api-internal.version>1.17</toolkit-api-internal.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.10.1-SNAPSHOT</ehcache.version>
-    <ehcache-ee.version>2.10.1-SNAPSHOT</ehcache-ee.version>
     <tcconfig.version>9.1</tcconfig.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
@@ -90,11 +104,6 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.terracottatech</groupId>
-        <artifactId>fast-restartable-store</artifactId>
-        <version>1.1.19</version>
-      </dependency>
-      <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>core-storage-api</artifactId>
         <version>${core-storage-api.version}</version>
@@ -105,9 +114,14 @@
         <version>${heap-core-storage.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.terracottatech.internal</groupId>
+        <groupId>org.terracotta.internal</groupId>
         <artifactId>bigmemory-core-storage</artifactId>
         <version>${bigmemory-core-storage.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.terracottatech</groupId>
+        <artifactId>search</artifactId>
+        <version>${search.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -210,6 +224,26 @@
         </exclusions>        
       </dependency>
       <dependency>
+        <groupId>org.eclipse.jetty.orbit</groupId>
+        <artifactId>javax.servlet</artifactId>
+        <version>${javax.servlet.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.orbit</groupId>
+        <artifactId>javax.security.auth.message</artifactId>
+        <version>1.0.0.v201108011116</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.orbit</groupId>
+        <artifactId>javax.annotation</artifactId>
+        <version>1.1.0.v201108011116</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.orbit</groupId>
+        <artifactId>javax.mail.glassfish</artifactId>
+        <version>1.4.1.v201005082020</version>
+      </dependency>
+      <dependency>
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
         <version>0.9.94</version>
@@ -246,32 +280,6 @@
         <version>${management-core-version}</version>
       </dependency>
       <dependency>
-        <groupId>com.terracotta</groupId>
-        <artifactId>security-core</artifactId>
-        <version>${security-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.terracotta</groupId>
-        <artifactId>security-keychain</artifactId>
-        <version>${security-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.terracotta</groupId>
-        <artifactId>security-REST</artifactId>
-        <version>${security-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.terracottatech</groupId>
-        <artifactId>search-ee</artifactId>
-        <version>${search.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-          </exclusion>          
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>org.terracotta.license</groupId>
         <artifactId>terracotta-license</artifactId>
         <version>${terracotta-license.version}</version>
@@ -300,6 +308,16 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>2.3.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-client</artifactId>
+        <version>2.6</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-json-jackson</artifactId>
+        <version>2.6</version>
       </dependency>
 
       <!-- Glassfish substitutes -->

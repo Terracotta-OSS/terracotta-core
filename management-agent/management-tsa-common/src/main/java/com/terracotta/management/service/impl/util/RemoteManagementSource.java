@@ -1,8 +1,22 @@
-/*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
  */
 package com.terracotta.management.service.impl.util;
 
+import com.terracotta.management.service.TimeoutService;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.filter.EncodingFilter;
@@ -18,23 +32,21 @@ import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.SubGenericType;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
-import com.terracotta.management.security.IACredentials;
-import com.terracotta.management.security.SSLContextFactory;
-import com.terracotta.management.security.SecurityContextService;
-import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.web.utils.TSAConfig;
-
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.AsyncInvoker;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.InvocationCallback;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 import java.io.EOFException;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,21 +62,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.AsyncInvoker;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.InvocationCallback;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-
 /**
  * @author Ludovic Orban
  */
@@ -78,53 +75,14 @@ public class RemoteManagementSource {
 
   private final LocalManagementSource localManagementSource;
   private final TimeoutService timeoutService;
-  private final SecurityContextService securityContextService;
-  private final Client client;
   private final Map<RemoteTSAEventListener, Collection<Future<EventInput>>> eventListenerFutures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>());
+  protected volatile Client client;
 
-  public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService, SSLContextFactory sslContextFactory) {
+  public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService) {
     this.localManagementSource = localManagementSource;
     this.timeoutService = timeoutService;
-    this.securityContextService = securityContextService;
 
     ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-    if (sslContextFactory != null) {
-      try {
-        clientBuilder.sslContext(sslContextFactory.create());
-      } catch (NoSuchAlgorithmException e) {
-        throw new RuntimeException(
-            "Failure instantiating Jersey client due to invalid KeyManagerFactory algorithm.", e);
-      } catch (IOException e) {
-        throw new RuntimeException("Failure instantiating Jersey client due to inability to load keyStore.", e);
-      } catch (KeyStoreException e) {
-        throw new RuntimeException("Failure instantiating Jersey client due to invalid KeyStore type.", e);
-      } catch (CertificateException e) {
-        throw new RuntimeException("Failure instantiating Jersey client due to invalid certificates in a KeyStore.",
-            e);
-      } catch (UnrecoverableKeyException e) {
-        throw new RuntimeException("Failure instantiating Jersey client due to bad key in a KeyStore.", e);
-      } catch (KeyManagementException e) {
-        throw new RuntimeException(
-            "Failure instantiating Jersey client due to one or more invalid keys in a KeyStore.", e);
-      } catch (URISyntaxException e) {
-        throw new RuntimeException("Failure instantiating Jersey client due to bad store location.", e);
-      }
-
-      HostnameVerifier hostnameVerifier;
-      if (Boolean.getBoolean("tc.ssl.disableHostnameVerifier")) {
-        hostnameVerifier = new HostnameVerifier() {
-          @Override
-          public boolean verify(String hostname, SSLSession session) {
-            return true;
-          }
-        };
-      } else {
-        //DEV-8842 : returning false every time means :
-        // we don't allow the hostname to be different from what is configured in the cert.
-        hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-      }
-      clientBuilder.hostnameVerifier(hostnameVerifier);
-    }
 
     // do not register the EncodingFilter, GZipEncoder and DeflateEncoder here
     // as a Jersey bug breaks SSE flow when they are enabled.
@@ -133,11 +91,16 @@ public class RemoteManagementSource {
     client.register(SseFeature.class);
   }
 
-  // test ctor
-  RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService, Client client) {
+  protected RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, Client client) {
     this.localManagementSource = localManagementSource;
     this.timeoutService = timeoutService;
-    this.securityContextService = securityContextService;
+    this.client = client;
+  }
+
+  protected void setClient(Client client) {
+    if (this.client != null) {
+      throw new IllegalStateException("Client already set");
+    }
     this.client = client;
   }
 
@@ -270,16 +233,13 @@ public class RemoteManagementSource {
     }
   }
 
-  private Invocation.Builder sseResource(URI uri) {
+  protected Invocation.Builder sseResource(URI uri) {
     WebTarget resource = client.target(uri);
     Builder builder = resource.request();
-    if (TSAConfig.isSslEnabled()) {
-      SecurityContextService.SecurityContext securityContext = securityContextService.getSecurityContext();
-      builder = builder.header(IACredentials.REQ_TICKET, securityContext.getRequestTicket())
-          .header(IACredentials.SIGNATURE, securityContext.getSignature())
-          .header(IACredentials.ALIAS, securityContext.getAlias())
-          .header(IACredentials.TC_ID_TOKEN, securityContext.getToken());
-    }
+    return enhanceBuilder(builder);
+  }
+
+  protected Builder enhanceBuilder(Builder builder) {
     return builder;
   }
 
@@ -297,15 +257,7 @@ public class RemoteManagementSource {
     resource.property(ClientProperties.CONNECT_TIMEOUT, (int)timeoutService.getCallTimeout());
     resource.property(ClientProperties.READ_TIMEOUT, (int)timeoutService.getCallTimeout());
 
-    Builder builder = resource.request();
-
-    if (TSAConfig.isSslEnabled()) {
-      SecurityContextService.SecurityContext securityContext = securityContextService.getSecurityContext();
-      builder = builder.header(IACredentials.REQ_TICKET, securityContext.getRequestTicket())
-        .header(IACredentials.SIGNATURE, securityContext.getSignature())
-        .header(IACredentials.ALIAS, securityContext.getAlias())
-        .header(IACredentials.TC_ID_TOKEN, securityContext.getToken());
-    }
+    Builder builder = enhanceBuilder(resource.request());
 
     builder = builder.header(CONNECTION_TIMEOUT_HEADER_NAME, timeoutService.getCallTimeout());
     builder = builder.header(READ_TIMEOUT_HEADER_NAME, timeoutService.getCallTimeout());

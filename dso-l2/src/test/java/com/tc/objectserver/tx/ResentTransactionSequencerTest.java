@@ -1,5 +1,18 @@
-/*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
  */
 package com.tc.objectserver.tx;
 
@@ -84,14 +97,15 @@ public class ResentTransactionSequencerTest extends TCTestCase {
   public void testCallbackOnResentComplete() throws Exception {
     sequencer.callBackOnResentTxnsInSystemCompletion(callBack);
     sequencer.goToActiveMode();
-    sequencer.addResentServerTransactionIDs(transactionIDs(0, 1, 2, 3));
+    TransactionBatchContext context = transactionBatch(0, 1, 2, 3);
+    sequencer.addResentServerTransactionIDs(context.getTransactionIDs());
     verify(transactionManager, never()).callBackOnTxnsInSystemCompletion(callBack);
 
-    sequencer.transactionManagerStarted(Collections.singleton(new ClientID(0)));
+    sequencer.transactionManagerStarted(clientIDs(0));
 
     verify(transactionManager, never()).callBackOnTxnsInSystemCompletion(callBack);
 
-    sequencer.addTransactions(transactionBatch(0, 1, 2, 3));
+    sequencer.addTransactions(context);
 
     verify(transactionManager).callBackOnTxnsInSystemCompletion(callBack);
   }
@@ -99,14 +113,31 @@ public class ResentTransactionSequencerTest extends TCTestCase {
   public void testClientDisconnect() throws Exception {
     sequencer.callBackOnResentTxnsInSystemCompletion(callBack);
     sequencer.goToActiveMode();
-    sequencer.addResentServerTransactionIDs(transactionIDs(0, 1, 2));
-    sequencer.addResentServerTransactionIDs(transactionIDs(1, 1, 2));
-    sequencer.transactionManagerStarted(clientIDs(0, 1));
-    sequencer.addTransactions(transactionBatch(0, 1, 2));
-    verify(transactionManager, never()).callBackOnTxnsInSystemCompletion(callBack);
+    
+    TransactionBatchContext batch1 = transactionBatch(0, 1);
+    TransactionBatchContext batch2 = transactionBatch(1, 1);
+    TransactionBatchContext batch3 = transactionBatch(2, 1);
+    
+    sequencer.addResentServerTransactionIDs(batch1.getTransactionIDs());
+    sequencer.addResentServerTransactionIDs(batch2.getTransactionIDs());
+    sequencer.addResentServerTransactionIDs(batch3.getTransactionIDs());
+    sequencer.transactionManagerStarted(clientIDs(0, 1, 2));
 
-    sequencer.clearAllTransactionsFor(new ClientID(1));
-    verify(transactionManager).callBackOnTxnsInSystemCompletion(callBack);
+    sequencer.addTransactions(batch2);
+    sequencer.clearAllTransactionsFor(batch2.getSourceNodeID());
+
+    sequencer.addTransactions(batch3);
+    sequencer.addTransactions(batch1);
+
+    InOrder inOrder = inOrder(transactionManager);
+    inOrder.verify(transactionManager).incomingTransactions(eq(batch1.getSourceNodeID()),
+        argThat(hasServerTransactions(serverTransactionID(0, 1))));
+    inOrder.verify(transactionManager).incomingTransactions(eq(batch2.getSourceNodeID()),
+        argThat(hasServerTransactions(serverTransactionID(1, 1))));
+    inOrder.verify(transactionManager).incomingTransactions(eq(batch3.getSourceNodeID()),
+        argThat(hasServerTransactions(serverTransactionID(2, 1))));
+
+    inOrder.verify(transactionManager).callBackOnTxnsInSystemCompletion(callBack);
   }
 
   public void testOrderedIncoming() throws Exception {
@@ -185,13 +216,13 @@ public class ResentTransactionSequencerTest extends TCTestCase {
   }
 
   public void testDiscontinuousGIDInOrder() throws Exception {
-    TransactionBatchContext batch1 = transactionBatch(0, 1, 2);
-    TransactionBatchContext batch2 = transactionBatch(1, 1);
-
     // Cut batch1 into 2 sub-batches based on the GID split, batch2 is just 1 batch sitting between batch1 part1 and batch1 part2
     when(gtxm.getGlobalTransactionID(serverTransactionID(0, 1))).thenReturn(new GlobalTransactionID(0));
     when(gtxm.getGlobalTransactionID(serverTransactionID(1, 1))).thenReturn(new GlobalTransactionID(1));
     when(gtxm.getGlobalTransactionID(serverTransactionID(0, 2))).thenReturn(new GlobalTransactionID(2));
+    
+    TransactionBatchContext batch1 = transactionBatch(0, 1, 2);
+    TransactionBatchContext batch2 = transactionBatch(1, 1);
 
     sequencer.goToActiveMode();
     sequencer.addResentServerTransactionIDs(batch1.getTransactionIDs());
@@ -274,9 +305,17 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     for (long transactionId : transactions) {
       ServerTransactionID stxID = serverTransactionID(clientId, transactionId);
       stxIDs.add(stxID);
-      when(gtxm.getGlobalTransactionID(stxID)).thenReturn(new GlobalTransactionID(nextGID++));
     }
     return stxIDs;
+  }
+
+  private GlobalTransactionID getOrCreateGID(ServerTransactionID serverTransactionID) {
+    GlobalTransactionID globalTransactionID = gtxm.getGlobalTransactionID(serverTransactionID);
+    if (globalTransactionID == null) {
+      globalTransactionID = new GlobalTransactionID(nextGID++);
+      when(gtxm.getGlobalTransactionID(serverTransactionID)).thenReturn(globalTransactionID);
+    }
+    return globalTransactionID;
   }
 
   private TransactionBatchContext transactionBatch(long clientId, long... transactionIds) {
@@ -285,6 +324,8 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     List<ServerTransactionID> ids = transactionIDs(clientId, transactionIds);
     for (ServerTransactionID stxId : ids) {
       ServerTransaction transaction = mock(ServerTransaction.class);
+      GlobalTransactionID globalTransactionID = getOrCreateGID(stxId);
+      when(transaction.getGlobalTransactionID()).thenReturn(globalTransactionID);
       when(transaction.getServerTransactionID()).thenReturn(stxId);
       transactions.add(transaction);
     }

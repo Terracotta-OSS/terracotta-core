@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+The contents of this file are subject to the Terracotta Public License Version
+2.0 (the "License"); You may not use this file except in compliance with the
+License. You may obtain a copy of the License at 
+
+     http://terracotta.org/legal/terracotta-public-license.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Covered Software is Terracotta Platform.
+
+The Initial Developer of the Covered Software is 
+     Terracotta, Inc., a Software AG company
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>terracotta-parent</artifactId>
+    <version>4.3.1-SNAPSHOT</version>
+    <relativePath>../terracotta-parent</relativePath>
+  </parent>
+
+  <artifactId>terracotta-samples</artifactId>
+  <name>Samples for Terracotta</name>
+
+  <properties>
+    <slf4j.version>1.7.7</slf4j.version>
+    <commons-lang.version>2.6</commons-lang.version>
+    <guava.version>14.0.1</guava.version>
+    <terracotta-nexus-staging-url>http://nexus.terracotta.eur.ad.sag/service/local/staging/deploy/maven2</terracotta-nexus-staging-url>
+    <terracotta-snapshots-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-snapshots</terracotta-snapshots-url>
+    <skipDeploy>false</skipDeploy>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache</artifactId>
+      <version>${ehcache.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>${commons-lang.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-toolkit-runtime</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <profile>
+      <id>configprogrammatic</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.configprogrammatic.ProgrammaticBasedBigMemoryConfiguration</mainClass>
+      </properties>
+    </profile>
+    <profile>
+      <id>configfile</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.configfile.ConfigFileBasedBigMemoryConfiguration</mainClass>
+      </properties>
+    </profile>
+    <profile>
+      <id>crud</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.crud.BigMemoryCrud</mainClass>
+      </properties>
+    </profile>
+    <profile>
+      <id>readwritethrough</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.readwritethrough.ReadWriteThrough</mainClass>
+      </properties>
+    </profile>
+    <profile>
+      <id>nonstop</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.nonstop.BigMemoryNonStopRejoin</mainClass>
+      </properties>
+    </profile>
+    <profile>
+      <id>arc</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.arc.ArcConfiguration</mainClass>
+      </properties>
+    </profile>
+    <profile>
+      <id>cache</id>
+      <properties>
+        <mainClass>com.bigmemory.samples.cache.BigMemoryAsACacheConfiguration</mainClass>
+      </properties>
+    </profile>
+  </profiles>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>2.5.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.1</version>
+          <extensions>true</extensions>
+          <configuration>
+            <!-- The Base URL of Nexus instance where we want to stage -->
+            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
+            <!-- The server "id" element from settings to use authentication from -->
+            <serverId>terracotta-nexus-staging</serverId>
+            <skipNexusStagingDeployMojo>${skipDeploy}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <filters>
+            <filter>${basedir}/src/assemble/filter.properties</filter>
+          </filters>
+          <descriptors>
+            <descriptor>${basedir}/src/assemble/distribution.xml</descriptor>
+          </descriptors>
+          <tarLongFileMode>gnu</tarLongFileMode>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-distribution</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
+        <configuration>
+          <classpathScope>compile</classpathScope>
+          <executable>${java.home}/bin/java</executable>
+          <arguments>
+            <argument>-Xmx200m</argument>
+            <argument>-Dcom.tc.productkey.path=${basedir}/../terracotta-license.key</argument>
+            <argument>-cp</argument>
+            <classpath/>
+            <argument>${mainClass}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
+
+</project>

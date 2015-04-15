@@ -1,9 +1,20 @@
-/*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
  */
 package com.terracotta.toolkit.express;
-
-import static com.terracotta.management.security.SecretUtils.TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
 
@@ -21,6 +32,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 class TerracottaInternalClientImpl implements TerracottaInternalClient {
+  // TODO Break up config so that only EE code needs these props.
+  public static final String TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP = "com.terracotta.SecretProvider";
 
   private static final String CLIENT_HANDLE_IMPL                                               = "com.terracotta.toolkit.express.ClientHandleImpl";
   public static final String  SECRET_PROVIDER                                                  = "com.terracotta.express.SecretProvider";

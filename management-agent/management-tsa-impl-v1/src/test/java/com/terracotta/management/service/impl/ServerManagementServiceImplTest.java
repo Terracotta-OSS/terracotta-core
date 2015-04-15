@@ -1,3 +1,19 @@
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
+ */
 package com.terracotta.management.service.impl;
 
 import com.tc.config.schema.L2Info;
@@ -72,7 +88,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
@@ -101,7 +117,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
@@ -126,7 +142,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
@@ -150,7 +166,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
@@ -185,7 +201,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
@@ -220,7 +236,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getL2Infos()).thenReturn(L2_INFOS);
     when(localManagementSource.getLocalServerName()).thenReturn("s1");
@@ -249,7 +265,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getLocalServerName()).thenReturn("s2");
     when(localManagementSource.getServerGroupInfos()).thenReturn(new ServerGroupInfo[] {
@@ -294,7 +310,7 @@ public class ServerManagementServiceImplTest {
     LocalManagementSource localManagementSource = mock(LocalManagementSource.class);
     TimeoutServiceImpl timeoutService = new TimeoutServiceImpl(1000L);
     DfltSecurityContextService securityContextService = new DfltSecurityContextService();
-    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService, securityContextService, null));
+    RemoteManagementSource remoteManagementSource = spy(new RemoteManagementSource(localManagementSource, timeoutService));
 
     when(localManagementSource.getServerGroupInfos()).thenReturn(new ServerGroupInfo[] {
         new ServerGroupInfo(new L2Info[] {L2_INFOS[0], L2_INFOS[1]}, "group0", 0, true),

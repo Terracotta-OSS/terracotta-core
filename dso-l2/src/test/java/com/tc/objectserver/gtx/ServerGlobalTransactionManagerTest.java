@@ -1,3 +1,19 @@
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
+ */
 package com.tc.objectserver.gtx;
 
 import org.junit.Before;
@@ -5,6 +21,7 @@ import org.junit.Test;
 
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -15,6 +32,9 @@ import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -69,5 +89,18 @@ public class ServerGlobalTransactionManagerTest {
     when(transactionStore.getLeastGlobalTransactionID()).thenReturn(GlobalTransactionID.NULL_ID);
     serverGlobalTransactionManager.clearCommittedTransaction(stxID2);
     verify(callbackSink).add(any(EventContext.class));
+  }
+
+  @Test
+  public void testShutdownClientWithLiveTransactions() throws Exception {
+    ClientID clientID = new ClientID(0);
+    ServerTransactionID sid = new ServerTransactionID(clientID, new TransactionID(1));
+    GlobalTransactionID gid = serverGlobalTransactionManager.getOrCreateGlobalTransactionID(sid);
+    serverGlobalTransactionManager.shutdownNode(clientID);
+    assertTrue(serverGlobalTransactionManager.initiateApply(sid));
+    assertEquals(gid, serverGlobalTransactionManager.getGlobalTransactionID(sid));
+    serverGlobalTransactionManager.commit(sid);
+    serverGlobalTransactionManager.clearCommitedTransactionsBelowLowWaterMark(sid);
+    assertNull(serverGlobalTransactionManager.getGlobalTransactionID(sid));
   }
 }

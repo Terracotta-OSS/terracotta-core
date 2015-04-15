@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+The contents of this file are subject to the Terracotta Public License Version
+2.0 (the "License"); You may not use this file except in compliance with the
+License. You may obtain a copy of the License at 
+
+     http://terracotta.org/legal/terracotta-public-license.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Covered Software is Terracotta Platform.
+
+The Initial Developer of the Covered Software is 
+     Terracotta, Inc., a Software AG company
+-->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -6,7 +23,7 @@
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent-ee</artifactId>
-    <version>3.16</version>
+    <version>3.19</version>
     <relativePath/>
   </parent>
 
@@ -54,6 +71,9 @@
 
     <module>management</module>
     <module>management-agent</module>
+    <module>terracotta-samples</module>
+    <module>server-script</module>
+    <module>management-cli-oss</module>
   </modules>
 
   <build>
@@ -90,6 +110,12 @@
         <module>../bigmemory-max-kit</module>
       </modules>
     </profile>
+    <profile>
+      <id>foss-kit</id>
+      <modules>
+        <module>terracotta-kit</module>
+      </modules>
+    </profile>
   
     <!-- activate to include EE modules if it's EE branch -->
     <profile>
@@ -103,6 +129,7 @@
         </file>
       </activation>
       <modules>
+        <module>../build-parent-ee</module>
         <module>../ent-common</module>
         <module>../ent-dso-l1</module>
         <module>../ent-dso-l2</module>
@@ -111,6 +138,7 @@
         <module>../ent-active-active-tests</module>
         <module>../terracotta-ee</module>
         <module>../terracotta-l1-ee</module>
+        <module>../ent-management-agent</module>
         <module>../toolkit-impl-ee</module>
         <module>../toolkit-express-impl-ee</module>
         <module>../toolkit-runtime-ee</module>
@@ -343,6 +371,34 @@
         <module>devwork/terracotta-sessions</module>
       </modules>
     </profile>
+      <profile>
+      <id>sag-deps</id>
+        <activation>
+          <property>
+            <name>sag-deps</name>
+            <value>true</value>
+          </property>
+        </activation>
+        <build>
+          <pluginManagement>
+            <plugins>
+              <plugin>
+              <groupId>org.terracotta</groupId>
+              <artifactId>maven-forge-plugin</artifactId>
+              <dependencies>
+                <dependency>
+                  <groupId>com.softwareag.ibit.tools.util</groupId>
+                  <artifactId>finder</artifactId>
+                  <!-- Before bumping version - verify it still accepts exclusion files -->
+                  <version>3.0</version>
+                  <scope>compile</scope>
+                </dependency>
+              </dependencies>
+              </plugin>
+            </plugins>
+          </pluginManagement>
+        </build>
+    </profile>
   </profiles>
 
   <distributionManagement>
@@ -352,10 +408,10 @@
       <url>${terracotta-nexus-staging-url}</url>
     </repository>
     <snapshotRepository>
-      <id>terracotta-ee-snapshots</id>
+      <id>terracotta-os-snapshots</id>
        <uniqueVersion>false</uniqueVersion>
-       <name>Terracotta EE Snapshots Repository</name>
-       <url>${terracotta-ee-snapshots-url}</url>
+       <name>Terracotta OS Snapshots Repository</name>
+       <url>${terracotta-os-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 

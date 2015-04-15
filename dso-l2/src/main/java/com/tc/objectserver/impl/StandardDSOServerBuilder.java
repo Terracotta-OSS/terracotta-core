@@ -1,5 +1,18 @@
-/*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
  */
 package com.tc.objectserver.impl;
 
@@ -39,6 +52,7 @@ import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
@@ -60,7 +74,9 @@ import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
+import com.tc.objectserver.persistence.OffheapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.offheap.DataStorageConfig;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.NullIndexHACoordinator;
@@ -76,6 +92,8 @@ import com.tc.operatorevent.TerracottaOperatorEventCallbackLogger;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.NonBlockingStartupLock;
@@ -86,6 +104,7 @@ import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 import com.terracottatech.config.DataStorage;
+import com.terracottatech.config.DataStorageOffheap;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,17 +114,29 @@ import java.util.List;
 import javax.management.MBeanServer;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
+  private static final boolean OFFHEAP_DISABLED = TCPropertiesImpl
+      .getProperties()
+      .getBoolean(TCPropertiesConsts.L2_OFFHEAP_DISABLED, false);
   private final HaConfig            haConfig;
 
   protected final TCSecurityManager securityManager;
   protected final TCLogger          logger;
+  protected final DataStorageConfig offHeapConfig;
 
   public StandardDSOServerBuilder(final HaConfig haConfig, final TCLogger logger,
-                                  final TCSecurityManager securityManager) {
+                                  final TCSecurityManager securityManager, L2DSOConfig l2Config) {
     this.logger = logger;
     this.securityManager = securityManager;
     this.logger.info("Standard TSA Server created");
     this.haConfig = haConfig;
+
+    DataStorage  store = l2Config.getDataStorage();
+    DataStorageOffheap offHeap = l2Config.getOffheap();
+    if (!OFFHEAP_DISABLED) {
+      this.offHeapConfig = new DataStorageConfig(store.isSetOffheap(), offHeap.getSize(),store.isSetHybrid(),store.getSize());
+    } else {
+      offHeapConfig = new DataStorageConfig(false, "64m", true);
+    }
   }
 
   @Override
@@ -304,7 +335,11 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     }
 
     if (persistent) throw new UnsupportedOperationException("Restartability is not supported in open source servers.");
-    return new Persistor(HeapStorageManagerFactory.INSTANCE);
+    if (offHeapConfig.enabled()) {
+      return new Persistor(new OffheapStorageManagerFactory(offHeapConfig));
+    } else {
+      return new Persistor(HeapStorageManagerFactory.INSTANCE);
+    }
   }
 
   @Override

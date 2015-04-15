@@ -1,6 +1,18 @@
-/*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+/* 
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at 
+ *
+ *      http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Platform.
+ *
+ * The Initial Developer of the Covered Software is 
+ *      Terracotta, Inc., a Software AG company
  */
 package com.tc.server;
 
@@ -21,6 +33,7 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -756,21 +769,26 @@ public class TCServerImpl extends SEDA implements TCServer {
     String warFile = System.getProperty("com.tc.management.war");
     String failureReason = null;
     if (warFile == null) {
-      final String webAppPrefix = "management-tsa-war";
+      final List<String> webAppPrefixes = Arrays.asList("ent-management-tsa-war", "management-tsa-war");
       try {
         File managementDir = Directories.getServerLibFolder();
 
         String[] files = managementDir.list(new FilenameFilter() {
           @Override
           public boolean accept(File dir, String name) {
-            return name.startsWith(webAppPrefix) && name.endsWith(".war");
+            for (String webAppPrefix : webAppPrefixes) {
+              if (name.startsWith(webAppPrefix) && name.endsWith(".war")) {
+                return true;
+              }
+            }
+            return false;
           }
         });
 
         if (files != null && files.length > 0) {
           warFile = managementDir.getPath() + File.separator + files[0];
         } else {
-          failureReason = "Could not find the management web archive named : " + webAppPrefix;
+          failureReason = "Could not find one of the management web archives : " + webAppPrefixes;
         }
       } catch (FileNotFoundException e) {
         failureReason = "Could not find the management web archive " + e.getMessage();
@@ -794,13 +812,20 @@ public class TCServerImpl extends SEDA implements TCServer {
 
         restContext.setContextPath("/tc-management-api");
         restContext.setWar(warFile);
+        restContext.setErrorHandler(new ErrorPageErrorHandler());
         contextHandlerCollection.addHandler(restContext);
 
         // make sure the REST webapp is started before binding the port
         if (contextHandlerCollection.isStarted()) {
           restContext.start();
+          // only bind the port if the agent deployed successfully
+          if (restContext.isAvailable()) {
+            bindManagementHttpPort(commonL2Config);
+          } else {
+            logger.warn("Cannot deploy REST management due to agent initialization error", restContext.getUnavailableException());
+            consoleLogger.warn("Cannot deploy REST management due to agent initialization error : " + restContext.getUnavailableException());
+          }
         }
-        bindManagementHttpPort(commonL2Config);
       } finally {
         fileUnlock();
       }
