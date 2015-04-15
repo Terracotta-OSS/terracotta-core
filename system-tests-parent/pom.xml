@@ -43,6 +43,7 @@ The Initial Developer of the Covered Software is
     <group>system</group>
     <tcmaven.version>2.0.0</tcmaven.version>
     <terracotta.core.version>4.3.1-SNAPSHOT</terracotta.core.version>
+    <tc.core.groupId>org.terracotta</tc.core.groupId>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <productKeyPath/>
     <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
@@ -94,7 +95,7 @@ The Initial Developer of the Covered Software is
         <version>${terracotta.core.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta</groupId>
+        <groupId>com.terracottatech</groupId>
         <artifactId>terracotta-ee</artifactId>
         <version>${terracotta.core.version}</version>
       </dependency>
@@ -118,7 +119,7 @@ The Initial Developer of the Covered Software is
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta</groupId>
+      <groupId>${tc.core.groupId}</groupId>
       <artifactId>${tc.core.artifactId}</artifactId>
     </dependency>
     <dependency>
@@ -371,7 +372,7 @@ The Initial Developer of the Covered Software is
           <version>${tcmaven.version}</version>
           <dependencies>
             <dependency>
-              <groupId>org.terracotta</groupId>
+              <groupId>com.terracottatech</groupId>
               <artifactId>terracotta-ee</artifactId>
               <version>${terracotta.core.version}</version>
             </dependency>
@@ -465,6 +466,7 @@ The Initial Developer of the Covered Software is
     <profile>
       <id>ee</id>
       <properties>
+        <tc.core.groupId>com.terracottatech</tc.core.groupId>
         <tc.core.artifactId>terracotta-ee</tc.core.artifactId>
         <skipTests>false</skipTests>
       </properties>
