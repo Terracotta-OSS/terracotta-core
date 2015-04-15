@@ -24,6 +24,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   @Override
   public void registerListener(EndpointListener listener) {
+    throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
