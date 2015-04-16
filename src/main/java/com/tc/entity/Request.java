@@ -14,6 +14,7 @@ public interface Request {
     CREATE_ENTITY,
     INVOKE_ACTION,
     GET_ENTITY,
+    RELEASE_ENTITY,
     DELETE_ENTITY
   }
   
