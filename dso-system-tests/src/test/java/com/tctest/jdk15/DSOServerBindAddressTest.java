@@ -206,6 +206,8 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory factory = super.configFactory();
     L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null, true);
+    manager.dsoL2Config().getDataStorage().setSize("512m");
+
     manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
     manager.dsoL2Config().tsaPort().setBind(bindAddress);
 

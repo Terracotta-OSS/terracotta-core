@@ -61,6 +61,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
  + "\">9510</tsa-port>"
+                    + "\n      <dataStorage size=\"512m\"/>"
                     + "\n      </server>"
                     + "\n      <server jmx-enabled=\"true\" name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
@@ -68,6 +69,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">8510</tsa-port>"
+                    + "\n      <dataStorage size=\"512m\"/>"
                     + "\n      </server>"
                     + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
@@ -107,6 +109,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <tsa-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">9510</tsa-group-port>"
+                    + "\n      <dataStorage size=\"512m\"/>"
                     + "\n      </server>"
                     + "\n      <server jmx-enabled=\"true\" name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
@@ -114,6 +117,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <tsa-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">8510</tsa-group-port>"
+                    + "\n      <dataStorage size=\"512m\"/>"
                     + "\n      </server>"
                     + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);

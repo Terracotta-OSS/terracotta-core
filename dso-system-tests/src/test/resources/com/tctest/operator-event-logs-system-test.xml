@@ -17,8 +17,7 @@ The Initial Developer of the Covered Software is
 -->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
-              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              >
+    >
 
   <servers>
     <server jmx-enabled="true" host="localhost" name="server-1">
@@ -27,6 +26,7 @@ The Initial Developer of the Covered Software is
       <tsa-group-port>4200</tsa-group-port>
       <data>server-1-data</data>
       <logs>server-1-logs</logs>
+      <dataStorage size="512m"/>
     </server>
 
   </servers>

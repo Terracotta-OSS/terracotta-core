@@ -17,7 +17,7 @@ The Initial Developer of the Covered Software is
 -->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    >
 
   <servers>
     <mirror-group election-time="5">
@@ -26,6 +26,7 @@ The Initial Developer of the Covered Software is
         <jmx-port bind="0.0.0.0">4220</jmx-port>
         <tsa-group-port>4230</tsa-group-port>
         <management-port>4240</management-port>
+        <dataStorage size="512m"/>
       </server>
 
       <server host="localhost" name="server-2" bind="127.0.0.1" jmx-enabled="true">
@@ -33,6 +34,7 @@ The Initial Developer of the Covered Software is
         <jmx-port>5220</jmx-port>
         <tsa-group-port>5230</tsa-group-port>
         <management-port>5240</management-port>
+        <dataStorage size="512m"/>
       </server>
 
       <server host="localhost" name="server-3" bind="0.0.0.0" jmx-enabled="true">
@@ -40,9 +42,12 @@ The Initial Developer of the Covered Software is
         <jmx-port bind="127.0.0.1">6220</jmx-port>
         <management-port bind="127.0.0.1">6240</management-port>
         <tsa-group-port bind="127.0.0.1">6230</tsa-group-port>
+        <dataStorage size="512m"/>
       </server>
 
-      <server host="localhost" name="server-4" jmx-enabled="true"/>
+      <server host="localhost" name="server-4" jmx-enabled="true">
+        <dataStorage size="512m"/>
+      </server>
     </mirror-group>
 
     <update-check>
