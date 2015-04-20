@@ -90,17 +90,4 @@ public class ServerGlobalTransactionManagerTest {
     serverGlobalTransactionManager.clearCommittedTransaction(stxID2);
     verify(callbackSink).add(any(EventContext.class));
   }
-
-  @Test
-  public void testShutdownClientWithLiveTransactions() throws Exception {
-    ClientID clientID = new ClientID(0);
-    ServerTransactionID sid = new ServerTransactionID(clientID, new TransactionID(1));
-    GlobalTransactionID gid = serverGlobalTransactionManager.getOrCreateGlobalTransactionID(sid);
-    serverGlobalTransactionManager.shutdownNode(clientID);
-    assertTrue(serverGlobalTransactionManager.initiateApply(sid));
-    assertEquals(gid, serverGlobalTransactionManager.getGlobalTransactionID(sid));
-    serverGlobalTransactionManager.commit(sid);
-    serverGlobalTransactionManager.clearCommitedTransactionsBelowLowWaterMark(sid);
-    assertNull(serverGlobalTransactionManager.getGlobalTransactionID(sid));
-  }
 }
