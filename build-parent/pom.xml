@@ -48,7 +48,7 @@ The Initial Developer of the Covered Software is
     <jetty.version>8.1.15.v20140411</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <search.version>1.4.14</search.version>
+    <search.version>1.5.0</search.version>
     <shiro.version>1.2.3</shiro.version>
     <management-core-version>2.0.12</management-core-version>
     <session-management.version>${project.version}</session-management.version>
