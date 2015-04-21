@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,7 +11,7 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tctest.jdk15;
@@ -206,7 +206,9 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory factory = super.configFactory();
     L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null, true);
-    manager.dsoL2Config().getDataStorage().setSize("512m");
+    
+    manager.dsoL2Config().getDataStorage().setSize("1g");
+    manager.dsoL2Config().getOffheap().setSize("512m");
 
     manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
     manager.dsoL2Config().tsaPort().setBind(bindAddress);
