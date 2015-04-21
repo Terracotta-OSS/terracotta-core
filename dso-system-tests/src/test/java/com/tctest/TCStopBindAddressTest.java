@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,7 +11,7 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tctest;
@@ -75,7 +75,7 @@ public class TCStopBindAddressTest extends BaseDSOTestCase {
                     + " \" bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">" + "\n     " + " <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress() + "\">" + tsaPort + "</tsa-port>" + "\n     "
                     + " <management-port bind=\"" + TCSocketAddress.LOOPBACK_IP + "\">" + managementPort1
-                    + "</management-port>" + "\n</server>"
+                    + "</management-port>" + "\n<dataStorage size=\"512m\"/>" + "\n</server>"
                     + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
