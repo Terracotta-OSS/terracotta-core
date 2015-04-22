@@ -147,6 +147,8 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       l2Builder.setTSABindAddress("127.0.0.1");
       l2Builder.setTSAGroupPort(pc.chooseRandomPort());
       l2Builder.setTSAGroupPortBindAddress("127.0.0.1");
+      l2Builder.setOffHeapEnabled(true);
+      l2Builder.setOffHeapMaxDataSize("512m");
 
       groupBuilders[i].setL2s(new L2ConfigBuilder[] { l2Builder });
     }
