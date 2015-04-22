@@ -288,6 +288,9 @@ public class CorruptMessageTest extends BaseDSOTestCase {
       manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
       manager.dsoL2Config().tsaPort().setBind(LOCALHOST);
 
+      manager.dsoL2Config().getDataStorage().setSize("512m");
+      manager.dsoL2Config().getOffheap().setSize("512m");
+
       manager.commonl2Config().jmxPort().setIntValue(jmxPort);
       manager.commonl2Config().jmxPort().setBind(LOCALHOST);
       server = new MyTCServerImpl(manager);
