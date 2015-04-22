@@ -241,6 +241,9 @@ public class ClientShutdownTest extends BaseDSOTestCase {
       manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
       manager.dsoL2Config().tsaPort().setBind("127.0.0.1");
 
+      manager.dsoL2Config().getDataStorage().setSize("512m");
+      manager.dsoL2Config().getOffheap().setSize("512m");
+
       manager.commonl2Config().jmxPort().setIntValue(jmxPort);
       manager.commonl2Config().jmxPort().setBind("127.0.0.1");
       server = new TCServerImpl(manager);
