@@ -83,6 +83,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     @Override
     public void execute() throws Throwable {
       TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, "false");
+      TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK, "true");
       server = new TCServerImpl(createL2Manager(bindAddr, tsaPort, jmxPort, tsaGroupPort, managementPort));
       server.start();
     }
@@ -207,8 +208,8 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     TestConfigurationSetupManagerFactory factory = super.configFactory();
     L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null, true);
     
-    manager.dsoL2Config().getDataStorage().setSize("1g");
-    manager.dsoL2Config().getOffheap().setSize("512m");
+    manager.dsoL2Config().getDataStorage().setSize("64m");
+    manager.dsoL2Config().getOffheap().setSize("64m");
 
     manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
     manager.dsoL2Config().tsaPort().setBind(bindAddress);
