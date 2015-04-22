@@ -82,7 +82,7 @@ The Initial Developer of the Covered Software is
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <surefire.min-memory>64m</surefire.min-memory>
-    <surefire.max-memory>512m</surefire.max-memory>
+    <surefire.max-memory>1g</surefire.max-memory>
     <surefire.additional-jvm-args/>
     <should_skip_tests>true</should_skip_tests>
     <surefire.jvm.mode>-server</surefire.jvm.mode>
