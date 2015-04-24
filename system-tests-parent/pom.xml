@@ -72,7 +72,7 @@ The Initial Developer of the Covered Software is
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <jrockit-jvm-arguments/>
     <surefire.min-memory>64m</surefire.min-memory>
-    <surefire.max-memory>128m</surefire.max-memory>
+    <surefire.max-memory>1g</surefire.max-memory>
     <surefire.additional-jvm-args/>
     <surefire.argLine>-server -Xms${surefire.min-memory} -Xmx${surefire.max-memory} ${surefire.additional-jvm-args} ${jrockit-jvm-arguments} -Dtc.base-dir=${tc.base-dir} ${tc.config} -Dtc.dso.globalmode=${tc.dso.globalmode} -Dtc.tests.info.property-files=${tc.tests.info.property-files} -Dcom.tc.properties=${tc.system.tests.properties} -Dcom.sun.management.jmxremote ${ee.license}</surefire.argLine>
     <skipTests>true</skipTests>
