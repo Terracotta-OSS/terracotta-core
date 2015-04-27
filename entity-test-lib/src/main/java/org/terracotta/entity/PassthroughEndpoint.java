@@ -3,7 +3,9 @@ package org.terracotta.entity;
 import com.google.common.util.concurrent.Futures;
 import com.tc.entity.Request;
 
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -11,20 +13,30 @@ import java.util.concurrent.Future;
  * @author twu
  */
 public class PassthroughEndpoint implements EntityClientEndpoint {
-  private final ServerEntity entity;
+  private final ClientID clientID = new FakeClientID();
+  private ServerEntity entity;
+  private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
+  private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
 
   public PassthroughEndpoint(ServerEntity entity) {
+    attach(entity);
+  }
+
+  public PassthroughEndpoint() {}
+
+  public void attach(ServerEntity entity) {
     this.entity = entity;
+    entity.connected(clientID);
   }
 
   @Override
   public byte[] getEntityConfiguration() {
-    throw new UnsupportedOperationException("Implement me!");
+    return entity.getConfig();
   }
 
   @Override
   public void registerListener(EndpointListener listener) {
-    throw new UnsupportedOperationException("Implement me!");
+    listeners.add(listener);
   }
 
   @Override
@@ -72,10 +84,31 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     @Override
     public Future<byte[]> invoke() {
       try {
-        return Futures.immediateFuture(entity.invoke(new FakeClientID(), payload));
+        return Futures.immediateFuture(entity.invoke(clientID, payload));
       } catch (Exception e) {
         return Futures.immediateFailedCheckedFuture(e);
       }
+    }
+  }
+
+  public ClientCommunicator clientCommunicator() {
+    return clientCommunicator;
+  }
+
+  private class TestClientCommunicator implements ClientCommunicator {
+    @Override
+    public void sendNoResponse(ClientID clientID, byte[] payload) {
+      if (clientID == PassthroughEndpoint.this.clientID) {
+        for (EndpointListener listener : listeners) {
+          listener.handleMessage(payload);
+        }
+      }
+    }
+
+    @Override
+    public Future<Void> send(ClientID clientID, byte[] payload) {
+      sendNoResponse(clientID, payload);
+      return Futures.immediateFuture(null);
     }
   }
 }
