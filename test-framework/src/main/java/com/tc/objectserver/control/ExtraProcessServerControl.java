@@ -22,8 +22,6 @@ import org.terracotta.test.util.TestProcessUtil;
 
 import com.tc.admin.TCStop;
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.cli.CommandLineBuilder;
-import com.tc.cli.ManagementToolUtil;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
@@ -36,6 +34,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
 import com.tc.test.TestConfigUtil;
 import com.tc.test.config.builder.ClusterManager;
+import com.tc.util.ProductInfo;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -54,7 +53,6 @@ import java.util.Map.Entry;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
-import javax.ws.rs.client.WebTarget;
 
 public class ExtraProcessServerControl extends ServerControlBase {
   private static final String  DEFAULT_MIN_HEAP          = "-Xms128m";
@@ -204,8 +202,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
 
     jvmArgs.add("-Dcom.tc.management.war="
-                + ClusterManager.findWarLocation("org.terracotta", "management-tsa-war",
-                                                 ClusterManager.guessMavenArtifactVersion()));
+                + ClusterManager.findAgentWarLocation(ClusterManager.guessMavenArtifactVersion()));
 
     // Add test defined parameters last so they have the final word in what gets passed to the spawned process.
     if (additionalJvmArgs != null) {
@@ -250,6 +247,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   protected void addProductKeyIfExists(List args) {
+
+    System.out.println("XXX Detecting edition: " + ProductInfo.getInstance().edition());
+
     String propertyKey = TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.PRODUCTKEY_PATH;
     String productKeyPath = System.getProperty(propertyKey);
     if (productKeyPath != null) {

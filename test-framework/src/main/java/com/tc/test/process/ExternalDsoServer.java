@@ -27,6 +27,7 @@ import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.test.config.builder.MavenArtifactFinder;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductInfo;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -254,8 +255,14 @@ public class ExternalDsoServer {
   }
 
   private String guessWarLocation() throws IOException {
+    String groupId = "org.terracotta";
+    String artifactId = "management-tsa-war";
+    if (ProductInfo.ENTERPRISE.equals(ProductInfo.getInstance().edition())) {
+      groupId = "com.terracottatech";
+      artifactId = "ent-management-tsa-war";
+    }
     String version = MavenArtifactFinder.figureCurrentArtifactMavenVersion();
-    return MavenArtifactFinder.findArtifactLocation("org.terracotta", "management-tsa-war", version, null, "war");
+    return MavenArtifactFinder.findArtifactLocation(groupId, artifactId, version, null, "war");
   }
 
   @Override

@@ -45,6 +45,8 @@ The Initial Developer of the Covered Software is
     <terracotta.core.version>4.3.1-SNAPSHOT</terracotta.core.version>
     <tc.core.groupId>org.terracotta</tc.core.groupId>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
+    <tc.management.war.groupId>org.terracotta</tc.management.war.groupId>
+    <tc.management.war.artifactId>management-tsa-war</tc.management.war.artifactId>
     <productKeyPath/>
     <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
     <container-test-framework.version>2.0.1-SNAPSHOT</container-test-framework.version>
@@ -468,6 +470,8 @@ The Initial Developer of the Covered Software is
       <properties>
         <tc.core.groupId>com.terracottatech</tc.core.groupId>
         <tc.core.artifactId>terracotta-ee</tc.core.artifactId>
+        <tc.management.war.groupId>com.terracottatech</tc.management.war.groupId>
+        <tc.management.war.artifactId>ent-management-tsa-war</tc.management.war.artifactId>
         <skipTests>false</skipTests>
       </properties>
     </profile>

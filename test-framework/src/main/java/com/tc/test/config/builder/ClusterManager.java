@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.tc.config.Loader;
 import com.tc.test.TestConfigUtil;
 import com.tc.test.process.ExternalDsoServer;
+import com.tc.util.ProductInfo;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 import com.terracottatech.config.Server;
@@ -131,7 +132,7 @@ public class ClusterManager {
   }
 
   public void start() throws Exception {
-    String war = findAgentWarLocation();
+    String war = findAgentWarLocation(version);
     workingDir.mkdirs();
 
     Server[] servers = tcConfigBuilder.getServers();
@@ -209,8 +210,14 @@ public class ClusterManager {
     return tcConfig.serverAt(groupIdx, serverIdx).getName();
   }
 
-  private String findAgentWarLocation() {
-    return findWarLocation("org.terracotta", "management-tsa-war", version);
+  public static String findAgentWarLocation(String version) {
+    String groupId = "org.terracotta";
+    String artifactId = "management-tsa-war";
+    if (ProductInfo.ENTERPRISE.equals(ProductInfo.getInstance().edition())) {
+      groupId = "com.terracottatech";
+      artifactId = "ent-management-tsa-war";
+    }
+    return findWarLocation(groupId, artifactId, version);
   }
 
   public String versionOf(String artifact) {
