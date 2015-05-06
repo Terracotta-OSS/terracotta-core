@@ -111,4 +111,9 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
       return Futures.immediateFuture(null);
     }
   }
+
+  @Override
+  public void close() {
+    // In a real implementation, this is where a call to the PlatformService, to clean up, would be.
+  }
 }
