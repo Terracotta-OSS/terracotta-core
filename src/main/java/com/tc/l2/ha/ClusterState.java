@@ -13,12 +13,6 @@ import java.util.Set;
 
 public interface ClusterState {
 
-  void setNextAvailableObjectID(long next);
-
-  void setNextAvailableGlobalTransactionID(long next);
-
-  void setNextAvailableDGCId(long next);
-
   void setNextAvailableChannelID(long next);
 
   void addNewConnection(ConnectionID id);
@@ -28,12 +22,6 @@ public interface ClusterState {
   void setStripeID(String clusterID);
 
   void removeConnection(ConnectionID id);
-
-  long getNextAvailableObjectID();
-
-  long getNextAvailableGlobalTxnID();
-
-  long getNextAvailableDGCID();
 
   long getNextAvailableChannelID();
 

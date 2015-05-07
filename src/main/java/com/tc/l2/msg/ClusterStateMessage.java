@@ -21,11 +21,8 @@ import java.util.Set;
 
 public class ClusterStateMessage extends AbstractGroupMessage {
 
-  public static final int        OBJECT_ID                    = 0x00;
   public static final int        NEW_CONNECTION_CREATED       = 0x01;
   public static final int        CONNECTION_DESTROYED         = 0x02;
-  public static final int        GLOBAL_TRANSACTION_ID        = 0x03;
-  public static final int        DGC_ID                       = 0x04;
   public static final int        COMPLETE_STATE               = 0xF0;
   public static final int        OPERATION_FAILED_SPLIT_BRAIN = 0xFE;
   public static final int        OPERATION_SUCCESS            = 0xFF;
@@ -60,15 +57,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     switch (getType()) {
-      case OBJECT_ID:
-        nextAvailableObjectID = in.readLong();
-        break;
-      case GLOBAL_TRANSACTION_ID:
-        nextAvailableGID = in.readLong();
-        break;
-      case DGC_ID:
-        nextAvailableDGCId = in.readLong();
-        break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
         connectionID = ConnectionID.readFrom(in);
@@ -99,15 +87,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     switch (getType()) {
-      case OBJECT_ID:
-        out.writeLong(nextAvailableObjectID);
-        break;
-      case GLOBAL_TRANSACTION_ID:
-        out.writeLong(nextAvailableGID);
-        break;
-      case DGC_ID:
-        out.writeLong(nextAvailableDGCId);
-        break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
         connectionID.writeTo(out);
@@ -150,20 +129,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
 
   public void initMessage(ClusterState state) {
     switch (getType()) {
-      case OBJECT_ID:
-        nextAvailableObjectID = state.getNextAvailableObjectID();
-        break;
-      case GLOBAL_TRANSACTION_ID:
-        nextAvailableGID = state.getNextAvailableGlobalTxnID();
-        break;
-      case DGC_ID:
-        nextAvailableDGCId = state.getNextAvailableDGCID();
-        break;
       case COMPLETE_STATE:
-        nextAvailableObjectID = state.getNextAvailableObjectID();
-        nextAvailableGID = state.getNextAvailableGlobalTxnID();
         nextAvailableChannelID = state.getNextAvailableChannelID();
-        nextAvailableDGCId = state.getNextAvailableDGCID();
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
         stripeIDMap = state.getStripeIDMap();
@@ -175,20 +142,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
 
   public void initState(ClusterState state) {
     switch (getType()) {
-      case OBJECT_ID:
-        state.setNextAvailableObjectID(nextAvailableObjectID);
-        break;
-      case GLOBAL_TRANSACTION_ID:
-        state.setNextAvailableGlobalTransactionID(nextAvailableGID);
-        break;
-      case DGC_ID:
-        state.setNextAvailableDGCId(nextAvailableDGCId);
-        break;
       case COMPLETE_STATE:
-        state.setNextAvailableObjectID(nextAvailableObjectID);
-        state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
-        state.setNextAvailableDGCId(nextAvailableDGCId);
         for (ConnectionID id : connectionIDs) {
           state.addNewConnection(id);
         }
@@ -211,12 +166,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
 
   public boolean isSplitBrainMessage() {
     return getType() == OPERATION_FAILED_SPLIT_BRAIN;
-  }
-
-  public static ClusterStateMessage createNextAvailableObjectIDMessage(ClusterState state) {
-    ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.OBJECT_ID);
-    msg.initMessage(state);
-    return msg;
   }
 
   public static ClusterStateMessage createOKResponse(ClusterStateMessage msg) {
@@ -246,15 +195,4 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     return msg;
   }
 
-  public static ClusterStateMessage createNextAvailableGlobalTransactionIDMessage(ClusterState state) {
-    ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.GLOBAL_TRANSACTION_ID);
-    msg.initMessage(state);
-    return msg;
-  }
-
-  public static ClusterStateMessage createNextAvailableDGCIterationMessage(ClusterState state) {
-    ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.DGC_ID);
-    msg.initMessage(state);
-    return msg;
-  }
 }
