@@ -189,7 +189,7 @@ The Initial Developer of the Covered Software is
                 def reducedPom = new File(project.build.directory, "dependency-reduced-pom.xml")
                 def pomProject = new XmlParser().parse(reducedPom)
 
-                def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122')}
+                def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122') || it.groupId.text().contains('gf-40')}
                 if(gfArtifacts[0] != null) {
 
                   def gfArtifactsParent = gfArtifacts[0].parent()
