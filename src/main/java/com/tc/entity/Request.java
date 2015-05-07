@@ -15,7 +15,7 @@ public interface Request {
     INVOKE_ACTION,
     GET_ENTITY,
     RELEASE_ENTITY,
-    DELETE_ENTITY
+    DESTROY_ENTITY
   }
   
   enum Acks {
