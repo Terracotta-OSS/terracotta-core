@@ -1,8 +1,7 @@
 package com.tc.entity;
 
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.EntityID;
-
+import com.tc.object.EntityDescriptor;
 import java.util.Optional;
 
 /**
@@ -10,13 +9,12 @@ import java.util.Optional;
  */
 public interface ServerEntityMessage extends TCMessage {
 
-  void setMessage(EntityID entityID, byte[] payload);
+  void setMessage(EntityDescriptor entityDescriptor, byte[] payload);
 
-  void setMessage(EntityID entityID, byte[] payload, long responseId);
+  void setMessage(EntityDescriptor entityDescriptor, byte[] payload, long responseId);
 
-
-  EntityID getEntityID();
-
+  EntityDescriptor getEntityDescriptor();
+  
   byte[] getMessage();
 
   Optional<Long> getResponseId();

@@ -11,7 +11,7 @@ import java.io.IOException;
  */
 public interface TCObject {
 
-  EntityID getEntityID();
+  EntityDescriptor getEntityDescriptor();
 
   /**
    * Takes a DNA strand and applies it

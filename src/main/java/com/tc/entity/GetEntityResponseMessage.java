@@ -1,8 +1,7 @@
 package com.tc.entity;
 
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.EntityID;
-
+import com.tc.object.EntityDescriptor;
 import java.util.Optional;
 
 /**
@@ -10,13 +9,13 @@ import java.util.Optional;
  */
 public interface GetEntityResponseMessage extends TCMessage {
 
-  void setMissing(EntityID id);
+  void setMissing(EntityDescriptor entityDescriptor);
 
-  void setEntity(EntityID id, byte[] config);
+  void setEntity(EntityDescriptor entityDescriptor, byte[] config);
   
   boolean isMissing();
   
-  EntityID getEntityID();
+  EntityDescriptor getEntityDescriptor();
   
   Optional<byte[]> getConfig();
 }

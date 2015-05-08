@@ -8,7 +8,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
@@ -42,7 +42,7 @@ public class RequestBatchMessageImpl extends DSOMessageBase implements RequestBa
     for (Request request : requests) {
       outputStream.writeLong(((ClientID) request.getSource()).toLong()); // TODO: what if it's not a client?
       outputStream.writeLong(request.getTransactionID().toLong());
-      request.getEntityID().serializeTo(outputStream);
+      request.getEntityDescriptor().serializeTo(outputStream);
 
       long acks = 0;
       for (Request.Acks ack : request.getAcks()) {
@@ -78,7 +78,7 @@ public class RequestBatchMessageImpl extends DSOMessageBase implements RequestBa
       for (int i = 0; i < batchSize; i++) {
         ClientID clientID = new ClientID(getLongValue());
         TransactionID transactionID = new TransactionID(getLongValue());
-        EntityID entityID = EntityID.readFrom(getInputStream());
+        EntityDescriptor entityDescriptor = EntityDescriptor.readFrom(getInputStream());
         
         Set<Request.Acks> acks = EnumSet.noneOf(Request.Acks.class);
         long requestedAcks = getLongValue();
@@ -91,7 +91,7 @@ public class RequestBatchMessageImpl extends DSOMessageBase implements RequestBa
         Request.Type type = Request.Type.values()[getIntValue()];
         byte[] payload = getBytesArray();
 
-        requests.add(new SimpleRequest(clientID, transactionID, entityID, acks, type, payload));
+        requests.add(new SimpleRequest(clientID, transactionID, entityDescriptor, acks, type, payload));
       }
       return true;
     }
@@ -100,15 +100,15 @@ public class RequestBatchMessageImpl extends DSOMessageBase implements RequestBa
   private static class SimpleRequest implements Request {
     private final ClientID clientID;
     private final TransactionID transactionID;
-    private final EntityID entityID;
+    private final EntityDescriptor entityDescriptor;
     private final Set<Acks> acks;
     private final Type type;
     private final byte[] payload;
 
-    private SimpleRequest(ClientID clientID, TransactionID transactionID, EntityID entityID, Set<Acks> acks, Type type, byte[] payload) {
+    private SimpleRequest(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Set<Acks> acks, Type type, byte[] payload) {
       this.clientID = clientID;
       this.transactionID = transactionID;
-      this.entityID = entityID;
+      this.entityDescriptor = entityDescriptor;
       this.acks = acks;
       this.type = type;
       this.payload = payload;
@@ -125,8 +125,8 @@ public class RequestBatchMessageImpl extends DSOMessageBase implements RequestBa
     }
 
     @Override
-    public EntityID getEntityID() {
-      return entityID;
+    public EntityDescriptor getEntityDescriptor() {
+      return this.entityDescriptor;
     }
 
     @Override

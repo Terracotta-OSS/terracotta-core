@@ -6,7 +6,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
@@ -17,11 +17,11 @@ import java.util.Optional;
  * @author twu
  */
 public class GetEntityResponseMessageImpl extends DSOMessageBase implements GetEntityResponseMessage {
-  private static final byte ENTITY_ID = 0;
+  private static final byte ENTITY_DESCRIPTOR = 0;
   private static final byte MISSING = 1;
   private static final byte CONFIG = 2;
   
-  private EntityID entityID;
+  private EntityDescriptor entityDescriptor;
   private boolean missing = false;
   private Optional<byte[]> config = Optional.empty();
   
@@ -34,14 +34,14 @@ public class GetEntityResponseMessageImpl extends DSOMessageBase implements GetE
   }
 
   @Override
-  public void setMissing(EntityID id) {
-    entityID = id;
-    missing = true;
+  public void setMissing(EntityDescriptor entityDescriptor) {
+    this.entityDescriptor = entityDescriptor;
+    this.missing = true;
   }
 
   @Override
-  public void setEntity(EntityID id, byte[] config) {
-    this.entityID = id;
+  public void setEntity(EntityDescriptor entityDescriptor, byte[] config) {
+    this.entityDescriptor = entityDescriptor;
     this.config = Optional.of(config);
   }
 
@@ -51,8 +51,8 @@ public class GetEntityResponseMessageImpl extends DSOMessageBase implements GetE
   }
 
   @Override
-  public EntityID getEntityID() {
-    return entityID;
+  public EntityDescriptor getEntityDescriptor() {
+    return this.entityDescriptor;
   }
 
   @Override
@@ -62,7 +62,7 @@ public class GetEntityResponseMessageImpl extends DSOMessageBase implements GetE
 
   @Override
   protected void dehydrateValues() {
-    putNVPair(ENTITY_ID, entityID);
+    putNVPair(ENTITY_DESCRIPTOR, this.entityDescriptor);
     putNVPair(MISSING, missing);
     config.ifPresent(bytes -> {
       putNVPair(CONFIG, bytes.length);
@@ -72,19 +72,24 @@ public class GetEntityResponseMessageImpl extends DSOMessageBase implements GetE
 
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
+    boolean didMatch = false;
     switch (name) {
-      case ENTITY_ID:
-        entityID = EntityID.readFrom(getInputStream());
+      case ENTITY_DESCRIPTOR:
+        this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
+        didMatch = true;
         break;
       case MISSING:
         missing = getBooleanValue();
+        didMatch = true;
         break;
       case CONFIG:
         config = Optional.of(getBytesArray());
+        didMatch = true;
         break;
       default:
-        return false;
+        // This must be malformed data so fail.
+        didMatch = false;
     }
-    return true;
+    return didMatch;
   }
 }

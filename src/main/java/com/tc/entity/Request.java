@@ -1,7 +1,7 @@
 package com.tc.entity;
 
 import com.tc.net.NodeID;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 
 import java.util.Set;
@@ -29,8 +29,8 @@ public interface Request {
   
   TransactionID getTransactionID();
   
-  EntityID getEntityID();
-  
+  EntityDescriptor getEntityDescriptor();
+
   Set<Acks> getAcks();
   
   Type getType();

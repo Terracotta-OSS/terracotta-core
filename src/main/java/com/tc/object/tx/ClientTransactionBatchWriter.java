@@ -8,6 +8,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
@@ -244,7 +245,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private final DNAEncodingInternal             encoding;
     private final SetOnceFlag                     committed            = new SetOnceFlag();
 
-    private final Map<EntityID, DNAWriter>        writers              = new LinkedHashMap<>();
+    private final Map<EntityDescriptor, DNAWriter>        writers              = new LinkedHashMap<>();
     private final TransactionID                   txnID;
 
     private int                                   headerLength         = UNINITIALIZED_LENGTH;
@@ -325,16 +326,17 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       }
       
       final TCObject tco = buffer.getTCObject();
-      final EntityID eid = tco.getEntityID();
+      final EntityDescriptor entityDescriptor = tco.getEntityDescriptor();
       final boolean isNew = tco.isNew();
 
-      DNAWriter writer = this.writers.get(eid);
+      DNAWriter writer = this.writers.get(entityDescriptor);
       if (writer == null) {
-        writer = new DNAWriterImpl(this.output, eid, this.serializer, this.encoding, !isNew);
+        EntityID entityID = entityDescriptor.getEntityID();
+        writer = new DNAWriterImpl(this.output, entityID, this.serializer, this.encoding, !isNew);
 
-        this.writers.put(eid, writer);
+        this.writers.put(entityDescriptor, writer);
       } else {
-        throw new AssertionError("writer already exists for " + eid);
+        throw new AssertionError("writer already exists for " + entityDescriptor);
       }
 
       // this isNew() check and flipping of the new flag are safe here only because transaction writing is completely

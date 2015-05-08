@@ -6,7 +6,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
@@ -17,12 +17,12 @@ import java.util.Optional;
  * @author twu
  */
 public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEntityMessage {
-  private static final byte ID = 0;
+  private static final byte ENTITY_DESCRIPTOR = 0;
   private static final byte MESSAGE = 1;
   private static final byte RESPONSE_ID = 2;
 
   private byte[] message;
-  private EntityID entityID;
+  private EntityDescriptor entityDescriptor;
   private Optional<Long> responseId = Optional.empty();
 
   public ServerEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
@@ -34,14 +34,14 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   }
 
   @Override
-  public void setMessage(EntityID entityID, byte[] message) {
-    this.entityID = entityID;
+  public void setMessage(EntityDescriptor entityDescriptor, byte[] message) {
+    this.entityDescriptor = entityDescriptor;
     this.message = message;
   }
 
   @Override
-  public void setMessage(EntityID entityID, byte[] payload, long responseId) {
-    this.entityID = entityID;
+  public void setMessage(EntityDescriptor entityDescriptor, byte[] payload, long responseId) {
+    this.entityDescriptor = entityDescriptor;
     this.message = payload;
     this.responseId = Optional.of(responseId);
   }
@@ -52,8 +52,8 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   }
 
   @Override
-  public EntityID getEntityID() {
-    return entityID;
+  public EntityDescriptor getEntityDescriptor() {
+    return this.entityDescriptor;
   }
 
   @Override
@@ -63,7 +63,7 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
 
   @Override
   protected void dehydrateValues() {
-    putNVPair(ID, entityID);
+    putNVPair(ENTITY_DESCRIPTOR, this.entityDescriptor);
     responseId.ifPresent(id -> {
       putNVPair(RESPONSE_ID, id);
     });
@@ -73,17 +73,24 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
 
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
+    boolean didMatch = false;
     switch (name) {
-      case ID:
-        entityID = EntityID.readFrom(getInputStream());
-        return true;
+      case ENTITY_DESCRIPTOR:
+        this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
+        didMatch = true;
+        break;
       case MESSAGE:
         message = getBytesArray();
-        return true;
+        didMatch = true;
+        break;
       case RESPONSE_ID:
         responseId = Optional.of(getLongValue());
-        return true;
+        didMatch = true;
+        break;
+      default:
+        // This must be malformed data so fail.
+        didMatch = false;
     }
-    return false;
+    return didMatch;
   }
 }

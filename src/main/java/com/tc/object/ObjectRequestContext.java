@@ -13,5 +13,5 @@ public interface ObjectRequestContext {
 
   public ClientID getClientID();
 
-  public Set<EntityID> getRequestedEntities();
+  public Set<EntityDescriptor> getRequestedEntities();
 }

@@ -10,7 +10,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.session.SessionID;
 
@@ -24,8 +24,8 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   private final static byte REQUEST_ID                 = 4;
   private final static byte REQUESTING_THREAD_NAME     = 6;
 
-  private Set<EntityID> requestedEntities;
-  private Set<EntityID> removedEntities;
+  private Set<EntityDescriptor> requestedEntities;
+  private Set<EntityDescriptor> removedEntities;
   private ObjectRequestID   requestID;
   private String            threadName;
 
@@ -42,12 +42,12 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   @Override
   protected void dehydrateValues() {
     putNVPair(ENTITIES_REQUESTED, requestedEntities.size());
-    for (EntityID entityID : requestedEntities) {
-      entityID.serializeTo(getOutputStream());
+    for (EntityDescriptor entityDescriptor : requestedEntities) {
+      entityDescriptor.serializeTo(getOutputStream());
     }
     putNVPair(ENTITIES_REMOVED, removedEntities.size());
-    for (EntityID removedEntity : removedEntities) {
-      removedEntity.serializeTo(getOutputStream());
+    for (EntityDescriptor entityDescriptor : removedEntities) {
+      entityDescriptor.serializeTo(getOutputStream());
     }
     putNVPair(REQUEST_ID, this.requestID.toLong());
     putNVPair(REQUESTING_THREAD_NAME, this.threadName);
@@ -59,13 +59,13 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
       case ENTITIES_REQUESTED:
         this.requestedEntities = new HashSet<>();
         for (int i = getIntValue(); i > 0; i--) {
-          requestedEntities.add(EntityID.readFrom(getInputStream()));
+          requestedEntities.add(EntityDescriptor.readFrom(getInputStream()));
         }
         return true;
       case ENTITIES_REMOVED:
         this.removedEntities = new HashSet<>();
         for (int i = getIntValue(); i > 0; i--) {
-          removedEntities.add(EntityID.readFrom(getInputStream()));
+          removedEntities.add(EntityDescriptor.readFrom(getInputStream()));
         }
         return true;
       case REQUEST_ID:
@@ -85,17 +85,17 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   }
 
   @Override
-  public Set<EntityID> getRequestedEntities() {
+  public Set<EntityDescriptor> getRequestedEntities() {
     return this.requestedEntities;
   }
 
   @Override
-  public Set<EntityID> getRemoved() {
+  public Set<EntityDescriptor> getRemoved() {
     return this.removedEntities;
   }
 
   @Override
-  public void initialize(ObjectRequestID rid, Set<EntityID> requested, Set<EntityID> removed) {
+  public void initialize(ObjectRequestID rid, Set<EntityDescriptor> requested, Set<EntityDescriptor> removed) {
     this.requestID = rid;
     this.requestedEntities = requested;
     this.removedEntities = removed;
