@@ -2,7 +2,6 @@ package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
 import com.tc.entity.Request;
-import com.tc.object.ClientInstanceID;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -15,8 +14,7 @@ import java.util.concurrent.Future;
  */
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientID clientID = new FakeClientID();
-  private final ClientInstanceID clientInstanceID = new ClientInstanceID(1);
-  private final ClientDescriptor clientDescriptor = new ClientDescriptor(clientID, clientInstanceID);
+  private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ServerEntity entity;
   private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
@@ -48,6 +46,9 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   private class FakeClientID implements ClientID {
+  }
+  
+  private class FakeClientDescriptor implements ClientDescriptor {
   }
 
   private class InvocationBuilderImpl implements InvocationBuilder {
