@@ -2,6 +2,7 @@ package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
 import com.tc.entity.Request;
+import com.tc.object.ClientInstanceID;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -14,6 +15,8 @@ import java.util.concurrent.Future;
  */
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientID clientID = new FakeClientID();
+  private final ClientInstanceID clientInstanceID = new ClientInstanceID(1);
+  private final ClientDescriptor clientDescriptor = new ClientDescriptor(clientID, clientInstanceID);
   private ServerEntity entity;
   private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
@@ -26,7 +29,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   public void attach(ServerEntity entity) {
     this.entity = entity;
-    entity.connected(clientID);
+    entity.connected(clientDescriptor);
   }
 
   @Override
@@ -84,7 +87,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     @Override
     public Future<byte[]> invoke() {
       try {
-        return Futures.immediateFuture(entity.invoke(clientID, payload));
+        return Futures.immediateFuture(entity.invoke(clientDescriptor, payload));
       } catch (Exception e) {
         return Futures.immediateFailedCheckedFuture(e);
       }
@@ -97,7 +100,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   private class TestClientCommunicator implements ClientCommunicator {
     @Override
-    public void sendNoResponse(ClientID clientID, byte[] payload) {
+    public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
       if (clientID == PassthroughEndpoint.this.clientID) {
         for (EndpointListener listener : listeners) {
           listener.handleMessage(payload);
@@ -106,8 +109,8 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     }
 
     @Override
-    public Future<Void> send(ClientID clientID, byte[] payload) {
-      sendNoResponse(clientID, payload);
+    public Future<Void> send(ClientDescriptor clientDescriptor, byte[] payload) {
+      sendNoResponse(clientDescriptor, payload);
       return Futures.immediateFuture(null);
     }
   }
