@@ -167,6 +167,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
    */
   @Override
   public void shutdown() {
+    if (l2State.isStopState()) {
+      logger.info("Server is already shutting down.");
+      return;
+    }
     if (!server.canShutdown()) {
       String msg = "Server cannot be shutdown because it is not fully started.";
       logger.error(msg);

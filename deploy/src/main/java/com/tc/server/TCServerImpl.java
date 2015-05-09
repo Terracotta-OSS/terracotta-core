@@ -352,10 +352,20 @@ public class TCServerImpl extends SEDA implements TCServer {
     return state.isPassiveStandby() || state.isActiveCoordinator() || state.isPassiveUninitialized();
   }
 
+  private final Object SHUTDOWN_LOCK = new Object();
+
   @Override
-  public synchronized void shutdown() {
-    if (canShutdown()) {
-      this.state.setState(StateManager.STOP_STATE);
+  public void shutdown() {
+    boolean doShutdown = false;
+
+    synchronized (SHUTDOWN_LOCK) {
+      if (canShutdown()) {
+        this.state.setState(StateManager.STOP_STATE);
+        doShutdown = true;
+      }
+    }
+
+    if (doShutdown) {
       consoleLogger.info("Server exiting...");
       notifyShutdown();
       Runtime.getRuntime().exit(0);
