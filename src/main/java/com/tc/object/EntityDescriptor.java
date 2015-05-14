@@ -54,7 +54,7 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     this.entityID.serializeTo(serialOutput);
-    // TODO:  Serialize the clientInstanceID once we are passing it over the wire.
+    this.clientInstanceID.serializeTo(serialOutput);
   }
 
   @Override
@@ -64,7 +64,6 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   }
 
   public static EntityDescriptor readFrom(TCByteBufferInput serialInput) throws IOException {
-    // TODO:  read the clientInstanceID from serialInput once we are passing it over the wire.
-    return new EntityDescriptor(EntityID.readFrom(serialInput), ClientInstanceID.NULL_ID);
+    return new EntityDescriptor(EntityID.readFrom(serialInput), ClientInstanceID.readFrom(serialInput));
   }
 }
