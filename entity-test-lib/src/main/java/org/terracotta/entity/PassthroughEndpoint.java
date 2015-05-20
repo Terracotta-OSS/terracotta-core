@@ -13,7 +13,6 @@ import java.util.concurrent.Future;
  * @author twu
  */
 public class PassthroughEndpoint implements EntityClientEndpoint {
-  private final ClientID clientID = new FakeClientID();
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ServerEntity entity;
   private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -45,9 +44,6 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     return new InvocationBuilderImpl();
   }
 
-  private class FakeClientID implements ClientID {
-  }
-  
   private class FakeClientDescriptor implements ClientDescriptor {
   }
 
@@ -102,7 +98,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   private class TestClientCommunicator implements ClientCommunicator {
     @Override
     public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
-      if (clientID == PassthroughEndpoint.this.clientID) {
+      if (clientDescriptor == PassthroughEndpoint.this.clientDescriptor) {
         for (EndpointListener listener : listeners) {
           listener.handleMessage(payload);
         }
