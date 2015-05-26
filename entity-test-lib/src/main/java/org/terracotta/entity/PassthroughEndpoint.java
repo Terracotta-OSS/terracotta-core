@@ -14,17 +14,17 @@ import java.util.concurrent.Future;
  */
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
-  private ServerEntity entity;
+  private ActiveServerEntity entity;
   private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
 
-  public PassthroughEndpoint(ServerEntity entity) {
+  public PassthroughEndpoint(ActiveServerEntity entity) {
     attach(entity);
   }
 
   public PassthroughEndpoint() {}
 
-  public void attach(ServerEntity entity) {
+  public void attach(ActiveServerEntity entity) {
     this.entity = entity;
     entity.connected(clientDescriptor);
   }
