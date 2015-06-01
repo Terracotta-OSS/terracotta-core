@@ -9,14 +9,14 @@
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent</artifactId>
-    <version>3.18</version>
+    <version>3.19</version>
   </parent>
   
   <groupId>org.terracotta</groupId>
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
 
   <properties>
     <java.build.version>1.8</java.build.version>
@@ -38,21 +38,21 @@
   </dependencies>
   
   <scm>
-    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/trunk</connection>
-    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging/trunk</developerConnection>
+    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/branches/private/voltron</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging/branches/private/voltron</developerConnection>
   </scm>
   
   <distributionManagement>
     <repository>
-      <id>terracotta-ee-releases</id>
-      <name>Terracotta EE Releases Repository</name>
-      <url>${terracotta-ee-releases-url}</url>
+      <id>terracotta-releases</id>
+      <name>Terracotta Releases Repository</name>
+      <url>${terracotta-releases-url}</url>
     </repository>
     <snapshotRepository>
-      <id>terracotta-ee-snapshots</id>
+      <id>terracotta-snapshots</id>
        <uniqueVersion>false</uniqueVersion>
        <name>Terracotta Snapshots Repository</name>
-       <url>${terracotta-ee-snapshots-url}</url>
+       <url>${terracotta-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 
