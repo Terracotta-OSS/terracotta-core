@@ -112,7 +112,7 @@ public class TCStop {
         consoleLogger.info("Stop success. Response code " + response.getStatus());
         return;
       } else if (response.getStatus() == 401) {
-        consoleLogger.error("Authentication failure. Invalid username/password.");
+        consoleLogger.error("Authentication/Authorization failure: Invalid username/password or insufficient permissions");
         throw new IOException("Incorrect username/password");
       } else if (response.getStatus() == 404) {
         consoleLogger.info("Got a 404, waiting a bit before retrying.");
