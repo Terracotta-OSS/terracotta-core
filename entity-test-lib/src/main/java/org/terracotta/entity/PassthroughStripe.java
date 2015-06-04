@@ -11,6 +11,7 @@ import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.Futures;
 import com.tc.entity.Request;
+import com.tc.object.EntityID;
 import com.tc.util.Assert;
 
 
@@ -18,7 +19,7 @@ import com.tc.util.Assert;
  * Similar to the PassthroughEndpoint although designed to handle the broader cases of active/passive distinction,
  *  creation/destruction of entities, and multiple clients connected to one entity.
  */
-public class PassthroughStripe implements ClientCommunicator {
+public class PassthroughStripe implements Service<ClientCommunicator>, ClientCommunicator {
   private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
   private final Map<String, ActiveServerEntity> activeMap = new HashMap<>();
@@ -77,27 +78,42 @@ public class PassthroughStripe implements ClientCommunicator {
     return Futures.immediateFuture(null);
   }
 
+  @Override
+  public void initialize(ServiceConfiguration<?> configuration) {
+    //do nothing
+  }
+
+  @Override
+  public ClientCommunicator get() {
+    return this;
+  }
+
+  @Override
+  public void destroy() {
+    //TODO what should be done for this?
+  }
+
 
   private class FakeServiceRegistry implements ServiceRegistry {
-    @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<T> getService(Class<T> type) {
-      // Only client communicator.
-      Assert.assertEquals(ClientCommunicator.class, type);
-      return (Optional<T>) Optional.of(PassthroughStripe.this);
-    }
-
-    @Override
-    public ServiceRegistry subRegistry(String name) {
-      // Not implemented for this test.
-      Assert.fail();
-      return null;
+    public <K, S extends Service<K>, SC extends ServiceConfiguration<S>> Optional<K> getService(SC configuration) {
+      return (Optional<K>) Optional.of(PassthroughStripe.this);
     }
 
     @Override
     public void destroy() {
       // Not implemented for this test.
       Assert.fail();
+    }
+
+    @Override
+    public EntityID getEntityID() {
+      return null;
+    }
+
+    @Override
+    public void destroy(Service service) {
+      //not required
     }
   }
   
