@@ -149,6 +149,11 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   @Override
+  public String getMainClassName() {
+    return System.getProperty("sun.java.command", "<unknown>");
+  }
+
+  @Override
   public String getEnvironment() {
     return format(System.getProperties());
   }
