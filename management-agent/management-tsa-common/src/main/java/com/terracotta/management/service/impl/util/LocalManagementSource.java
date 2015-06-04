@@ -387,16 +387,12 @@ public class LocalManagementSource {
 
   public Map<String, Object> getClientAttributes(ObjectName clientObjectName) throws ManagementSourceException {
     try {
-      Map<String, Object> result = new HashMap<String, Object>();
+      ObjectName l1InfoObjectName = (ObjectName) mBeanServer.getAttribute(clientObjectName, "L1InfoBeanName");
+      Map<String, Object> result = getMBeanAttributes(l1InfoObjectName, new String[] { "Version", "BuildID",
+          "ClientUUID", "MavenArtifactsVersion" });
 
       result.put("RemoteAddress", mBeanServer.getAttribute(clientObjectName, "RemoteAddress"));
       result.put("ClientID", mBeanServer.getAttribute(clientObjectName, "ClientID").toString());
-
-      ObjectName l1InfoObjectName = (ObjectName)mBeanServer.getAttribute(clientObjectName, "L1InfoBeanName");
-      result.put("Version", mBeanServer.getAttribute(l1InfoObjectName, "Version"));
-      result.put("BuildID", mBeanServer.getAttribute(l1InfoObjectName, "BuildID"));
-      result.put("ClientUUID", mBeanServer.getAttribute(l1InfoObjectName, "ClientUUID"));
-      result.put("MavenArtifactsVersion", mBeanServer.getAttribute(l1InfoObjectName, "MavenArtifactsVersion"));
 
       return result;
     } catch (JMException jme) {
@@ -406,17 +402,24 @@ public class LocalManagementSource {
 
   public Map<String, Object> getClientStatistics(String clientId, String[] attributeNames) throws ManagementSourceException {
     try {
-      Map<String, Object> result = new HashMap<String, Object>();
-
       Set<ObjectName> objectNames = mBeanServer.queryNames(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId + ",productId=*"), null);
       if (objectNames.size() != 1) {
         throw new ManagementSourceException("there should only be 1 client at org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId + ",productId=*");
       }
       ObjectName clientObjectName = objectNames.iterator().next();
+      return getMBeanAttributes(clientObjectName, attributeNames);
+    } catch (JMException jme) {
+      throw new ManagementSourceException(jme);
+    }
+  }
 
-      AttributeList attributes = mBeanServer.getAttributes(clientObjectName, attributeNames);
+  private Map<String, Object> getMBeanAttributes(ObjectName objectName, String[] attributeNames)
+      throws ManagementSourceException {
+    try {
+      Map<String, Object> result = new HashMap<String, Object>();
+      AttributeList attributes = mBeanServer.getAttributes(objectName, attributeNames);
       for (Object attributeObj : attributes) {
-        Attribute attribute = (Attribute)attributeObj;
+        Attribute attribute = (Attribute) attributeObj;
         result.put(attribute.getName(), attribute.getValue());
       }
 
@@ -428,15 +431,15 @@ public class LocalManagementSource {
 
   public Map<String, Object> getClientConfig(ObjectName clientObjectName) throws ManagementSourceException {
     try {
-      Map<String, Object> result = new HashMap<String, Object>();
 
       ObjectName l1InfoObjectName = (ObjectName)mBeanServer.getAttribute(clientObjectName, "L1InfoBeanName");
-      L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServer, l1InfoObjectName, L1InfoMBean.class);
+      Map<String, Object> result = getMBeanAttributes(l1InfoObjectName, new String[] { "TCProperties", "Config",
+          "Environment", "ProcessArguments" });
 
-      result.put("tcProperties", l1InfoMBean.getTCProperties());
-      result.put("config", l1InfoMBean.getConfig());
-      result.put("environment", l1InfoMBean.getEnvironment());
-      result.put("processArguments", l1InfoMBean.getProcessArguments());
+      result.put("tcProperties", result.remove("TCProperties"));
+      result.put("config", result.remove("Config"));
+      result.put("environment", result.remove("Environment"));
+      result.put("processArguments", result.remove("ProcessArguments"));
 
       return result;
     } catch (JMException jme) {
