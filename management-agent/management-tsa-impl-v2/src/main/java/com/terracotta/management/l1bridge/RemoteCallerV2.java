@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,21 +11,23 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.terracotta.management.l1bridge;
 
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 import org.terracotta.management.resource.AbstractEntityV2;
 import org.terracotta.management.resource.ExceptionEntityV2;
+import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.ResponseEntityV2;
+import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
@@ -42,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Ludovic Orban
@@ -61,7 +64,7 @@ public class RemoteCallerV2 extends RemoteCaller {
     long beforeSubmission = System.nanoTime();
 
     for (final String node : nodes) {
-      if (node.equals(AbstractEntityV2.EMBEDDED_AGENT_ID)) { continue; }
+      if (node.equals(Representable.EMBEDDED_AGENT_ID)) { continue; }
       try {
         Future<ResponseEntityV2<T>> future = executorService.submit(new Callable<ResponseEntityV2<T>>() {
           @Override
@@ -85,9 +88,10 @@ public class RemoteCallerV2 extends RemoteCaller {
         futures.put(node, future);
       } catch (RejectedExecutionException ree) {
         ResponseEntityV2<T> rejectionResponse = new ResponseEntityV2<T>();
-        ExceptionEntityV2 ee = new ExceptionEntityV2(ree);
+        Throwable rootCause = ExceptionUtils.getRootCause(ree);
+        ExceptionEntityV2 ee = new ExceptionEntityV2(rootCause);
         ee.setAgentId(node);
-        ee.setMessage(ree.getMessage() + " while calling " + serviceName + "." + method.getName());
+        ee.setMessage(rootCause.getMessage());
         rejectionResponse.getExceptionEntities().add(ee);
         futures.put(node, new RejectionFuture<ResponseEntityV2<T>>(rejectionResponse));
       }
@@ -114,13 +118,17 @@ public class RemoteCallerV2 extends RemoteCaller {
         globalResult.getEntities().addAll(resp.getEntities());
         globalResult.getExceptionEntities().addAll(resp.getExceptionEntities());
       } catch (Exception e) {
-        ExceptionEntityV2 e1 = new ExceptionEntityV2(e);
+        Throwable rootCause = ExceptionUtils.getRootCause(e);
+        ExceptionEntityV2 e1 = new ExceptionEntityV2(rootCause);
         e1.setAgentId(node);
-        e1.setMessage("Agent failed to respond to " + serviceName + "." + method.getName() + " in " + timeout + "ms");
+        e1.setMessage(rootCause.getMessage());
         globalResult.getExceptionEntities().add(e1);
 
         future.cancel(true);
-        LOG.debug("Future execution error in {}.{} : agent '{}' failed to respond to call in {}ms", serviceName, method.getName(), node, timeout, e);
+        
+        if (e instanceof TimeoutException) {
+          LOG.debug("Future execution error in   {}.{} : agent '{}' failed to respond to call in {}ms", serviceName, method.getName(), node, timeout, e);
+        }
       } finally {
         timeLeft -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeCollection);
       }
