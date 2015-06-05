@@ -602,8 +602,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private boolean updateCheckEnabled() {
-    boolean skipped = Boolean.getBoolean("com.tc.skipUpdateCheck");
-    return !skipped && this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getEnabled();
+    boolean enable = Boolean.getBoolean("com.tc.enableUpdateCheck");
+    return enable && this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getEnabled();
   }
 
   private int updateCheckPeriodDays() {
