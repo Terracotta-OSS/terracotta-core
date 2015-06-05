@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,10 +11,12 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.terracotta.management.service.impl.util;
+
+import org.terracotta.license.LicenseConstants;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
@@ -33,18 +35,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Conversion;
 import com.terracotta.management.web.utils.TSAConfig;
-import org.terracotta.license.LicenseConstants;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.InstanceNotFoundException;
-import javax.management.JMException;
-import javax.management.JMX;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.Notification;
-import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -57,6 +48,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
+
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.JMX;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.Notification;
+import javax.management.ObjectName;
 
 /**
  * @author Ludovic Orban
@@ -389,7 +391,7 @@ public class LocalManagementSource {
     try {
       ObjectName l1InfoObjectName = (ObjectName) mBeanServer.getAttribute(clientObjectName, "L1InfoBeanName");
       Map<String, Object> result = getMBeanAttributes(l1InfoObjectName, new String[] { "Version", "BuildID",
-          "ClientUUID", "MavenArtifactsVersion" });
+          "ClientUUID", "MavenArtifactsVersion", "MainClassName" });
 
       result.put("RemoteAddress", mBeanServer.getAttribute(clientObjectName, "RemoteAddress"));
       result.put("ClientID", mBeanServer.getAttribute(clientObjectName, "ClientID").toString());
