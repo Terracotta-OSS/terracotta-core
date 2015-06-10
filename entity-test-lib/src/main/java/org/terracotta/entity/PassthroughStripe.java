@@ -39,8 +39,9 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
       // Create the instances.
-      ActiveServerEntity active = service.createActiveEntity(serviceRegistry, configuration);
-      PassiveServerEntity passive = service.createPassiveEntity(serviceRegistry, configuration);
+      EntityID id = new EntityID(name, name);
+      ActiveServerEntity active = service.createActiveEntity(id, serviceRegistry, configuration);
+      PassiveServerEntity passive = service.createPassiveEntity(id, serviceRegistry, configuration);
       // Set them as new instances.
       active.createNew();
       passive.createNew();
@@ -104,11 +105,6 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     public void destroy() {
       // Not implemented for this test.
       Assert.fail();
-    }
-
-    @Override
-    public EntityID getEntityID() {
-      return null;
     }
 
     @Override
