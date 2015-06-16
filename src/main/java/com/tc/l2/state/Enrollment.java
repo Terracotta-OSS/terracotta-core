@@ -8,7 +8,6 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.logging.TCLogger;
-import com.tc.logging.TCLoggingService;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.Assert;
@@ -19,7 +18,7 @@ import java.util.Arrays;
 
 public class Enrollment implements TCSerializable<Enrollment> {
 
-  private static final TCLogger logger = ServiceUtil.loadService(TCLoggingService.class).getLogger(Enrollment.class);
+  private static final TCLogger logger = ServiceUtil.getLoggingService().getLogger(Enrollment.class);
   private NodeID                nodeID;
   private long[]                weights;
   private boolean               isNew;
