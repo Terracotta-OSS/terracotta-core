@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 public class TCGroupMessageWrapper extends DSOMessageBase {
   private final static byte GROUP_MESSAGE_ID = 1;
-  private GroupMessage      message;
+  private AbstractGroupMessage      message;
 
   public TCGroupMessageWrapper(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                MessageChannel channel, TCMessageType type) {
@@ -33,11 +33,11 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void setGroupMessage(GroupMessage message) {
+  public void setGroupMessage(AbstractGroupMessage message) {
     this.message = message;
   }
 
-  public GroupMessage getGroupMessage() {
+  public AbstractGroupMessage getGroupMessage() {
     return this.message;
   }
 
@@ -53,7 +53,7 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
       case GROUP_MESSAGE_ID:
         TCByteBufferInputStream in = getInputStream();
         try {
-          this.message = (GroupMessage) Class.forName(in.readString()).newInstance();
+          this.message = (AbstractGroupMessage) Class.forName(in.readString()).newInstance();
         } catch (InstantiationException e) {
           throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
