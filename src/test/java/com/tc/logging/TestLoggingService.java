@@ -6,8 +6,6 @@
 
 package com.tc.logging;
 
-import java.io.File;
-
 /**
  *
  * @author cdennis
@@ -102,10 +100,5 @@ public class TestLoggingService implements TCLoggingService {
   @Override
   public TCLogger getLogger(Class<?> c) {
     return getLogger(c.getName());
-  }
-
-  @Override
-  public void setLogDirectory(File theDirectory, int processType) {
-    //ignored
   }
 }

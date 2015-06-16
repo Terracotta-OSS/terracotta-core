@@ -3,8 +3,6 @@
  */
 package com.tc.util;
 
-import com.tc.logging.TCLoggingService;
-
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -26,11 +24,6 @@ public class ServiceUtil {
 
     return rv;
 
-  }
-
-
-  public static TCLoggingService getLoggingService() {
-    return ServiceUtil.loadService(TCLoggingService.class);
   }
 
 }

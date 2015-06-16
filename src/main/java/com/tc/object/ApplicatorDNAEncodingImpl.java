@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.io.TCDataInput;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLoggingService;
 import com.tc.object.compression.CompressedData;
 import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.impl.BaseDNAEncodingImpl;
@@ -17,7 +18,7 @@ import java.io.UnsupportedEncodingException;
 
 public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   
-  private static final TCLogger    logger = ServiceUtil.getLoggingService()
+  private static final TCLogger    logger = ServiceUtil.loadService(TCLoggingService.class)
                                               .getLogger(ApplicatorDNAEncodingImpl.class);
 
   /**

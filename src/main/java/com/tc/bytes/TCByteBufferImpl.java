@@ -588,7 +588,7 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   /* This is the debug version. PLEASE DONT DELETE */
 
-  // private static final TCLogger logger = ServiceUtil.getLoggingService().getLogger(TCByteBufferJDK14.class);
+  // private static final TCLogger logger = TCLogging.getLogger(TCByteBufferJDK14.class);
   //
   // private final ByteBuffer buffer;
   // private final TCByteBufferJDK14 root;
