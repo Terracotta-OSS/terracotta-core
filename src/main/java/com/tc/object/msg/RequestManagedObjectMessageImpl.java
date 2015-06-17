@@ -113,7 +113,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   }
 
   @Override
-  public Object getKey() {
+  public Object getSchedulingKey() {
     return getSourceNodeID();
   }
 

@@ -193,7 +193,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
   }
 
   @Override
-  public Object getKey() {
+  public Object getSchedulingKey() {
     return this.getSourceNodeID();
   }
 
