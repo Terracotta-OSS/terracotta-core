@@ -3,7 +3,7 @@
  */
 package com.tc.async.api;
 
-public interface OrderedEventContext extends EventContext {
+public interface OrderedEventContext {
 
   public long getSequenceID();
   

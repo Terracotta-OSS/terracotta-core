@@ -3,7 +3,6 @@
  */
 package com.tc.net.groups;
 
-import com.tc.async.api.EventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
@@ -11,7 +10,7 @@ import com.tc.net.GroupID;
 
 import java.io.IOException;
 
-public class L1RemovedGroupMessage extends AbstractGroupMessage implements EventContext {
+public class L1RemovedGroupMessage extends AbstractGroupMessage {
 
   public static final int L1_REMOVED = 1;
 

@@ -4,7 +4,6 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.state.Enrollment;
@@ -13,7 +12,7 @@ import com.tc.net.groups.MessageID;
 
 import java.io.IOException;
 
-public class L2StateMessage extends AbstractGroupMessage implements EventContext {
+public class L2StateMessage extends AbstractGroupMessage {
 
   public static final int START_ELECTION          = 0; // Sent during the start of an election by the initiator
   public static final int ELECTION_RESULT         = 1; // Sent at the end of an election by the initiator

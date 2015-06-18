@@ -3,14 +3,13 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.lang.Recyclable;
 
 /**
  * @author teck
  */
-public interface TCNetworkMessage extends EventContext, Recyclable {
+public interface TCNetworkMessage extends Recyclable {
 
   public TCNetworkHeader getHeader();
 

@@ -7,7 +7,7 @@ package com.tc.async.api;
  * This interface must be implemented by events which want to be processed in multi-threaded queues.  It also allows the
  * implementor a way to describe how it should be scheduled by means of the scheduling key.
  */
-public interface MultiThreadedEventContext extends EventContext {
+public interface MultiThreadedEventContext {
   /**
    * The scheduling key is an object used to determine how to schedule this event in a multi-threaded queue.
    * Events which return the same key (equals()-equality) will be handled in the order they arrive, with one completing

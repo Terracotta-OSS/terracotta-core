@@ -3,13 +3,12 @@
  */
 package com.tc.management.remote.protocol.terracotta;
 
-import com.tc.async.api.EventContext;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.util.UUID;
 
 import javax.management.MBeanServer;
 
-public class L1ConnectionMessage implements EventContext {
+public class L1ConnectionMessage {
 
   public static final class Connecting extends L1ConnectionMessage {
     public Connecting(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains) {

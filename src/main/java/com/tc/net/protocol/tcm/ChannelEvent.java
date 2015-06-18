@@ -3,11 +3,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.EventContext;
-
 import java.util.Date;
 
-public interface ChannelEvent extends EventContext {
+public interface ChannelEvent {
 
   public MessageChannel getChannel();
 

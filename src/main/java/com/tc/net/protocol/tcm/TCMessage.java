@@ -3,7 +3,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.EventContext;
 import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
 
@@ -12,7 +11,7 @@ import java.io.IOException;
 /**
  * Base interface for application level messages sent through the TC messaging stack
  */
-public interface TCMessage extends EventContext {
+public interface TCMessage {
 
   public TCMessageType getMessageType();
 
