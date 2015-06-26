@@ -18,6 +18,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.client.AbstractClientFactory;
+import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -129,7 +130,7 @@ public class DistributedObjectClientFactory {
       @Override
       public void execute() throws Throwable {
         final AbstractClientFactory clientFactory = AbstractClientFactory.getFactory();
-        DistributedObjectClient client = clientFactory.createClient(configHelper, group, classProvider,
+        final DistributedObjectClient client = clientFactory.createClient(configHelper, group, classProvider,
                                                                     connectionComponents, dsoCluster, securityManager,
                                                                     abortableOperationManager, rejoinManager, uuid,
                                                                     productId);
@@ -138,6 +139,15 @@ public class DistributedObjectClientFactory {
 
         dsoCluster.init(client.getClusterMetaDataManager(), client.getObjectManager(), client.getClusterEventsStage());
         dsoCluster.addClusterListener(new ClusterEventListener(client.getRemoteTransactionManager()));
+        dsoCluster.addClusterListener(new DsoClusterErrorListener() {
+          @Override
+          public void nodeError(DsoClusterEvent event) {
+//  TAB-6001: close the channel, connection not allowed and client should not be connected to the server
+            client.getChannel().close();
+// this client must be restarted to ever connect back to the cluster so shutdown the rejoinManager
+            rejoinManager.shutdown();
+          }
+        });
 
         clientRef.set(client);
       }
