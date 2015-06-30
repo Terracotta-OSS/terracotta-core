@@ -122,11 +122,6 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
       // Not implemented for this test.
       Assert.fail();
     }
-
-    @Override
-    public void destroy(Service service) {
-      //not required
-    }
   }
   
   private class FakeEndpoint implements EntityClientEndpoint {
