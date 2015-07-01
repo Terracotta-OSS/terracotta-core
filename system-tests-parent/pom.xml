@@ -41,7 +41,7 @@ The Initial Developer of the Covered Software is
 
   <properties>
     <group>system</group>
-    <tcmaven.version>2.0.0</tcmaven.version>
+    <tcmaven.version>2.1.0</tcmaven.version>
     <terracotta.core.version>4.3.1-SNAPSHOT</terracotta.core.version>
     <tc.core.groupId>org.terracotta</tc.core.groupId>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
@@ -382,12 +382,6 @@ The Initial Developer of the Covered Software is
               <groupId>org.terracotta.qa</groupId>
               <artifactId>license-wrapper</artifactId>
               <version>1.0.0</version>
-            </dependency>
-            <dependency>
-              <groupId>org.terracotta</groupId>
-              <artifactId>management-tsa-war</artifactId>
-              <version>${terracotta.core.version}</version>
-              <type>war</type>
             </dependency>
           </dependencies>
         </plugin>
