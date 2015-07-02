@@ -53,7 +53,7 @@ The Initial Developer of the Covered Software is
     <management-core-version>2.0.12</management-core-version>
     <session-management.version>${project.version}</session-management.version>
     <tc-messaging.version>1.0.0</tc-messaging.version>
-    <terracotta-license.version>1.1.2</terracotta-license.version>
+    <terracotta-license.version>1.1.4</terracotta-license.version>
     <toolkit-api.version>2.7</toolkit-api.version> 
     <toolkit-api-internal.version>1.17</toolkit-api-internal.version>
     <!-- version of ehcache embedded inside toolkit -->
