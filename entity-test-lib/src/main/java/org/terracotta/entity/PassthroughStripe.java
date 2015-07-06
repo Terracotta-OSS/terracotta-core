@@ -10,17 +10,16 @@ import java.util.Vector;
 import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.Futures;
-import com.tc.entity.Request;
-import com.tc.object.EntityID;
-import com.tc.util.Assert;
+import org.junit.Assert;
 
 
 /**
  * Similar to the PassthroughEndpoint although designed to handle the broader cases of active/passive distinction,
  *  creation/destruction of entities, and multiple clients connected to one entity.
  */
-public class PassthroughStripe implements Service<ClientCommunicator>, ClientCommunicator {
-  private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
+public class PassthroughStripe<ID> implements Service<ClientCommunicator>, ClientCommunicator {
+
+  private final ServerEntityService<ID ,? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
   private final Map<String, ActiveServerEntity> activeMap = new HashMap<>();
   private final Map<String, PassiveServerEntity> passiveMap = new HashMap<>();
@@ -29,17 +28,16 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
   private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<>();
   
   private int nextClientID = 1;
-  
-  public PassthroughStripe(ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service, Class<?> clazz) {
+
+  public PassthroughStripe(ServerEntityService<ID, ? extends ActiveServerEntity, ? extends PassiveServerEntity> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
     this.service = service;
   }
   
-  public boolean createServerEntity(String name, byte[] configuration) {
+  public boolean createServerEntity(ID id,String name, byte[] configuration) {
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
       // Create the instances.
-      EntityID id = new EntityID(name, name);
       ActiveServerEntity active = service.createActiveEntity(id, serviceRegistry, configuration);
       PassiveServerEntity passive = service.createPassiveEntity(id, serviceRegistry, configuration);
       // Set them as new instances.
@@ -187,7 +185,7 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     private final ActiveServerEntity activeServerEntity;
     private final PassiveServerEntity passiveServerEntity;
     private byte[] payload = null;
-    private final Set<Request.Acks> acks = EnumSet.noneOf(Request.Acks.class);
+    private final Set<Acks> acks = EnumSet.noneOf(Acks.class);
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
         ActiveServerEntity activeServerEntity,
@@ -199,25 +197,25 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
 
     @Override
     public InvocationBuilder ackReceipt() {
-      acks.add(Request.Acks.RECEIPT);
+      acks.add(Acks.RECEIPT);
       return this;
     }
 
     @Override
     public InvocationBuilder ackReplicated() {
-      acks.add(Request.Acks.REPLICATED);
+      acks.add(Acks.REPLICATED);
       return this;
     }
 
     @Override
     public InvocationBuilder ackLogged() {
-      acks.add(Request.Acks.PERSIST_IN_SEQUENCER);
+      acks.add(Acks.PERSIST_IN_SEQUENCER);
       return this;
     }
 
     @Override
     public InvocationBuilder ackCompleted() {
-      acks.add(Request.Acks.APPLIED);
+      acks.add(Acks.APPLIED);
       return this;
     }
 

@@ -1,7 +1,6 @@
 package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
-import com.tc.entity.Request;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -49,29 +48,29 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   private class InvocationBuilderImpl implements InvocationBuilder {
     private byte[] payload = null;
-    private final Set<Request.Acks> acks = EnumSet.noneOf(Request.Acks.class);
+    private final Set<Acks> acks = EnumSet.noneOf(Acks.class);
 
     @Override
     public InvocationBuilder ackReceipt() {
-      acks.add(Request.Acks.RECEIPT);
+      acks.add(Acks.RECEIPT);
       return this;
     }
 
     @Override
     public InvocationBuilder ackReplicated() {
-      acks.add(Request.Acks.REPLICATED);
+      acks.add(Acks.REPLICATED);
       return this;
     }
 
     @Override
     public InvocationBuilder ackLogged() {
-      acks.add(Request.Acks.PERSIST_IN_SEQUENCER);
+      acks.add(Acks.PERSIST_IN_SEQUENCER);
       return this;
     }
 
     @Override
     public InvocationBuilder ackCompleted() {
-      acks.add(Request.Acks.APPLIED);
+      acks.add(Acks.APPLIED);
       return this;
     }
 
