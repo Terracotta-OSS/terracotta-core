@@ -94,25 +94,24 @@ public class PassthroughStripe<ID> implements Service<ClientCommunicator>, Clien
 
 
   private class FakeServiceRegistry implements ServiceRegistry {
+    @SuppressWarnings("unchecked")
     @Override
-    public Optional getService(ServiceConfiguration configuration) {
-      return Optional.of(new Service() {
-
+    public <T> Optional<Service<T>> getService(Class<T> serviceType, ServiceConfiguration<T> configuration) {
+      Service<PassthroughStripe<ID>> service = new Service<PassthroughStripe<ID>>() {
         @Override
-        public Object get() {
+        public PassthroughStripe<ID> get() {
           return PassthroughStripe.this;
         }
 
         @Override
-        public void initialize(ServiceConfiguration configuration) {
-
+        public void initialize(ServiceConfiguration<? extends PassthroughStripe<ID>> configuration) {
         }
 
         @Override
         public void destroy() {
-
         }  
-      });
+      };
+      return Optional.of((Service<T>)service);
     }
 
     @Override
@@ -174,6 +173,7 @@ public class PassthroughStripe<ID> implements Service<ClientCommunicator>, Clien
       return this.id;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
       return ((FakeClientDescriptor)obj).id == this.id;
