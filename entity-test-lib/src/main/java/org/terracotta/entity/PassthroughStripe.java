@@ -17,9 +17,9 @@ import org.junit.Assert;
  * Similar to the PassthroughEndpoint although designed to handle the broader cases of active/passive distinction,
  *  creation/destruction of entities, and multiple clients connected to one entity.
  */
-public class PassthroughStripe<ID> implements Service<ClientCommunicator>, ClientCommunicator {
+public class PassthroughStripe implements Service<ClientCommunicator>, ClientCommunicator {
 
-  private final ServerEntityService<ID ,? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
+  private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
   private final Map<String, ActiveServerEntity> activeMap = new HashMap<>();
   private final Map<String, PassiveServerEntity> passiveMap = new HashMap<>();
@@ -29,17 +29,17 @@ public class PassthroughStripe<ID> implements Service<ClientCommunicator>, Clien
   
   private int nextClientID = 1;
 
-  public PassthroughStripe(ServerEntityService<ID, ? extends ActiveServerEntity, ? extends PassiveServerEntity> service, Class<?> clazz) {
+  public PassthroughStripe(ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
     this.service = service;
   }
   
-  public boolean createServerEntity(ID id,String name, byte[] configuration) {
+  public boolean createServerEntity(String name, byte[] configuration) {
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
       // Create the instances.
-      ActiveServerEntity active = service.createActiveEntity(id, serviceRegistry, configuration);
-      PassiveServerEntity passive = service.createPassiveEntity(id, serviceRegistry, configuration);
+      ActiveServerEntity active = service.createActiveEntity(serviceRegistry, configuration);
+      PassiveServerEntity passive = service.createPassiveEntity(serviceRegistry, configuration);
       // Set them as new instances.
       active.createNew();
       passive.createNew();
