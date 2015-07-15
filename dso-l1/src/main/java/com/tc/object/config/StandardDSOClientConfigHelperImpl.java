@@ -272,14 +272,14 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
 
         String strServerVersion = null;
         try {
-          strServerVersion = serverUrl.getHeaderField("Version", pwProvider, true);
+          strServerVersion = serverUrl.getServerVersion(pwProvider);
           activeDown = false;
           logger.info("Server: " + serverUrl + " returned server version = " + strServerVersion);
         } catch (IOException e) {
           // server that we pinged was not up
           // we should try other servers in stripe
           activeDown = true;
-          logger.info("Server seems to be down.." + serverUrl + ", retrying next available in stripe");
+          logger.info("Server seems to be down.." + serverUrl + ", retrying next available in stripe : " + e);
         }
         if (strServerVersion == null) {
           if (serverNumberInStripe == (connectionInfo.length - 1)) {

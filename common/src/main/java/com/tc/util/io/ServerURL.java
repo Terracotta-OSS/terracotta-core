@@ -16,6 +16,7 @@
  */
 package com.tc.util.io;
 
+import org.apache.commons.io.IOUtils;
 import sun.misc.BASE64Encoder;
 
 import com.tc.exception.TCRuntimeException;
@@ -38,6 +39,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -50,6 +53,8 @@ import javax.net.ssl.X509TrustManager;
 public class ServerURL {
 
   private static final TCLogger logger                    = TCLogging.getLogger(ServerURL.class);
+
+  private static final String   VERSION_HEADER            = "Version";
 
   private static final boolean  DISABLE_HOSTNAME_VERIFIER = Boolean.getBoolean("tc.ssl.disableHostnameVerifier");
   private static final boolean  TRUST_ALL_CERTS           = Boolean.getBoolean("tc.ssl.trustAllCerts");
@@ -73,18 +78,48 @@ public class ServerURL {
     return this.openStream(null);
   }
 
-  public String getHeaderField(String fieldName, PwProvider pwProvider, boolean retryOnNull) throws IOException {
+  public String getServerVersion(PwProvider pwProvider) throws IOException {
     for (int i = 0; i < 3; i++) {
-      URLConnection urlConnection = createSecureConnection(pwProvider);
-      urlConnection.connect();
-      String value = urlConnection.getHeaderField(fieldName);
-      if (value != null || !retryOnNull) { return value; }
+      HttpURLConnection urlConnection = createSecureConnection(pwProvider);
+      try {
+        urlConnection.connect();
+        int responseCode = urlConnection.getResponseCode();
+        if (responseCode == 200) {
+          return urlConnection.getHeaderField(VERSION_HEADER);
+        } else {
+          logger.info("Failed to retrieve header field, response code : " + responseCode + ", headers :\n" + readHeaderFields(urlConnection) + " body : \n[" + readLines(urlConnection) + "]");
+        }
+      } finally {
+        urlConnection.disconnect();
+      }
 
-      logger.info("Retrying connection since header field was null");
+      logger.info("Retrying connection since response code != 200");
       ThreadUtil.reallySleep(50);
     }
 
-    throw new RuntimeException("Cannot retrieve " + fieldName + " header from server url: " + theURL);
+    throw new IOException("Cannot retrieve " + VERSION_HEADER + " header from server url after 3 tries : " + theURL);
+  }
+
+  private static String readHeaderFields(HttpURLConnection urlConnection) {
+    StringBuilder sb = new StringBuilder();
+    Map<String, List<String>> headerFields = urlConnection.getHeaderFields();
+    for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
+      sb.append(entry.getKey()).append("=").append(entry.getValue()).append(System.getProperty("line.separator"));
+    }
+    return sb.toString();
+  }
+
+  private static String readLines(HttpURLConnection urlConnection) throws IOException {
+    try {
+      List<String> lines = IOUtils.readLines(urlConnection.getInputStream());
+      StringBuilder sb = new StringBuilder();
+      for (String line : lines) {
+        sb.append(line).append(System.getProperty("line.separator"));
+      }
+      return sb.toString();
+    } catch (IOException e) {
+      return "";
+    }
   }
 
   public InputStream openStream(PwProvider pwProvider) throws IOException {
@@ -111,7 +146,7 @@ public class ServerURL {
     }
   }
 
-  private URLConnection createSecureConnection(PwProvider pwProvider) {
+  private HttpURLConnection createSecureConnection(PwProvider pwProvider) {
     if (securityInfo.isSecure()) {
       Assert.assertNotNull("Secured URL '" + theURL + "', yet PwProvider instance", pwProvider);
     }
@@ -153,7 +188,7 @@ public class ServerURL {
       urlConnection.setConnectTimeout(timeout);
       urlConnection.setReadTimeout(timeout);
     }
-    return urlConnection;
+    return (HttpURLConnection) urlConnection;
   }
 
   @Override
