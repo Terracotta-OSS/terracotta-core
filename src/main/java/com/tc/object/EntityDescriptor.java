@@ -15,15 +15,20 @@ import java.io.IOException;
  * of an already-known client.  This is of primary interest in the wire protocol along a given connection.
  */
 public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
-  public static final EntityDescriptor NULL_ID = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID);
+  // We use 0 as the null version since it is invalid (versions are always expected to be > 0).
+  public static final long INVALID_VERSION = 0;
+  public static final EntityDescriptor NULL_ID = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, INVALID_VERSION);
 
 
   private final EntityID entityID;
   private final ClientInstanceID clientInstanceID;
+  // The version of the client-side entity implementation.
+  private final long clientSideVersion;
   
-  public EntityDescriptor(EntityID entityID, ClientInstanceID clientInstanceID) {
+  public EntityDescriptor(EntityID entityID, ClientInstanceID clientInstanceID, long clientSideVersion) {
     this.entityID = entityID;
     this.clientInstanceID = clientInstanceID;
+    this.clientSideVersion = clientSideVersion;
   }
   
   public EntityID getEntityID() {
@@ -32,6 +37,10 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   
   public ClientInstanceID getClientInstanceID() {
     return this.clientInstanceID;
+  }
+  
+  public long getClientSideVersion() {
+    return this.clientSideVersion;
   }
   
   @Override
@@ -55,6 +64,7 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   public void serializeTo(TCByteBufferOutput serialOutput) {
     this.entityID.serializeTo(serialOutput);
     this.clientInstanceID.serializeTo(serialOutput);
+    serialOutput.writeLong(this.clientSideVersion);
   }
 
   @Override
@@ -64,6 +74,6 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   }
 
   public static EntityDescriptor readFrom(TCByteBufferInput serialInput) throws IOException {
-    return new EntityDescriptor(EntityID.readFrom(serialInput), ClientInstanceID.readFrom(serialInput));
+    return new EntityDescriptor(EntityID.readFrom(serialInput), ClientInstanceID.readFrom(serialInput), serialInput.readLong());
   }
 }
