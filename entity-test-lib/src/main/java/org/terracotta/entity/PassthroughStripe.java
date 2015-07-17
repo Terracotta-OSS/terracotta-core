@@ -97,14 +97,14 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<Service<T>> getService(Class<T> serviceType, ServiceConfiguration<T> configuration) {
-      Service<PassthroughStripe<ID>> service = new Service<PassthroughStripe<ID>>() {
+      Service<PassthroughStripe> service = new Service<PassthroughStripe>() {
         @Override
-        public PassthroughStripe<ID> get() {
+        public PassthroughStripe get() {
           return PassthroughStripe.this;
         }
 
         @Override
-        public void initialize(ServiceConfiguration<? extends PassthroughStripe<ID>> configuration) {
+        public void initialize(ServiceConfiguration<? extends PassthroughStripe> configuration) {
         }
 
         @Override
