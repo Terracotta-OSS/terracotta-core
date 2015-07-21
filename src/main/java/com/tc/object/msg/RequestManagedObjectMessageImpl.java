@@ -22,12 +22,10 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   private final static byte ENTITIES_REQUESTED = 1;
   private final static byte ENTITIES_REMOVED = 2;
   private final static byte REQUEST_ID                 = 4;
-  private final static byte REQUESTING_THREAD_NAME     = 6;
 
   private Set<EntityDescriptor> requestedEntities;
   private Set<EntityDescriptor> removedEntities;
   private ObjectRequestID   requestID;
-  private String            threadName;
 
   public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                          MessageChannel channel, TCMessageType type) {
@@ -50,7 +48,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
       entityDescriptor.serializeTo(getOutputStream());
     }
     putNVPair(REQUEST_ID, this.requestID.toLong());
-    putNVPair(REQUESTING_THREAD_NAME, this.threadName);
   }
 
   @Override
@@ -70,9 +67,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
         return true;
       case REQUEST_ID:
         this.requestID = new ObjectRequestID(getLongValue());
-        return true;
-      case REQUESTING_THREAD_NAME:
-        this.threadName = getStringValue();
         return true;
       default:
         return false;
@@ -99,12 +93,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
     this.requestID = rid;
     this.requestedEntities = requested;
     this.removedEntities = removed;
-    this.threadName = Thread.currentThread().getName();
-  }
-
-  @Override
-  public String getRequestingThreadName() {
-    return this.threadName;
   }
 
   @Override
@@ -115,10 +103,5 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements R
   @Override
   public Object getSchedulingKey() {
     return getSourceNodeID();
-  }
-
-  @Override
-  public LOOKUP_STATE getLookupState() {
-    return LOOKUP_STATE.CLIENT;
   }
 }
