@@ -96,7 +96,7 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
   private class FakeServiceRegistry implements ServiceRegistry {
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<Service<T>> getService(Class<T> serviceType, ServiceConfiguration<T> configuration) {
+    public <T> Service<T> getService(ServiceConfiguration<T> configuration) {
       Service<PassthroughStripe> service = new Service<PassthroughStripe>() {
         @Override
         public PassthroughStripe get() {
@@ -111,7 +111,7 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
         public void destroy() {
         }  
       };
-      return Optional.of((Service<T>)service);
+      return (Service<T>)service;
     }
 
     @Override
