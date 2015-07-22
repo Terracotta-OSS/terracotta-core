@@ -11,14 +11,11 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.ObjectRequestContext;
 import com.tc.object.ObjectRequestID;
 
-import java.util.Set;
-
 public interface RequestManagedObjectMessage extends ObjectRequestContext, MultiThreadedEventContext, Recyclable {
 
-  public Set<EntityDescriptor> getRemoved();
+  public EntityDescriptor getRemovedEntity();
 
-  public void initialize(ObjectRequestID requestID, Set<EntityDescriptor> requestedEntities,
-                         Set<EntityDescriptor> removedEntities);
+  public void initialize(ObjectRequestID requestID, EntityDescriptor requestedEntity, EntityDescriptor removedEntity);
 
   public void send();
 
