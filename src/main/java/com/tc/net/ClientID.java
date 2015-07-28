@@ -87,4 +87,7 @@ public class ClientID implements NodeID, Serializable {
     return (int) (toLong() - c.toLong());
   }
 
+  public static ClientID readFrom(TCByteBufferInput serialInput) throws IOException {
+    return new ClientID(serialInput.readLong());
+  }
 }
