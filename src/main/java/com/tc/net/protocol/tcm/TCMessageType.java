@@ -73,12 +73,13 @@ public final class TCMessageType {
   public static final int           TYPE_INVOKE_REGISTERED_SERVICE_MESSAGE            = 82;
   public static final int           TYPE_INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE   = 83;
 //  public static final int           TYPE_REQUEST_BATCH_MESSAGE                        = 84;
-  public static final int           TYPE_REQUEST_RESPONSE_MESSAGE                     = 85;
+//  public static final int           TYPE_REQUEST_RESPONSE_MESSAGE                     = 85;
   public static final int           TYPE_REQUEST_ACK_MESSAGE                          = 86;
   public static final int           TYPE_GET_ENTITY_RESPONSE_MESSAGE                  = 87;
   public static final int           TYPE_SERVER_ENTITY_MESSAGE                        = 88;
   public static final int           TYPE_SERVER_ENTITY_RESPONSE_MESSAGE               = 89;
   public static final int           TYPE_VOLTRON_ENTITY_MESSAGE                       = 90;
+  public static final int           TYPE_VOLTRON_ENTITY_RESPONSE_MESSAGE              = 91;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType LOCK_REQUEST_MESSAGE                              = new TCMessageType();
@@ -99,12 +100,12 @@ public final class TCMessageType {
   public static final TCMessageType LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE         = new TCMessageType();
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_MESSAGE                 = new TCMessageType();
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE        = new TCMessageType();
-  public static final TCMessageType REQUEST_RESPONSE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType REQUEST_ACK_MESSAGE                               = new TCMessageType();
   public static final TCMessageType GET_ENTITY_RESPONSE_MESSAGE                       = new TCMessageType();
   public static final TCMessageType SERVER_ENTITY_MESSAGE                             = new TCMessageType();
   public static final TCMessageType SERVER_ENTITY_RESPONSE_MESSAGE                    = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_MESSAGE                            = new TCMessageType();
+  public static final TCMessageType VOLTRON_ENTITY_RESPONSE_MESSAGE                   = new TCMessageType();
 
   public static TCMessageType getInstance(int i) {
     return typeMap.get(i);
