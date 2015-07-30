@@ -27,7 +27,7 @@ public final class TCMessageType {
   public static final int           TYPE_LOCK_REQUEST_MESSAGE                         = 9;
 //  public static final int           TYPE_COMMIT_TRANSACTION_MESSAGE                   = 10;
   // public static final int           TYPE_REQUEST_ROOT_RESPONSE_MESSAGE                = 11;
-  public static final int           TYPE_REQUEST_MANAGED_OBJECT_MESSAGE               = 12;
+//  public static final int           TYPE_REQUEST_MANAGED_OBJECT_MESSAGE               = 12;
 //  public static final int           TYPE_REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE      = 13;
 //  public static final int           TYPE_BROADCAST_TRANSACTION_MESSAGE                = 14;
 //  public static final int           TYPE_OBJECT_ID_BATCH_REQUEST_MESSAGE              = 18;
@@ -75,7 +75,7 @@ public final class TCMessageType {
 //  public static final int           TYPE_REQUEST_BATCH_MESSAGE                        = 84;
 //  public static final int           TYPE_REQUEST_RESPONSE_MESSAGE                     = 85;
   public static final int           TYPE_REQUEST_ACK_MESSAGE                          = 86;
-  public static final int           TYPE_GET_ENTITY_RESPONSE_MESSAGE                  = 87;
+//  public static final int           TYPE_GET_ENTITY_RESPONSE_MESSAGE                  = 87;
   public static final int           TYPE_SERVER_ENTITY_MESSAGE                        = 88;
   public static final int           TYPE_SERVER_ENTITY_RESPONSE_MESSAGE               = 89;
   public static final int           TYPE_VOLTRON_ENTITY_MESSAGE                       = 90;
@@ -86,7 +86,6 @@ public final class TCMessageType {
   public static final TCMessageType LOCK_RECALL_MESSAGE                               = new TCMessageType();
   public static final TCMessageType LOCK_RESPONSE_MESSAGE                             = new TCMessageType();
   public static final TCMessageType LOCK_QUERY_RESPONSE_MESSAGE                       = new TCMessageType();
-  public static final TCMessageType REQUEST_MANAGED_OBJECT_MESSAGE                    = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
@@ -101,7 +100,6 @@ public final class TCMessageType {
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_MESSAGE                 = new TCMessageType();
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE        = new TCMessageType();
   public static final TCMessageType REQUEST_ACK_MESSAGE                               = new TCMessageType();
-  public static final TCMessageType GET_ENTITY_RESPONSE_MESSAGE                       = new TCMessageType();
   public static final TCMessageType SERVER_ENTITY_MESSAGE                             = new TCMessageType();
   public static final TCMessageType SERVER_ENTITY_RESPONSE_MESSAGE                    = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_MESSAGE                            = new TCMessageType();
