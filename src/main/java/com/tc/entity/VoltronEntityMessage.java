@@ -9,11 +9,30 @@ import java.util.Set;
 
 public interface VoltronEntityMessage {
   enum Type {
-    CREATE_ENTITY,
-    INVOKE_ACTION,
-    GET_ENTITY,
+    /**
+     * Called to add a reference from a client to an existing entity.
+     */
+    FETCH_ENTITY,
+    /**
+     * Called to release a reference from a client to an existing entity (previously acquired with FETCH_ENTITY).
+     */
     RELEASE_ENTITY,
-    DESTROY_ENTITY
+    /**
+     * Used when checking if an entity exists but has no side-effects on the entity or client-entity references.
+     */
+    DOES_EXIST,
+    /**
+     * Creates a new entity.  This doesn't create a reference from the caller to the entity, however.
+     */
+    CREATE_ENTITY,
+    /**
+     * Called to destroy an existing entity (previously created with CREATE_ENTITY).
+     */
+    DESTROY_ENTITY,
+    /**
+     * Used when invoking a method on an existing entity.
+     */
+    INVOKE_ACTION,
   }
   
   enum Acks {
