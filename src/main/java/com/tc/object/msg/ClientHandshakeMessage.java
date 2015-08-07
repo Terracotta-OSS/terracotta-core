@@ -7,6 +7,7 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import java.util.Collection;
 
+
 public interface ClientHandshakeMessage extends TCMessage {
   void addLockContext(ClientServerExchangeLockContext ctxt);
 
@@ -22,4 +23,7 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   long getLocalTimeMills();
 
+  void addReconnectReference(ClientEntityReferenceContext context);
+
+  Collection<ClientEntityReferenceContext> getReconnectReferences();
 }

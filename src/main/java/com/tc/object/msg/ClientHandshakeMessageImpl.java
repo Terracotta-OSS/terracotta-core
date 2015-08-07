@@ -11,6 +11,8 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.session.SessionID;
+import com.tc.util.Assert;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,15 +20,17 @@ import java.util.Set;
 
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
-  private static final byte   LOCK_CONTEXT             = 2;
-  private static final byte   CLIENT_VERSION           = 6;
-  private static final byte   ENTERPRISE_CLIENT        = 8;
-  private static final byte   LOCAL_TIME_MILLS         = 10;
+  private static final byte   LOCK_CONTEXT             = 1;
+  private static final byte   CLIENT_VERSION           = 2;
+  private static final byte   ENTERPRISE_CLIENT        = 3;
+  private static final byte   LOCAL_TIME_MILLS         = 4;
+  private static final byte   RECONNECT_REFERENCES     = 5;
 
   private final Set<ClientServerExchangeLockContext> lockContexts             = new HashSet<ClientServerExchangeLockContext>();
   private long                currentLocalTimeMills    = System.currentTimeMillis();
   private boolean             enterpriseClient         = false;
   private String              clientVersion            = "UNKNOW";
+  private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                     MessageChannel channel, TCMessageType messageType) {
@@ -81,6 +85,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
     putNVPair(CLIENT_VERSION, this.clientVersion);
     putNVPair(LOCAL_TIME_MILLS, this.currentLocalTimeMills);
+    for (final ClientEntityReferenceContext referenceContext : this.reconnectReferences) {
+      putNVPair(RECONNECT_REFERENCES, referenceContext);
+    }
   }
 
   @Override
@@ -98,8 +105,22 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       case LOCAL_TIME_MILLS:
         this.currentLocalTimeMills = getLongValue();
         return true;
+      case RECONNECT_REFERENCES:
+        this.reconnectReferences.add(getObject(new ClientEntityReferenceContext()));
+        return true;
       default:
         return false;
     }
+  }
+
+  @Override
+  public void addReconnectReference(ClientEntityReferenceContext context) {
+    boolean newAddition = this.reconnectReferences.add(context);
+    Assert.assertTrue(newAddition);
+  }
+
+  @Override
+  public Collection<ClientEntityReferenceContext> getReconnectReferences() {
+    return this.reconnectReferences;
   }
 }
