@@ -22,14 +22,11 @@ package org.terracotta.entity;
 import com.google.common.util.concurrent.Futures;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-/**
- * @author twu
- */
+
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity entity;
@@ -67,29 +64,22 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   private class InvocationBuilderImpl implements InvocationBuilder {
     private byte[] payload = null;
-    private final Set<Acks> acks = EnumSet.noneOf(Acks.class);
 
     @Override
-    public InvocationBuilder ackReceipt() {
-      acks.add(Acks.RECEIPT);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder ackReplicated() {
-      acks.add(Acks.REPLICATED);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder ackLogged() {
-      acks.add(Acks.PERSIST_IN_SEQUENCER);
+    public InvocationBuilder ackReceived() {
+      // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
     public InvocationBuilder ackCompleted() {
-      acks.add(Acks.APPLIED);
+      // ACKs ignored in this implementation.
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder replicate(boolean requiresReplication) {
+      // Replication ignored in this implementation.
       return this;
     }
 

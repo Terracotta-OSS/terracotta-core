@@ -19,12 +19,9 @@
 
 package org.terracotta.entity;
 
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Future;
 
@@ -192,7 +189,6 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
       return this.id;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
       return ((FakeClientDescriptor)obj).id == this.id;
@@ -204,7 +200,6 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     private final ActiveServerEntity activeServerEntity;
     private final PassiveServerEntity passiveServerEntity;
     private byte[] payload = null;
-    private final Set<Acks> acks = EnumSet.noneOf(Acks.class);
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
         ActiveServerEntity activeServerEntity,
@@ -215,26 +210,20 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     }
 
     @Override
-    public InvocationBuilder ackReceipt() {
-      acks.add(Acks.RECEIPT);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder ackReplicated() {
-      acks.add(Acks.REPLICATED);
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder ackLogged() {
-      acks.add(Acks.PERSIST_IN_SEQUENCER);
+    public InvocationBuilder ackReceived() {
+      // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
     public InvocationBuilder ackCompleted() {
-      acks.add(Acks.APPLIED);
+      // ACKs ignored in this implementation.
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder replicate(boolean requiresReplication) {
+      // Replication ignored in this implementation.
       return this;
     }
 
