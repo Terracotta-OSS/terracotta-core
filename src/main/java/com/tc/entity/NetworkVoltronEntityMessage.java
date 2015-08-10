@@ -5,8 +5,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 
-import java.util.Set;
-
 
 /**
  * VoltronEntityMessage is primarily used over the network but it also has server-internal "loopback" messages so this
@@ -16,5 +14,5 @@ public interface NetworkVoltronEntityMessage extends VoltronEntityMessage, TCMes
   /**
    * Initializes the contents of the message.
    */
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, Set<Acks> acks, boolean requiresReplication, byte[] extendedData);
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData);
 }

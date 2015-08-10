@@ -15,8 +15,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 
 public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements NetworkVoltronEntityMessage {
@@ -24,7 +22,6 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private TransactionID transactionID;
   private EntityDescriptor entityDescriptor;
   private Type type;
-  private Set<Acks> acks;
   private boolean requiresReplication;
   private byte[] extendedData;
 
@@ -46,12 +43,6 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
 
   @Override
-  public Set<Acks> getAcks() {
-    Assert.assertNotNull(this.acks);
-    return this.acks;
-  }
-  
-  @Override
   public boolean doesRequireReplication() {
     return this.requiresReplication;
   }
@@ -69,21 +60,19 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
 
   @Override
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, Set<Acks> acks, boolean requiresReplication, byte[] extendedData) {
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
     Assert.assertNotNull(clientID);
     Assert.assertNotNull(transactionID);
     Assert.assertNotNull(entityDescriptor);
     Assert.assertNotNull(type);
-    Assert.assertNotNull(acks);
     Assert.assertNotNull(extendedData);
 
     this.clientID = clientID;
     this.transactionID = transactionID;
     this.entityDescriptor = entityDescriptor;
     this.type = type;
-    this.acks = acks;
     this.requiresReplication = requiresReplication;
     this.extendedData = extendedData;
   }
@@ -110,12 +99,6 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     
     this.entityDescriptor.serializeTo(outputStream);
     
-    long acksBits = 0;
-    for (Acks ack : this.acks) {
-      acksBits |= 1L << ack.ordinal();
-    }
-    outputStream.writeLong(acksBits);
-    
     outputStream.writeInt(type.ordinal());
     
     outputStream.writeInt(extendedData.length);
@@ -132,13 +115,6 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.clientID = ClientID.readFrom(getInputStream());
     this.transactionID = new TransactionID(getLongValue());
     this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
-    long requestedAcks = getLongValue();
-    this.acks = new HashSet<>();
-    for (int j = 0; j < Acks.values().length; j++) {
-      if ((requestedAcks & (1L << j)) != 0) {
-        this.acks.add(Acks.values()[j]);
-      }
-    }
     this.type = Type.values()[getIntValue()];
     this.extendedData = getBytesArray();
     return true;

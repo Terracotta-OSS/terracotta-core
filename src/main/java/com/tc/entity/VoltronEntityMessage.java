@@ -4,8 +4,6 @@ import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 
-import java.util.Set;
-
 
 public interface VoltronEntityMessage {
   enum Type {
@@ -54,8 +52,6 @@ public interface VoltronEntityMessage {
   
   EntityDescriptor getEntityDescriptor();
 
-  Set<Acks> getAcks();
-  
   boolean doesRequireReplication();
   
   Type getType();
