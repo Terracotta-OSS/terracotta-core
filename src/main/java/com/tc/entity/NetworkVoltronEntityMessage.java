@@ -16,5 +16,5 @@ public interface NetworkVoltronEntityMessage extends VoltronEntityMessage, TCMes
   /**
    * Initializes the contents of the message.
    */
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, Set<Acks> acks, byte[] extendedData);
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, Set<Acks> acks, boolean requiresReplication, byte[] extendedData);
 }

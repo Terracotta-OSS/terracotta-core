@@ -25,6 +25,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private EntityDescriptor entityDescriptor;
   private Type type;
   private Set<Acks> acks;
+  private boolean requiresReplication;
   private byte[] extendedData;
 
   @Override
@@ -51,6 +52,11 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
   
   @Override
+  public boolean doesRequireReplication() {
+    return this.requiresReplication;
+  }
+  
+  @Override
   public Type getType() {
     Assert.assertNotNull(this.type);
     return this.type;
@@ -63,7 +69,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
 
   @Override
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, Set<Acks> acks, byte[] extendedData) {
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, Set<Acks> acks, boolean requiresReplication, byte[] extendedData) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
     Assert.assertNotNull(clientID);
@@ -78,6 +84,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.entityDescriptor = entityDescriptor;
     this.type = type;
     this.acks = acks;
+    this.requiresReplication = requiresReplication;
     this.extendedData = extendedData;
   }
   

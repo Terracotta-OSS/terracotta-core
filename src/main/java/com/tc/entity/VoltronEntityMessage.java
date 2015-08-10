@@ -36,10 +36,16 @@ public interface VoltronEntityMessage {
   }
   
   enum Acks {
-    RECEIPT,
-    PERSIST_IN_SEQUENCER,
-    REPLICATED,
-    APPLIED
+    /**
+     * Sent when the active receives the message and after it has enqueued it for execution in the entity.
+     */
+    RECEIVED,
+    /**
+     * Sent with the actual response.  Once this is received, the get() on the future will return the value/exception
+     * from the server.
+     * If this Ack is not requested, the get() will only return any local exceptions and no return value (null).
+     */
+    APPLIED,
   }
   
   NodeID getSource();
@@ -49,6 +55,8 @@ public interface VoltronEntityMessage {
   EntityDescriptor getEntityDescriptor();
 
   Set<Acks> getAcks();
+  
+  boolean doesRequireReplication();
   
   Type getType();
   

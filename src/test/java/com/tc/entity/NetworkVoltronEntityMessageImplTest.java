@@ -48,8 +48,9 @@ public class NetworkVoltronEntityMessageImplTest {
     Type messageType = VoltronEntityMessage.Type.FETCH_ENTITY;
     Set<Acks> acks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     acks.add(VoltronEntityMessage.Acks.APPLIED);
+    boolean requiresReplication = false;
     byte[] extendedData = new byte[1];
-    message.setContents(clientID, transactionID, entityDescriptor, messageType, acks, extendedData);
+    message.setContents(clientID, transactionID, entityDescriptor, messageType, acks, requiresReplication, extendedData);
     message.dehydrate();
     
     TCMessageHeader header = (TCMessageHeader) message.getHeader();
