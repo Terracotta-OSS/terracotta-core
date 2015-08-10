@@ -24,6 +24,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private Type type;
   private boolean requiresReplication;
   private byte[] extendedData;
+  private TransactionID oldestTransactionPending;
 
   @Override
   public NodeID getSource() {
@@ -60,7 +61,12 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
 
   @Override
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData) {
+  public TransactionID getOldestTransactionOnClient() {
+    return this.oldestTransactionPending;
+  }
+
+  @Override
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
     Assert.assertNotNull(clientID);
@@ -68,6 +74,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     Assert.assertNotNull(entityDescriptor);
     Assert.assertNotNull(type);
     Assert.assertNotNull(extendedData);
+    Assert.assertNotNull(oldestTransactionPending);
 
     this.clientID = clientID;
     this.transactionID = transactionID;
@@ -75,6 +82,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.type = type;
     this.requiresReplication = requiresReplication;
     this.extendedData = extendedData;
+    this.oldestTransactionPending = oldestTransactionPending;
   }
   
   
@@ -103,6 +111,8 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     
     outputStream.writeInt(extendedData.length);
     outputStream.write(extendedData);
+    
+    outputStream.writeLong(this.oldestTransactionPending.toLong());
   }
   
   @Override
@@ -117,6 +127,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
     this.type = Type.values()[getIntValue()];
     this.extendedData = getBytesArray();
+    this.oldestTransactionPending = new TransactionID(getLongValue());
     return true;
   }
 }

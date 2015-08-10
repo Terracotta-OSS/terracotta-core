@@ -57,4 +57,12 @@ public interface VoltronEntityMessage {
   Type getType();
   
   byte[] getExtendedData();
+  
+  /**
+   * This represents the oldest transaction that the sending client still knows about, from a tracking perspective.  The
+   * client will clear this once it gets the final APPLED response from the server but, in the meantime, the server must
+   * remember the order of transactions from this client going back at least as far as this transaction, to preserve
+   * re-send order in the case of a restart or fail-over.
+   */
+  TransactionID getOldestTransactionOnClient();
 }

@@ -5,6 +5,7 @@
 package com.tc.entity;
 
 import java.io.IOException;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.io.TCByteBufferOutputStream;
@@ -22,6 +23,7 @@ import com.tc.object.tx.TransactionID;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 
@@ -44,7 +46,8 @@ public class NetworkVoltronEntityMessageImplTest {
     Type messageType = VoltronEntityMessage.Type.FETCH_ENTITY;
     boolean requiresReplication = false;
     byte[] extendedData = new byte[1];
-    message.setContents(clientID, transactionID, entityDescriptor, messageType, requiresReplication, extendedData);
+    TransactionID oldestTransactionPending = new TransactionID(1);
+    message.setContents(clientID, transactionID, entityDescriptor, messageType, requiresReplication, extendedData, oldestTransactionPending);
     message.dehydrate();
     
     TCMessageHeader header = (TCMessageHeader) message.getHeader();
@@ -52,5 +55,10 @@ public class NetworkVoltronEntityMessageImplTest {
     outputStream.close();
     NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, payload);
     decodingMessage.hydrate();
+    assertEquals(clientID, decodingMessage.getSource());
+    assertEquals(transactionID, decodingMessage.getTransactionID());
+    assertEquals(entityDescriptor, decodingMessage.getEntityDescriptor());
+    assertEquals(messageType, decodingMessage.getType());
+    assertEquals(oldestTransactionPending, decodingMessage.getOldestTransactionOnClient());
   }
 }
