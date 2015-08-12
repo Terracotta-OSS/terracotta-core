@@ -4,6 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -25,12 +26,14 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte   ENTERPRISE_CLIENT        = 3;
   private static final byte   LOCAL_TIME_MILLS         = 4;
   private static final byte   RECONNECT_REFERENCES     = 5;
+  private static final byte   RESEND_MESSAGES          = 6;
 
   private final Set<ClientServerExchangeLockContext> lockContexts             = new HashSet<ClientServerExchangeLockContext>();
   private long                currentLocalTimeMills    = System.currentTimeMillis();
   private boolean             enterpriseClient         = false;
   private String              clientVersion            = "UNKNOW";
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
+  private final Set<ResendVoltronEntityMessage> resendMessages = new HashSet<ResendVoltronEntityMessage>();
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                     MessageChannel channel, TCMessageType messageType) {
@@ -88,6 +91,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     for (final ClientEntityReferenceContext referenceContext : this.reconnectReferences) {
       putNVPair(RECONNECT_REFERENCES, referenceContext);
     }
+    for (final ResendVoltronEntityMessage resendMessage : this.resendMessages) {
+      putNVPair(RESEND_MESSAGES, resendMessage);
+    }
   }
 
   @Override
@@ -108,6 +114,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       case RECONNECT_REFERENCES:
         this.reconnectReferences.add(getObject(new ClientEntityReferenceContext()));
         return true;
+      case RESEND_MESSAGES:
+        this.resendMessages.add(getObject(new ResendVoltronEntityMessage()));
+        return true;
       default:
         return false;
     }
@@ -122,5 +131,16 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   @Override
   public Collection<ClientEntityReferenceContext> getReconnectReferences() {
     return this.reconnectReferences;
+  }
+
+  @Override
+  public void addResendMessage(ResendVoltronEntityMessage message) {
+    boolean newAddition = this.resendMessages.add(message);
+    Assert.assertTrue(newAddition);
+  }
+
+  @Override
+  public Collection<ResendVoltronEntityMessage> getResendMessages() {
+    return this.resendMessages;
   }
 }
