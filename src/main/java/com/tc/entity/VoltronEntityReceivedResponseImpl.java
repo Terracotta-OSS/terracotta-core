@@ -12,22 +12,25 @@ import com.tc.object.tx.TransactionID;
 
 import java.io.IOException;
 
-/**
- * @author twu
- */
-public class RequestAckMessageImpl extends DSOMessageBase implements RequestAckMessage {
+
+public class VoltronEntityReceivedResponseImpl extends DSOMessageBase implements VoltronEntityReceivedResponse {
   private static final byte TRANSACTION_ID = 0;
   
   private TransactionID transactionID;
   
-  public RequestAckMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
+  public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public RequestAckMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
+  public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
+  public VoltronEntityMessage.Acks getAckType() {
+    return VoltronEntityMessage.Acks.RECEIVED;
+  }
+  
   @Override
   protected void dehydrateValues() {
     putNVPair(TRANSACTION_ID, transactionID.toLong());

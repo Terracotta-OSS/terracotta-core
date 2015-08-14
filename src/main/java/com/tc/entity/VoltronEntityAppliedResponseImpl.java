@@ -18,11 +18,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 
-public class VoltronEntityResponseMessageImpl extends DSOMessageBase implements VoltronEntityResponseMessage {
+public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements VoltronEntityAppliedResponse {
   private TransactionID transactionID;
   private boolean isSuccess;
   private byte[] successResponse;
   private Exception failureException;
+  
+  @Override
+  public VoltronEntityMessage.Acks getAckType() {
+    return VoltronEntityMessage.Acks.APPLIED;
+  }
   
   @Override
   public void setSuccess(TransactionID transactionID, byte[] response) {
@@ -51,11 +56,11 @@ public class VoltronEntityResponseMessageImpl extends DSOMessageBase implements 
   }
   
   
-  public VoltronEntityResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
+  public VoltronEntityAppliedResponseImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public VoltronEntityResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
+  public VoltronEntityAppliedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
