@@ -16,7 +16,6 @@
  */
 package com.tc.server;
 
-import com.tc.config.schema.messaging.http.ManagementNotListeningOnThatPortServlet;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -56,6 +55,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupIDMapServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
+import com.tc.config.schema.messaging.http.ManagementNotListeningOnThatPortServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
@@ -953,13 +953,6 @@ public class TCServerImpl extends SEDA implements TCServer {
       return this.manager.getStage(name);
     }
 
-  }
-
-  @Override
-  public void startBeanShell(final int port) {
-    if (this.dsoServer != null) {
-      this.dsoServer.startBeanShell(port);
-    }
   }
 
   private synchronized void notifyShutdown() {

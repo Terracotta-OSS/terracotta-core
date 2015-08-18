@@ -193,11 +193,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public void startBeanShell(int port) {
-    server.startBeanShell(port);
-  }
-
-  @Override
   public String toString() {
     if (isStarted()) {
       return "starting, startTime(" + getStartTime() + ")";

@@ -19,9 +19,6 @@ package com.tc.objectserver.impl;
 import org.apache.commons.io.FileUtils;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -1068,10 +1065,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                          this.lockManager, (DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats, instanceMonitor,
                                                          indexHACoordinator, connectionPolicy, remoteManagement);
-    if (tcProperties.getBoolean(TCPropertiesConsts.L2_BEANSHELL_ENABLED)) {
-      startBeanShell(tcProperties.getInt(TCPropertiesConsts.L2_BEANSHELL_PORT));
-    }
-
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 
@@ -1329,21 +1322,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l1Listener.stop(10000);
     this.l1Listener.getChannelManager().closeAllChannels();
     return true;
-  }
-
-  public void startBeanShell(final int port) {
-    try {
-      final Interpreter i = new Interpreter();
-      i.set("dsoServer", this);
-      i.set("objectManager", this.objectManager);
-      i.set("txnObjectManager", this.txnObjectManager);
-      i.set("portnum", port);
-      i.eval("setAccessibility(true)"); // turn off access restrictions
-      i.eval("server(portnum)");
-      consoleLogger.info("Bean shell is started on port " + port);
-    } catch (final EvalError e) {
-      e.printStackTrace();
-    }
   }
 
   /**

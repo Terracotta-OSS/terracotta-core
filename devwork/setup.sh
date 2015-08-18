@@ -24,5 +24,5 @@ svn co https://svn.terracotta.org/repo/internal/ehcache-enterprise/ehcache-core-
 # svn co https://svn.terracotta.org/repo/forge/enterprise/quartz-ee/trunk quartz-ee
 svn co https://svn.terracotta.org/repo/forge/projects/management-core/trunk management-core
 svn co https://svn.terracotta.org/repo/forge/projects/management-common/trunk management-common
-svn co https://svn.terracotta.org/repo/forge/enterprise/terracotta-session/trunk terracotta-sessions
+#svn co https://svn.terracotta.org/repo/forge/enterprise/terracotta-session/trunk terracotta-sessions
 svn co https://svn.terracotta.org/repo/internal/wan40/trunk wan40

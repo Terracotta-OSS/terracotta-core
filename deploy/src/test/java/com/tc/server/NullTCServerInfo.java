@@ -154,11 +154,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public void startBeanShell(int port) {
-    //
-  }
-
-  @Override
   public Map getStatistics() {
     return null;
   }

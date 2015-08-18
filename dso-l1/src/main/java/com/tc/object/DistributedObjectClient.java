@@ -16,9 +16,6 @@
  */
 package com.tc.object;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -35,6 +32,8 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.lang.TCThreadGroup;
 import com.tc.license.LicenseManager;
 import com.tc.license.ProductID;
+import com.tc.logging.CallbackOnExitHandler;
+import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -212,8 +211,6 @@ import com.tc.util.sequence.BatchSequenceReceiver;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tcclient.cluster.DsoClusterInternal;
-import com.tc.logging.CallbackOnExitHandler;
-import com.tc.logging.CallbackOnExitState;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -1100,23 +1097,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   @Override
   public void dump() {
     this.dumpHandler.dump();
-  }
-
-  @Override
-  public void startBeanShell(final int port) {
-    try {
-      final Interpreter i = new Interpreter();
-      i.set("client", this);
-      i.set("objectManager", this.objectManager);
-      i.set("lockmanager", this.lockManager);
-      i.set("txManager", this.clientTxnManager);
-      i.set("portnum", port);
-      i.eval("setAccessibility(true)"); // turn off access restrictions
-      i.eval("server(portnum)");
-      CONSOLE_LOGGER.info("Bean shell is started on port " + port);
-    } catch (final EvalError e) {
-      e.printStackTrace();
-    }
   }
 
   @Override

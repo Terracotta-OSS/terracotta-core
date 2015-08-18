@@ -237,17 +237,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Bean shell Properties
-   * Description : Bean shell can be enabled in the server for debugging.
-   * enabled     : Enables/disables Beanshell
-   * port        : Port number for Beanshell
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_BEANSHELL_ENABLED                                           = "l2.beanshell.enabled";
-  public static final String L2_BEANSHELL_PORT                                              = "l2.beanshell.port";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section : Network HA (nha)
    * Description : If Networked HA is enabled then these values take effect
    * tcgroupcomm.handshake.timeout        - tc-group-comm handshake timeout milliseconds

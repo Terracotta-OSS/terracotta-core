@@ -270,11 +270,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   @Override
-  public void startBeanShell(int port) {
-    this.client.startBeanShell(port);
-  }
-
-  @Override
   public void gc() {
     ManagementFactory.getMemoryMXBean().gc();
   }

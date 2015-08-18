@@ -62,8 +62,6 @@ public interface TCServer {
 
   ServerGroupInfo[] serverGroups();
 
-  void startBeanShell(int port);
-
   int getTSAListenPort();
 
   int getTSAGroupPort();

@@ -48,8 +48,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   void shutdown();
 
-  void startBeanShell(int port);
-
   String getVersion();
 
   String getMavenArtifactsVersion();
