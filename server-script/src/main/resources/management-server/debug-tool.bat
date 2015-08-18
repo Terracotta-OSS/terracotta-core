@@ -61,10 +61,10 @@ ${@#ee}  CALL %root%list-agent-ids.bat %IGNORE_SSL_CERT% -u %USERNAME% -p %PASSW
 ${@#ee}  EXIT /B
 ${@#ee} )
 
-${@#oss} IF NOT '%DO_ZIP%'=='-z' (
+IF NOT '%DO_ZIP%'=='-z' (
 ${@#oss}  CALL %root%rest-client.bat %IGNORE_SSL_CERT% -g "%MGM_SERVER_LOCATION%/tc-management-api/v2/agents/diagnostics/%THREAD_DUMP%"  "$.[*].dump"
 ${@#ee}  CALL %root%rest-client.bat %IGNORE_SSL_CERT% -g "%MGM_SERVER_LOCATION%/tmc/api/agents;ids=%AGENT_ID%/diagnostics/threadDump" "" %USERNAME% %PASSWORD% "$.[*].dump"
-${@#oss} ) ELSE (
+) ELSE (
 ${@#ee} CALL %root%rest-client.bat %IGNORE_SSL_CERT% -e -f -g %MGM_SERVER_LOCATION%/tmc/api/agents "" %USERNAME% %PASSWORD% "$.[?(@.agencyOf == 'TSA')].[?(@.agentId == '%AGENT_ID%')].agentId" > NUL 2>&1
 ${@#ee}  IF ERRORLEVEL 1 (
 ${@#ee}    echo Incorrect agent ID, available IDs
@@ -73,6 +73,6 @@ ${@#ee}    EXIT /B
 ${@#ee}  )
 ${@#ee}  CALL %root%rest-client.bat %IGNORE_SSL_CERT% -g "%MGM_SERVER_LOCATION%/tmc/api/agents;ids=%AGENT_ID%/diagnostics/threadDumpArchive" "" %USERNAME% %PASSWORD% > %AGENT_ID%-ThreadDump.zip
 ${@#oss}  CALL %root%rest-client.bat %IGNORE_SSL_CERT% -g "%MGM_SERVER_LOCATION%/tc-management-api/v2/agents/diagnostics/%THREAD_DUMP_ARCHIVE%"  > ThreadDump.zip
-${@#oss} )
+)
 
 ENDLOCAL
