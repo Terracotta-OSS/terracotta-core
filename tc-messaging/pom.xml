@@ -7,12 +7,12 @@
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
-    <groupId>org.terracotta.forge</groupId>
-    <artifactId>forge-parent</artifactId>
-    <version>3.19</version>
+    <groupId>org.terracotta</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>5.0.0-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
   </parent>
   
-  <groupId>org.terracotta</groupId>
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
@@ -26,46 +26,12 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <version>1.9.5</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
-  <scm>
-    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/branches/private/voltron</connection>
-    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging/branches/private/voltron</developerConnection>
-  </scm>
-  
-  <distributionManagement>
-    <repository>
-      <id>terracotta-releases</id>
-      <name>Terracotta Releases Repository</name>
-      <url>${terracotta-releases-url}</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-snapshots</id>
-       <uniqueVersion>false</uniqueVersion>
-       <name>Terracotta Snapshots Repository</name>
-       <url>${terracotta-snapshots-url}</url>
-    </snapshotRepository>
-  </distributionManagement>
-
-  <repositories>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>  
 </project>

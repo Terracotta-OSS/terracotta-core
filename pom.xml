@@ -28,6 +28,7 @@
     <module>build-parent</module>
     <module>build-data</module>
     <module>test-common</module>
+    <module>tc-messaging</module>
     <module>common</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
