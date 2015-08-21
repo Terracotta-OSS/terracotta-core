@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -42,10 +30,10 @@ import java.util.concurrent.ExecutorService;
  */
 public class ManagementServicesManagerImpl implements ManagementServicesManager {
 
-  private static final Collection<Method> OBJECT_METHODS = Collections.unmodifiableCollection(new HashSet<Method>(Arrays
+  private static final Collection<Method> OBJECT_METHODS = Collections.unmodifiableCollection(new HashSet<>(Arrays
       .asList(Object.class.getMethods())));
 
-  private final ConcurrentMap<ServiceID, ServiceHolder> services = new ConcurrentHashMap<ServiceID, ServiceHolder>();
+  private final ConcurrentMap<ServiceID, ServiceHolder> services = new ConcurrentHashMap<>();
 
   private final Collection<MessageChannel> messageChannels;
   private final ClientIDProvider clientIDProvider;
@@ -66,7 +54,7 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
   }
 
   @Override
-  public void asyncCall(final RemoteCallHolder remoteCallHolder, final ResponseListener responseListener) {
+  public void asyncCall(RemoteCallHolder remoteCallHolder, ResponseListener responseListener) {
     ServiceID serviceID = remoteCallHolder.getServiceID();
     final ServiceHolder serviceHolder = services.get(serviceID);
     if (serviceHolder == null) {
@@ -135,7 +123,7 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
       requestedServiceIDs = services.keySet();
     }
 
-    Set<RemoteCallDescriptor> response = new HashSet<RemoteCallDescriptor>();
+    Set<RemoteCallDescriptor> response = new HashSet<>();
 
     for (ServiceID requestedServiceID : requestedServiceIDs) {
       ServiceHolder serviceHolder = services.get(requestedServiceID);
@@ -146,14 +134,14 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
   }
 
   private Collection<RemoteCallDescriptor> buildRemoteCallDescriptors(ServiceID serviceID, Object service) {
-    Collection<RemoteCallDescriptor> result = new ArrayList<RemoteCallDescriptor>();
+    Collection<RemoteCallDescriptor> result = new ArrayList<>();
 
     Method[] methods = service.getClass().getMethods();
     for (Method method : methods) {
       if (OBJECT_METHODS.contains(method)) { continue; }
 
       String name = method.getName();
-      List<String> argTypeNames = new ArrayList<String>();
+      List<String> argTypeNames = new ArrayList<>();
       Class<?>[] parameters = method.getParameterTypes();
       for (Class<?> parameter : parameters) {
         argTypeNames.add(parameter.getName());

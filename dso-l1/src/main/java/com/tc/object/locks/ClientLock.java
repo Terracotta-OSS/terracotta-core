@@ -1,23 +1,8 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.locks;
 
-import com.tc.abortable.AbortableOperationManager;
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
 import com.tc.object.ClearableCallback;
@@ -36,9 +21,8 @@ public interface ClientLock extends ClearableCallback {
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
    */
-  public void lock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
-                   ThreadID thread, LockLevel level) throws GarbageLockException,
-      AbortedOperationException;
+  public void lock(RemoteLockManager remote,
+                   ThreadID thread, LockLevel level) throws GarbageLockException;
 
   /**
    * Try to acquire
@@ -52,11 +36,9 @@ public interface ClientLock extends ClearableCallback {
    * @return <code>true</code> if locked
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
-   * @throws AbortedOperationException
    */
-  public boolean tryLock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
-                         ThreadID thread, LockLevel level) throws GarbageLockException,
-      AbortedOperationException;
+  public boolean tryLock(RemoteLockManager remote,
+                         ThreadID thread, LockLevel level) throws GarbageLockException;
   
   /**
    * Timed acquire
@@ -68,11 +50,10 @@ public interface ClientLock extends ClearableCallback {
    * @return <code>true</code> if locked
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
-   * @throws AbortedOperationException
    */
-  public boolean tryLock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+  public boolean tryLock(RemoteLockManager remote,
                          ThreadID thread, LockLevel level, long timeout)
-      throws InterruptedException, GarbageLockException, AbortedOperationException;
+      throws InterruptedException, GarbageLockException;
   
   /**
    * Interruptible acquire
@@ -82,11 +63,10 @@ public interface ClientLock extends ClearableCallback {
    * @param level level at which to lock
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
-   * @throws AbortedOperationException
    */
-  public void lockInterruptibly(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+  public void lockInterruptibly(RemoteLockManager remote,
                                 ThreadID thread, LockLevel level)
-      throws InterruptedException, GarbageLockException, AbortedOperationException;
+      throws InterruptedException, GarbageLockException;
 
   /**
    * Blocking unlock
@@ -94,10 +74,9 @@ public interface ClientLock extends ClearableCallback {
    * @param remote remote lock manager for delegation
    * @param thread id of the unlocking (current) thread
    * @param level at which to unlock
-   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if there is no matching lock hold
    */
-  public void unlock(RemoteLockManager remote, ThreadID thread, LockLevel level) throws AbortedOperationException;
+  public void unlock(RemoteLockManager remote, ThreadID thread, LockLevel level);
 
   /**
    * Notify a single thread waiting on the lock.
@@ -128,12 +107,11 @@ public interface ClientLock extends ClearableCallback {
    * @param listener listener to fire just prior to moving to a local JVM Object.wait();
    * @param thread id of the locking (current) thread
    * @param waitObject TODO
-   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(final AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+  public void wait(RemoteLockManager remote,
                    WaitListener listener, ThreadID thread, Object waitObject)
-      throws InterruptedException, AbortedOperationException;
+      throws InterruptedException;
   
   /**
    * Move the current thread to wait with timeout.
@@ -143,12 +121,11 @@ public interface ClientLock extends ClearableCallback {
    * @param thread id of the locking (current) thread
    * @param waitObject TODO
    * @param timeout maximum time to remain waiting
-   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+  public void wait(RemoteLockManager remote,
                    WaitListener listener, ThreadID thread, Object waitObject, long timeout)
-      throws InterruptedException, AbortedOperationException;
+      throws InterruptedException;
 
   /**
    * Return true if the given lock is held locally by any thread at the given lock level.

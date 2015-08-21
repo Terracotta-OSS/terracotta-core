@@ -1,26 +1,14 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.beans.object;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.object.ObjectID;
 
-import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -43,6 +31,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
       private boolean isStarted = false;
       private boolean isRunning = false;
 
+      @Override
       public void run() {
         setRunningState();
         gcController.startGC();
@@ -74,14 +63,17 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
         logger.info("DGC finished.");
       }
 
+      @Override
       public synchronized boolean isGCRunning() {
         return isRunning;
       }
 
+      @Override
       public synchronized boolean isGCStarted() {
         return isStarted;
       }
 
+      @Override
       public synchronized void reset() {
         isRunning = false;
         isStarted = false;
@@ -89,14 +81,17 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     };
   }
 
+  @Override
   public boolean isGCRunning() {
     return gcRunner.isGCRunning();
   }
 
+  @Override
   public boolean isGCStarted() {
     return gcRunner.isGCStarted();
   }
 
+  @Override
   public synchronized boolean runGC() {
     if (!isEnabled()) {
       logger.warn("Cannot run DGC because mBean is not enabled.");
@@ -141,6 +136,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     return true;
   }
 
+  @Override
   public synchronized void reset() {
     // nothing to reset
   }
@@ -158,11 +154,12 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     objectIdsFetcher = fetcher;
   }
 
-  public SortedSet getAllObjectIds() {
-    Set set = objectIdsFetcher.getAllObjectIds();
-    SortedSet treeSet = new TreeSet();
-    for (Iterator iter = set.iterator(); iter.hasNext();) {
-      treeSet.add(iter.next());
+  @Override
+  public SortedSet<ObjectID> getAllObjectIds() {
+    Set<ObjectID> set = objectIdsFetcher.getAllObjectIds();
+    SortedSet<ObjectID> treeSet = new TreeSet<>();
+    for (ObjectID id : set) {
+      treeSet.add(id);
     }
     return treeSet;
   }
@@ -176,7 +173,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
   }
 
   public static interface ObjectIdsFetcher {
-    Set getAllObjectIds();
+    Set<ObjectID> getAllObjectIds();
   }
 
   static interface GCRunner extends Runnable {

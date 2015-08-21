@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.l2.state;
 
@@ -29,9 +17,9 @@ import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.GroupMessage;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
@@ -46,12 +34,12 @@ public class StateManagerImpl implements StateManager {
   private static final TCLogger        logger              = TCLogging.getLogger(StateManagerImpl.class);
 
   private final TCLogger               consoleLogger;
-  private final GroupManager           groupManager;
+  private final GroupManager<AbstractGroupMessage> groupManager;
   private final ElectionManager        electionMgr;
-  private final Sink                   stateChangeSink;
+  private final Sink<StateChangedEvent> stateChangeSink;
   private final WeightGeneratorFactory weightsFactory;
 
-  private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<StateChangeListener>();
+  private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<>();
   private final Object                 electionLock        = new Object();
   private final ClusterStatePersistor  clusterStatePersistor;
 
@@ -60,9 +48,9 @@ public class StateManagerImpl implements StateManager {
   private boolean                      electionInProgress  = false;
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
-  public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink,
+  public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, Sink<StateChangedEvent> stateChangeSink,
                           StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory,
-                          final ClusterStatePersistor clusterStatePersistor) {
+                          ClusterStatePersistor clusterStatePersistor) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
@@ -176,7 +164,7 @@ public class StateManagerImpl implements StateManager {
       state = PASSIVE_UNINITIALIZED;
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
-      stateChangeSink.add(new StateChangedEvent(START_STATE, state));
+      stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state));
     } else if (state == ACTIVE_COORDINATOR) {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_UNINITIALIZED + " from " + ACTIVE_COORDINATOR
@@ -192,7 +180,7 @@ public class StateManagerImpl implements StateManager {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
     } else if (state != PASSIVE_STANDBY) {
-      stateChangeSink.add(new StateChangedEvent(state, PASSIVE_STANDBY));
+      stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_STANDBY));
       state = PASSIVE_STANDBY;
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
@@ -211,7 +199,7 @@ public class StateManagerImpl implements StateManager {
       info("Becoming " + state, true);
       fireStateChangedOperatorEvent();
       electionMgr.declareWinner(this.activeNode);
-      stateChangeSink.add(event);
+      stateChangeSink.addSingleThreaded(event);
     } else {
       throw new AssertionError("Cant move to " + ACTIVE_COORDINATOR + " from " + state);
     }
@@ -235,7 +223,7 @@ public class StateManagerImpl implements StateManager {
   public void moveNodeToPassiveStandby(NodeID nodeID) {
     Assert.assertTrue(isActiveCoordinator());
     logger.info("Requesting node " + nodeID + " to move to " + PASSIVE_STANDBY);
-    GroupMessage msg = L2StateMessage.createMoveToPassiveStandbyMessage(EnrollmentFactory
+    AbstractGroupMessage msg = L2StateMessage.createMoveToPassiveStandbyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
     try {
       this.groupManager.sendTo(nodeID, msg);
@@ -315,7 +303,7 @@ public class StateManagerImpl implements StateManager {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
       Assert.assertFalse(ServerID.NULL_ID.equals(activeNode));
       // This wouldn't normally happen, but we agree - so ack
-      GroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
+      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
     } else if (state == ACTIVE_COORDINATOR || !activeNode.isNull()
@@ -328,7 +316,7 @@ public class StateManagerImpl implements StateManager {
       // Force other node to rerun election so that we can abort
       // Condition 3 :
       // We don't want new L2s to win an election when there are old L2s in PASSIVE states.
-      GroupMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, EnrollmentFactory
+      AbstractGroupMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       warn("WARNING :: Active Node = " + activeNode + " , " + state
            + " received ELECTION_RESULT message from another node : " + msg + " : Forcing re-election "
@@ -355,7 +343,7 @@ public class StateManagerImpl implements StateManager {
   private void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
     if (state == ACTIVE_COORDINATOR) {
       // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
-      GroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
+      AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
@@ -371,7 +359,7 @@ public class StateManagerImpl implements StateManager {
   public void publishActiveState(NodeID nodeID) throws GroupException {
     debugInfo("Publishing active state to nodeId: " + nodeID);
     Assert.assertTrue(isActiveCoordinator());
-    GroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(EnrollmentFactory
+    AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validateResponse(nodeID, response);

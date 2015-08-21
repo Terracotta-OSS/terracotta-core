@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.objectserver.locks;
 
@@ -21,6 +8,7 @@ import com.tc.util.Assert;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -34,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class LockStore {
   private static final int                  DEFAULT_SEGMENTS = 32;
-  private final HashMap<LockID, ServerLock> segments[];
+  private final Map<LockID, ServerLock>     segments[];
   private final ReentrantLock[]             guards;
   private final int                         segmentShift;
   private final int                         segmentMask;
@@ -59,13 +47,18 @@ public class LockStore {
     segmentMask = ssize - 1;
     numberOfSegments = ssize;
 
-    segments = new HashMap[numberOfSegments];
+    segments = initSegments(numberOfSegments);
     guards = new ReentrantLock[numberOfSegments];
 
     for (int i = 0; i < segments.length; i++) {
-      segments[i] = new HashMap();
+      segments[i] = new HashMap<>();
       guards[i] = new ReentrantLock();
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<LockID, ServerLock>[] initSegments(int numberOfSegments) {
+    return new Map[numberOfSegments];
   }
 
   public ServerLock checkOut(LockID lockID) {
@@ -141,7 +134,7 @@ public class LockStore {
     public ServerLock getNextLock(ServerLock lock) {
       validateOldLock(lock);
       while (currentIter == null || !currentIter.hasNext()) {
-        HashMap<LockID, ServerLock> nextSegment = fetchNextSegment();
+        Map<LockID, ServerLock> nextSegment = fetchNextSegment();
         if (nextSegment == null) { return null; }
         currentIter = nextSegment.entrySet().iterator();
       }
@@ -169,7 +162,7 @@ public class LockStore {
 
     }
 
-    private HashMap<LockID, ServerLock> fetchNextSegment() {
+    private Map<LockID, ServerLock> fetchNextSegment() {
       if (currentIndex >= 0 && currentIndex < segments.length) {
         guards[currentIndex].unlock();
       }

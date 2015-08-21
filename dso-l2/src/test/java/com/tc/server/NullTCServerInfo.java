@@ -1,0 +1,282 @@
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
+ */
+package com.tc.server;
+
+import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
+import com.tc.management.AbstractTerracottaMBean;
+import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.objectserver.api.BackupManager;
+
+import java.util.Map;
+
+import javax.management.NotCompliantMBeanException;
+
+public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServerInfoMBean {
+
+  public NullTCServerInfo() throws NotCompliantMBeanException {
+    super(TCServerInfoMBean.class, false);
+  }
+
+  @Override
+  public void reset() {
+    // nothing to reset
+  }
+
+  @Override
+  public long getActivateTime() {
+    return 0;
+  }
+
+  @Override
+  public String getBuildID() {
+    return "";
+  }
+
+  @Override
+  public String getCopyright() {
+    return "";
+  }
+
+  @Override
+  public String getDescriptionOfCapabilities() {
+    return "";
+  }
+
+  @Override
+  public L2Info[] getL2Info() {
+    return null;
+  }
+
+  @Override
+  public String getL2Identifier() {
+    return null;
+  }
+
+  @Override
+  public int getTSAListenPort() {
+    return 0;
+  }
+
+  @Override
+  public int getTSAGroupPort() {
+    return 0;
+  }
+
+  @Override
+  public long getStartTime() {
+    return 0;
+  }
+
+  @Override
+  public String getVersion() {
+    return "";
+  }
+
+  @Override
+  public String getPatchLevel() {
+    return "";
+  }
+
+  @Override
+  public String getPatchVersion() {
+    return "";
+  }
+
+  @Override
+  public String getPatchBuildID() {
+    return "";
+  }
+
+  @Override
+  public boolean isActive() {
+    return false;
+  }
+
+  @Override
+  public boolean isStarted() {
+    return false;
+  }
+
+  @Override
+  public boolean isShutdownable() {
+    return false;
+  }
+
+  @Override
+  public void shutdown() {
+    //
+  }
+
+  @Override
+  public void stop() {
+    //
+  }
+
+  @Override
+  public String getHealthStatus() {
+    return "";
+  }
+
+  @Override
+  public boolean isPassiveStandby() {
+    return false;
+  }
+
+  @Override
+  public boolean isPassiveUninitialized() {
+    return false;
+  }
+
+  @Override
+  public boolean isRecovering() {
+    return false;
+  }
+
+  @Override
+  public Map<String, Object> getStatistics() {
+    return null;
+  }
+
+  @Override
+  public long getMaxMemory() {
+    return 0;
+  }
+
+  @Override
+  public long getUsedMemory() {
+    return 0;
+  }
+
+  @Override
+  public byte[] takeCompressedThreadDump(long requestMillis) {
+    return null;
+  }
+
+  @Override
+  public boolean getRestartable() {
+    return false;
+  }
+
+  @Override
+  public String getEnvironment() {
+    return null;
+  }
+
+  @Override
+  public String getConfig() {
+    return null;
+  }
+
+  @Override
+  public boolean isPatched() {
+    return false;
+  }
+
+  @Override
+  public String getState() {
+    return null;
+  }
+
+  @Override
+  public ServerGroupInfo[] getServerGroupInfo() {
+    return null;
+  }
+
+  @Override
+  public String getMavenArtifactsVersion() {
+    return null;
+  }
+
+  @Override
+  public void gc() {
+    /**/
+  }
+
+  @Override
+  public boolean isVerboseGC() {
+    return false;
+  }
+
+  @Override
+  public void setVerboseGC(boolean verboseGC) {
+    /**/
+  }
+
+  @Override
+  public boolean isEnterprise() {
+    return false;
+  }
+
+  @Override
+  public String getTCProperties() {
+    return null;
+  }
+
+  @Override
+  public String[] getProcessArguments() {
+    return null;
+  }
+
+  @Override
+  public boolean isSecure() {
+    return false;
+  }
+
+  @Override
+  public String getSecurityServiceLocation() {
+    return null;
+  }
+
+  @Override
+  public Integer getSecurityServiceTimeout() {
+    return null;
+  }
+
+  @Override
+  public String getSecurityHostname() {
+    return null;
+  }
+
+  @Override
+  public String getIntraL2Username() {
+    return null;
+  }
+
+  @Override
+  public void backup(String name) {
+    //
+  }
+
+  @Override
+  public String getRunningBackup() {
+    return null;
+  }
+
+  @Override
+  public String getBackupStatus(String name) {
+    return BackupManager.BackupStatus.UNKNOWN.toString();
+  }
+
+  @Override
+  public String getBackupFailureReason(String name) {
+    return null;
+  }
+
+  @Override
+  public String getResourceState() {
+    return "";
+  }
+
+  @Override
+  public Map<String, String> getBackupStatuses() {
+    return null;
+  }
+
+  @Override
+  public boolean isLegacyProductionModeEnabled() {
+    return false;
+  }
+}

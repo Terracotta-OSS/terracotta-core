@@ -1,33 +1,17 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.reporter;
 
-import org.apache.xmlbeans.XmlException;
-
-import com.tc.config.Loader;
-import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.object.config.schema.L2DSOConfigObject;
+import com.tc.object.config.schema.L2ConfigObject;
 import com.tc.sysinfo.EnvStats;
 import com.tc.util.ArchiveBuilder;
 import com.tc.util.ZipBuilder;
-import com.terracottatech.config.Client;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import org.terracotta.config.Server;
+import org.terracotta.config.Servers;
+import org.terracotta.config.TCConfigurationParser;
+import org.terracotta.config.TcConfig;
+import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.xml.namespace.QName;
 
 /**
  * This utility is used to archive Terracotta execution environment information for debugging purposes. Run the
@@ -80,7 +62,7 @@ public final class ArchiveUtil {
                                       + "\n\t\t# ./archive-util ...\n\n\tSpecifying a directory location as the"
                                       + " first command will recursively archive it's entire contents";
 
-  private static final Set<String> validDashArgs = new HashSet<String>();
+  private static final Set<String> validDashArgs = new HashSet<>();
 
   static {
     validDashArgs.add(DASH_C);
@@ -120,7 +102,7 @@ public final class ArchiveUtil {
     boolean dashArgs = true;
     int locationCmd = -1;
     int fileArg = -1;
-    Set<String> dashSet = new HashSet<String>(2);
+    Set<String> dashSet = new HashSet<>(2);
     for (int i = 0; i < args.length; i++) {
       if (args[i].startsWith("-")) {
         if (!dashArgs) escape(USAGE, null);
@@ -162,7 +144,7 @@ public final class ArchiveUtil {
       new ArchiveUtil(dashC, tcConfigFile, outputFile).createArchive();
     } catch (IOException e) {
       escape("\tUnable to read Terracotta configuration file\n", e);
-    } catch (XmlException e) {
+    } catch (SAXException e) {
       escape("\tUnable to parse Terracotta configuration file\n", e);
     }
   }
@@ -173,23 +155,8 @@ public final class ArchiveUtil {
   }
 
   private File getClientLogsLocation(TcConfig configBeans) {
-    Client clients = configBeans.getClients();
-    if (clients == null) {
-      quit("The Terracotta config specified doesn't contain the <clients> element.\nYou may have provided a server config by mistake.");
-    }
-
-    String logs = clients.getLogs();
-    if (isStdX(logs)) return null;
-    if (logs == null) {
-      logs = Client.type.getElementProperty(QName.valueOf("logs")).getDefaultText();
-    }
-    String clientLogs = ParameterSubstituter.substitute(logs);
-    File clientLogsDir = makeAbsolute(new File(clientLogs));
-    if (!clientLogsDir.exists()) {
-      quit("\nError occured while parsing: " + tcConfig
-           + "\n\tUnable to locate client log files at: " + clientLogs);
-    }
-    return clientLogsDir;
+    //TODO fix client stuff
+    return null;
   }
 
   private boolean isStdX(String value) {
@@ -200,7 +167,7 @@ public final class ArchiveUtil {
   private Server[] getServersElement(TcConfig configBeans) {
     Servers servers = configBeans.getServers();
     if (servers == null) quit("The Terracotta config specified doesn't contain the <servers> element");
-    return L2DSOConfigObject.getServers(servers);
+    return L2ConfigObject.getServers(servers);
   }
 
   private File[] getServerLogsLocation(TcConfig configBeans) {
@@ -210,8 +177,6 @@ public final class ArchiveUtil {
     for (int i = 0; i < servers.length; i++) {
       logs[i] = servers[i].getLogs();
       if (isStdX(logs[i])) logs[i] = null;
-      if (logs[i] == null) logs[i] = Server.type.getElementProperty(QName.valueOf("logs")).getDefaultText();
-      logs[i] = ParameterSubstituter.substitute(logs[i]);
       File serverLogsDir = makeAbsolute(new File(logs[i]));
       if (!serverLogsDir.exists()) {
         quit("\nError occured while parsing: " + tcConfig
@@ -238,12 +203,12 @@ public final class ArchiveUtil {
     System.out.println("\n\nWrote archive to:" + archiveFile);
   }
 
-  private void createArchive() throws IOException, XmlException {
+  private void createArchive() throws IOException, SAXException {
     if (tcConfig.isDirectory()) {
       createPathArchive();
       return;
     }
-    TcConfig configBeans = new Loader().parse(tcConfig).getTcConfig();
+    TcConfig configBeans = TCConfigurationParser.parse(tcConfig).getPlatformConfiguration();
     File clientLogsDir = null;
     File[] serverLogsDir = null;
 

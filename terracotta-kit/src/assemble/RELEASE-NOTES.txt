@@ -1,1 +1,0 @@
-Please refer to http://www.terracotta.org/kit/reflector?kitID=default&pageID=TerracottaReleaseNotes for changes and release notes.

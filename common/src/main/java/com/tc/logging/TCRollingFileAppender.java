@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.logging;
 
@@ -29,8 +16,7 @@ import java.io.InterruptedIOException;
 
 public class TCRollingFileAppender extends RollingFileAppender {
   private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
-  private static final PatternLayout DERBY_PATTERN_LAYOUT = new PatternLayout(TCLogging.DERBY_PATTERN);
-  private long                       nextRollover         = 0;
+
   private String                     fileNamePrefix       = "";
   private String                     fileNameSuffix       = "";
   public TCRollingFileAppender(Layout layout, String logPath, boolean append) throws IOException {
@@ -48,8 +34,6 @@ public class TCRollingFileAppender extends RollingFileAppender {
     try {
       if (event.getLoggerName().equals(TCLogging.DUMP_LOGGER_NAME)) {
         this.setLayout(DUMP_PATTERN_LAYOUT);
-      } else if (event.getLoggerName().equals(TCLogging.DERBY_LOGGER_NAME)) {
-        this.setLayout(DERBY_PATTERN_LAYOUT);
       }
       super.subAppend(event);
     } finally {
@@ -66,9 +50,6 @@ public class TCRollingFileAppender extends RollingFileAppender {
     if (qw != null) {
       long size = ((CountingQuietWriter) qw).getCount();
       LogLog.debug("rolling over count=" + size);
-      // if operation fails, do not roll again until
-      // maxFileSize more bytes are written
-      nextRollover = size + maxFileSize;
     }
     LogLog.debug("maxBackupIndex=" + maxBackupIndex);
 
@@ -122,7 +103,6 @@ public class TCRollingFileAppender extends RollingFileAppender {
         // This will also close the file. This is OK since multiple
         // close operations are safe.
         this.setFile(fileName, false, bufferedIO, bufferSize);
-        nextRollover = 0;
       } catch (IOException e) {
         if (e instanceof InterruptedIOException) {
           Thread.currentThread().interrupt();

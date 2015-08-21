@@ -1,57 +1,42 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tcclient.cluster;
 
-import com.tc.async.api.EventContext;
-import com.tc.cluster.DsoClusterEvent;
-import com.tc.cluster.DsoClusterListener;
-import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
+import com.tc.cluster.ClusterEvent;
+import com.tc.cluster.ClusterListener;
+import com.tcclient.cluster.ClusterInternal.ClusterEventType;
 
 /**
- * DsoCluster Events Contexts to be put in ClusterInternalEventsHandler.
+ * Cluster Events Contexts to be put in ClusterInternalEventsHandler.
  */
-public class ClusterInternalEventsContext implements EventContext {
+public class ClusterInternalEventsContext {
 
-  private final DsoClusterEventType eventType;
-  private final DsoClusterEvent     event;
-  private final DsoClusterListener  dsoClusterListener;
+  private final ClusterEventType eventType;
+  private final ClusterEvent     event;
+  private final ClusterListener clusterListener;
 
-  public ClusterInternalEventsContext(DsoClusterEventType eventType, DsoClusterEvent event, DsoClusterListener listener) {
+  public ClusterInternalEventsContext(ClusterEventType eventType, ClusterEvent event, ClusterListener listener) {
     this.eventType = eventType;
     this.event = event;
-    this.dsoClusterListener = listener;
+    this.clusterListener = listener;
   }
 
-  public DsoClusterEventType getEventType() {
+  public ClusterEventType getEventType() {
     return eventType;
   }
 
-  public DsoClusterEvent getEvent() {
+  public ClusterEvent getEvent() {
     return event;
   }
 
-  public DsoClusterListener getDsoClusterListener() {
-    return dsoClusterListener;
+  public ClusterListener getClusterListener() {
+    return clusterListener;
   }
 
   @Override
   public String toString() {
-    return "ClusterInternalEventsContext [eventType=" + eventType + ", event=" + event + ", dsoClusterListener="
-           + dsoClusterListener + "]";
+    return "ClusterInternalEventsContext [eventType=" + eventType + ", event=" + event + ", clusterListener=" + clusterListener + "]";
   }
 
 }

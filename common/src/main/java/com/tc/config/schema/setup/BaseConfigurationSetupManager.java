@@ -1,117 +1,59 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
-import com.tc.config.schema.IllegalConfigurationChangeHandler;
-import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.context.StandardConfigContext;
-import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.repository.BeanRepository;
-import com.tc.config.schema.repository.MutableBeanRepository;
-import com.tc.config.schema.repository.StandardBeanRepository;
-import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.util.Assert;
-import com.terracottatech.config.Client;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcProperties;
-
-import java.io.File;
+import org.terracotta.config.Servers;
+import org.terracotta.config.TcConfiguration;
+import org.terracotta.config.TcProperties;
 
 /**
  * A base class for all TVS configuration setup managers.
  */
 public class BaseConfigurationSetupManager {
-  private final String[]                          args;
-  private final ConfigurationCreator              configurationCreator;
-  private final MutableBeanRepository             clientBeanRepository;
-  private final MutableBeanRepository             serversBeanRepository;
-  private final MutableBeanRepository             systemBeanRepository;
-  private final MutableBeanRepository             tcPropertiesRepository;
+  private final String[] args;
+  private final ConfigurationCreator configurationCreator;
+  private TcConfiguration conf;
 
-  protected final DefaultValueProvider            defaultValueProvider;
-  private final XmlObjectComparator               xmlObjectComparator;
-  private final IllegalConfigurationChangeHandler illegalConfigurationChangeHandler;
-
-  public BaseConfigurationSetupManager(ConfigurationCreator configurationCreator,
-                                       DefaultValueProvider defaultValueProvider,
-                                       XmlObjectComparator xmlObjectComparator,
-                                       IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
-    this((String[]) null, configurationCreator, defaultValueProvider, xmlObjectComparator,
-         illegalConfigurationChangeHandler);
+  public BaseConfigurationSetupManager(ConfigurationCreator configurationCreator) {
+    this(null, configurationCreator);
   }
 
-  public BaseConfigurationSetupManager(String[] args, ConfigurationCreator configurationCreator,
-                                       DefaultValueProvider defaultValueProvider,
-                                       XmlObjectComparator xmlObjectComparator,
-                                       IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+  public BaseConfigurationSetupManager(String[] args, ConfigurationCreator configurationCreator) {
     Assert.assertNotNull(configurationCreator);
-    Assert.assertNotNull(defaultValueProvider);
-    Assert.assertNotNull(xmlObjectComparator);
-    Assert.assertNotNull(illegalConfigurationChangeHandler);
 
     this.args = args;
     this.configurationCreator = configurationCreator;
-    this.systemBeanRepository = new StandardBeanRepository(System.class);
-    this.clientBeanRepository = new StandardBeanRepository(Client.class);
-    this.serversBeanRepository = new StandardBeanRepository(Servers.class);
-    this.tcPropertiesRepository = new StandardBeanRepository(TcProperties.class);
-
-    this.defaultValueProvider = defaultValueProvider;
-    this.xmlObjectComparator = xmlObjectComparator;
-    this.illegalConfigurationChangeHandler = illegalConfigurationChangeHandler;
   }
 
   public String[] processArguments() {
     return args;
   }
 
-  protected final MutableBeanRepository clientBeanRepository() {
-    return this.clientBeanRepository;
+  public final Servers serversBeanRepository() {
+    return this.conf.getPlatformConfiguration().getServers();
   }
 
-  public final MutableBeanRepository serversBeanRepository() {
-    return this.serversBeanRepository;
-  }
-
-  protected final MutableBeanRepository systemBeanRepository() {
-    return this.systemBeanRepository;
-  }
-
-  protected final MutableBeanRepository tcPropertiesRepository() {
-    return this.tcPropertiesRepository;
-  }
-
-  protected final XmlObjectComparator xmlObjectComparator() {
-    return this.xmlObjectComparator;
+  protected final TcProperties tcPropertiesRepository() {
+    return this.conf.getPlatformConfiguration().getTcProperties();
   }
 
   protected final ConfigurationCreator configurationCreator() {
     return this.configurationCreator;
   }
 
-  protected final void runConfigurationCreator(boolean isClient) throws ConfigurationSetupException {
-    this.configurationCreator.createConfigurationIntoRepositories(clientBeanRepository, serversBeanRepository,
-                                                                  systemBeanRepository, tcPropertiesRepository,
-                                                                  isClient);
+  protected final TcConfiguration tcConfigurationRepository() {
+    return this.conf;
   }
 
-  public final ConfigContext createContext(BeanRepository beanRepository, File configFilePath) {
-    Assert.assertNotNull(beanRepository);
-    return new StandardConfigContext(beanRepository, this.defaultValueProvider, this.illegalConfigurationChangeHandler);
+  protected final void runConfigurationCreator() throws ConfigurationSetupException {
+    try {
+      this.configurationCreator.createConfiguration();
+    } catch (Throwable t) {
+      throw new ConfigurationSetupException(t);
+    }
+    this.conf = configurationCreator.getParsedConfiguration();
   }
 
 }

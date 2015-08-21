@@ -1,0 +1,49 @@
+<tc-config xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+           xmlns:security="http://www.terracotta.org/config/security"
+           xmlns="http://www.terracotta.org/config"
+           xsi:schemaLocation="http://www.terracotta.org/config terracotta.xsd
+                        http://www.terracotta.org/config/security ../../main/resources/security.xsd">
+  <services>
+    <service>
+      <security:security>
+        <security:ssl>
+          <security:certificate>certificate</security:certificate>
+        </security:ssl>
+        <security:auth>
+          <security:realm>realm</security:realm>
+          <security:url>url</security:url>
+          <security:user>user</security:user>
+
+        </security:auth>
+        <security:keychain>
+          <security:class>class</security:class>
+          <security:secret-provider>secret</security:secret-provider>
+          <security:url>url</security:url>
+        </security:keychain>
+        <security:management>
+          <security:hostname>hostname</security:hostname>
+          <security:ia>ia</security:ia>
+          <security:timeout>100</security:timeout>
+        </security:management>
+      </security:security>
+    </service>
+  </services>
+</tc-config>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

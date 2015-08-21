@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.lang;
 
@@ -38,6 +25,8 @@ import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -52,8 +41,8 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
   private static final String                        OOME_ERROR_MSG                  = "Fatal error: out of available memory. Exiting...";
   protected final TCLogger                           logger;
   private final ExceptionHelperImpl                  helper;
-  private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
-  private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap();
+  private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList<>();
+  private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap<>();
   private final Object                               dumpLock                        = new Object();
 
   private static final long                          TIME_OUT                        = TCPropertiesImpl
@@ -97,7 +86,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
   }
 
   @Override
-  public void addCallbackOnExitExceptionHandler(Class c, CallbackOnExitHandler exitHandler) {
+  public void addCallbackOnExitExceptionHandler(Class<?> c, CallbackOnExitHandler exitHandler) {
     callbackOnExitExceptionHandlers.put(c, exitHandler);
   }
 
@@ -108,7 +97,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * @param t Throwable
    */
   @Override
-  public void handleThrowable(final Thread thread, final Throwable t) {
+  public void handleThrowable(Thread thread, Throwable t) {
     handlePossibleOOME(t);
 
     if (isThreadGroupDestroyed(thread, t)) {
@@ -128,9 +117,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     }
 
     final CallbackOnExitState throwableState = new CallbackOnExitState(t);
-
-    // TAB-5348
-    // scheduleExit(throwableState);
+    scheduleExit(throwableState);
 
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
@@ -170,7 +157,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * Considering {@code -XX:OnOutOfMemoryError=<cmd>} option might be also a good idea.
    */
   @Override
-  public void handlePossibleOOME(final Throwable t) {
+  public void handlePossibleOOME(Throwable t) {
     Throwable rootCause = Throwables.getRootCause(t);
     if (rootCause instanceof OutOfMemoryError) {
       try {
@@ -183,6 +170,20 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
         exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
       }
     }
+  }
+
+  private synchronized void scheduleExit(CallbackOnExitState throwableState) {
+    if (isExitScheduled) { return; }
+    isExitScheduled = true;
+
+    TimerTask timerTask = new TimerTask() {
+      @Override
+      public void run() {
+        exit(throwableState);
+      }
+    };
+    Timer timer = new Timer("Dump On Timeout Timer");
+    timer.schedule(timerTask, TIME_OUT);
   }
 
   private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {

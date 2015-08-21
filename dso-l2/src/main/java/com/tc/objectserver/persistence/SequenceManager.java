@@ -1,25 +1,4 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
- */
 package com.tc.objectserver.persistence;
-
-import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
-import org.terracotta.corestorage.KeyValueStorage;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
 
 import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
@@ -28,6 +7,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.KeyValueStorage;
 /**
  * @author tim
  */
@@ -36,11 +17,11 @@ public class SequenceManager {
   private static final String SEQUENCE_UUID_MAP = "sequence_uuid_map";
 
   private final ConcurrentMap<String, Sequence> createdSequences =
-          new ConcurrentHashMap<String, Sequence>();
+          new ConcurrentHashMap<>();
   private final KeyValueStorage<String, Long> sequenceMap;
   private final KeyValueStorage<String, String> uuidMap;
 
-  public SequenceManager(final StorageManager storageManager) {
+  public SequenceManager(IPersistentStorage storageManager) {
     this.sequenceMap = storageManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class);
     this.uuidMap = storageManager.getKeyValueStorage(SEQUENCE_UUID_MAP, String.class, String.class);
   }
@@ -60,11 +41,11 @@ public class SequenceManager {
   public MutableSequence getSequence(String name) {
     return getSequence(name, 0L);
   }
-
-  public static void addConfigsTo(final Map<String, KeyValueStorageConfig<?, ?>> configs) {
-    configs.put(SEQUENCE_MAP, ImmutableKeyValueStorageConfig.builder(String.class, Long.class).build());
-    configs.put(SEQUENCE_UUID_MAP, ImmutableKeyValueStorageConfig.builder(String.class, String.class).build());
-  }
+//
+//  public static void addConfigsTo(Map<String, KeyValueStorageConfig<?, ?>> configs) {
+//    configs.put("platform" + "|" + SEQUENCE_MAP, ImmutableKeyValueStorageConfig.builder(String.class, Long.class).build());
+//    configs.put("platform" + "|" + SEQUENCE_UUID_MAP, ImmutableKeyValueStorageConfig.builder(String.class, String.class).build());
+//  }
 
   private static class Sequence implements MutableSequence {
 

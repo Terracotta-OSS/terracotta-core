@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.net.groups;
 
@@ -20,7 +7,6 @@ import com.tc.config.ClusterInfo;
 import com.tc.config.HaConfig;
 import com.tc.config.NodesStore;
 import com.tc.config.ReloadConfigChangeContext;
-import com.tc.exception.ImplementMe;
 import com.tc.net.GroupID;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
@@ -38,25 +24,25 @@ public class HaConfigForGroupNameTests implements HaConfig {
 
   @Override
   public GroupID getActiveCoordinatorGroupID() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   public ServerGroup[] getAllActiveServerGroups() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   public Node[] getAllNodes() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public GroupID getThisGroupID() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public GroupID[] getGroupIDs() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -65,48 +51,48 @@ public class HaConfigForGroupNameTests implements HaConfig {
   }
 
   public ServerGroup getThisGroup() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   public Node[] getThisGroupNodes() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public Node getThisNode() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public boolean isActiveActive() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public boolean isActiveCoordinatorGroup() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   public boolean isDiskedBasedActivePassive() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   public boolean isNetworkedActivePassive() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public ReloadConfigChangeContext reloadConfiguration() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public NodesStore getNodesStore() {
-    throw new ImplementMe();
+    throw new UnsupportedOperationException();
   }
 
   public static class ClusterInfoImpl implements ClusterInfo {
-    public volatile HashSet<String> serverNamesForThisGroup = new HashSet<String>();
+    public volatile Set<String> serverNamesForThisGroup = new HashSet<>();
 
     public ClusterInfoImpl(Set<String> set) {
       this.serverNamesForThisGroup.addAll(set);
@@ -118,7 +104,7 @@ public class HaConfigForGroupNameTests implements HaConfig {
     }
 
     void updateServerNames(ReloadConfigChangeContext context) {
-      HashSet<String> tmp = (HashSet<String>) serverNamesForThisGroup.clone();
+      Set<String> tmp = new HashSet<>(serverNamesForThisGroup);
 
       for (Node n : context.getNodesAdded()) {
         tmp.add(n.getServerNodeName());
@@ -133,12 +119,12 @@ public class HaConfigForGroupNameTests implements HaConfig {
 
     @Override
     public GroupID getGroupIDFromNodeName(String name) {
-      throw new ImplementMe();
+      throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean hasServerInCluster(String name) {
-      throw new ImplementMe();
+      throw new UnsupportedOperationException();
     }
   }
 

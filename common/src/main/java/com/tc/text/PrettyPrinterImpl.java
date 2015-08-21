@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.text;
 
@@ -20,7 +7,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class PrettyPrinterImpl implements PrettyPrinter {
@@ -29,18 +15,18 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
   private final StringBuffer    prefix;
   private final PrintWriter     out;
-  private final IdentityHashMap visited;
+  private final IdentityHashMap<Object, String> visited;
 
   private final PrintPolicy     defaultPolicy = new BasicPrintPolicy();
-  private final Collection      policies;
+  private final Collection<PrintPolicy> policies;
 
   private boolean               autoflush     = true;
 
   public PrettyPrinterImpl(PrintWriter out) {
-    this(INDENT, out, new IdentityHashMap());
+    this(INDENT, out, new IdentityHashMap<Object, String>());
   }
 
-  private PrettyPrinterImpl(String prefix, PrintWriter out, IdentityHashMap visited) {
+  private PrettyPrinterImpl(String prefix, PrintWriter out, IdentityHashMap<Object, String> visited) {
     this.prefix = new StringBuffer(prefix);
     this.out = out;
     this.visited = visited;
@@ -134,8 +120,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
   private PrintPolicy findPolicyFor(Object o) {
     if (o == null) return defaultPolicy;
-    for (Iterator i = policies.iterator(); i.hasNext();) {
-      PrintPolicy policy = (PrintPolicy) i.next();
+    for (PrintPolicy policy : policies) {
       if (policy.accepts(o)) { return policy; }
     }
     return defaultPolicy;
@@ -144,8 +129,8 @@ public class PrettyPrinterImpl implements PrettyPrinter {
   /**
    * Creates a policy path. Each policy is searched in order.
    */
-  private Collection initPolicies() {
-    Collection rv = new ArrayList();
+  private Collection<PrintPolicy> initPolicies() {
+    Collection<PrintPolicy> rv = new ArrayList<>();
     rv.add(new PrettyPrintablePrintPolicy());
     rv.add(new ShallowMapPrintPolicy());
     rv.add(new ShallowCollectionPrintPolicy());
@@ -177,7 +162,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o.getClass().getName()).print(".size()=").print(((Map) o).size() + "");
+      return pp.print(o.getClass().getName()).print(".size()=").print(((Map<?, ?>) o).size() + "");
     }
 
     @Override
@@ -191,7 +176,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o.getClass().getName()).print(".size()=").print(((Collection) o).size() + "");
+      return pp.print(o.getClass().getName()).print(".size()=").print(((Collection<?>) o).size() + "");
     }
 
     @Override

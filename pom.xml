@@ -1,45 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-The contents of this file are subject to the Terracotta Public License Version
-2.0 (the "License"); You may not use this file except in compliance with the
-License. You may obtain a copy of the License at 
-
-     http://terracotta.org/legal/terracotta-public-license.
-
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-the specific language governing rights and limitations under the License.
-
-The Covered Software is Terracotta Platform.
-
-The Initial Developer of the Covered Software is 
-     Terracotta, Inc., a Software AG company
--->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.terracotta.forge</groupId>
-    <artifactId>forge-parent-ee</artifactId>
+    <artifactId>forge-parent</artifactId>
     <version>3.19</version>
     <relativePath/>
   </parent>
 
   <groupId>org.terracotta</groupId>
   <artifactId>terracotta-root</artifactId>
-  <version>4.3.1-SNAPSHOT</version>
+  <version>5.0.0-SNAPSHOT</version>
   <name>terracotta-root</name>
   <packaging>pom</packaging>
 
-  <scm>
-    <developerConnection>scm:svn:https://svn.terracotta.org/repo/internal/enterprise/trunk</developerConnection>
-  </scm>
-  
   <properties>
+    <java.build.version>1.8</java.build.version>
     <build.edition>opensource</build.edition>
-    <maven-forge-plugin.version>1.2.19</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.2.13</maven-forge-plugin.version>
     <tc-shader.version>1.2</tc-shader.version>
     <skip.deploy>false</skip.deploy>
   </properties>
@@ -47,33 +27,13 @@ The Initial Developer of the Covered Software is
   <modules>
     <module>build-parent</module>
     <module>build-data</module>
+    <module>test-common</module>
     <module>common</module>
-    <module>dso-l1-api</module>
-    <module>dso-common</module>
-    <module>dso-l2-common</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
-    <module>deploy</module>
-
-    <module>legacy-test-tree</module>
-    <module>dso-system-tests</module>
-
-    <module>terracotta-parent</module>
-    <module>terracotta</module>
-    <module>terracotta-l1-parent</module>
-    <module>terracotta-l1</module>
-    <module>test-framework</module>
-    <module>system-tests-parent</module>
-
-    <module>toolkit-impl</module>
-    <module>toolkit-express-impl</module>
-    <module>toolkit-runtime</module>
-
+    <module>connection-loader</module>
+    <module>connection-impl</module>
     <module>management</module>
-    <module>management-agent</module>
-    <module>terracotta-samples</module>
-    <module>server-script</module>
-    <module>management-cli-oss</module>
   </modules>
 
   <build>
@@ -102,299 +62,6 @@ The Initial Developer of the Covered Software is
     </plugins>
   </build>
 
-  <profiles>
-    <!-- Allow building kit from the top level -->
-    <profile>
-      <id>kit</id>
-      <modules>
-        <module>../bigmemory-max-kit</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>foss-kit</id>
-      <modules>
-        <module>terracotta-kit</module>
-      </modules>
-    </profile>
-  
-    <!-- activate to include EE modules if it's EE branch -->
-    <profile>
-      <id>include-ee-modules</id>
-      <properties>
-        <build.edition>enterprise</build.edition>
-      </properties>
-      <activation>
-        <file>
-          <exists>../terracotta-ee/pom.xml</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>../build-parent-ee</module>
-        <module>../ent-common</module>
-        <module>../ent-dso-l1</module>
-        <module>../ent-dso-l2</module>
-        <module>../ent-deploy</module>
-        <module>../ent-system-tests</module>
-        <module>../ent-active-active-tests</module>
-        <module>../terracotta-ee</module>
-        <module>../terracotta-l1-ee</module>
-        <module>../ent-management-agent</module>
-        <module>../toolkit-impl-ee</module>
-        <module>../toolkit-express-impl-ee</module>
-        <module>../toolkit-runtime-ee</module>
-        <module>../toolkit-ee-system-tests</module>
-        <module>../toolkit-lrt-system-tests</module>
-        <module>../wan-standalone</module>
-      </modules>
-    </profile>
-
-    <!-- activate by default if 'terracotta-toolkit-api' module exists.
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>toolkit-api</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-toolkit-api</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/terracotta-toolkit-api</module>
-      </modules>
-    </profile>
-    <!-- activate by default if 'ehcache' module exists.
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>ehcache</id>
-      <activation>
-        <file>
-          <exists>devwork/ehcache</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/ehcache</module>
-      </modules>
-    </profile>
-    <!-- activate by default if 'ehcache-ee' module exists.
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>ehcache-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/ehcache-ee</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/ehcache-ee</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>quartz</id>
-      <activation>
-        <file>
-          <exists>devwork/quartz</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/quartz</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>quartz-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/quartz-ee</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/quartz-ee</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>management-core</id>
-      <activation>
-        <file>
-          <exists>devwork/management-core</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/management-core</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>management-common</id>
-      <activation>
-        <file>
-          <exists>devwork/management-common</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/management-common</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>management-apps</id>
-      <activation>
-        <file>
-          <exists>devwork/management-apps</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/management-apps</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>core-storage-api</id>
-      <activation>
-        <file>
-          <exists>devwork/core-storage-api</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/core-storage-api</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>heap-core-storage</id>
-      <activation>
-        <file>
-          <exists>devwork/heap-core-storage</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/heap-core-storage</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>bigmemory-core-storage</id>
-      <activation>
-        <file>
-          <exists>devwork/bigmemory-core-storage</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/bigmemory-core-storage</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>search</id>
-      <activation>
-        <file>
-          <exists>devwork/search</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/search</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>terracotta-license</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-license</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/terracotta-license</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>offheap-store</id>
-      <activation>
-        <file>
-          <exists>devwork/offheap-store</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/offheap-store</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>statistics</id>
-      <activation>
-        <file>
-          <exists>devwork/statistics</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/statistics</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>security-modules</id>
-      <activation>
-        <file>
-          <exists>devwork/security-modules</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/security-modules</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>wan40</id>
-      <activation>
-        <file>
-          <exists>devwork/wan40</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/wan40</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>terracotta-sessions</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-sessions</exists>
-        </file>
-      </activation>
-      <modules>
-        <module>devwork/terracotta-sessions</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>sag-deps</id>
-        <activation>
-          <property>
-            <name>sag-deps</name>
-            <value>true</value>
-          </property>
-        </activation>
-        <build>
-          <pluginManagement>
-            <plugins>
-              <plugin>
-              <groupId>org.terracotta</groupId>
-              <artifactId>maven-forge-plugin</artifactId>
-              <dependencies>
-                <dependency>
-                  <groupId>com.softwareag.ibit.tools.util</groupId>
-                  <artifactId>finder</artifactId>
-                  <!-- Before bumping version - verify it still accepts exclusion files -->
-                  <version>3.0</version>
-                  <scope>compile</scope>
-                </dependency>
-              </dependencies>
-              </plugin>
-            </plugins>
-          </pluginManagement>
-        </build>
-    </profile>
-  </profiles>
-
   <distributionManagement>
     <repository>
       <id>terracotta-nexus-staging</id>
@@ -402,18 +69,14 @@ The Initial Developer of the Covered Software is
       <url>${terracotta-nexus-staging-url}</url>
     </repository>
     <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
+      <id>terracotta-ee-snapshots</id>
        <uniqueVersion>false</uniqueVersion>
-       <name>Terracotta OS Snapshots Repository</name>
-       <url>${terracotta-os-snapshots-url}</url>
+       <name>Terracotta EE Snapshots Repository</name>
+       <url>${terracotta-ee-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 
   <repositories>
-    <repository>
-      <id>sonatype-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
     <repository>
       <id>terracotta-snapshots</id>
       <url>http://www.terracotta.org/download/reflector/snapshots</url>

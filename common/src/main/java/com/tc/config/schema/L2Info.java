@@ -1,23 +1,7 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import com.tc.util.Assert;
 
@@ -134,52 +118,44 @@ public class L2Info implements java.io.Serializable {
   @Override
   public int hashCode() {
     if (hashCode == null) {
-      HashCodeBuilder builder = new HashCodeBuilder();
-      if (name != null) {
-        builder.append(name);
-      }
-      builder.append(jmxPort);
-      builder.append(tsaPort);
-      if (tsaGroupBind != null) {
-        builder.append(tsaGroupBind);
-      }
-      builder.append(tsaGroupPort);
-      builder.append(managementPort);
-      builder.append(securityHostname);
-      builder.append(host);
-      hashCode = Integer.valueOf(builder.toHashCode());
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((host == null) ? 0 : host.hashCode());
+      result = prime * result + jmxPort;
+      result = prime * result + managementPort;
+      result = prime * result + ((name == null) ? 0 : name.hashCode());
+      result = prime * result + ((securityHostname == null) ? 0 : securityHostname.hashCode());
+      result = prime * result + ((tsaGroupBind == null) ? 0 : tsaGroupBind.hashCode());
+      result = prime * result + tsaGroupPort;
+      result = prime * result + tsaPort;
+      hashCode = result;
     }
-    return hashCode.intValue();
+    return hashCode;
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (!(object instanceof L2Info)) return false;
-    L2Info other = (L2Info) object;
-    return StringUtils.equals(name(), other.name())
-           && jmxPort() == other.jmxPort()
-           && tsaPort() == other.tsaPort()
-           && tsaGroupPort() == other.tsaGroupPort()
-           && StringUtils.equals(tsaGroupBind(), other.tsaGroupBind())
-           && managementPort() == other.managementPort()
-           && StringUtils.equals(securityHostname(), other.securityHostname())
-           && StringUtils.equals(host(), other.host());
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    L2Info other = (L2Info) obj;
+    if (host == null) {
+      if (other.host != null) return false;
+    } else if (!host.equals(other.host)) return false;
+    if (jmxPort != other.jmxPort) return false;
+    if (managementPort != other.managementPort) return false;
+    if (name == null) {
+      if (other.name != null) return false;
+    } else if (!name.equals(other.name)) return false;
+    if (securityHostname == null) {
+      if (other.securityHostname != null) return false;
+    } else if (!securityHostname.equals(other.securityHostname)) return false;
+    if (tsaGroupBind == null) {
+      if (other.tsaGroupBind != null) return false;
+    } else if (!tsaGroupBind.equals(other.tsaGroupBind)) return false;
+    if (tsaGroupPort != other.tsaGroupPort) return false;
+    if (tsaPort != other.tsaPort) return false;
+    return true;
   }
 
-  public boolean matches(L2Info other) {
-    if (!StringUtils.equals(name(), other.name())) return false;
-    if (jmxPort() != other.jmxPort()) return false;
-    if (tsaPort() != other.tsaPort()) return false;
-    if (tsaGroupPort() != other.tsaGroupPort()) return false;
-    if (managementPort() != other.managementPort()) return false;
-    if (!StringUtils.equals(securityHostname(), other.securityHostname())) return false;
-    if (!StringUtils.equals(tsaGroupBind(), other.tsaGroupBind())) return false;
-    String hostname = safeGetCanonicalHostName();
-    String otherHostname = other.safeGetCanonicalHostName();
-    if (hostname != null || otherHostname != null) {
-      return StringUtils.equals(hostname, otherHostname);
-    } else {
-      return StringUtils.equals(host(), other.host());
-    }
-  }
 }

@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.runtime;
 
@@ -31,7 +19,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
   /**
    * Create some threads, and take a thread dump.
    */
-  protected static String getDump(final TraceThread[] threads) throws Exception {
+  protected static String getDump(TraceThread[] threads) throws Exception {
     final Object lock = new Object();
     final String[] dump = new String[1];
     final Runnable runnable = new Runnable() {
@@ -77,7 +65,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
       }
     }
 
-    public void init(final ObserverGate g) {
+    public void init(ObserverGate g) {
       this.gate = g;
     }
 
@@ -95,7 +83,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
 
   }
 
-  protected int countSubstrings(final String src, final String target) {
+  protected int countSubstrings(String src, String target) {
     int fromIndex = 0;
     int count = 0;
     while (fromIndex < src.length()) {
@@ -123,7 +111,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
     /**
      * @param waiters number of waiter threads, not including master thread
      */
-    public ObserverGate(final int waiters, final Runnable runnable) {
+    public ObserverGate(int waiters, Runnable runnable) {
       this.waiters = waiters;
       this.runnable = runnable;
     }

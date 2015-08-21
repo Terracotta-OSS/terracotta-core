@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util.version;
 
@@ -24,7 +11,7 @@ import junit.framework.TestCase;
 
 public class VersionTest extends TestCase {
 
-  private void helpTestParse(String str, int major, int minor, int micro, int patch, int build, final String specifier, String qualifier) {
+  private void helpTestParse(String str, int major, int minor, int micro, int patch, int build, String specifier, String qualifier) {
     Version v = new Version(str);
     assertEquals("major", major, v.major());
     assertEquals("minor", minor, v.minor());
@@ -43,6 +30,7 @@ public class VersionTest extends TestCase {
     helpTestParse("4.3.0.0.1", 4, 3, 0, 0, 1, null, null);
   }
   
+  @SuppressWarnings("unused")
   private void helpTestInvalid(String input) {
     try {
       new Version(input);
@@ -97,7 +85,7 @@ public class VersionTest extends TestCase {
   }
   
   public void testSortList() {
-    List<Version> stuff = new ArrayList<Version>();
+    List<Version> stuff = new ArrayList<>();
     stuff.add(new Version("1.2.0")); 
     stuff.add(new Version("1.1.0-SNAPSHOT"));
     stuff.add(new Version("1.1.0"));

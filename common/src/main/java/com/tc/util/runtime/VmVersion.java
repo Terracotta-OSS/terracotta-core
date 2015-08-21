@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util.runtime;
 
@@ -47,10 +34,8 @@ public final class VmVersion {
    * java.runtime.version, jrockit.version, java.vm.name, and java.vendor.
    * 
    * @param Properties Typically System.getProperties()
-   * @throws UnknownJvmVersionException If JVM version is unknown
-   * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
-  public VmVersion(final Properties props) {
+  public VmVersion(Properties props) {
     this(javaVersion(props), runtimeVersion(props), isHotspot(props), isOpenJdk(props), isJRockit(props), isIBM(props),
          isAzul(props));
   }
@@ -62,11 +47,9 @@ public final class VmVersion {
    * @param runtimeVersion Runtime version pattern like 1.4.2_12-269
    * @param isJRockit True if BEA JRockit JVM
    * @param isIBM True if IBM JVM
-   * @throws UnknownJvmVersionException If JVM version is unknown
-   * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
-  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isSun,
-                    final boolean isOpenJdk, final boolean isJRockit, final boolean isIBM, final boolean isAzul) {
+  private VmVersion(String vendorVersion, String runtimeVersion, boolean isSun,
+                    boolean isOpenJdk, boolean isJRockit, boolean isIBM, boolean isAzul) {
     this.isHotSpot = isSun;
     this.isOpenJdk = isOpenJdk;
     this.isIBM = isIBM;
@@ -211,7 +194,7 @@ public final class VmVersion {
    * @return True if other version has identical version string
    */
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (!(o instanceof VmVersion)) { return false; }
 
     final VmVersion other = (VmVersion) o;

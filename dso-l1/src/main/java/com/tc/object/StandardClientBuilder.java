@@ -1,0 +1,141 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.tc.object;
+
+import com.tc.async.api.Sink;
+import com.tc.license.ProductID;
+import com.tc.logging.ClientIDLogger;
+import com.tc.logging.TCLogger;
+import com.tc.management.L1Management;
+import com.tc.management.TCClient;
+import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
+import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
+import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.CommunicationsManager;
+import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
+import com.tc.object.config.ConnectionInfoConfig;
+import com.tc.object.config.DSOMBeanConfig;
+import com.tc.object.config.PreparedComponentsFromL2Connection;
+import com.tc.object.context.PauseContext;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
+import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
+import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ClientLockManagerConfig;
+import com.tc.object.locks.ClientLockManagerImpl;
+import com.tc.object.locks.RemoteLockManager;
+import com.tc.object.locks.RemoteLockManagerImpl;
+import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.session.SessionManager;
+import com.tc.object.session.SessionProvider;
+import com.tc.runtime.logging.LongGCLogger;
+import com.tc.util.UUID;
+import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.runtime.ThreadIDManager;
+import com.tcclient.cluster.ClusterInternalEventsGun;
+
+import java.util.Collection;
+import java.util.Map;
+
+public class StandardClientBuilder implements ClientBuilder {
+
+  @Override
+  public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
+                                                         PreparedComponentsFromL2Connection connComp,
+                                                         SessionProvider sessionProvider, int maxReconnectTries,
+                                                         int socketConnectTimeout, TCClient client) {
+    final ConnectionAddressProvider cap = createConnectionAddressProvider(connComp);
+    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0, socketConnectTimeout, cap);
+  }
+
+  protected ConnectionAddressProvider createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
+    final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
+    final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
+    final ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
+    return cap;
+  }
+
+  @Override
+  public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter,
+                                                           NetworkStackHarnessFactory stackHarnessFactory,
+                                                           ConnectionPolicy connectionPolicy, int commThread,
+                                                           HealthCheckerConfig aConfig,
+                                                           Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                                           ReconnectionRejectedHandler reconnectionRejectedHandler,
+                                                           TCSecurityManager securityManager, ProductID productId) {
+    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
+                                         connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
+                                         reconnectionRejectedHandler, securityManager, productId);
+  }
+
+  @Override
+  public TunnelingEventHandler createTunnelingEventHandler(ClientMessageChannel ch, DSOMBeanConfig config, UUID uuid) {
+    return new TunnelingEventHandler(ch, config, uuid);
+  }
+
+  @Override
+  public TunneledDomainManager createTunneledDomainManager(ClientMessageChannel ch, DSOMBeanConfig config,
+                                                           TunnelingEventHandler teh) {
+    return new TunneledDomainManager(ch, config, teh);
+  }
+
+  @Override
+  public ClientLockManager createLockManager(ClientMessageChannel channel, ClientIDLogger clientIDLogger,
+                                             SessionManager sessionManager,
+                                             LockRequestMessageFactory lockRequestMessageFactory,
+                                             ThreadIDManager threadManager,
+                                             ClientLockManagerConfig config,
+                                             TaskRunner taskRunner) {
+    final RemoteLockManager remoteLockManager = new RemoteLockManagerImpl(channel, lockRequestMessageFactory,
+        taskRunner);
+    return new ClientLockManagerImpl(clientIDLogger, sessionManager, channel, remoteLockManager, threadManager, config,
+        taskRunner);
+  }
+
+  @Override
+  public ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
+                                                             ClientHandshakeMessageFactory chmf, Sink<PauseContext> pauseSink,
+                                                             SessionManager sessionManager,
+                                                             ClusterInternalEventsGun clusterEventsGun, String clientVersion,
+                                                             Collection<ClientHandshakeCallback> callbacks,
+                                                             Collection<ClearableCallback> clearCallbacks) {
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, clientVersion, callbacks,
+                                          clearCallbacks);
+  }
+
+  @Override
+  public L1Management createL1Management(TunnelingEventHandler teh, String rawConfigText,
+                                         DistributedObjectClient distributedObjectClient) {
+    return new L1Management(teh, rawConfigText, distributedObjectClient);
+  }
+
+  @Override
+  public void registerForOperatorEvents(L1Management management) {
+    // NOP
+  }
+
+  @Override
+  public LongGCLogger createLongGCLogger(long gcTimeOut) {
+    return new LongGCLogger(gcTimeOut);
+  }
+
+  @Override
+  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel) {
+    return new ClientEntityManagerImpl(channel);
+  }
+
+}

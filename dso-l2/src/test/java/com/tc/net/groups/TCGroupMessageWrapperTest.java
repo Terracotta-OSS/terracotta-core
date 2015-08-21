@@ -1,34 +1,13 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.groups;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ClusterStateMessage;
-import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.l2.msg.ObjectListSyncMessage;
-import com.tc.l2.msg.ObjectSyncCompleteMessage;
-import com.tc.l2.msg.ObjectSyncMessage;
-import com.tc.l2.msg.ObjectSyncResetMessage;
-import com.tc.l2.msg.RelayedCommitTransactionMessage;
-import com.tc.l2.msg.ServerRelayedTxnAckMessage;
 import com.tc.l2.state.Enrollment;
-import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -49,28 +28,16 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
-import com.tc.object.ObjectID;
-import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.dna.impl.ObjectStringSerializerImpl;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.session.NullSessionManager;
-import com.tc.object.tx.ServerTransactionID;
-import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
-import com.tc.util.BitSetObjectIDSet;
-import com.tc.util.ObjectIDSet;
-import com.tc.util.TCCollections;
 import com.tc.util.UUID;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -93,7 +60,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   private CommunicationsManager                   clientComms;
   private CommunicationsManager                   serverComms;
   private ChannelManager                          channelManager;
-  private final LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue(10);
+  private final LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue<>(10);
   private static final long                       timeout        = 1000;
   private final TimeUnit                          unit           = TimeUnit.MILLISECONDS;
 
@@ -103,13 +70,13 @@ public class TCGroupMessageWrapperTest extends TestCase {
     clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
-                                                new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
-                                                Collections.EMPTY_MAP, null);
+                                                new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
+                                                Collections.emptyMap(), null);
     serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
-                                                new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
-                                                Collections.EMPTY_MAP, null);
+                                                new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
+                                                Collections.emptyMap(), null);
   }
 
   @Override
@@ -155,7 +122,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                       new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
                                                       new DefaultConnectionIdFactory());
 
-    lsnr.start(new HashSet());
+    lsnr.start(new HashSet<ConnectionID>());
     return (lsnr);
   }
 
@@ -186,7 +153,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     assertEquals(src.getMessageID(), dst.getMessageID());
   }
 
-  private GroupMessage sendGroupMessage(GroupMessage sendMesg) throws Exception {
+  private GroupMessage sendGroupMessage(AbstractGroupMessage sendMesg) throws Exception {
     NetworkListener lsnr = initServer();
     channelManager = lsnr.getChannelManager();
     assertEquals(0, channelManager.getChannels().length);
@@ -203,22 +170,13 @@ public class TCGroupMessageWrapperTest extends TestCase {
   }
 
   public void testClusterStateMessage() throws Exception {
-    GroupMessage sendMesg = new ClusterStateMessage(ClusterStateMessage.OPERATION_SUCCESS, new MessageID(1000));
-    sendGroupMessage(sendMesg);
-  }
-
-  public void testGCResultMessage() throws Exception {
-    ObjectIDSet oidSet = new BitSetObjectIDSet();
-    for (long i = 1; i <= 100; ++i) {
-      oidSet.add(new ObjectID(i));
-    }
-    GroupMessage sendMesg = new GCResultMessage(new GarbageCollectionInfo(), oidSet);
+    AbstractGroupMessage sendMesg = new ClusterStateMessage(ClusterStateMessage.OPERATION_SUCCESS, new MessageID(1000));
     sendGroupMessage(sendMesg);
   }
 
   public void testGroupZapNodeMessage() throws Exception {
     long weights[] = new long[] { 1, 23, 44, 78 };
-    GroupMessage sendMesg = new GroupZapNodeMessage(GroupZapNodeMessage.ZAP_NODE_REQUEST,
+    AbstractGroupMessage sendMesg = new GroupZapNodeMessage(GroupZapNodeMessage.ZAP_NODE_REQUEST,
                                                     L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "Zapping node", weights);
     sendGroupMessage(sendMesg);
   }
@@ -226,59 +184,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   public void testL2StateMessage() throws Exception {
     long weights[] = new long[] { 1, 23, 44, 78 };
     Enrollment enroll = new Enrollment(makeNodeID("test"), true, weights);
-    GroupMessage sendMesg = new L2StateMessage(L2StateMessage.START_ELECTION, enroll);
-    sendGroupMessage(sendMesg);
-  }
-
-  public void testObjectListSyncMessage() throws Exception {
-    GroupMessage sendMesg = new ObjectListSyncMessage(new MessageID(10), ObjectListSyncMessage.REQUEST);
-    sendGroupMessage(sendMesg);
-  }
-
-  public void testObjectSyncCompleteMessage() throws Exception {
-    GroupMessage sendMesg = new ObjectSyncCompleteMessage(100);
-    sendGroupMessage(sendMesg);
-  }
-
-  public void testObjectSyncMessage() throws Exception {
-    ObjectIDSet dnaOids = new BitSetObjectIDSet();
-    for (long i = 1; i <= 100; ++i) {
-      dnaOids.add(new ObjectID(i));
-    }
-    int count = 10;
-    TCByteBuffer[] serializedDNAs = new TCByteBuffer[] {};
-    ObjectStringSerializer objectSerializer = new ObjectStringSerializerImpl();
-    Map roots = new HashMap();
-    long sID = 10;
-    ObjectSyncMessage message = new ObjectSyncMessage(new ServerTransactionID(new ServerID("hello", new byte[]{34, 33, (byte) 234}),
-            new TransactionID(342)), dnaOids, count, serializedDNAs,
-            objectSerializer, roots, sID, TCCollections.EMPTY_OBJECT_ID_SET);
-    sendGroupMessage(message);
-  }
-
-  public void testObjectSyncResetMessage() throws Exception {
-    GroupMessage sendMesg = new ObjectSyncResetMessage(ObjectSyncResetMessage.REQUEST_RESET, new MessageID(10));
-    sendGroupMessage(sendMesg);
-  }
-
-  public void testRelayedCommitTransactionMessage() throws Exception {
-    NodeID nodeID = makeNodeID("test");
-    TCByteBuffer[] buffer = new TCByteBuffer[] {};
-    ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    Map sid2gid = new HashMap();
-    long seqID = 100;
-    GlobalTransactionID lowWaterMark = new GlobalTransactionID(200);
-
-    GroupMessage sendMesg = new RelayedCommitTransactionMessage(nodeID, buffer, serializer, sid2gid, seqID,
-                                                                lowWaterMark);
-    sendGroupMessage(sendMesg);
-  }
-
-  public void testServerTxnAckMessage() throws Exception {
-    NodeID nodeID = makeNodeID("test");
-    MessageID messageID = new MessageID(100);
-    Set serverTxnIDs = new HashSet(10);
-    GroupMessage sendMesg = new ServerRelayedTxnAckMessage(nodeID, messageID, serverTxnIDs);
+    AbstractGroupMessage sendMesg = new L2StateMessage(L2StateMessage.START_ELECTION, enroll);
     sendGroupMessage(sendMesg);
   }
 

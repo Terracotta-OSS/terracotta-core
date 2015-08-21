@@ -1,24 +1,10 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.logging;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -47,9 +33,8 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -77,7 +62,6 @@ public class TCLogging {
 
   private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
   public static final String        DUMP_LOGGER_NAME                   = "com.tc.dumper.dump";
-  public static final String        DERBY_LOGGER_NAME                  = "com.tc.derby.log";
   private static final String       OPERATOR_EVENT_LOGGER_NAME         = "tc.operator.event";
 
   private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
@@ -110,7 +94,7 @@ public class TCLogging {
 
   private static Properties         loggingProperties;
 
-  public static TCLogger getLogger(Class clazz) {
+  public static TCLogger getLogger(Class<?> clazz) {
     if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
     return getLogger(clazz.getName());
   }
@@ -147,7 +131,7 @@ public class TCLogging {
   /**
    * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
    */
-  public static TCLogger getTestingLogger(Class clazz) {
+  public static TCLogger getTestingLogger(Class<?> clazz) {
     if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
     return getTestingLogger(clazz.getName());
   }
@@ -240,7 +224,7 @@ public class TCLogging {
   private static boolean customConfiguration() {
     try {
       // First one wins:
-      List<File> locations = new ArrayList<File>();
+      List<File> locations = new ArrayList<>();
       if (System.getenv("TC_INSTALL_DIR") != null) {
         locations.add(new File(System.getenv("TC_INSTALL_DIR"), LOG4J_CUSTOM_FILENAME));
       }
@@ -296,6 +280,7 @@ public class TCLogging {
   public static final int PROCESS_TYPE_L1      = 1;
   public static final int PROCESS_TYPE_L2      = 2;
 
+  @SuppressWarnings("resource")
   public static void setLogDirectory(File theDirectory, int processType) {
     Assert.assertNotNull(theDirectory);
 
@@ -447,10 +432,6 @@ public class TCLogging {
     return new TCLoggerImpl(DUMP_LOGGER_NAME);
   }
 
-  public static TCLogger getDerbyLogger() {
-    return new TCLoggerImpl(DERBY_LOGGER_NAME);
-  }
-
   static {
     ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(TCLogging.class.getClassLoader());
@@ -464,7 +445,7 @@ public class TCLogging {
     consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
     operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
 
-    List<Logger> internalLoggers = new ArrayList<Logger>();
+    List<Logger> internalLoggers = new ArrayList<>();
     for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
       internalLoggers.add(Logger.getLogger(nameSpace));
     }
@@ -530,12 +511,8 @@ public class TCLogging {
     return wrappedAppender;
   }
 
-  public static void removeAppender(String loggerName, Log4JAppenderToTCAppender appender) {
-    new TCLoggerImpl(loggerName).getLogger().removeAppender(appender);
-  }
-
   private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
-    List<Logger> loggers = new ArrayList<Logger>();
+    List<Logger> loggers = new ArrayList<>();
     loggers.addAll(internalLoggers);
     loggers.add(customerLogger);
     return loggers.toArray(new Logger[] {});
@@ -576,10 +553,8 @@ public class TCLogging {
       Properties properties = System.getProperties();
       int maxKeyLength = 1;
 
-      ArrayList keys = new ArrayList();
-      Iterator iter = properties.entrySet().iterator();
-      while (iter.hasNext()) {
-        Entry entry = (Entry) iter.next();
+      List<String> keys = new ArrayList<>();
+      for (Map.Entry<Object, Object> entry : properties.entrySet()) {
         Object objKey = entry.getKey();
         Object objValue = entry.getValue();
 
@@ -607,11 +582,14 @@ public class TCLogging {
       data.append("JVM arguments: " + inputArguments);
       data.append(nl);
 
-      String[] sortedKeys = (String[]) keys.toArray(new String[keys.size()]);
+      String[] sortedKeys = keys.toArray(new String[keys.size()]);
       Arrays.sort(sortedKeys);
       for (String key : sortedKeys) {
-        data.append(StringUtils.rightPad(key, maxKeyLength));
-        data.append(": ");
+        data.append(key);
+        for (int i = 0; i < maxKeyLength - key.length(); i++) {
+          data.append(' ');
+        }
+        data.append(" : ");
         data.append(properties.get(key));
         data.append(nl);
       }
@@ -623,6 +601,7 @@ public class TCLogging {
       t.printStackTrace();
     }
   }
+
 
   // This method for use in tests only
   public static void closeFileAppender() {

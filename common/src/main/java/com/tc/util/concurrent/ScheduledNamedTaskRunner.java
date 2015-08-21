@@ -1,27 +1,14 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.util.concurrent;
 
-import org.apache.commons.lang.StringUtils;
+package com.tc.util.concurrent;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.text.StringUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,40 +43,40 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
 
   private static final TCLogger logger = TCLogging.getLogger(ScheduledNamedTaskRunner.class);
   // to restore the initial thread's name after a task execution
-  private final ThreadLocal<String> initialThreadName = new ThreadLocal<String>();
+  private final ThreadLocal<String> initialThreadName = new ThreadLocal<>();
   // to be able to cancel all tasks related to a particular timer
-  private final Map<Timer, Set<Future<?>>> timerTasks = new HashMap<Timer, Set<Future<?>>>();
+  private final Map<Timer, Set<Future<?>>> timerTasks = new HashMap<>();
 
-  public ScheduledNamedTaskRunner(final int corePoolSize) {
+  public ScheduledNamedTaskRunner(int corePoolSize) {
     super(corePoolSize);
   }
 
-  public ScheduledNamedTaskRunner(final int corePoolSize, final ThreadFactory threadFactory) {
+  public ScheduledNamedTaskRunner(int corePoolSize, ThreadFactory threadFactory) {
     super(corePoolSize, threadFactory);
   }
 
-  public ScheduledNamedTaskRunner(final int corePoolSize, final RejectedExecutionHandler handler) {
+  public ScheduledNamedTaskRunner(int corePoolSize, RejectedExecutionHandler handler) {
     super(corePoolSize, handler);
   }
 
-  public ScheduledNamedTaskRunner(final int corePoolSize, final ThreadFactory threadFactory, final RejectedExecutionHandler handler) {
+  public ScheduledNamedTaskRunner(int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
     super(corePoolSize, threadFactory, handler);
   }
 
-  public ScheduledNamedTaskRunner(final int corePoolSize, final ThreadGroup threadGroup) {
+  public ScheduledNamedTaskRunner(int corePoolSize, ThreadGroup threadGroup) {
     super(corePoolSize, newThreadFactory(threadGroup));
   }
 
-  protected void handleUncaughtException(final Throwable e) {
+  protected void handleUncaughtException(Throwable e) {
     final Thread t = Thread.currentThread();
     // honors existing Thread's uncaught exception handler
     t.getUncaughtExceptionHandler().uncaughtException(t, e);
   }
 
   @Override
-  protected void beforeExecute(final Thread t, final Runnable r) {
+  protected void beforeExecute(Thread t, Runnable r) {
     if (r instanceof NamedRunnableScheduledFuture) {
-      final NamedRunnableScheduledFuture namedRunnable = (NamedRunnableScheduledFuture)r;
+      final NamedRunnableScheduledFuture<?> namedRunnable = (NamedRunnableScheduledFuture<?>)r;
       // remember initial name
       if (StringUtils.isNotBlank(namedRunnable.getName())) {
         initialThreadName.set(t.getName());
@@ -101,17 +88,17 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     super.beforeExecute(t, r);
   }
 
-  private synchronized void registerTimerTask(final NamedRunnableScheduledFuture namedRunnable) {
+  private synchronized void registerTimerTask(NamedRunnableScheduledFuture<?> namedRunnable) {
     final Timer timer = namedRunnable.getTimer();
     Set<Future<?>> tasks = timerTasks.get(timer);
     if (tasks == null) {
-      tasks = new HashSet<Future<?>>();
+      tasks = new HashSet<>();
       timerTasks.put(timer, tasks);
     }
     tasks.add(namedRunnable);
   }
 
-  private synchronized void unregisterTimerTask(final NamedRunnableScheduledFuture namedRunnable) {
+  private synchronized void unregisterTimerTask(NamedRunnableScheduledFuture<?> namedRunnable) {
     final Timer timer = namedRunnable.getTimer();
     final Set<Future<?>> tasks = timerTasks.get(timer);
     if (tasks != null) {
@@ -151,7 +138,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     }
 
     if (r instanceof NamedRunnableScheduledFuture) {
-      final NamedRunnableScheduledFuture namedRunnable = (NamedRunnableScheduledFuture)r;
+      final NamedRunnableScheduledFuture<?> namedRunnable = (NamedRunnableScheduledFuture<?>)r;
       // rollback to initial thread's name
       if (StringUtils.isNotBlank(namedRunnable.getName())) {
         t.setName(initialThreadName.get());
@@ -162,7 +149,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     }
   }
 
-  private static void uninterruptedGet(final Future<?> future) throws ExecutionException {
+  private static void uninterruptedGet(Future<?> future) throws ExecutionException {
     while (true) {
       try {
         future.get();
@@ -175,17 +162,17 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
   }
 
   @Override
-  protected <V> RunnableScheduledFuture<V> decorateTask(final Runnable runnable,
-                                                        final RunnableScheduledFuture<V> task) {
+  protected <V> RunnableScheduledFuture<V> decorateTask(Runnable runnable,
+                                                        RunnableScheduledFuture<V> task) {
     if (runnable instanceof TimerNamedRunnable) {
       final TimerNamedRunnable namedRunnable = (TimerNamedRunnable)runnable;
-      return new NamedRunnableScheduledFuture<V>(namedRunnable, task);
+      return new NamedRunnableScheduledFuture<>(namedRunnable, task);
     } else {
       return super.decorateTask(runnable, task);
     }
   }
 
-  private static ThreadFactory newThreadFactory(final ThreadGroup threadGroup) {
+  private static ThreadFactory newThreadFactory(ThreadGroup threadGroup) {
     final ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
     if (threadGroup != null) {
       builder.setThreadFactory(new ThreadGroupAwareFactory(threadGroup));
@@ -200,13 +187,13 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
   }
 
   @Override
-  public Timer newTimer(final String name) {
+  public Timer newTimer(String name) {
     Preconditions.checkState(!isShutdown(), "Cannot create a timer - the parent task runner has been already shut down");
     return new PooledTimer(name, this);
   }
 
   @Override
-  public synchronized void cancelTimer(final Timer timer) {
+  public synchronized void cancelTimer(Timer timer) {
     final Set<Future<?>> tasks = timerTasks.remove(timer);
     if (tasks != null) {
       // cancel all tasks
@@ -242,10 +229,10 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
   private static final class ThreadGroupAwareFactory implements ThreadFactory {
     private final ThreadGroup group;
 
-    private ThreadGroupAwareFactory(final ThreadGroup group) {this.group = group;}
+    private ThreadGroupAwareFactory(ThreadGroup group) {this.group = group;}
 
     @Override
-    public Thread newThread(final Runnable r) {
+    public Thread newThread(Runnable r) {
       return new Thread(group, r);
     }
   }
@@ -255,8 +242,8 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     private final TimerNamedRunnable namedRunnable;
     private final RunnableScheduledFuture<V> target;
 
-    private NamedRunnableScheduledFuture(final TimerNamedRunnable namedRunnable,
-                                         final RunnableScheduledFuture<V> target) {
+    private NamedRunnableScheduledFuture(TimerNamedRunnable namedRunnable,
+                                         RunnableScheduledFuture<V> target) {
       this.namedRunnable = namedRunnable;
       this.target = target;
     }
@@ -277,12 +264,12 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     }
 
     @Override
-    public long getDelay(final TimeUnit unit) {
+    public long getDelay(TimeUnit unit) {
       return target.getDelay(unit);
     }
 
     @Override
-    public int compareTo(final Delayed o) {
+    public int compareTo(Delayed o) {
       return target.compareTo(o);
     }
 
@@ -292,7 +279,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     }
 
     @Override
-    public boolean cancel(final boolean mayInterruptIfRunning) {
+    public boolean cancel(boolean mayInterruptIfRunning) {
       return target.cancel(mayInterruptIfRunning);
     }
 
@@ -312,7 +299,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     }
 
     @Override
-    public V get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       return target.get(timeout, unit);
     }
 

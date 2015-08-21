@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.locks;
 
@@ -112,6 +99,11 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return false;
     }
   }
+  
+  @Override
+  public int hashCode() {
+    return owner.hashCode();
+  }
 
   @Override
   public String toString() {
@@ -178,13 +170,16 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
-      switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+      ServerLockLevel serverLevel = ServerLockLevel.fromClientLockLevel(getLockLevel());
+      
+      switch (serverLevel) {
         case READ:
           return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
         case WRITE:
           return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
+        default:
+          throw new AssertionError(serverLevel);
       }
-      throw new AssertionError();
     }
   }
 
@@ -290,22 +285,27 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
+      ServerLockLevel serverLevel = ServerLockLevel.fromClientLockLevel(getLockLevel());
+      
       if (isAwarded()) {
-        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+        switch (serverLevel) {
           case READ:
             return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
           case WRITE:
             return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
+          default:
+            throw new AssertionError(serverLevel);
         }
       } else {
-        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+        switch (serverLevel) {
           case READ:
             return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_READ);
           case WRITE:
             return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_WRITE);
+          default:
+            throw new AssertionError(serverLevel);
         }
       }
-      throw new AssertionError();
     }
 
     public void allowDelegation() {
@@ -353,24 +353,29 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
+      ServerLockLevel serverLevel = ServerLockLevel.fromClientLockLevel(getLockLevel());
+      
       if (isAwarded()) {
-        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+        switch (serverLevel) {
           case READ:
             return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
           case WRITE:
             return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
+          default:
+            throw new AssertionError(serverLevel);
         }
       } else {
-        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+        switch (serverLevel) {
           case READ:
             return new ClientServerExchangeLockContext(lock, node, getOwner(),
                                                        ServerLockContext.State.TRY_PENDING_READ, getTimeout());
           case WRITE:
             return new ClientServerExchangeLockContext(lock, node, getOwner(),
                                                        ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
+          default:
+            throw new AssertionError(serverLevel);
         }
       }
-      throw new AssertionError();
     }
 
     @Override
@@ -480,7 +485,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         this.waitObject = waitObject;
       }
 
-      this.reacquires = new Stack<PendingLockHold>();
+      this.reacquires = new Stack<>();
       for (LockHold hold : holds) {
         reacquires.add(new MonitorBasedPendingLockHold(owner, hold.getLockLevel(), this.waitObject));
       }

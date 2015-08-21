@@ -1,25 +1,7 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
- */
 package com.tc.util.concurrent;
 
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
-
-import java.util.Set;
 
 import static com.tc.util.Assert.assertFalse;
 import static com.tc.util.Assert.assertTrue;
@@ -33,7 +15,7 @@ import static org.junit.matchers.JUnitMatchers.hasItems;
 public class TCConcurrentMultiMapTest {
   @Test
   public void testAdd() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
     assertTrue(mmap.add("foo", "bar"));
     assertTrue(mmap.get("foo").contains("bar"));
     assertFalse(mmap.add("foo", "baz"));
@@ -49,7 +31,7 @@ public class TCConcurrentMultiMapTest {
 
   @Test
   public void testRemove() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
     mmap.add("foo", "bar");
     mmap.add("foo", "baz");
     assertTrue(mmap.remove("foo", "bar"));
@@ -67,7 +49,7 @@ public class TCConcurrentMultiMapTest {
 
   @Test
   public void testRemoveAll() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
     mmap.add("foo", "bar");
     mmap.add("foo", "baz");
     mmap.add("foo", "boo");
@@ -77,7 +59,7 @@ public class TCConcurrentMultiMapTest {
 
   @Test
   public void testAddAll() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
     assertTrue(mmap.addAll("foo", Sets.newSet("bar", "baz", "boo")));
     assertThat(mmap.get("foo"), hasItems("bar", "baz", "boo"));
     assertTrue(mmap.remove("foo", "boo"));

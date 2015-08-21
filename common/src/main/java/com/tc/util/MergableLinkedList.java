@@ -1,23 +1,9 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -27,17 +13,17 @@ import java.util.NoSuchElementException;
  * Only the basic necessary methods are implemented as of now. But I can see this list implement the List interface
  * someday.
  */
-public class MergableLinkedList {
+public class MergableLinkedList<T> {
   private int                     size = 0;
-  private MergableLinkedList.Node head;
-  private MergableLinkedList.Node tail;
+  private MergableLinkedList.Node<T> head;
+  private MergableLinkedList.Node<T> tail;
 
   /**
    * Adds the collection to the end of the list(ServerTransaction) txnQ.removeFirst()
    */
-  public void addAll(Collection c) {
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      add(i.next());
+  public void addAll(Collection<T> c) {
+    for (T element : c) {
+      add(element);
     }
   }
 
@@ -45,7 +31,7 @@ public class MergableLinkedList {
    * This is the reason this class exists. This is an optimized way to add all the elements in List m to the front of
    * this List. At the end of this call the List m is cleared.
    */
-  public void mergeToFront(MergableLinkedList m) {
+  public void mergeToFront(MergableLinkedList<T> m) {
     if (m.isEmpty()) {
       // Nothing to merge
       return;
@@ -68,9 +54,9 @@ public class MergableLinkedList {
     return size;
   }
 
-  public Object removeFirst() {
+  public T removeFirst() {
     if (head == null) { throw new NoSuchElementException(); }
-    Object toReturn = head.data;
+    T toReturn = head.data;
     if (head == tail) {
       // Only one element in the list
       head = tail = null;
@@ -88,8 +74,8 @@ public class MergableLinkedList {
   /**
    * Adds to the end of the list
    */
-  public void add(Object o) {
-    MergableLinkedList.Node n = new Node(o);
+  public void add(T t) {
+    MergableLinkedList.Node<T> n = new Node<>(t);
     if (head == null) {
       // first node
       head = n;
@@ -100,12 +86,12 @@ public class MergableLinkedList {
     size++;
   }
 
-  private static final class Node {
+  private static final class Node<T> {
 
-    private MergableLinkedList.Node next;
-    private Object                  data;
+    private MergableLinkedList.Node<T> next;
+    private final T                  data;
 
-    public Node(Object data) {
+    public Node(T data) {
       this.data = data;
     }
   }

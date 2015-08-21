@@ -1,49 +1,27 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.config;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.xmlbeans.XmlObject;
-import org.terracotta.groupConfigForL1.GroupnameId;
-import org.terracotta.groupConfigForL1.GroupnameIdMapDocument;
-import org.terracotta.groupConfigForL1.ServerGroupsDocument;
 import org.xml.sax.SAXParseException;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.net.GroupID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.ServerURL;
-import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 /*
  * Read the configuration from L2 via Servlet. It loops through L2 server list known to L1 until a successful
@@ -53,7 +31,6 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
 
   private static final TCLogger  logger                                       = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger  consoleLogger                                = CustomerLogging.getConsoleLogger();
-  private static final int       MAX_CONNECT_TRIES                            = -1;
   private static final long      RECONNECT_WAIT_INTERVAL                      = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
@@ -67,15 +44,15 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
   private final ConnectionInfo[] connections;
   private final PwProvider       pwProvider;
 
-  public ConfigInfoFromL2Impl(final L1ConfigurationSetupManager configSetupManager) {
+  public ConfigInfoFromL2Impl(L1ConfigurationSetupManager configSetupManager) {
     this(configSetupManager, null);
   }
 
-  public ConfigInfoFromL2Impl(final L1ConfigurationSetupManager configSetupManager, PwProvider pwProvider) {
+  public ConfigInfoFromL2Impl(L1ConfigurationSetupManager configSetupManager, PwProvider pwProvider) {
     this(getConnectionsFromL1Config(configSetupManager), pwProvider);
   }
 
-  public ConfigInfoFromL2Impl(final ConnectionInfo[] connections, PwProvider pwProvider) {
+  public ConfigInfoFromL2Impl(ConnectionInfo[] connections, PwProvider pwProvider) {
     this.connections = connections;
     this.pwProvider = pwProvider;
 
@@ -91,7 +68,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    * Get L2 connection info from L1ConfigurationSetupManager. Made static to be called in constructor.
    * @param configSetupManager L1 configuration setup
    */
-  private static ConnectionInfo[] getConnectionsFromL1Config(final L1ConfigurationSetupManager configSetupManager) {
+  private static ConnectionInfo[] getConnectionsFromL1Config(L1ConfigurationSetupManager configSetupManager) {
     L2Data[] l2s = null;
     // synchronized here as same issue of MNK-1984. ArrayIndexOutOfBoundsException in multi threaded environment due to
     // apache bug https://issues.apache.org/jira/browse/XMLBEANS-328
@@ -106,75 +83,14 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
     return connectInfo.getConnectionInfos();
   }
 
-  /*
-   * Get Groupname to GroupID mapping from L2. To maintain the GroupID assignment consistency between L2 and L1. L1 gets
-   * those from L2. Refer DEV-5463 for why problem occurred.
-   * @return Map of Groupname(String) to GroupID
-   */
-  @Override
-  public Map<String, GroupID> getGroupNameIDMapFromL2() throws ConfigurationSetupException {
-    Map<String, GroupID> map = new HashMap<String, GroupID>();
 
-    GroupnameIdMapDocument groupnameIdMapDocument = getAndParseDocumentFromL2("Groupname ID Map",
-                                                                              GROUPID_MAP_SERVLET_PATH,
-                                                                              new FactoryParser<GroupnameIdMapDocument>() {
-                                                                                @Override
-                                                                                public GroupnameIdMapDocument parse(InputStream in2)
-                                                                                    throws Exception {
-                                                                                  return GroupnameIdMapDocument.Factory
-                                                                                      .parse(in2);
-                                                                                }
-                                                                              });
-    for (GroupnameId gid : groupnameIdMapDocument.getGroupnameIdMap().getGroupnameIdArray()) {
-      int groupID = gid.getGid().intValue();
-      if (groupID <= -1) { throw new ConfigurationSetupException("Wrong group ID " + groupID + " of " + gid.getName()); }
-      map.put(gid.getName(), new GroupID(groupID));
-    }
 
-    // a little bit verification
-    int groupCount = getGroupCount();
-    if (map.size() != groupCount) { throw new ConfigurationSetupException("Expect group count " + groupCount
-                                                                          + " but see mapping " + map.size()); }
-
-    return map;
-  }
-
-  /*
-   * Get L1Reconnect properties from L2. To make sure L1 and L2 using the same L1Reconnect properties.
-   * @return com.terracottatech.config.L1ReconnectPropertiesDocument defines/generated by terracotta6.xsd
-   */
-  @Override
-  public L1ReconnectPropertiesDocument getL1ReconnectPropertiesFromL2() throws ConfigurationSetupException {
-    return getAndParseDocumentFromL2("L1 Reconnect Properties", L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH,
-                                     new FactoryParser<L1ReconnectPropertiesDocument>() {
-                                       @Override
-                                       public L1ReconnectPropertiesDocument parse(InputStream in2) throws Exception {
-                                         return L1ReconnectPropertiesDocument.Factory.parse(in2);
-                                       }
-                                     });
-  }
-
-  /*
-   * Get server groups configuration properties from L2. To make sure L2 and L1 using the same L2s.
-   * @return org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups defined/generated by terracotta6.xsd
-   */
-  @Override
-  public ServerGroupsDocument getServerGroupsFromL2() throws ConfigurationSetupException {
-    return getAndParseDocumentFromL2("Cluster topology", GROUP_INFO_SERVLET_PATH,
-                                     new FactoryParser<ServerGroupsDocument>() {
-                                       @Override
-                                       public ServerGroupsDocument parse(InputStream in2) throws Exception {
-                                         return ServerGroupsDocument.Factory.parse(in2);
-                                       }
-                                     });
-  }
-
-  private <T extends XmlObject> T getAndParseDocumentFromL2(String message, String httpPath,
-                                                            FactoryParser<T> factoryParser)
-      throws ConfigurationSetupException {
+  private <T> T getAndParseDocumentFromL2(String message, String httpPath,
+                                          FactoryParser<T> factoryParser) {
     int tries = 0;
+    InputStream in = null;
     while (true) {
-      InputStream in = getPropertiesFromServerViaHttp(message, httpPath);
+      in = getPropertiesFromServerViaHttp(message, httpPath);
       try {
         try {
           return new ParseXmlObjectStream<T>().parse(message, in, factoryParser);
@@ -190,20 +106,17 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
         consoleLogger.error(e.getMessage());
         logger.error(e);
         throw new AssertionError(e);
+      } finally {
+        IOUtils.closeQuietly(in);
       }
-
     }
-  }
-
-  private int getGroupCount() throws ConfigurationSetupException {
-    return getServerGroupsFromL2().getServerGroups().getServerGroupArray().length;
   }
 
   /*
    * Wrap a method to be called by ParseXmlObjectStream.parse().
    * @param <T> a class defined/generated by terracotta6.xsd, a factory method to parse InputStream into <T>.
    */
-  interface FactoryParser<T extends XmlObject> {
+  interface FactoryParser<T> {
     T parse(InputStream in) throws Exception;
   }
 
@@ -211,7 +124,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    * Parse InputStream into an XmlObject document.
    * @param <T> an XmlObject document to be parsed out.
    */
-  private static class ParseXmlObjectStream<T extends XmlObject> {
+  private static class ParseXmlObjectStream<T> {
 
     /*
      * Parse InputStream by parser according to the specified XmlObject type.
@@ -220,7 +133,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
      * @parser a factory method for specified type of XmlObject.
      * @return <T> XmlObject defined/generated by terracotta6.xsd.
      */
-    public T parse(final String mesg, final InputStream in, final FactoryParser<T> parser) throws Exception {
+    public T parse(String mesg, InputStream in, FactoryParser<T> parser) throws Exception {
       PushbackInputStream pin = new PushbackInputStream(in, 100);
       byte[] prop = new byte[100];
       int propHeadReadLength = pin.read(prop);
@@ -245,8 +158,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    * @httpPathExtension path to the servlet.
    * @return InputStream to connected L2 servlet.
    */
-  private InputStream getPropertiesFromServerViaHttp(final String message, final String httpPathExtension)
-      throws ConfigurationSetupException {
+  private InputStream getPropertiesFromServerViaHttp(String message, String httpPathExtension) {
     StringBuilder text = new StringBuilder("Can't connect to ");
     if (connections.length > 1) text.append("any of the servers [");
     else text.append("server [");
@@ -258,9 +170,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
     text.append("].");
 
     boolean loggedInConsole = false;
-    int count = 0;
     while (true) {
-      count++;
       InputStream in = getPropertiesFromL2Stream(message, httpPathExtension);
       if (in != null) { return in; }
 
@@ -272,7 +182,6 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
         logger.warn(text + "Retrying... \n");
       }
 
-      if (MAX_CONNECT_TRIES > 0 && count >= MAX_CONNECT_TRIES) { throw new ConfigurationSetupException(text.toString()); }
       ThreadUtil.reallySleep(connectRetryInterval);
     }
   }
@@ -280,7 +189,8 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
   /*
    * Open an InputStream via http servlet from one of L2s.
    */
-  public InputStream getPropertiesFromL2Stream(final String message, final String httpPathExtension) {
+  @SuppressWarnings("resource")
+  private InputStream getPropertiesFromL2Stream(String message, String httpPathExtension) {
     InputStream propFromL2Stream;
     ServerURL theURL;
     for (int i = 0; i < connections.length; i++) {
@@ -308,6 +218,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
         }
       }
     }
+    
     return null;
   }
 

@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.properties;
 
@@ -72,7 +59,14 @@ public interface TCPropertiesConsts {
       "l1.cachemanager.leastCount", "l1.cachemanager.percentageToEvict", "l1.cachemanager.sleepInterval",
       "l1.cachemanager.criticalThreshold", "l1.cachemanager.threshold", "l1.cachemanager.monitorOldGenOnly",
       "l1.cachemanager.criticalObjectThreshold", "l1.connect.versionMatchCheck.enabled", "l1.jvm.check.compatibility",
-      "l1.max.connect.retries"                                                             };
+      "l1.max.connect.retries", "l1.objectmanager.fault.count", "l2.objectmanager.dgc.throttle.timeInMillis",
+      "l2.objectmanager.dgc.throttle.requestsPerThrottle", "l1.objectmanager.fault.count", "l2.serverarray.2pc.enabled",                                     
+      "l1.transactionmanager.folding.enabled", "l1.transactionmanager.folding.object.limit",
+      "l1.transactionmanager.folding.lock.limit", "l1.transactionmanager.folding.debug",
+      "l1.objectmanager.remote.maxDNALRUSize", "l1.objectmanager.remote.logging.enabled",
+      "toolkit.bulkload.logging", "toolkit.bulkload.minbatchbytesize", "toolkit.bulkload.throttle.timeInmillis",
+      "toolkit.bulkload.throttle.threshold", "l1.l2.config.validation.enabled"
+  };
 
   /*********************************************************************************************************************
    * <code>
@@ -162,8 +156,6 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_MESSAGE_MAXSIZE_MB               = "l2.objectmanager.passive.sync.message.maxSizeInMegaBytes";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                    = "l2.objectmanager.passive.sync.throttle.timeInMillis";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_PENDING_MSGS            = "l2.objectmanager.passive.sync.throttle.maxPendingMessages";
-  public static final String L2_OBJECTMANAGER_DGC_THROTTLE_TIME                             = "l2.objectmanager.dgc.throttle.timeInMillis";
-  public static final String L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE                      = "l2.objectmanager.dgc.throttle.requestsPerThrottle";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_ENABLED                            = "l2.objectmanager.dgc.inline.enabled";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS                   = "l2.objectmanager.dgc.inline.intervalInSeconds";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS                        = "l2.objectmanager.dgc.inline.maxObjects";
@@ -217,8 +209,6 @@ public interface TCPropertiesConsts {
   public static final String L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS                      = "l2.seda.managedobjectrequeststage.threads";
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
   public static final String L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE                      = "l2.seda.evictionprocessorstage.sink.capacity";
-  public static final String L2_SEDA_SEARCH_THREADS                                         = "l2.seda.search.threads";
-  public static final String L2_SEDA_QUERY_THREADS                                          = "l2.seda.query.threads";
   public static final String L2_SEDA_SERVER_MAP_CAPACITY_EVICTION_STAGE_THREADS             = "l2.seda.server.map.capacity.eviction.stage.threads";
   public static final String L2_LOCAL_CACHE_TXN_COMPLETE_THREADS                            = "l2.seda.local.cache.transaction.complete.threads";
   public static final String L2_LOCAL_CACHE_TXN_COMPLETE_SINK_CAPACITY                      = "l2.seda.local.cache.transaction.complete.sink.capacity";
@@ -234,6 +224,17 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L1_SEDA_STAGE_SINK_CAPACITY                                    = "l1.seda.stage.sink.capacity";
   public static final String L1_SEDA_PINNED_ENTRY_FAULT_STAGE_THREADS                       = "l1.seda.pinned.entry.fault.stage.threads";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section : L2 Bean shell Properties
+   * Description : Bean shell can be enabled in the server for debugging.
+   * enabled     : Enables/disables Beanshell
+   * port        : Port number for Beanshell
+   * </code>
+   ********************************************************************************************************************/
+  public static final String L2_BEANSHELL_ENABLED                                           = "l2.beanshell.enabled";
+  public static final String L2_BEANSHELL_PORT                                              = "l2.beanshell.port";
 
   /*********************************************************************************************************************
    * <code>
@@ -282,15 +283,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Server Array Properties
-   * serverarray.2pc.enabled  :Enables/disables 2 phase commit for enterprise server array
-   *                           (experimental, do not change)
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_SERVERARRAY_2PC_ENABLED                                     = "l2.serverarray.2pc.enabled";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section : L1 Server Array Properties
    * objectCreationStrategy     - Supported types round-robin, group-affinity
    * roundRobin.startIndex      - The first index to start at for each client. Supports
@@ -306,14 +298,6 @@ public interface TCPropertiesConsts {
   public static final String L1_SERVERARRAY_OBJECTCREATIONSTRATEGY                          = "l1.serverarray.objectCreationStrategy";
   public static final String L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_GROUPAFFINITY_GROUPNAME  = "l1.serverarray.objectCreationStrategy.groupAffinity.groupName";
   public static final String L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_ROUND_ROBIN_START_INDEX  = "l1.serverarray.objectCreationStrategy.roundRobin.startIndex";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : L1 L2 Config match Property
-   * Description : This property will check if the client has to match server config i.e. check cluster topology
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L1_L2_CONFIG_VALIDATION_ENABLED                                = "l1.l2.config.validation.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -348,19 +332,6 @@ public interface TCPropertiesConsts {
    *                                 reduces disk io at the L2.
    *    strings.compress.minSize   - Strings with lengths less that this number are not
    *                                 compressed
-   *    folding.enabled            - True/false whether txn folding is enabled. Folding is
-   *                                 the act of combining similar (but unique) application
-   *                                 transactions into a single txn (for more optimal processing
-   *                                 on the server). Only transactions that share common locks
-   *                                 and objects can be folded.
-   *    folding.lock.limit         - The maximum number of distinct locks permitted in folded txns
-   *                                 (0 or less means infinite)
-   *    folding.object.limit       - Object count threshold for short circuiting txn folding logic
-   *                                 (0 or less means infinite). If a txn contains more distinct
-   *                                 than this threshold, there will be no search to determine a
-   *                                 possible fold target
-   *    folding.debug              - Enable debug logging for the transaction folder. Use with
-   *                                 care -- This will cause *lots* of logging to occur
    *    timeoutForAckOnExit        - Max wait time in seconds to wait for ACKs before exit.
    *                                 value 0 for infinite wait.
    * </code>
@@ -374,10 +345,6 @@ public interface TCPropertiesConsts {
   public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED                 = "l1.transactionmanager.strings.compress.enabled";
   public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED         = "l1.transactionmanager.strings.compress.logging.enabled";
   public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE                 = "l1.transactionmanager.strings.compress.minSize";
-  public static final String L1_TRANSACTIONMANAGER_FOLDING_ENABLED                          = "l1.transactionmanager.folding.enabled";
-  public static final String L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT                     = "l1.transactionmanager.folding.object.limit";
-  public static final String L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT                       = "l1.transactionmanager.folding.lock.limit";
-  public static final String L1_TRANSACTIONMANAGER_FOLDING_DEBUG                            = "l1.transactionmanager.folding.debug";
   public static final String L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT                     = "l1.transactionmanager.timeoutForAckOnExit";
 
   public static final String TC_TRANSPORT_HANDSHAKE_TIMEOUT                                 = "tc.transport.handshake.timeout";
@@ -423,8 +390,6 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : L1 Object Manager Properties
    * Description : This section contains the defaults for the Object manager for the L1
-   * remote.maxDNALRUSize    : Count of dnas after which l1s will remove unrequested object
-   * remote.logging.enabled  : Enable/disable logging of remote object manager
    * remote.maxRequestSentImmediately
    *                         : Maximum number of requests send immediately after which it will be batched
    * objectid.request.size   : Number of object ids requested at once from L2 for creating
@@ -436,8 +401,6 @@ public interface TCPropertiesConsts {
    * fault.count               : Default number of additional reachable objects to also fault when requesting a remote object
    * </code>
    ********************************************************************************************************************/
-  public static final String L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                        = "l1.objectmanager.remote.maxDNALRUSize";
-  public static final String L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED                        = "l1.objectmanager.remote.logging.enabled";
   public static final String L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY           = "l1.objectmanager.remote.maxRequestSentImmediately";
   public static final String L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD               = "l1.objectmanager.remote.batchLookupTimePeriod";
   public static final String L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                         = "l1.objectmanager.objectid.request.size";
@@ -445,7 +408,6 @@ public interface TCPropertiesConsts {
   public static final String L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                         = "l1.objectmanager.fault.logging.enabled";
   public static final String L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER                    = "l1.objectmanager.removed.objects.send.timer";
   public static final String L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD                     = "l1.objectmanager.removed.objects.threshold";
-  public static final String L1_OBJECTMANAGER_FAULT_COUNT                                   = "l1.objectmanager.fault.count";
 
   /*********************************************************************************************************************
    * <code>
@@ -842,25 +804,6 @@ public interface TCPropertiesConsts {
   // for tests
   public static final String L2_OFFHEAP_SKIP_JVMARG_CHECK                                   = "l2.offHeapCache.skip.jvmarg.check";
 
-  public static final String L1_SEARCH_MAX_OPEN_RESULT_SETS                                 = "l1.search.max.open.resultSets";
-  public static final String L2_SEARCH_MAX_PAGED_RESULT_SETS                                = "l2.search.max.paged.resultSets";
-  public static final String L2_SEARCH_MAX_RESULT_PAGE_SIZE                                 = "l2.search.max.result.pageSize";
-
-  public static final String SEARCH_QUERY_WAIT_FOR_TXNS                                     = "search.query.wait.for.txns";
-  public static final String SEARCH_USE_COMMIT_THREAD                                       = "search.use.commit.thread";
-  public static final String SEARCH_PASSIVE_MAX_CHUNK                                       = "search.passive.max.chunk";
-  public static final String SEARCH_PASSIVE_MAX_PENDING                                     = "search.passive.max.pending";
-  public static final String SEARCH_LUCENE_USE_RAM_DIRECTORY                                = "search.lucene.use.ram.directory";
-  public static final String SEARCH_LUCENE_USE_OFFHEAP_DIRECTORY                            = "search.lucene.use.offHeap.directory";
-  public static final String SEARCH_LUCENE_MAX_BUFFER                                       = "search.lucene.max.buffer";
-  public static final String SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES                              = "search.lucene.max.boolean.clauses";
-  public static final String SEARCH_LUCENE_MERGE_FACTOR                                     = "search.lucene.mergefactor";
-  public static final String SEARCH_LUCENE_MAX_MERGE_THREADS                                = "search.lucene.maxMergeThreads";
-  public static final String SEARCH_LUCENE_MAX_BUFFERED_DOCS                                = "search.lucene.maxBufferedDocs";
-  public static final String SEARCH_LUCENE_MAX_MERGE_DOCS                                   = "search.lucene.maxMergeDocs";
-  public static final String SEARCH_LUCENE_INDEXES_PER_CACHE                                = "search.lucene.indexes.per.cache";
-  public static final String SEARCH_LUCENE_DISABLE_FIELD_COMPRESSION                        = "search.lucene.disableStoredFieldCompression";
-
   public static final String APP_GROUPS_DEBUG                                               = "appgroups.debug";
 
   /*********************************************************************************************************************
@@ -887,19 +830,8 @@ public interface TCPropertiesConsts {
   String                     L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE                            = "l1.serverEvent.delivery.queueSize";
   String                     L1_SERVER_EVENT_DELIVERY_TIMEOUT_INTERVAL                      = "l1.serverEvent.delivery.timeout.intervalInSec";
 
-  /*********************************************************************************************************************
-   * <code>
-   * Section :  BulkLoad Settings
-   * toolkit.bulkload.logging               - Enable logging of Bulkload
-   * toolkit.bulkload.minbatchbytesize      - Minimum batch size send to L2
-   * toolkit.bulkload.throttle.timeInmillis - Time in millis used for throttling
-   * toolkit.bulkload.throttle.threshold    - Maxmium size of buffer after which throttling will happen
-   * </code>
-   ********************************************************************************************************************/
-  public static final String TOOLKIT_BULKLOAD_LOGGING_ENABLED                               = "toolkit.bulkload.logging";
-  public static final String TOOLKIT_LOCAL_BUFFER_PUTS_BATCH_BYTE_SIZE                      = "toolkit.bulkload.minbatchbytesize";
-  public static final String TOOLKIT_LOCAL_BUFFER_PUTS_BATCH_TIME_MILLIS                    = "toolkit.bulkload.throttle.timeInmillis";
-  public static final String TOOLKIT_LOCAL_BUFFER_PUTS_THROTTLE_BYTE_SIZE                   = "toolkit.bulkload.throttle.threshold";
+ 
+ 
 
   /*
    * For enabling CAS logging
@@ -914,11 +846,4 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String VERSION_COMPATIBILITY_CHECK                                    = "version.compatibility.check";
 
-  /*********************************************************************************************************************
-   * <code>
-   * Section :  Secure Communication protocol for TCServer
-   * disabled.secure.protocols - List of comma separated protocols which needs to be disabled from comunication usage.
-   * </code>
-   ********************************************************************************************************************/
-  public static final String DISABLED_SECURE_PROTOCOLS                                      = "disabled.secure.protocols";
 }

@@ -1,51 +1,32 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.net.DSOClientMessageChannel;
-import com.tc.object.tx.RemoteTransactionManager;
-import com.tc.platform.rejoin.RejoinManager;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ClientShutdownManager {
   private static final TCLogger                    logger         = TCLogging.getLogger(ClientShutdownManager.class);
-  private final RemoteTransactionManager           rtxManager;
 
-  private final DSOClientMessageChannel            channel;
+  private final ClientMessageChannel               channel;
 
   private final ClientHandshakeManager             handshakeManager;
   private final PreparedComponentsFromL2Connection connectionComponents;
-  private final Set<Runnable>                      beforeShutdown = new HashSet<Runnable>();
+  private final Set<Runnable>                      beforeShutdown = new HashSet<>();
   private final DistributedObjectClient            client;
-  private final RejoinManager                      rejoinManager;
 
-  public ClientShutdownManager(ClientObjectManager objectManager, DistributedObjectClient client,
-                               PreparedComponentsFromL2Connection connectionComponents, RejoinManager rejoinManager) {
+  public ClientShutdownManager(DistributedObjectClient client, PreparedComponentsFromL2Connection connectionComponents) {
     this.client = client;
-    this.rejoinManager = rejoinManager;
-    this.rtxManager = client.getRemoteTransactionManager();
     this.channel = client.getChannel();
     this.handshakeManager = client.getClientHandshakeManager();
     this.connectionComponents = connectionComponents;
@@ -74,9 +55,6 @@ public class ClientShutdownManager {
   }
 
   public void execute(boolean fromShutdownHook, boolean forceImmediate) {
-    // no more rejoins should happen after shutdown
-    rejoinManager.shutdown();
-
     executeBeforeShutdownHooks();
 
     closeLocalWork(fromShutdownHook, forceImmediate);
@@ -101,18 +79,8 @@ public class ClientShutdownManager {
     handshakeManager.shutdown(fromShutdownHook);
 
     boolean immediate = forceImmediate || isImmediate();
-    if (!immediate) {
-      if (rtxManager != null) {
-        try {
-          rtxManager.stop();
-        } catch (Throwable t) {
-          logger.error("Error shutting down remote transaction manager", t);
-        }
-      }
-    } else {
-      logger.warn("DSO Client exiting without flushing local work");
-    }
 
+    // TODO: hook up to ClientRequestManager?
   }
 
   private boolean isImmediate() {

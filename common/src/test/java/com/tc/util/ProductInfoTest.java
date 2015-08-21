@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -31,6 +19,7 @@ import java.util.Enumeration;
 
 import junit.framework.TestCase;
 
+@SuppressWarnings("resource")
 public class ProductInfoTest extends TestCase {
 
   public void testNullCodeSource() throws Exception {
@@ -67,9 +56,9 @@ public class ProductInfoTest extends TestCase {
       verifyOpenSourceBuildData(info);
       verifyPatchInfo(info);
       assertEquals("20080620-235959 (Revision 12112 from thepatchbranch)",
-                   info.patchBuildID());
+          info.patchBuildID());
       assertEquals("Patch Level 5, as of 20080620-235959 (Revision 12112 from thepatchbranch)",
-                   info.toLongPatchString());
+          info.toLongPatchString());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -94,9 +83,9 @@ public class ProductInfoTest extends TestCase {
       verifyEnterpriseBuildData(info);
       verifyPatchInfo(info);
       assertEquals("20080620-235959 (Revision 12112 from thepatchbranch)",
-                   info.patchBuildID());
+          info.patchBuildID());
       assertEquals("Patch Level 5, as of 20080620-235959 (Revision 12112 from thepatchbranch)",
-                   info.toLongPatchString());
+          info.toLongPatchString());
 
     } catch (Exception e) {
       fail(e.getMessage());
@@ -116,17 +105,17 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("Opensource", info.edition());
-    assertTrue(info.isOpenSource());
-    assertFalse(info.isEnterprise());
+    assertEquals("Enterprise", info.edition());
+    assertFalse(info.isOpenSource());
+    assertTrue(info.isEnterprise());
     assertEquals("1.2.3", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
     System.out.println(info.toLongString());
-    assertEquals("Terracotta 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 from thebranch)",
-                 info.toLongString());
-    assertEquals("Terracotta 1.2.3-SNAPSHOT", info.toShortString());
+    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 from thebranch)",
+        info.toLongString());
+    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT", info.toShortString());
     assertEquals("1.2.3-SNAPSHOT", info.version());
   }
 
@@ -144,16 +133,16 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("Opensource", info.edition());
-    assertFalse(info.isEnterprise());
-    assertTrue(info.isOpenSource());
+    assertEquals("Enterprise", info.edition());
+    assertTrue(info.isEnterprise());
+    assertFalse(info.isOpenSource());
     assertEquals("1.2.3", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
-    assertEquals("Terracotta 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 from thebranch)",
-                 info.toLongString());
-    assertEquals("Terracotta 1.2.3-SNAPSHOT", info.toShortString());
+    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 from thebranch)",
+        info.toLongString());
+    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT", info.toShortString());
     assertEquals("1.2.3-SNAPSHOT", info.version());
   }
 
@@ -177,7 +166,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchTimestampAsString());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchEERevision());
     assertEquals("Patch Level [unknown], as of [unknown] (Revision [unknown] from [unknown])",
-                 info.toLongPatchString());
+        info.toLongPatchString());
     assertEquals("Patch Level [unknown]", info.toShortPatchString());
   }
 

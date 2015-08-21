@@ -1,26 +1,12 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema;
 
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import org.apache.commons.io.IOUtils;
 
-import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -34,30 +20,21 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
     try {
       tcConfig = getTempFile("tc-config-test.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
-                      + "\n      <server name=\"server1\" host=\"%i\">" + "\n       <data>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server1-data</data>"
+                      + "\n<tc-config xmlns=\"http://www.terracotta.org/config\">" + "\n<servers>"
+                      + "\n      <server name=\"server1\" host=\"%i\">"
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server1-logs</logs>"
                       + "\n       <tsa-port>9510</tsa-port>"
-                      + "\n       <jmx-port>9520</jmx-port>"
                       + "\n       <tsa-group-port>9530</tsa-group-port>"
                       + "\n      </server>"
                       + "\n      <server name=\"server2\" host=\"11.0.1.2\">"
-                      + "\n       <data>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-data</data>"
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
                       + "\n       <tsa-port>8510</tsa-port>"
                       + "\n</server>"
                       + "\n      <server name=\"server3\" host=\"11.0.1.3\">"
-                      + "\n       <data>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-data</data>"
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
@@ -65,16 +42,13 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <tsa-group-port>7555</tsa-group-port>"
                       + "\n</server>"
                       + "\n</servers>"
-                      + "\n</tc:tc-config>";
+                      + "\n</tc-config>";
       writeConfigFile(config);
-      TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
-                                                                                              new FatalIllegalConfigurationChangeHandler());
+      StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null, null);
 
-      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
-      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
-      Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
-      Assert.assertEquals(9540, configSetupMgr.dsoL2Config().managementPort().getIntValue());
+      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(null);
+      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getValue());
+      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
     } catch (Throwable e) {
       throw new AssertionError(e);

@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -149,11 +137,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   @Override
-  public String getMainClassName() {
-    return System.getProperty("sun.java.command", "<unknown>");
-  }
-
-  @Override
   public String getEnvironment() {
     return format(System.getProperties());
   }
@@ -171,8 +154,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
 
   private String format(Properties properties, String keyPrefix) {
     StringBuffer sb = new StringBuffer();
-    Enumeration keys = properties.propertyNames();
-    ArrayList<String> l = new ArrayList<String>();
+    Enumeration<?> keys = properties.propertyNames();
+    ArrayList<String> l = new ArrayList<>();
 
     while (keys.hasMoreElements()) {
       Object o = keys.nextElement();
@@ -216,7 +199,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     if (args == null) {
       return inputArgs.toArray(new String[inputArgs.size()]);
     } else {
-      List<String> l = new ArrayList<String>();
+      List<String> l = new ArrayList<>();
       l.add(StringUtil.toString(args, " ", null, null));
       l.addAll(inputArgs);
       return l.toArray(new String[l.size()]);
@@ -245,8 +228,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   @Override
-  public Map getStatistics() {
-    HashMap map = new HashMap();
+  public Map<String, Object> getStatistics() {
+    Map<String, Object> map = new HashMap<>();
 
     map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
     map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));

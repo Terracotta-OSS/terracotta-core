@@ -1,23 +1,12 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventContext;
+import com.tc.async.api.EventHandlerException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.ManagementResponseListener;
 import com.tc.management.TCManagementEvent;
@@ -27,8 +16,6 @@ import com.tc.net.NodeID;
 import com.tc.object.management.ManagementRequestID;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
-import com.tc.util.Assert;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-public class ServerManagementHandler extends AbstractEventHandler {
-
+public class ServerManagementHandler {
+  private static final TCLogger logger = TCLogging.getLogger(ServerManagementHandler.class);
   private static final int MAX_UNFIRED_EVENT_COUNT = 15;
   private static final int MAX_UNFIRED_EVENT_RETENTION_MILLIS = 30000;
 
-  private final Map<ManagementRequestID, ManagementResponseListener> responseListenerMap = new ConcurrentHashMap<ManagementRequestID, ManagementResponseListener>();
-  private final List<ManagementEventListener> eventListeners = new CopyOnWriteArrayList<ManagementEventListener>();
+  private final Map<ManagementRequestID, ManagementResponseListener> responseListenerMap = new ConcurrentHashMap<>();
+  private final List<ManagementEventListener> eventListeners = new CopyOnWriteArrayList<>();
   private final List<EventHolder> unfiredEvents = new CopyOnWriteArrayList<EventHolder>() {
     @Override
     public boolean add(EventHolder eventHolder) {
@@ -53,10 +40,9 @@ public class ServerManagementHandler extends AbstractEventHandler {
     }
   };
 
-  @Override
-  public void handleEvent(final EventContext context) {
-    if (context instanceof ListRegisteredServicesResponseMessage) {
-      ListRegisteredServicesResponseMessage response = (ListRegisteredServicesResponseMessage)context;
+  private final AbstractEventHandler<ListRegisteredServicesResponseMessage> listHandler = new AbstractEventHandler<ListRegisteredServicesResponseMessage>() {
+    @Override
+    public void handleEvent(ListRegisteredServicesResponseMessage response) throws EventHandlerException {
       ManagementRequestID managementRequestID = response.getManagementRequestID();
       ManagementResponseListener responseListener = responseListenerMap.get(managementRequestID);
       if (responseListener != null) {
@@ -68,8 +54,15 @@ public class ServerManagementHandler extends AbstractEventHandler {
       } else {
         getLogger().warn("no listener registered for response " + managementRequestID + " - dropping it");
       }
-    } else if (context instanceof InvokeRegisteredServiceResponseMessage) {
-      InvokeRegisteredServiceResponseMessage response = (InvokeRegisteredServiceResponseMessage)context;
+    }
+  };
+  public AbstractEventHandler<ListRegisteredServicesResponseMessage> getListHandler() {
+    return this.listHandler;
+  }
+  
+  private final AbstractEventHandler<InvokeRegisteredServiceResponseMessage> invokeHandler = new AbstractEventHandler<InvokeRegisteredServiceResponseMessage>() {
+    @Override
+    public void handleEvent(InvokeRegisteredServiceResponseMessage response) throws EventHandlerException {
       NodeID sourceNodeID = response.getSourceNodeID();
 
       ManagementRequestID managementRequestID = response.getManagementRequestID();
@@ -78,7 +71,7 @@ public class ServerManagementHandler extends AbstractEventHandler {
         // L1 event
         for (ManagementEventListener eventListener : eventListeners) {
           try {
-            Map<String, Object> contextMap = new HashMap<String, Object>();
+            Map<String, Object> contextMap = new HashMap<>();
             ClientID clientID = (ClientID)sourceNodeID;
             contextMap.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, Long.toString(clientID.toLong()));
             contextMap.put(ManagementEventListener.CONTEXT_SOURCE_JMX_ID, TerracottaManagement.buildNodeId(response.getChannel().getRemoteAddress()));
@@ -103,9 +96,10 @@ public class ServerManagementHandler extends AbstractEventHandler {
           getLogger().warn("no listener registered for response " + managementRequestID + " - dropping it");
         }
       }
-    } else {
-      Assert.fail("Unknown event type " + context.getClass().getName());
     }
+  };
+  public AbstractEventHandler<InvokeRegisteredServiceResponseMessage> getInvokeHandler() {
+    return this.invokeHandler;
   }
 
   public void registerResponseListener(ManagementRequestID managementRequestID, ManagementResponseListener responseListener) {
@@ -141,7 +135,7 @@ public class ServerManagementHandler extends AbstractEventHandler {
         try {
           listener.onEvent(event, context);
         } catch (RuntimeException re) {
-          getLogger().warn("Management event listener error", re);
+          logger.warn("Management event listener error", re);
         }
       }
     }

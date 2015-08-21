@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.connect;
 
@@ -58,18 +45,22 @@ public class PlainMBeanMirror implements MBeanMirror {
     mBeanInfo = beanInfo;
   }
 
+  @Override
   public MBeanServerConnection getMBeanServerConnection() {
     return mbsc;
   }
 
+  @Override
   public ObjectName getRemoteObjectName() {
     return objectName;
   }
 
+  @Override
   public ObjectName getLocalObjectName() {
     return localObjectName;
   }
 
+  @Override
   public Object getAttribute(String name) throws AttributeNotFoundException, MBeanException, ReflectionException {
     try {
       return mbsc.getAttribute(objectName, name);
@@ -80,6 +71,7 @@ public class PlainMBeanMirror implements MBeanMirror {
     }
   }
 
+  @Override
   public void setAttribute(Attribute attr) throws AttributeNotFoundException, InvalidAttributeValueException,
       MBeanException, ReflectionException {
     try {
@@ -91,6 +83,7 @@ public class PlainMBeanMirror implements MBeanMirror {
     }
   }
 
+  @Override
   public AttributeList getAttributes(String[] names) {
     try {
       return mbsc.getAttributes(objectName, names);
@@ -101,6 +94,7 @@ public class PlainMBeanMirror implements MBeanMirror {
     }
   }
 
+  @Override
   public AttributeList setAttributes(AttributeList attrs) {
     try {
       return mbsc.setAttributes(objectName, attrs);
@@ -111,6 +105,7 @@ public class PlainMBeanMirror implements MBeanMirror {
     }
   }
 
+  @Override
   public Object invoke(String opName, Object[] args, String[] sig) throws MBeanException, ReflectionException {
     try {
       return mbsc.invoke(objectName, opName, args, sig);
@@ -121,6 +116,7 @@ public class PlainMBeanMirror implements MBeanMirror {
     }
   }
 
+  @Override
   public MBeanInfo getMBeanInfo() {
     try {
       return mBeanInfo == null ? mbsc.getMBeanInfo(objectName) : mBeanInfo;

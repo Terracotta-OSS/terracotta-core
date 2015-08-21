@@ -1,24 +1,13 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.EventContext;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
@@ -37,13 +26,13 @@ import java.util.LinkedList;
  * 
  * @author steve
  */
-public class RequestLockUnLockHandler extends AbstractEventHandler {
+public class RequestLockUnLockHandler extends AbstractEventHandler<LockRequestMessage> {
+  private static final TCLogger logger = TCLogging.getLogger(RequestLockUnLockHandler.class);
+  
   private LockManager lockManager;
 
   @Override
-  public void handleEvent(EventContext context) {
-    LockRequestMessage lrm = (LockRequestMessage) context;
-
+  public void handleEvent(LockRequestMessage lrm) {
     LockID lid = lrm.getLockID();
     NodeID cid = lrm.getSourceNodeID();
     ThreadID tid = lrm.getThreadID();
@@ -77,6 +66,9 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
           Collection<ClientServerExchangeLockContext> lockState = recallContext.getContexts();
           lockManager.recallCommit(recallContext.getLockID(), (ClientID) cid, lockState);
         }
+        return;
+      default:
+        logger.error("Unexpected lock request type: " + lrm.getRequestType());
         return;
     }
   }

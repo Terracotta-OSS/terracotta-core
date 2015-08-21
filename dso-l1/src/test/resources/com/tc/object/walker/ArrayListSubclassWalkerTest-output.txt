@@ -1,0 +1,5 @@
+com.tc.object.walker.BasicWalkerTest$ArrayListSubclass (id 0)
+  int iVal = 42
+  String sVal = "timmy"
+  [0] = "foo"
+  [1] = "bar"

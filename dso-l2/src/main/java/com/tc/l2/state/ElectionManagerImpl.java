@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.l2.state;
 
@@ -26,13 +14,11 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupResponse;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class ElectionManagerImpl implements ElectionManager {
@@ -43,8 +29,8 @@ public class ElectionManagerImpl implements ElectionManager {
   private static final State    ELECTION_COMPLETE    = new State("Election-Complete");
   private static final State    ELECTION_IN_PROGRESS = new State("Election-In-Progress");
 
-  private final GroupManager    groupManager;
-  private final Map             votes                = new HashMap();
+  private final GroupManager<L2StateMessage> groupManager;
+  private final Map<NodeID, Enrollment> votes        = new HashMap<>();
 
   private State                 state                = INIT;
 
@@ -66,7 +52,7 @@ public class ElectionManagerImpl implements ElectionManager {
       // Another node is also joining in the election process, Cast its vote and notify my vote
       // Note : WE dont want to do this for new candidates when we are not new.
       Enrollment vote = msg.getEnrollment();
-      Enrollment old = (Enrollment) votes.put(vote.getNodeID(), vote);
+      Enrollment old = votes.put(vote.getNodeID(), vote);
       boolean sendResponse = msg.inResponseTo().isNull();
       if (old != null && !vote.equals(old)) {
         logger.warn("Received duplicate vote : Replacing with new one : " + vote + " old one : " + old);
@@ -75,7 +61,7 @@ public class ElectionManagerImpl implements ElectionManager {
       if (sendResponse) {
         // This is either not a response to this node initiating election or a duplicate vote. Either case notify this
         // nodes vote
-        GroupMessage response = createElectionStartedMessage(msg, myVote);
+        L2StateMessage response = createElectionStartedMessage(msg, myVote);
         logger.info("Casted vote from " + msg + " My Response : " + response);
         try {
           groupManager.sendTo(msg.messageFrom(), response);
@@ -111,7 +97,7 @@ public class ElectionManagerImpl implements ElectionManager {
     debugInfo("Handling election result");
     if (state == ELECTION_COMPLETE && !this.winner.equals(msg.getEnrollment())) {
       // conflict
-      GroupMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, this.winner);
+      L2StateMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, this.winner);
       logger.warn("WARNING :: Election result conflict : Winner local = " + this.winner + " :  remote winner = "
                   + msg.getEnrollment());
       try {
@@ -124,7 +110,7 @@ public class ElectionManagerImpl implements ElectionManager {
       if (state == ELECTION_IN_PROGRESS) {
         basicAbort(msg);
       }
-      GroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
+      L2StateMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       try {
         groupManager.sendTo(msg.messageFrom(), resultAgreed);
@@ -145,7 +131,7 @@ public class ElectionManagerImpl implements ElectionManager {
   @Override
   public synchronized void declareWinner(NodeID myNodeId) {
     Assert.assertEquals(winner.getNodeID(), myNodeId);
-    GroupMessage msg = createElectionWonMessage(this.winner);
+    L2StateMessage msg = createElectionWonMessage(this.winner);
     debugInfo("Announcing as winner: " + myNodeId);
     this.groupManager.sendAll(msg);
     logger.info("Declared as Winner: Winner is : " + this.winner);
@@ -199,7 +185,7 @@ public class ElectionManagerImpl implements ElectionManager {
     Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew, weightsFactory);
     electionStarted(e);
 
-    GroupMessage msg = createElectionStartedMessage(e);
+    L2StateMessage msg = createElectionStartedMessage(e);
     debugInfo("Sending my election vote to all members");
     groupManager.sendAll(msg);
 
@@ -216,9 +202,8 @@ public class ElectionManagerImpl implements ElectionManager {
     // Step 4 : local host won the election, so notify world for acceptance
     msg = createElectionResultMessage(e);
     debugInfo("Won election, announcing to world and waiting for response...");
-    GroupResponse responses = groupManager.sendAllAndWaitForResponse(msg);
-    for (Iterator i = responses.getResponses().iterator(); i.hasNext();) {
-      L2StateMessage response = (L2StateMessage) i.next();
+    GroupResponse<L2StateMessage> responses = groupManager.sendAllAndWaitForResponse(msg);
+    for (L2StateMessage response : responses.getResponses()) {
       Assert.assertEquals(msg.getMessageID(), response.inResponseTo());
       if (response.getType() == L2StateMessage.RESULT_AGREED) {
         Assert.assertEquals(e, response.getEnrollment());
@@ -247,8 +232,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private Enrollment countVotes() {
     Enrollment computedWinner = null;
-    for (Iterator i = votes.values().iterator(); i.hasNext();) {
-      Enrollment e = (Enrollment) i.next();
+    for (Enrollment e : votes.values()) {
       if (computedWinner == null) {
         computedWinner = e;
       } else if (e.wins(computedWinner)) {
@@ -269,19 +253,19 @@ public class ElectionManagerImpl implements ElectionManager {
     }
   }
 
-  private GroupMessage createElectionStartedMessage(Enrollment e) {
+  private L2StateMessage createElectionStartedMessage(Enrollment e) {
     return L2StateMessage.createElectionStartedMessage(e);
   }
 
-  private GroupMessage createElectionWonMessage(Enrollment e) {
+  private L2StateMessage createElectionWonMessage(Enrollment e) {
     return L2StateMessage.createElectionWonMessage(e);
   }
 
-  private GroupMessage createElectionResultMessage(Enrollment e) {
+  private L2StateMessage createElectionResultMessage(Enrollment e) {
     return L2StateMessage.createElectionResultMessage(e);
   }
 
-  private GroupMessage createElectionStartedMessage(L2StateMessage msg, Enrollment e) {
+  private L2StateMessage createElectionStartedMessage(L2StateMessage msg, Enrollment e) {
     return L2StateMessage.createElectionStartedMessage(msg, e);
   }
 

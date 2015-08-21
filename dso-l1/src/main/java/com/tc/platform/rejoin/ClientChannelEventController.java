@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.platform.rejoin;
 
@@ -27,7 +14,6 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.util.CallStackTrace;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,26 +23,30 @@ public class ClientChannelEventController {
   private static final TCLogger         LOGGER   = TCLogging.getLogger(ClientChannelEventController.class);
 
   private final ClientHandshakeManager clientHandshakeManager;
-  private final Sink                   pauseSink;
+  private final Sink<PauseContext> pauseSink;
   private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
-  private final RejoinManagerInternal   rejoinManager;
-  private final DSOClientMessageChannel channel;
+  private final ClientMessageChannel channel;
 
-  public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
-                                      ClientHandshakeManager clientHandshakeManager, RejoinManagerInternal rejoinManager) {
+  /**
+   * Creates the event controller and connects it to the given channel.
+   */
+  public static void connectChannelEventListener(ClientMessageChannel channel, Sink<PauseContext> pauseSink, ClientHandshakeManager clientHandshakeManager) {
+    ClientChannelEventController controller = new ClientChannelEventController(channel, pauseSink, clientHandshakeManager);
+    channel.addListener(new ChannelEventListenerImpl(controller));
+  }
+  
+  private ClientChannelEventController(ClientMessageChannel channel, Sink<PauseContext> pauseSink, ClientHandshakeManager clientHandshakeManager) {
     this.pauseSink = pauseSink;
     this.clientHandshakeManager = clientHandshakeManager;
-    this.rejoinManager = rejoinManager;
     this.channel = channel;
-    channel.addListener(new ChannelEventListenerImpl(this));
   }
 
-  private void pause(NodeID remoteNodeId) {
-    this.pauseSink.add(new PauseContext(true, remoteNodeId));
+  private void pause() {
+    this.pauseSink.addSingleThreaded(new PauseContext(true));
   }
 
-  private void unpause(NodeID remoteNodeId) {
-    this.pauseSink.add(new PauseContext(false, remoteNodeId));
+  private void unpause() {
+    this.pauseSink.addSingleThreaded(new PauseContext(false));
   }
 
   public void shutdown() {
@@ -68,11 +58,11 @@ public class ClientChannelEventController {
   }
 
   private void channelConnected(ChannelEvent event) {
-    unpause(event.getChannel().getRemoteNodeID());
+    unpause();
   }
 
   private void channelDisconnected(ChannelEvent event) {
-    pause(event.getChannel().getRemoteNodeID());
+    pause();
   }
 
   private void channelClosed(ChannelEvent event) {
@@ -85,14 +75,9 @@ public class ClientChannelEventController {
   }
 
   private void requestRejoin(ChannelEvent event) {
-    clientHandshakeManager.disconnected(event.getChannel().getRemoteNodeID());
-    clientHandshakeManager.fireNodeErrorIfNecessary(rejoinManager.isRejoinEnabled());
-    if (rejoinManager.isRejoinEnabled()) {
-      rejoinManager.requestRejoin(channel.channel());
-    } else {
-      LOGGER
-          .fatal("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
-    }
+    clientHandshakeManager.disconnected();
+    clientHandshakeManager.fireNodeError();
+    LOGGER.fatal("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
   }
 
   private static class ChannelEventListenerImpl implements ChannelEventListener {
@@ -111,7 +96,7 @@ public class ClientChannelEventController {
                       + CallStackTrace.getCallStack());
       if (controller.clientHandshakeManager.isShutdown()) { return; }
       ChannelID eventChannelId = event.getChannelID();
-      ClientMessageChannel currentChannel = controller.channel.channel();
+      ClientMessageChannel currentChannel = controller.channel;
       if (eventChannelId != null && !currentChannel.getChannelID().equals(eventChannelId)) {
         LOGGER.info("Ignoring channel event " + event.getType() + " for channel " + eventChannelId
                         + " as currentChannel " + currentChannel.getChannelID());
@@ -129,9 +114,12 @@ public class ClientChannelEventController {
           break;
         case CHANNEL_OPENED_EVENT:
           controller.channelOpened(event);
-          break;
+          break;        
         case TRANSPORT_RECONNECTION_REJECTED_EVENT:
           controller.channelReconnectionRejected(event);
+          break;
+        default:
+          LOGGER.warn("Ignoring unexpeceted channel event " + event.getType() + " for channel " + eventChannelId);
           break;
       }
     }

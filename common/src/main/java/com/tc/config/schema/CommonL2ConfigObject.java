@@ -1,107 +1,61 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.terracottatech.config.Authentication;
-import com.terracottatech.config.AuthenticationMode;
-import com.terracottatech.config.BindPort;
-import com.terracottatech.config.HttpAuthentication;
-import com.terracottatech.config.Server;
+import org.terracotta.config.BindPort;
+import org.terracotta.config.Server;
+
+import org.terracotta.config.TcConfiguration;
 
 import java.io.File;
-
-import javax.xml.namespace.QName;
 
 /**
  * The standard implementation of {@link CommonL2Config}.
  */
-public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Config {
+public class CommonL2ConfigObject implements CommonL2Config {
 
-  private final BindPort jmxPort;
   private final BindPort tsaPort;
   private final BindPort tsaGroupPort;
   private final BindPort managementPort;
-  private final String   host;
-  private final boolean  authentication;
-  private final String   passwordFile;
-  private final String   loginConfigName;
-  private final String   accessFile;
-  private final boolean  httpAuthentication;
-  private final String   userRealmFile;
-  private final boolean  secured;
+  private final String host;
+  private final boolean authentication;
+  private final String passwordFile;
+  private final String loginConfigName;
+  private final String accessFile;
+  private final boolean httpAuthentication;
+  private final String userRealmFile;
+  private final boolean secured;
+  private final Server server;
+  private final TcConfiguration conf;
 
-  public CommonL2ConfigObject(ConfigContext context) {
-    this(context, false);
+  public CommonL2ConfigObject(Server server) {
+    this(server, null, false);
   }
 
-  public CommonL2ConfigObject(ConfigContext context, boolean secured) {
-    super(context);
+  public CommonL2ConfigObject(Server context, TcConfiguration conf ,boolean secured) {
     this.secured = secured;
-    context.ensureRepositoryProvides(Server.class);
-
-    Server server = (Server) context.bean();
+    server = context;
+    this.conf = conf;
 
     this.host = server.getHost();
 
     // JMX authentication
-    String pwd = null;
-    String loginConfig = null;
-    String access = null;
-    this.authentication = server.isSetAuthentication();
+    //TODO fix this when handling management service
+    this.authentication = false;
 
-    if (authentication) {
-      if (server.getAuthentication().isSetMode()) {
-        if (server.getAuthentication().getMode().isSetLoginConfigName()) {
-          loginConfig = server.getAuthentication().getMode().getLoginConfigName();
-        } else {
-          pwd = server.getAuthentication().getMode().getPasswordFile();
-          if (pwd == null) pwd = AuthenticationMode.type.getElementProperty(QName.valueOf("password-file"))
-              .getDefaultText();
-          pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
-        }
-      } else {
-        pwd = AuthenticationMode.type.getElementProperty(QName.valueOf("password-file")).getDefaultText();
-        pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
-      }
-      access = server.getAuthentication().getAccessFile();
-      if (access == null) access = Authentication.type.getElementProperty(QName.valueOf("access-file"))
-          .getDefaultText();
-      access = new File(ParameterSubstituter.substitute(access)).getAbsolutePath();
-    }
-    this.passwordFile = pwd;
-    this.accessFile = access;
-    this.loginConfigName = loginConfig;
+
+    this.passwordFile = null;
+    this.accessFile = null;
+    this.loginConfigName = null;
 
     // HTTP authentication
-    String userRealm = null;
-    this.httpAuthentication = server.isSetHttpAuthentication();
+    this.httpAuthentication = false;
 
     if (httpAuthentication) {
-      userRealm = server.getHttpAuthentication().getUserRealmFile();
-      if (null == userRealm) {
-        userRealm = HttpAuthentication.type.getElementProperty(QName.valueOf("user-realm-file")).getDefaultText();
-      }
-      userRealm = new File(ParameterSubstituter.substitute(userRealm)).getAbsolutePath();
     }
-    this.userRealmFile = userRealm;
+    this.userRealmFile = null;
 
-    this.jmxPort = server.getJmxPort();
     this.tsaPort = server.getTsaPort();
     this.tsaGroupPort = server.getTsaGroupPort();
     this.managementPort = server.getManagementPort();
@@ -109,31 +63,17 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
 
   @Override
   public File dataPath() {
-    Server server = (Server) getBean();
     return new File(server.getData());
   }
 
   @Override
   public File logsPath() {
-    Server server = (Server) getBean();
     return new File(server.getLogs());
   }
 
   @Override
   public File serverDbBackupPath() {
-    Server server = (Server) getBean();
     return new File(server.getDataBackup());
-  }
-
-  @Override
-  public File indexPath() {
-    Server server = (Server) getBean();
-    return new File(server.getIndex());
-  }
-
-  @Override
-  public BindPort jmxPort() {
-    return this.jmxPort;
   }
 
   @Override
@@ -189,5 +129,10 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
   @Override
   public boolean isSecure() {
     return secured;
+  }
+
+  @Override
+  public TcConfiguration getBean() {
+    return this.conf;
   }
 }

@@ -1,38 +1,19 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
-import com.tc.config.schema.ActiveServerGroupConfig;
+import org.terracotta.config.Servers;
+
 import com.tc.config.schema.ActiveServerGroupsConfig;
-import com.tc.config.schema.repository.MutableBeanRepository;
+import com.tc.config.schema.repository.BeanRepository;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.server.ServerConnectionValidator;
-import com.terracottatech.config.BindPort;
-import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
+//TODO fix this when a proper topology is present
 public class TopologyVerifier {
   private final Servers                   oldServersBean;
   private final Servers                   newServersBean;
@@ -41,10 +22,10 @@ public class TopologyVerifier {
 
   private static final TCLogger           logger = TCLogging.getLogger(TopologyVerifier.class);
 
-  TopologyVerifier(MutableBeanRepository oldServers, MutableBeanRepository newServers,
+  TopologyVerifier(Servers oldServers, Servers newServers,
                    ActiveServerGroupsConfig oldGroupsInfo, ServerConnectionValidator serverConnectionValidator) {
-    this.oldServersBean = (Servers) oldServers.bean();
-    this.newServersBean = (Servers) newServers.bean();
+    this.oldServersBean = oldServers;
+    this.newServersBean = newServers;
     this.oldGroupsInfo = oldGroupsInfo;
     this.serverConnectionValidator = serverConnectionValidator;
   }
@@ -91,155 +72,28 @@ public class TopologyVerifier {
   }
 
   private boolean isGroupsSizeEqualsOne() {
-    return oldGroupsInfo.getActiveServerGroupCount() == 1 && newServersBean.getMirrorGroupArray().length == 1;
+    return true;
   }
 
   private boolean isGroupNameSpecified() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroupArray();
-
-    // check to see the group names for all new servers are set
-    for (MirrorGroup newGroup : newGroupsInfo) {
-      if (!newGroup.isSetGroupName()) { return false; }
-    }
-    return true;
+    return false;
   }
 
   private boolean isMemberMovedToDifferentGroup() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroupArray();
-    for (MirrorGroup newGroupInfo : newGroupsInfo) {
-      String groupName = newGroupInfo.getGroupName();
-      for (String member : L2DSOConfigObject.getServerNames(newGroupInfo)) {
-        String previousGrpName = getPreviousGroupName(member);
-        if (previousGrpName != null && !groupName.equals(previousGrpName)) {
-          logger.warn(member + " group was changed. This is not supported currently.");
-          return true;
-        }
-      }
-    }
-
     return false;
-  }
-
-  private String getPreviousGroupName(String member) {
-    for (ActiveServerGroupConfig groupInfo : oldGroupsInfo.getActiveServerGroups()) {
-      if (groupInfo.isMember(member)) { return groupInfo.getGroupName(); }
-    }
-    return null;
   }
 
   private boolean isGroupNameSame() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroupArray();
 
-    Set<String> newGroupNames = new HashSet<String>();
-    for (MirrorGroup newGroup : newGroupsInfo) {
-      newGroupNames.add(newGroup.getGroupName());
-    }
-
-    Set<String> oldGroupNames = new HashSet<String>();
-    for (ActiveServerGroupConfig oldGroupInfo : this.oldGroupsInfo.getActiveServerGroups()) {
-      oldGroupNames.add(oldGroupInfo.getGroupName());
-    }
-
-    boolean areGroupNamesSame = oldGroupNames.equals(newGroupNames);
-    if (!areGroupNamesSame) {
-      logger.warn("The group names have changed. Groups before=" + oldGroupNames + " Groups after=" + newGroupNames);
-    }
-
-    return areGroupNamesSame;
-  }
-
-  private TopologyReloadStatus checkExistingServerConfigIsSame() {
-    Server[] oldServerArray = L2DSOConfigObject.getServers(oldServersBean);
-    Map<String, Server> oldServersInfo = new HashMap<String, Server>();
-    for (Server server : oldServerArray) {
-      oldServersInfo.put(server.getName(), server);
-    }
-
-    if (!checkGarbageCollection()) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
-
-    Server[] newServerArray = L2DSOConfigObject.getServers(newServersBean);
-    boolean isTopologyChanged = !(newServerArray.length == oldServerArray.length);
-    for (Server newServer : newServerArray) {
-      Server oldServer = oldServersInfo.get(newServer.getName());
-      if (oldServer != null && !checkServer(oldServer, newServer)) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
-
-      if (oldServer == null) {
-        isTopologyChanged = true;
-      }
-    }
-
-    if (!isTopologyChanged) { return TopologyReloadStatus.TOPOLOGY_UNCHANGED; }
-
-    return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
-  }
-
-  private boolean checkGarbageCollection() {
-    if (oldServersBean.isSetGarbageCollection()) {
-      if (!newServersBean.isSetGarbageCollection()) { return false; }
-
-      if ((oldServersBean.getGarbageCollection().getEnabled() != newServersBean.getGarbageCollection().getEnabled())
-          || oldServersBean.getGarbageCollection().getInterval() != newServersBean.getGarbageCollection().getInterval()) {
-        logger.warn("Server Garbage Collection Info changed");
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private Set<String> getRemovedMembers() {
-    Server[] oldServerArray = L2DSOConfigObject.getServers(oldServersBean);
-    HashSet<String> oldServerNames = new HashSet<String>();
-    for (Server server : oldServerArray) {
-      oldServerNames.add(server.getName());
-    }
-
-    Server[] newServerArray = L2DSOConfigObject.getServers(newServersBean);
-    for (Server newServer : newServerArray) {
-      oldServerNames.remove(newServer.getName());
-    }
-
-    return oldServerNames;
-  }
-
-  /**
-   * check ports, persistence and mode
-   */
-  private boolean checkServer(Server oldServer, Server newServer) {
-    if (!validatePorts(oldServer.getTsaPort(), newServer.getTsaPort())
-        || !validatePorts(oldServer.getJmxPort(), newServer.getJmxPort())
-        || !validatePorts(oldServer.getTsaGroupPort(), newServer.getTsaGroupPort())) {
-      logger.warn("Server port configuration was changed for server " + oldServer.getName()
-                  + ". [tsa-port, tsa-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
-                  + oldServer.getTsaGroupPort() + "}, {" + oldServer.getJmxPort() + "}] :"
-                  + ". [tsa-port, tsa-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
-                  + oldServer.getTsaGroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {"
-                  + newServer.getTsaPort() + "}, {" + newServer.getTsaGroupPort() + "}, {" + newServer.getJmxPort()
-                  + "}]");
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean validatePorts(BindPort oldValue, BindPort newValue) {
-    Integer oldPort = oldValue != null ? oldValue.getIntValue() : null;
-    Integer newPort = newValue != null ? newValue.getIntValue() : null;
-
-    if ((oldPort == null && newPort == null)) {
-      return true;
-    } else if (oldPort != null && oldPort.equals(newPort)) {
-      // check the bind address
-      return validatePortAddress(oldValue.getBind(), newValue.getBind());
-    }
     return false;
   }
 
-  private boolean validatePortAddress(String oldValue, String newValue) {
-    if (oldValue != null && newValue != null) {
-      return oldValue.equals(newValue);
-    } else {
-      return (oldValue == newValue);
-    }
+  private TopologyReloadStatus checkExistingServerConfigIsSame() {
+    return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }
+
+  private Set<String> getRemovedMembers() {
+    return null;
+  }
+
 }

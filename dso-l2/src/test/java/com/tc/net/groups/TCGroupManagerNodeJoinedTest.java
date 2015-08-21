@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.groups;
 
@@ -68,7 +56,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   }
 
   @Override
-  protected void tcTestCaseTearDown(final Throwable testException) throws Throwable {
+  protected void tcTestCaseTearDown(Throwable testException) throws Throwable {
     super.tcTestCaseTearDown(testException);
     throwableHandler.throwIfNecessary();
   }
@@ -123,7 +111,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                      allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.EMPTY_LIST);
+      stageManager.startAll(context, Collections.emptyList());
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
@@ -137,7 +125,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     // joining
     System.out.println("*** Start Joining...");
     for (int i = 0; i < nodes; ++i) {
-      Set<Node> nodeSet = new HashSet<Node>();
+      Set<Node> nodeSet = new HashSet<>();
       Collections.addAll(nodeSet, allNodes);
       NodesStore nodeStore = new NodesStoreImpl(nodeSet);
       groupManagers[i].join(allNodes[i], nodeStore);
@@ -178,7 +166,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                      allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.EMPTY_LIST);
+      stageManager.startAll(context, Collections.emptyList());
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
@@ -190,7 +178,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     }
 
-    Set<Node> nodeSet = new HashSet<Node>();
+    Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, proxiedAllNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
 
@@ -247,7 +235,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                      allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.EMPTY_LIST);
+      stageManager.startAll(context, Collections.emptyList());
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
@@ -261,7 +249,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     // joining
     System.out.println("*** Start Joining...");
-    Set<Node> nodeSet = new HashSet<Node>();
+    Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, proxiedAllNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nodes; ++i) {
@@ -378,7 +366,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
   }
 
-  private void waitForAllMessageCountsToReach(final int count) throws Exception {
+  private void waitForAllMessageCountsToReach(int count) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -396,7 +384,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   private static final class MyListener implements GroupMessageListener {
 
-    NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
+    NoExceptionLinkedQueue<GroupMessage> queue = new NoExceptionLinkedQueue<>();
     private int            count = 0;
 
     @Override

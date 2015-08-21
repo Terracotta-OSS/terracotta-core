@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management;
 
@@ -42,13 +29,13 @@ import javax.rmi.ssl.SslRMIServerSocketFactory;
 import javax.security.auth.Subject;
 
 public class JMXConnectorProxy implements JMXConnector {
-  private final String       m_host;
-  private final int          m_port;
-  private final Map          m_env;
-  private JMXServiceURL      m_serviceURL;
-  private JMXConnector       m_connector;
-  private final JMXConnector m_connectorProxy;
-  private final boolean      m_secured;
+  private final String              m_host;
+  private final int                 m_port;
+  private final Map<String, Object> m_env;
+  private JMXServiceURL             m_serviceURL;
+  private JMXConnector              m_connector;
+  private final JMXConnector        m_connectorProxy;
+  private final boolean             m_secured;
 
   public static final String JMXMP_URI_PATTERN  = "service:jmx:jmxmp://{0}:{1}";
   public static final String JMXRMI_URI_PATTERN = "service:jmx:rmi:///jndi/rmi://{0}:{1}/jmxrmi";
@@ -57,11 +44,11 @@ public class JMXConnectorProxy implements JMXConnector {
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
   }
 
-  public JMXConnectorProxy(final String host, final int port, final Map env) {
+  public JMXConnectorProxy(String host, int port, Map<String, Object> env) {
     this(host, port, env, false);
   }
 
-  public JMXConnectorProxy(final String host, final int port, final Map env, final boolean secured) {
+  public JMXConnectorProxy(String host, int port, Map<String, Object> env, boolean secured) {
     m_host = host;
     m_port = port;
     m_env = env;
@@ -69,7 +56,7 @@ public class JMXConnectorProxy implements JMXConnector {
     m_secured = secured;
   }
 
-  public JMXConnectorProxy(final String host, final int port) {
+  public JMXConnectorProxy(String host, int port) {
     this(host, port, null, false);
   }
 
@@ -153,7 +140,7 @@ public class JMXConnectorProxy implements JMXConnector {
       ensureConnector();
 
       try {
-        Class c = m_connector.getClass();
+        Class<? extends JMXConnector> c = m_connector.getClass();
         Method m = c.getMethod(method.getName(), method.getParameterTypes());
         return m.invoke(m_connector, args);
       } catch (InvocationTargetException ite) {
@@ -176,11 +163,11 @@ public class JMXConnectorProxy implements JMXConnector {
     return m_serviceURL;
   }
 
-  public static String getJMXConnectorURL(final String host, final int port) {
+  public static String getJMXConnectorURL(String host, int port) {
     return MessageFormat.format(JMXMP_URI_PATTERN, new Object[] { host, port + "" });
   }
 
-  public static String getSecureJMXConnectorURL(final String host, final int port) {
+  public static String getSecureJMXConnectorURL(String host, int port) {
     return MessageFormat.format(JMXRMI_URI_PATTERN, new Object[] { host, port + "" });
   }
 
@@ -200,7 +187,7 @@ public class JMXConnectorProxy implements JMXConnector {
   }
 
   @Override
-  public void connect(Map env) throws IOException {
+  public void connect(Map<String, ?> env) throws IOException {
     m_connectorProxy.connect(env);
   }
 

@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management;
 
@@ -23,7 +10,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
 import java.lang.reflect.Field;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -56,18 +42,18 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
 
   // NOTE: The use of NotificationBroadcasterSupport has been removed and re-implemented internally
   // to avoid issues with JDK logging (DEV-421)
-  private final List                             notificationListeners   = new CopyOnWriteArrayList();
+  private final List<Listener>                             notificationListeners   = new CopyOnWriteArrayList<>();
   private boolean                                isActive;
 
   protected static final MBeanNotificationInfo[] EMPTY_NOTIFICATION_INFO = {};
 
-  protected AbstractTerracottaMBean(final Class mBeanInterface, final boolean isNotificationBroadcaster)
+  protected AbstractTerracottaMBean(Class<?> mBeanInterface, boolean isNotificationBroadcaster)
       throws NotCompliantMBeanException {
     this(mBeanInterface, isNotificationBroadcaster, ENABLED);
   }
 
-  protected AbstractTerracottaMBean(final Class mBeanInterface, final boolean isNotificationBroadcaster,
-                                    final boolean isActive) throws NotCompliantMBeanException {
+  protected AbstractTerracottaMBean(Class<?> mBeanInterface, boolean isNotificationBroadcaster,
+                                    boolean isActive) throws NotCompliantMBeanException {
     super(mBeanInterface);
     this.logger = TCLogging.getLogger(mBeanInterface);
     this.beanBundle = getBundleForMBean(mBeanInterface, logger);
@@ -85,8 +71,8 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   }
 
   @Override
-  public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter,
-                                      final Object obj) {
+  public void addNotificationListener(NotificationListener listener, NotificationFilter filter,
+                                      Object obj) {
     // don't register listeners from foreign classloaders
     if (!isListenerInSameClassLoader(listener)) return;
 
@@ -105,15 +91,14 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   }
 
   @Override
-  public void removeNotificationListener(final NotificationListener listener, final NotificationFilter filter,
-                                         final Object obj) throws ListenerNotFoundException {
+  public void removeNotificationListener(NotificationListener listener, NotificationFilter filter,
+                                         Object obj) throws ListenerNotFoundException {
     // ignore removal of listeners from foreign classloaders
     if (!isListenerInSameClassLoader(listener)) return;
 
     boolean removed = false;
 
-    for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
-      Listener lsnr = (Listener) i.next();
+    for (Listener lsnr : notificationListeners) {
       if (lsnr.listener == listener && lsnr.filter == filter && lsnr.handback == obj) {
         removed = true;
         notificationListeners.remove(lsnr);
@@ -124,14 +109,13 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   }
 
   @Override
-  public void removeNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
+  public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
     // ignore removal of listeners from foreign classloaders
     if (!isListenerInSameClassLoader(listener)) return;
 
     boolean removed = false;
 
-    for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
-      Listener lsnr = (Listener) i.next();
+    for (Listener lsnr : notificationListeners) {
       if (lsnr.listener == listener) {
         removed = true;
         notificationListeners.remove(lsnr);
@@ -170,7 +154,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
    * classloader (ie: 'foreign' classloaders). The fact that the original listener gets wrapped in another one
    * whose classloader is the system classloader explains the extra reflection trickery.
    */
-  private boolean isListenerInSameClassLoader(final NotificationListener listener) {
+  private boolean isListenerInSameClassLoader(NotificationListener listener) {
     if (logger.isDebugEnabled()) {
       logger.debug("checking notification listener " + listener + " - CL : " + listener.getClass()
           .getClassLoader());
@@ -210,11 +194,9 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     return true;
   }
 
-  public final void sendNotification(final Notification notification) {
+  public final void sendNotification(Notification notification) {
     if (isEnabled()) {
-      for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
-        Listener lsnr = (Listener) i.next();
-
+      for (Listener lsnr : notificationListeners) {
         if (lsnr.filter == null || lsnr.filter.isNotificationEnabled(notification)) {
           lsnr.listener.handleNotification(notification, lsnr.handback);
         }
@@ -237,7 +219,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     setState(false);
   }
 
-  private synchronized void setState(final boolean isActive) {
+  private synchronized void setState(boolean isActive) {
     if (this.isActive && !isActive) {
       reset();
     }
@@ -264,7 +246,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
    * with overriding only this particular method to supply descriptions.
    */
   @Override
-  protected String getDescription(final MBeanFeatureInfo featureInfo) {
+  protected String getDescription(MBeanFeatureInfo featureInfo) {
     final String name = featureInfo.getName();
     String bundleDescription = null;
     if (beanBundle != null) {
@@ -290,7 +272,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     return bundleDescription;
   }
 
-  private static ResourceBundle getBundleForMBean(final Class mBeanInterface, final TCLogger logger) {
+  private static ResourceBundle getBundleForMBean(Class<?> mBeanInterface, TCLogger logger) {
     ResourceBundle bundle = null;
     try {
       bundle = ResourceBundle.getBundle(mBeanInterface.getName(), Locale.getDefault(),

@@ -1,31 +1,17 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.xmlbeans.XmlError;
-import org.apache.xmlbeans.XmlException;
+import org.terracotta.config.TcConfig;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
+import org.terracotta.config.TcConfiguration;
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
-import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
-import com.tc.config.schema.repository.MutableBeanRepository;
+import com.tc.config.schema.repository.BeanRepository;
 import com.tc.config.schema.setup.sources.Base64ConfigurationSource;
 import com.tc.config.schema.setup.sources.ConfigurationSource;
 import com.tc.config.schema.setup.sources.FileConfigurationSource;
@@ -36,15 +22,11 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
-import com.tc.object.config.schema.L1DSOConfigObject;
-import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -64,51 +46,43 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
-  private static final TCLogger      consoleLogger                        = CustomerLogging.getConsoleLogger();
-  private static final long          GET_CONFIGURATION_TOTAL_TIMEOUT      = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
+  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final long GET_CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl.getProperties()
+      .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
 
-  private static final long          MIN_RETRY_TIMEOUT                    = 5 * 1000;
-  private static final Pattern       SERVER_PATTERN                       = Pattern.compile("(.*):(.*)",
-                                                                                            Pattern.CASE_INSENSITIVE);
-  private static final Pattern       RESOURCE_PATTERN                     = Pattern.compile("resource://(.*)",
-                                                                                            Pattern.CASE_INSENSITIVE);
-  private static final Pattern       BASE64_PATTERN                       = Pattern.compile("base64://(.*)",
-                                                                                            Pattern.DOTALL);
+  private static final long MIN_RETRY_TIMEOUT = 5 * 1000;
+  private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern RESOURCE_PATTERN = Pattern.compile("resource://(.*)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern BASE64_PATTERN = Pattern.compile("base64://(.*)", Pattern.DOTALL);
   // We require more than one character before the colon so that we don't mistake Windows-style directory paths as URLs.
-  private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
-  private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
-                                                                                       30000);
+  private static final Pattern URL_PATTERN = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
+  private static final long GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl.getProperties()
+      .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT, 30000);
 
-  private final ConfigurationSpec    configurationSpec;
-  private final ConfigBeanFactory    beanFactory;
-  private final TCLogger             logger;
+  private final ConfigurationSpec configurationSpec;
+  private final ConfigBeanFactory beanFactory;
+  private final TCLogger logger;
 
-  private boolean                    baseConfigLoadedFromTrustedSource;
-  private String                     serverOverrideConfigDescription;
-  private boolean                    serverOverrideConfigLoadedFromTrustedSource;
-  private File                       directoryLoadedFrom;
-  private String                     baseConfigDescription                = "";
-  private TcConfigDocument           tcConfigDocument;
-  private TcConfigDocument           providedTcConfigDocument;
-  private final DefaultValueProvider defaultValueProvider                 = new SchemaDefaultValueProvider();
-  private final PwProvider           pwProvider;
+  private boolean baseConfigLoadedFromTrustedSource;
+  private String serverOverrideConfigDescription;
+  private boolean serverOverrideConfigLoadedFromTrustedSource;
+  private File directoryLoadedFrom;
+  private String baseConfigDescription = "";
+  private TcConfiguration tcConfigDocument;
+  private TcConfiguration providedTcConfigDocument;
+  private final PwProvider pwProvider;
 
-  public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
-                                             final ConfigBeanFactory beanFactory) {
+  public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory) {
     this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, null);
   }
 
-  public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
-                                             final ConfigBeanFactory beanFactory, PwProvider pwProvider) {
+  public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory,
+                                             PwProvider pwProvider) {
     this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, pwProvider);
   }
 
-  public StandardXMLFileConfigurationCreator(final TCLogger logger, final ConfigurationSpec configurationSpec,
-                                             final ConfigBeanFactory beanFactory, PwProvider pwProvider) {
+  public StandardXMLFileConfigurationCreator(TCLogger logger, ConfigurationSpec configurationSpec,
+                                             ConfigBeanFactory beanFactory, PwProvider pwProvider) {
     Assert.assertNotNull(beanFactory);
     this.logger = logger;
     this.beanFactory = beanFactory;
@@ -117,64 +91,48 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   @Override
-  public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
-                                                  MutableBeanRepository l2sBeanRepository,
-                                                  MutableBeanRepository systemBeanRepository,
-                                                  MutableBeanRepository tcPropertiesRepository, boolean isClient)
-      throws ConfigurationSetupException {
-    loadConfigAndSetIntoRepositories(l1BeanRepository, l2sBeanRepository, systemBeanRepository, tcPropertiesRepository,
-                                     isClient);
+  public void createConfiguration() throws ConfigurationSetupException {
+    loadConfigAndSetIntoRepositories();
     logCopyOfConfig();
   }
 
-  protected void loadConfigAndSetIntoRepositories(MutableBeanRepository l1BeanRepository,
-                                                  MutableBeanRepository l2sBeanRepository,
-                                                  MutableBeanRepository systemBeanRepository,
-                                                  MutableBeanRepository tcPropertiesRepository, boolean isClient)
-      throws ConfigurationSetupException {
-    Assert.assertNotNull(l1BeanRepository);
-    Assert.assertNotNull(l2sBeanRepository);
-    Assert.assertNotNull(systemBeanRepository);
-    Assert.assertNotNull(tcPropertiesRepository);
-
+  protected void loadConfigAndSetIntoRepositories() throws ConfigurationSetupException {
     ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
-    ConfigDataSourceStream baseConfigDataSourceStream = loadConfigDataFromSources(sources, l1BeanRepository,
-                                                                                  l2sBeanRepository,
-                                                                                  systemBeanRepository,
-                                                                                  tcPropertiesRepository, isClient);
+    ConfigDataSourceStream baseConfigDataSourceStream = loadConfigDataFromSources(sources);
     baseConfigLoadedFromTrustedSource = baseConfigDataSourceStream.isTrustedSource();
     baseConfigDescription = baseConfigDataSourceStream.getDescription();
 
     if (this.configurationSpec.shouldOverrideServerTopology()) {
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
-      ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources,
-                                                                                                    l2sBeanRepository,
-                                                                                                    true, false);
+      ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, true, false);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     }
   }
 
   @Override
-  public String reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogTcConfig,
-                                           boolean reportToConsole) throws ConfigurationSetupException {
+  public String reloadServersConfiguration(boolean shouldLogTcConfig, boolean reportToConsole)
+      throws ConfigurationSetupException {
     ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
     ConfigDataSourceStream serverOverrideConfigDataSourceStream;
     if (this.configurationSpec.shouldOverrideServerTopology()) {
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
-      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, l2sBeanRepository,
-                                                                             reportToConsole, shouldLogTcConfig);
+      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, reportToConsole, shouldLogTcConfig);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     } else {
-      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, l2sBeanRepository,
-                                                                             reportToConsole, shouldLogTcConfig);
+      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, reportToConsole, shouldLogTcConfig);
     }
 
     if (shouldLogTcConfig) {
       logCopyOfConfig();
     }
     return serverOverrideConfigDataSourceStream.getDescription();
+  }
+
+  @Override
+  public TcConfiguration getParsedConfiguration() {
+    return this.tcConfigDocument;
   }
 
   protected ConfigurationSource[] getConfigurationSources(String configrationSpec) throws ConfigurationSetupException {
@@ -192,8 +150,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
       if (source == null) {
         // formatting
-        throw new ConfigurationSetupException("The location '" + thisComponent
-                                              + "' is not in any recognized format -- it doesn't "
+        throw new ConfigurationSetupException("The location '" + thisComponent + "' is not in any recognized format -- it doesn't "
                                               + "seem to be a server, resource, URL, or file.");
       }
 
@@ -253,32 +210,24 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     else return null;
   }
 
-  private ConfigDataSourceStream loadConfigDataFromSources(ConfigurationSource[] sources,
-                                                           MutableBeanRepository l1BeanRepository,
-                                                           MutableBeanRepository l2sBeanRepository,
-                                                           MutableBeanRepository systemBeanRepository,
-                                                           MutableBeanRepository tcPropertiesRepository,
-                                                           boolean isClient) throws ConfigurationSetupException {
+  private ConfigDataSourceStream loadConfigDataFromSources(ConfigurationSource[] sources) throws ConfigurationSetupException {
     long startTime = System.currentTimeMillis();
     ConfigDataSourceStream configDataSourceStream = getConfigDataSourceStrean(sources, startTime, "base configuration");
     if (configDataSourceStream.getSourceInputStream() == null) configurationFetchFailed(sources, startTime);
     loadConfigurationData(configDataSourceStream.getSourceInputStream(), configDataSourceStream.isTrustedSource(),
-                          configDataSourceStream.getDescription(), l1BeanRepository, l2sBeanRepository,
-                          systemBeanRepository, tcPropertiesRepository, isClient);
+                          configDataSourceStream.getDescription());
     consoleLogger.info("Successfully loaded " + configDataSourceStream.getDescription() + ".");
     return configDataSourceStream;
   }
 
   private ConfigDataSourceStream loadServerConfigDataFromSources(ConfigurationSource[] sources,
-                                                                 MutableBeanRepository l2sBeanRepository,
                                                                  boolean reportToConsole, boolean updateTcConfig)
       throws ConfigurationSetupException {
     long startTime = System.currentTimeMillis();
     ConfigDataSourceStream configDataSourceStream = getConfigDataSourceStrean(sources, startTime, "server topology");
     if (configDataSourceStream.getSourceInputStream() == null) configurationFetchFailed(sources, startTime);
-    loadServerConfigurationData(configDataSourceStream.getSourceInputStream(),
-                                configDataSourceStream.isTrustedSource(), configDataSourceStream.getDescription(),
-                                l2sBeanRepository, updateTcConfig);
+    loadServerConfigurationData(configDataSourceStream.getSourceInputStream(), configDataSourceStream.isTrustedSource(),
+                                configDataSourceStream.getDescription(), updateTcConfig);
     if (reportToConsole) {
       consoleLogger.info("Successfully overridden " + configDataSourceStream.getDescription() + ".");
     }
@@ -287,8 +236,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private static class ConfigDataSourceStream {
     private final InputStream sourceInputStream;
-    private final boolean     trustedSource;
-    private final String      description;
+    private final boolean trustedSource;
+    private final String description;
 
     public ConfigDataSourceStream(InputStream sourceInputStream, boolean trustedSource, String description) {
       this.sourceInputStream = sourceInputStream;
@@ -309,8 +258,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     }
   }
 
-  private ConfigDataSourceStream getConfigDataSourceStrean(ConfigurationSource[] sources, long startTime,
-                                                           String description) {
+  @SuppressWarnings("resource")
+  private ConfigDataSourceStream getConfigDataSourceStrean(ConfigurationSource[] sources, long startTime, String description) {
     ConfigurationSource[] remainingSources = new ConfigurationSource[sources.length];
     ConfigurationSource loadedSource = null;
     System.arraycopy(sources, 0, remainingSources, 0, sources.length);
@@ -349,8 +298,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     return new ConfigDataSourceStream(out, trustedSource, descrip);
   }
 
-  private void configurationFetchFailed(ConfigurationSource[] sources, long startTime)
-      throws ConfigurationSetupException {
+  private void configurationFetchFailed(ConfigurationSource[] sources, long startTime) throws ConfigurationSetupException {
     StringBuilder text = new StringBuilder("Could not fetch configuration data from ");
     if (sources.length > 1) {
       text.append(sources.length).append(" different configuration sources.  The sources we tried were: ");
@@ -424,17 +372,17 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     }
   }
 
-  private void updateTcConfigFull(TcConfigDocument configDocument, String description) {
+  private void updateTcConfigFull(TcConfiguration configDocument, String description) {
     updateTcConfig(configDocument, description, false);
   }
 
-  private void updateTcConfig(TcConfigDocument configDocument, String description, boolean serverElementsOnly) {
+  private void updateTcConfig(TcConfiguration configDocument, String description, boolean serverElementsOnly) {
     if (!serverElementsOnly) {
       this.tcConfigDocument = configDocument;
     } else {
       Assert.assertNotNull(this.tcConfigDocument);
-      TcConfig toConfig = this.tcConfigDocument.getTcConfig();
-      TcConfig fromConfig = configDocument.getTcConfig();
+      TcConfig toConfig = this.tcConfigDocument.getPlatformConfiguration();
+      TcConfig fromConfig = configDocument.getPlatformConfiguration();
       if (toConfig.getServers() != null) toConfig.setServers(fromConfig.getServers());
     }
   }
@@ -443,96 +391,52 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     logger.info(describeSources() + ":\n\n" + this.providedTcConfigDocument.toString());
   }
 
-  private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip,
-                                     MutableBeanRepository clientBeanRepository,
-                                     MutableBeanRepository serversBeanRepository,
-                                     MutableBeanRepository systemBeanRepository,
-                                     MutableBeanRepository tcPropertiesRepository, boolean isClient)
-      throws ConfigurationSetupException {
-    try {
-
-      TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip, isClient);
-      Assert.assertNotNull(configDocument);
-      updateTcConfigFull(configDocument, descrip);
-      setClientBean(clientBeanRepository, configDocument.getTcConfig(), descrip);
-      setServerBean(serversBeanRepository, configDocument.getTcConfig(), descrip);
-      setTcPropertiesBean(tcPropertiesRepository, configDocument.getTcConfig(), descrip);
-    } catch (XmlException xmle) {
-      throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
-                                            + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
-    }
+  private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip) throws ConfigurationSetupException {
+    TcConfiguration configDocument = getConfigFromSourceStream(in, trustedSource, descrip, directoryConfigurationLoadedFrom()!= null ?
+        directoryConfigurationLoadedFrom().getAbsolutePath() : "");
+    Assert.assertNotNull(configDocument);
+    updateTcConfigFull(configDocument, descrip);
   }
 
   private void loadServerConfigurationData(InputStream in, boolean trustedSource, String descrip,
-                                           MutableBeanRepository serversBeanRepository, boolean updateTcConfig)
-      throws ConfigurationSetupException {
-    try {
-      TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip, false);
-      Assert.assertNotNull(configDocument);
-      setServerBean(serversBeanRepository, configDocument.getTcConfig(), descrip);
-      if (updateTcConfig) {
-        updateTcConfigFull(configDocument, descrip);
-      }
-    } catch (XmlException xmle) {
-      throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
-                                            + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
+                                           boolean updateTcConfig) throws ConfigurationSetupException {
+    TcConfiguration configDocument = getConfigFromSourceStream(in, trustedSource, descrip, directoryConfigurationLoadedFrom().getAbsolutePath());
+    Assert.assertNotNull(configDocument);
+    if (updateTcConfig) {
+      updateTcConfigFull(configDocument, descrip);
     }
   }
 
-  private void setClientBean(MutableBeanRepository clientBeanRepository, TcConfig config, String description)
-      throws XmlException {
-    clientBeanRepository.setBean(config.getClients(), description);
-  }
 
-  private void setServerBean(MutableBeanRepository serversBeanRepository, TcConfig config, String description)
-      throws XmlException {
-    serversBeanRepository.setBean(config.getServers(), description);
-  }
-
-  private void setTcPropertiesBean(MutableBeanRepository tcPropertiesRepository, TcConfig config, String description)
-      throws XmlException {
-    tcPropertiesRepository.setBean(config.getTcProperties(), description);
-  }
-
-  private TcConfigDocument getConfigFromSourceStream(InputStream in, boolean trustedSource, String descrip,
-                                                     boolean isClient) throws ConfigurationSetupException {
-    TcConfigDocument tcConfigDoc;
+  private TcConfiguration getConfigFromSourceStream(InputStream in, boolean trustedSource, String descrip, String source)
+      throws ConfigurationSetupException {
+    TcConfiguration tcConfigDoc;
     try {
       ByteArrayOutputStream dataCopy = new ByteArrayOutputStream();
       IOUtils.copy(in, dataCopy);
       in.close();
 
       InputStream copyIn = new ByteArrayInputStream(dataCopy.toByteArray());
-      BeanWithErrors beanWithErrors = beanFactory.createBean(copyIn, descrip);
+      BeanWithErrors beanWithErrors = beanFactory.createBean(copyIn, descrip, source);
 
       if (beanWithErrors.errors() != null && beanWithErrors.errors().length > 0) {
         logger.debug("Configuration didn't parse; it had " + beanWithErrors.errors().length + " error(s).");
 
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < beanWithErrors.errors().length; ++i) {
-          XmlError error = beanWithErrors.errors()[i];
-          buf.append("  [" + i + "]: Line " + error.getLine() + ", column " + error.getColumn() + ": "
-                     + error.getMessage() + "\n");
-          if (error.getMessage().indexOf("spring") > -1) {
-            buf.append("  The Spring configuration in your Terracotta configuration file is not valid. "
-                       + "Clustering Spring no longer requires special configuration. For more information, see http://www.terracotta.org/spring.\n");
-          }
+          SAXParseException error = beanWithErrors.errors()[i];
+          buf.append("  [" + i + "]: Line " + error.getLineNumber() + ", column " + error.getColumnNumber() + ": " + error.getMessage()
+                     + "\n");
         }
 
-        throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
-                                              + "Terracotta schema:\n" + buf);
+        throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the Terracotta schema:\n"
+                                              + buf);
       } else {
         logger.debug("Configuration is valid.");
       }
 
-      tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
-      this.providedTcConfigDocument = (TcConfigDocument) beanWithErrors.bean().copy();
-      TcConfig config = tcConfigDoc.getTcConfig();
-      L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
-      // initialize client only while parsing for client
-      if (isClient) {
-        L1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
-      }
+      tcConfigDoc = ((TcConfiguration) beanWithErrors.bean());
+      this.providedTcConfigDocument = tcConfigDoc;
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("We were unable to read configuration data from the " + descrip + ": "
                                             + ioe.getLocalizedMessage(), ioe);
@@ -541,10 +445,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                             + saxe.getLocalizedMessage(), saxe);
     } catch (ParserConfigurationException pce) {
       throw Assert.failure("The XML parser can't be configured correctly; this should not happen.", pce);
-    } catch (XmlException xmle) {
-      throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
-                                            + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
     }
+
     return tcConfigDoc;
   }
 
@@ -563,12 +465,15 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   public String rawConfigText() {
     return this.providedTcConfigDocument.toString();
   }
+  
+  @Override
+  public String source() {
+    return this.configurationSpec.getBaseConfigSpec();
+  }
 
   @Override
   public String describeSources() {
-    return "The configuration specified by '"
-           + baseConfigDescription
-           + "'"
+    return "The configuration specified by '" + baseConfigDescription + "'"
            + (this.serverOverrideConfigDescription == null ? "" : " and '" + this.serverOverrideConfigDescription + "'");
   }
 }

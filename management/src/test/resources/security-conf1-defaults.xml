@@ -1,0 +1,36 @@
+<tc-config xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+           xmlns:security="http://www.terracotta.org/config/security"
+           xmlns="http://www.terracotta.org/config"
+           xsi:schemaLocation="http://www.terracotta.org/config terracotta.xsd
+                        http://www.terracotta.org/config/security ../../main/resources/security.xsd">
+  <services>
+    <service>
+      <security:security>
+        <security:ssl>
+        </security:ssl>
+        <security:auth>
+        </security:auth>
+        <security:keychain>
+        </security:keychain>
+      </security:security>
+    </service>
+  </services>
+</tc-config>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

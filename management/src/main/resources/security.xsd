@@ -1,0 +1,68 @@
+<xs:schema
+    xmlns:security="http://www.terracotta.org/config/security"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    version="1.0" targetNamespace="http://www.terracotta.org/config/security" elementFormDefault="qualified">
+  <xs:element name="security">
+    <xs:complexType>
+      <xs:annotation>
+        <xs:documentation>
+          Configuration of server's security, ie: SSL and
+          authentication.
+        </xs:documentation>
+      </xs:annotation>
+      <xs:all>
+        <xs:element name="ssl" type="security:ssl" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="keychain" type="security:keychain" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="auth" type="security:auth" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="management" type="security:management" minOccurs="0" maxOccurs="1"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="ssl">
+    <xs:all>
+      <xs:element name="certificate" type="security:non-blank-token" minOccurs="1" maxOccurs="1"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="keychain">
+    <xs:all>
+      <xs:element name="class" type="security:non-blank-token" minOccurs="0" maxOccurs="1"
+                  default="com.terracotta.management.keychain.FileStoreKeyChain"/>
+      <xs:element name="url" type="security:non-blank-token" minOccurs="0" maxOccurs="1"
+                  default="file://%(user.home)/.tc/mgmt/keychain"/>
+      <xs:element name="secret-provider" type="security:non-blank-token" minOccurs="0" maxOccurs="1"
+                  default="com.terracotta.management.security.ObfuscatingSecretProviderBackend"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="auth">
+    <xs:all>
+      <xs:element name="realm" type="security:non-blank-token" minOccurs="0" maxOccurs="1"
+                  default="com.tc.net.core.security.ShiroIniRealm"/>
+      <xs:element name="url" type="security:non-blank-token" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="user" type="security:non-blank-token" minOccurs="0" maxOccurs="1" default="terracotta"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="management">
+    <xs:all>
+      <xs:element name="ia" type="security:non-blank-token" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="timeout" type="security:non-negative-int" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="hostname" type="security:non-blank-token" minOccurs="0" maxOccurs="1"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:simpleType name="non-blank-token">
+    <xs:restriction base="xs:token">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="non-negative-int">
+    <xs:restriction base="xs:nonNegativeInteger">
+      <xs:maxInclusive value="2147483647"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

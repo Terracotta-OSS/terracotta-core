@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.net.utils;
 
@@ -32,12 +19,14 @@ public class L2Utils {
   public static final long MAX_COMMS_DIRECT_MEMORY_REQUIREMENT = 256 * 1024 * 1024; // 256MiB
 
   public static int getOptimalCommWorkerThreads() {
-    int def = Math.min(Runtime.getRuntime().availableProcessors() * 2, MAX_DEFAULT_COMM_THREADS);
+//  TODO:  reduced number of default threads.  re-evaluate closer to release MKS 6.8.2015
+    int def = Math.min(Runtime.getRuntime().availableProcessors()/2, MAX_DEFAULT_COMM_THREADS);
     return TCPropertiesImpl.getProperties().getInt("l2.tccom.workerthreads", def);
   }
 
   public static int getOptimalStageWorkerThreads() {
-    int def = Math.min(Runtime.getRuntime().availableProcessors() * 2, MAX_DEFAULT_STAGE_THREADS);
+//  TODO:  reduced number of default threads.  re-evaluate closer to release MKS 6.8.2015
+    int def = Math.min(Runtime.getRuntime().availableProcessors()/2, MAX_DEFAULT_STAGE_THREADS);
     return TCPropertiesImpl.getProperties().getInt("l2.seda.stage.workerthreads", def);
   }
 
@@ -70,8 +59,8 @@ public class L2Utils {
    *
    * @return the optimal number of threads
    */
-  public static int calculateOptimalThreadsCount(final int cpus, final long wait, final long compute,
-                                                 final double targetUtilization) {
+  public static int calculateOptimalThreadsCount(int cpus, long wait, long compute,
+                                                 double targetUtilization) {
     Preconditions.checkArgument(compute > 0);
     Preconditions.checkArgument(wait >= 0);
     Preconditions.checkArgument(cpus > 0);

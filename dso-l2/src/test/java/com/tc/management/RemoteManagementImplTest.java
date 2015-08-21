@@ -1,19 +1,3 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
- */
 package com.tc.management;
 
 import org.hamcrest.CoreMatchers;
@@ -67,13 +51,13 @@ public class RemoteManagementImplTest {
     ServerManagementHandler serverManagementHandler = mock(ServerManagementHandler.class);
     RemoteManagementImpl remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, null);
 
-    when(channelManager.getAllClientIDs()).thenReturn(new HashSet() {{
+    when(channelManager.getAllClientIDs()).thenReturn(new HashSet<NodeID>() {{
       add(new ClientID(0L));
       add(new ClientID(1L));
       add(new ClientID(2L));
     }});
 
-    Set<NodeID> allClientIDs = remoteManagement.getAllClientIDs();
+    Set<? extends NodeID> allClientIDs = remoteManagement.getAllClientIDs();
     assertThat(allClientIDs.size(), is(3));
   }
 
@@ -91,7 +75,7 @@ public class RemoteManagementImplTest {
     when(messageChannel.createMessage(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE)).thenReturn(listRegisteredServicesMessage);
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         ListRegisteredServicesResponseMessage responseMessage = mock(ListRegisteredServicesResponseMessage.class);
@@ -169,7 +153,7 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final String response = "this is a response";
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         InvokeRegisteredServiceResponseMessage responseMessage = mock(InvokeRegisteredServiceResponseMessage.class);
@@ -206,7 +190,7 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final Exception response = new IllegalArgumentException("this is an error");
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         InvokeRegisteredServiceResponseMessage responseMessage = mock(InvokeRegisteredServiceResponseMessage.class);
@@ -248,7 +232,7 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final Exception response = new IllegalArgumentException("this is an error");
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         InvokeRegisteredServiceResponseMessage responseMessage = mock(InvokeRegisteredServiceResponseMessage.class);
@@ -291,7 +275,7 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final String response = "this is a response";
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         InvokeRegisteredServiceResponseMessage responseMessage = mock(InvokeRegisteredServiceResponseMessage.class);
@@ -374,8 +358,8 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final String response = "this is a response";
-    final AtomicReference<ManagementResponseListener> managementResponseListenerAtomicReference = new AtomicReference<ManagementResponseListener>();
-    doAnswer(new Answer() {
+    final AtomicReference<ManagementResponseListener> managementResponseListenerAtomicReference = new AtomicReference<>();
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         ManagementResponseListener managementResponseListener = (ManagementResponseListener)invocation.getArguments()[1];
@@ -428,8 +412,8 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final String response = "this is a response";
-    final AtomicReference<ManagementResponseListener> managementResponseListenerAtomicReference = new AtomicReference<ManagementResponseListener>();
-    doAnswer(new Answer() {
+    final AtomicReference<ManagementResponseListener> managementResponseListenerAtomicReference = new AtomicReference<>();
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         ManagementResponseListener managementResponseListener = (ManagementResponseListener)invocation.getArguments()[1];
@@ -484,8 +468,8 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final String response = "this is a response";
-    final AtomicReference<ManagementResponseListener> managementResponseListenerAtomicReference = new AtomicReference<ManagementResponseListener>();
-    doAnswer(new Answer() {
+    final AtomicReference<ManagementResponseListener> managementResponseListenerAtomicReference = new AtomicReference<>();
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         ManagementResponseListener managementResponseListener = (ManagementResponseListener)invocation.getArguments()[1];
@@ -546,7 +530,7 @@ public class RemoteManagementImplTest {
 
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(clientID, new ServiceID("myClass", 0), "myMethod", new String[0]);
     final String response = "this is a response";
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         InvokeRegisteredServiceResponseMessage responseMessage = mock(InvokeRegisteredServiceResponseMessage.class);

@@ -1,32 +1,18 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
-
-import org.apache.commons.lang.StringUtils;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
-import com.tc.util.stringification.OurStringBuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Arrays;
 
 /**
  * Returns a {@link ConnectionInfo} array from the L2 data.
@@ -43,19 +29,19 @@ public class ConnectionInfoConfig {
     this.connectionInfos = createValueFrom(l2sData, securityInfo);
   }
 
-  private ConnectionInfo[] createValueFrom(L2Data[] l2sData, final SecurityInfo securityInfo) {
+  private ConnectionInfo[] createValueFrom(L2Data[] l2sData, SecurityInfo securityInfo) {
     ConnectionInfo[] out;
 
     String serversProperty = System.getProperty("tc.server");
     if (serversProperty != null && (serversProperty = serversProperty.trim()) != null && serversProperty.length() > 0) {
       consoleLogger.info("tc.server: " + serversProperty);
 
-      String[] serverDescs = StringUtils.split(serversProperty, ",");
+      String[] serverDescs = serversProperty.split(",");
       int count = serverDescs.length;
 
       out = new ConnectionInfo[count];
       for (int i = 0; i < count; i++) {
-        String[] serverDesc = StringUtils.split(serverDescs[i], ":");
+        String[] serverDesc = serverDescs[i].split(":");
         String host = serverDesc.length > 0 ? serverDesc[0] : "localhost";
         int tsaPort = 9510;
 
@@ -102,10 +88,6 @@ public class ConnectionInfoConfig {
 
   @Override
   public String toString() {
-    StringBuilder l2sDataString = new StringBuilder();
-    for (ConnectionInfo connectionInfo : this.connectionInfos) {
-      l2sDataString.append(connectionInfo.toString());
-    }
-    return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).appendSuper(l2sDataString.toString()).toString();
-  }
+    return "ConnectionInfoConfig [connectionInfos=" + Arrays.toString(connectionInfos) + "]";
+  }  
 }

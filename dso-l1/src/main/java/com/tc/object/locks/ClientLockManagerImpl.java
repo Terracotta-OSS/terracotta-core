@@ -1,35 +1,17 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.locks;
 
-import com.tc.abortable.AbortableOperationManager;
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
-import com.tc.net.ClientID;
-import com.tc.net.NodeID;
+import com.tc.object.ClientIDProvider;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.operatorevent.LockEventListener;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.AbortedOperationUtil;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
 import com.tc.util.concurrent.TaskRunner;
@@ -48,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods, PrettyPrintable {
+public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods {
   private static final WaitListener               NULL_LISTENER       = new WaitListener() {
                                                                         @Override
                                                                         public void handleWaitEvent() {
@@ -66,25 +48,26 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final SessionManager                    sessionManager;
   private final TCLogger                          logger;
 
-  private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
-  private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<LockEventListener>();
-
-  private final AbortableOperationManager         abortableOperationManager;
+  private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<>();
+  private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<>();
 
   private final Timer                             gcTimer;
   private final Timer                             lockLeaseTimer;
   private final AtomicLong                        lockAwardSequence   = new AtomicLong();
 
-  public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
-                               final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
-                               final ClientLockManagerConfig config,
-                               final AbortableOperationManager abortableOperationManager, final TaskRunner taskRunner) {
+  private final ClientIDProvider clientIdProvider;
+
+  public ClientLockManagerImpl(TCLogger logger, SessionManager sessionManager,
+                               ClientIDProvider clientIdProvider,
+                               RemoteLockManager remoteLockManager, ThreadIDManager threadManager,
+                               ClientLockManagerConfig config,
+                               TaskRunner taskRunner) {
     this.logger = logger;
+    this.clientIdProvider = clientIdProvider;
     this.remoteLockManager = remoteLockManager;
     this.threadManager = threadManager;
     this.sessionManager = sessionManager;
-    this.abortableOperationManager = abortableOperationManager;
-    this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
+    this.locks = new ConcurrentHashMap<>(config.getStripedCount());
     final long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
     this.gcTimer = taskRunner.newTimer("ClientLockManager LockGC");
     this.lockLeaseTimer = taskRunner.newTimer("ClientLockManager Lock Lease Timer");
@@ -112,7 +95,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     runningCondition.signalAll();
   }
 
-  private ClientLock getOrCreateClientLockState(final LockID lock) {
+  private ClientLock getOrCreateClientLockState(LockID lock) {
     stateGuard.readLock().lock();
     try {
       throwExceptionIfNecessary();
@@ -128,24 +111,23 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
-  private ClientLock getClientLockState(final LockID lock) {
+  private ClientLock getClientLockState(LockID lock) {
     return this.locks.get(lock);
   }
 
   /***********************************/
   /* BEGIN TerracottaLocking METHODS */
   /**
-   * @throws AbortedOperationException
    *********************************/
 
   @Override
-  public void lock(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public void lock(LockID lock, LockLevel level) {
     waitUntilRunning();
 
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        lockState.lock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(), level);
+        lockState.lock(this.remoteLockManager, this.threadManager.getThreadID(), level);
         break;
       } catch (final GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
@@ -156,13 +138,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public boolean tryLock(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public boolean tryLock(LockID lock, LockLevel level) {
     waitUntilRunning();
 
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        if (lockState.tryLock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(),
+        if (lockState.tryLock(this.remoteLockManager, this.threadManager.getThreadID(),
                               level)) {
           return true;
         } else {
@@ -177,8 +159,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException,
-      AbortedOperationException {
+  public boolean tryLock(LockID lock, LockLevel level, long timeout) throws InterruptedException {
     if (timeout < 0) { throw new IllegalArgumentException("tryLock is passed with negative timeout, timeout=" + timeout); }
 
     waitUntilRunning();
@@ -186,7 +167,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        if (lockState.tryLock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(),
+        if (lockState.tryLock(this.remoteLockManager, this.threadManager.getThreadID(),
                               level, timeout)) {
           return true;
         } else {
@@ -201,14 +182,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException,
-      AbortedOperationException {
+  public void lockInterruptibly(LockID lock, LockLevel level) throws InterruptedException {
     waitUntilRunning();
 
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        lockState.lockInterruptibly(this.abortableOperationManager, this.remoteLockManager,
+        lockState.lockInterruptibly(this.remoteLockManager,
                                     this.threadManager.getThreadID(), level);
         break;
       } catch (final GarbageLockException e) {
@@ -220,13 +200,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public void unlock(LockID lock, LockLevel level) {
     final ClientLock lockState = getOrCreateClientLockState(lock);
     lockState.unlock(this.remoteLockManager, this.threadManager.getThreadID(), level);
   }
 
   @Override
-  public Notify notify(final LockID lock, final Object waitObject) throws AbortedOperationException {
+  public Notify notify(LockID lock, Object waitObject) {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     final ThreadID thread = this.threadManager.getThreadID();
@@ -238,7 +218,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public Notify notifyAll(final LockID lock, final Object waitObject) throws AbortedOperationException {
+  public Notify notifyAll(LockID lock, Object waitObject) {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     final ThreadID thread = this.threadManager.getThreadID();
@@ -250,18 +230,17 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void wait(final LockID lock, final Object waitObject) throws InterruptedException, AbortedOperationException {
+  public void wait(LockID lock, Object waitObject) throws InterruptedException {
     wait(lock, NULL_LISTENER, waitObject);
   }
 
   @Override
-  public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException,
-      AbortedOperationException {
+  public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException {
     wait(lock, NULL_LISTENER, waitObject, timeout);
   }
 
   @Override
-  public boolean isLocked(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public boolean isLocked(LockID lock, LockLevel level) {
     waitUntilRunning();
     final ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
@@ -273,10 +252,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         continue;
       }
 
-      switch (cselc.getState()) {
-        default:
-          continue;
-
+      switch (cselc.getState()) { 
         case GREEDY_HOLDER_READ:
         case HOLDER_READ:
           if (level == LockLevel.READ) { return true; }
@@ -285,13 +261,16 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         case HOLDER_WRITE:
           if ((level == LockLevel.WRITE) || (level == LockLevel.SYNCHRONOUS_WRITE)) { return true; }
           break;
+        // $CASES-OMITTED$
+        default:
+          continue;
       }
     }
     return false;
   }
 
   @Override
-  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public boolean isLockedByCurrentThread(LockID lock, LockLevel level) {
     waitUntilRunning();
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
@@ -302,7 +281,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public boolean isLockedByCurrentThread(final LockLevel level) {
+  public boolean isLockedByCurrentThread(LockLevel level) {
     final ThreadID thread = this.threadManager.getThreadID();
     for (final ClientLock lockState : this.locks.values()) {
       if (lockState.isLockedBy(thread, level)) { return true; }
@@ -311,7 +290,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int localHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public int localHoldCount(LockID lock, LockLevel level) {
     waitUntilRunning();
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
@@ -322,7 +301,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int globalHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
+  public int globalHoldCount(LockID lock, LockLevel level) {
     waitUntilRunning();
 
     int holdCount = 0;
@@ -351,6 +330,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
             holdCount++;
           }
           break;
+        //$CASES-OMITTED$
         default:
           break;
       }
@@ -360,7 +340,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int globalPendingCount(final LockID lock) throws AbortedOperationException {
+  public int globalPendingCount(LockID lock) {
     waitUntilRunning();
 
     int pendingCount = 0;
@@ -371,11 +351,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
     for (final ClientServerExchangeLockContext cselc : queryLock(lock)) {
       switch (cselc.getState()) {
-        default:
-          continue;
         case PENDING_READ:
         case PENDING_WRITE:
           pendingCount++;
+          break;
+        //$CASES-OMITTED$
+        default:
+          continue;
       }
     }
 
@@ -383,16 +365,18 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int globalWaitingCount(final LockID lock) throws AbortedOperationException {
+  public int globalWaitingCount(LockID lock) {
     waitUntilRunning();
 
     int waiterCount = 0;
     for (final ClientServerExchangeLockContext cselc : queryLock(lock)) {
       switch (cselc.getState()) {
-        default:
-          continue;
         case WAITER:
           waiterCount++;
+          break;
+        //$CASES-OMITTED$
+        default:
+          continue;
       }
     }
 
@@ -407,7 +391,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void pinLock(final LockID lock, long awardID) {
+  public void pinLock(LockID lock, long awardID) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
       lockState.pinLock(awardID);
@@ -415,31 +399,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void unpinLock(final LockID lock, long awardID) {
+  public void unpinLock(LockID lock, long awardID) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
       lockState.unpinLock(awardID);
     }
-  }
-
-  @Override
-  public LockID generateLockIdentifier(final String str) {
-    throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
-  }
-
-  @Override
-  public LockID generateLockIdentifier(final long l) {
-    throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
-  }
-
-  @Override
-  public LockID generateLockIdentifier(final Object obj) {
-    throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
-  }
-
-  @Override
-  public LockID generateLockIdentifier(final Object obj, final String field) {
-    throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
 
   /***********************************/
@@ -451,11 +415,10 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   /***********************************/
 
   @Override
-  public void award(final NodeID node, final SessionID session, final LockID lock, final ThreadID thread,
-                    final ServerLockLevel level) {
+  public void award(SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     this.stateGuard.readLock().lock();
     try {
-      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(node, session)) {
+      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(session)) {
         this.logger.warn("Ignoring lock award from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
@@ -491,7 +454,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void notified(final LockID lock, final ThreadID thread) {
+  public void notified(LockID lock, ThreadID thread) {
     this.stateGuard.readLock().lock();
     try {
       if (isPausedOrRejoinInProgress()) {
@@ -516,18 +479,17 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void recall(final NodeID node, final SessionID session, final LockID lock, final ServerLockLevel level,
-                     final int lease) {
-    recall(node, session, lock, level, lease, false);
+  public void recall(SessionID session, LockID lock, ServerLockLevel level,
+                     int lease) {
+    recall(session, lock, level, lease, false);
   }
 
   @Override
-  public void recall(final NodeID node, final SessionID session, final LockID lock, final ServerLockLevel level,
-                     final int lease, final boolean batch) {
+  public void recall(SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch) {
     this.stateGuard.readLock().lock();
     try {
       if (isPausedOrRejoinInProgress() || isShutdown()
-          || (node != null && !sessionManager.isCurrentSession(node, session))) {
+          || (!sessionManager.isCurrentSession(session))) {
         this.logger.warn("Ignoring recall request from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + ", interestedLevel : " + level + " state: " + state);
         return;
@@ -537,7 +499,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       if (lockState != null) {
         if (lockState.recall(this.remoteLockManager, level, lease, batch)) {
           // schedule the greedy lease
-          lockLeaseTimer.schedule(new LeaseTask(node, session, lock, level, batch), lease, TimeUnit.MILLISECONDS);
+          lockLeaseTimer.schedule(new LeaseTask(session, lock, level, batch), lease, TimeUnit.MILLISECONDS);
         }
       }
     } finally {
@@ -546,11 +508,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void refuse(final NodeID node, final SessionID session, final LockID lock, final ThreadID thread,
-                     final ServerLockLevel level) {
+  public void refuse(SessionID session, LockID lock, ThreadID thread,
+                     ServerLockLevel level) {
     this.stateGuard.readLock().lock();
     try {
-      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(node, session)) {
+      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(session)) {
         this.logger.warn("Ignoring lock refuse from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
@@ -571,8 +533,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
    */
   @Override
   @FindbugsSuppressWarnings("NN_NAKED_NOTIFY")
-  public void info(final LockID lock, final ThreadID requestor,
-                   final Collection<ClientServerExchangeLockContext> contexts) {
+  public void info(LockID lock, ThreadID requestor,
+                   Collection<ClientServerExchangeLockContext> contexts) {
     this.stateGuard.readLock().lock();
     try {
       final Object old = this.inFlightLockQueries.put(requestor, contexts);
@@ -591,30 +553,29 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   /***********************************/
   /* BEGIN Stupid Wait Test METHODS */
   /**
-   * @throws AbortedOperationException
    *********************************/
 
   @Override
-  public void wait(final LockID lock, final WaitListener listener, final Object waitObject)
-      throws InterruptedException, AbortedOperationException {
+  public void wait(LockID lock, WaitListener listener, Object waitObject)
+      throws InterruptedException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     if (logger.isDebugEnabled()) {
       logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
     }
-    lockState.wait(this.abortableOperationManager, this.remoteLockManager, listener, this.threadManager.getThreadID(),
+    lockState.wait(this.remoteLockManager, listener, this.threadManager.getThreadID(),
                    waitObject);
   }
 
   @Override
-  public void wait(final LockID lock, final WaitListener listener, final Object waitObject, final long timeout)
-      throws InterruptedException, AbortedOperationException {
+  public void wait(LockID lock, WaitListener listener, Object waitObject, long timeout)
+      throws InterruptedException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     if (logger.isDebugEnabled()) {
       logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
     }
-    lockState.wait(this.abortableOperationManager, this.remoteLockManager, listener, this.threadManager.getThreadID(),
+    lockState.wait(this.remoteLockManager, listener, this.threadManager.getThreadID(),
                    waitObject, timeout);
   }
 
@@ -627,14 +588,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   /***********************************/
 
   @Override
-  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
-                                  final ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     this.stateGuard.writeLock().lock();
     try {
       this.state = this.state.initialize();
       if (this.state == State.STARTING) {
         for (final ClientLock cls : this.locks.values()) {
-          cls.initializeHandshake((ClientID) thisNode, handshakeMessage);
+          cls.initializeHandshake(this.clientIdProvider.getClientID(), handshakeMessage);
         }
       }
     } finally {
@@ -643,7 +603,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void pause(final NodeID remoteNode, final int disconnected) {
+  public void pause() {
     this.stateGuard.writeLock().lock();
     try {
       this.state = this.state.pause();
@@ -668,7 +628,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void unpause(final NodeID remoteNode, final int disconnected) {
+  public void unpause() {
     this.stateGuard.writeLock().lock();
     try {
       this.state = this.state.unpause();
@@ -684,10 +644,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   /***********************************/
   /* END ClientHandshake METHODS */
   /**
-   * @throws AbortedOperationException
    *********************************/
 
-  private void waitUntilRunning() throws AbortedOperationException {
+  private void waitUntilRunning() {
     this.stateGuard.readLock().lock();
     try {
       if (this.state == State.RUNNING) { return; }
@@ -704,7 +663,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
-          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           interrupted = true;
         }
       }
@@ -898,7 +856,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print("ClientLockManagerImpl [" + this.locks.size() + " locks]").flush();
     for (final ClientLock lock : this.locks.values()) {
       out.indent().print(lock).flush();
@@ -908,14 +866,14 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
-    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
+    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<>();
     for (final ClientLock lock : this.locks.values()) {
       contexts.addAll(lock.getStateSnapshot(this.remoteLockManager.getClientID()));
     }
     return contexts;
   }
 
-  private Collection<ClientServerExchangeLockContext> queryLock(final LockID lock) {
+  private Collection<ClientServerExchangeLockContext> queryLock(LockID lock) {
     final ThreadID current = this.threadManager.getThreadID();
 
     this.inFlightLockQueries.put(current, lock);
@@ -927,7 +885,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         synchronized (lock) {
           final Object data = this.inFlightLockQueries.get(current);
           if (data instanceof Collection) {
-            return (Collection<ClientServerExchangeLockContext>) data;
+            return castToCollection(data);
           } else {
             try {
               lock.wait();
@@ -942,6 +900,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private static Collection<ClientServerExchangeLockContext> castToCollection(Object data) {
+    return (Collection<ClientServerExchangeLockContext>) data;
+  }
+
   private void resubmitInFlightLockQueries() {
     for (final Entry<ThreadID, Object> query : this.inFlightLockQueries.entrySet()) {
       if (query.getValue() instanceof LockID) {
@@ -951,14 +914,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   class LeaseTask implements Runnable {
-    private final NodeID          node;
     private final SessionID       session;
     private final LockID          lock;
     private final ServerLockLevel level;
     private final boolean         batch;
 
-    public LeaseTask(NodeID node, SessionID session, LockID lock, ServerLockLevel level, boolean batch) {
-      this.node = node;
+    public LeaseTask(SessionID session, LockID lock, ServerLockLevel level, boolean batch) {
       this.session = session;
       this.lock = lock;
       this.level = level;
@@ -968,7 +929,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     @Override
     public void run() {
       try {
-        ClientLockManagerImpl.this.recall(node, session, lock, level, -1, batch);
+        ClientLockManagerImpl.this.recall(session, lock, level, -1, batch);
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
       } catch (PlatformRejoinException e) {
@@ -1027,7 +988,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public boolean isLockAwardValid(final LockID lock, final long awardID) {
+  public boolean isLockAwardValid(LockID lock, long awardID) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
       return false;
@@ -1037,7 +998,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public long getAwardIDFor(final LockID lock) {
+  public long getAwardIDFor(LockID lock) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
       throw new IllegalStateException("LockState shouldn't be null");

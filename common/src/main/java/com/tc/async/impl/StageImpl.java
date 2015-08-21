@@ -1,28 +1,13 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.async.impl;
 
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
@@ -37,13 +22,13 @@ import com.tc.util.concurrent.ThreadUtil;
 /**
  * The SEDA Stage
  */
-public class StageImpl implements Stage {
+public class StageImpl<EC> implements Stage<EC> {
   private static final long    pollTime = 3000; // This is the poor man's solution for
                                                 // stage
   private final String         name;
-  private final EventHandler   handler;
-  private final StageQueueImpl stageQueue;
-  private final WorkerThread[] threads;
+  private final EventHandler<EC> handler;
+  private final StageQueueImpl<EC> stageQueue;
+  private final WorkerThread<EC>[] threads;
   private final ThreadGroup    group;
   private final TCLogger       logger;
   private final int            sleepMs;
@@ -65,8 +50,9 @@ public class StageImpl implements Stage {
    * @param queueFactory : Factory used to create the queues
    * @param queueSize : Max queue Size allowed
    */
-  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler handler, int threadCount,
-                   int threadsToQueueRatio, ThreadGroup group, QueueFactory queueFactory, int queueSize) {
+  @SuppressWarnings("unchecked")
+  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler<EC> handler, int threadCount,
+                   int threadsToQueueRatio, ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
@@ -74,8 +60,7 @@ public class StageImpl implements Stage {
     if (threadsToQueueRatio > threadCount) {
       logger.warn("Thread to Queue Ratio " + threadsToQueueRatio + " > Worker Threads " + threadCount);
     }
-    this.stageQueue = new StageQueueImpl(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name,
-                                         queueSize);
+    this.stageQueue = new StageQueueImpl<>(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name, queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
@@ -99,7 +84,7 @@ public class StageImpl implements Stage {
   }
 
   @Override
-  public Sink getSink() {
+  public Sink<EC> getSink() {
     return stageQueue;
   }
 
@@ -111,14 +96,13 @@ public class StageImpl implements Stage {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs,
-                                    pausable, name);
+      threads[i] = new WorkerThread<>(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs, pausable, name);
       threads[i].start();
     }
   }
 
   private void stopThreads() {
-    for (WorkerThread thread : threads) {
+    for (WorkerThread<EC> thread : threads) {
       thread.shutdown();
       thread.interrupt();
     }
@@ -135,17 +119,16 @@ public class StageImpl implements Stage {
     return "StageImpl(" + name + ")";
   }
 
-  private static class WorkerThread extends Thread {
-    private final Source       source;
-    private final EventHandler handler;
+  private static class WorkerThread<EC> extends Thread {
+    private final Source<ContextWrapper<EC>>       source;
+    private final EventHandler<EC> handler;
     private volatile boolean   shutdownRequested = false;
     private final TCLogger     tcLogger;
     private final int          sleepMs;
     private final boolean      pausable;
     private final String       stageName;
 
-    public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group, TCLogger logger,
-                        int sleepMs, boolean pausable, String stageName) {
+    public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler, ThreadGroup group, TCLogger logger, int sleepMs, boolean pausable, String stageName) {
       super(group, name);
       tcLogger = logger;
       setDaemon(true);
@@ -177,16 +160,12 @@ public class StageImpl implements Stage {
     @Override
     public void run() {
       while (!shutdownRequested()) {
-        EventContext ctxt = null;
+        ContextWrapper<EC> ctxt = null;
         try {
           ctxt = source.poll(pollTime);
           if (ctxt != null) {
             handleStageDebugPauses();
-            if (ctxt instanceof SpecializedEventContext) {
-              ((SpecializedEventContext) ctxt).execute();
-            } else {
-              handler.handleEvent(ctxt);
-            }
+            ctxt.runWithHandler(handler);
           }
         } catch (InterruptedException ie) {
           if (shutdownRequested()) { return; }

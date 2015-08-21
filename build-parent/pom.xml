@@ -1,21 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-The contents of this file are subject to the Terracotta Public License Version
-2.0 (the "License"); You may not use this file except in compliance with the
-License. You may obtain a copy of the License at 
-
-     http://terracotta.org/legal/terracotta-public-license.
-
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-the specific language governing rights and limitations under the License.
-
-The Covered Software is Terracotta Platform.
-
-The Initial Developer of the Covered Software is 
-     Terracotta, Inc., a Software AG company
--->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -23,7 +6,7 @@ The Initial Developer of the Covered Software is
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-root</artifactId>
-    <version>4.3.1-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -42,24 +25,14 @@ The Initial Developer of the Covered Software is
     <group>unit</group>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <core-storage-api.version>1.3.2</core-storage-api.version>
-    <heap-core-storage.version>1.1.2</heap-core-storage.version>
-    <bigmemory-core-storage.version>2.0.0</bigmemory-core-storage.version>
-    <jetty.version>8.1.15.v20140411</jetty.version>
-    <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
+    <connection-api.version>1.0-SNAPSHOT</connection-api.version>
+    <entity-api.version>1.0-SNAPSHOT</entity-api.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <search.version>1.5.0</search.version>
-    <shiro.version>1.2.3</shiro.version>
-    <management-core-version>2.0.12</management-core-version>
-    <session-management.version>${project.version}</session-management.version>
-    <tc-messaging.version>1.0.0</tc-messaging.version>
-    <terracotta-license.version>1.1.4</terracotta-license.version>
-    <toolkit-api.version>2.7</toolkit-api.version> 
-    <toolkit-api-internal.version>1.17</toolkit-api-internal.version>
-    <!-- version of ehcache embedded inside toolkit -->
-    <ehcache.version>2.10.1-SNAPSHOT</ehcache.version>
-    <tcconfig.version>9.2</tcconfig.version>
-    <linked-child-process.version>1.0.8</linked-child-process.version>
+    <management-core-version>2.0.8</management-core-version>
+    <tc-messaging.version>2.0.0-SNAPSHOT</tc-messaging.version>
+    <terracotta-license.version>1.1.2</terracotta-license.version>
+
+    <tcconfig.version>10.0-SNAPSHOT</tcconfig.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.15</surefire.version>
@@ -82,13 +55,14 @@ The Initial Developer of the Covered Software is
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <surefire.min-memory>64m</surefire.min-memory>
-    <surefire.max-memory>1g</surefire.max-memory>
+    <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args/>
     <should_skip_tests>true</should_skip_tests>
     <surefire.jvm.mode>-server</surefire.jvm.mode>
     <surefire.argLine>${surefire.jvm.mode}
       -Xms${surefire.min-memory}
       -Xmx${surefire.max-memory}
+      -XX:MaxDirectMemorySize=1024m
       -XX:+HeapDumpOnOutOfMemoryError
       -DlistName=${listName}
       -Dtc.base-dir=${tc.base-dir} ${tc.config}
@@ -104,24 +78,29 @@ The Initial Developer of the Covered Software is
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>core-storage-api</artifactId>
-        <version>${core-storage-api.version}</version>
+        <groupId>org.terracotta</groupId>
+        <artifactId>connection-api</artifactId>
+        <version>${connection-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>heap-core-storage</artifactId>
-        <version>${heap-core-storage.version}</version>
+        <groupId>org.terracotta</groupId>
+        <artifactId>standard-cluster-services</artifactId>
+        <version>${entity-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>bigmemory-core-storage</artifactId>
-        <version>${bigmemory-core-storage.version}</version>
+        <groupId>org.terracotta</groupId>
+        <artifactId>entity-server-api</artifactId>
+        <version>${entity-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.terracottatech</groupId>
-        <artifactId>search</artifactId>
-        <version>${search.version}</version>
+        <groupId>org.terracotta</groupId>
+        <artifactId>entity-client-api</artifactId>
+        <version>${entity-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>test-entity-distribution</artifactId>
+        <version>${entity-api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -129,29 +108,9 @@ The Initial Developer of the Covered Software is
         <version>${tc-messaging.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>linked-child-process</artifactId>
-        <version>${linked-child-process.version}</version>
-      </dependency>
-      <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
         <version>1.2.17</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <version>1.1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-collections</groupId>
-        <artifactId>commons-collections</artifactId>
-        <version>3.2.1</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>2.5</version>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>
@@ -164,84 +123,9 @@ The Initial Developer of the Covered Software is
         <version>2.4</version>
       </dependency>
       <dependency>
-        <groupId>commons-httpclient</groupId>
-        <artifactId>commons-httpclient</artifactId>
-        <version>3.1</version>
-      </dependency>
-      <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>jmxremote_optional-tc</artifactId>
         <version>1.0.5</version>
-      </dependency>
-      <dependency>
-        <groupId>org.beanshell</groupId>
-        <artifactId>bsh</artifactId>
-        <version>2.0b4</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.xmlbeans</groupId>
-        <artifactId>xmlbeans</artifactId>
-        <version>2.4.0</version>
-        <exclusions>
-          <exclusion>
-            <groupId>stax</groupId>
-            <artifactId>stax-api</artifactId>
-          </exclusion>
-        </exclusions>        
-      </dependency>
-      <dependency>
-        <groupId>org.apache.xmlbeans</groupId>
-        <artifactId>xmlbeans-jsr173-api</artifactId>
-        <version>1.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-util</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.aggregate</groupId>
-        <artifactId>jetty-all-server</artifactId>
-        <version>${jetty.version}</version>
-        <!-- we exclude all flagged jars so we can switch them for Glassfish -->
-        <exclusions>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.servlet</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.security.auth.message</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.annotation</artifactId>       
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.mail.glassfish</artifactId>        
-          </exclusion>
-        </exclusions>        
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.servlet</artifactId>
-        <version>${javax.servlet.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.security.auth.message</artifactId>
-        <version>1.0.0.v201108011116</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.annotation</artifactId>
-        <version>1.1.0.v201108011116</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.mail.glassfish</artifactId>
-        <version>1.4.1.v201005082020</version>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
@@ -253,11 +137,6 @@ The Initial Developer of the Covered Software is
             <artifactId>junit</artifactId>
           </exclusion>
         </exclusions>        
-      </dependency>
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.0.67</version>
       </dependency>
       <dependency>
         <groupId>net.sourceforge</groupId>
@@ -300,62 +179,20 @@ The Initial Developer of the Covered Software is
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>hsqldb</groupId>
-        <artifactId>hsqldb</artifactId>
-        <version>1.7.2.2</version>
-      </dependency>
-      <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>2.3.3</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.core</groupId>
-        <artifactId>jersey-client</artifactId>
-        <version>2.6</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.media</groupId>
-        <artifactId>jersey-media-json-jackson</artifactId>
-        <version>2.6</version>
-      </dependency>
-
-      <!-- Glassfish substitutes -->
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.servlet-api</artifactId>
-        <version>3.0.1</version>
-      </dependency>
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.security.auth.message</artifactId>
-        <version>1.0</version>
-      </dependency>  
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.annotation</artifactId>
-        <version>1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.mail</artifactId>
-        <version>1.4.4</version>
       </dependency>
 
       <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
         <groupId>org.terracotta</groupId>
-        <artifactId>tcconfig</artifactId>
+        <artifactId>tc-config-parser</artifactId>
         <version>${tcconfig.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
-        <artifactId>tc-l1-reconnect-properties</artifactId>
-        <version>${tcconfig.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>tcstats</artifactId>
+        <artifactId>tcconfig-schema</artifactId>
         <version>${tcconfig.version}</version>
       </dependency>
 
@@ -402,11 +239,6 @@ The Initial Developer of the Covered Software is
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -536,46 +368,6 @@ The Initial Developer of the Covered Software is
               </configuration>
             </execution>
           </executions>
-        </plugin>        
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>2.3.1</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>test-jar</goal>
-              </goals>
-              <configuration>
-                <skip>${skip.testjar}</skip>
-                <excludes>
-                  <exclude>**/*Test.class</exclude>
-                  <exclude>build-data.txt</exclude>
-                </excludes>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>2.2.1</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>test-jar</goal>
-              </goals>
-              <configuration>
-                <forceCreation>true</forceCreation>
-                <excludeResources>true</excludeResources>
-                <excludes>
-                  <exclude>**/*Test.java</exclude>
-                  <exclude>**/*TestApp.java</exclude>
-                  <exclude>build-data.txt</exclude>
-                </excludes>
-              </configuration>
-            </execution>
-          </executions>
         </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings
           only. It has no influence on the Maven build itself. -->
@@ -691,7 +483,7 @@ The Initial Developer of the Covered Software is
                   <action>
                     <ignore/>
                   </action>
-                </pluginExecution>                
+                </pluginExecution>
               </pluginExecutions>
             </lifecycleMappingMetadata>
           </configuration>
@@ -707,18 +499,11 @@ The Initial Developer of the Covered Software is
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-      </plugin>      
+      </plugin>
     </plugins>
   </build>
 
   <profiles>
-    <profile>
-      <id>system-tests</id>
-      <properties>
-        <should_skip_tests>false</should_skip_tests>
-      </properties>
-    </profile>
-
     <profile>
       <id>client-jvm</id>
       <properties>
@@ -745,7 +530,7 @@ The Initial Developer of the Covered Software is
     </profile>
 
     <profile>
-      <id>check-short</id>
+      <id>check-short</id>   
       <properties>
         <should_skip_tests>false</should_skip_tests>
       </properties>     
@@ -754,7 +539,7 @@ The Initial Developer of the Covered Software is
           <plugin>
             <groupId>org.reflections</groupId>
             <artifactId>reflections-maven</artifactId>
-            <version>0.9.9-RC1</version>
+            <version>0.9.9-RC2</version>
             <configuration>
               <scanners>org.reflections.scanners.TypeAnnotationsScanner</scanners>
               <destinations>${project.build.directory}/reflections.xml</destinations>

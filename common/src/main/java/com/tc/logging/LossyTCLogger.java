@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.logging;
 
@@ -24,7 +11,6 @@ import com.tc.util.Assert;
 public class LossyTCLogger implements TCLogger {
 
   public static final long DEFAULT_LOG_TIME_INTERVAL  = 5000; // 5 sec
-  public static final long DEFAULT_LOG_COUNT_INTERVAL = 10000; // 10000 Messages once
 
   public static enum LossyTCLoggerType {
     TIME_BASED, COUNT_BASED
@@ -179,7 +165,7 @@ public class LossyTCLogger implements TCLogger {
   }
 
   interface LogOrNot {
-    boolean canLog(final Object message);
+    boolean canLog(Object message);
 
     boolean isLoggingEnabledNow();
   }
@@ -196,7 +182,7 @@ public class LossyTCLogger implements TCLogger {
     }
 
     @Override
-    public synchronized boolean canLog(final Object message) {
+    public synchronized boolean canLog(Object message) {
       long now = System.currentTimeMillis();
 
       if (this.lossyLogOnlyIfSameContent) {
@@ -236,7 +222,7 @@ public class LossyTCLogger implements TCLogger {
     }
 
     @Override
-    public synchronized boolean canLog(final Object message) {
+    public synchronized boolean canLog(Object message) {
       if (this.lossyLogOnlyIfSameContent) {
         if ((this.prevMessage == null) || !(this.prevMessage.equals(message))) {
           this.prevMessage = message;

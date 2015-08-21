@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
@@ -41,19 +28,21 @@ public class TunnelingMessageConnection implements MessageConnection {
    * @param channel outgoing network channel, calls to {@link #writeMessage(Message)} will drop messages here and send
    *        to the other side
    */
-  public TunnelingMessageConnection(final MessageChannel channel, boolean isJmxConnectionServer) {
+  public TunnelingMessageConnection(MessageChannel channel, boolean isJmxConnectionServer) {
     this.isJmxConnectionServer = new AtomicBoolean(isJmxConnectionServer);
-    this.inbox = new LinkedBlockingQueue<Message>();
+    this.inbox = new LinkedBlockingQueue<>();
     this.channel = channel;
   }
 
+  @Override
   public void close() {
     if (closed.attemptSet()) {
       inbox.clear();
     }
   }
 
-  public void connect(final Map environment) {
+  @Override
+  public void connect(@SuppressWarnings("rawtypes") Map environment) {
     if (connected.attemptSet()) {
       if (!isJmxConnectionServer.get()) {
         JmxRemoteTunnelMessage connectMessage = (JmxRemoteTunnelMessage) channel
@@ -64,10 +53,12 @@ public class TunnelingMessageConnection implements MessageConnection {
     }
   }
 
+  @Override
   public String getConnectionId() {
     return channel.getRemoteAddress().getStringForm();
   }
 
+  @Override
   public Message readMessage() throws IOException {
     Message m;
     do {
@@ -81,7 +72,8 @@ public class TunnelingMessageConnection implements MessageConnection {
     return m;
   }
 
-  public void writeMessage(final Message outboundMessage) throws IOException {
+  @Override
+  public void writeMessage(Message outboundMessage) throws IOException {
     if (closed.isSet()) { throw new IOException("connection closed"); }
 
     JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) channel
@@ -93,7 +85,7 @@ public class TunnelingMessageConnection implements MessageConnection {
   /**
    * This should only be invoked from the SEDA event handler that receives incoming network messages.
    */
-  void incomingNetworkMessage(final Message inboundMessage) {
+  void incomingNetworkMessage(Message inboundMessage) {
     if (closed.isSet()) { return; }
     inbox.add(inboundMessage);
   }

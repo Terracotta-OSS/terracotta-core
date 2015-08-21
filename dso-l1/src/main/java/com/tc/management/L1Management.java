@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -62,7 +50,7 @@ public class L1Management extends TerracottaManagement {
 
   private volatile boolean               stopped;
 
-  public L1Management(final TunnelingEventHandler tunnelingHandler, final String rawConfigText, final TCClient client) {
+  public L1Management(TunnelingEventHandler tunnelingHandler, String rawConfigText, TCClient client) {
     super();
 
     started = new SetOnceFlag();
@@ -115,7 +103,7 @@ public class L1Management extends TerracottaManagement {
     }
   }
 
-  public synchronized void start(final boolean createDedicatedMBeanServer) {
+  public synchronized void start(boolean createDedicatedMBeanServer) {
     started.set();
 
     Thread registrationThread = new Thread(new Runnable() {
@@ -177,7 +165,7 @@ public class L1Management extends TerracottaManagement {
   }
 
   @Override
-  public Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws IOException {
+  public Object findMBean(ObjectName objectName, Class<?> mBeanInterface) throws IOException {
     if (objectName.equals(L1MBeanNames.L1INFO_PUBLIC)) return l1InfoBean;
     else {
       synchronized (mBeanServerLock) {
@@ -191,7 +179,7 @@ public class L1Management extends TerracottaManagement {
     return l1InfoBean;
   }
 
-  private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException,
+  private void attemptToRegister(boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException,
       MBeanRegistrationException, NotCompliantMBeanException, MalformedObjectNameException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
@@ -230,7 +218,7 @@ public class L1Management extends TerracottaManagement {
 
     // This will make the JobExecutor threads in remote JMX idle timeout after 5s (instead of 5 minutes)
     try {
-      Class c = Class.forName("com.sun.jmx.remote.opt.util.JobExecutor");
+      Class<?> c = Class.forName("com.sun.jmx.remote.opt.util.JobExecutor");
       Method method = c.getMethod("setWaitingTime", Long.TYPE);
       method.setAccessible(true);
       method.invoke(null, 5000L);
@@ -248,7 +236,7 @@ public class L1Management extends TerracottaManagement {
                   + " up/down you may see stack traces printed to the log");
     }
     try {
-      final Map environment = new HashMap();
+      final Map<String, Object> environment = new HashMap<>();
       environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(TunnelingMessageConnectionServer.TUNNELING_HANDLER, tunnelingHandler);

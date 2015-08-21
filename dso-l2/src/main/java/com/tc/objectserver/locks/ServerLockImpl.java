@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.objectserver.locks;
 
@@ -101,7 +88,8 @@ public final class ServerLockImpl extends AbstractServerLock {
     ServerLockContext request = getNextRequestIfCanAward(helper);
     if (request == null) { return; }
 
-    switch (request.getState().getLockLevel()) {
+    ServerLockLevel lockLevel = request.getState().getLockLevel();
+    switch (lockLevel) {
       case READ:
         add(request, helper);
         awardAllReadsGreedily(helper, request);
@@ -121,6 +109,8 @@ public final class ServerLockImpl extends AbstractServerLock {
           }
         }
         break;
+      default:
+        throw new AssertionError(lockLevel);
     }
   }
 
@@ -139,6 +129,7 @@ public final class ServerLockImpl extends AbstractServerLock {
           switch (iter.next().getState().getType()) {
             case GREEDY_HOLDER:
               break;
+            //$CASES-OMITTED$
             default:
               iter.addPrevious(request);
               return;
@@ -147,6 +138,7 @@ public final class ServerLockImpl extends AbstractServerLock {
 
         this.addLast(request);
         break;
+      //$CASES-OMITTED$
       default:
         throw new IllegalStateException("Only holders context should be passed " + request.getState());
     }
@@ -154,13 +146,14 @@ public final class ServerLockImpl extends AbstractServerLock {
 
   private void awardAllReadsGreedily(LockHelper helper, ServerLockContext request) {
     // fetch all the read requests and check if has write pending requests as well
-    List<ServerLockContext> contexts = new ArrayList<ServerLockContext>();
+    List<ServerLockContext> contexts = new ArrayList<>();
     SinglyLinkedListIterator<ServerLockContext> iterator = iterator();
     boolean hasPendingWrite = false;
     while (iterator.hasNext()) {
       ServerLockContext context = iterator.next();
       if (context.isPending()) {
-        switch (context.getState().getLockLevel()) {
+        ServerLockLevel lockLevel = context.getState().getLockLevel();
+        switch (lockLevel) {
           case READ:
             iterator.remove();
             contexts.add(context);
@@ -168,11 +161,13 @@ public final class ServerLockImpl extends AbstractServerLock {
           case WRITE:
             hasPendingWrite = true;
             break;
+          default:
+            throw new AssertionError(lockLevel);
         }
       }
     }
 
-    ArrayList<ClientID> listOfClients = new ArrayList<ClientID>();
+    ArrayList<ClientID> listOfClients = new ArrayList<>();
     for (ServerLockContext context : contexts) {
       if (!listOfClients.contains(context.getClientID())) {
         awardLockGreedily(helper, context);
@@ -206,7 +201,8 @@ public final class ServerLockImpl extends AbstractServerLock {
     boolean hasGreedyReadHolder = false;
 
     for (ClientServerExchangeLockContext cselc : serverLockContexts) {
-      switch (cselc.getState().getType()) {
+      Type type = cselc.getState().getType();
+      switch (type) {
         case GREEDY_HOLDER:
           // This is the case when a client holds a greedy write and a read recall is made
           // In such a case we would add this client as a GREEDY READ, process pending requests
@@ -252,6 +248,8 @@ public final class ServerLockImpl extends AbstractServerLock {
             addWaiter(waiter, helper);
           }
           break;
+        default:
+          throw new AssertionError(type);
       }
     }
 
@@ -277,7 +275,7 @@ public final class ServerLockImpl extends AbstractServerLock {
                                                                                            greedyHolder.getClientID(),
                                                                                            greedyHolder.getThreadID(),
                                                                                            level);
-      helper.getLockSink().add(lrc);
+      helper.getLockSink().addMultiThreaded(lrc);
       isRecalled = true;
     }
   }
@@ -288,13 +286,16 @@ public final class ServerLockImpl extends AbstractServerLock {
 
   private void awardLockGreedily(LockHelper helper, ServerLockContext request, boolean toRespond) {
     State state = null;
-    switch (request.getState().getLockLevel()) {
+    ServerLockLevel lockLevel = request.getState().getLockLevel();
+    switch (lockLevel) {
       case READ:
         state = State.GREEDY_HOLDER_READ;
         break;
       case WRITE:
         state = State.GREEDY_HOLDER_WRITE;
         break;
+      default:
+        throw new AssertionError(lockLevel);
     }
     // remove holders (from the same client) who have given the lock non greedily till now
     removeNonGreedyHoldersAndPendingOfSameClient(request, helper);
@@ -345,7 +346,7 @@ public final class ServerLockImpl extends AbstractServerLock {
   }
 
   private List<ServerLockContext> getGreedyHolders() {
-    List<ServerLockContext> contexts = new ArrayList<ServerLockContext>();
+    List<ServerLockContext> contexts = new ArrayList<>();
     SinglyLinkedListIterator<ServerLockContext> iterator = iterator();
     while (iterator.hasNext()) {
       ServerLockContext context = iterator.next();
@@ -353,6 +354,7 @@ public final class ServerLockImpl extends AbstractServerLock {
         case GREEDY_HOLDER:
           contexts.add(context);
           break;
+        //$CASES-OMITTED$
         default:
           return contexts;
       }
@@ -369,6 +371,7 @@ public final class ServerLockImpl extends AbstractServerLock {
           // can award greedily
           if (context.getClientID().equals(cid)) { return context; }
           break;
+        //$CASES-OMITTED$
         default:
           return null;
       }
@@ -381,7 +384,8 @@ public final class ServerLockImpl extends AbstractServerLock {
     SinglyLinkedListIterator<ServerLockContext> iterator = iterator();
     while (iterator.hasNext()) {
       ServerLockContext next = iterator.next();
-      switch (next.getState().getType()) {
+      Type type = next.getState().getType();
+      switch (type) {
         case GREEDY_HOLDER:
           break;
         case TRY_PENDING:
@@ -398,6 +402,8 @@ public final class ServerLockImpl extends AbstractServerLock {
           break;
         case WAITER:
           return;
+        default:
+          throw new AssertionError(type);
       }
     }
   }

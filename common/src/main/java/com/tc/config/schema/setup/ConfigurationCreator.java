@@ -1,22 +1,10 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
-import com.tc.config.schema.repository.MutableBeanRepository;
+import com.tc.config.schema.repository.BeanRepository;
+import org.terracotta.config.TcConfiguration;
 
 import java.io.File;
 
@@ -26,13 +14,9 @@ import java.io.File;
 public interface ConfigurationCreator {
 
   /**
-   * Load up the configuration into the various repositories.
+   * Load up the configuration.
    */
-  void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
-                                           MutableBeanRepository l2sBeanRepository,
-                                           MutableBeanRepository systemBeanRepository,
-                                           MutableBeanRepository tcPropertiesRepository, boolean isClient)
-      throws ConfigurationSetupException;
+  void createConfiguration() throws ConfigurationSetupException;
 
   /**
    * @return the directory containing the configuration file from which config was loaded,
@@ -51,9 +35,14 @@ public interface ConfigurationCreator {
    * Return the config text as retrieved from source.
    */
   String rawConfigText();
+  
+  String source();
 
   String describeSources();
 
-  String reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogConfig,
+  String reloadServersConfiguration(boolean shouldLogConfig,
                                     boolean reportToConsole) throws ConfigurationSetupException;
+
+
+  TcConfiguration getParsedConfiguration();
 }

@@ -1,23 +1,8 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.locks;
 
-import com.tc.abortable.AbortableOperationManager;
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCNotRunningException;
@@ -29,7 +14,6 @@ import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.SynchronizedSinglyLinkedList;
@@ -69,7 +53,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private long                        awardId       = NULL_AWARD_ID;
 
-  public ClientLockImpl(final LockID lock) {
+  public ClientLockImpl(LockID lock) {
     this.lock = lock;
   }
 
@@ -100,11 +84,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * to the server.
    */
   @Override
-  public void lock(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                   final ThreadID thread, final LockLevel level) throws GarbageLockException, AbortedOperationException {
+  public void lock(RemoteLockManager remote,
+                   ThreadID thread, LockLevel level) throws GarbageLockException {
     markUsed();
-    if (!tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()) {
-      acquireQueued(abortableOperationManager, remote, thread, level);
+    if (!tryAcquireLocally(remote, thread, level).isSuccess()) {
+      acquireQueued(remote, thread, level);
     }
   }
 
@@ -113,15 +97,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * to the server
    */
   @Override
-  public void lockInterruptibly(final AbortableOperationManager abortableOperationManager,
-                                final RemoteLockManager remote, final ThreadID thread, final LockLevel level)
-      throws InterruptedException, GarbageLockException, AbortedOperationException {
+  public void lockInterruptibly(RemoteLockManager remote, ThreadID thread, LockLevel level)
+      throws InterruptedException, GarbageLockException {
     markUsed();
     if (Thread.interrupted()) {
-      handleInterrupt(abortableOperationManager);
+      throw new InterruptedException();
     }
-    if (!tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()) {
-      acquireQueuedInterruptibly(abortableOperationManager, remote, thread, level);
+    if (!tryAcquireLocally(remote, thread, level).isSuccess()) {
+      acquireQueuedInterruptibly(remote, thread, level);
     }
   }
 
@@ -131,16 +114,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * get a little more complicated.
    */
   @Override
-  public boolean tryLock(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                         final ThreadID thread, final LockLevel level) throws GarbageLockException,
-      AbortedOperationException {
+  public boolean tryLock(RemoteLockManager remote,
+                         ThreadID thread, LockLevel level) throws GarbageLockException {
     markUsed();
-    final LockAcquireResult result = tryAcquireLocally(remote, abortableOperationManager, thread, level);
+    final LockAcquireResult result = tryAcquireLocally(remote, thread, level);
     if (result.isKnownResult()) {
       return result.isSuccess();
     } else {
       try {
-        return acquireQueuedTimeout(abortableOperationManager, remote, thread, level, 0);
+        return acquireQueuedTimeout(remote, thread, level, 0);
       } catch (final InterruptedException e) {
         Thread.currentThread().interrupt();
         return false;
@@ -152,23 +134,21 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Try to acquire locally - if we fail then queue the request and defer to the server.
    */
   @Override
-  public boolean tryLock(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                         final ThreadID thread, final LockLevel level, final long timeout) throws InterruptedException,
-      GarbageLockException, AbortedOperationException {
+  public boolean tryLock(RemoteLockManager remote,
+                         ThreadID thread, LockLevel level, long timeout) throws InterruptedException, GarbageLockException {
     markUsed();
     if (Thread.interrupted()) {
-      handleInterrupt(abortableOperationManager);
+      throw new InterruptedException();
     }
-    return tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()
-           || acquireQueuedTimeout(abortableOperationManager, remote, thread, level, timeout);
+    return tryAcquireLocally(remote, thread, level).isSuccess()
+           || acquireQueuedTimeout(remote, thread, level, timeout);
   }
 
   /*
    * Release the lock and unpark an acquire if release tells us that queued acquires may now succeed.
    */
   @Override
-  public void unlock(final RemoteLockManager remote, final ThreadID thread, final LockLevel level)
-      throws AbortedOperationException {
+  public void unlock(RemoteLockManager remote, ThreadID thread, LockLevel level) {
     markUsed();
     if (release(remote, thread, level)) {
       unparkFirstQueuedAcquire();
@@ -180,7 +160,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * thread
    */
   @Override
-  public boolean notify(final RemoteLockManager remote, final ThreadID thread, final Object waitObject) {
+  public boolean notify(RemoteLockManager remote, ThreadID thread, Object waitObject) {
     markUsed();
     return notify(thread, false);
   }
@@ -189,14 +169,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Find all the lock waiters in the state and unpark them.
    */
   @Override
-  public boolean notifyAll(final RemoteLockManager remote, final ThreadID thread, final Object waitObject) {
+  public boolean notifyAll(RemoteLockManager remote, ThreadID thread, Object waitObject) {
     markUsed();
     return notify(thread, true);
   }
 
-  private boolean notify(final ThreadID thread, final boolean all) {
+  private boolean notify(ThreadID thread, boolean all) {
     boolean result;
-    final Collection<LockWaiter> waiters = new ArrayList<LockWaiter>();
+    final Collection<LockWaiter> waiters = new ArrayList<>();
 
     synchronized (this) {
       if (!isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
@@ -231,10 +211,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public void wait(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                   final WaitListener listener, final ThreadID thread, final Object waitObject)
-      throws InterruptedException, AbortedOperationException {
-    wait(abortableOperationManager, remote, listener, thread, waitObject, 0);
+  public void wait(RemoteLockManager remote,
+                   WaitListener listener, ThreadID thread, Object waitObject)
+      throws InterruptedException {
+    wait(remote, listener, thread, waitObject, 0);
   }
 
   /*
@@ -243,12 +223,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * operations...
    */
   @Override
-  public void wait(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                   final WaitListener listener, final ThreadID thread, final Object waitObject, final long timeout)
-      throws InterruptedException, AbortedOperationException {
+  public void wait(RemoteLockManager remote,
+                   WaitListener listener, ThreadID thread, Object waitObject, long timeout)
+      throws InterruptedException {
     markUsed();
     if (Thread.interrupted()) {
-      handleInterrupt(abortableOperationManager);
+      throw new InterruptedException();
     }
 
     if (!isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
@@ -290,7 +270,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     } finally {
       if (waiter != null && !waiter.isRejoinInProgress()) {
         moveWaiterToPending(waiter);
-        acquireAll(abortableOperationManager, remote, thread, waiter.getReacquires());
+        acquireAll(remote, thread, waiter.getReacquires());
       } else if (!isLockedBy(thread, WRITE_LEVELS)) {
         LOGGER.fatal("Potential lock reacquire failure after wait by " + thread + " in:\n" + this);
       }
@@ -304,8 +284,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private synchronized LockWaiter releaseAllAndPushWaiter(final RemoteLockManager remote, final ThreadID thread,
-                                                          final Object waitObject, final long timeout) {
+  private synchronized LockWaiter releaseAllAndPushWaiter(RemoteLockManager remote, ThreadID thread,
+                                                          Object waitObject, long timeout) {
     final Stack<LockHold> holds = releaseAll(remote, thread);
     final LockWaiter waiter = new LockWaiter(thread, waitObject, holds, timeout);
     addLast(waiter);
@@ -319,8 +299,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return waiter;
   }
 
-  private synchronized Stack<LockHold> releaseAll(final RemoteLockManager remote, final ThreadID thread) {
-    final Stack<LockHold> holds = new Stack<LockHold>();
+  private synchronized Stack<LockHold> releaseAll(RemoteLockManager remote, ThreadID thread) {
+    final Stack<LockHold> holds = new Stack<>();
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
       final LockStateNode node = it.next();
       if ((node instanceof LockHold) && node.getOwner().equals(thread)) {
@@ -331,8 +311,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return holds;
   }
 
-  private void waitOnLockWaiter(final RemoteLockManager remote, final ThreadID thread, final LockWaiter waiter,
-                                final WaitListener listener) throws InterruptedException {
+  private void waitOnLockWaiter(RemoteLockManager remote, ThreadID thread, LockWaiter waiter,
+                                WaitListener listener) throws InterruptedException {
     listener.handleWaitEvent();
     try {
       if (waiter.getTimeout() == 0) {
@@ -352,34 +332,33 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (waiter.isRejoinInProgress()) { throw new PlatformRejoinException(); }
   }
 
-  private void acquireAll(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                          final ThreadID thread, final Stack<PendingLockHold> acquires) {
-    Stack<PendingLockHold> acquiresClone = (Stack<PendingLockHold>) acquires.clone();
+  private void acquireAll(RemoteLockManager remote,
+                          ThreadID thread, Stack<PendingLockHold> acquires) {
+    Stack<PendingLockHold> acquiresClone = copyStack(acquires);
     while (!acquires.isEmpty()) {
       final PendingLockHold qa = acquires.pop();
       try {
-        acquireQueued(abortableOperationManager, remote, thread, qa.getLockLevel(), qa);
+        acquireQueued(remote, thread, qa.getLockLevel(), qa);
       } catch (final GarbageLockException e) {
         throw new AssertionError("GarbageLockException thrown while reacquiring locks after wait");
-      } catch (AbortedOperationException e) {
-        // If it came here, it failed because of flush, hence this means no lock was taken from the stack and hence
-        // throwing AbortedOperationException is fine
-        // TODO: looks wrong, for each PendingLockHold in acquires which sees AbortedOperationException
-        // we remove all PendingLockHold present in acquiresClone
-        for (PendingLockHold pending : acquiresClone) {
-          remove(pending);
-        }
       }
     }
   }
 
+  private static <T> Stack<T> copyStack(Stack<T> toCopy) {
+    Stack<T> newStack = new Stack<>();
+    newStack.addAll(toCopy);
+    return newStack;
+  }
+
   @Override
-  public synchronized Collection<ClientServerExchangeLockContext> getStateSnapshot(final ClientID client) {
-    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
+  public synchronized Collection<ClientServerExchangeLockContext> getStateSnapshot(ClientID client) {
+    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<>();
 
     switch (this.greediness) {
       case GARBAGE:
         break;
+      //$CASES-OMITTED$
       default:
         final ClientServerExchangeLockContext c = this.greediness.toContext(this.lock, client);
         if (c != null) {
@@ -420,7 +399,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public synchronized boolean isLocked(final LockLevel level) {
+  public synchronized boolean isLocked(LockLevel level) {
     for (final LockStateNode s : this) {
       if ((s instanceof LockHold) && (((LockHold) s).getLockLevel().equals(level))) { return true; }
     }
@@ -428,7 +407,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public synchronized boolean isLockedBy(final ThreadID thread, final LockLevel level) {
+  public synchronized boolean isLockedBy(ThreadID thread, LockLevel level) {
     for (final LockStateNode s : this) {
       if ((s instanceof LockHold) && (((LockHold) s).getLockLevel().equals(level) || (level == null))
           && s.getOwner().equals(thread)) { return true; }
@@ -436,7 +415,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return false;
   }
 
-  public synchronized boolean isLockedBy(final ThreadID thread, final Set<LockLevel> levels) {
+  public synchronized boolean isLockedBy(ThreadID thread, Set<LockLevel> levels) {
     for (final LockStateNode s : this) {
       if ((s instanceof LockHold) && s.getOwner().equals(thread) && levels.contains(((LockHold) s).getLockLevel())) { return true; }
     }
@@ -444,7 +423,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public synchronized int holdCount(final LockLevel level) {
+  public synchronized int holdCount(LockLevel level) {
     int holders = 0;
     for (final LockStateNode s : this) {
       if ((s instanceof LockHold) && ((LockHold) s).getLockLevel().equals(level)) {
@@ -477,7 +456,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * lock
    */
   @Override
-  public void notified(final ThreadID thread) {
+  public void notified(ThreadID thread) {
     LockWaiter waiter = null;
     synchronized (this) {
       for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
@@ -501,13 +480,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Move the given waiters reacquire nodes into the queue
    */
-  private synchronized void moveWaiterToPending(final LockWaiter waiter) {
+  private synchronized void moveWaiterToPending(LockWaiter waiter) {
     if ((waiter != null) && (remove(waiter) != null)) {
       addPendingAcquires(waiter);
     }
   }
 
-  private synchronized void addPendingAcquires(final LockWaiter waiter) {
+  private synchronized void addPendingAcquires(LockWaiter waiter) {
     if (!waiter.isRejoinInProgress()) {
       Stack<PendingLockHold> reacquires = waiter.getReacquires();
       java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
@@ -524,7 +503,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * triggered by a tryLock that no longer requires the lock.
    */
   @Override
-  public synchronized boolean recall(final RemoteLockManager remote, final ServerLockLevel interest, final int lease,
+  public synchronized boolean recall(RemoteLockManager remote, ServerLockLevel interest, int lease,
                                      boolean batch) {
     // transition the greediness state
     this.greediness = this.greediness.recalled(this, lease, interest);
@@ -543,7 +522,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Called by the stage thread to indicate that the tryLock attempt has failed.
    */
   @Override
-  public void refuse(final ThreadID thread, final ServerLockLevel level) {
+  public void refuse(ThreadID thread, ServerLockLevel level) {
     PendingLockHold acquire;
     synchronized (this) {
       acquire = getQueuedAcquire(thread, level);
@@ -561,7 +540,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Called by the stage thread when the server has awarded a lock (either greedy or per thread).
    */
   @Override
-  public void award(final RemoteLockManager remote, final ThreadID thread, final ServerLockLevel level, long lockAwardID)
+  public void award(RemoteLockManager remote, ThreadID thread, ServerLockLevel level, long lockAwardID)
       throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       synchronized (this) {
@@ -649,12 +628,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Try to acquire the lock (optionally with delegation to the server)
    */
-  private LockAcquireResult tryAcquire(final AbortableOperationManager abortableOperationManager,
-                                       final RemoteLockManager remote, final ThreadID thread, final LockLevel level,
-                                       final long timeout, final PendingLockHold node) throws GarbageLockException,
-      AbortedOperationException {
+  private LockAcquireResult tryAcquire(RemoteLockManager remote, ThreadID thread, LockLevel level,
+                                       long timeout, PendingLockHold node) throws GarbageLockException {
     // try to do things locally first...
-    final LockAcquireResult result = tryAcquireLocally(remote, abortableOperationManager, thread, level);
+    final LockAcquireResult result = tryAcquireLocally(remote, thread, level);
     if (result.isKnownResult()) {
       return result;
     } else {
@@ -713,10 +690,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Attempt to acquire the lock at the given level locally
    */
-  private LockAcquireResult tryAcquireLocally(final RemoteLockManager remote,
-                                              final AbortableOperationManager abortableOperationManager,
-                                              final ThreadID thread, final LockLevel level)
-      throws GarbageLockException, AbortedOperationException {
+  private LockAcquireResult tryAcquireLocally(RemoteLockManager remote,
+                                              ThreadID thread, LockLevel level)
+      throws GarbageLockException {
     // if this is a concurrent acquire then just let it through.
     if (level == LockLevel.CONCURRENT) { return LockAcquireResult.SHARED_SUCCESS; }
 
@@ -727,7 +703,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         try {
           ClientLockImpl.this.wait();
         } catch (InterruptedException e) {
-          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           interrupted = true;
         }
         result = tryAcquireUsingThreadState(remote, thread, level);
@@ -748,8 +723,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread,
-                                                       final LockLevel level) {
+  private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, ThreadID thread,
+                                                       LockLevel level) {
     // check if flush in progress then wait for flush
     if (isFlushInProgress()) { return LockAcquireResult.WAIT_FOR_FLUSH; }
     // What can we glean from local lock state
@@ -786,8 +761,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Unlock and return true if acquires might now succeed.
    */
-  private boolean release(final RemoteLockManager remote, final ThreadID thread, final LockLevel level)
-      throws AbortedOperationException {
+  private boolean release(RemoteLockManager remote, ThreadID thread, LockLevel level) {
     // concurrent unlocks are implicitly okay - we don't monitor concurrent locks
     if (level == LockLevel.CONCURRENT) {
       // concurrent unlocks do not change the state - no reason why queued acquires would succeed
@@ -795,7 +769,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     LockHold unlock = null;
-    boolean aborted = false;
     synchronized (this) {
       for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
         final LockStateNode s = it.next();
@@ -813,15 +786,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       if (!unlock.getLockLevel().isSyncWrite() && !flushOnUnlock(unlock)) { return release(remote, unlock); }
     }
 
-    if (unlock.getLockLevel().isSyncWrite()) {
-      // wait for the server to receive all transactions for this lock
-      try {
-        remote.waitForServerToReceiveTxnsForThisLock(this.lock);
-      } catch (AbortedOperationException e) {
-        aborted = true;
-      }
-    }
-
     synchronized (this) {
       final ServerLockLevel flushLevel = greediness.getFlushLevel();
       // only one unlock callback is added for flushing the lock
@@ -833,12 +797,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           flushCallback.transactionsForLockFlushed(lock);
         }
       } else {
-        boolean rv = release(remote, unlock);
-        if (aborted) { throw new AbortedOperationException(); }
-        return rv;
+        return release(remote, unlock);
       }
     }
-    if (aborted) { throw new AbortedOperationException(); }
 
     return true;
   }
@@ -859,7 +820,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private synchronized boolean release(final RemoteLockManager remote, final LockHold unlock) {
+  private synchronized boolean release(RemoteLockManager remote, LockHold unlock) {
     remove(unlock);
     if (this.greediness.isFree()) {
       remoteUnlock(remote, unlock);
@@ -871,7 +832,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return true;
   }
 
-  private void remoteUnlock(final RemoteLockManager remote, final LockHold unlock) {
+  private void remoteUnlock(RemoteLockManager remote, LockHold unlock) {
     for (final LockStateNode s : this) {
       if (s == unlock) {
         continue;
@@ -890,7 +851,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     remote.unlock(this.lock, unlock.getOwner(), ServerLockLevel.fromClientLockLevel(unlock.getLockLevel()));
   }
 
-  private synchronized boolean flushOnUnlock(final LockHold unlock) {
+  private synchronized boolean flushOnUnlock(LockHold unlock) {
     if (!this.greediness.flushOnUnlock()) { return false; }
 
     for (final LockStateNode s : this) {
@@ -906,7 +867,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return true;
   }
 
-  private synchronized boolean flushOnUnlockAll(final ThreadID thread) {
+  private synchronized boolean flushOnUnlockAll(ThreadID thread) {
     if (this.greediness.flushOnUnlock()) { return true; }
 
     for (final LockStateNode s : this) {
@@ -920,30 +881,24 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Conventional acquire queued - uses a LockSupport based queue object.
    */
-  private void acquireQueued(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                             final ThreadID thread, final LockLevel level) throws GarbageLockException,
-      AbortedOperationException {
+  private void acquireQueued(RemoteLockManager remote,
+                             ThreadID thread, LockLevel level) throws GarbageLockException {
     final PendingLockHold node = new PendingLockHold(thread, level);
     addLast(node);
-    try {
-      acquireQueued(abortableOperationManager, remote, thread, level, node);
-    } catch (AbortedOperationException e) {
-      remove(node);
-      throw e;
-    }
+    acquireQueued(remote, thread, level, node);
   }
 
   /*
    * Generic acquire - uses an already existing queued node - used during wait notify
    */
-  private void acquireQueued(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
-                             final ThreadID thread, final LockLevel level, final PendingLockHold node)
-      throws GarbageLockException, AbortedOperationException {
+  private void acquireQueued(RemoteLockManager remote,
+                             ThreadID thread, LockLevel level, PendingLockHold node)
+      throws GarbageLockException {
     boolean interrupted = false;
     try {
       for (;;) {
         // try to acquire before sleeping
-        final LockAcquireResult result = tryAcquire(abortableOperationManager, remote, thread, level, BLOCKING_LOCK,
+        final LockAcquireResult result = tryAcquire(remote, thread, level, BLOCKING_LOCK,
                                                     node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
@@ -958,13 +913,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         // park the thread and wait for unpark
         node.park();
         if (Thread.interrupted()) {
-          try {
-            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-          } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
-            unparkFirstQueuedAcquire();
-            throw e;
-          }
           interrupted = true;
 
           if (remote.isShutdown()) { throw new TCNotRunningException(); }
@@ -990,20 +938,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Just like acquireQueued but throws InterruptedException if unparked by interrupt rather then saving the interrupt
    * state
    */
-  private void acquireQueuedInterruptibly(final AbortableOperationManager abortableOperationManager,
-                                          final RemoteLockManager remote, final ThreadID thread, final LockLevel level)
-      throws InterruptedException, GarbageLockException, AbortedOperationException {
+  private void acquireQueuedInterruptibly(RemoteLockManager remote, ThreadID thread, LockLevel level)
+      throws InterruptedException, GarbageLockException {
     final PendingLockHold node = new PendingLockHold(thread, level);
     addLast(node);
     try {
       for (;;) {
         LockAcquireResult result = null;
-        try {
-          result = tryAcquire(abortableOperationManager, remote, thread, level, BLOCKING_LOCK, node);
-        } catch (AbortedOperationException e) {
-          remove(node);
-          throw e;
-        }
+        result = tryAcquire(remote, thread, level, BLOCKING_LOCK, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
         } else {
@@ -1021,14 +963,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         node.park();
 
         if (Thread.interrupted()) {
-          try {
-            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-          } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
-            unparkFirstQueuedAcquire();
-            throw e;
-          }
-
           break;
         }
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
@@ -1044,28 +978,21 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
     // Arrive here only if interrupted
     abortAndRemove(remote, node);
-    handleInterrupt(abortableOperationManager);
+    throw new InterruptedException();
   }
 
   /*
    * Acquire queued - waiting for at most timeout milliseconds.
    */
-  private boolean acquireQueuedTimeout(final AbortableOperationManager abortableOperationManager,
-                                       final RemoteLockManager remote, final ThreadID thread, final LockLevel level,
-                                       long timeout) throws InterruptedException, GarbageLockException,
-      AbortedOperationException {
+  private boolean acquireQueuedTimeout(RemoteLockManager remote, ThreadID thread, LockLevel level,
+                                       long timeout) throws InterruptedException, GarbageLockException {
     long lastTime = System.currentTimeMillis();
     final PendingTryLockHold node = new PendingTryLockHold(thread, level, timeout);
     addLast(node);
     try {
       while (!node.isRefused()) {
         LockAcquireResult result;
-        try {
-          result = tryAcquire(abortableOperationManager, remote, thread, level, timeout, node);
-        } catch (AbortedOperationException e) {
-          remove(node);
-          throw e;
-        }
+        result = tryAcquire(remote, thread, level, timeout, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
         } else {
@@ -1084,26 +1011,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
         if (!node.canDelegate()) {
           node.park();
-          try {
-            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-          } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
-            unparkFirstQueuedAcquire();
-            throw e;
-          }
         } else {
           node.park(timeout);
-          try {
-            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-          } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
-            unparkFirstQueuedAcquire();
-            throw e;
-          }
         }
         if (Thread.interrupted()) {
           abortAndRemove(remote, node);
-          handleInterrupt(abortableOperationManager);
+          throw new InterruptedException();
         }
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
         final long now = System.currentTimeMillis();
@@ -1112,7 +1025,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         lastTime = now;
       }
       remove(node);
-      final LockAcquireResult result = tryAcquireLocally(remote, abortableOperationManager, thread, level);
+      final LockAcquireResult result = tryAcquireLocally(remote, thread, level);
       if (result.isShared()) {
         unparkFirstQueuedAcquire();
       }
@@ -1128,7 +1041,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private synchronized void abortAndRemove(final RemoteLockManager remote, PendingLockHold node) {
+  private synchronized void abortAndRemove(RemoteLockManager remote, PendingLockHold node) {
     node = (PendingLockHold) remove(node);
     if (node != null && node.isAwarded()) {
       resetPinIfNecessary();
@@ -1149,15 +1062,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Unpark the next queued acquire (after supplied node)
    */
-  private void unparkNextQueuedAcquire(final LockStateNode node) {
+  private void unparkNextQueuedAcquire(LockStateNode node) {
     final PendingLockHold nextAcquire = getNextQueuedAcquire(node);
     if (nextAcquire != null) {
       nextAcquire.unpark();
     }
   }
 
-  private void unparkSubsequentTryLocks(final LockStateNode node) {
-    Collection<PendingTryLockHold> pending = new ArrayList<PendingTryLockHold>();
+  private void unparkSubsequentTryLocks(LockStateNode node) {
+    Collection<PendingTryLockHold> pending = new ArrayList<>();
     synchronized (this) {
       PendingLockHold a = getNextQueuedAcquire(node);
       while (a != null) {
@@ -1180,7 +1093,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return null;
   }
 
-  private synchronized PendingLockHold getNextQueuedAcquire(final LockStateNode node) {
+  private synchronized PendingLockHold getNextQueuedAcquire(LockStateNode node) {
     LockStateNode current = node.getNext();
     while (current != null) {
       if (current instanceof PendingLockHold) { return (PendingLockHold) current; }
@@ -1189,7 +1102,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return null;
   }
 
-  private synchronized PendingLockHold getQueuedAcquire(final ThreadID thread, final ServerLockLevel level) {
+  private synchronized PendingLockHold getQueuedAcquire(ThreadID thread, ServerLockLevel level) {
     for (final LockStateNode s : this) {
       if ((s instanceof PendingLockHold) && s.getOwner().equals(thread)
           && level.equals(ServerLockLevel.fromClientLockLevel(((PendingLockHold) s).getLockLevel()))) { return (PendingLockHold) s; }
@@ -1197,7 +1110,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return null;
   }
 
-  private synchronized ClientGreediness doRecall(final RemoteLockManager remote, final boolean batch) {
+  private synchronized ClientGreediness doRecall(RemoteLockManager remote, boolean batch) {
     if (canRecallNow()) {
       final ServerLockLevel flushLevel = this.greediness.getFlushLevel();
       final LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
@@ -1217,7 +1130,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     private final ServerLockLevel   expectedFlushLevel;
     private final LockHold          unlock;
 
-    public UnlockCallback(RemoteLockManager remote, ServerLockLevel flushLevel, final LockHold unlock) {
+    public UnlockCallback(RemoteLockManager remote, ServerLockLevel flushLevel, LockHold unlock) {
       this.remote = remote;
       this.expectedFlushLevel = flushLevel;
       this.unlock = unlock;
@@ -1258,7 +1171,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     @Override
-    public void transactionsForLockFlushed(final LockID id) {
+    public void transactionsForLockFlushed(LockID id) {
       synchronized (ClientLockImpl.this) {
         if (greediness.isRecallInProgress()) {
           ServerLockLevel flushLevel = greediness.getFlushLevel();
@@ -1277,7 +1190,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private synchronized ClientGreediness recallCommit(final RemoteLockManager remote, boolean batch) {
+  private synchronized ClientGreediness recallCommit(RemoteLockManager remote, boolean batch) {
     if (this.greediness.isFree()) {
       return this.greediness;
     } else {
@@ -1317,7 +1230,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * This is always called from Lock GC. so recall commits from here will be batched
    */
   @Override
-  public synchronized boolean tryMarkAsGarbage(final RemoteLockManager remote) {
+  public synchronized boolean tryMarkAsGarbage(RemoteLockManager remote) {
     if (this.pinned == 0 && isEmpty() && this.gcCycleCount > 0) {
       this.greediness = this.greediness.markAsGarbage();
       if (this.greediness.isGarbage()) {
@@ -1338,7 +1251,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public synchronized void initializeHandshake(final ClientID client, final ClientHandshakeMessage message) {
+  public synchronized void initializeHandshake(ClientID client, ClientHandshakeMessage message) {
     final Collection<ClientServerExchangeLockContext> contexts = getFilteredStateSnapshot(client, true);
 
     for (final LockStateNode node : this) {
@@ -1353,12 +1266,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private synchronized Collection<ClientServerExchangeLockContext> getFilteredStateSnapshot(final ClientID client,
-                                                                                            final boolean greedy) {
-    final Collection<ClientServerExchangeLockContext> legacyState = new ArrayList();
+  private synchronized Collection<ClientServerExchangeLockContext> getFilteredStateSnapshot(ClientID client,
+                                                                                            boolean greedy) {
+    final Collection<ClientServerExchangeLockContext> legacyState = new ArrayList<>();
 
-    final Map<ThreadID, ClientServerExchangeLockContext> holds = new HashMap<ThreadID, ClientServerExchangeLockContext>();
-    final Map<ThreadID, ClientServerExchangeLockContext> pends = new HashMap<ThreadID, ClientServerExchangeLockContext>();
+    final Map<ThreadID, ClientServerExchangeLockContext> holds = new HashMap<>();
+    final Map<ThreadID, ClientServerExchangeLockContext> pends = new HashMap<>();
 
     for (final ClientServerExchangeLockContext context : getStateSnapshot(client)) {
       switch (context.getState()) {
@@ -1387,6 +1300,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         case GREEDY_HOLDER_WRITE:
           if (greedy) { return Collections.singletonList(context); }
           break;
+        default:
+          throw new AssertionError(context.getState());
       }
     }
     legacyState.addAll(holds.values());
@@ -1395,10 +1310,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return legacyState;
   }
 
-  private synchronized Collection<ClientServerExchangeLockContext> getRecallCommitStateSnapshot(final ClientID client) {
+  private synchronized Collection<ClientServerExchangeLockContext> getRecallCommitStateSnapshot(ClientID client) {
     final ClientGreediness postRecallGreediness = this.greediness.recallCommitted();
     if (postRecallGreediness.isGreedy()) {
-      final List<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
+      final List<ClientServerExchangeLockContext> contexts = new ArrayList<>();
       contexts.add(postRecallGreediness.toContext(this.lock, client));
       return contexts;
     } else {
@@ -1419,15 +1334,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     return sb.toString();
-  }
-
-  private void handleInterrupt(AbortableOperationManager abortableOperationManager) throws InterruptedException,
-      AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      throw new InterruptedException();
-    }
   }
 
   @Override

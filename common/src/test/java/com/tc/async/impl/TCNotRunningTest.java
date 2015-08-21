@@ -1,23 +1,9 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.async.impl;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventContext;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
 import com.tc.lang.TCThreadGroup;
@@ -37,7 +23,7 @@ import junit.framework.TestCase;
 public class TCNotRunningTest extends TestCase {
 
   private StageManagerImpl          stageManager;
-  private TestHandler               testHandler;
+  private TestHandler<TestEventContext>               testHandler;
   private TestCallbackOnExitHandler callbackOnExitHandler;
 
   @Override
@@ -46,10 +32,10 @@ public class TCNotRunningTest extends TestCase {
     debug("In setup");
     try {
       ThrowableHandler throwableHandler = new NonExitingThrowableHandler(TCLogging.getLogger(StageManagerImpl.class));
-      stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory());
+      stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory<TestEventContext>());
       callbackOnExitHandler = new TestCallbackOnExitHandler();
       throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
-      testHandler = new TestHandler();
+      testHandler = new TestHandler<>();
     } catch (Throwable t) {
       t.printStackTrace();
     }
@@ -57,9 +43,9 @@ public class TCNotRunningTest extends TestCase {
 
   public void testDirect() {
     debug("Running direct test");
-    Stage stage = stageManager.createStage("some-stage", testHandler, 1, 10);
+    Stage<TestEventContext> stage = stageManager.createStage("some-stage", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().add(new TestEventContext());
+    stage.getSink().addSingleThreaded(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
     debug("test complete");
@@ -68,9 +54,9 @@ public class TCNotRunningTest extends TestCase {
   public void testWrapped() {
     debug("Testing wrapped exception");
     testHandler.state = HandlerState.WRAPPED_EXCEPTION;
-    Stage stage = stageManager.createStage("some-stage-2", testHandler, 1, 10);
+    Stage<TestEventContext> stage = stageManager.createStage("some-stage-2", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().add(new TestEventContext());
+    stage.getSink().addSingleThreaded(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
     debug("test complete");
@@ -79,9 +65,9 @@ public class TCNotRunningTest extends TestCase {
   public void testOtherException() {
     debug("Testing other exception");
     testHandler.state = HandlerState.OTHER_EXCEPTION;
-    Stage stage = stageManager.createStage("some-stage-3", testHandler, 1, 10);
+    Stage<TestEventContext> stage = stageManager.createStage("some-stage-3", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().add(new TestEventContext());
+    stage.getSink().addSingleThreaded(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     callbackOnExitHandler.waitUntilExitCalled();
     debug("test complete");
@@ -95,13 +81,13 @@ public class TCNotRunningTest extends TestCase {
     DIRECT_EXCEPTION, WRAPPED_EXCEPTION, OTHER_EXCEPTION;
   }
 
-  private static class TestHandler extends AbstractEventHandler {
+  private static class TestHandler<EC> extends AbstractEventHandler<EC> {
 
     private volatile HandlerState state             = HandlerState.DIRECT_EXCEPTION;
     private final AtomicInteger   handledEventCount = new AtomicInteger();
 
     @Override
-    public void handleEvent(EventContext context) {
+    public void handleEvent(EC context) {
       try {
         switch (state) {
           case DIRECT_EXCEPTION:
@@ -110,6 +96,8 @@ public class TCNotRunningTest extends TestCase {
             throw new RuntimeException(new TCNotRunningException("Direct exception"));
           case OTHER_EXCEPTION:
             throw new RuntimeException("Some other exception");
+          default:
+            throw new AssertionError(state);
         }
       } finally {
         handledEventCount.incrementAndGet();
@@ -139,7 +127,7 @@ public class TCNotRunningTest extends TestCase {
 
   }
 
-  private static class TestEventContext implements EventContext {
+  private static class TestEventContext {
     //
   }
 

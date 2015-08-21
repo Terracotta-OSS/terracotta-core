@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.groups;
 
@@ -32,16 +20,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListener, GroupMessageListener {
+// Note that this class is only used in testing.
+public class VirtualTCGroupManagerImpl<M extends GroupMessage> implements GroupManager<M>, GroupEventsListener, GroupMessageListener<M> {
   private static final TCLogger                           logger           = TCLogging
                                                                                .getLogger(VirtualTCGroupManagerImpl.class);
-  private final GroupManager                              groupManager;
-  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners   = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<String, GroupMessageListener>         messageListeners = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Set<NodeID>                               groupNodeIDs     = new CopyOnWriteArraySet<NodeID>();
+  private final GroupManager<M>                              groupManager;
+  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners   = new CopyOnWriteArrayList<>();
+  private final Map<String, GroupMessageListener<M>>         messageListeners = new ConcurrentHashMap<>();
+  private final Set<NodeID>                               groupNodeIDs     = new CopyOnWriteArraySet<>();
   private final ClusterInfo                               serverNamesOfThisGroup;
 
-  public VirtualTCGroupManagerImpl(GroupManager groupManager, ClusterInfo serverNamesOfThisGroup) {
+  public VirtualTCGroupManagerImpl(GroupManager<M> groupManager, ClusterInfo serverNamesOfThisGroup) {
     this.groupManager = groupManager;
     groupManager.registerForGroupEvents(this);
     this.serverNamesOfThisGroup = serverNamesOfThisGroup;
@@ -69,18 +58,19 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   }
 
   @Override
-  public void registerForMessages(Class msgClass, GroupMessageListener listener) {
-    GroupMessageListener prev = messageListeners.put(msgClass.getName(), listener);
+  public <N extends M> void registerForMessages(Class<N> msgClass, GroupMessageListener<N> listener) {
+    Class<M> castClass = ((Class<M>)msgClass);
+    GroupMessageListener<M> prev = messageListeners.put(castClass.getName(), (GroupMessageListener<M>)listener);
     if (prev != null) {
       logger.warn("Previous listener removed : " + prev);
     }
-    groupManager.registerForMessages(msgClass, this);
+    groupManager.registerForMessages(castClass, this);
   }
 
   @Override
-  public void messageReceived(NodeID from, GroupMessage msg) {
+  public void messageReceived(NodeID from, M msg) {
     if (!isThisGroup(from)) return;
-    GroupMessageListener listener = messageListeners.get(msg.getClass().getName());
+    GroupMessageListener<M> listener = messageListeners.get(msg.getClass().getName());
     if (listener != null) {
       listener.messageReceived(from, msg);
     } else {
@@ -91,38 +81,38 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   }
 
   @Override
-  public void routeMessages(Class msgClass, Sink sink) {
-    registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
+  public <N extends M> void routeMessages(Class<N> msgClass, Sink<N> sink) {
+    registerForMessages(msgClass, new RouteGroupMessagesToSink<>(msgClass.getName(), sink));
   }
 
   @Override
-  public void sendAll(GroupMessage msg) {
+  public void sendAll(M msg) {
     groupManager.sendAll(msg, groupNodeIDs);
   }
 
   @Override
-  public void sendAll(GroupMessage msg, Set nodeIDs) {
+  public void sendAll(M msg, Set<? extends NodeID> nodeIDs) {
     groupManager.sendAll(msg, nodeIDs);
   }
 
   @Override
-  public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
+  public GroupResponse<M> sendAllAndWaitForResponse(M msg) throws GroupException {
     return groupManager.sendAllAndWaitForResponse(msg, groupNodeIDs);
   }
 
   @Override
-  public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) throws GroupException {
+  public GroupResponse<M> sendAllAndWaitForResponse(M msg, Set<? extends NodeID> nodeIDs) throws GroupException {
     return groupManager.sendAllAndWaitForResponse(msg, nodeIDs);
   }
 
   @Override
-  public void sendTo(NodeID nodeID, GroupMessage msg) throws GroupException {
+  public void sendTo(NodeID nodeID, M msg) throws GroupException {
     Assert.assertTrue(isThisGroup(nodeID));
     groupManager.sendTo(nodeID, msg);
   }
 
   @Override
-  public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) throws GroupException {
+  public M sendToAndWaitForResponse(NodeID nodeID, M msg) throws GroupException {
     Assert.assertTrue(isThisGroup(nodeID));
     return groupManager.sendToAndWaitForResponse(nodeID, msg);
   }
@@ -161,7 +151,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   /*
    * for testing purpose only
    */
-  protected GroupManager getBaseTCGroupManager() {
+  protected GroupManager<M> getBaseTCGroupManager() {
     return groupManager;
   }
 

@@ -1,26 +1,11 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.config.DSOMBeanConfig;
@@ -34,31 +19,31 @@ import java.io.IOException;
 import javax.management.remote.generic.MessageConnection;
 import javax.management.remote.message.Message;
 
-public class TunnelingEventHandler extends AbstractEventHandler implements ClientHandshakeCallback {
+public class TunnelingEventHandler extends AbstractEventHandler<JmxRemoteTunnelMessage> implements ClientHandshakeCallback {
 
-  private static final TCLogger      logger     = TCLogging.getLogger(TunnelingEventHandler.class);
+  private static final TCLogger logger = TCLogging.getLogger(TunnelingEventHandler.class);
 
-  private final MessageChannel       channel;
+  private final MessageChannel channel;
 
-  private final DSOMBeanConfig       config;
+  private final DSOMBeanConfig config;
 
   private TunnelingMessageConnection messageConnection;
 
-  private boolean                    acceptOk;
+  private boolean acceptOk;
 
-  private final Object               jmxReadyLock;
+  private final Object jmxReadyLock;
 
-  private final SetOnceFlag                localJmxServerReady;
+  private final SetOnceFlag localJmxServerReady;
 
-  private boolean                    transportConnected;
+  private boolean transportConnected;
 
-  private boolean                    sentReadyMessage;
+  private boolean sentReadyMessage;
 
-  private boolean                    stopAccept = false;
+  private boolean stopAccept = false;
 
-  private final UUID                 uuid;
+  private final UUID uuid;
 
-  public TunnelingEventHandler(final MessageChannel channel, final DSOMBeanConfig config, UUID uuid) {
+  public TunnelingEventHandler(MessageChannel channel, DSOMBeanConfig config, UUID uuid) {
     this.channel = channel;
     this.config = config;
     acceptOk = false;
@@ -90,8 +75,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   }
 
   @Override
-  public void handleEvent(final EventContext context) {
-    final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
+  public void handleEvent(JmxRemoteTunnelMessage messageEnvelope) {
     if (messageEnvelope.getCloseConnection()) {
       reset();
     } else {
@@ -171,10 +155,9 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   }
 
   /**
-   * Once the local JMX server has successfully started (this happens in a background thread as DSO is so early in the
-   * startup process that the system JMX server in 1.5+ can't be created inline with other initialization) we send a
-   * 'ready' message to the L2 each time we connect to it. This tells the L2 that they can connect to our local JMX
-   * server and see the beans we have in the DSO client.
+   * Once the local JMX server has successfully started (this happens in a background thread as DSO is so early in the startup process that
+   * the system JMX server in 1.5+ can't be created inline with other initialization) we send a 'ready' message to the L2 each time we
+   * connect to it. This tells the L2 that they can connect to our local JMX server and see the beans we have in the DSO client.
    */
   private void sendJmxReadyMessageIfNecessary() {
     final boolean send;
@@ -197,30 +180,26 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   }
 
   @Override
-  public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     // Ignore
   }
 
   @Override
-  public void pause(NodeID remoteNode, int disconnected) {
-    if (remoteNode.equals(channel.getRemoteNodeID())) {
-      reset();
-      synchronized (jmxReadyLock) {
-        transportConnected = false;
-      }
+  public void pause() {
+    reset();
+    synchronized (jmxReadyLock) {
+      transportConnected = false;
     }
   }
 
   @Override
-  public void unpause(NodeID remoteNode, int disconnected) {
-    if (remoteNode.equals(channel.getRemoteNodeID())) {
-      synchronized (jmxReadyLock) {
-        // MNK-2553: Flip the transportConnected switch here in case we receive the transport connected notification
-        // late (i.e. after ClientHandshakeManager).
-        transportConnected = true;
-      }
-      sendJmxReadyMessageIfNecessary();
+  public void unpause() {
+    synchronized (jmxReadyLock) {
+      // MNK-2553: Flip the transportConnected switch here in case we receive the transport connected notification
+      // late (i.e. after ClientHandshakeManager).
+      transportConnected = true;
     }
+    sendJmxReadyMessageIfNecessary();
   }
 
   @Override

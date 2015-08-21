@@ -1,0 +1,20 @@
+<tc-config xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns:storage="http://www.terracotta.org/config/storage"
+        xmlns="http://www.terracotta.org/config"
+        xsi:schemaLocation="http://www.terracotta.org/config terracotta.xsd
+                        http://www.terracotta.org/config/storage ../../main/resources/storage.xsd">
+    <services>
+        <service>
+            <storage:storage>
+                <storage:offheap>
+                    <storage:enabled>true</storage:enabled>
+                    <storage:maxDataSize>100M</storage:maxDataSize>
+                </storage:offheap>
+                <storage:dataStorage size="200M"/>
+                <storage:data>randompath</storage:data>
+                <storage:restartable enabled="false"/>
+            </storage:storage>
+        </service>
+    </services>
+</tc-config>
+

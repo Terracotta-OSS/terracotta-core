@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -61,7 +49,7 @@ public class RemoteManagementImpl implements RemoteManagement {
 
   @Override
   public void sendEvent(TCManagementEvent event) {
-    Map<String, Object> context = new HashMap<String, Object>();
+    Map<String, Object> context = new HashMap<>();
     context.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, thisServerNodeName);
     serverManagementHandler.fireEvent(event, context);
   }
@@ -89,7 +77,7 @@ public class RemoteManagementImpl implements RemoteManagement {
       throw new RemoteManagementException("Error listing registered management services", nsce);
     }
 
-    final AtomicReference<Set<RemoteCallDescriptor>> remoteCallDescriptors = new AtomicReference<Set<RemoteCallDescriptor>>();
+    final AtomicReference<Set<RemoteCallDescriptor>> remoteCallDescriptors = new AtomicReference<>();
 
     final CountDownLatch latch = new CountDownLatch(1);
     serverManagementHandler.registerResponseListener(message.getManagementRequestID(), new ManagementResponseListener() {
@@ -119,7 +107,7 @@ public class RemoteManagementImpl implements RemoteManagement {
   }
 
 
-  public Future<Object> asyncRemoteCall(final RemoteCallDescriptor remoteCallDescriptor, final ClassLoader classLoader, Object... args) throws RemoteManagementException {
+  public Future<Object> asyncRemoteCall(RemoteCallDescriptor remoteCallDescriptor, ClassLoader classLoader, Object... args) throws RemoteManagementException {
     InvokeRegisteredServiceMessage invokeMessage;
     try {
       invokeMessage = (InvokeRegisteredServiceMessage)channelManager.getActiveChannel(remoteCallDescriptor.getL1Node())
@@ -128,13 +116,13 @@ public class RemoteManagementImpl implements RemoteManagement {
       throw new RemoteManagementException("Error calling management services", nsce);
     }
 
-    final AtomicReference<Exception> exception = new AtomicReference<Exception>();
-    final AtomicReference<Object> response = new AtomicReference<Object>();
+    final AtomicReference<Exception> exception = new AtomicReference<>();
+    final AtomicReference<Object> response = new AtomicReference<>();
 
     RemoteCallHolder remoteCallHolder = new RemoteCallHolder(remoteCallDescriptor, args);
     invokeMessage.setRemoteCallHolder(remoteCallHolder);
 
-    final AtomicReference<ManagementRequestID> responseManagementRequestIDRef = new AtomicReference<ManagementRequestID>();
+    final AtomicReference<ManagementRequestID> responseManagementRequestIDRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     serverManagementHandler.registerResponseListener(invokeMessage.getManagementRequestID(), new ManagementResponseListener() {
       @Override

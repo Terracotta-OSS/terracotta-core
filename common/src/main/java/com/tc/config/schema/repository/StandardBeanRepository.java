@@ -1,63 +1,27 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema.repository;
 
-import org.apache.commons.lang.ClassUtils;
-import org.apache.xmlbeans.SchemaType;
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlObject;
-import org.apache.xmlbeans.XmlOptions;
-
-import com.tc.config.schema.listen.ConfigurationChangeListener;
-import com.tc.config.schema.listen.ConfigurationChangeListenerSet;
-import com.tc.config.schema.validate.ConfigurationValidator;
 import com.tc.util.Assert;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
 /**
  * The standard implementation of {@link MutableBeanRepository}.
  */
-public class StandardBeanRepository implements MutableBeanRepository {
+public class StandardBeanRepository implements BeanRepository {
 
-  private final Class                          requiredClass;
-  private final ConfigurationChangeListenerSet listenerSet;
-  private final Set                            validators;
-  private XmlObject                            bean;
+  private final Class<?>                       requiredClass;
+  private Object                               bean;
 
-  private XmlObject                            preMutateCopy;
-
-  public StandardBeanRepository(Class requiredClass) {
+  public StandardBeanRepository(Class<?> requiredClass) {
     Assert.assertNotNull(requiredClass);
 
     this.requiredClass = requiredClass;
-    this.listenerSet = new ConfigurationChangeListenerSet();
-    this.validators = new HashSet();
     this.bean = null;
   }
 
   @Override
-  public void ensureBeanIsOfClass(Class theClass) {
+  public void ensureBeanIsOfClass(Class<?> theClass) {
     if (!theClass.isAssignableFrom(this.requiredClass)) {
       // formatting
       throw Assert.failure("You're making sure this repository requires at least " + theClass + ", but it requires "
@@ -66,112 +30,18 @@ public class StandardBeanRepository implements MutableBeanRepository {
   }
 
   @Override
-  public void saveCopyOfBeanInAnticipationOfFutureMutation() {
-    Assert.eval(this.preMutateCopy == null);
-    this.preMutateCopy = this.bean.copy();
-  }
-
-  @Override
-  public void didMutateBean() {
-    Assert.eval(this.preMutateCopy != null);
-    this.listenerSet.configurationChanged(this.preMutateCopy, this.bean);
-    this.preMutateCopy = null;
-  }
-
-  @Override
-  public synchronized XmlObject bean() {
+  public synchronized Object bean() {
     return this.bean;
   }
-
-  static SchemaType getTypeFieldFrom(Class theClass) {
-    try {
-      Field typeField = theClass.getField("type");
-
-      Assert.eval(typeField.getType().equals(SchemaType.class));
-
-      int modifiers = typeField.getModifiers();
-      Assert.eval(Modifier.isPublic(modifiers));
-      Assert.eval(Modifier.isStatic(modifiers));
-      Assert.eval(Modifier.isFinal(modifiers));
-
-      return (SchemaType) typeField.get(null);
-    } catch (NoSuchFieldException nsfe) {
-      throw Assert.failure("Class " + theClass.getName()
-                           + ", doesn't have a 'public static final SchemaType type' field?", nsfe);
-    } catch (IllegalArgumentException iae) {
-      throw Assert.failure("Unable to get 'public static final SchemaType type' from class " + theClass.getName(), iae);
-    } catch (IllegalAccessException iae) {
-      throw Assert.failure("Unable to get 'public static final SchemaType type' from class " + theClass.getName(), iae);
-    }
-  }
-
+  
   @Override
-  public SchemaType rootBeanSchemaType() {
-    return getTypeFieldFrom(this.requiredClass);
-  }
-
-  @Override
-  public synchronized void setBean(XmlObject bean, String sourceDescription) throws XmlException {
-    Assert.assertNotBlank(sourceDescription);
-    Assert.eval(bean == null || this.requiredClass.isInstance(bean));
-
-    if (this.bean == bean) return;
-
-    if (bean != null) {
-      throwExceptionIfSchemaValidationFails(bean, sourceDescription);
-
-      Iterator iter = this.validators.iterator();
-      while (iter.hasNext()) {
-        ((ConfigurationValidator) iter.next()).validate(bean);
-      }
-    }
-
-    XmlObject oldBean = this.bean;
-    this.bean = bean;
-    this.listenerSet.configurationChanged(oldBean, bean);
-  }
-
-  private void throwExceptionIfSchemaValidationFails(XmlObject theBean, String sourceDescription) throws XmlException {
-    List errors = new ArrayList();
-    XmlOptions options = new XmlOptions();
-    options = options.setLoadLineNumbers();
-    options = options.setErrorListener(errors);
-    options = options.setDocumentSourceName(sourceDescription);
-
-    boolean validated = theBean.validate(options);
-
-    if (errors.size() > 0 || (!validated)) {
-      StringBuffer descrip = new StringBuffer();
-
-      descrip.append("The configuration from '" + sourceDescription + "' is invalid; it has " + errors.size()
-                     + " error" + (errors.size() == 1 ? "" : "s") + ":\n");
-
-      int pos = 1;
-      Iterator iter = errors.iterator();
-      while (iter.hasNext()) {
-        descrip.append("   " + pos + ": " + iter.next().toString() + "\n");
-        pos++;
-      }
-
-      throw new XmlException(descrip.toString());
-    }
-  }
-
-  @Override
-  public void addListener(ConfigurationChangeListener listener) {
-    Assert.assertNotNull(listener);
-    this.listenerSet.addListener(listener);
-  }
-
-  @Override
-  public void addValidator(ConfigurationValidator validator) {
-    Assert.assertNotNull(validator);
-    this.validators.add(validator);
+  public synchronized void setBean(Object bean, String description) {
+    this.bean = bean;    
   }
 
   @Override
   public String toString() {
-    return "<Repository for bean of class " + ClassUtils.getShortClassName(this.requiredClass) + "; have bean? "
+    return "<Repository for bean of class " + this.requiredClass.getSimpleName() + "; have bean? "
            + (this.bean != null) + ">";
   }
 

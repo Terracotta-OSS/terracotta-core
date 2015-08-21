@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.l2.state;
 
@@ -27,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class StateSyncManagerImpl implements StateSyncManager {
 
-  private final ConcurrentMap<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<NodeID, SyncValue>();
+  private final ConcurrentMap<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<>();
 
   @Override
   public void objectSyncComplete(NodeID nodeID) {
@@ -42,11 +29,6 @@ public class StateSyncManagerImpl implements StateSyncManager {
   }
 
   @Override
-  public void indexSyncComplete(NodeID nodeID) {
-    // overridden in EE
-  }
-
-  @Override
   public void removeL2(NodeID nodeID) {
     syncMessagesProcessedMap.remove(nodeID);
   }
@@ -54,11 +36,6 @@ public class StateSyncManagerImpl implements StateSyncManager {
   @Override
   public void objectSyncComplete() {
     // no-op
-  }
-
-  @Override
-  public void indexSyncComplete() {
-    // overridden in EE
   }
 
   @Override
@@ -70,8 +47,6 @@ public class StateSyncManagerImpl implements StateSyncManager {
 
   static interface SyncValue {
 
-    public void indexSyncCompleteMessageAcked();
-
     public void objectSyncCompleteMessageAcked();
 
     public boolean isSyncMesssagesAcked();
@@ -81,11 +56,6 @@ public class StateSyncManagerImpl implements StateSyncManager {
 
     return new SyncValue() {
       private volatile boolean objectSyncCompleteMessageProcessed = false;
-
-      @Override
-      public void indexSyncCompleteMessageAcked() {
-        // no-op
-      }
 
       @Override
       public void objectSyncCompleteMessageAcked() {

@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util.runtime;
 
@@ -28,8 +15,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -81,9 +68,9 @@ public class ThreadDumpUtil {
 
   public static String getLockList(LockInfoByThreadID lockInfo, ThreadID tcThreadID) {
     String lockList = "";
-    ArrayList heldLocks = lockInfo.getHeldLocks(tcThreadID);
-    ArrayList waitOnLocks = lockInfo.getWaitOnLocks(tcThreadID);
-    ArrayList pendingLocks = lockInfo.getPendingLocks(tcThreadID);
+    List<String> heldLocks = lockInfo.getHeldLocks(tcThreadID);
+    List<String> waitOnLocks = lockInfo.getWaitOnLocks(tcThreadID);
+    List<String> pendingLocks = lockInfo.getPendingLocks(tcThreadID);
     if (heldLocks.size() != 0) {
       lockList += "LOCKED : " + heldLocks.toString() + "\n";
     }
@@ -183,7 +170,7 @@ public class ThreadDumpUtil {
     return sb.toString();
   }
 
-  private static void threadHeader(final StringBuilder sb, final ThreadInfo threadInfo) {
+  private static void threadHeader(StringBuilder sb, ThreadInfo threadInfo) {
     final String threadName = threadInfo.getThreadName();
     sb.append("\"");
     sb.append(threadName);
@@ -224,7 +211,7 @@ public class ThreadDumpUtil {
     sb.append('\n');
   }
 
-  private static String threadLockedSynchronizers(final ThreadInfo threadInfo) {
+  private static String threadLockedSynchronizers(ThreadInfo threadInfo) {
     final String NO_SYNCH_INFO = "no locked synchronizers information available\n";
     if (null == threadInfo) { return NO_SYNCH_INFO; }
     try {

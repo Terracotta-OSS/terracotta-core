@@ -1,31 +1,17 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tcclient.cluster.ClusterEventsNotifier;
 import com.tcclient.cluster.ClusterInternalEventsContext;
-import com.tcclient.cluster.DsoClusterEventsNotifier;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -40,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Handler firing the dso cluster internal events to the listeners
  */
-public class ClusterInternalEventsHandler extends AbstractEventHandler {
+public class ClusterInternalEventsHandler<EC> extends AbstractEventHandler<EC> {
 
   private static final TCLogger          logger = TCLogging.getLogger(ClusterInternalEventsHandler.class);
   private static final int               EXECUTOR_MAX_THREADS = TCPropertiesImpl
@@ -51,7 +37,7 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
                                                                        .getProperties()
                                                                        .getLong(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS,
                                                                                60);
-  private final DsoClusterEventsNotifier dsoClusterEventsNotifier;
+  private final ClusterEventsNotifier    clusterEventsNotifier;
   private final ClusterEventExecutor     clusterEventExecutor      = new ClusterEventExecutor();
 
   private static class ClusterEventExecutor implements PrettyPrintable {
@@ -88,20 +74,20 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
     }
   }
 
-  public ClusterInternalEventsHandler(final DsoClusterEventsNotifier eventsNotifier) {
-    this.dsoClusterEventsNotifier = eventsNotifier;
+  public ClusterInternalEventsHandler(ClusterEventsNotifier eventsNotifier) {
+    this.clusterEventsNotifier = eventsNotifier;
   }
 
   @Override
-  public void handleEvent(final EventContext context) {
+  public void handleEvent(EC context) {
     ThreadPoolExecutor service = clusterEventExecutor.getExecutorService();
-    Future eventFuture = service.submit(new Runnable() {
+    Future<?> eventFuture = service.submit(new Runnable() {
       @Override
       public void run() {
         if (context instanceof ClusterInternalEventsContext) {
           ClusterInternalEventsContext eventContext = (ClusterInternalEventsContext) context;
-          dsoClusterEventsNotifier.notifyDsoClusterListener(eventContext.getEventType(), eventContext.getEvent(),
-                                                            eventContext.getDsoClusterListener());
+          clusterEventsNotifier.notifyClusterListener(eventContext.getEventType(), eventContext.getEvent(),
+                                                            eventContext.getClusterListener());
         } else {
           throw new AssertionError("Unknown Context " + context);
         }

@@ -1,24 +1,11 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.groups;
 
 import com.google.common.base.Throwables;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
@@ -135,7 +122,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
     VirtualTCGroupManagerImpl[] virtualMgr = new VirtualTCGroupManagerImpl[virtuals];
     Node[] virtualNodes = new Node[virtuals];
-    HashSet<String> names = new HashSet<String>();
+    HashSet<String> names = new HashSet<>();
     for (int i = 0; i < virtuals; ++i) {
       virtualNodes[i] = allNodes[i];
       names.add(virtualNodes[i].getServerNodeName());
@@ -158,7 +145,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
     // joining
     System.out.println("*** Start Joining...");
-    Set<Node> nodeSet = new HashSet<Node>();
+    Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, allNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nodes; ++i) {
@@ -236,7 +223,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
     VirtualTCGroupManagerImpl[] virtualMgr = new VirtualTCGroupManagerImpl[virtuals];
     Node[] virtualNodes = new Node[virtuals];
-    HashSet<String> names = new HashSet<String>();
+    HashSet<String> names = new HashSet<>();
     for (int i = 0; i < virtuals; ++i) {
       virtualNodes[i] = allNodes[i];
       names.add(virtualNodes[i].getServerNodeName());
@@ -259,7 +246,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
     // Joining and Electing
     System.out.println("*** Start Joining and Electing...");
-    Set<Node> nodeSet = new HashSet<Node>();
+    Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, allNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     groupMgr[0].join(allNodes[0], nodeStore);
@@ -295,7 +282,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     System.gc();
     System.out.println("*** Testing total=" + nodes + " with " + virtuals + " nodes join at later time.");
 
-    final LinkedBlockingQueue<NodeID> joinedNodes = new LinkedBlockingQueue<NodeID>();
+    final LinkedBlockingQueue<NodeID> joinedNodes = new LinkedBlockingQueue<>();
     NodeID[] ids = new NodeID[nodes];
     TCGroupManagerImpl[] groupMgr = new TCGroupManagerImpl[nodes];
     PortChooser pc = new PortChooser();
@@ -309,7 +296,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
     VirtualTCGroupManagerImpl[] virtualMgr = new VirtualTCGroupManagerImpl[virtuals];
     Node[] virtualNodes = new Node[virtuals];
-    HashSet<String> names = new HashSet<String>();
+    HashSet<String> names = new HashSet<>();
     for (int i = 0; i < virtuals; ++i) {
       virtualNodes[i] = allNodes[i];
       names.add(virtualNodes[i].getServerNodeName());
@@ -332,7 +319,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
     // the first node to be the active one
     System.out.println("*** First node joins to be an active node...");
-    Set<Node> nodeSet = new HashSet<Node>();
+    Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, allNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     ids[0] = groupMgr[0].join(allNodes[0], nodeStore);
@@ -349,7 +336,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     });
 
     System.out.println("***  Remaining nodes join");
-    nodeSet = new HashSet<Node>();
+    nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, allNodes);
     nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 1; i < nodes; ++i) {
@@ -422,7 +409,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node
         .getGroupPort(), stageManager, null);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-    stageManager.startAll(context, Collections.EMPTY_LIST);
+    stageManager.startAll(context, Collections.emptyList());
     return gm;
   }
 
@@ -445,16 +432,16 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   }
 
   private static class L2StateMessageStage extends Thread {
-    private final MockSink               sink;
-    private final NoExceptionLinkedQueue processQ = new NoExceptionLinkedQueue();
+    private final MockSink<L2StateMessage> sink;
+    private final NoExceptionLinkedQueue<L2StateMessage> processQ = new NoExceptionLinkedQueue<>();
     private final StateManager           mgr;
     private volatile boolean             stop     = false;
 
     public L2StateMessageStage(StateManager mgr) {
       this.mgr = mgr;
-      this.sink = new MockSink() {
+      this.sink = new MockSink<L2StateMessage>() {
         @Override
-        public void add(EventContext ec) {
+        public void addSingleThreaded(L2StateMessage ec) {
           processQ.put(ec);
         }
       };
@@ -477,7 +464,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     @Override
     public void run() {
       while (!isStopped()) {
-        L2StateMessage m = (L2StateMessage) processQ.poll(3000);
+        L2StateMessage m = processQ.poll(3000);
         if (m != null) {
           mgr.handleClusterStateMessage(m);
         }
@@ -526,7 +513,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     }
   }
 
-  private static class ChangeSink extends MockSink {
+  private static class ChangeSink extends MockSink<StateChangedEvent> {
     private final int         serverIndex;
     private StateChangedEvent event = null;
 
@@ -535,8 +522,8 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     }
 
     @Override
-    public void add(EventContext context) {
-      event = (StateChangedEvent) context;
+    public void addSingleThreaded(StateChangedEvent context) {
+      this.event = context;
       System.out.println("*** Server[" + serverIndex + "]: " + event);
     }
 

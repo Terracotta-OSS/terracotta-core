@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.connect;
 
@@ -39,7 +26,7 @@ import javax.management.remote.generic.ConnectionClosedException;
 public class ClientBeanBag {
   private static final TCLogger       LOGGER    = TCLogging.getLogger(ClientBeanBag.class);
 
-  private final Set<ObjectName>       beanNames = new HashSet<ObjectName>();
+  private final Set<ObjectName>       beanNames = new HashSet<>();
   private final MBeanServer           l2MBeanServer;
   private final MBeanServerConnection l1Connection;
   private final MessageChannel        channel;
@@ -141,7 +128,7 @@ public class ClientBeanBag {
     return false;
   }
 
-  synchronized void registerBean(final ObjectName objName) {
+  synchronized void registerBean(ObjectName objName) {
     LOGGER.debug("registerBean: " + objName);
 
     ObjectName modifiedObjName = null;
@@ -196,7 +183,7 @@ public class ClientBeanBag {
     }
 
     @Override
-    public boolean isNotificationEnabled(final Notification notification) {
+    public boolean isNotificationEnabled(Notification notification) {
       if (notification instanceof MBeanServerNotification) {
         final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
         final String notifType = mbsn.getType();
@@ -222,7 +209,7 @@ public class ClientBeanBag {
     }
 
     @Override
-    final public void handleNotification(final Notification notification, final Object context) {
+    final public void handleNotification(Notification notification, Object context) {
       if (notification instanceof MBeanServerNotification) {
         String type = notification.getType();
         MBeanServerNotification mbsn = (MBeanServerNotification) notification;

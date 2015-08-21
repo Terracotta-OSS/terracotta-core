@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats;
 
@@ -24,25 +12,25 @@ import junit.framework.TestCase;
 @Category(CheckShorts.class)
 public class LossyStackTest extends TestCase {
 
+  @SuppressWarnings("unused")
   public void testException() {
     try {
-      new LossyStack(0);
+      new LossyStack<Object>(0);
       fail();
     } catch (IllegalArgumentException iae) {
       // expected
     }
 
     try {
-      new LossyStack(-4);
+      new LossyStack<Object>(-4);
       fail();
     } catch (IllegalArgumentException iae) {
       // expected
     }
-
   }
 
   public void test() {
-    LossyStack stack = new LossyStack(5);
+    LossyStack<Integer> stack = new LossyStack<>(5);
     assertEquals(0, stack.depth());
     assertTrue(stack.isEmtpy());
     assertNull(stack.peek());
@@ -79,7 +67,7 @@ public class LossyStackTest extends TestCase {
     stack.push(Integer.valueOf(7));
     assertEquals(5, stack.depth());
 
-    Integer[] data = (Integer[]) stack.toArray(new Integer[stack.depth()]);
+    Integer[] data = stack.toArray(new Integer[stack.depth()]);
     assertEquals(5, data.length);
     for (int i = 0; i < data.length; i++) {
       assertEquals(Integer.valueOf(7 - i), data[i]);

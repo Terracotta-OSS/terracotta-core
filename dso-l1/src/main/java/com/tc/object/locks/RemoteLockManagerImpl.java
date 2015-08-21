@@ -1,28 +1,12 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.locks;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.GroupID;
 import com.tc.object.ClientIDProvider;
-import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.util.concurrent.TaskRunner;
@@ -42,24 +26,19 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final static long                    MAX_TIME_IN_QUEUE           = 1;
 
   private final LockRequestMessageFactory      messageFactory;
-  private final ClientGlobalTransactionManager clientGlobalTxnManager;
-  private final GroupID                        group;
   private final ClientIDProvider               clientIdProvider;
 
-  private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
+  private final Queue<RecallBatchContext>      queue                       = new LinkedList<>();
   private boolean                              shutdown;
 
   private final Timer                          batchRecallTimer;
   private ScheduledFuture<?>                   batchRecallTask;
 
 
-  public RemoteLockManagerImpl(final ClientIDProvider clientIdProvider, final GroupID group,
-                               final LockRequestMessageFactory messageFactory,
-                               final ClientGlobalTransactionManager clientGlobalTxnManager,
-                               final TaskRunner taskRunner) {
+  public RemoteLockManagerImpl(ClientIDProvider clientIdProvider,
+                               LockRequestMessageFactory messageFactory,
+                               TaskRunner taskRunner) {
     this.messageFactory = messageFactory;
-    this.clientGlobalTxnManager = clientGlobalTxnManager;
-    this.group = group;
     this.clientIdProvider = clientIdProvider;
     this.batchRecallTimer = taskRunner.newTimer("Batch Recall Timer");
   }
@@ -67,7 +46,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   @Override
   public void cleanup() {
     synchronized (queue) {
-      clientGlobalTxnManager.cleanup();
       queue.clear();
     }
   }
@@ -78,22 +56,17 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void flush(final LockID lock) throws AbortedOperationException {
-    this.clientGlobalTxnManager.flush(lock);
+  public void flush(LockID lock) {
   }
 
   @Override
-  public boolean asyncFlush(final LockID lock, final LockFlushCallback callback) {
-    return this.clientGlobalTxnManager.asyncFlush(lock, callback);
+  public boolean asyncFlush(LockID lock, LockFlushCallback callback) {
+    callback.transactionsForLockFlushed(lock);
+    return true;
   }
 
   @Override
-  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) throws AbortedOperationException {
-    this.clientGlobalTxnManager.waitForServerToReceiveTxnsForThisLock(lock);
-  }
-
-  @Override
-  public void interrupt(final LockID lock, final ThreadID thread) {
+  public void interrupt(LockID lock, ThreadID thread) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -102,7 +75,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
+  public void lock(LockID lock, ThreadID thread, ServerLockLevel level) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -111,7 +84,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void query(final LockID lock, final ThreadID thread) {
+  public void query(LockID lock, ThreadID thread) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -120,7 +93,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
+  public void tryLock(LockID lock, ThreadID thread, ServerLockLevel level, long timeout) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -129,7 +102,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void unlock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
+  public void unlock(LockID lock, ThreadID thread, ServerLockLevel level) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -138,7 +111,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void wait(final LockID lock, final ThreadID thread, final long waitTime) {
+  public void wait(LockID lock, ThreadID thread, long waitTime) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -146,7 +119,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
-  private void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState) {
+  private void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState) {
     sendPendingRecallCommits();
 
     final LockRequestMessage msg = createMessage();
@@ -158,7 +131,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
+  public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
     if (!batch) {
       recallCommit(lock, lockState);
       return;
@@ -224,10 +197,10 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   private LockRequestMessage createMessage() {
-    return this.messageFactory.newLockRequestMessage(this.group);
+    return this.messageFactory.newLockRequestMessage();
   }
 
-  protected void sendMessage(final LockRequestMessage msg) {
+  protected void sendMessage(LockRequestMessage msg) {
     msg.send();
   }
 

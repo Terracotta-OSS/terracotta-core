@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -21,83 +8,59 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.lang.StringUtils;
 
-import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
+import com.tc.text.StringUtils;
 
 import java.io.File;
 
 /**
- * The standard implementation of {@link com.tc.config.schema.setup.ConfigurationSetupManagerFactory} &mdash; uses
- * system properties and command-line arguments to create the relevant factories.
+ * The standard implementation of {@link com.tc.config.schema.setup.ConfigurationSetupManagerFactory} &mdash; uses system properties and
+ * command-line arguments to create the relevant factories.
  */
 public class StandardConfigurationSetupManagerFactory extends BaseConfigurationSetupManagerFactory {
 
-  private static final String     CONFIG_SPEC_ARGUMENT_NAME = "config";
+  private static final String CONFIG_SPEC_ARGUMENT_NAME = "config";
   /**
    * <code>public</code> for <strong>TESTS AND DOCUMENTATION ONLY</strong>.
    */
-  public static final String      CONFIG_SPEC_ARGUMENT_WORD = "--" + CONFIG_SPEC_ARGUMENT_NAME;
-  public static final String      SERVER_NAME_ARGUMENT_WORD = "-n";
+  public static final String CONFIG_SPEC_ARGUMENT_WORD = "--" + CONFIG_SPEC_ARGUMENT_NAME;
+  public static final String SERVER_NAME_ARGUMENT_WORD = "-n";
 
-  private static final String     L2_NAME_PROPERTY_NAME     = "tc.server.name";
-  public static final String      DEFAULT_CONFIG_SPEC       = "tc-config.xml";
-  public static final String      DEFAULT_CONFIG_PATH       = "default-config.xml";
-  public static final String      DEFAULT_CONFIG_URI        = "resource:///"
-                                                              + StandardConfigurationSetupManagerFactory.class
-                                                                  .getPackage().getName().replace('.', '/') + "/"
-                                                              + DEFAULT_CONFIG_PATH;
+  private static final String L2_NAME_PROPERTY_NAME = "tc.server.name";
+  public static final String DEFAULT_CONFIG_SPEC = "tc-config.xml";
+  public static final String DEFAULT_CONFIG_PATH = "default-config.xml";
+  public static final String DEFAULT_CONFIG_URI = "resource:///"
+                                                  + StandardConfigurationSetupManagerFactory.class.getPackage().getName().replace('.', '/')
+                                                  + "/" + DEFAULT_CONFIG_PATH;
 
-  private final String[]          args;
-  private final String            defaultL2Identifier;
+  private final String[] args;
+  private final String defaultL2Identifier;
   private final ConfigurationSpec configurationSpec;
-  private final PwProvider        pwProvider;
+  private final PwProvider pwProvider;
 
   public static enum ConfigMode {
     L2, CUSTOM_L1, EXPRESS_L1
   }
 
-  public StandardConfigurationSetupManagerFactory(ConfigMode configMode,
-                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                  PwProvider pwProvider)
+  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode, PwProvider pwProvider)
       throws ConfigurationSetupException {
-    this((String[]) null, configMode, illegalChangeHandler, pwProvider);
+    this(args, parseDefaultCommandLine(args, configMode), configMode, pwProvider);
   }
 
-  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
-                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                  PwProvider pwProvider)
+  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode, PwProvider pwProvider)
       throws ConfigurationSetupException {
-    this(args, parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler, pwProvider);
+    this(args, commandLine, configMode, System.getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME), pwProvider);
   }
 
-  public StandardConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
-                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                  PwProvider pwProvider)
-      throws ConfigurationSetupException {
-    this((String[]) null, commandLine, configMode, illegalChangeHandler, pwProvider);
-  }
-
-  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode,
-                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                  PwProvider pwProvider)
-      throws ConfigurationSetupException {
-    this(args, commandLine, configMode, illegalChangeHandler, System
-        .getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME), pwProvider);
-  }
-
-  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
-                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                  String configSpec,
+  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode, String configSpec,
                                                   PwProvider pwProvider) throws ConfigurationSetupException {
-    this(args, parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler, configSpec, pwProvider);
+    this(args, parseDefaultCommandLine(args, configMode), configMode, configSpec, pwProvider);
   }
 
-  private static CommandLine parseDefaultCommandLine(String[] args, ConfigMode configMode)
-      throws ConfigurationSetupException {
+  private static CommandLine parseDefaultCommandLine(String[] args, ConfigMode configMode) throws ConfigurationSetupException {
     try {
       if (args == null || args.length == 0) {
         return new PosixParser().parse(new Options(), new String[0]);
@@ -111,44 +74,38 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     }
   }
 
-  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode,
-                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                  String configSpec, PwProvider pwProvider) throws ConfigurationSetupException {
-    super(illegalChangeHandler);
+  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode, String configSpec,
+                                                  PwProvider pwProvider) throws ConfigurationSetupException {
     String effectiveConfigSpec = getEffectiveConfigSpec(configSpec, commandLine, configMode);
     String cwdAsString = System.getProperty("user.dir");
     if (StringUtils.isBlank(cwdAsString)) { throw new ConfigurationSetupException(
                                                                                   "We can't find the working directory of the process; we need this to continue. "
                                                                                       + "(The system property 'user.dir' was "
-                                                                                      + (cwdAsString == null ? "null"
-                                                                                          : "'" + cwdAsString + "'")
-                                                                                      + ".)"); }
+                                                                                      + (cwdAsString == null ? "null" : "'" + cwdAsString
+                                                                                                                        + "'") + ".)"); }
     this.args = args;
-    this.configurationSpec = new ConfigurationSpec(
-                                                   effectiveConfigSpec,
-                                                   System
-                                                       .getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
+    this.configurationSpec = new ConfigurationSpec(effectiveConfigSpec,
+                                                   System.getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
                                                    configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
     this.pwProvider = pwProvider;
   }
 
-  private String getDefaultL2Identifier(final CommandLine commandLine) {
+  private String getDefaultL2Identifier(CommandLine commandLine) {
     String l2NameOnCommandLine = StringUtils.trimToNull(commandLine.getOptionValue('n'));
     String specifiedL2Identifier = StringUtils.trimToNull(l2NameOnCommandLine != null ? l2NameOnCommandLine : System
         .getProperty(L2_NAME_PROPERTY_NAME));
     return specifiedL2Identifier;
   }
 
-  private String getEffectiveConfigSpec(final String configSpec, final CommandLine commandLine,
-                                        final ConfigMode configMode) throws ConfigurationSetupException {
+  private String getEffectiveConfigSpec(String configSpec, CommandLine commandLine, ConfigMode configMode)
+      throws ConfigurationSetupException {
 
     String configFileOnCommandLine = null;
     String effectiveConfigSpec;
 
     configFileOnCommandLine = StringUtils.trimToNull(commandLine.getOptionValue('f'));
-    effectiveConfigSpec = StringUtils
-        .trimToNull(configFileOnCommandLine != null ? configFileOnCommandLine : configSpec);
+    effectiveConfigSpec = StringUtils.trimToNull(configFileOnCommandLine != null ? configFileOnCommandLine : configSpec);
 
     if (StringUtils.isBlank(effectiveConfigSpec)) {
       File localConfig = new File(System.getProperty("user.dir"), DEFAULT_CONFIG_SPEC);
@@ -163,8 +120,8 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     if (StringUtils.isBlank(effectiveConfigSpec)) {
       // formatting
       throw new ConfigurationSetupException("You must specify the location of the Terracotta "
-                                            + "configuration file for this process, using the " + "'"
-                                            + CONFIG_FILE_PROPERTY_NAME + "' system property.");
+                                            + "configuration file for this process, using the " + "'" + CONFIG_FILE_PROPERTY_NAME
+                                            + "' system property.");
     }
 
     return effectiveConfigSpec;
@@ -194,47 +151,24 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     return options;
   }
 
-  public L1ConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
-      throws ConfigurationSetupException {
-    return createL1TVSConfigurationSetupManager(logger, new SecurityInfo());
-  }
-
-  public L1ConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger, final SecurityInfo securityInfo)
-      throws ConfigurationSetupException {
-    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger, this.configurationSpec,
-                                                                                        this.beanFactory, this.pwProvider);
-
-    L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator,
-                                                                                   this.defaultValueProvider,
-                                                                                   this.xmlObjectComparator,
-                                                                                   this.illegalChangeHandler, securityInfo);
-
-    return setupManager;
-  }
-
   @Override
   public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) throws ConfigurationSetupException {
-    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec,
-                                                                                        this.beanFactory, this.pwProvider);
-
-    L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator,
-                                                                                   this.defaultValueProvider,
-                                                                                   this.xmlObjectComparator,
-                                                                                   this.illegalChangeHandler, securityInfo);
+    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory,
+                                                                                        this.pwProvider);
+    L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator, securityInfo);
 
     return setupManager;
   }
 
   @Override
-  public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name, boolean setupLogging)
+  public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
       throws ConfigurationSetupException {
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory, this.pwProvider);
 
-    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, this.defaultValueProvider,
-                                               this.xmlObjectComparator, this.illegalChangeHandler, setupLogging);
+    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name);
   }
 
   public String[] getArguments() {

@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util;
 
@@ -24,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
@@ -32,7 +18,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
   // This file resides in src.resource/com/tc/properties directory
   private static final String      DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
-  private static final Set<String> exemptedProperties         = new HashSet<String>();
+  private static final Set<String> exemptedProperties         = new HashSet<>();
 
   private final Properties         props                      = new Properties();
 
@@ -86,18 +72,6 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_PAGE_SIZE);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_COUNT);
     
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_USE_COMMIT_THREAD);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MERGE_FACTOR);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_DOCS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_DISABLE_FIELD_COMPRESSION);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BUFFERED_DOCS);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES);
-    exemptedProperties.add(TCPropertiesConsts.L1_SEARCH_MAX_OPEN_RESULT_SETS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEARCH_MAX_PAGED_RESULT_SETS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEARCH_MAX_RESULT_PAGE_SIZE);
-
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_PREFIX);
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_POLICY);
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD);
@@ -133,7 +107,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
   }
 
   public void testAllConstsDeclared() {
-    Set<String> tcPropertiesConsts = new HashSet<String>();
+    Set<String> tcPropertiesConsts = new HashSet<>();
     Field[] fields = TCPropertiesConsts.class.getDeclaredFields();
     for (Field field : fields) {
       try {
@@ -143,9 +117,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
       }
     }
     tcPropertiesConsts.remove(TCPropertiesConsts.OLD_PROPERTIES.toString());
-    Set tcProperties = props.keySet();
-    for (Iterator<String> iter = tcProperties.iterator(); iter.hasNext();) {
-      String tcProperty = iter.next();
+    
+    Set<String> tcProperties = getKeys(props);
+    for (String tcProperty : tcProperties) {
       Assert
           .assertTrue("There is no constant declared for " + tcProperty + " in " + TCPropertiesConsts.class.getName(),
                       tcPropertiesConsts.contains(tcProperty));
@@ -168,5 +142,13 @@ public class TCPropertiesConstsTest extends TCTestCase {
         }
       }
     }
+  }
+
+  private static Set<String> getKeys(Properties props) {
+    Set<String> keys = new HashSet<>();
+    for (Object key : props.keySet()) {
+      keys.add((String) key);
+    }
+    return keys;
   }
 }

@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util.concurrent;
 
@@ -70,7 +57,7 @@ public final class SetOnceRef<V> {
     this(null, allowNull, false);
   }
 
-  private SetOnceRef(final V ref, final boolean allowNull, final boolean init) {
+  private SetOnceRef(V ref, boolean allowNull, boolean init) {
     this.allowsNullValue = allowNull;
 
     if (init) {
@@ -94,7 +81,7 @@ public final class SetOnceRef<V> {
    * @throws IllegalStateException if the reference has already been set by another thread
    * @throws IllegalArgumentException if the given reference is null and this instance does not allow the null value
    */
-  public synchronized void set(final V ref) {
+  public synchronized void set(V ref) {
       if (set) { throw new IllegalStateException("Reference has already been set"); }
 
       if ((!allowsNull()) && (ref == null)) { throw new IllegalArgumentException(

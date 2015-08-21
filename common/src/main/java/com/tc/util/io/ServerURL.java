@@ -1,22 +1,9 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.io;
 
-import org.apache.commons.io.IOUtils;
 import sun.misc.BASE64Encoder;
 
 import com.tc.exception.TCRuntimeException;
@@ -39,8 +26,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -53,8 +38,6 @@ import javax.net.ssl.X509TrustManager;
 public class ServerURL {
 
   private static final TCLogger logger                    = TCLogging.getLogger(ServerURL.class);
-
-  private static final String   VERSION_HEADER            = "Version";
 
   private static final boolean  DISABLE_HOSTNAME_VERIFIER = Boolean.getBoolean("tc.ssl.disableHostnameVerifier");
   private static final boolean  TRUST_ALL_CERTS           = Boolean.getBoolean("tc.ssl.trustAllCerts");
@@ -78,48 +61,32 @@ public class ServerURL {
     return this.openStream(null);
   }
 
-  public String getServerVersion(PwProvider pwProvider) throws IOException {
+  public String getHeaderField(String fieldName, PwProvider pwProvider, boolean retryOnNull) throws IOException {
     for (int i = 0; i < 3; i++) {
-      HttpURLConnection urlConnection = createSecureConnection(pwProvider);
-      try {
-        urlConnection.connect();
-        int responseCode = urlConnection.getResponseCode();
-        if (responseCode == 200) {
-          return urlConnection.getHeaderField(VERSION_HEADER);
-        } else {
-          logger.info("Failed to retrieve header field, response code : " + responseCode + ", headers :\n" + readHeaderFields(urlConnection) + " body : \n[" + readLines(urlConnection) + "]");
-        }
-      } finally {
-        urlConnection.disconnect();
+      URLConnection urlConnection = createSecureConnection(pwProvider);
+      urlConnection.connect();
+      //Check response code to make sure everything works fine.
+      int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
+      switch (responseCode) {
+        case 401:
+          throw new TCAuthenticationException("Authentication error connecting to " + urlConnection.getURL()
+              + " - invalid credentials (tried user " + securityInfo.getUsername()
+              + ")");
+        case 403:
+          throw new TCAuthorizationException("Authorization error connecting to " + urlConnection.getURL()
+              + " - does the user '" + securityInfo.getUsername()
+              + "' have the required roles?");
+        default:
       }
 
-      logger.info("Retrying connection since response code != 200");
+      String value = urlConnection.getHeaderField(fieldName);
+      if (value != null || !retryOnNull) { return value; }
+
+      logger.info("Retrying connection since header field was null");
       ThreadUtil.reallySleep(50);
     }
 
-    throw new IOException("Cannot retrieve " + VERSION_HEADER + " header from server url after 3 tries : " + theURL);
-  }
-
-  private static String readHeaderFields(HttpURLConnection urlConnection) {
-    StringBuilder sb = new StringBuilder();
-    Map<String, List<String>> headerFields = urlConnection.getHeaderFields();
-    for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
-      sb.append(entry.getKey()).append("=").append(entry.getValue()).append(System.getProperty("line.separator"));
-    }
-    return sb.toString();
-  }
-
-  private static String readLines(HttpURLConnection urlConnection) throws IOException {
-    try {
-      List<String> lines = IOUtils.readLines(urlConnection.getInputStream());
-      StringBuilder sb = new StringBuilder();
-      for (String line : lines) {
-        sb.append(line).append(System.getProperty("line.separator"));
-      }
-      return sb.toString();
-    } catch (IOException e) {
-      return "";
-    }
+    throw new RuntimeException("Cannot retrieve " + fieldName + " header from server url: " + theURL);
   }
 
   public InputStream openStream(PwProvider pwProvider) throws IOException {
@@ -146,7 +113,7 @@ public class ServerURL {
     }
   }
 
-  private HttpURLConnection createSecureConnection(PwProvider pwProvider) {
+  private URLConnection createSecureConnection(PwProvider pwProvider) {
     if (securityInfo.isSecure()) {
       Assert.assertNotNull("Secured URL '" + theURL + "', yet PwProvider instance", pwProvider);
     }
@@ -188,7 +155,7 @@ public class ServerURL {
       urlConnection.setConnectTimeout(timeout);
       urlConnection.setReadTimeout(timeout);
     }
-    return (HttpURLConnection) urlConnection;
+    return urlConnection;
   }
 
   @Override

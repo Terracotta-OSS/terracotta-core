@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.objectserver.locks;
 
@@ -20,11 +7,14 @@ import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockContext.Type;
 import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.locks.LockStore.LockIterator;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
 import com.tc.objectserver.locks.factory.ServerLockFactoryImpl;
@@ -44,7 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * LockManager is responsible for holding locks (in a LockStore) and delegating requests from the handler to the
  * concerned lock. Each lock is checked out, worked upon and then finally checked in.
  */
-public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, TimerCallback {
+public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, TimerCallback, DSOChannelManagerEventListener {
   private enum RequestType {
     LOCK, TRY_LOCK, WAIT, UNLOCK
   }
@@ -54,7 +44,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
   private final LockHelper                              lockHelper;
   private final ReentrantReadWriteLock                  statusLock       = new ReentrantReadWriteLock();
   private boolean                                       isStarted        = false;
-  private final LinkedBlockingQueue<RequestLockContext> lockRequestQueue = new LinkedBlockingQueue<RequestLockContext>();
+  private final LinkedBlockingQueue<RequestLockContext> lockRequestQueue = new LinkedBlockingQueue<>();
 
   private static final TCLogger                         logger           = TCLogging.getLogger(LockManagerImpl.class);
 
@@ -66,6 +56,16 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     this.lockStore = new LockStore(factory);
     this.channelManager = channelManager;
     this.lockHelper = new LockHelper(lockSink, lockStore, this);
+    channelManager.addEventListener(this);
+  }
+
+  @Override
+  public void channelCreated(MessageChannel channel) {
+  }
+
+  @Override
+  public void channelRemoved(MessageChannel channel) {
+    clearAllLocksFor((ClientID) channel.getRemoteNodeID());
   }
 
   @Override
@@ -198,7 +198,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     for (ClientServerExchangeLockContext cselc : serverLockContexts) {
       LockID lid = cselc.getLockID();
 
-      switch (cselc.getState().getType()) {
+      Type type = cselc.getState().getType();
+      switch (type) {
         case GREEDY_HOLDER:
         case HOLDER:
         case WAITER:
@@ -216,6 +217,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
           tryLock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel(),
                   cselc.timeout());
           break;
+        default:
+          throw new AssertionError(type);
       }
     }
   }
@@ -234,7 +237,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
 
   @Override
   public LockMBean[] getAllLocks() {
-    List<LockMBean> beansList = new ArrayList<LockMBean>();
+    List<LockMBean> beansList = new ArrayList<>();
 
     LockIterator iter = lockStore.iterator();
     ServerLock lock = iter.getNextLock(null);
@@ -279,6 +282,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
         case UNLOCK:
           unlock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID());
           break;
+        default:
+          throw new AssertionError(ctxt.getType());
       }
     }
   }

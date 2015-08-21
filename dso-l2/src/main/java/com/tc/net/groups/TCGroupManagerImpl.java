@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.groups;
 
@@ -42,6 +30,7 @@ import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
@@ -54,21 +43,23 @@ import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
-import com.tc.net.protocol.tcm.GeneratedMessageFactory;
+import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.utils.L2Utils;
-import com.tc.object.config.schema.L2DSOConfig;
+import com.tc.object.config.schema.L2Config;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
@@ -110,7 +101,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventListener, TopologyChangeListener {
+public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyChangeListener {
   private static final TCLogger                             logger                      = TCLogging
                                                                                             .getLogger(TCGroupManagerImpl.class);
 
@@ -118,18 +109,17 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private final ReconnectConfig                             l2ReconnectConfig;
 
   private final String                                      version;
-  private final Sink                                        httpSink;
   private final TCSecurityManager                           securityManager;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
-  private final CopyOnWriteArrayList<GroupEventsListener>   groupListeners              = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<String, GroupMessageListener>           messageListeners            = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Map<MessageID, GroupResponse>               pendingRequests             = new ConcurrentHashMap<MessageID, GroupResponse>();
+  private final CopyOnWriteArrayList<GroupEventsListener>   groupListeners              = new CopyOnWriteArrayList<>();
+  private final Map<String, GroupMessageListener<? extends GroupMessage>>           messageListeners            = new ConcurrentHashMap<>();
+  private final Map<MessageID, GroupResponse<AbstractGroupMessage>>               pendingRequests             = new ConcurrentHashMap<>();
   private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
-  private final ConcurrentHashMap<MessageChannel, ServerID> channelToNodeID             = new ConcurrentHashMap<MessageChannel, ServerID>();
-  private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<ServerID, TCGroupMember>();
-  private final ConcurrentHashMap<String, TCGroupMember>    nodenameToMembers           = new ConcurrentHashMap<String, TCGroupMember>();
+  private final ConcurrentHashMap<MessageChannel, ServerID> channelToNodeID             = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, TCGroupMember>    nodenameToMembers           = new ConcurrentHashMap<>();
   private final Timer                                       handshakeTimer              = new Timer(
                                                                                                     "TC Group Manager Handshake timer",
                                                                                                     true);
@@ -145,27 +135,26 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private TCGroupMemberDiscovery                            discover;
   private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
                                                                                                                              logger);
-  private Stage                                             hydrateStage;
-  private Stage                                             receiveGroupMessageStage;
-  private Stage                                             handshakeMessageStage;
-  private Stage                                             discoveryStage;
+  private Stage<HydrateContext> hydrateStage;
+  private Stage<TCGroupMessageWrapper> receiveGroupMessageStage;
+  private Stage<TCGroupHandshakeMessage> handshakeMessageStage;
+  private Stage<DiscoveryStateMachine> discoveryStage;
   private TCProperties                                      l2Properties;
 
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Sink httpSink, NodesStore nodesStore, TCSecurityManager securityManager) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink, nodesStore, securityManager);
+                            ServerID thisNodeID, NodesStore nodesStore, TCSecurityManager securityManager) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, nodesStore, securityManager);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, Sink httpSink, NodesStore nodesStore,
+                            StageManager stageManager, ServerID thisNodeID, NodesStore nodesStore,
                             TCSecurityManager securityManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
-    this.httpSink = httpSink;
     this.securityManager = securityManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
@@ -173,9 +162,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     initializeWeights(weightGeneratorFactory);
 
-    L2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
+    L2Config l2DSOConfig = configSetupManager.dsoL2Config();
 
-    this.groupPort = l2DSOConfig.tsaGroupPort().getIntValue();
+    this.groupPort = l2DSOConfig.tsaGroupPort().getValue();
 
     TCSocketAddress socketAddress;
     try {
@@ -217,7 +206,6 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     this.stageManager = stageManager;
     this.securityManager = securityManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
-    this.httpSink = null;
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
     this.version = getVersion();
@@ -255,11 +243,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     initMessageRouter(messageRouter);
 
-    final Map<TCMessageType, Class> messageTypeClassMapping = new HashMap<TCMessageType, Class>();
+    final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
-
-    final Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new HashMap<TCMessageType, GeneratedMessageFactory>();
-    initMessageTypeFactoryMapping(messageTypeFactoryMapping);
 
     communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
                                                           new NullMessageMonitor(), messageRouter,
@@ -268,11 +253,11 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                           new HealthCheckerConfigImpl(l2Properties
                                                               .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
-                                                          messageTypeClassMapping, messageTypeFactoryMapping,
+                                                          messageTypeClassMapping, Collections.emptyMap(),
         securityManager);
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
-                                                         new DefaultConnectionIdFactory(), httpSink);
+                                                         new DefaultConnectionIdFactory());
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
 
@@ -289,24 +274,16 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private void createTCGroupManagerStages() {
     int maxStageSize = 5000;
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE,
-                                            new HydrateHandler(), 1, maxStageSize);
-    receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE,
-                                                        new ReceiveGroupMessageHandler(this), 1, maxStageSize);
-    handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE,
-                                                     new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
-    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE,
-                                              new TCGroupMemberDiscoveryHandler(this), 4, maxStageSize);
+    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE, HydrateContext.class,new HydrateHandler(), 1, maxStageSize);
+    receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
+    handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
+    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, 1, maxStageSize);
   }
 
-  private Map<TCMessageType, Class> initMessageTypeClassMapping(final Map<TCMessageType, Class> messageTypeClassMapping) {
+  private Map<TCMessageType, Class<? extends TCMessage>> initMessageTypeClassMapping(Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping) {
     messageTypeClassMapping.put(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
     messageTypeClassMapping.put(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     return messageTypeClassMapping;
-  }
-
-  private Map<TCMessageType, Class> initMessageTypeFactoryMapping(final Map<TCMessageType, GeneratedMessageFactory> messageTypeClassMapping) {
-    return Collections.EMPTY_MAP;
   }
 
   private void initMessageRouter(TCMessageRouter messageRouter) {
@@ -319,14 +296,14 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * getDiscoveryHandlerSink -- sink for discovery to enqueue tasks for open channel.
    */
-  protected Sink getDiscoveryHandlerSink() {
+  protected Sink<DiscoveryStateMachine> getDiscoveryHandlerSink() {
     return discoveryStage.getSink();
   }
 
   /*
    * Once connected, both send NodeID to each other.
    */
-  private void handshake(final MessageChannel channel) {
+  private void handshake(MessageChannel channel) {
     getOrCreateHandshakeStateMachine(channel);
   }
 
@@ -441,7 +418,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     discover.setupNodes(thisNode, nodesStore.getAllNodes());
     discover.start();
     try {
-      groupListener.start(new HashSet());
+      groupListener.start(new HashSet<ConnectionID>());
     } catch (IOException e) {
       throw new GroupException(e);
     }
@@ -504,7 +481,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private void notifyAnyPendingRequests(TCGroupMember member) {
     synchronized (pendingRequests) {
-      for (GroupResponse groupResponse : pendingRequests.values()) {
+      for (GroupResponse<AbstractGroupMessage> groupResponse : pendingRequests.values()) {
         GroupResponseImpl response = (GroupResponseImpl) groupResponse;
         response.notifyMemberDead(member);
       }
@@ -512,12 +489,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   @Override
-  public void sendAll(GroupMessage msg) {
+  public void sendAll(AbstractGroupMessage msg) {
     sendAll(msg, members.keySet());
   }
 
   @Override
-  public void sendAll(GroupMessage msg, Set nodeIDs) {
+  public void sendAll(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) {
     final boolean debug = msg instanceof L2StateMessage;
     for (TCGroupMember m : members.values()) {
       if (!nodeIDs.contains(m.getPeerNodeID())) {
@@ -538,7 +515,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   @Override
-  public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
+  public void sendTo(NodeID node, AbstractGroupMessage msg) throws GroupException {
     TCGroupMember member = getMember(node);
     if (member != null && member.isReady()) {
       if (msg instanceof L2StateMessage) {
@@ -551,13 +528,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   @Override
-  public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) throws GroupException {
+  public AbstractGroupMessage sendToAndWaitForResponse(NodeID nodeID, AbstractGroupMessage msg) throws GroupException {
     debugInfo("Sending to " + nodeID + " and Waiting for Response : " + msg.getMessageID());
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
     TCGroupMember m = getMember(nodeID);
     if ((m != null) && m.isReady()) {
-      GroupResponse old = pendingRequests.put(msgID, groupResponse);
+      GroupResponse<AbstractGroupMessage> old = pendingRequests.put(msgID, groupResponse);
       Assert.assertNull(old);
       groupResponse.sendTo(m, msg);
       groupResponse.waitForResponses(getNodeID());
@@ -572,16 +549,16 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   @Override
-  public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
+  public GroupResponse<AbstractGroupMessage> sendAllAndWaitForResponse(AbstractGroupMessage msg) throws GroupException {
     return sendAllAndWaitForResponse(msg, members.keySet());
   }
 
   @Override
-  public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) throws GroupException {
+  public GroupResponse<AbstractGroupMessage> sendAllAndWaitForResponse(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) throws GroupException {
     debugInfo("Sending to ALL and Waiting for Response : " + msg.getMessageID());
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
-    GroupResponse old = pendingRequests.put(msgID, groupResponse);
+    GroupResponse<AbstractGroupMessage> old = pendingRequests.put(msgID, groupResponse);
     Assert.assertNull(old);
     groupResponse.sendAll(msg, nodeIDs);
     groupResponse.waitForResponses(getNodeID());
@@ -589,7 +566,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return groupResponse;
   }
 
-  private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener, final char[] password)
+  private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener, char[] password)
       throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
@@ -706,7 +683,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return members.size();
   }
 
-  public void messageReceived(GroupMessage message, MessageChannel channel) {
+  public void messageReceived(AbstractGroupMessage message, MessageChannel channel) {
 
     if (isStopped.get()) {
       channel.close();
@@ -744,7 +721,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
-  private boolean notifyPendingRequests(MessageID requestID, GroupMessage gmsg, ServerID nodeID) {
+  private boolean notifyPendingRequests(MessageID requestID, AbstractGroupMessage gmsg, ServerID nodeID) {
     GroupResponseImpl response = (GroupResponseImpl) pendingRequests.get(requestID);
     if (response != null) {
       response.addResponseFrom(nodeID, gmsg);
@@ -753,10 +730,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return false;
   }
 
-  private static void validateExternalizableClass(Class<AbstractGroupMessage> clazz) {
-    String name = clazz.getName();
+  private static void validateExternalizableClass(Class<? extends GroupMessage> msgClass) {
+    String name = msgClass.getName();
     try {
-      Constructor<AbstractGroupMessage> cons = clazz.getDeclaredConstructor(new Class[0]);
+      Constructor<? extends GroupMessage> cons = msgClass.getDeclaredConstructor(new Class[0]);
       if ((cons.getModifiers() & Modifier.PUBLIC) == 0) { throw new AssertionError(
                                                                                    name
                                                                                        + " : public no arg constructor not found"); }
@@ -766,25 +743,28 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   @Override
-  public void registerForMessages(Class msgClass, GroupMessageListener listener) {
+  public <N extends AbstractGroupMessage> void registerForMessages(Class<N> msgClass, GroupMessageListener<N> listener) {
     validateExternalizableClass(msgClass);
-    GroupMessageListener prev = messageListeners.put(msgClass.getName(), listener);
+    GroupMessageListener<?> prev = messageListeners.put(msgClass.getName(), listener);
     if (prev != null) {
       logger.warn("Previous listener removed : " + prev);
     }
   }
 
   @Override
-  public void routeMessages(Class msgClass, Sink sink) {
-    registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
+  public <N extends AbstractGroupMessage> void routeMessages(Class<N> msgClass, Sink<N> sink) {
+    registerForMessages(msgClass, new RouteGroupMessagesToSink<>(msgClass.getName(), sink));
   }
 
+  // Suppress the case to the listener to receive GroupMessage.
+  @SuppressWarnings("unchecked")
   private void fireMessageReceivedEvent(ServerID from, GroupMessage msg) {
-    GroupMessageListener listener = messageListeners.get(msg.getClass().getName());
+    GroupMessageListener<? extends GroupMessage> listener = messageListeners.get(msg.getClass().getName());
     if (listener != null) {
-      listener.messageReceived(from, msg);
+      ((GroupMessageListener<GroupMessage>)listener).messageReceived(from, msg);
     } else {
       String errorMsg = "No Route for " + msg + " from " + from;
+      errorMsg += " " + msg.getClass().getName() + " " + messageListeners.keySet();
       logger.error(errorMsg);
       throw new AssertionError(errorMsg);
     }
@@ -808,7 +788,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       long weights[] = zapNodeRequestProcessor.getCurrentNodeWeights();
       logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason + " my weight = "
                   + Arrays.toString(weights));
-      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights);
+      AbstractGroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights);
       try {
         sendTo(nodeID, msg);
       } catch (GroupException e) {
@@ -842,10 +822,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return out;
   }
 
-  private static class GroupResponseImpl implements GroupResponse {
+  private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {
 
-    private final Set<ServerID>      waitFor   = new HashSet<ServerID>();
-    private final List<GroupMessage> responses = new ArrayList<GroupMessage>();
+    private final Set<ServerID>      waitFor   = new HashSet<>();
+    private final List<AbstractGroupMessage> responses = new ArrayList<>();
     private final TCGroupManagerImpl manager;
 
     GroupResponseImpl(TCGroupManagerImpl manager) {
@@ -853,22 +833,24 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
 
     @Override
-    public synchronized List<GroupMessage> getResponses() {
+    public synchronized List<AbstractGroupMessage> getResponses() {
       Assert.assertTrue(waitFor.isEmpty());
       return responses;
     }
 
     @Override
-    public synchronized GroupMessage getResponse(NodeID nodeID) {
+    public synchronized AbstractGroupMessage getResponse(NodeID nodeID) {
       Assert.assertTrue(waitFor.isEmpty());
-      for (GroupMessage msg : responses) {
-        if (nodeID.equals(msg.messageFrom())) return msg;
+      for (AbstractGroupMessage msg : responses) {
+        if (nodeID.equals(msg.messageFrom())) {
+          return msg;
+        }
       }
       logger.warn("Missing response message from " + nodeID);
       return null;
     }
 
-    public synchronized void sendTo(TCGroupMember member, GroupMessage msg) throws GroupException {
+    public synchronized void sendTo(TCGroupMember member, AbstractGroupMessage msg) throws GroupException {
       if (member.isReady()) {
         Assert.assertNotNull(member.getPeerNodeID());
         waitFor.add(member.getPeerNodeID());
@@ -882,7 +864,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     // sendAll(msg, manager.members.keySet());
     // }
 
-    public synchronized void sendAll(GroupMessage msg, Set nodeIDs) {
+    public synchronized void sendAll(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) {
       final boolean debug = msg instanceof L2StateMessage;
       for (TCGroupMember m : manager.getMembers()) {
         if (!nodeIDs.contains(m.getPeerNodeID())) {
@@ -904,7 +886,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       }
     }
 
-    public synchronized void addResponseFrom(ServerID nodeID, GroupMessage gmsg) {
+    public synchronized void addResponseFrom(ServerID nodeID, AbstractGroupMessage gmsg) {
       if (!waitFor.remove(nodeID)) {
         String message = "Recd response from a member not in list : " + nodeID + " : waiting For : " + waitFor
                          + " msg : " + gmsg;
@@ -941,12 +923,11 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
-  private final class ZapNodeRequestRouter implements GroupMessageListener {
+  private final class ZapNodeRequestRouter implements GroupMessageListener<GroupZapNodeMessage> {
 
     @Override
-    public void messageReceived(NodeID fromNode, GroupMessage msg) {
-      GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
-      zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
+    public void messageReceived(NodeID fromNode, GroupZapNodeMessage zapMsg) {
+      zapNodeRequestProcessor.incomingZapNodeRequest(zapMsg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
                                                      zapMsg.getWeights());
     }
   }

@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util.concurrent;
 
@@ -50,7 +37,7 @@ public class CopyOnWriteSequentialMap<K, V> extends LinkedHashMap<K, V> {
   private boolean                        inPutAll                    = false;
 
   private final static TypedArrayFactory DEFAULT_TYPED_ARRAY_FACTORY = new TypedArrayFactory() {
-
+                                                                       @SuppressWarnings("unchecked")
                                                                        @Override
                                                                        public Object[] createTypedArray(int size) {
                                                                          return new Object[size];
@@ -140,6 +127,7 @@ public class CopyOnWriteSequentialMap<K, V> extends LinkedHashMap<K, V> {
     return _snapshot.values();
   }
 
+  @SuppressWarnings("unchecked")
   public <R> R[] valuesToArray() {
     Collection<V> values = values();
     // Avoid "holes" in target array
@@ -195,7 +183,7 @@ public class CopyOnWriteSequentialMap<K, V> extends LinkedHashMap<K, V> {
   private void takeSnapshot() {
     // Defer taking snapshot until putAll() is finished. Needed because super.putAll() does a bunch of put()'s
     if (inPutAll) return;
-    Map<K, V> temp = new LinkedHashMap<K, V>();
+    Map<K, V> temp = new LinkedHashMap<>();
     for (Map.Entry<K, V> e : super.entrySet())
       temp.put(e.getKey(), e.getValue());
     _snapshot = Collections.unmodifiableMap(temp);

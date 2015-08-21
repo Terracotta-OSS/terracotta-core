@@ -1,24 +1,12 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util;
 
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.logging.TCLogger;
+
 import java.lang.reflect.Array;
 
 /**
@@ -26,9 +14,9 @@ import java.lang.reflect.Array;
  */
 public class Util {
   private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
-  
-  private static final Error FATAL_ERROR = new Error(
-  "Fatal error -- Please refer to console output and Terracotta log files for more information");
+
+  private static final Error            FATAL_ERROR = new Error(
+                                                                "Fatal error -- Please refer to console output and Terracotta log files for more information");
 
   /**
    * Enumerates the argument, provided that it is an array, in a nice, human-readable format.
@@ -55,18 +43,18 @@ public class Util {
     return buf.toString();
   }
 
+  @SuppressWarnings("finally")
   public static void printLogAndRethrowError(Throwable t, TCLogger logger) {
-    printLogAndMaybeRethrowError(t, true, logger);
-  }
-
-  public static void printLogAndMaybeRethrowError(final Throwable t, final boolean rethrow, final TCLogger logger) {
-    // if (t instanceof ReadOnlyException) { throw (ReadOnlyException) t; }
-    // if (t instanceof UnlockedSharedObjectException) { throw (UnlockedSharedObjectException) t; }
-    // if (t instanceof TCNonPortableObjectError) { throw (TCNonPortableObjectError) t; }
-
+    if (t == null) {
+      throw null;
+    }
+    
     try {
-      if (t != null) t.printStackTrace();
-      logger.error(t);
+      try {
+        t.printStackTrace();
+      } finally {
+        logger.error(t);
+      }
     } catch (Throwable err) {
       try {
         err.printStackTrace();
@@ -74,26 +62,24 @@ public class Util {
         // sorry, game over, stop trying
       }
     } finally {
-      if (rethrow) {
-        // don't wrap existing Runtime and Error
-        if (t instanceof RuntimeException) { throw (RuntimeException) t; }
-        if (t instanceof Error) { throw (Error) t; }
+      // don't wrap existing Runtime and Error
+      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+      if (t instanceof Error) { throw (Error) t; }
 
-        // Try to new up a RuntimeException to throw
-        final RuntimeException re;
+      // Try to new up a RuntimeException to throw
+      final RuntimeException re;
+      try {
+        re = new RuntimeException("Unexpected Error " + t.getMessage(), t);
+      } catch (Throwable err3) {
         try {
-          re = new RuntimeException("Unexpected Error " + t.getMessage(), t);
-        } catch (Throwable err3) {
-          try {
-            err3.printStackTrace();
-          } catch (Throwable err4) {
-            // sorry, game over, stop trying
-          }
-          throw FATAL_ERROR;
+          err3.printStackTrace();
+        } catch (Throwable err4) {
+          // sorry, game over, stop trying
         }
-
-        throw re;
+        throw FATAL_ERROR;
       }
+
+      throw re;
     }
   }
   
@@ -101,18 +87,6 @@ public class Util {
     if (isInterrupted) {
       Thread.currentThread().interrupt();
     }
-  }
-  
-  public static long getMillis(long timeInNanos) {
-    return timeInNanos/1000000;
-  }
-  
-  public static int getNanos(long timeInNanos, long mills) {
-    return (int)(timeInNanos - mills*1000000);
-  }
-  
-  public static long getTimeInNanos(long mills, int nanos) {
-    return mills*1000000+nanos;
   }
   
   public static int hash(Object key, int limit) {

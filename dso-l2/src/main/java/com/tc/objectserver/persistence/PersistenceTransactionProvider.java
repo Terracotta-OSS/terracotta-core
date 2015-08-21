@@ -1,33 +1,17 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
- */
 package com.tc.objectserver.persistence;
-
-import org.terracotta.corestorage.StorageManager;
 
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionProvider;
+
+import org.terracotta.persistence.IPersistentStorage;
 
 /**
  * @author tim
  */
 public class PersistenceTransactionProvider implements TransactionProvider {
-  private final StorageManager manager;
+  private final IPersistentStorage manager;
 
-  public PersistenceTransactionProvider(StorageManager manager) {
+  public PersistenceTransactionProvider(IPersistentStorage manager) {
     this.manager = manager;
   }
 
@@ -37,13 +21,12 @@ public class PersistenceTransactionProvider implements TransactionProvider {
   }
 
   private class StorageTransaction implements Transaction {
-    private StorageTransaction() {
-      manager.begin();
-    }
+    
+    IPersistentStorage.Transaction transaction = manager.begin();
 
     @Override
     public void commit() {
-      manager.commit();
+      transaction.commit();
     }
   }
 }

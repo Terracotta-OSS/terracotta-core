@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2011 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -39,7 +27,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   private final ClientStatePersistor              clientStateStore;
   private final MutableSequence                   connectionIDSequence;
   private String                                  uid;
-  private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<ConnectionIDFactoryListener>();
+  private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
 
   public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
     this.clientStateStore = clientStateStore;
@@ -48,7 +36,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   @Override
-  public ConnectionID populateConnectionID(final ConnectionID connectionID) {
+  public ConnectionID populateConnectionID(ConnectionID connectionID) {
     if (new ChannelID(connectionID.getChannelID()).isNull()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
     } else {
@@ -56,11 +44,11 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     }
   }
 
-  private ConnectionID nextConnectionId(String clientJvmID, final ProductID productId) {
+  private ConnectionID nextConnectionId(String clientJvmID, ProductID productId) {
     return buildConnectionId(clientJvmID, connectionIDSequence.next(), productId);
   }
 
-  private ConnectionID buildConnectionId(String jvmID, long channelID, final ProductID productId) {
+  private ConnectionID buildConnectionId(String jvmID, long channelID, ProductID productId) {
     Assert.assertNotNull(uid);
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
     clientStateStore.saveClientState(new ChannelID(channelID));
@@ -69,7 +57,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     return rv;
   }
 
-  private ConnectionID makeConnectionId(String clientJvmID, long channelID, final ProductID productId) {
+  private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID productId) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
     // provided channelID shall not be using
     if (clientStateStore.containsClient(new ChannelID(channelID))) { throw new TCRuntimeException(
@@ -113,7 +101,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   @Override
   public Set<ConnectionID> loadConnectionIDs() {
     Assert.assertNotNull(uid);
-    Set<ConnectionID> connections = new HashSet<ConnectionID>();
+    Set<ConnectionID> connections = new HashSet<>();
     for (final ChannelID channelID : clientStateStore.loadClientIDs()) {
       connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, (channelID).toLong(), uid));
     }

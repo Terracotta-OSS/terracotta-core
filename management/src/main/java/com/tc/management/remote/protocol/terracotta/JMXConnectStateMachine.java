@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
@@ -175,16 +162,17 @@ public class JMXConnectStateMachine {
         return;
       }
 
-      Map environment = new HashMap();
+      Map<String, Object> environment = new HashMap<>();
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(ClientProvider.JMX_MESSAGE_CHANNEL, channel);
       environment.put("jmx.remote.x.request.timeout", Long.valueOf(Long.MAX_VALUE));
       environment.put("jmx.remote.x.client.connection.check.period", Long.valueOf(0));
       environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
 
-      final JMXConnector conn;
+    
       try {
-        conn = jmxConnect(channel, serviceURL, environment);
+        @SuppressWarnings("resource")
+        final JMXConnector conn = jmxConnect(channel, serviceURL, environment);
 
         final MBeanServerConnection l1MBeanServerConnection = conn.getMBeanServerConnection();
 
@@ -209,9 +197,9 @@ public class JMXConnectStateMachine {
     }
   }
 
-  private static JMXConnector jmxConnect(MessageChannel channel, final JMXServiceURL serviceURL, final Map environment)
+  private static JMXConnector jmxConnect(MessageChannel channel, JMXServiceURL serviceURL, Map<String, Object> environment)
       throws IOException {
-    final AtomicReference<Object> ref = new AtomicReference<Object>();
+    final AtomicReference<Object> ref = new AtomicReference<>();
 
     Thread connectThread = new Thread("JMX Connect for " + channel.getChannelID()) {
       @Override
@@ -258,7 +246,7 @@ public class JMXConnectStateMachine {
 
   private static final class ConnectorClosedFilter implements NotificationFilter {
     @Override
-    public boolean isNotificationEnabled(final Notification notification) {
+    public boolean isNotificationEnabled(Notification notification) {
       boolean enabled = false;
       if (notification instanceof JMXConnectionNotification) {
         final JMXConnectionNotification jmxcn = (JMXConnectionNotification) notification;
@@ -276,7 +264,7 @@ public class JMXConnectStateMachine {
     }
 
     @Override
-    final public void handleNotification(final Notification notification, final Object context) {
+    final public void handleNotification(Notification notification, Object context) {
       bag.unregisterBeans();
     }
   }

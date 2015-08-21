@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object.locks;
 
@@ -21,7 +8,7 @@ import com.tc.net.ClientID;
 enum ClientGreediness {
   GARBAGE {
     @Override
-    boolean canAward(final LockLevel level) throws GarbageLockException {
+    boolean canAward(LockLevel level) throws GarbageLockException {
       throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
     }
 
@@ -56,17 +43,17 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) throws GarbageLockException {
+    ClientGreediness requested(ServerLockLevel level) throws GarbageLockException {
       throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
     }
 
     @Override
-    ClientGreediness awarded(final ServerLockLevel level) throws GarbageLockException {
+    ClientGreediness awarded(ServerLockLevel level) throws GarbageLockException {
       throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return this;
     }
 
@@ -81,7 +68,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       throw new AssertionError("Garbage locks have no exchange context representation.");
     }
 
@@ -93,7 +80,7 @@ enum ClientGreediness {
 
   FREE {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return false;
     }
 
@@ -128,23 +115,24 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this;
     }
 
     @Override
-    ClientGreediness awarded(final ServerLockLevel level) {
+    ClientGreediness awarded(ServerLockLevel level) {
       switch (level) {
         case READ:
           return GREEDY_READ;
         case WRITE:
           return GREEDY_WRITE;
+        default:
+          throw new AssertionError("Trying to award unknown ServerLockLevel " + level);
       }
-      throw new AssertionError("Trying to award unknown ServerLockLevel " + level);
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return this;
     }
 
@@ -154,7 +142,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return null;
     }
 
@@ -166,7 +154,7 @@ enum ClientGreediness {
 
   GREEDY_READ {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return level.isRead();
     }
 
@@ -201,29 +189,31 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       switch (level) {
         case READ:
           return this;
         case WRITE:
           return RECALLED_READ;
+        default:
+          throw new AssertionError("Trying to request unknown ServerLockLevel " + level);
       }
-      throw new AssertionError("Trying to request unknown ServerLockLevel " + level);
     }
 
     @Override
-    ClientGreediness awarded(final ServerLockLevel level) {
+    ClientGreediness awarded(ServerLockLevel level) {
       switch (level) {
         case READ:
           return GREEDY_READ;
         case WRITE:
           return GREEDY_WRITE;
-      }
-      throw new AssertionError("Trying to award unknown ServerLockLevel " + level);
+        default:
+          throw new AssertionError("Trying to award unknown ServerLockLevel " + level);
+        }    
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return RECALLED_READ;
     }
 
@@ -233,7 +223,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_READ);
     }
@@ -246,7 +236,7 @@ enum ClientGreediness {
 
   GREEDY_WRITE {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return true;
     }
 
@@ -281,12 +271,12 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this;
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       if ((lease > 0) && (clientLock.pendingCount() > 0)) {
         return GREEDY_WRITE;
       } else {
@@ -295,8 +285,9 @@ enum ClientGreediness {
             return RECALLED_WRITE_FOR_READ;
           case WRITE:
             return RECALLED_WRITE;
+          default:
+            throw new AssertionError("Trying to recall for unknown ServerLockLevel " + level);
         }
-        throw new AssertionError("Trying to recall for unknown ServerLockLevel " + level);
       }
     }
 
@@ -306,7 +297,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
@@ -319,7 +310,7 @@ enum ClientGreediness {
 
   RECALLED_READ {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return false;
     }
 
@@ -354,12 +345,12 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this; // lock is being recalled - we'll get the per thread awards from the server later
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return this;
     }
 
@@ -379,7 +370,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_READ);
     }
@@ -392,7 +383,7 @@ enum ClientGreediness {
 
   RECALLED_WRITE {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return false;
     }
 
@@ -422,12 +413,12 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this; // lock is being recalled - we'll get the per thread awards from the server later
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return this;
     }
 
@@ -452,7 +443,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
@@ -465,7 +456,7 @@ enum ClientGreediness {
 
   READ_RECALL_IN_PROGRESS {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return false;
     }
 
@@ -500,12 +491,12 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this;
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return this;
     }
 
@@ -520,7 +511,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_READ);
     }
@@ -533,7 +524,7 @@ enum ClientGreediness {
 
   WRITE_RECALL_IN_PROGRESS {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return false;
     }
 
@@ -568,12 +559,12 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this;
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       return this;
     }
 
@@ -588,7 +579,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
@@ -601,7 +592,7 @@ enum ClientGreediness {
 
   RECALLED_WRITE_FOR_READ {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return level.isRead();
     }
 
@@ -646,19 +637,20 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this;
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       switch (level) {
         case READ:
           return this;
         case WRITE:
           return RECALLED_WRITE;
+        default:
+          throw new AssertionError("Trying to recall for unknown ServerLockLevel " + level);
       }
-      throw new AssertionError("Trying to recall for unknown ServerLockLevel " + level);
     }
 
     @Override
@@ -667,7 +659,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
@@ -680,7 +672,7 @@ enum ClientGreediness {
 
   WRITE_RECALL_FOR_READ_IN_PROGRESS {
     @Override
-    boolean canAward(final LockLevel level) {
+    boolean canAward(LockLevel level) {
       return level.isRead();
     }
 
@@ -720,19 +712,20 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness requested(final ServerLockLevel level) {
+    ClientGreediness requested(ServerLockLevel level) {
       return this;
     }
 
     @Override
-    ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+    ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
       switch (level) {
         case READ:
           return this;
         case WRITE:
           return WRITE_RECALL_IN_PROGRESS;
+        default:
+          throw new AssertionError("Trying to recall for unknown ServerLockLevel " + level);
       }
-      throw new AssertionError("Trying to recall for unknown ServerLockLevel " + level);
     }
 
     @Override
@@ -741,7 +734,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientServerExchangeLockContext toContext(final LockID lock, final ClientID client) {
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
@@ -771,18 +764,18 @@ enum ClientGreediness {
   /**
    * @throws GarbageLockException thrown if in a garbage state
    */
-  ClientGreediness requested(final ServerLockLevel level) throws GarbageLockException {
+  ClientGreediness requested(ServerLockLevel level) throws GarbageLockException {
     throw new AssertionError("request level while in unexpected state (" + this + ")");
   }
 
   /**
    * @throws GarbageLockException thrown if in a garbage state
    */
-  ClientGreediness awarded(final ServerLockLevel level) throws GarbageLockException {
+  ClientGreediness awarded(ServerLockLevel level) throws GarbageLockException {
     throw new AssertionError("award while in unexpected state (" + this + ")");
   }
 
-  ClientGreediness recalled(final ClientLock clientLock, final int lease, final ServerLockLevel level) {
+  ClientGreediness recalled(ClientLock clientLock, int lease, ServerLockLevel level) {
     throw new AssertionError("recalled while in unexpected state (" + this + ")");
   }
 

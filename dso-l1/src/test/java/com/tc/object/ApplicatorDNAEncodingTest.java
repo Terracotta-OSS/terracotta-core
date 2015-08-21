@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -35,17 +23,17 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
 import junit.framework.TestCase;
 
+@SuppressWarnings("resource")
 public class ApplicatorDNAEncodingTest extends TestCase {
 
   Random        rnd           = new Random();
   ClassProvider classProvider = new MockClassProvider();
-
+  
   public void testZeroLengthByteArray() throws Exception {
     final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
@@ -243,7 +231,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
     helpTestStringEncodingDecoding(bigString, true);
   }
 
-  public void helpTestStringEncodingDecoding(final String s, final boolean compressed) throws Exception {
+  public void helpTestStringEncodingDecoding(String s, boolean compressed) throws Exception {
     // Encode string using applicator encoding into data
     final DNAEncoding applicatorEncoding = getApplicatorEncoding();
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
@@ -287,7 +275,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
 
   }
 
-  private String getBigString(final int length) {
+  private String getBigString(int length) {
     final String sample = "mold for Big String";
     final StringBuffer sb = new StringBuffer();
     while (sb.length() < length) {
@@ -344,7 +332,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
 
     DNAEncoding encoding = getApplicatorEncoding();
     encoding.encode(getClass(), output);
-    Class c = Object.class;
+    Class<?> c = Object.class;
     final UTF8ByteDataHolder name = new UTF8ByteDataHolder(c.getName());
     final ClassInstance ci = new ClassInstance(name);
     encoding.encode(ci, output);
@@ -363,9 +351,9 @@ public class ApplicatorDNAEncodingTest extends TestCase {
 
     encoding = getApplicatorEncoding();
     input = new TCByteBufferInputStream(data);
-    c = (Class) encoding.decode(input);
+    c = (Class<?>) encoding.decode(input);
     assertEquals(getClass(), c);
-    c = (Class) encoding.decode(input);
+    c = (Class<?>) encoding.decode(input);
     assertEquals(Object.class, c);
     assertEquals(0, input.available());
 
@@ -374,7 +362,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   public void testBasic() throws Exception {
     final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    final List data = new ArrayList();
+    final List<Object> data = new ArrayList<>();
     data.add(new ObjectID(1));
     data.add("one");
     data.add(new Boolean(true));
@@ -394,13 +382,12 @@ public class ApplicatorDNAEncodingTest extends TestCase {
     data.add(new Short((short) -1));
 
     final DNAEncoding encoding = getApplicatorEncoding();
-    for (final Iterator i = data.iterator(); i.hasNext();) {
-      encoding.encode(i.next(), output);
+    for (Object d : data) {
+      encoding.encode(d, output);
     }
 
     final TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
-    for (final Iterator i = data.iterator(); i.hasNext();) {
-      final Object orig = i.next();
+    for (Object orig : data) {
       final Object decoded = encoding.decode(input);
 
       assertEquals(orig, decoded);

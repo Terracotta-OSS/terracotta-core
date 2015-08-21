@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -33,10 +21,10 @@ import junit.framework.TestCase;
 public class AATreeSetTest extends TestCase {
 
   public void testRandom() {
-    List<Long> longs = populateRandomLongs(new ArrayList(), 1000);
+    List<Long> longs = populateRandomLongs(new ArrayList<Long>(), 1000);
 
-    SortedSet<Long> treeSet = new TreeSet<Long>();
-    SortedSet<Long> aatree = new AATreeSet<Long>();
+    SortedSet<Long> treeSet = new TreeSet<>();
+    SortedSet<Long> aatree = new AATreeSet<>();
 
     for (Long l : longs) {
       boolean aaInsert = aatree.add(l);
@@ -46,8 +34,8 @@ public class AATreeSetTest extends TestCase {
 
     assertEquals(treeSet.size(), aatree.size());
 
-    Iterator tsIterator = treeSet.iterator();
-    Iterator aaIterator = aatree.iterator();
+    Iterator<Long> tsIterator = treeSet.iterator();
+    Iterator<Long> aaIterator = aatree.iterator();
 
     while (tsIterator.hasNext() && aaIterator.hasNext()) {
       assertEquals(tsIterator.next(), aaIterator.next());
@@ -59,7 +47,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testBasic() {
-    Set<Long> t = new AATreeSet<Long>();
+    Set<Long> t = new AATreeSet<>();
     t.add(Long.valueOf(25));
     t.add(Long.valueOf(10));
     t.add(Long.valueOf(1));
@@ -81,10 +69,10 @@ public class AATreeSetTest extends TestCase {
     checkAATreeIteratorElements(t.iterator());
   }
 
-  private static void checkAATreeIteratorElements(Iterator<? extends Comparable> i) {
-    Comparable prev = null;
+  private static void checkAATreeIteratorElements(Iterator<Long> i) {
+    Long prev = null;
     while (i.hasNext()) {
-      Comparable curr = i.next();
+      Long curr = i.next();
       // assert that iteration gives sorted result, since aatree behaves like a set, duplicates are eliminated and hence
       // we don't have to check for equality.
       if (prev != null) {
@@ -96,7 +84,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testVeryBasic() {
-    AATreeSet<Integer> aaTree = new AATreeSet<Integer>();
+    AATreeSet<Integer> aaTree = new AATreeSet<>();
     boolean inserted = aaTree.add(Integer.valueOf(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
@@ -128,7 +116,7 @@ public class AATreeSetTest extends TestCase {
 
   // Test program; should print min and max and nothing else
   public void testMinMax() {
-    AATreeSet<Integer> t = new AATreeSet();
+    AATreeSet<Integer> t = new AATreeSet<>();
     final int NUMS = 400000;
     final int GAP = 1;
 
@@ -161,9 +149,9 @@ public class AATreeSetTest extends TestCase {
 
   public void testTailSetIteratorForRandomAATree() {
     System.err.println("TreeSet Creation");
-    List<Long> longs = populateRandomLongs(new ArrayList(), 10001);
-    SortedSet<Long> treeSet = new TreeSet<Long>();
-    SortedSet<Long> aatree = new AATreeSet<Long>();
+    List<Long> longs = populateRandomLongs(new ArrayList<Long>(), 10001);
+    SortedSet<Long> treeSet = new TreeSet<>();
+    SortedSet<Long> aatree = new AATreeSet<>();
 
     for (Long l : longs) {
       boolean aaInsert = aatree.add(l);
@@ -188,7 +176,7 @@ public class AATreeSetTest extends TestCase {
   public void testTailSetIteratorsForFixedAATree() {
 
     // 1 2 4 8 9 10 11 13 15 17 19 23 25 27 29 33 35 47 56
-    List longList = new ArrayList();
+    List<Long> longList = new ArrayList<>();
     longList.add(Long.valueOf(25));
     longList.add(Long.valueOf(27));
     longList.add(Long.valueOf(9));
@@ -210,10 +198,10 @@ public class AATreeSetTest extends TestCase {
     longList.add(Long.valueOf(29));
     longList.add(Long.valueOf(19));
 
-    AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
-    TreeSet<Long> treeSet = new TreeSet<Long>();
+    AATreeSet<Long> aaTreeSet = new AATreeSet<>();
+    TreeSet<Long> treeSet = new TreeSet<>();
     for (int i = 0; i < longList.size(); i++) {
-      Long insertItem = (Long) longList.get(i);
+      Long insertItem = longList.get(i);
       aaTreeSet.add(insertItem);
       treeSet.add(insertItem);
     }
@@ -258,7 +246,7 @@ public class AATreeSetTest extends TestCase {
     compareIterators(tsIterator, aaIterator);
   }
 
-  private void compareIterators(Iterator tsIterator, Iterator aaIterator) {
+  private void compareIterators(Iterator<Long> tsIterator, Iterator<Long> aaIterator) {
     while (tsIterator.hasNext() && aaIterator.hasNext()) {
       assertEquals(tsIterator.next(), aaIterator.next());
     }
@@ -278,7 +266,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testRemove() {
-    AATreeSet<MyInt> aaTree = new AATreeSet<MyInt>();
+    AATreeSet<MyInt> aaTree = new AATreeSet<>();
     assertTrue(aaTree.add(new MyInt(5)));
     assertTrue(aaTree.add(new MyInt(10)));
     assertTrue(aaTree.add(new MyInt(1)));
@@ -299,14 +287,14 @@ public class AATreeSetTest extends TestCase {
     assertEquals(new MyInt(11), eleven);
 
     assertEquals(3, aaTree.size());
-    Iterator i = aaTree.iterator();
-    MyInt one = (MyInt) i.next();
+    Iterator<MyInt> i = aaTree.iterator();
+    MyInt one = i.next();
     assertEquals(new MyInt(1), one);
     aaTree.remove(one);
 
     assertEquals(2, aaTree.size());
     i = aaTree.iterator();
-    MyInt seven = (MyInt) i.next();
+    MyInt seven = i.next();
     assertEquals(new MyInt(7), seven);
     aaTree.remove(seven);
 
@@ -318,8 +306,8 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testTreeBalance() {
-    SortedSet<Long> treeSet = new TreeSet<Long>();
-    AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
+    SortedSet<Long> treeSet = new TreeSet<>();
+    AATreeSet<Long> aaTreeSet = new AATreeSet<>();
 
     long seed = System.nanoTime();
     Banner.infoBanner("Tree Balance Test Seed Is " + seed);
@@ -344,8 +332,8 @@ public class AATreeSetTest extends TestCase {
       aaTreeSet.validateTreeStructure();
     }
 
-    Iterator tsIterator = treeSet.iterator();
-    Iterator aaIterator = aaTreeSet.iterator();
+    Iterator<Long> tsIterator = treeSet.iterator();
+    Iterator<Long> aaIterator = aaTreeSet.iterator();
 
     while (tsIterator.hasNext() && aaIterator.hasNext()) {
       assertEquals(tsIterator.next(), aaIterator.next());

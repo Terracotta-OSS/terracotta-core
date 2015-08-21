@@ -1,35 +1,19 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventContext;
+import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.util.Assert;
-
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 
-public class ClientTunnelingEventHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
+public class ClientTunnelingEventHandler implements DSOChannelManagerEventListener {
 
   public static final String    STATE_ATTACHMENT = ClientTunnelingEventHandler.class.getName() + ".STATE_ATTACHMENT";
 
@@ -37,29 +21,45 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
 
   private final MBeanServer     l2MBeanServer;
   private final Object          sinkLock;
-  private Sink                  connectStageSink;
-  private Sink                  disconnectStageSink;
+  private Sink<L1ConnectionMessage.Connecting> connectStageSink;
+  private Sink<L1ConnectionMessage.Disconnecting> disconnectStageSink;
+  private Sink<TunneledDomainsChanged> tunnelDomainsChangedStageSink;
 
   public ClientTunnelingEventHandler() {
     l2MBeanServer = MBeanServerFactory.findMBeanServer(null).get(0);
     sinkLock = new Object();
   }
 
-  @Override
-  public void handleEvent(final EventContext context) {
-    setupJMXStateMachine(((TCMessage) context).getChannel());
-
-    if (context instanceof L1JmxReady) {
-      final L1JmxReady readyMessage = (L1JmxReady) context;
+  
+  private final AbstractEventHandler<L1JmxReady> readyHandler = new AbstractEventHandler<L1JmxReady>(){
+    @Override
+    public void handleEvent(L1JmxReady readyMessage) throws EventHandlerException {
+      setupJMXStateMachine(readyMessage.getChannel());
       connectToL1JmxServer(readyMessage);
-    } else if (context instanceof TunneledDomainsChanged) {
-      final TunneledDomainsChanged message = (TunneledDomainsChanged) context;
+    }
+  };
+  public AbstractEventHandler<L1JmxReady> getReadyHandler() {
+    return this.readyHandler;
+  }
+  
+  private final AbstractEventHandler<TunneledDomainsChanged> tunnelHandler = new AbstractEventHandler<TunneledDomainsChanged>(){
+    @Override
+    public void handleEvent(TunneledDomainsChanged message) throws EventHandlerException {
+      setupJMXStateMachine(message.getChannel());
       synchronized (sinkLock) {
         if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
-        connectStageSink.add(message);
+        tunnelDomainsChangedStageSink.addSingleThreaded(message);
       }
-    } else {
-      final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
+    }
+  };
+  public AbstractEventHandler<TunneledDomainsChanged> getTunnelHandler() {
+    return this.tunnelHandler;
+  }
+  
+  private final AbstractEventHandler<JmxRemoteTunnelMessage> remoteHandler = new AbstractEventHandler<JmxRemoteTunnelMessage>(){
+    @Override
+    public void handleEvent(JmxRemoteTunnelMessage messageEnvelope) throws EventHandlerException {
+      setupJMXStateMachine(messageEnvelope.getChannel());
       if (messageEnvelope.getCloseConnection()) {
         channelRemoved(messageEnvelope.getChannel());
       } else if (messageEnvelope.getInitConnection()) {
@@ -69,16 +69,19 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
         routeTunneledMessage(messageEnvelope);
       }
     }
+  };
+  public AbstractEventHandler<JmxRemoteTunnelMessage> getRemoteHandler() {
+    return this.remoteHandler;
   }
 
-  private void connectToL1JmxServer(final L1JmxReady readyMessage) {
+  private void connectToL1JmxServer(L1JmxReady readyMessage) {
     logger.info("L1[" + readyMessage.getChannelID() + "] notified us that their JMX server is now available");
 
-    EventContext msg = new L1ConnectionMessage.Connecting(l2MBeanServer, readyMessage.getChannel(),
+    L1ConnectionMessage.Connecting msg = new L1ConnectionMessage.Connecting(l2MBeanServer, readyMessage.getChannel(),
                                                           readyMessage.getUUID(), readyMessage.getTunneledDomains());
     synchronized (sinkLock) {
       if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
-      connectStageSink.add(msg);
+      connectStageSink.addSingleThreaded(msg);
     }
   }
 
@@ -88,7 +91,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     }
   }
 
-  private void routeTunneledMessage(final JmxRemoteTunnelMessage messageEnvelope) {
+  private void routeTunneledMessage(JmxRemoteTunnelMessage messageEnvelope) {
     JMXConnectStateMachine state = (JMXConnectStateMachine) messageEnvelope.getChannel()
         .getAttachment(STATE_ATTACHMENT);
 
@@ -100,37 +103,30 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   }
 
   @Override
-  public void channelCreated(final MessageChannel channel) {
+  public void channelCreated(MessageChannel channel) {
     // DEV-16: Instead of immediately interrogating an L1's JMX server as soon as it connects, we wait for the L1 client
     // to send us a 'L1JmxReady' network message to avoid a startup race condition
   }
 
   @Override
-  public void channelRemoved(final MessageChannel channel) {
-    EventContext msg = new L1ConnectionMessage.Disconnecting(channel);
+  public void channelRemoved(MessageChannel channel) {
+    L1ConnectionMessage.Disconnecting msg = new L1ConnectionMessage.Disconnecting(channel);
 
     synchronized (sinkLock) {
       if (disconnectStageSink == null) { throw new AssertionError("DisconnectStageSink was not set."); }
-      disconnectStageSink.add(msg);
+      disconnectStageSink.addSingleThreaded(msg);
     }
   }
 
-  public void setStages(Sink connectSink, Sink disconnectSink) {
-    // There are two unique sinks because disconnects might need to unblock
-    // the actions taken on connect. The known example of this is that when
-    // the connect event might block trying to lookup beans on the L1 if it
-    // disconnects very quickly. In this case, the stage thread would hang
-    // forever and the disconnect event that could un-hang it was waiting
-    // in the queue. Using two stages solves this issue
-    Assert.assertFalse(connectSink == disconnectSink);
-
+  public void setStages(Sink<L1ConnectionMessage.Connecting> connectSink, Sink<L1ConnectionMessage.Disconnecting> disconnectSink, Sink<TunneledDomainsChanged> tunnelDomainsChangedSink) {
     synchronized (sinkLock) {
-      if ((connectStageSink != null) || (disconnectStageSink != null)) {
+      if ((connectStageSink != null) || (disconnectStageSink != null) || (tunnelDomainsChangedStageSink != null)) {
         //
         throw new AssertionError("attempt to set stages more than once");
       }
       connectStageSink = connectSink;
       disconnectStageSink = disconnectSink;
+      tunnelDomainsChangedStageSink = tunnelDomainsChangedSink;
     }
   }
 

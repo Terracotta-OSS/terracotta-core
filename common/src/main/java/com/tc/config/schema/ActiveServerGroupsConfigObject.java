@@ -1,61 +1,35 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema;
 
-import org.apache.xmlbeans.XmlObject;
-
-import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.repository.ChildBeanFetcher;
-import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.util.ActiveCoordinatorHelper;
-import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.Servers;
+import org.terracotta.config.Server;
+import org.terracotta.config.Servers;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ActiveServerGroupsConfigObject extends BaseConfigObject implements ActiveServerGroupsConfig {
+public class ActiveServerGroupsConfigObject implements ActiveServerGroupsConfig {
   private final List<ActiveServerGroupConfig> groupConfigs;
+  private final Servers servers;
 
-  public ActiveServerGroupsConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager)
+  public ActiveServerGroupsConfigObject(Servers context, L2ConfigurationSetupManagerImpl setupManager)
       throws ConfigurationSetupException {
-    super(context);
-    context.ensureRepositoryProvides(Servers.class);
 
-    Servers servers = (Servers) context.bean();
-    final MirrorGroup[] groupArray = servers.getMirrorGroupArray();
+    servers = context;
 
-    if (groupArray == null || groupArray.length == 0) { throw new AssertionError(
-                                                                                 "ActiveServerGroup array is null!  This should never happen since we make sure default is used."); }
-
-    ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[groupArray.length];
-
-    for (int i = 0; i < tempGroupConfigArray.length; i++) {
-      tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
-                                                                  setupManager);
+    ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[1];
+    for(Server s : servers.getServer()) {
+      tempGroupConfigArray[0] = new ActiveServerGroupConfigObject(servers, setupManager);
     }
-    final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper
-        .generateGroupInfo(tempGroupConfigArray);
+    final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper.generateGroupInfo(tempGroupConfigArray);
     this.groupConfigs = Collections.unmodifiableList(Arrays.asList(activeServerGroupConfigObjects));
   }
+
 
   @Override
   public int getActiveServerGroupCount() {
@@ -75,20 +49,11 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
     return null;
   }
 
-  private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager, final MirrorGroup group) {
-    ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(),
-                                                                 MirrorGroup.class, new ChildBeanFetcher() {
-                                                                   @Override
-                                                                   public XmlObject getChild(XmlObject parent) {
-                                                                     return group;
-                                                                   }
-                                                                 });
-    return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
+  public static void initializeMirrorGroups(Servers servers) {
   }
 
-  public static void initializeMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider) {
-    if (servers.getMirrorGroupArray() == null || servers.getMirrorGroupArray().length == 0) {
-      ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers);
-    }
+  @Override
+  public Servers getBean() {
+    return servers;
   }
 }

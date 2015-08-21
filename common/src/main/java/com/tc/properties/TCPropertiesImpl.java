@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.properties;
 
@@ -33,8 +20,6 @@ import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -91,7 +76,7 @@ public class TCPropertiesImpl implements TCProperties {
     warnForOldProperties();
   }
 
-  public static String tcSysProp(final String prop) {
+  public static String tcSysProp(String prop) {
     return SYSTEM_PROP_PREFIX + prop;
   }
 
@@ -335,7 +320,7 @@ public class TCPropertiesImpl implements TCProperties {
 
   private static TCLogger newLoggingProxy() {
     LoggingInvocationHandler handler = new LoggingInvocationHandler();
-    Class[] interfaces = new Class[] { TCLogger.class };
+    Class<?>[] interfaces = new Class[] { TCLogger.class };
     ClassLoader loader = TCPropertiesImpl.class.getClassLoader();
     return (TCLogger) Proxy.newProxyInstance(loader, interfaces, handler);
   }
@@ -345,7 +330,7 @@ public class TCPropertiesImpl implements TCProperties {
    * will buffer calls to logger until the switch method is called
    */
   private static class LoggingInvocationHandler implements InvocationHandler {
-    private final List calls    = new ArrayList();
+    private final ArrayList<Call> calls    = new ArrayList<>();
     private boolean    switched = false;
     private TCLogger   realLogger;
 
@@ -367,8 +352,7 @@ public class TCPropertiesImpl implements TCProperties {
 
       realLogger = TCLogging.getLogger(TCProperties.class);
 
-      for (Iterator i = calls.iterator(); i.hasNext();) {
-        Call call = (Call) i.next();
+      for (Call call : calls) {
         call.execute(realLogger);
       }
 

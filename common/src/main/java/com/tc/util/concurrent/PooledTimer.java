@@ -1,24 +1,11 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
+
 package com.tc.util.concurrent;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.google.common.base.Preconditions;
+import com.tc.text.StringUtils;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -50,27 +37,27 @@ class PooledTimer implements Timer {
   }
 
   @Override
-  public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
+  public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
     Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
     return executor.schedule(wrap(command), delay, unit);
   }
 
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable command, final long initialDelay,
-                                                final long period, final TimeUnit unit) {
+  public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay,
+                                                long period, TimeUnit unit) {
     Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
     return executor.scheduleAtFixedRate(wrap(command), initialDelay, period, unit);
   }
 
   @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(final Runnable command, final long initialDelay,
-                                                   final long delay, final TimeUnit unit) {
+  public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay,
+                                                   long delay, TimeUnit unit) {
     Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
     return executor.scheduleWithFixedDelay(wrap(command), initialDelay, delay, unit);
   }
 
   @Override
-  public void execute(final Runnable command) {
+  public void execute(Runnable command) {
     Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
     executor.execute(wrap(command));
   }
@@ -81,7 +68,7 @@ class PooledTimer implements Timer {
     cancelled = true;
   }
 
-  private Runnable wrap(final Runnable r) {
+  private Runnable wrap(Runnable r) {
     return (StringUtils.isNotBlank(name)) ? new TimerNamedRunnable() {
       @Override
       public String getName() {

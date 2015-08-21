@@ -1,25 +1,9 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice. All rights
+ * reserved.
  */
 package com.tc.config.schema.context;
 
-import com.tc.config.schema.MockIllegalConfigurationChangeHandler;
-import com.tc.config.schema.MockSchemaType;
-import com.tc.config.schema.MockXmlObject;
-import com.tc.config.schema.defaults.MockDefaultValueProvider;
 import com.tc.config.schema.repository.MockBeanRepository;
 import com.tc.test.TCTestCase;
 
@@ -28,23 +12,15 @@ import com.tc.test.TCTestCase;
  */
 public class StandardConfigContextTest extends TCTestCase {
 
-  private MockSchemaType                        schemaType;
-  private MockBeanRepository                    beanRepository;
-  private MockDefaultValueProvider              defaultValueProvider;
-  private MockIllegalConfigurationChangeHandler illegalConfigurationChangeHandler;
+  private MockBeanRepository beanRepository;
 
-  private ConfigContext                         context;
+  private ConfigContext context;
 
   @Override
   public void setUp() throws Exception {
-    this.schemaType = new MockSchemaType();
     this.beanRepository = new MockBeanRepository();
-    this.beanRepository.setReturnedRootBeanSchemaType(this.schemaType);
-    this.defaultValueProvider = new MockDefaultValueProvider();
-    this.illegalConfigurationChangeHandler = new MockIllegalConfigurationChangeHandler();
 
-    this.context = new StandardConfigContext(this.beanRepository, this.defaultValueProvider,
-                                             this.illegalConfigurationChangeHandler);
+    this.context = new StandardConfigContext(this.beanRepository);
   }
 
   public void testEnsureRepositoryProvides() throws Exception {
@@ -68,91 +44,19 @@ public class StandardConfigContextTest extends TCTestCase {
     }
   }
 
+  @SuppressWarnings("unused")
   public void testConstruction() throws Exception {
     try {
-      new StandardConfigContext(null, this.defaultValueProvider, this.illegalConfigurationChangeHandler);
+      new StandardConfigContext(null);
       fail("Didn't get NPE on no bean repository");
     } catch (NullPointerException npe) {
       // ok
     }
-
-    try {
-      new StandardConfigContext(this.beanRepository, null, this.illegalConfigurationChangeHandler);
-      fail("Didn't get NPE on no default value provider");
-    } catch (NullPointerException npe) {
-      // ok
-    }
-
-    try {
-      new StandardConfigContext(this.beanRepository, this.defaultValueProvider, null);
-      fail("Didn't get NPE on no illegal configuration change handler");
-    } catch (NullPointerException npe) {
-      // ok
-    }
   }
 
-  public void testHasDefaultFor() throws Exception {
-    this.defaultValueProvider.setReturnedPossibleForXPathToHaveDefault(false);
-    this.defaultValueProvider.setReturnedHasDefault(false);
-
-    assertFalse(this.context.hasDefaultFor("foobar/baz"));
-    assertEquals(1, this.defaultValueProvider.getNumPossibleForXPathToHaveDefaults());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastPossibleForXPathToHaveDefaultsXPath());
-    assertEquals(0, this.defaultValueProvider.getNumHasDefaults());
-
-    this.defaultValueProvider.reset();
-    this.defaultValueProvider.setReturnedPossibleForXPathToHaveDefault(true);
-    this.defaultValueProvider.setReturnedHasDefault(false);
-
-    assertFalse(this.context.hasDefaultFor("foobar/baz"));
-    assertEquals(1, this.defaultValueProvider.getNumPossibleForXPathToHaveDefaults());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastPossibleForXPathToHaveDefaultsXPath());
-    assertEquals(1, this.defaultValueProvider.getNumHasDefaults());
-    assertSame(this.schemaType, this.defaultValueProvider.getLastHasDefaultsSchemaType());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastHasDefaultsXPath());
-
-    this.defaultValueProvider.reset();
-    this.defaultValueProvider.setReturnedPossibleForXPathToHaveDefault(false);
-    this.defaultValueProvider.setReturnedHasDefault(true);
-
-    assertFalse(this.context.hasDefaultFor("foobar/baz"));
-    assertEquals(1, this.defaultValueProvider.getNumPossibleForXPathToHaveDefaults());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastPossibleForXPathToHaveDefaultsXPath());
-    assertEquals(0, this.defaultValueProvider.getNumHasDefaults());
-
-    this.defaultValueProvider.reset();
-    this.defaultValueProvider.setReturnedPossibleForXPathToHaveDefault(true);
-    this.defaultValueProvider.setReturnedHasDefault(true);
-
-    assertTrue(this.context.hasDefaultFor("foobar/baz"));
-    assertEquals(1, this.defaultValueProvider.getNumPossibleForXPathToHaveDefaults());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastPossibleForXPathToHaveDefaultsXPath());
-    assertEquals(1, this.defaultValueProvider.getNumHasDefaults());
-    assertSame(this.schemaType, this.defaultValueProvider.getLastHasDefaultsSchemaType());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastHasDefaultsXPath());
-  }
-
-  public void testDefaultFor() throws Exception {
-    MockXmlObject object = new MockXmlObject();
-    this.defaultValueProvider.setReturnedDefaultFor(object);
-
-    assertSame(object, this.context.defaultFor("foobar/baz"));
-    assertEquals(1, this.defaultValueProvider.getNumDefaultFors());
-    assertSame(this.schemaType, this.defaultValueProvider.getLastBaseType());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastXPath());
-  }
-
-  public void testIsOptional() throws Exception {
-    this.defaultValueProvider.setReturnedIsOptional(false);
-
-    assertFalse(this.context.isOptional("foobar/baz"));
-    assertEquals(1, this.defaultValueProvider.getNumIsOptionals());
-    assertSame(this.schemaType, this.defaultValueProvider.getLastBaseType());
-    assertEquals("foobar/baz", this.defaultValueProvider.getLastXPath());
-  }
 
   public void testBean() throws Exception {
-    MockXmlObject object = new MockXmlObject();
+    Object object = new Object();
     this.beanRepository.setReturnedBean(object);
 
     assertSame(object, this.context.bean());

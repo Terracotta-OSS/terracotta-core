@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.operatorevent;
 
@@ -26,11 +13,11 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
   }
 
   public static enum EventSubsystem {
-    MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2, APPLICATION, SYSTEM_SETUP, RESOURCE, WAN
+    MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2, APPLICATION, SYSTEM_SETUP, RESOURCE
   }
 
   public static enum EventType {
-    MEMORY_LONGGC, DGC_PERIODIC_STARTED, DGC_PERIODIC_FINISHED, DGC_PERIODIC_CANCELED, DGC_INLINE_CLEANUP_STARTED, DGC_INLINE_CLEANUP_FINISHED, DGC_INLINE_CLEANUP_CANCELED, TOPOLOGY_NODE_JOINED, TOPOLOGY_NODE_LEFT, TOPOLOGY_NODE_STATE, TOPOLOGY_HANDSHAKE_REJECT, TOPOLOGY_ACTIVE_LEFT, TOPOLOGY_MIRROR_LEFT, TOPOLOGY_ZAP_RECEIVED, TOPOLOGY_ZAP_ACCEPTED, TOPOLOGY_DB_DIRTY, DCV2_SERVERMAP_EVICTION, SYSTEM_TIME_DIFFERENT, TOPOLOGY_CONFIG_RELOADED, RESOURCE_CAPACITY_NEAR, RESOURCE_CAPACITY_FULL, RESOURCE_CAPACITY_RESTORED, APPLICATION_USER_DEFINED, WAN_REPLICA_CONNECTED, WAN_REPLICA_DISCONNECTED
+    MEMORY_LONGGC, DGC_PERIODIC_STARTED, DGC_PERIODIC_FINISHED, DGC_PERIODIC_CANCELED, DGC_INLINE_CLEANUP_STARTED, DGC_INLINE_CLEANUP_FINISHED, DGC_INLINE_CLEANUP_CANCELED, TOPOLOGY_NODE_JOINED, TOPOLOGY_NODE_LEFT, TOPOLOGY_NODE_STATE, TOPOLOGY_HANDSHAKE_REJECT, TOPOLOGY_ACTIVE_LEFT, TOPOLOGY_MIRROR_LEFT, TOPOLOGY_ZAP_RECEIVED, TOPOLOGY_ZAP_ACCEPTED, TOPOLOGY_DB_DIRTY, DCV2_SERVERMAP_EVICTION, SYSTEM_TIME_DIFFERENT, TOPOLOGY_CONFIG_RELOADED, RESOURCE_CAPACITY_NEAR, RESOURCE_CAPACITY_FULL, RESOURCE_CAPACITY_RESTORED, APPLICATION_USER_DEFINED,
   }
 
   void addNodeName(String nodeId);

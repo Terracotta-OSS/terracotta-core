@@ -1,22 +1,8 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
-import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.JMXAttributeContext;
@@ -44,7 +30,7 @@ public class RemoteJMXAttributeProcessor {
                                       new NamedThreadFactory("RemoteJMXAttributeProcessorWorker"));
   }
 
-  public void add(final EventContext context) {
+  public void add(JMXAttributeContext attributeContext) {
     try {
       int retries = 0;
       while (true) {
@@ -52,8 +38,6 @@ public class RemoteJMXAttributeProcessor {
           executor.execute(new Runnable() {
             @Override
             public void run() {
-              JMXAttributeContext attributeContext = (JMXAttributeContext) context;
-
               JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) attributeContext.getChannel()
                   .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE);
               messageEnvelope.setTunneledMessage(attributeContext.getOutboundMessage());

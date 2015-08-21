@@ -1,26 +1,9 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.config.schema;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
 import com.tc.util.Assert;
-import com.tc.util.stringification.OurStringBuilder;
 
 /**
  * Contains the information from the L2s that L1 needs.
@@ -78,20 +61,32 @@ public interface L2ConfigForL1 {
     }
 
     @Override
-    public boolean equals(Object that) {
-      if (!(that instanceof L2Data)) return false;
-      L2Data thatData = (L2Data) that;
-      return new EqualsBuilder().append(this.host, thatData.host).append(this.tsaPort, thatData.tsaPort).isEquals();
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + groupId;
+      result = prime * result + ((host == null) ? 0 : host.hashCode());
+      result = prime * result + tsaPort;
+      return result;
     }
 
     @Override
-    public int hashCode() {
-      return new HashCodeBuilder().append(this.host).append(this.tsaPort).toHashCode();
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      L2Data other = (L2Data) obj;
+      if (groupId != other.groupId) return false;
+      if (host == null) {
+        if (other.host != null) return false;
+      } else if (!host.equals(other.host)) return false;
+      if (tsaPort != other.tsaPort) return false;
+      return true;
     }
 
     @Override
     public String toString() {
-      return new OurStringBuilder(this).append("host", this.host).append("TSA port", this.tsaPort).toString();
+      return "L2Data [host=" + host + ", tsaPort=" + tsaPort + "]";
     }
   }
 

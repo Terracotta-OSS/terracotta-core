@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.util.concurrent;
 
@@ -56,7 +43,7 @@ public class TCFutureTest extends TestCase {
     testResultSet(f1);
   }
 
-  public void testResultSet(final TCFuture f1) {
+  public void testResultSet(TCFuture f1) {
 
     final Object val = new Object();
 
@@ -92,7 +79,7 @@ public class TCFutureTest extends TestCase {
     testSetMulti(f1);
   }
 
-  public void testSetMulti(final TCFuture f1) {
+  public void testSetMulti(TCFuture f1) {
 
     f1.set(new Object());
 
@@ -113,7 +100,7 @@ public class TCFutureTest extends TestCase {
     testSetAfterCancel(f1);
   }
 
-  public void testSetAfterCancel(final TCFuture f1) {
+  public void testSetAfterCancel(TCFuture f1) {
 
     f1.cancel();
 
@@ -128,7 +115,7 @@ public class TCFutureTest extends TestCase {
     testCancelAfterSet(f1);
   }
 
-  public void testCancelAfterSet(final TCFuture f1) {
+  public void testCancelAfterSet(TCFuture f1) {
 
     f1.set(new Object());
 
@@ -143,7 +130,7 @@ public class TCFutureTest extends TestCase {
     
   }
   
-  public void testCancel(final TCFuture f1) {
+  public void testCancel(TCFuture f1) {
     Runnable run = new Runnable() {
       @Override
       public void run() {
@@ -173,7 +160,7 @@ public class TCFutureTest extends TestCase {
     testSetNull(new TCFuture(new Object()));
   }
   
-  public void testSetNull(final TCFuture f1) throws Exception {
+  public void testSetNull(TCFuture f1) throws Exception {
     f1.set(null);
 
     assertTrue(f1.get(100) == null);
@@ -186,7 +173,7 @@ public class TCFutureTest extends TestCase {
   }
   
   
-  public void testSetNullException(final TCFuture f1) {
+  public void testSetNullException(TCFuture f1) {
     try {
       f1.setException(null);
       fail();
@@ -202,7 +189,7 @@ public class TCFutureTest extends TestCase {
     
   }
   
-  public void testExceptionAfterSet(final TCFuture f1) {
+  public void testExceptionAfterSet(TCFuture f1) {
     f1.set(new Object());
 
     Throwable t = new Throwable("throw me");
@@ -220,7 +207,7 @@ public class TCFutureTest extends TestCase {
     testExceptionAfterCancel(new TCFuture(new Object()));
   }
   
-  public void testExceptionAfterCancel(final TCFuture f1) {
+  public void testExceptionAfterCancel(TCFuture f1) {
   f1.cancel();
 
     Throwable t = new Throwable("throw me");
@@ -234,7 +221,7 @@ public class TCFutureTest extends TestCase {
     testExceptionResult(new TCFuture(new Object()));
   }
   
-  public void testExceptionResult(final TCFuture f1) {
+  public void testExceptionResult(TCFuture f1) {
     Throwable t = new Throwable("throw me");
     f1.setException(t);
 

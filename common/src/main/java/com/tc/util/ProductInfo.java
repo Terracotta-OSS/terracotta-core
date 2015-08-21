@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.util;
 
@@ -23,7 +10,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+
+import com.tc.text.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -148,9 +136,16 @@ public final class ProductInfo {
   public static synchronized ProductInfo getInstance() {
     if (INSTANCE == null) {
       try {
-        InputStream buildData = getData(BUILD_DATA_RESOURCE_NAME);
-        InputStream patchData = getData(PATCH_DATA_RESOURCE_NAME);
-        INSTANCE = new ProductInfo(buildData, patchData);
+        InputStream buildData = null;        
+        InputStream patchData = null;
+        try {
+          buildData = getData(BUILD_DATA_RESOURCE_NAME);
+          patchData = getData(PATCH_DATA_RESOURCE_NAME);        
+          INSTANCE = new ProductInfo(buildData, patchData);
+        } finally {
+          IOUtils.closeQuietly(buildData);
+          IOUtils.closeQuietly(patchData);
+        }
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -214,11 +209,21 @@ public final class ProductInfo {
 
   public static void printRawData() {
     try {
-      InputStream buildData = getBuildData();
-      if (buildData != null) IOUtils.copy(buildData, System.out);
+      InputStream buildData = null;
+      try {
+        buildData = getBuildData();
+        if (buildData != null) IOUtils.copy(buildData, System.out);
+      } finally {
+        IOUtils.closeQuietly(buildData);
+      }
 
-      InputStream patchData = getPatchData();
-      if (patchData != null) IOUtils.copy(patchData, System.out);
+      InputStream patchData = null;
+      try {
+        patchData = getPatchData();
+        if (patchData != null) IOUtils.copy(patchData, System.out);
+      } finally {
+        IOUtils.closeQuietly(patchData);
+      }
     } catch (IOException e) {
       throw new RuntimeException(e.getMessage());
     }

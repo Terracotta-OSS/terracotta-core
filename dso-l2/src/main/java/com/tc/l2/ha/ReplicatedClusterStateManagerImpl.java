@@ -1,18 +1,6 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.l2.ha;
 
@@ -25,9 +13,9 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -39,23 +27,21 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
-import java.util.Iterator;
-
-public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener,
+public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
     ConnectionIDFactoryListener, PrettyPrintable {
 
   private static final TCLogger logger   = TCLogging.getLogger(ReplicatedClusterStateManagerImpl.class);
 
-  private final GroupManager    groupManager;
+  private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
   private final StateManager    stateManager;
-  private final Sink            channelLifeCycleSink;
+  private final Sink<NodeStateEventContext>            channelLifeCycleSink;
 
   private boolean               isActive = false;
 
-  public ReplicatedClusterStateManagerImpl(GroupManager groupManager, StateManager stateManager,
+  public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
                                            ClusterState clusterState, ConnectionIDFactory factory,
-                                           Sink channelLifeCycleSink) {
+                                           Sink<NodeStateEventContext> channelLifeCycleSink) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.state = clusterState;
@@ -108,26 +94,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     }
   }
 
-  // TODO:: Sync only once a while to the passives
-  @Override
-  public synchronized void publishNextAvailableObjectID(long minID) {
-    state.setNextAvailableObjectID(minID);
-    publishToAll(ClusterStateMessage.createNextAvailableObjectIDMessage(state));
-  }
-
-  @Override
-  public synchronized void publishNextAvailableDGCID(long nextGcIteration) {
-    state.setNextAvailableDGCId(nextGcIteration);
-    publishToAll(ClusterStateMessage.createNextAvailableDGCIterationMessage(state));
-  }
-
-  // TODO:: Sync only once a while to the passives
-  @Override
-  public void publishNextAvailableGlobalTransactionID(long minID) {
-    state.setNextAvailableGlobalTransactionID(minID);
-    publishToAll(ClusterStateMessage.createNextAvailableGlobalTransactionIDMessage(state));
-  }
-
   @Override
   public synchronized void connectionIDCreated(ConnectionID connectionID) {
     Assert.assertTrue(stateManager.isActiveCoordinator());
@@ -142,11 +108,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
   }
 
-  private void publishToAll(GroupMessage message) {
+  private void publishToAll(AbstractGroupMessage message) {
     try {
-      GroupResponse gr = groupManager.sendAllAndWaitForResponse(message);
-      for (Iterator i = gr.getResponses().iterator(); i.hasNext();) {
-        ClusterStateMessage msg = (ClusterStateMessage) i.next();
+      GroupResponse<AbstractGroupMessage> gr = groupManager.sendAllAndWaitForResponse(message);
+      for (AbstractGroupMessage resp : gr.getResponses()) {
+        ClusterStateMessage msg = (ClusterStateMessage) resp;
         validateResponse(msg.messageFrom(), msg);
       }
     } catch (GroupException e) {
@@ -156,14 +122,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   @Override
-  public void messageReceived(NodeID fromNode, GroupMessage msg) {
-    if (msg instanceof ClusterStateMessage) {
-      ClusterStateMessage clusterMsg = (ClusterStateMessage) msg;
-      handleClusterStateMessage(fromNode, clusterMsg);
-    } else {
-      throw new AssertionError("ReplicatedClusterStateManagerImpl : Received wrong message type :"
-                               + msg.getClass().getName() + " : " + msg);
-    }
+  public void messageReceived(NodeID fromNode, ClusterStateMessage msg) {
+    handleClusterStateMessage(fromNode, msg);
   }
 
   private void handleClusterStateMessage(NodeID fromNode, ClusterStateMessage msg) {
@@ -191,8 +151,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
     if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
       // Not really needed, but just in case
-      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(msg
-          .getConnectionID().getChannelID()), msg.getConnectionID().getProductId()));
+      NodeID nodeID = new ClientID(msg.getConnectionID().getChannelID());
+      channelLifeCycleSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, nodeID, msg.getConnectionID().getProductId()));
     } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
       // this is needed to clean up some data structures internally
       // NOTE :: It is ok to add this event context directly to the channel life cycle handler (and not wrap around a
@@ -200,8 +160,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       // server transaction manager.
       // XXX::FIXME:: The above statement is true only when this event is fixed to be fired from active after all txns
       // are acked in the active.
-      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, new ClientID(msg
-          .getConnectionID().getChannelID()), msg.getConnectionID().getProductId()));
+      NodeID nodeID = new ClientID(msg.getConnectionID().getChannelID());
+      channelLifeCycleSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID, msg.getConnectionID().getProductId()));
     }
   }
 
@@ -224,7 +184,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   @Override
   public void fireNodeLeftEvent(NodeID nodeID) {
     // this is needed to clean up some data structures internally
-    channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID, null));
+    channelLifeCycleSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID, null));
   }
 
   @Override

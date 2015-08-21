@@ -1,18 +1,5 @@
-/* 
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
- *
- *      http://terracotta.org/legal/terracotta-public-license.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
- *
- * The Covered Software is Terracotta Platform.
- *
- * The Initial Developer of the Covered Software is 
- *      Terracotta, Inc., a Software AG company
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.objectserver.locks;
 
@@ -35,20 +22,20 @@ public class LockResponseContextFactory {
                                                      .getProperties()
                                                      .getBoolean(TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_ENABLED);
 
-  public static LockResponseContext createLockRejectedResponseContext(final LockID lockID, final NodeID nodeID,
-                                                                      final ThreadID threadID,
-                                                                      final ServerLockLevel level) {
+  public static LockResponseContext createLockRejectedResponseContext(LockID lockID, NodeID nodeID,
+                                                                      ThreadID threadID,
+                                                                      ServerLockLevel level) {
     return new LockResponseContext(lockID, nodeID, threadID, level, LockResponseContext.LOCK_NOT_AWARDED);
   }
 
-  public static LockResponseContext createLockAwardResponseContext(final LockID lockID, final NodeID nodeID,
-                                                                   final ThreadID threadID, final ServerLockLevel level) {
+  public static LockResponseContext createLockAwardResponseContext(LockID lockID, NodeID nodeID,
+                                                                   ThreadID threadID, ServerLockLevel level) {
     LockResponseContext lrc = new LockResponseContext(lockID, nodeID, threadID, level, LockResponseContext.LOCK_AWARD);
     return lrc;
   }
 
-  public static LockResponseContext createLockRecallResponseContext(final LockID lockID, final NodeID nodeID,
-                                                                    final ThreadID threadID, final ServerLockLevel level) {
+  public static LockResponseContext createLockRecallResponseContext(LockID lockID, NodeID nodeID,
+                                                                    ThreadID threadID, ServerLockLevel level) {
     if (LOCK_LEASE_ENABLE) {
       return new LockResponseContext(lockID, nodeID, threadID, level, LockResponseContext.LOCK_RECALL, LOCK_LEASE_TIME);
     } else {
@@ -56,17 +43,17 @@ public class LockResponseContextFactory {
     }
   }
 
-  public static LockResponseContext createLockWaitTimeoutResponseContext(final LockID lockID, final NodeID nodeID,
-                                                                         final ThreadID threadID,
-                                                                         final ServerLockLevel level) {
+  public static LockResponseContext createLockWaitTimeoutResponseContext(LockID lockID, NodeID nodeID,
+                                                                         ThreadID threadID,
+                                                                         ServerLockLevel level) {
     return new LockResponseContext(lockID, nodeID, threadID, level, LockResponseContext.LOCK_WAIT_TIMEOUT);
   }
 
   public static LockResponseContext createLockQueriedResponseContext(
-                                                                     final LockID lockID,
-                                                                     final NodeID nodeID,
-                                                                     final ThreadID threadID,
-                                                                     final ServerLockLevel level,
+                                                                     LockID lockID,
+                                                                     NodeID nodeID,
+                                                                     ThreadID threadID,
+                                                                     ServerLockLevel level,
                                                                      Collection<ClientServerExchangeLockContext> contexts,
                                                                      int numberOfPendingRequests) {
     return new LockResponseContext(lockID, nodeID, threadID, level, contexts, numberOfPendingRequests,
