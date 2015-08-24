@@ -27,7 +27,7 @@ public class MockMessageChannel implements MessageChannelInternal {
   private final ChannelID  channelId;
   private NetworkLayer     sendLayer;
 
-  BlockingQueue<Object>    closedCalls = new LinkedBlockingQueue<>();
+  BlockingQueue<Object>    closedCalls = new LinkedBlockingQueue<Object>();
   private long             lastClosedCallTimestamp;
 
   private final Map<TCMessageType, Class<? extends TCMessage>>        knownMessageTypes;
@@ -40,7 +40,7 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   public MockMessageChannel(ChannelID channelId) {
     this.channelId = channelId;
-    this.knownMessageTypes = new HashMap<>();
+    this.knownMessageTypes = new HashMap<TCMessageType, Class<? extends TCMessage>>();
     reset();
     source = new ClientID(channelId.toLong());
   }

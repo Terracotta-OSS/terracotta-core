@@ -78,7 +78,7 @@ public class Grep {
   //
   public static List<CharSequence> grep(String pat, CharBuffer cb) {
     Pattern pattern = Pattern.compile(pat);
-    List<CharSequence> result = new ArrayList<>();
+    List<CharSequence> result = new ArrayList<CharSequence>();
     Matcher lm = linePattern.matcher(cb); // Line matcher
     Matcher pm = null; // Pattern matcher
     while (lm.find()) {

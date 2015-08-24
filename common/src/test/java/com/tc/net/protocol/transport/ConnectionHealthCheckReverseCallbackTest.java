@@ -19,6 +19,7 @@ import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
@@ -93,8 +94,9 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
                                                 new TCMessageRouterImpl(), new PlainNetworkStackHarnessFactory(),
                                                 serverConnMgr, new NullConnectionPolicy(), 0, serverHC,
-                                                new TransportHandshakeErrorNullHandler(), Collections.emptyMap(),
-                                                Collections.emptyMap(), null);
+                                                new TransportHandshakeErrorNullHandler(),
+                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
     String host = "localhost";
 
     serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
@@ -110,7 +112,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
         .createListener(new NullSessionManager(), new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, listenPort), true,
                         new DefaultConnectionIdFactory());
 
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
 
     ConnectionAddressProvider addrProvider = new ConnectionAddressProvider(
                                                                            new ConnectionInfo[] { new ConnectionInfo(

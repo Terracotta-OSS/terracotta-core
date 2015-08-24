@@ -59,7 +59,7 @@ public abstract class ObjectIDSetTestBase {
   @Test
   public void testContain() {
     final ObjectIDSet set = create();
-    final HashSet<ObjectID> hashSet = new HashSet<>();
+    final HashSet<ObjectID> hashSet = new HashSet<ObjectID>();
 
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
@@ -80,7 +80,7 @@ public abstract class ObjectIDSetTestBase {
   @Test
   public void testFailingAddAll() {
     ObjectIDSet oidSet1 = create();
-    Set<ObjectID> hashSet = new HashSet<>();
+    Set<ObjectID> hashSet = new HashSet<ObjectID>();
     long failedIDs[] = new long[] { 1884, 1371, 595, 440, 730, 1382, 1781, 217, 1449, 1043, 1556, 1679, 347, 860, 1020,
         1619, 1801, 1146, 769, 19, 532, 655, 692, 1268, 1793, 1533, 1616, 1702, 1241, 1754, 633, 1192, 166, 1312, 179,
         945, 44, 755, 1390, 1070, 431, 293, 1319, 339, 852, 103, 141, 874, 1643, 592, 1477, 242, 1165, 777, 953, 1580,
@@ -228,7 +228,7 @@ public abstract class ObjectIDSetTestBase {
   @Test
   public void testIterator() {
     final ObjectIDSet set = create();
-    final TreeSet<ObjectID> treeSet = new TreeSet<>();
+    final TreeSet<ObjectID> treeSet = new TreeSet<ObjectID>();
 
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
@@ -256,7 +256,7 @@ public abstract class ObjectIDSetTestBase {
 
   public void testNegativeIds() {
     final ObjectIDSet set = create();
-    final TreeSet<ObjectID> treeSet = new TreeSet<>();
+    final TreeSet<ObjectID> treeSet = new TreeSet<ObjectID>();
 
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
@@ -288,7 +288,7 @@ public abstract class ObjectIDSetTestBase {
   @Test
   public void testFirstAndLast() {
     final ObjectIDSet set = create();
-    final TreeSet<ObjectID> treeSet = new TreeSet<>();
+    final TreeSet<ObjectID> treeSet = new TreeSet<ObjectID>();
 
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
@@ -337,7 +337,7 @@ public abstract class ObjectIDSetTestBase {
     // testing random removes
 
     set = new BitSetObjectIDSet();
-    final HashSet<ObjectID> hashSet = new HashSet<>();
+    final HashSet<ObjectID> hashSet = new HashSet<ObjectID>();
 
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
@@ -371,9 +371,9 @@ public abstract class ObjectIDSetTestBase {
   }
 
   private void timeAndTestRemoveAll(long seed) {
-    final TreeSet<ObjectID> expected = new TreeSet<>();
-    final TreeSet<ObjectID> big = new TreeSet<>();
-    final TreeSet<ObjectID> small = new TreeSet<>();
+    final TreeSet<ObjectID> expected = new TreeSet<ObjectID>();
+    final TreeSet<ObjectID> big = new TreeSet<ObjectID>();
+    final TreeSet<ObjectID> small = new TreeSet<ObjectID>();
 
     ObjectIDSet set = create();
     final Random r = new Random(seed);
@@ -420,7 +420,7 @@ public abstract class ObjectIDSetTestBase {
     final long seed = sr.nextLong();
     System.err.println("SORTED TEST : Seed for Random is " + seed);
     final Random r = new Random(seed);
-    final TreeSet<ObjectID> ts = new TreeSet<>();
+    final TreeSet<ObjectID> ts = new TreeSet<ObjectID>();
     final SortedSet<ObjectID> expandingBitSetBased = create();
     for (int i = 0; i < 10000; i++) {
       final long l = r.nextLong();
@@ -446,7 +446,7 @@ public abstract class ObjectIDSetTestBase {
 
   public void basicTest(int distRange, int iterationCount) {
     final long test_start = System.currentTimeMillis();
-    final Set<ObjectID> s = new HashSet<>();
+    final Set<ObjectID> s = new HashSet<ObjectID>();
     final Set<ObjectID> small = create();
     final String cname = small.getClass().getName();
     System.err.println("Running tests for " + cname + " distRange = " + distRange + " iterationCount = "
@@ -466,7 +466,7 @@ public abstract class ObjectIDSetTestBase {
       assertEquals(s.size(), small.size());
     }
     final Iterator<ObjectID> sit = small.iterator();
-    final List<ObjectID> all = new ArrayList<>();
+    final List<ObjectID> all = new ArrayList<ObjectID>();
     all.addAll(s);
     while (sit.hasNext()) {
       final ObjectID i = sit.next();
@@ -475,8 +475,8 @@ public abstract class ObjectIDSetTestBase {
     Assert.eval(s.size() == 0);
 
     // test retain all
-    final Set<ObjectID> odds = new HashSet<>();
-    final Set<ObjectID> evens = new HashSet<>();
+    final Set<ObjectID> odds = new HashSet<ObjectID>();
+    final Set<ObjectID> evens = new HashSet<ObjectID>();
     for (int i = 0; i < all.size(); i++) {
       if (i % 2 == 0) {
         evens.add(all.get(i));
@@ -565,7 +565,7 @@ public abstract class ObjectIDSetTestBase {
   }
 
   private Set<ObjectID> createRandomSetOfObjectIDs() {
-    final Set<ObjectID> s = new HashSet<>();
+    final Set<ObjectID> s = new HashSet<ObjectID>();
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
     System.err.println("Random Set creation : Seed for Random is " + seed);
@@ -662,7 +662,7 @@ public abstract class ObjectIDSetTestBase {
   @Test
   public void testObjectIDSetIteratorFullRemove() {
     ObjectIDSet oidSet = create();
-    final Set<ObjectID> all = new TreeSet<>();
+    final Set<ObjectID> all = new TreeSet<ObjectID>();
     final SecureRandom sr = new SecureRandom();
     final long seed = sr.nextLong();
     System.err.println("Running iteratorRemoveTest for " + oidSet.getClass().getName() + " and seed is " + seed);
@@ -747,7 +747,7 @@ public abstract class ObjectIDSetTestBase {
 
   @Test
   public void testObjectIDSetIteratorRemoveSpecailCases() {
-    final List<ObjectID> longList = new ArrayList<>();
+    final List<ObjectID> longList = new ArrayList<ObjectID>();
     longList.add(new ObjectID(25));
     longList.add(new ObjectID(26));
     longList.add(new ObjectID(27));
@@ -790,7 +790,7 @@ public abstract class ObjectIDSetTestBase {
     Iterator<ObjectID> i = objectIDSet.iterator();
     assertEquals(totalElements, iterateElements(i));
 
-    final List<ObjectID> longSortList = new ArrayList<>();
+    final List<ObjectID> longSortList = new ArrayList<ObjectID>();
     i = objectIDSet.iterator();
     while (i.hasNext()) {
       longSortList.add(i.next());

@@ -138,7 +138,7 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
     }
 
     for (int i = 0; i < this.segments.length; ++i) {
-      this.segments[i] = new Segment<>(cap, loadFactor);
+      this.segments[i] = new Segment<K, V>(cap, loadFactor);
     }
   }
 
@@ -328,7 +328,7 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
     private final HashMap<K, V> map;
 
     public Segment(int initialCapacity, float loadFactor) {
-      this.map = new HashMap<>(initialCapacity, loadFactor);
+      this.map = new HashMap<K, V>(initialCapacity, loadFactor);
     }
 
     public int size() {

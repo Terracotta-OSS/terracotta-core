@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 public final class InetSocketAddressList {
 
   private static final Pattern               ADDRESS_PATTERN = Pattern.compile("^([^:]+):(\\p{Digit}+)$");
-  private final ArrayList<InetSocketAddress> addressList     = new ArrayList<>();
+  private final ArrayList<InetSocketAddress> addressList     = new ArrayList<InetSocketAddress>();
 
   public InetSocketAddressList(InetSocketAddress[] addressList) {
     Assert.assertNoNullElements(addressList);
@@ -38,7 +38,7 @@ public final class InetSocketAddressList {
 
   public static InetSocketAddress[] parseAddresses(String list) throws ParseException {
     Assert.assertNotNull(list);
-    List<InetSocketAddress> addressList = new ArrayList<>();
+    List<InetSocketAddress> addressList = new ArrayList<InetSocketAddress>();
     String[] addresses = list.split(",");
     int currentPosition = 0;
     for (int pos = 0; pos < addresses.length; ++pos) {

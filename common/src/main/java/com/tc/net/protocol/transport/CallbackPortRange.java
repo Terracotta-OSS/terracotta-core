@@ -14,7 +14,7 @@ public class CallbackPortRange {
     propValue = propValue.trim().replaceAll("\\s", "");
     String[] parts = propValue.split(",");
 
-    Set<Integer> range = new LinkedHashSet<>();
+    Set<Integer> range = new LinkedHashSet<Integer>();
     for (String part : parts) {
       if (part.length() > 0) {
         if (part.indexOf("-") > 0) {

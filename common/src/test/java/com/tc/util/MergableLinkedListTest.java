@@ -50,7 +50,7 @@ public class MergableLinkedListTest extends TestCase {
     assertEquals(2, coll.size());
 
     // test null and empty case
-    MergableLinkedList<TestData> emptyList = new MergableLinkedList<>();
+    MergableLinkedList<TestData> emptyList = new MergableLinkedList<TestData>();
     try {
       emptyList.addAll(null);
       fail("adding a null exception should throw a null pointer exception.");
@@ -99,7 +99,7 @@ public class MergableLinkedListTest extends TestCase {
     assertEquals(0, secondList.size());
 
     // test null and empty case
-    MergableLinkedList<TestData> emptyList = new MergableLinkedList<>();
+    MergableLinkedList<TestData> emptyList = new MergableLinkedList<TestData>();
     try {
       emptyList.mergeToFront(null);
       fail("adding null MergableLinkedList should throw a null pointer exception.");
@@ -126,7 +126,7 @@ public class MergableLinkedListTest extends TestCase {
     // empty case
 
     try {
-      MergableLinkedList<TestData> emptyList = new MergableLinkedList<>();
+      MergableLinkedList<TestData> emptyList = new MergableLinkedList<TestData>();
       emptyList.removeFirst();
       fail("should throw NoSuchElementException size list is empty");
     } catch (NoSuchElementException nsee) {
@@ -135,7 +135,7 @@ public class MergableLinkedListTest extends TestCase {
   }
 
   public void testIsEmpty() {
-    MergableLinkedList<TestData> emptyList = new MergableLinkedList<>();
+    MergableLinkedList<TestData> emptyList = new MergableLinkedList<TestData>();
     assertTrue(emptyList.isEmpty());
 
     MergableLinkedList<TestData> populatedList = createMergableLinkedList(1, 2);
@@ -143,7 +143,7 @@ public class MergableLinkedListTest extends TestCase {
   }
 
   public void testAdd() {
-    MergableLinkedList<TestData> list = new MergableLinkedList<>();
+    MergableLinkedList<TestData> list = new MergableLinkedList<TestData>();
     assertEquals(0, list.size());
     list.add(new TestData("testData1"));
     assertEquals(1, list.size());
@@ -160,7 +160,7 @@ public class MergableLinkedListTest extends TestCase {
 
     // test null and empty case
 
-    MergableLinkedList<TestData> emptyList = new MergableLinkedList<>();
+    MergableLinkedList<TestData> emptyList = new MergableLinkedList<TestData>();
     emptyList.add(null);
 
     assertEquals(1, emptyList.size());
@@ -180,7 +180,7 @@ public class MergableLinkedListTest extends TestCase {
   }
 
   private MergableLinkedList<TestData> createMergableLinkedList(int startValue, int size) {
-    MergableLinkedList<TestData> initialList = new MergableLinkedList<>();
+    MergableLinkedList<TestData> initialList = new MergableLinkedList<TestData>();
     for (int i = startValue; i < startValue + size; i++) {
       initialList.add(new TestData("testData" + i));
     }
@@ -188,7 +188,7 @@ public class MergableLinkedListTest extends TestCase {
   }
 
   private Collection<TestData> createCollection(int startValue, int size) {
-    Collection<TestData> coll = new ArrayList<>();
+    Collection<TestData> coll = new ArrayList<TestData>();
     for (int i = startValue; i < startValue + size; i++) {
       coll.add(new TestData("testData" + i));
     }

@@ -73,7 +73,7 @@ public class ClassCreationCount implements Comparable<ClassCreationCount> {
   }
 
   public static ClassCreationCount[] fromTabularData(TabularData tabularData) {
-    final List<ClassCreationCount> countList = new ArrayList<>(tabularData.size());
+    final List<ClassCreationCount> countList = new ArrayList<ClassCreationCount>(tabularData.size());
     for (Object data : tabularData.values()) {
       countList.add(new ClassCreationCount((CompositeData) data));
     }

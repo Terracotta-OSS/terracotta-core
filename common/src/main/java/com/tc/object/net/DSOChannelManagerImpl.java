@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
   private static final TCLogger      logger         = TCLogging.getLogger(DSOChannelManager.class);
 
-  private final CopyOnWriteSequentialMap<NodeID, MessageChannel> activeChannels = new CopyOnWriteSequentialMap<>(
+  private final CopyOnWriteSequentialMap<NodeID, MessageChannel> activeChannels = new CopyOnWriteSequentialMap<NodeID, MessageChannel>(
                                                                                       new CopyOnWriteSequentialMap.TypedArrayFactory() {
                                                                                         @SuppressWarnings("unchecked")
                                                                                         @Override
@@ -42,7 +42,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
                                                                                         }
                                                                                       });
   
-  private final List<DSOChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<>();
+  private final List<DSOChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<DSOChannelManagerEventListener>();
 
   private final ChannelManager       genericChannelManager;
   private final TCConnectionManager  connectionManager;
@@ -150,7 +150,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   private Set<? extends NodeID> getAllActiveClientIDs() {
-    Set<NodeID> clientIDs = new HashSet<>();
+    Set<NodeID> clientIDs = new HashSet<NodeID>();
       for (NodeID cid : activeChannels.keySet()) {
         clientIDs.add(cid);
       }
@@ -171,7 +171,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   @Override
   public Set<NodeID> getAllClientIDs() {
     Set<ChannelID> channelIDs = genericChannelManager.getAllChannelIDs();
-    Set<NodeID> clientIDs = new HashSet<>(channelIDs.size());
+    Set<NodeID> clientIDs = new HashSet<NodeID>(channelIDs.size());
     for (ChannelID cid : channelIDs) {
       clientIDs.add(getClientIDFor(cid));
     }

@@ -42,7 +42,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
 
   // NOTE: The use of NotificationBroadcasterSupport has been removed and re-implemented internally
   // to avoid issues with JDK logging (DEV-421)
-  private final List<Listener>                             notificationListeners   = new CopyOnWriteArrayList<>();
+  private final List<Listener>                   notificationListeners   = new CopyOnWriteArrayList<Listener>();
   private boolean                                isActive;
 
   protected static final MBeanNotificationInfo[] EMPTY_NOTIFICATION_INFO = {};

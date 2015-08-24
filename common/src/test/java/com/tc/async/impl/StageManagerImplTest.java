@@ -49,14 +49,10 @@ public class StageManagerImplTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    try {
       stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(StageManagerImpl.class))), new QueueFactory<TestEventContext>());
-      testEventHandler = new TestEventHandler<>();
+      testEventHandler = new TestEventHandler<TestEventContext>();
       multiThreadedStageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(StageManagerImpl.class))), new QueueFactory<TestMultiThreadedEventContext>());
-      multiThreadedTestEventHandler = new TestEventHandler<>();
-    } catch (Throwable t) {
-      t.printStackTrace();
-    }
+      multiThreadedTestEventHandler = new TestEventHandler<TestMultiThreadedEventContext>();
   }
 
   public void testStage() throws Exception {
@@ -85,7 +81,7 @@ public class StageManagerImplTest extends TestCase {
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());
     assertTrue(s.getSink().size() == 4);
-    assertTrue(testEventHandler.getContexts().size() == 0);
+    assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());

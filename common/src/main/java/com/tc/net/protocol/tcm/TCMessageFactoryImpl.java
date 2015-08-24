@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private final Map<TCMessageType, GeneratedMessageFactory> factories = new ConcurrentHashMap<>();
+  private final Map<TCMessageType, GeneratedMessageFactory> factories = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
   private final MessageMonitor  monitor;
   private final SessionProvider sessionProvider;
 

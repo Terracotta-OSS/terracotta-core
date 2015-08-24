@@ -15,8 +15,8 @@ public class MessageRecyclerImpl<K> implements MessageRecycler<K> {
 
   private static final int              MAX_MESSAGES_TO_HOLD = 1000;
 
-  private final LinkedList<RecycleItem<K>> messages             = new LinkedList<>();
-  private final Map<K, RecycleItem<K>>     keys2RecycleItem     = new HashMap<>();
+  private final LinkedList<RecycleItem<K>> messages             = new LinkedList<RecycleItem<K>>();
+  private final Map<K, RecycleItem<K>>     keys2RecycleItem     = new HashMap<K, RecycleItem<K>>();
 
   public MessageRecyclerImpl() {
     super();
@@ -25,8 +25,8 @@ public class MessageRecyclerImpl<K> implements MessageRecycler<K> {
   @Override
   public synchronized void addMessage(Recyclable message, Set<K> keys) {
     if (!keys.isEmpty()) {
-      final Set<K> lkeys = new HashSet<>(keys.size());
-      RecycleItem<K> ri = new RecycleItem<>(message, lkeys);
+      final Set<K> lkeys = new HashSet<K>(keys.size());
+      RecycleItem<K> ri = new RecycleItem<K>(message, lkeys);
       for (K key : keys) {
         lkeys.add(key);
         this.keys2RecycleItem.put(key, ri);

@@ -59,7 +59,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   // maintains weight of all L1 Connections which is handled by this WorkerComm
   private final HashMap<TCConnection, Integer> managedConnectionsMap;
   private int                                  clientWeights;
-  private final List<TCListener>               listeners     = new ArrayList<>();
+  private final List<TCListener>               listeners     = new ArrayList<TCListener>();
   private String                               listenerString;
 
   private static enum COMM_THREAD_MODE {
@@ -70,7 +70,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     this.commThreadName = commThreadName;
     this.workerCommMgr = workerCommManager;
     this.socketParams = socketParams;
-    this.managedConnectionsMap = new HashMap<>();
+    this.managedConnectionsMap = new HashMap<TCConnection, Integer>();
     this.readerComm = new CommThread(COMM_THREAD_MODE.NIO_READER);
     this.writerComm = new CommThread(COMM_THREAD_MODE.NIO_WRITER);
   }
@@ -281,7 +281,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       setName(name);
 
       this.selector = createSelector();
-      this.selectorTasks = new LinkedBlockingQueue<>();
+      this.selectorTasks = new LinkedBlockingQueue<Runnable>();
       this.mode = mode;
     }
 
@@ -368,7 +368,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
-    void unregister(SelectableChannel channel) {
+    void unregister(final SelectableChannel channel) {
       if (Thread.currentThread() != this) {
         final CountDownLatch latch = new CountDownLatch(1);
         this.addSelectorTask(new Runnable() {
@@ -393,7 +393,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
-    void stopListener(ServerSocketChannel ssc, Runnable callback) {
+    void stopListener(final ServerSocketChannel ssc, final Runnable callback) {
       if (Thread.currentThread() != this) {
         Runnable task = new Runnable() {
           @Override
@@ -418,7 +418,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
-    void cleanupChannel(Channel ch, Runnable callback) {
+    void cleanupChannel(final Channel ch, final Runnable callback) {
 
       if (null == ch) {
         // not expected
@@ -721,7 +721,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       return this.bytesWritten.get();
     }
 
-    private void handleRequest(InterestRequest req) {
+    private void handleRequest(final InterestRequest req) {
       // ignore the request if we are stopped/stopping
       if (isStopRequested()) { return; }
 

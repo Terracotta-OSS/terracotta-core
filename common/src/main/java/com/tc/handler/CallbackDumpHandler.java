@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CallbackDumpHandler implements CallbackOnExitHandler {
-  private final List<CallbackDumpAdapter> dumpObjectList = new CopyOnWriteArrayList<>();
+  private final List<CallbackDumpAdapter> dumpObjectList = new CopyOnWriteArrayList<CallbackDumpAdapter>();
 
   public void registerForDump(CallbackDumpAdapter dumpObject) {
     this.dumpObjectList.add(dumpObject);

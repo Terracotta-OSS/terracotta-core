@@ -11,6 +11,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.management.RemoteCallDescriptor;
+import com.tc.object.management.RemoteCallHolder;
 import com.tc.object.management.TCSerializableCollection;
 import com.tc.object.session.SessionID;
 
@@ -24,7 +25,7 @@ public class ListRegisteredServicesResponseMessage extends AbstractManagementMes
 
   private static final byte REMOTE_CALL_DESCRIPTORS = 1;
 
-  private RemoteCallDescriptorCollection remoteCallDescriptors = new RemoteCallDescriptorCollection();
+  private TCSerializableCollection<RemoteCallDescriptor> remoteCallDescriptors = new RemoteCallDescriptorCollection();
 
   public ListRegisteredServicesResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
@@ -54,7 +55,7 @@ public class ListRegisteredServicesResponseMessage extends AbstractManagementMes
     if (!super.hydrateValue(name)) {
       switch (name) {
         case REMOTE_CALL_DESCRIPTORS:
-          remoteCallDescriptors = (RemoteCallDescriptorCollection)getObject(new RemoteCallDescriptorCollection());
+          remoteCallDescriptors = this.<TCSerializableCollection<RemoteCallDescriptor>>getObject(new RemoteCallDescriptorCollection());
           return true;
 
         default:

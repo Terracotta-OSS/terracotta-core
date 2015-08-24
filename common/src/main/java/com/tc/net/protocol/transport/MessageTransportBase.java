@@ -34,7 +34,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private NetworkLayer                             receiveLayer;
 
   private final Object                             attachingNewConnection = new Object();
-  private final AtomicReference<TCConnectionEvent> connectionCloseEvent   = new AtomicReference<>(null);
+  private final AtomicReference<TCConnectionEvent> connectionCloseEvent   = new AtomicReference<TCConnectionEvent>(null);
   private boolean                                  allowConnectionReplace = false;
   private volatile ConnectionHealthCheckerContext  healthCheckerContext   = new ConnectionHealthCheckerContextDummyImpl();
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;

@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 public class SetOnceRefTest extends TestCase {
 
   public void testAllowsNull() {
-    SetOnceRef<Object> ref = new SetOnceRef<>(false);
+    SetOnceRef<Object> ref = new SetOnceRef<Object>(false);
 
     assertFalse(ref.allowsNull());
 
@@ -31,9 +31,9 @@ public class SetOnceRefTest extends TestCase {
   }
 
   public void testSetNull() {
-    final SetOnceRef<Object> ref1 = new SetOnceRef<>(true);
+    final SetOnceRef<Object> ref1 = new SetOnceRef<Object>(true);
     ref1.set(null);
-    final SetOnceRef<Object> ref2 = new SetOnceRef<>(null, true);
+    final SetOnceRef<Object> ref2 = new SetOnceRef<Object>(null, true);
 
     assertTrue(ref1.get() == null);
     assertTrue(ref2.get() == null);
@@ -43,9 +43,9 @@ public class SetOnceRefTest extends TestCase {
     final Object val1 = new Object();
     final Object val2 = new Object();
 
-    final SetOnceRef<Object> ref1 = new SetOnceRef<>();
+    final SetOnceRef<Object> ref1 = new SetOnceRef<Object>();
     ref1.set(val1);
-    final SetOnceRef<Object> ref2 = new SetOnceRef<>(val2);
+    final SetOnceRef<Object> ref2 = new SetOnceRef<Object>(val2);
 
     assertTrue(ref1.get() == val1);
     assertTrue(ref2.get() == val2);
@@ -67,7 +67,7 @@ public class SetOnceRefTest extends TestCase {
 
   public void testGetMany() {
     final Object JUnitGetsMeHard = new Object();
-    final SetOnceRef<Object> ref = new SetOnceRef<>(JUnitGetsMeHard);
+    final SetOnceRef<Object> ref = new SetOnceRef<Object>(JUnitGetsMeHard);
 
     for (int i = 0; i < 1000; i++) {
       assertTrue(ref.get() == JUnitGetsMeHard);
@@ -77,7 +77,7 @@ public class SetOnceRefTest extends TestCase {
   public void testThreadAccess() throws InterruptedException {
     final Object val = new Object();
 
-    final SetOnceRef<Object> ref = new SetOnceRef<>();
+    final SetOnceRef<Object> ref = new SetOnceRef<Object>();
 
     Thread other = new Thread(new Runnable() {
       @Override

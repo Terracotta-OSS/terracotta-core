@@ -24,7 +24,7 @@ public class ServerProvider implements JMXConnectorServerProvider {
                                                                   + jmxServiceURL.getProtocol());
       throw exception;
     }
-    Map<String, Object> terracottaEnvironment = initialEnvironment != null ? new HashMap<>(initialEnvironment) : new HashMap<>();
+    Map<String, Object> terracottaEnvironment = initialEnvironment != null ? new HashMap<String, Object>(initialEnvironment) : new HashMap<String, Object>();
     terracottaEnvironment.put(GenericConnectorServer.MESSAGE_CONNECTION_SERVER,
                               new TunnelingMessageConnectionServer(jmxServiceURL));
     return new GenericConnectorServer(terracottaEnvironment, mBeanServer);

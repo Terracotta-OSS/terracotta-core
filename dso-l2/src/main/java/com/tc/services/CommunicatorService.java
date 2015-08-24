@@ -112,7 +112,7 @@ public class CommunicatorService implements ServiceProvider, DSOChannelManagerEv
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     clientAccounts.values().stream().forEach(a->a.close());
     clientAccounts.clear();
   }

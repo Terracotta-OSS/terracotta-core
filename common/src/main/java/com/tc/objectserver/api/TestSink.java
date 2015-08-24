@@ -14,7 +14,7 @@ import java.util.List;
  * @author steve
  */
 public class TestSink<EC> implements Sink<EC> {
-  private final List<EC> queue = new LinkedList<>();
+  private final List<EC> queue = new LinkedList<EC>();
 
   @Override
   public void addSingleThreaded(EC context) {

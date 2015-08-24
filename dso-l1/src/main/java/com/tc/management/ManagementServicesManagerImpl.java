@@ -30,10 +30,10 @@ import java.util.concurrent.ExecutorService;
  */
 public class ManagementServicesManagerImpl implements ManagementServicesManager {
 
-  private static final Collection<Method> OBJECT_METHODS = Collections.unmodifiableCollection(new HashSet<>(Arrays
+  private static final Collection<Method> OBJECT_METHODS = Collections.unmodifiableCollection(new HashSet<Method>(Arrays
       .asList(Object.class.getMethods())));
 
-  private final ConcurrentMap<ServiceID, ServiceHolder> services = new ConcurrentHashMap<>();
+  private final ConcurrentMap<ServiceID, ServiceHolder> services = new ConcurrentHashMap<ServiceID, ServiceHolder>();
 
   private final Collection<MessageChannel> messageChannels;
   private final ClientIDProvider clientIDProvider;
@@ -54,7 +54,7 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
   }
 
   @Override
-  public void asyncCall(RemoteCallHolder remoteCallHolder, ResponseListener responseListener) {
+  public void asyncCall(final RemoteCallHolder remoteCallHolder, final ResponseListener responseListener) {
     ServiceID serviceID = remoteCallHolder.getServiceID();
     final ServiceHolder serviceHolder = services.get(serviceID);
     if (serviceHolder == null) {
@@ -123,7 +123,7 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
       requestedServiceIDs = services.keySet();
     }
 
-    Set<RemoteCallDescriptor> response = new HashSet<>();
+    Set<RemoteCallDescriptor> response = new HashSet<RemoteCallDescriptor>();
 
     for (ServiceID requestedServiceID : requestedServiceIDs) {
       ServiceHolder serviceHolder = services.get(requestedServiceID);
@@ -134,14 +134,14 @@ public class ManagementServicesManagerImpl implements ManagementServicesManager 
   }
 
   private Collection<RemoteCallDescriptor> buildRemoteCallDescriptors(ServiceID serviceID, Object service) {
-    Collection<RemoteCallDescriptor> result = new ArrayList<>();
+    Collection<RemoteCallDescriptor> result = new ArrayList<RemoteCallDescriptor>();
 
     Method[] methods = service.getClass().getMethods();
     for (Method method : methods) {
       if (OBJECT_METHODS.contains(method)) { continue; }
 
       String name = method.getName();
-      List<String> argTypeNames = new ArrayList<>();
+      List<String> argTypeNames = new ArrayList<String>();
       Class<?>[] parameters = method.getParameterTypes();
       for (Class<?> parameter : parameters) {
         argTypeNames.add(parameter.getName());

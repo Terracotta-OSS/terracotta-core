@@ -7,8 +7,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TerracottaOperatorEventLogger {
 
-  private final CopyOnWriteArrayList<TerracottaOperatorEventCallback>        callbacks        = new CopyOnWriteArrayList<>();
-  private final CopyOnWriteArrayList<TerracottaOperatorEventHistoryProvider> historyProviders = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArrayList<TerracottaOperatorEventCallback>        callbacks        = new CopyOnWriteArrayList<TerracottaOperatorEventCallback>();
+  private final CopyOnWriteArrayList<TerracottaOperatorEventHistoryProvider> historyProviders = new CopyOnWriteArrayList<TerracottaOperatorEventHistoryProvider>();
   private final NodeNameProvider                                             nodeNameProvider;
 
   public TerracottaOperatorEventLogger(NodeNameProvider nodeIdProvider) {

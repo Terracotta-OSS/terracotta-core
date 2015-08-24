@@ -10,7 +10,7 @@ import java.util.LinkedList;
  */
 public class LossyStack<T> {
 
-  private final LinkedList<T> data = new LinkedList<>();
+  private final LinkedList<T> data = new LinkedList<T>();
   private final int        maxDepth;
 
   public LossyStack(int depth) {

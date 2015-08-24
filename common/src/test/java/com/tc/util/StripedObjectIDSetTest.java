@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class StripedObjectIDSetTest extends TCTestCase {
   public void testBasic() throws Exception {
-    HashSet<ObjectID> hashSet = new HashSet<>();
+    HashSet<ObjectID> hashSet = new HashSet<ObjectID>();
     StripedObjectIDSet stripedObjectIdSet = new StripedObjectIDSet();
 
     // test ADD
@@ -118,7 +118,7 @@ public class StripedObjectIDSetTest extends TCTestCase {
   }
 
   public void testConcurrency() {
-    HashSet<ObjectID> hashSet = new HashSet<>();
+    HashSet<ObjectID> hashSet = new HashSet<ObjectID>();
     StripedObjectIDSet stripedObjectIdSet = new StripedObjectIDSet(16);
 
     for (int i = 0; i < 64 * 16; i = i + 16) {

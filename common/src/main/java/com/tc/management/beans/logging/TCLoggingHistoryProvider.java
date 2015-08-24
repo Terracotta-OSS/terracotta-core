@@ -17,7 +17,7 @@ import javax.management.Notification;
  * @author Ludovic Orban
  */
 public class TCLoggingHistoryProvider {
-  private final CircularLossyQueue<Notification> notificationsHistory = new CircularLossyQueue<>(
+  private final CircularLossyQueue<Notification> notificationsHistory = new CircularLossyQueue<Notification>(
       TCPropertiesImpl
           .getProperties()
           .getInt(
@@ -40,7 +40,7 @@ public class TCLoggingHistoryProvider {
    * @param timestamp indicates time of last retrieved message
    */
   public List<Notification> getLogNotificationsSince(long timestamp) {
-    List<Notification> result = new ArrayList<>();
+    List<Notification> result = new ArrayList<Notification>();
 
     Notification[] notifications = new Notification[this.notificationsHistory.depth()];
     this.notificationsHistory.toArray(notifications);

@@ -13,7 +13,7 @@ public class ThreadIDManagerImpl implements ThreadIDManager {
   private final ThreadIDMap threadIDMap;
 
   public ThreadIDManagerImpl(ThreadIDMap threadIDMap) {
-    this.threadID = new VicariousThreadLocal<>();
+    this.threadID = new VicariousThreadLocal<ThreadID>();
     this.threadIDMap = threadIDMap;
   }
 

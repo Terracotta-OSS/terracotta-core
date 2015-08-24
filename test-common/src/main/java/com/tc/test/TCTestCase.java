@@ -42,7 +42,7 @@ public class TCTestCase extends TestCase {
 
   private static final long                DEFAULT_TIMEOUT_THRESHOLD = 60000;
 
-  private final AtomicReference<Throwable> beforeTimeoutException    = new AtomicReference<>(null);
+  private final AtomicReference<Throwable> beforeTimeoutException    = new AtomicReference<Throwable>(null);
 
   private DataDirectoryHelper              dataDirectoryHelper;
   private TempDirectoryHelper              tempDirectoryHelper;
@@ -396,7 +396,9 @@ public class TCTestCase extends TestCase {
   }
 
   protected final void fail(String message, Throwable t) {
-    throw new AssertionError(message == null ? "" : (message + "\n"), t);
+    AssertionError err = new AssertionError(message == null ? "" : (message + "\n"));
+    err.initCause(t);
+    throw err;
   }
 
   private Date parseDate(String date) {

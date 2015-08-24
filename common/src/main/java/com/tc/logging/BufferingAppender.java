@@ -21,7 +21,7 @@ public class BufferingAppender extends AppenderSkeleton {
   private boolean             on;
 
   public BufferingAppender(int maxCapacity) {
-    this.buffer = new ArrayBlockingQueue<>(maxCapacity);
+    this.buffer = new ArrayBlockingQueue<LoggingEvent>(maxCapacity);
     this.on = true;
   }
 

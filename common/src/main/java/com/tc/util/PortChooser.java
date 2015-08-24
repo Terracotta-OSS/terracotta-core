@@ -18,7 +18,7 @@ public final class PortChooser {
   public static final int           MAX          = 65535;
 
   private static final Object       VM_WIDE_LOCK = (PortChooser.class.getName() + "LOCK").intern();
-  private static final Set<Integer> chosen       = new HashSet<>();
+  private static final Set<Integer> chosen       = new HashSet<Integer>();
   private static final Random       random       = new Random();
   private static final Range        exclude      = EphemeralPorts.getRange();
 

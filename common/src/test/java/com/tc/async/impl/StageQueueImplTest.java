@@ -59,20 +59,20 @@ public class StageQueueImplTest {
     int index = 0;
     int size = 4;
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    List<BlockingQueue<Object>> cxts = new ArrayList<>();
+    final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
     
     QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
     when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<>((Integer)invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[0]);
         cxts.add(queue);
         return queue;
       }
     
     });
-    StageQueueImpl<Object> instance = new StageQueueImpl<>(size, 1, context, logger, "mock", 16);
+    StageQueueImpl<Object> instance = new StageQueueImpl<Object>(size, 1, context, logger, "mock", 16);
     for (int x=0;x<cxts.size();x++) {
       assertNotNull(instance.getSource(index));
     }

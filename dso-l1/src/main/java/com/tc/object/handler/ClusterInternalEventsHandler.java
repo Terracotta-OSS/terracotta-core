@@ -79,7 +79,7 @@ public class ClusterInternalEventsHandler<EC> extends AbstractEventHandler<EC> {
   }
 
   @Override
-  public void handleEvent(EC context) {
+  public void handleEvent(final EC context) {
     ThreadPoolExecutor service = clusterEventExecutor.getExecutorService();
     Future<?> eventFuture = service.submit(new Runnable() {
       @Override

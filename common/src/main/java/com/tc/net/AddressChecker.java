@@ -30,7 +30,7 @@ public class AddressChecker {
   }
 
   private Set<InetAddress> findAllLocalAddresses() {
-    Set<InetAddress> rv = new HashSet<>();
+    Set<InetAddress> rv = new HashSet<InetAddress>();
 
     final Enumeration<NetworkInterface> nics;
     try {

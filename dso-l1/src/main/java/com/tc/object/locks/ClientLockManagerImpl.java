@@ -48,8 +48,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final SessionManager                    sessionManager;
   private final TCLogger                          logger;
 
-  private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<>();
-  private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<>();
+  private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
+  private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<LockEventListener>();
 
   private final Timer                             gcTimer;
   private final Timer                             lockLeaseTimer;
@@ -67,7 +67,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.remoteLockManager = remoteLockManager;
     this.threadManager = threadManager;
     this.sessionManager = sessionManager;
-    this.locks = new ConcurrentHashMap<>(config.getStripedCount());
+    this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
     final long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
     this.gcTimer = taskRunner.newTimer("ClientLockManager LockGC");
     this.lockLeaseTimer = taskRunner.newTimer("ClientLockManager Lock Lease Timer");
@@ -866,7 +866,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
-    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<>();
+    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
     for (final ClientLock lock : this.locks.values()) {
       contexts.addAll(lock.getStateSnapshot(this.remoteLockManager.getClientID()));
     }

@@ -26,7 +26,7 @@ import javax.management.remote.generic.ConnectionClosedException;
 public class ClientBeanBag {
   private static final TCLogger       LOGGER    = TCLogging.getLogger(ClientBeanBag.class);
 
-  private final Set<ObjectName>       beanNames = new HashSet<>();
+  private final Set<ObjectName>       beanNames = new HashSet<ObjectName>();
   private final MBeanServer           l2MBeanServer;
   private final MBeanServerConnection l1Connection;
   private final MessageChannel        channel;

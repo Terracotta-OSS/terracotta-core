@@ -330,7 +330,7 @@ public class TCPropertiesImpl implements TCProperties {
    * will buffer calls to logger until the switch method is called
    */
   private static class LoggingInvocationHandler implements InvocationHandler {
-    private final ArrayList<Call> calls    = new ArrayList<>();
+    private final ArrayList<Call> calls    = new ArrayList<Call>();
     private boolean    switched = false;
     private TCLogger   realLogger;
 

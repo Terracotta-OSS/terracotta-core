@@ -17,7 +17,7 @@ public class TestDNACursor implements DNACursor {
   private int           current = -1;
 
   public TestDNACursor() {
-    this(new ArrayList<>());
+    this(new ArrayList<Object>());
   }
 
   public TestDNACursor(List<Object> actions) {

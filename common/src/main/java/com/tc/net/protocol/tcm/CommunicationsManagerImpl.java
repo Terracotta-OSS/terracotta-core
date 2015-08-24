@@ -73,7 +73,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                                              .getLogger(CommunicationsManager.class);
 
   private final SetOnceFlag                                                    shutdown                  = new SetOnceFlag();
-  private final Set<NetworkListener>                                           listeners                 = new HashSet<>();
+  private final Set<NetworkListener>                                           listeners                 = new HashSet<NetworkListener>();
   private final ReentrantLock                                                  licenseLock               = new ReentrantLock();
   private final TCConnectionManager                                            connectionManager;
   private final boolean                                                        privateConnMgr;
@@ -85,8 +85,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final ConnectionPolicy                                               connectionPolicy;
   private final ReconnectionRejectedHandler                                    reconnectionRejectedHandler;
   protected final ProductID                                                    productId;
-  protected final ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping   = new ConcurrentHashMap<>();
-  protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>    messageTypeFactoryMapping = new ConcurrentHashMap<>();
+  protected final ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>>();
+  protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>    messageTypeFactoryMapping = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
 
   private ConnectionHealthChecker                                              connectionHealthChecker;
   private ServerID                                                             serverID                  = ServerID.NULL_ID;
@@ -103,8 +103,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy) {
     this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, null, connectionPolicy, 0,
-         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), Collections.emptyMap(),
-         Collections.emptyMap(), null);
+         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
 
   }
 
@@ -113,14 +113,14 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    int workerCommCount) {
     this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, null, connectionPolicy,
          workerCommCount, new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(),
-         Collections.emptyMap(), Collections.emptyMap(), null);
+         Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(), Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig config) {
     this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, connectionPolicy, config,
-         Collections.emptyMap(), Collections.emptyMap());
+         Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(), Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
@@ -442,7 +442,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       NetworkListener callbackPortListener = createListener(new NullSessionManager(), address, true,
                                                             new DefaultConnectionIdFactory());
       try {
-        callbackPortListener.start(Collections.emptySet());
+        callbackPortListener.start(Collections.<ConnectionID>emptySet());
         this.callbackPort = callbackPortListener.getBindPort();
         this.callbackportListener = callbackPortListener;
         logger.info("HealthCheck CallbackPort Listener started at " + callbackPortListener.getBindAddress() + ":"

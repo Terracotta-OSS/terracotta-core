@@ -47,7 +47,7 @@ public class BitSetObjectIDSetTest extends ObjectIDSetTestBase {
     long seed = new SecureRandom().nextLong();
     final Random r = new Random(seed);
     ObjectIDSet set = create();
-    Set<ObjectID> hashSet = new HashSet<>();
+    Set<ObjectID> hashSet = new HashSet<ObjectID>();
 
     for (int i = 0; i < 800000; i++) {
       final long l = r.nextLong();
@@ -71,7 +71,7 @@ public class BitSetObjectIDSetTest extends ObjectIDSetTestBase {
     }
     final long t4 = System.currentTimeMillis();
 
-    final Set<ObjectID> hashSet2 = new HashSet<>();
+    final Set<ObjectID> hashSet2 = new HashSet<ObjectID>();
     for (int i = 0; i < 800000; i++) {
       hashSet2.add(new ObjectID(r.nextLong()));
     }

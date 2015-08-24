@@ -604,8 +604,8 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T extends Enum<T>> T makeEnum(Class<?> enumType, String enumName) {
-    return Enum.valueOf((Class<T>) enumType, enumName);
+  private static Enum<?> makeEnum(Class<?> enumType, String enumName) {
+    return Enum.valueOf((Class<Enum>) enumType, enumName);
   }
 
   protected abstract boolean useStringEnumRead(byte type);

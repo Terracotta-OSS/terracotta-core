@@ -27,13 +27,13 @@ public class EnterpriseLockDistributionStrategy implements LockDistributionStrat
   }
 
   public SortedMap<GroupID, List<Notify>> segregateNotifies2Groups(List<Notify> notifies) {
-    TreeMap<GroupID, List<Notify>> groupIds2Notifies = new TreeMap<>();
+    TreeMap<GroupID, List<Notify>> groupIds2Notifies = new TreeMap<GroupID, List<Notify>>();
     for (Iterator<Notify> notifyIterator = notifies.iterator(); notifyIterator.hasNext();) {
       Notify notify = notifyIterator.next();
       GroupID gid = getGroupIDFor(notify.getLockID());
       List<Notify> list = groupIds2Notifies.get(gid);
       if (list == null) {
-        list = new ArrayList<>();
+        list = new ArrayList<Notify>();
         groupIds2Notifies.put(gid, list);
       }
       list.add(notify);

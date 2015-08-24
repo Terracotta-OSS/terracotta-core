@@ -157,7 +157,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
   @Override
   public SortedSet<ObjectID> getAllObjectIds() {
     Set<ObjectID> set = objectIdsFetcher.getAllObjectIds();
-    SortedSet<ObjectID> treeSet = new TreeSet<>();
+    SortedSet<ObjectID> treeSet = new TreeSet<ObjectID>();
     for (ObjectID id : set) {
       treeSet.add(id);
     }

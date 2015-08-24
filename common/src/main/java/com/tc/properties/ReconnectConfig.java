@@ -5,24 +5,14 @@ package com.tc.properties;
 
 public interface ReconnectConfig {
 
-  default boolean getReconnectEnabled() {
-    return true;
-  }
+  boolean getReconnectEnabled();
 
-  default int getReconnectTimeout() {
-    return 5000;
-  }
+  int getReconnectTimeout();
   
-  default int getSendQueueCapacity() {
-    return 5000;
-  }
+  int getSendQueueCapacity();
   
-  default int getMaxDelayAcks() {
-    return 16;
-  }
+  int getMaxDelayAcks();
   
-  default int getSendWindow() {
-    return 32;
-  }
+  int getSendWindow();
   
 }

@@ -41,8 +41,8 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
   private final TCCommImpl              comm;
   private final HealthCheckerConfig     healthCheckerConfig;
-  private final Set<TCConnection>       connections            = new HashSet<>();
-  private final Set<TCListener>         listeners              = new HashSet<>();
+  private final Set<TCConnection>       connections            = new HashSet<TCConnection>();
+  private final Set<TCListener>         listeners              = new HashSet<TCListener>();
   private final SetOnceFlag             shutdown               = new SetOnceFlag();
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
@@ -111,7 +111,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   @Override
   public TCConnection[] getAllActiveConnections() {
     synchronized (connections) {
-      List<TCConnection> activeConnections = new ArrayList<>();
+      List<TCConnection> activeConnections = new ArrayList<TCConnection>();
       long maxIdleTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(healthCheckerConfig, false);
       for (TCConnection conn : connections) {
         if ((conn.getIdleTime() < maxIdleTime) && conn.isTransportEstablished()) {

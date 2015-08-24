@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 public class StartupHelperTest extends TestCase {
 
   public void testException() throws Throwable {
-    final AtomicReference<Throwable> error = new AtomicReference<>(null);
+    final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
 
     ThreadGroup group = new ThreadGroup("group") {
       @Override

@@ -20,7 +20,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
   private static final String              CMS_NAME      = "ConcurrentMarkSweep";
   private static final String              CMS_WARN_MESG = "Terracotta does not recommend ConcurrentMarkSweep Collector.";
 
-  private final List<MemoryEventsListener> listeners     = new CopyOnWriteArrayList<>();
+  private final List<MemoryEventsListener> listeners     = new CopyOnWriteArrayList<MemoryEventsListener>();
 
   private final int                        leastCount;
   private final long                       sleepInterval;

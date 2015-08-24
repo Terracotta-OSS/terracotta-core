@@ -183,7 +183,7 @@ public class CopyOnWriteSequentialMap<K, V> extends LinkedHashMap<K, V> {
   private void takeSnapshot() {
     // Defer taking snapshot until putAll() is finished. Needed because super.putAll() does a bunch of put()'s
     if (inPutAll) return;
-    Map<K, V> temp = new LinkedHashMap<>();
+    Map<K, V> temp = new LinkedHashMap<K, V>();
     for (Map.Entry<K, V> e : super.entrySet())
       temp.put(e.getKey(), e.getValue());
     _snapshot = Collections.unmodifiableMap(temp);

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class TCPropertyStore {
-  private final Map<Key, String> props = new LinkedHashMap<>();
+  private final Map<Key, String> props = new LinkedHashMap<Key, String>();
 
   public synchronized boolean containsKey(String key) {
     return props.containsKey(new Key(key));

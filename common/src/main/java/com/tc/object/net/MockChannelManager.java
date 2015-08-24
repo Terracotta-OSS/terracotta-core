@@ -16,7 +16,7 @@ import java.util.Set;
 
 public class MockChannelManager implements DSOChannelManager {
 
-  private final Map<ClientID, MessageChannel> channels = new HashMap<>();
+  private final Map<ClientID, MessageChannel> channels = new HashMap<ClientID, MessageChannel>();
 
   public void addChannel(MessageChannel channel) {
     synchronized (channels) {

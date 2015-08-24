@@ -25,9 +25,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
-  private final AddCallBack<K, V>            addCallback    = new AddCallBack<>();
-  private final AddAllCallBack<K, V>         addAllCallback = new AddAllCallBack<>();
-  private final RemoveCallBack<K, V>         removeCallback = new RemoveCallBack<>();
+  private final AddCallBack<K, V>            addCallback    = new AddCallBack<K, V>();
+  private final AddAllCallBack<K, V>         addAllCallback = new AddAllCallBack<K, V>();
+  private final RemoveCallBack<K, V>         removeCallback = new RemoveCallBack<K, V>();
 
   private final TCConcurrentStore<K, Set<V>> store;
 
@@ -35,7 +35,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * Creates a Multimap with a default initial capacity (16), load factor (0.75) and concurrencyLevel (16).
    */
   public TCConcurrentMultiMap() {
-    this.store = new TCConcurrentStore<>();
+    this.store = new TCConcurrentStore<K, Set<V>>();
   }
 
   /**
@@ -46,7 +46,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws IllegalArgumentException if the initial capacity of elements is negative.
    */
   public TCConcurrentMultiMap(int initialCapacity) {
-    this.store = new TCConcurrentStore<>(initialCapacity);
+    this.store = new TCConcurrentStore<K, Set<V>>(initialCapacity);
   }
 
   /**
@@ -57,7 +57,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws IllegalArgumentException if the initial capacity of elements is negative or the load factor is non-positive
    */
   public TCConcurrentMultiMap(int initialCapacity, float loadFactor) {
-    this.store = new TCConcurrentStore<>(initialCapacity, loadFactor);
+    this.store = new TCConcurrentStore<K, Set<V>>(initialCapacity, loadFactor);
   }
 
   /**
@@ -70,7 +70,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    *         non-positive.
    */
   public TCConcurrentMultiMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    this.store = new TCConcurrentStore<>(initialCapacity, loadFactor, concurrencyLevel);
+    this.store = new TCConcurrentStore<K, Set<V>>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   /**
@@ -173,7 +173,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
         segment.put(key, singleton((V)value));
         return true;
       } else if (set instanceof SingletonSet && !set.contains(value)) {
-        set = new HashSet<>(set);
+        set = new HashSet<V>(set);
         segment.put(key, set);
       }
       set.add((V) value);
@@ -188,11 +188,11 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
       boolean newEntry = false;
       Set<V> set = segment.get(key);
       if (set == null) {
-        set = new HashSet<>();
+        set = new HashSet<V>();
         segment.put(key, set);
         newEntry = true;
       } else if (set instanceof SingletonSet) {
-        set = new HashSet<>(set);
+        set = new HashSet<V>(set);
         segment.put(key, set);
       }
       @SuppressWarnings("unchecked")
@@ -229,7 +229,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
   }
 
   private static <T> Set<T> singleton(T t) {
-    return new SingletonSet<>(t);
+    return new SingletonSet<T>(t);
   }
 
   private static class SingletonSet<V> extends AbstractSet<V> {

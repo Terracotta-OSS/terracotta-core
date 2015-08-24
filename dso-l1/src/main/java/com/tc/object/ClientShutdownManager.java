@@ -22,7 +22,7 @@ public class ClientShutdownManager {
 
   private final ClientHandshakeManager             handshakeManager;
   private final PreparedComponentsFromL2Connection connectionComponents;
-  private final Set<Runnable>                      beforeShutdown = new HashSet<>();
+  private final Set<Runnable>                      beforeShutdown = new HashSet<Runnable>();
   private final DistributedObjectClient            client;
 
   public ClientShutdownManager(DistributedObjectClient client, PreparedComponentsFromL2Connection connectionComponents) {

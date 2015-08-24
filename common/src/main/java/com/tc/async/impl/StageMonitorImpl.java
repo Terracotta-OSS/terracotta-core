@@ -14,7 +14,7 @@ class StageMonitorImpl implements StageMonitor {
   private final String          name;
   private final StringFormatter formatter;
 
-  private final List<Snapshot>            snapshots = new ArrayList<>();
+  private final List<Snapshot>  snapshots = new ArrayList<Snapshot>();
   private long                  begin     = System.currentTimeMillis();
 
   StageMonitorImpl(String name, StringFormatter formatter) {

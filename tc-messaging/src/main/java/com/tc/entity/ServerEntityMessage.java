@@ -2,7 +2,6 @@ package com.tc.entity;
 
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.EntityDescriptor;
-import java.util.Optional;
 
 /**
  * @author twu
@@ -17,5 +16,5 @@ public interface ServerEntityMessage extends TCMessage {
   
   byte[] getMessage();
 
-  Optional<Long> getResponseId();
+  Long getResponseId();
 }

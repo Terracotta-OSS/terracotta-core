@@ -42,7 +42,7 @@ public class NetworkSanityTest extends TestCase {
     }
   }
 
-  private static void accept(ServerSocket ss) {
+  private static void accept(final ServerSocket ss) {
     Thread t = new Thread() {
       @Override
       public void run() {

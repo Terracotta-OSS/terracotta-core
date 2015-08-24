@@ -22,7 +22,7 @@ public class StreamAppender {
     this.output = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)), true);
   }
 
-  public void writeInput(InputStream err, InputStream out) {
+  public void writeInput(final InputStream err, final InputStream out) {
     errWriter = new Thread() {
       BufferedReader reader = new BufferedReader(new InputStreamReader(err));
 

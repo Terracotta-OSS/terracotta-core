@@ -127,7 +127,7 @@ public class AATreeSet<T extends Comparable<T>> extends AbstractSet<T> implement
     return find(root, probe).getPayload();
   }
 
-  private static final Node<?> TERMINAL = new TerminalNode<>();
+  private static final Node<?> TERMINAL = new TerminalNode();
 
   @SuppressWarnings("unchecked")
   private Node<T> terminal() {
@@ -182,7 +182,7 @@ public class AATreeSet<T extends Comparable<T>> extends AbstractSet<T> implement
     if (data instanceof Node) {
       return (Node<T>) data;
     } else {
-      return new TreeNode<>(data);
+      return new TreeNode<T>(data);
     }
   }
 
@@ -536,7 +536,7 @@ public class AATreeSet<T extends Comparable<T>> extends AbstractSet<T> implement
 
   class TreeIterator implements Iterator<T> {
 
-    private final Stack<Node<T>> path = new Stack<>();
+    private final Stack<Node<T>> path = new Stack<Node<T>>();
     protected Node<T>            next;
 
     TreeIterator() {
@@ -614,7 +614,7 @@ public class AATreeSet<T extends Comparable<T>> extends AbstractSet<T> implement
     public SubTreeIterator(T start, T end) {
       super(start);
       if (end != null) {
-        Stack<Node<T>> path = new Stack<>();
+        Stack<Node<T>> path = new Stack<Node<T>>();
         path.push(terminal());
         Node<T> current = root;
         while (true) {

@@ -81,7 +81,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
         q = queueFactory.createInstance(queueSize);
         queueCount++;
       }
-      this.sourceQueues[i] = new SourceQueueImpl<>(q, String.valueOf(queueCount), statsCollector);
+      this.sourceQueues[i] = new SourceQueueImpl<ContextWrapper<EC>>(q, String.valueOf(queueCount), statsCollector);
     }
   }
 
@@ -98,7 +98,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     }
 
     boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
     try {
       while (true) {
         try {
@@ -126,7 +126,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
 
     boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
     try {
       while (true) {
         try {
@@ -147,7 +147,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
 
   @Override
   public void addSpecialized(SpecializedEventContext specialized) {
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<>(specialized);
+    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
     boolean interrupted = Thread.interrupted();
     SourceQueueImpl<ContextWrapper<EC>> queue = getSourceQueueFor(specialized);
     try {

@@ -10,6 +10,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.management.RemoteCallDescriptor;
 import com.tc.object.management.RemoteCallHolder;
 import com.tc.object.session.SessionID;
 
@@ -52,7 +53,7 @@ public class InvokeRegisteredServiceMessage extends AbstractManagementMessage {
     if (!super.hydrateValue(name)) {
       switch (name) {
         case REMOTE_CALL_HOLDER:
-          remoteCallHolder = (RemoteCallHolder)getObject(new RemoteCallHolder());
+          remoteCallHolder = (RemoteCallHolder) this.<RemoteCallDescriptor>getObject(new RemoteCallHolder());
           return true;
 
         default:

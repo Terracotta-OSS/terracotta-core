@@ -29,7 +29,7 @@ public class ExternalProcessStreamWriter {
     return exception;
   }
   
-  private void print(PrintStream stream, InputStream in) {
+  private void print(final PrintStream stream, final InputStream in) {
     Thread writer = new Thread() {
       BufferedReader reader = new BufferedReader(new InputStreamReader(in));
       @Override

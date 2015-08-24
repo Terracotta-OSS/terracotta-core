@@ -43,7 +43,7 @@ public class TCFutureTest extends TestCase {
     testResultSet(f1);
   }
 
-  public void testResultSet(TCFuture f1) {
+  public void testResultSet(final TCFuture f1) {
 
     final Object val = new Object();
 
@@ -130,7 +130,7 @@ public class TCFutureTest extends TestCase {
     
   }
   
-  public void testCancel(TCFuture f1) {
+  public void testCancel(final TCFuture f1) {
     Runnable run = new Runnable() {
       @Override
       public void run() {

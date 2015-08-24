@@ -25,7 +25,7 @@ public class ProtocolSwitch implements TCProtocolAdaptor {
   private static final String[]    HTTP_METHODS      = new String[] { "GET", "POST", "HEAD", "PUT", "OPTIONS",
       "DELETE", "TRACE", "CONNECT"                  };
 
-  private static final Set<String> METHODS           = new HashSet<>(Arrays.asList(HTTP_METHODS));
+  private static final Set<String> METHODS           = new HashSet<String>(Arrays.asList(HTTP_METHODS));
 
   // The longest HTTP method is 7 chars, +1 for the space
   private static final int         INSPECT           = 8;

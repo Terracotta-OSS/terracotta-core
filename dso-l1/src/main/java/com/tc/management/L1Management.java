@@ -103,7 +103,7 @@ public class L1Management extends TerracottaManagement {
     }
   }
 
-  public synchronized void start(boolean createDedicatedMBeanServer) {
+  public synchronized void start(final boolean createDedicatedMBeanServer) {
     started.set();
 
     Thread registrationThread = new Thread(new Runnable() {
@@ -236,7 +236,7 @@ public class L1Management extends TerracottaManagement {
                   + " up/down you may see stack traces printed to the log");
     }
     try {
-      final Map<String, Object> environment = new HashMap<>();
+      final Map<String, Object> environment = new HashMap<String, Object>();
       environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(TunnelingMessageConnectionServer.TUNNELING_HANDLER, tunnelingHandler);

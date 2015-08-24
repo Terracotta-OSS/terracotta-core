@@ -26,7 +26,7 @@ public class CircularLossyQueueTest extends TCTestCase {
   }
 
   public void testOrder() {
-    LossyStack<TimeStampedCounterValue> lossyStack = new LossyStack<>(SIZE);
+    LossyStack<TimeStampedCounterValue> lossyStack = new LossyStack<TimeStampedCounterValue>(SIZE);
 
     for (int i = 1; i <= SIZE; i++) {
       queue.push(new TimeStampedCounterValue(System.currentTimeMillis(), i));
@@ -97,6 +97,6 @@ public class CircularLossyQueueTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    queue = new CircularLossyQueue<>(SIZE);
+    queue = new CircularLossyQueue<TimeStampedCounterValue>(SIZE);
   }
 }

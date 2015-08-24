@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * @author steve
  */
 public class TestEventHandler<EC> extends AbstractEventHandler<EC> {
-  private final List<EC> contexts = new LinkedList<>();
+  private final List<EC> contexts = new LinkedList<EC>();
 
   /*
    * (non-Javadoc)
@@ -24,6 +24,7 @@ public class TestEventHandler<EC> extends AbstractEventHandler<EC> {
    */
   @Override
   public synchronized void handleEvent(EC context) {
+    System.out.println("Received " + context);
     contexts.add(context);
     notifyAll();
   }
@@ -38,6 +39,6 @@ public class TestEventHandler<EC> extends AbstractEventHandler<EC> {
   }
 
   public synchronized List<EC> getContexts() {
-    return new ArrayList<>(contexts);
+    return new ArrayList<EC>(contexts);
   }
 }

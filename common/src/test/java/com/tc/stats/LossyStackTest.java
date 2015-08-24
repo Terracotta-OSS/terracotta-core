@@ -26,7 +26,7 @@ public class LossyStackTest extends TestCase {
   }
 
   public void test() {
-    LossyStack<Integer> stack = new LossyStack<>(5);
+    LossyStack<Integer> stack = new LossyStack<Integer>(5);
     assertEquals(0, stack.depth());
     assertTrue(stack.isEmtpy());
     assertNull(stack.peek());

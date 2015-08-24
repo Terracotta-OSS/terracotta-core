@@ -22,7 +22,7 @@ public class CounterTest extends TestCase {
   public void testConcurrency() throws InterruptedException {
     final Counter counter = new CounterImpl();
     final AtomicLong local = new AtomicLong(0L);
-    final AtomicReference<Throwable> error = new AtomicReference<>(null);
+    final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
 
     Thread[] threads = new Thread[10];
     for (int i = 0; i < threads.length; i++) {

@@ -27,7 +27,7 @@ public class SendStateMachine extends AbstractStateMachine {
   final State                              PAUSED_STATE          = new PausedState();
 
   private final OOOProtocolMessageDelivery delivery;
-  private final LinkedList<OOOProtocolMessage> outstandingMsgs       = new LinkedList<>();
+  private final LinkedList<OOOProtocolMessage> outstandingMsgs       = new LinkedList<OOOProtocolMessage>();
   private final int                        sendWindow;
   private final boolean                    isClient;
   private final String                     debugId;
@@ -46,7 +46,7 @@ public class SendStateMachine extends AbstractStateMachine {
     sendWindow = reconnectConfig.getSendWindow();
     int queueCap = reconnectConfig.getSendQueueCapacity();
     this.sendQueueCap = (queueCap == 0) ? Integer.MAX_VALUE : queueCap;
-    this.sendQueue = new LinkedBlockingQueue<>(this.sendQueueCap);
+    this.sendQueue = new LinkedBlockingQueue<TCNetworkMessage>(this.sendQueueCap);
     this.isClient = isClient;
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
@@ -281,7 +281,7 @@ public class SendStateMachine extends AbstractStateMachine {
     outstandingMsgs.clear();
 
     LinkedBlockingQueue<TCNetworkMessage> tmpQ = sendQueue;
-    sendQueue = new LinkedBlockingQueue<>(sendQueueCap);
+    sendQueue = new LinkedBlockingQueue<TCNetworkMessage>(sendQueueCap);
     tmpQ.clear();
   }
 

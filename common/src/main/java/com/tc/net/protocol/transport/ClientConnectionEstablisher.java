@@ -380,7 +380,7 @@ public class ClientConnectionEstablisher {
     private static final TCLogger             logger             = TCLogging.getLogger(AsyncReconnect.class);
     private final ClientConnectionEstablisher cce;
     private volatile boolean                  stopped            = false;
-    private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<>();
+    private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<ConnectionRequest>();
     private Thread                            connectionEstablisherThread;
     private boolean                           disableThreadSpawn = false;
 

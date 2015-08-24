@@ -13,9 +13,9 @@ import java.util.Map;
 
 public class LockInfoByThreadIDImpl implements LockInfoByThreadID {
 
-  private final Map<ThreadID, List<String>> heldLocks    = new LinkedHashMap<>();
-  private final Map<ThreadID, List<String>> waitOnLocks  = new LinkedHashMap<>();
-  private final Map<ThreadID, List<String>> pendingLocks = new LinkedHashMap<>();
+  private final Map<ThreadID, List<String>> heldLocks    = new LinkedHashMap<ThreadID, List<String>>();
+  private final Map<ThreadID, List<String>> waitOnLocks  = new LinkedHashMap<ThreadID, List<String>>();
+  private final Map<ThreadID, List<String>> pendingLocks = new LinkedHashMap<ThreadID, List<String>>();
 
   @Override
   public List<String> getHeldLocks(ThreadID threadID) {
@@ -56,7 +56,7 @@ public class LockInfoByThreadIDImpl implements LockInfoByThreadID {
   private void addLockTo(Map<ThreadID, List<String>> lockMap, ThreadID threadID, String value) {
     List<String> lockArray = lockMap.get(threadID);
     if (lockArray == null) {
-      List<String> al = new ArrayList<>();
+      List<String> al = new ArrayList<String>();
       al.add(value);
       lockMap.put(threadID, al);
     } else {

@@ -45,7 +45,7 @@ public class ThreadPreferenceExecutor implements Executor {
     this.idleTime = idleTime;
     this.unit = unit;
     this.threadFactory = threadFactory;
-    this.queue = new SynchronousQueue<>();
+    this.queue = new SynchronousQueue<Runnable>();
     this.logger = logger;
   }
 

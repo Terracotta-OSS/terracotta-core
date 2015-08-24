@@ -216,7 +216,7 @@ public class DistributedObjectClient implements TCClient {
     Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     
     // We need a StageManager to create the SEDA stages used for handling the messages.
-    final SEDA<Void> seda = new SEDA<>(threadGroup);
+    final SEDA<Void> seda = new SEDA<Void>(threadGroup);
     communicationStageManager = seda.getStageManager();
     this.tcMemManager = new TCMemoryManagerImpl(threadGroup);
   }
@@ -268,6 +268,31 @@ public class DistributedObjectClient implements TCClient {
 
   private ReconnectConfig getReconnectPropertiesFromServer() {
     ReconnectConfig reconnectConfig = new ReconnectConfig() {
+
+      @Override
+      public boolean getReconnectEnabled() {
+        return true;
+      }
+
+      @Override
+      public int getReconnectTimeout() {
+        return 5000;
+      }
+
+      @Override
+      public int getSendQueueCapacity() {
+        return 5000;
+      }
+
+      @Override
+      public int getMaxDelayAcks() {
+        return 16;
+      }
+
+      @Override
+      public int getSendWindow() {
+        return 32;
+      }
     };
     return reconnectConfig;
   }
@@ -421,14 +446,14 @@ public class DistributedObjectClient implements TCClient {
 
     final Stage<Void> managementStage = this.communicationStageManager.createStage(ClientConfigurationContext.MANAGEMENT_STAGE, Void.class, new ClientManagementHandler<Void>(managementServicesManager), 1, maxSize);
 
-    final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<>();
+    final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
     clientHandshakeCallbacks.add(teh);
     // ClientEntityManager should be the last one so that isRejoinInProgress flag of TCObjectSelfStoreImpl has been reset
     // in RemoteServerMapManager.initializeHandshake()
     clientHandshakeCallbacks.add(this.clientEntityManager);
     final ProductInfo pInfo = ProductInfo.getInstance();
-    final Collection<ClearableCallback> clearCallbacks = new ArrayList<>();
+    final Collection<ClearableCallback> clearCallbacks = new ArrayList<ClearableCallback>();
     clearCallbacks.add(this.communicationStageManager);
     clearCallbacks.add(cluster);
     this.clientHandshakeManager = this.clientBuilder
@@ -505,7 +530,7 @@ public class DistributedObjectClient implements TCClient {
   }
 
   private Map<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMapping() {
-    final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
+    final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<TCMessageType, Class<? extends TCMessage>>();
 
     messageTypeClassMapping.put(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
     messageTypeClassMapping.put(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
@@ -746,7 +771,7 @@ public class DistributedObjectClient implements TCClient {
       final int count = group.enumerate(threads);
 
       if (count < threads.length) {
-        final List<Thread> l = new ArrayList<>(count);
+        final List<Thread> l = new ArrayList<Thread>(count);
         for (final Thread t : threads) {
           if (t != null) {
             l.add(t);

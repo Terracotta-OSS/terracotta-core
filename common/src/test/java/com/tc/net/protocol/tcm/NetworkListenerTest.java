@@ -5,6 +5,7 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -52,7 +53,7 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener lsnr = commsMgr.createListener(sessionProvider, new TCSocketAddress(0), true, cidf, false);
 
     try {
-      lsnr.start(Collections.emptySet());
+      lsnr.start(Collections.<ConnectionID>emptySet());
     } catch (IOException ioe) {
       fail(ioe.getMessage());
     }
@@ -60,7 +61,7 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener lsnr2 = commsMgr.createListener(sessionProvider, new TCSocketAddress(lsnr.getBindPort()), true,
                                                     cidf, false);
     try {
-      lsnr2.start(Collections.emptySet());
+      lsnr2.start(Collections.<ConnectionID>emptySet());
       fail();
     } catch (IOException ioe) {
       // expect a bind exception
@@ -84,7 +85,7 @@ public class NetworkListenerTest extends TestCase {
           .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory());
 
       try {
-        lsnr.start(Collections.emptySet());
+        lsnr.start(Collections.<ConnectionID>emptySet());
         listeners[i] = lsnr;
       } catch (IOException ioe) {
         fail(ioe.getMessage());

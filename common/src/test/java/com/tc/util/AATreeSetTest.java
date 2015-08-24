@@ -23,8 +23,8 @@ public class AATreeSetTest extends TestCase {
   public void testRandom() {
     List<Long> longs = populateRandomLongs(new ArrayList<Long>(), 1000);
 
-    SortedSet<Long> treeSet = new TreeSet<>();
-    SortedSet<Long> aatree = new AATreeSet<>();
+    SortedSet<Long> treeSet = new TreeSet<Long>();
+    SortedSet<Long> aatree = new AATreeSet<Long>();
 
     for (Long l : longs) {
       boolean aaInsert = aatree.add(l);
@@ -47,7 +47,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testBasic() {
-    Set<Long> t = new AATreeSet<>();
+    Set<Long> t = new AATreeSet<Long>();
     t.add(Long.valueOf(25));
     t.add(Long.valueOf(10));
     t.add(Long.valueOf(1));
@@ -84,7 +84,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testVeryBasic() {
-    AATreeSet<Integer> aaTree = new AATreeSet<>();
+    AATreeSet<Integer> aaTree = new AATreeSet<Integer>();
     boolean inserted = aaTree.add(Integer.valueOf(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
@@ -116,7 +116,7 @@ public class AATreeSetTest extends TestCase {
 
   // Test program; should print min and max and nothing else
   public void testMinMax() {
-    AATreeSet<Integer> t = new AATreeSet<>();
+    AATreeSet<Integer> t = new AATreeSet<Integer>();
     final int NUMS = 400000;
     final int GAP = 1;
 
@@ -150,8 +150,8 @@ public class AATreeSetTest extends TestCase {
   public void testTailSetIteratorForRandomAATree() {
     System.err.println("TreeSet Creation");
     List<Long> longs = populateRandomLongs(new ArrayList<Long>(), 10001);
-    SortedSet<Long> treeSet = new TreeSet<>();
-    SortedSet<Long> aatree = new AATreeSet<>();
+    SortedSet<Long> treeSet = new TreeSet<Long>();
+    SortedSet<Long> aatree = new AATreeSet<Long>();
 
     for (Long l : longs) {
       boolean aaInsert = aatree.add(l);
@@ -176,7 +176,7 @@ public class AATreeSetTest extends TestCase {
   public void testTailSetIteratorsForFixedAATree() {
 
     // 1 2 4 8 9 10 11 13 15 17 19 23 25 27 29 33 35 47 56
-    List<Long> longList = new ArrayList<>();
+    List<Long> longList = new ArrayList<Long>();
     longList.add(Long.valueOf(25));
     longList.add(Long.valueOf(27));
     longList.add(Long.valueOf(9));
@@ -198,8 +198,8 @@ public class AATreeSetTest extends TestCase {
     longList.add(Long.valueOf(29));
     longList.add(Long.valueOf(19));
 
-    AATreeSet<Long> aaTreeSet = new AATreeSet<>();
-    TreeSet<Long> treeSet = new TreeSet<>();
+    AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
+    TreeSet<Long> treeSet = new TreeSet<Long>();
     for (int i = 0; i < longList.size(); i++) {
       Long insertItem = longList.get(i);
       aaTreeSet.add(insertItem);
@@ -266,7 +266,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testRemove() {
-    AATreeSet<MyInt> aaTree = new AATreeSet<>();
+    AATreeSet<MyInt> aaTree = new AATreeSet<MyInt>();
     assertTrue(aaTree.add(new MyInt(5)));
     assertTrue(aaTree.add(new MyInt(10)));
     assertTrue(aaTree.add(new MyInt(1)));
@@ -306,8 +306,8 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testTreeBalance() {
-    SortedSet<Long> treeSet = new TreeSet<>();
-    AATreeSet<Long> aaTreeSet = new AATreeSet<>();
+    SortedSet<Long> treeSet = new TreeSet<Long>();
+    AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
 
     long seed = System.nanoTime();
     Banner.infoBanner("Tree Balance Test Seed Is " + seed);

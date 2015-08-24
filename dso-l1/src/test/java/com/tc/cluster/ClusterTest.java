@@ -296,7 +296,7 @@ public class ClusterTest extends TestCase {
 
   private static class TestEventListener implements ClusterListener {
 
-    public LinkedList<String> events = new LinkedList<>();
+    public LinkedList<String> events = new LinkedList<String>();
 
     public LinkedList<String> getOccurredEvents() {
       return events;
@@ -433,7 +433,7 @@ public class ClusterTest extends TestCase {
 
   private static class OOBTestListener extends TestEventListener implements OutOfBandClusterListener {
 
-    private final AtomicReference<Throwable> error = new AtomicReference<>();
+    private final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
 
     @Override
     public boolean useOutOfBandNotification(ClusterEventType type, ClusterEvent event) {

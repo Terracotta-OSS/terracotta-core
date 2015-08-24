@@ -65,15 +65,20 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.logger = new ClientIDLogger(channel, TCLogging.getLogger(ClientEntityManager.class));
     
     this.channel = channel;
-    this.sender = new Thread(this::sendLoop);
+    this.sender = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        sendLoop();
+      }
+    });
     this.sender.setDaemon(true);
-    this.inFlightMessages = new ConcurrentHashMap<>();
-    this.outbound = new LinkedBlockingQueue<>(MAX_QUEUED_REQUESTS);
+    this.inFlightMessages = new ConcurrentHashMap<TransactionID, InFlightMessage>();
+    this.outbound = new LinkedBlockingQueue<InFlightMessage>(MAX_QUEUED_REQUESTS);
     this.requestTickets = new Semaphore(MAX_PENDING_REQUESTS);
     this.currentTransactionID = new AtomicLong();
     
     this.state = State.RUNNING;
-    this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
+    this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint>(10240, 0.75f, 128);
     
     // TODO:  This constructor should not be starting a thread so we probably want some external methods to manage the
     //  life-cycle of this internal thread.
@@ -126,7 +131,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A create needs to be replicated.
     boolean requiresReplication = true;
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
-    return Futures.lazyTransform(createInFlightMessageAfterAcks(message, requestedAcks), ignore -> null);
+    return (Future) createInFlightMessageAfterAcks(message, requestedAcks);
   }
 
   @Override
@@ -136,7 +141,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A destroy call has no extended data.
     byte[] emtpyExtendedData = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
-    return Futures.lazyTransform(createInFlightMessageAfterAcks(message, requestedAcks), ignore -> null);
+    return (Future) createInFlightMessageAfterAcks(message, requestedAcks);
   }
 
   @Override
@@ -263,7 +268,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
 
-  private EntityClientEndpoint internalLookup(EntityDescriptor entityDescriptor, Runnable closeHook) {
+  private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
     if (State.REJOIN_IN_PROGRESS == this.state) {
       throw new PlatformRejoinException("Unable to start lookup for EntityDescriptor " + entityDescriptor

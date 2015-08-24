@@ -10,6 +10,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.ClientID;
@@ -247,7 +248,7 @@ public class ClientEntityManagerTest extends TestCase {
     Exception resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    Future<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.emptySet(), false, new byte[0]);
+    Future<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -261,7 +262,7 @@ public class ClientEntityManagerTest extends TestCase {
     Exception resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    Future<Void> waiter = this.manager.createEntity(entityID, version, Collections.emptySet(), config);
+    Future<Void> waiter = this.manager.createEntity(entityID, version, Collections.<Acks>emptySet(), config);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     waiter.get();
   }
@@ -270,8 +271,16 @@ public class ClientEntityManagerTest extends TestCase {
   public void testRequestAcks() throws Exception {
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, null, null, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    EnumSet<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.RECEIVED);
-    Thread t = new Thread(() -> { this.manager.invokeAction(entityDescriptor, requestedAcks, false, new byte[0]);});
+    final EnumSet<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.RECEIVED);
+    final ClientEntityManager mgr = manager;
+    Thread t = new Thread(new Runnable() {
+
+      @Override
+      public void run() {
+        mgr.invokeAction(entityDescriptor, requestedAcks, false, new byte[0]);
+      }
+      
+    });
     t.start();
     
     t.join(1000);

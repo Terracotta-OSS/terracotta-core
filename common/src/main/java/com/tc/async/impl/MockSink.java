@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class MockSink<EC> implements Sink<EC> {
 
-  public BlockingQueue<EC> queue = new LinkedBlockingQueue<>(); // its not bounded
+  public BlockingQueue<EC> queue = new LinkedBlockingQueue<EC>(); // its not bounded
 
   public EC take() {
     try {
