@@ -7,7 +7,6 @@ import com.google.common.base.Throwables;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
@@ -24,7 +23,6 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     //
   }
 
-  private final ClusteredStateLoader  clusteredStateLoader;
   private final AppClassLoader        appClassLoader;
   private final ClientCreatorCallable clientCreator;
   private final Set<String>           tunneledMBeanDomains = new HashSet<>();
@@ -39,15 +37,14 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     }
     try {
       this.appClassLoader = new AppClassLoader(appLoader);
-      this.clusteredStateLoader = createClusteredStateLoader();
 
       @SuppressWarnings("unchecked")
-      Class<Callable<ClientCreatorCallable>> bootClass = (Class<Callable<ClientCreatorCallable>>) clusteredStateLoader.loadClass(CreateClient.class.getName());
+      Class<Callable<ClientCreatorCallable>> bootClass = (Class<Callable<ClientCreatorCallable>>) appClassLoader.loadClass(CreateClient.class.getName());
       
       Constructor<Callable<ClientCreatorCallable>> cstr = bootClass.getConstructor(String.class, Boolean.TYPE, ClassLoader.class, Boolean.TYPE,
                                                      String.class, Map.class);
 
-      Callable<ClientCreatorCallable> boot = cstr.newInstance(tcConfig, isUrlConfig, clusteredStateLoader, rejoinEnabled, productId, env);
+      Callable<ClientCreatorCallable> boot = cstr.newInstance(tcConfig, isUrlConfig, appClassLoader, rejoinEnabled, productId, env);
       this.clientCreator = boot.call();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -59,7 +56,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     if (isInitialized) { return; }
 
     try {
-      Class<?> clientHandleImpl = clusteredStateLoader.loadClass(CLIENT_HANDLE_IMPL);
+      Class<?> clientHandleImpl = appClassLoader.loadClass(CLIENT_HANDLE_IMPL);
       clientHandle = (ClientHandle) clientHandleImpl.getConstructor(Object.class).newInstance(clientCreator.call());
 
       isInitialized = true;
@@ -93,7 +90,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   public <T> T instantiate(String className, Class<?>[] cstrArgTypes, Object[] cstrArgs) throws Exception {
     try {
       @SuppressWarnings("unchecked")
-      Class<T> clazz = (Class<T>) clusteredStateLoader.loadClass(className);
+      Class<T> clazz = (Class<T>) appClassLoader.loadClass(className);
       
       Constructor<T> cstr = clazz.getConstructor(cstrArgTypes);
       return cstr.newInstance(cstrArgs);
@@ -105,7 +102,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public Class<?> loadClass(String className) throws ClassNotFoundException {
-    return clusteredStateLoader.loadClass(className);
+    return appClassLoader.loadClass(className);
   }
 
   @Override
@@ -124,25 +121,6 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       clientHandle = null;
       appClassLoader.clear();
     }
-  }
-
-  private byte[] getClassBytes(Class<?> klass) {
-    ClassLoader loader = getClass().getClassLoader();
-    String res = klass.getName().replace('.', '/').concat(".class");
-    try {
-      return Util.extract(loader.getResourceAsStream(res));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private ClusteredStateLoader createClusteredStateLoader() {
-    ClusteredStateLoader loader = new ClusteredStateLoaderImpl(appClassLoader);
-    loader.addExtraClass(ClientHandleImpl.class.getName(), getClassBytes(ClientHandleImpl.class));
-    loader.addExtraClass(CreateClient.class.getName(), getClassBytes(CreateClient.class));
-    loader.addExtraClass(CreateClient.ClientCreatorCallableImpl.class.getName(),
-                         getClassBytes(CreateClient.ClientCreatorCallableImpl.class));
-    return loader;
   }
 
   @Override
