@@ -34,12 +34,18 @@ public class PassthroughServerProcess implements MessageHandler {
   
   public PassthroughServerProcess(boolean isActiveMode) {
     this.isRunning = true;
-    this.entityServices = new Vector<>();
-    this.serverThread = new Thread(this::runServerThread);
-    this.messageQueue = new Vector<>();
-    this.activeEntities = (isActiveMode ? new HashMap<>() : null);
-    this.passiveEntities = (isActiveMode ? null : new HashMap<>());
-    this.serviceProviderMap = new HashMap<>();
+    this.entityServices = new Vector<ServerEntityService<?, ?>>();
+    this.serverThread = new Thread(new Runnable() {
+
+      @Override
+      public void run() {
+        runServerThread();
+      }
+    });
+    this.messageQueue = new Vector<MessageContainer>();
+    this.activeEntities = (isActiveMode ? new HashMap<String, ActiveServerEntity>() : null);
+    this.passiveEntities = (isActiveMode ? null : new HashMap<String, PassiveServerEntity>());
+    this.serviceProviderMap = new HashMap<Class<?>, ServiceProvider>();
   }
   
   public void start() {
@@ -67,7 +73,7 @@ public class PassthroughServerProcess implements MessageHandler {
     }
   }
 
-  public synchronized void sendMessageToServer(PassthroughConnection sender, byte[] message) {
+  public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {
     MessageContainer container = new MessageContainer();
     container.sender = new IMessageSenderWrapper() {
       @Override

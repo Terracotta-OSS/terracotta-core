@@ -7,7 +7,7 @@ package org.terracotta.passthrough;
 public class Assert {
 
   public static void unexpected(Exception e) {
-    throw new AssertionError("Unexpected exception", e);
+    throw (AssertionError) new AssertionError("Unexpected exception").initCause(e);
   }
 
   public static void unimplemented() {

@@ -23,7 +23,7 @@ public class PassthroughServer {
   
   public PassthroughServer(boolean isActiveMode) {
     this.serverProcess = new PassthroughServerProcess(isActiveMode);
-    this.entityClientServices = new Vector<>();
+    this.entityClientServices = new Vector<EntityClientService<?, ?>>();
     
     // Register built-in services.
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();

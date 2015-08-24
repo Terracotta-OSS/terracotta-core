@@ -1,6 +1,7 @@
 package org.terracotta.passthrough;
 
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,13 +38,18 @@ public class PassthroughConnection implements Connection {
     this.entityClientServices = entityClientServices;
     this.nextTransactionID = 1;
     this.nextClientEndpointID = 1;
-    this.inFlight = new HashMap<>();
+    this.inFlight = new HashMap<Long, PassthroughWait>();
     this.serverProcess = serverProcess;
-    this.localEndpoints = new HashMap<>();
+    this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint>();
     
     this.isRunning = true;
-    this.clientThread = new Thread(this::runClientThread);
-    this.messageQueue = new Vector<>();
+    this.clientThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        runClientThread();
+      }
+    });
+    this.messageQueue = new Vector<byte[]>();
     
     // Note:  This should probably not be in the constructor.
     this.clientThread.start();
@@ -82,10 +88,14 @@ public class PassthroughConnection implements Connection {
   }
 
   @SuppressWarnings({ "unchecked" })
-  public <T> T createEntityInstance(Class<T> cls, String name, long clientInstanceID, long clientSideVersion, byte[] config) {
+  public <T> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config) {
     EntityClientService<?, ?> service = getEntityClientService(cls);
-    Runnable onClose = () -> {
-      this.localEndpoints.remove(clientInstanceID);
+    Runnable onClose = new Runnable() {
+
+      @Override
+      public void run() {
+        localEndpoints.remove(clientInstanceID);
+      }
     };
     PassthroughEntityClientEndpoint endpoint = new PassthroughEntityClientEndpoint(this, cls, name, clientInstanceID, config, onClose);
     this.localEndpoints.put(clientInstanceID, endpoint);
@@ -114,54 +124,58 @@ public class PassthroughConnection implements Connection {
   }
 
   private void clientThreadHandleMessage(byte[] message) {
-    PassthroughMessageCodec.Decoder<Void> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
-      switch (type) {
-        case ACK_FROM_SERVER:
-          handleAck(transactionID);
-          break;
-        case COMPLETE_FROM_SERVER: {
-          // Complete has a flag for success/failure, followed by return value and exception.
-          boolean isSuccess = input.readBoolean();
-          int length = input.readInt();
-          byte[] bytes = null;
-          if (-1 == length) {
-            // This is the case of a null result.
-          } else {
-            bytes = new byte[length];
-            input.readFully(bytes);
+    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughMessageCodec.Decoder<Void>() {
+
+      @Override
+      public Void decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+        switch (type) {
+          case ACK_FROM_SERVER:
+            handleAck(transactionID);
+            break;
+          case COMPLETE_FROM_SERVER: {
+            // Complete has a flag for success/failure, followed by return value and exception.
+            boolean isSuccess = input.readBoolean();
+            int length = input.readInt();
+            byte[] bytes = null;
+            if (-1 == length) {
+              // This is the case of a null result.
+            } else {
+              bytes = new byte[length];
+              input.readFully(bytes);
+            }
+            byte[] result = null;
+            Exception error = null;
+            if (isSuccess) {
+              result = bytes;
+            } else {
+              error = PassthroughMessageCodec.deserializeExceptionFromArray(bytes);
+            }
+            handleComplete(transactionID, result, error);
+            break;
           }
-          byte[] result = null;
-          Exception error = null;
-          if (isSuccess) {
-            result = bytes;
-          } else {
-            error = PassthroughMessageCodec.deserializeExceptionFromArray(bytes);
+          case INVOKE_ON_CLIENT: {
+            long clientInstanceID = input.readLong();
+            int length = input.readInt();
+            byte[] result = new byte[length];
+            input.readFully(result);
+            handleInvokeOnClient(clientInstanceID, result);
+            break;
           }
-          handleComplete(transactionID, result, error);
-          break;
+          case CREATE_ENTITY:
+          case DESTROY_ENTITY:
+          case DOES_ENTITY_EXIST:
+          case FETCH_ENTITY:
+          case RELEASE_ENTITY:
+          case INVOKE_ON_SERVER:
+            // Not handled on client.
+            Assert.unreachable();
+            break;
+          default:
+            Assert.unreachable();
+            break;
         }
-        case INVOKE_ON_CLIENT: {
-          long clientInstanceID = input.readLong();
-          int length = input.readInt();
-          byte[] result = new byte[length];
-          input.readFully(result);
-          handleInvokeOnClient(clientInstanceID, result);
-          break;
-        }
-        case CREATE_ENTITY:
-        case DESTROY_ENTITY:
-        case DOES_ENTITY_EXIST:
-        case FETCH_ENTITY:
-        case RELEASE_ENTITY:
-        case INVOKE_ON_SERVER:
-          // Not handled on client.
-          Assert.unreachable();
-          break;
-        default:
-          Assert.unreachable();
-          break;
+        return null;
       }
-      return null;
     };
     PassthroughMessageCodec.decodeRawMessage(decoder, message);
   }
@@ -184,19 +198,19 @@ public class PassthroughConnection implements Connection {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
   }
 
   @Override
   public <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
-    return new PassthroughEntityRef<>(this, cls, version, name);
+    return new PassthroughEntityRef<T, C>(this, cls, version, name);
   }
 
   @Override
   public <T extends Entity, C> EntityMaintenanceRef<T, C> acquireMaintenanceModeRef(Class<T> cls, long version, String name) {
     @SuppressWarnings("unchecked")
     EntityClientService<T, C> service = (EntityClientService<T, C>) getEntityClientService(cls);
-    return new PassthroughMaintenanceRef<>(this, service, cls, version, name);
+    return new PassthroughMaintenanceRef<T, C>(this, service, cls, version, name);
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })

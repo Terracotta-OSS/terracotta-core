@@ -37,11 +37,11 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
 
   private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
-  private final Map<String, ActiveServerEntity> activeMap = new HashMap<>();
-  private final Map<String, PassiveServerEntity> passiveMap = new HashMap<>();
-  private final Map<String, byte[]> configMap = new HashMap<>();
-  private final Map<String, Integer> connectCountMap = new HashMap<>();
-  private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<>();
+  private final Map<String, ActiveServerEntity> activeMap = new HashMap<String, ActiveServerEntity>();
+  private final Map<String, PassiveServerEntity> passiveMap = new HashMap<String, PassiveServerEntity>();
+  private final Map<String, byte[]> configMap = new HashMap<String, byte[]>();
+  private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
+  private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
   
   private int nextClientID = 1;
 
@@ -138,7 +138,7 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
   }
   
   private class FakeEndpoint implements EntityClientEndpoint {
-    private final List<EndpointListener> listeners = new Vector<>();
+    private final List<EndpointListener> listeners = new Vector<EndpointListener>();
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
     

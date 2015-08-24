@@ -18,7 +18,7 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  * the same process).  Serializing them ensures that there are no invalid assumptions being made on either side, however.
  */
 public class PassthroughMessageCodec {
-  public static PassthroughMessage createFetchMessage(Class<?> clazz, String entityName, long clientInstanceID, long version) {
+  public static PassthroughMessage createFetchMessage(final Class<?> clazz, final String entityName, final long clientInstanceID, final long version) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.FETCH_ENTITY, shouldReplicateToPassives) {
       @Override
@@ -30,7 +30,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createReleaseMessage(Class<?> entityClass, String entityName, long clientInstanceID) {
+  public static PassthroughMessage createReleaseMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.RELEASE_ENTITY, shouldReplicateToPassives) {
       @Override
@@ -41,7 +41,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createExistsMessage(Class<?> entityClass, String entityName, long version) {
+  public static PassthroughMessage createExistsMessage(final Class<?> entityClass, final String entityName, final long version) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.DOES_ENTITY_EXIST, shouldReplicateToPassives) {
       @Override
@@ -52,7 +52,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createDestroyMessage(Class<?> entityClass, String entityName) {
+  public static PassthroughMessage createDestroyMessage(final Class<?> entityClass, final String entityName) {
     boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.DESTROY_ENTITY, shouldReplicateToPassives) {
       @Override
@@ -62,7 +62,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createCreateMessage(Class<?> entityClass, String entityName, long version, byte[] serializedConfiguration) {
+  public static PassthroughMessage createCreateMessage(final Class<?> entityClass, final String entityName, final long version, final byte[] serializedConfiguration) {
     boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.CREATE_ENTITY, shouldReplicateToPassives) {
       @Override
@@ -75,7 +75,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createInvokeMessage(Class<?> clazz, String entityName, long clientInstanceID, byte[] payload, boolean shouldReplicateToPassives) {
+  public static PassthroughMessage createInvokeMessage(final Class<?> clazz, final String entityName, final long clientInstanceID, final byte[] payload, final boolean shouldReplicateToPassives) {
     return new PassthroughMessage(Type.INVOKE_ON_SERVER, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
@@ -97,7 +97,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createCompleteMessage(byte[] response, Exception error) {
+  public static PassthroughMessage createCompleteMessage(final byte[] response, final Exception error) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.COMPLETE_FROM_SERVER, shouldReplicateToPassives) {
@@ -120,7 +120,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createMessageToClient(long clientInstanceID, byte[] payload) {
+  public static PassthroughMessage createMessageToClient(final long clientInstanceID, final byte[] payload) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.INVOKE_ON_CLIENT, shouldReplicateToPassives) {
@@ -137,19 +137,26 @@ public class PassthroughMessageCodec {
   }
   
   public static long decodeTransactionIDFromRawMessage(byte[] rawMessage) {
-    Decoder<Long> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
-      return transactionID;
+    Decoder<Long> decoder = new Decoder<Long>() {
+
+      @Override
+      public Long decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+        return transactionID;
+      }
     };
-    Long result = runRawDecoder(decoder, rawMessage);
-    return result.longValue();
+    return runRawDecoder(decoder, rawMessage);
   }
   
   public static Type decodeTransactionTypeFromRawMessage(byte[] rawMessage) {
-    Decoder<Type> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
-      // The type is an int ordinal after the transactionID.
-      input.readLong();
-      int ordinal = input.readInt();
-      return Type.values()[ordinal];
+    Decoder<Type> decoder = new Decoder<Type>() {
+
+      @Override
+      public Type decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+        // The type is an int ordinal after the transactionID.
+        input.readLong();
+        int ordinal = input.readInt();
+        return Type.values()[ordinal];
+      }
     };
     return runRawDecoder(decoder, rawMessage);
   }
@@ -157,8 +164,13 @@ public class PassthroughMessageCodec {
   public static byte[] serializeObjectToArray(Exception exception) {
     // We need to manually serialize the exception using Java serialization.
     ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-    try (ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput)) {
-      objectOutput.writeObject(exception);
+    try {
+      ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput);
+      try {
+        objectOutput.writeObject(exception);
+      } finally {
+        objectOutput.close();
+      }
     } catch (IOException e) {
       // Can't happen with a byte array.
       Assert.unexpected(e);
@@ -169,8 +181,13 @@ public class PassthroughMessageCodec {
   public static Exception deserializeExceptionFromArray(byte[] bytes) {
     Exception exception = null;
     ByteArrayInputStream byteInput = new ByteArrayInputStream(bytes);
-    try (ObjectInputStream objectInput = new ObjectInputStream(byteInput)) {
-      exception = (Exception) objectInput.readObject();
+    try {
+      ObjectInputStream objectInput = new ObjectInputStream(byteInput);
+      try {
+        exception = (Exception) objectInput.readObject();
+      } finally {
+        objectInput.close();
+      }
     } catch (ClassNotFoundException e) {
       // We control this entire system so we should never fail to find the class.
       Assert.unexpected(e);

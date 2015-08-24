@@ -32,7 +32,7 @@ import org.junit.Assert;
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity entity;
-  private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
+  private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<EndpointListener, Boolean>());
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
 
   public PassthroughEndpoint(ActiveServerEntity entity) {

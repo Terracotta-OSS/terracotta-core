@@ -14,7 +14,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
  */
 public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
   @Override
-  public void close() throws Exception {
+  public void close() {
     // TODO Auto-generated method stub
     
   }

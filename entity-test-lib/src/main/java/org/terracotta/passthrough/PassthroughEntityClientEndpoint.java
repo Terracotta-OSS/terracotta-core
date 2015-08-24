@@ -32,7 +32,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     this.clientInstanceID = clientInstanceID;
     this.config = config;
     this.onClose = onClose;
-    this.listeners = new Vector<>();
+    this.listeners = new Vector<EndpointListener>();
   }
 
   @Override
