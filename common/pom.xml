@@ -86,6 +86,11 @@ Apache Ivy version: 2.2.0 20100923230623
     </dependency>
     <!-- tests dependencies -->
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.test</groupId>
       <artifactId>test-common</artifactId>
       <version>${project.version}</version>
@@ -94,6 +99,11 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
