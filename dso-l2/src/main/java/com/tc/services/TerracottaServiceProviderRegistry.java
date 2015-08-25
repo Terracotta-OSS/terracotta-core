@@ -20,7 +20,7 @@ public interface TerracottaServiceProviderRegistry {
    * @param configuration platform configuration which each service provider can query for their service configuration
    *
    */
-  void initialize(TcConfiguration configuration);
+  void initialize(String serverName, TcConfiguration configuration);
 
   /**
    * Method to register platform level service provider which don't have life-cycle using SPI interface.
