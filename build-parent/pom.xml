@@ -142,16 +142,6 @@
         <version>13.0.1</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>management-core</artifactId>
-        <version>${management-core-version}</version>
-      </dependency>      
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>management-core-resources</artifactId>
-        <version>${management-core-version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.terracotta.license</groupId>
         <artifactId>terracotta-license</artifactId>
         <version>${terracotta-license.version}</version>
@@ -165,16 +155,6 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>jul-to-slf4j</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>2.3.3</version>
       </dependency>
 
       <!-- Dependencies for core Terracotta artifacts -->
@@ -190,16 +170,6 @@
       </dependency>
 
       <!-- tests -->
-      <dependency>
-        <groupId>com.thoughtworks.xstream</groupId>
-        <artifactId>xstream</artifactId>
-        <version>1.4.4</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.ant</groupId>
-        <artifactId>ant</artifactId>
-        <version>1.7.1</version>
-      </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
@@ -322,26 +292,6 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
-    <repository>
-      <id>jboss-public</id>
-      <url>http://repository.jboss.org/nexus/content/groups/public</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>oracle</id>
-      <url>http://download.oracle.com/maven</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>      
   </repositories>
   <pluginRepositories>
     <pluginRepository>
@@ -352,15 +302,5 @@
       <id>terracotta-releases</id>
       <url>http://www.terracotta.org/download/reflector/releases</url>
     </pluginRepository>
-    <pluginRepository>
-      <id>evgenyg.artifactoryonline.com</id>
-      <url>http://evgenyg.artifactoryonline.com/evgenyg/repo/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>    
   </pluginRepositories>
 </project>
