@@ -26,7 +26,6 @@
 
   <modules>
     <module>build-parent</module>
-    <module>build-data</module>
     <module>test-common</module>
     <module>tc-messaging</module>
     <module>common</module>
