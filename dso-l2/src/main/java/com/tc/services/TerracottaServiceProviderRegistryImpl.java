@@ -26,8 +26,8 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @SuppressWarnings("unchecked")
   @Override
-  public void initialize(TcConfiguration configuration) {
-    for (ServiceProviderConfiguration config : configuration.getServiceConfigurations()) {
+  public void initialize(String serverName, TcConfiguration configuration) {
+    for (ServiceProviderConfiguration config : configuration.getServiceConfigurations().get(serverName)) {
       Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
       try {
         ServiceProvider provider = serviceClazz.newInstance();
