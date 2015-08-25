@@ -406,7 +406,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     logger.debug("persistent: " + restartable);
 
-    serviceRegistry.initialize(this.configSetupManager.commonl2Config().getBean());
+    serviceRegistry.initialize(this.configSetupManager.getL2Identifier(), this.configSetupManager.commonl2Config().getBean());
 
     // For now, we will register com.tc.objectserver.persistence.FlatFileStorageServiceProvider here.  We are currently
     //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
