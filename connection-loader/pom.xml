@@ -34,23 +34,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <!-- XXX: This should really be a dependency on the core TC Client API -->
-      <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-l1-ee</artifactId>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-l1</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.test</groupId>
-      <artifactId>test-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tc-messaging</artifactId>
-      <scope>provided</scope>
-    </dependency>
+    </dependency>  
   </dependencies>
 
 </project>
