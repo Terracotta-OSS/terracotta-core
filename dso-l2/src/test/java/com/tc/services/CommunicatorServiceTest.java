@@ -2,10 +2,8 @@ package com.tc.services;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.entity.ServerEntityMessage;
 import com.tc.net.ClientID;
@@ -33,7 +31,6 @@ import static org.mockito.Mockito.when;
 /**
  * @author twu
  */
-@Category(CheckShorts.class)
 public class CommunicatorServiceTest {
   private CommunicatorService communicatorService;
   private DSOChannelManager dsoChannelManager;

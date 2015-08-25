@@ -2,8 +2,6 @@ package com.tc.objectserver.handshakemanager;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.logging.TCLogger;
@@ -29,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
-@Category(CheckShorts.class)
 public class ServerClientHandshakeManagerTest {
   private DSOChannelManager channelManager;
   private LockManager lockManager;

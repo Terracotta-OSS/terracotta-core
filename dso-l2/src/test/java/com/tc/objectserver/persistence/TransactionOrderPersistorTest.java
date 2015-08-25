@@ -7,15 +7,11 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
 
-import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.CheckShorts;
-
 import com.tc.test.TCTestCase;
 
 import java.io.IOException;
 
 
-@Category(CheckShorts.class)
 public class TransactionOrderPersistorTest extends TCTestCase {
   private static final String TEMP_FILE = "temp_file";
   private FlatFilePersistentStorage persistentStorage;

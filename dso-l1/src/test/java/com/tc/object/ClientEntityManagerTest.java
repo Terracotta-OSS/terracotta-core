@@ -6,9 +6,7 @@ package com.tc.object;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
@@ -36,7 +34,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-@Category(CheckShorts.class)
 public class ClientEntityManagerTest extends TestCase {
   private ClientMessageChannel channel;
   private ClientEntityManager manager;

@@ -22,8 +22,6 @@
   </licenses>
 
   <properties>
-    <group>unit</group>
-
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <connection-api.version>1.0-SNAPSHOT</connection-api.version>
     <entity-api.version>1.0-SNAPSHOT</entity-api.version>
@@ -39,19 +37,16 @@
     <powermock.version>1.5.1</powermock.version>
     <hamcrest.version>1.3</hamcrest.version>
     <skip.testjar>false</skip.testjar>
-    <listName>checkshort.txt</listName>
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
     <checkstyle-suppressions-file>${basedir}/../checkstyle/suppressions.xml</checkstyle-suppressions-file>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
-    <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>
     <com.tc.l1.modules.repositories>${localMavenRepository}</com.tc.l1.modules.repositories>
     <tc.tests.info.bootjars.normal>${basedir}/../target/dso-boot.jar</tc.tests.info.bootjars.normal>
     <tc.tests.info.property-files>${tc.tests.configuration.properties.file}</tc.tests.info.property-files>
     <tc.tests.info.temp-root>${project.build.directory}/temp</tc.tests.info.temp-root>
-    <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${linked-child-process.version}/linked-child-process-${linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <surefire.min-memory>64m</surefire.min-memory>
@@ -64,15 +59,13 @@
       -Xmx${surefire.max-memory}
       -XX:MaxDirectMemorySize=1024m
       -XX:+HeapDumpOnOutOfMemoryError
-      -DlistName=${listName}
       -Dtc.base-dir=${tc.base-dir} ${tc.config}
       -Dtc.dso.globalmode=false
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
       -Dcom.tc.l1.modules.repositories=${localMavenRepository}
-      -Dcom.tc.properties=${tc.system.tests.properties}
       -Dtc.install-root.ignore-checks=true
-      -Dcom.sun.management.jmxremote 
-      ${surefire.additional-jvm-args}</surefire.argLine>   
+      -Dcom.sun.management.jmxremote
+      ${surefire.additional-jvm-args}</surefire.argLine>
   </properties>
 
   <dependencyManagement>
@@ -286,213 +279,15 @@
           </executions>
         </plugin>
         <plugin>
-          <!-- we include the surefire plugin to get a known version and to always tell
-               it to skip tests. The toolkit resolver plugin is the actual thing that runs
-               tests -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${surefire.version}</version>
-          <configuration>
-            <skipTests>true</skipTests>
-          </configuration>
         </plugin>
-
-        <plugin>
-          <groupId>org.terracotta</groupId>
-          <artifactId>maven-forge-plugin</artifactId>
-          <version>${maven-forge-plugin.version}</version>
-          <configuration>
-            <skipTests>true</skipTests>
-          </configuration>
-          <executions>
-            <execution>
-              <id>create-build-info</id>
-              <goals>
-                <goal>buildinfo</goal>
-              </goals>
-              <phase>generate-resources</phase>
-              <configuration>
-                <rootPath>${basedir}/..</rootPath>
-              </configuration>
-            </execution>          
-            <execution>
-              <id>default-test</id>
-              <phase>integration-test</phase>
-              <goals>
-                <goal>test</goal>
-              </goals>
-              <configuration>
-                <properties>
-                  <property>
-                    <name>listener</name>
-                    <value>net.sf.ehcache.SystemExitListener</value>
-                  </property>
-                </properties>              
-                <failIfNoTests>false</failIfNoTests>
-                <printSummary>true</printSummary>
-                <reportFormat>plain</reportFormat>
-                <includes>
-                  <include>**/*Test.java</include>
-                </includes>         
-                <skipTests>${should_skip_tests}</skipTests>
-                <forkMode>always</forkMode>
-                <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
-                <useSystemClassLoader>true</useSystemClassLoader>
-                <workingDirectory>${project.build.directory}/temp</workingDirectory>
-                <devLog>true</devLog>
-                <argLine>${surefire.argLine}</argLine>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <!--This plugin's configuration is used to store Eclipse m2e settings
-          only. It has no influence on the Maven build itself. -->
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>com.goldin.plugins</groupId>
-                    <artifactId>
-                      maven-properties-plugin
-                    </artifactId>
-                    <versionRange>[0.2.2,)</versionRange>
-                    <goals>
-                      <goal>set-properties</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>
-                      org.apache.maven.plugins
-                    </groupId>
-                    <artifactId>
-                      maven-dependency-plugin
-                    </artifactId>
-                    <versionRange>[2.1,)</versionRange>
-                    <goals>
-                      <goal>unpack-dependencies</goal>
-                      <goal>list</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.gmaven</groupId>
-                    <artifactId>gmaven-plugin</artifactId>
-                    <versionRange>[1.3,)</versionRange>
-                    <goals>
-                      <goal>execute</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>
-                      exec-maven-plugin
-                    </artifactId>
-                    <versionRange>[1.2,)</versionRange>
-                    <goals>
-                      <goal>exec</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.terracotta</groupId>
-                    <artifactId>
-                      maven-forge-plugin
-                    </artifactId>
-                    <versionRange>[1.0.2,)</versionRange>
-                    <goals>
-                      <goal>buildinfo</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute/>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.terracotta</groupId>
-                    <artifactId>
-                      maven-forge-plugin
-                    </artifactId>
-                    <versionRange>[1.0.2,)</versionRange>
-                    <goals>
-                      <goal>manifest</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>                
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>
-                      build-helper-maven-plugin
-                    </artifactId>
-                    <versionRange>[1.5,)</versionRange>
-                    <goals>
-                      <goal>add-source</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>       
       </plugins>
     </pluginManagement>
-
-    <plugins>
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-      </plugin>  
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-      </plugin>
-    </plugins>
   </build>
 
   <profiles>
-    <profile>
-      <id>client-jvm</id>
-      <properties>
-        <surefire.jvm.mode>-client</surefire.jvm.mode>
-      </properties>
-    </profile>
-    <profile>
-      <id>server-jvm</id>
-      <properties>
-        <surefire.jvm.mode>-server</surefire.jvm.mode>
-      </properties>
-    </profile>
-
     <profile>
       <id>workaround-windows</id>
       <activation>
@@ -503,81 +298,6 @@
       <properties>
         <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
       </properties>
-    </profile>
-
-    <profile>
-      <id>check-short</id>   
-      <properties>
-        <should_skip_tests>false</should_skip_tests>
-      </properties>     
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections-maven</artifactId>
-            <version>0.9.9-RC2</version>
-            <configuration>
-              <scanners>org.reflections.scanners.TypeAnnotationsScanner</scanners>
-              <destinations>${project.build.directory}/reflections.xml</destinations>
-              <tests>true</tests>
-              <parallel>true</parallel>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>reflections</goal>
-                </goals>
-                <phase>process-test-classes</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.terracotta</groupId>
-            <artifactId>maven-forge-plugin</artifactId>
-            <configuration>
-              <useReflectionFile>true</useReflectionFile>
-              <groups>org.terracotta.test.categories.CheckShorts</groups>
-              <failIfNoTests>false</failIfNoTests>
-            </configuration>
-          </plugin>
-        </plugins>      
-      </build>
-    </profile>   
-
-    <profile>
-      <id>check</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.gmaven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
-            <version>${gmaven-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>decide-which-group-should-run-tests</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-                <configuration>
-                  <source>
-                    def target = project.properties['target']
-                    if (target == null) fail("-Dtarget needs to be set for this profile")
-                    def targetSet = new HashSet(Arrays.asList(target.split(",")))
-                    def projectGroups = new HashSet()
-                    if (project.properties['group'] != null) {
-                      projectGroups.addAll(Arrays.asList(project.properties['group'].split(",")))
-                    }
-                    targetSet.retainAll(projectGroups)
-                    def shouldSkipTest = targetSet.size() == 0
-                    project.properties.should_skip_tests = String.valueOf(shouldSkipTest)
-                  </source>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>         
-        </plugins>          
-      </build>
     </profile>
   </profiles>
 

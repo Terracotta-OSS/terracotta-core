@@ -2,8 +2,6 @@ package com.tc.objectserver.entity;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
@@ -25,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
-@Category(CheckShorts.class)
 public class ServerEntityRequestImplTest {
   private MessageChannel messageChannel;
   private VoltronEntityReceivedResponse requestAckMessage;

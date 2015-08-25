@@ -6,12 +6,10 @@ package com.tc.net.protocol.transport;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.net.CommStackMismatchException;
@@ -33,7 +31,6 @@ import com.tc.util.TCTimeoutException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
-@Category(CheckShorts.class)
 public class ClientConnectionEstablisherTest {
   private ClientConnectionEstablisher         connEstablisher;
   @Mock
