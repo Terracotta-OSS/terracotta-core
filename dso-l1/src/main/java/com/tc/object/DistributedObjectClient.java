@@ -285,26 +285,11 @@ public class DistributedObjectClient implements TCClient {
     return clusterEventsStage;
   }
 
-  private void validateClientServerCompatibility() {
-    try {
-      this.config.validateClientServerCompatibility(securityManager, config.getSecurityInfo());
-    } catch (final ConfigurationSetupException e) {
-      CONSOLE_LOGGER.error(e.getMessage());
-      throw new IllegalStateException(e.getMessage(), e);
-    }
-  }
-
   public synchronized void start() {
     validateSecurityConfig();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final boolean checkClientServerVersions = tcProperties.getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
-    /**
-     * TODO: Fix this, turning off for now as this check needs management port
-    if (checkClientServerVersions) {
-      validateClientServerCompatibility();
-    }
-    */
     this.l1Properties = tcProperties.getPropertiesFor("l1");
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
