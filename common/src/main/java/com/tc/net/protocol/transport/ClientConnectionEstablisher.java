@@ -98,10 +98,10 @@ public class ClientConnectionEstablisher {
   void setAsyncReconnectingForTests(boolean val) {
     this.asyncReconnecting.set(val);
   }
-
+  
   // for testing only
-  void setAsyncReconnectThreadForTests(AsyncReconnect asyncReconnThread) {
-    this.asyncReconnect = asyncReconnThread;
+  void disableReconnectThreadSpawn() {
+    this.asyncReconnect.disableThreadSpawn();
   }
 
   // method used in testing only
@@ -361,7 +361,6 @@ public class ClientConnectionEstablisher {
     }
     // Allow the async thread reconnects/restores only when cmt was connected atleast once
     if (request.getClientMessageTransport() != null && request.getClientMessageTransport().wasOpened()) {
-      asyncReconnect.startThreadIfNecessary();
       this.asyncReconnect.putConnectionRequest(request);
     } else {
       LOGGER.info("Ignoring connection request as transport was not connected even once");
@@ -384,10 +383,10 @@ public class ClientConnectionEstablisher {
   static class AsyncReconnect implements Runnable {
     private static final TCLogger             logger             = TCLogging.getLogger(AsyncReconnect.class);
     private final ClientConnectionEstablisher cce;
-    private final AtomicBoolean               threadStarted      = new AtomicBoolean(false);
     private volatile boolean                  stopped            = false;
     private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<>();
     private Thread                            connectionEstablisherThread;
+    private boolean                           disableThreadSpawn = false;
 
     public AsyncReconnect(ClientConnectionEstablisher cce) {
       this.cce = cce;
@@ -396,12 +395,13 @@ public class ClientConnectionEstablisher {
     public boolean isStopped() {
       return stopped;
     }
-
-    private void awaitTermination(boolean mayInterruptIfRunning) {
-      synchronized (this) {
-        connectionRequests.clear();
-      }
-      LOGGER.info("waiting for connection establisher to finish " + connectionEstablisherThread);
+    
+    synchronized void disableThreadSpawn() {
+      disableThreadSpawn = true;
+    }
+    
+    private void waitForThread(boolean mayInterruptIfRunning) {
+  //  Should be synchronized by caller
       boolean isInterrupted = false;
       try {
         if (Thread.currentThread() != connectionEstablisherThread && connectionEstablisherThread != null) {
@@ -410,6 +410,7 @@ public class ClientConnectionEstablisher {
           }
           connectionEstablisherThread.join();
         }
+        connectionEstablisherThread = null;
       } catch (InterruptedException e) {
         LOGGER.warn("Got interrupted while waiting for connectionEstablisherThread to complete");
         isInterrupted = true;
@@ -418,12 +419,22 @@ public class ClientConnectionEstablisher {
       }
     }
 
+    private void awaitTermination(boolean mayInterruptIfRunning) {
+      synchronized (this) {
+        connectionRequests.clear();
+        LOGGER.info("waiting for connection establisher to finish " + connectionEstablisherThread);
+        this.notifyAll();
+      }
+      waitForThread(mayInterruptIfRunning);
+    }
+
     public synchronized void stop() {
       stopped = true;
       this.notifyAll();
     }
 
     public synchronized void putConnectionRequest(ConnectionRequest request) {
+      startThreadIfNecessary();
       connectionRequests.add(request);
       this.notifyAll();
     }
@@ -438,7 +449,7 @@ public class ClientConnectionEstablisher {
       try {
         while (!stopped && connectionRequests.isEmpty()) {
           try {
-            this.wait();
+              this.wait();
           } catch (InterruptedException e) {
             isInterrupted = true;
           }
@@ -451,8 +462,9 @@ public class ClientConnectionEstablisher {
       }
     }
 
-    public void startThreadIfNecessary() {
-      if (threadStarted.compareAndSet(false, true)) {
+    private void startThreadIfNecessary() {
+  //  Should be synchronized by caller
+      if (connectionEstablisherThread == null && !disableThreadSpawn) {
         Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId());
         thread.setDaemon(true);
         thread.start();
