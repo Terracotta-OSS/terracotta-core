@@ -5,6 +5,11 @@ import java.util.concurrent.Future;
 import org.terracotta.entity.InvocationBuilder;
 
 
+/**
+ * Used by the client-side PassthroughEntityClientEndpoint to build the invocation which will be sent to the server.
+ * Note that this isn't where the invocation ack is tracked, just the object which builds that message and ack tracking
+ * mechanism (by requesting it in the underlying PassthroughConnection).
+ */
 public class PassthroughInvocationBuilder implements InvocationBuilder {
   private final PassthroughConnection connection;
   private final Class<?> entityClass;

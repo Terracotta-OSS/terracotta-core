@@ -8,6 +8,9 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
 
 
+/**
+ * The registry of services available on a PassthroughServer.
+ */
 public class PassthroughServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;

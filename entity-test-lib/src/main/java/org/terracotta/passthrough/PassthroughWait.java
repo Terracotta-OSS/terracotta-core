@@ -6,6 +6,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 
+/**
+ * Used by the client-side message processing to handle the synchronous nature of the messaging system.  This expects the
+ * client code's thread to block on acks or completion, and be unblocked by the client-send message processing thread
+ * processing the corresponding acks and completion messages.
+ */
 public class PassthroughWait implements Future<byte[]> {
   private boolean waitingForReceive;
   private boolean waitingForComplete;
@@ -26,7 +31,7 @@ public class PassthroughWait implements Future<byte[]> {
       try {
         wait();
       } catch (InterruptedException e) {
-        Assert.fail(e);
+        Assert.unexpected(e);
       }
     }
   }

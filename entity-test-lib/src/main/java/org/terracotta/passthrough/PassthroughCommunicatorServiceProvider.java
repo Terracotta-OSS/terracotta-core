@@ -8,8 +8,11 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 
+/**
+ * The provider of PassthroughCommunicatorService, to server-side entities.  It has no meaningful implementation beyond
+ * providing that.
+ */
 public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
-
   @Override
   public void close() throws Exception {
     // TODO Auto-generated method stub
@@ -33,6 +36,4 @@ public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
     // TODO Auto-generated method stub
     return null;
   }
-
-
 }

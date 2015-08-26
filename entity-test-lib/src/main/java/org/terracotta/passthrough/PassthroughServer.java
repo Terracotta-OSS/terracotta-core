@@ -10,6 +10,11 @@ import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
 
 
+/**
+ * The top-level "server" of the passthrough testing system.
+ * This essentially represents a single "active", within the cluster.  In the future, it will likely be extended to have
+ * either active or passive modes, for testing active-passive stripes.
+ */
 public class PassthroughServer {
   private final PassthroughServerProcess serverProcess;
   private boolean hasStarted;

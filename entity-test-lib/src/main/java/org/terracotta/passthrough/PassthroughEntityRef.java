@@ -7,6 +7,15 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 
 
+/**
+ * The client-side object which refers to a specific server-side entity instance.  The client code can call fetchEntity to
+ * request a unique client-side instance which back-ends onto this common server-side instance.
+ * 
+ * TODO:  Fetched entities do not yet hold a read-lock on the server-side entity.
+ * 
+ * @param <T> The entity type
+ * @param <C> The configuration type
+ */
 public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C> {
   private final PassthroughConnection passthroughConnection;
   private final Class<T> clazz;
@@ -30,7 +39,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     try {
       rawConfig = received.get();
     } catch (InterruptedException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     } catch (ExecutionException e) {
       // This is the actual failure case.
       throw new IllegalStateException(e);

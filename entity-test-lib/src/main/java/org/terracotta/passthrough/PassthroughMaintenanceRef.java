@@ -8,6 +8,15 @@ import org.terracotta.connection.entity.EntityMaintenanceRef;
 import org.terracotta.entity.EntityClientService;
 
 
+/**
+ * Similar to PassthroughEntityRef, although for maintenance operations.  This means that checks of the existence of named
+ * entity, as well as creation and destruction of the server-side instance are managed through this object.
+ * 
+ * TODO:  The maintenance ref does not yet hold a write-lock on the server-side entity until close() is called.
+ * 
+ * @param <T> The entity type
+ * @param <C> The configuration type
+ */
 public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMaintenanceRef<T, C> {
   private final PassthroughConnection passthroughConnection;
   private final EntityClientService<T, C> service;
@@ -32,9 +41,9 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
       received.get();
       doesExist = true;
     } catch (InterruptedException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     } catch (ExecutionException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     }
     return doesExist;
   }
@@ -46,9 +55,9 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
     try {
       received.get();
     } catch (InterruptedException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     } catch (ExecutionException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     }
   }
 
@@ -60,9 +69,9 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
     try {
       received.get();
     } catch (InterruptedException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     } catch (ExecutionException e) {
-      // This means there was actually a problem.
+      // This means there was actually a problem with the call, which we want to communicate back.
       throw new IllegalStateException(e);
     }
   }

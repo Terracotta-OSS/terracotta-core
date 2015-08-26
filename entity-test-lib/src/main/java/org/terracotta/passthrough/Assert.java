@@ -1,9 +1,13 @@
 package org.terracotta.passthrough;
 
+
+/**
+ * Common assertion utilities used by the pass-through system-test.
+ */
 public class Assert {
 
-  public static void fail(Exception e) {
-    throw new AssertionError("Always fail", e);
+  public static void unexpected(Exception e) {
+    throw new AssertionError("Unexpected exception", e);
   }
 
   public static void unimplemented() {

@@ -9,6 +9,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 
+/**
+ * A common utility class to encode/decode passthrough messages since they are stored as byte[] instances, on client and
+ * server message queues.
+ * Arguably, this is over-kill, as the instances can be passed through, directly (since both the client and server run in
+ * the same process).  Serializing them ensures that there are no invalid assumptions being made on either side, however.
+ */
 public class PassthroughMessageCodec {
   public enum Type {
     FETCH_ENTITY,
@@ -168,7 +174,8 @@ public class PassthroughMessageCodec {
     try (ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput)) {
       objectOutput.writeObject(exception);
     } catch (IOException e) {
-      Assert.fail(e);
+      // Can't happen with a byte array.
+      Assert.unexpected(e);
     }
     return byteOutput.toByteArray();
   }
@@ -179,9 +186,11 @@ public class PassthroughMessageCodec {
     try (ObjectInputStream objectInput = new ObjectInputStream(byteInput)) {
       exception = (Exception) objectInput.readObject();
     } catch (ClassNotFoundException e) {
-      Assert.fail(e);
+      // We control this entire system so we should never fail to find the class.
+      Assert.unexpected(e);
     } catch (IOException e) {
-      Assert.fail(e);
+      // Can't happen with a byte array.
+      Assert.unexpected(e);
     }
     return exception;
   }
@@ -194,7 +203,8 @@ public class PassthroughMessageCodec {
     try {
       result = decoder.decode(input);
     } catch (IOException e) {
-      Assert.fail(e);
+      // Can't happen with a byte array.
+      Assert.unexpected(e);
     }
     return result;
   }

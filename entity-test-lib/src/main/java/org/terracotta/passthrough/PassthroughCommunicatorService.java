@@ -8,8 +8,12 @@ import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 
 
+/**
+ * The implementation of the communicator service which is normally built-in to the platform.
+ * This is used, by server-side entities, to send messages back to specific client-side instances.
+ * TODO:  we currently need to determine how to handle the synchronous send.
+ */
 public class PassthroughCommunicatorService implements Service<ClientCommunicator>, ClientCommunicator {
-
   @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
     PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;

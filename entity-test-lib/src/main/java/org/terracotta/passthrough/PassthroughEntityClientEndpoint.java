@@ -10,6 +10,11 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 
 
+/**
+ * The object representing the connection end-point of a client-side entity.  Messages sent from the client entity are routed
+ * through the InvocationBuilder into the server, from here.  Additionally, messages from the server to the entity are routed
+ * through here.
+ */
 public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   private final PassthroughConnection connection;
   private final Class<?> entityClass;
@@ -52,9 +57,9 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     try {
       received.get();
     } catch (InterruptedException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     } catch (ExecutionException e) {
-      Assert.fail(e);
+      Assert.unexpected(e);
     }
     onClose.run();
   }

@@ -5,6 +5,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 
+/**
+ * The top-level abstract class of all messages passed through the inter-thread "wire" between the "server" and "client".
+ */
 public abstract class PassthroughMessage {
   public long transactionID;
   
@@ -21,7 +24,7 @@ public abstract class PassthroughMessage {
       output.close();
     } catch (IOException e) { 
       // Can't happen with a byte array.
-      Assert.fail(e);
+      Assert.unexpected(e);
     }
     return bytes.toByteArray();
   }

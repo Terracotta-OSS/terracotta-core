@@ -12,6 +12,12 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.passthrough.PassthroughMessageCodec.Type;
 
 
+/**
+ * The wrapper around the thread running as the "server process", within the PassthroughServer.
+ * Note that this currently handles not only message processing, but also message execution.
+ * In the future, message execution will likely be split out into other threads to better support entity read-write locking
+ * and also test concurrency strategy.
+ */
 public class PassthroughServerProcess {
   private boolean isRunning;
   private final List<ServerEntityService<?, ?>> entityServices;
@@ -52,8 +58,7 @@ public class PassthroughServerProcess {
     try {
       this.serverThread.join();
     } catch (InterruptedException e) {
-      // Not expected.
-      Assert.fail(e);
+      Assert.unexpected(e);
     }
   }
   
@@ -76,8 +81,7 @@ public class PassthroughServerProcess {
         try {
           this.wait();
         } catch (InterruptedException e) {
-          // Not expected.
-          Assert.fail(e);
+          Assert.unexpected(e);
         }
       }
     }

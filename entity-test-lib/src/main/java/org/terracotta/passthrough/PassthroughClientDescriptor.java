@@ -3,6 +3,11 @@ package org.terracotta.passthrough;
 import org.terracotta.entity.ClientDescriptor;
 
 
+/**
+ * The ClientDescriptor implementation used is very simple since it can carry the reference to the sender, directly.
+ * This is used, by the server-side entities, to identify a specific client-side entity instance connected to it or sending
+ * it messages.
+ */
 public class PassthroughClientDescriptor implements ClientDescriptor {
   public final PassthroughConnection sender;
   public final long clientInstanceID;

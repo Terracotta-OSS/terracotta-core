@@ -16,6 +16,10 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.passthrough.PassthroughMessageCodec.Type;
 
 
+/**
+ * The pass-through component which represents a client connected to the server.
+ * Internally, this runs a single thread to handle incoming ACKs, completions, and messages.
+ */
 public class PassthroughConnection implements Connection {
   private final List<EntityClientService<?, ?>> entityClientServices;
   private long nextTransactionID;
@@ -104,8 +108,7 @@ public class PassthroughConnection implements Connection {
         try {
           this.wait();
         } catch (InterruptedException e) {
-          // Not expected.
-          Assert.fail(e);
+          Assert.unexpected(e);
         }
       }
     }
