@@ -222,8 +222,7 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(true).when(cmt).wasOpened();
     Mockito.doReturn(connection).when(connManager).createConnection((TCProtocolAdaptor) Matchers.any());
     OOOConnectionWatcher watcher = new OOOConnectionWatcher(cmt, connEstablisher, layer, 0);
-    DummyAsyncReconnect asyncReconnectThread = new DummyAsyncReconnect(connEstablisher);
-    connEstablisher.setAsyncReconnectThreadForTests(asyncReconnectThread);
+    connEstablisher.disableReconnectThreadSpawn();
 
     connEstablisher.restoreConnection(cmt, sa, 0, watcher);
     Assert.assertEquals(0, connEstablisher.connectionRequestQueueSize());
@@ -249,18 +248,4 @@ public class ClientConnectionEstablisherTest {
       Assert.fail(msg);
     }
   }
-
-  public static class DummyAsyncReconnect extends AsyncReconnect {
-
-    public DummyAsyncReconnect(ClientConnectionEstablisher cce) {
-      super(cce);
-    }
-
-    @Override
-    public void startThreadIfNecessary() {
-      // no op
-    }
-
-  }
-
 }
