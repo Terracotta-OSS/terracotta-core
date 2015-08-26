@@ -20,10 +20,6 @@
   <packaging>jar</packaging>
   <name>management</name>
 
-  <properties>  
-    <skip.deploy>true</skip.deploy>
-  </properties>
-  
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

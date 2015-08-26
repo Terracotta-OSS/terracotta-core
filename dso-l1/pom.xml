@@ -20,10 +20,6 @@
   <packaging>jar</packaging>
   <name>dso-l1</name>
 
-  <properties>  
-    <skip.deploy>true</skip.deploy>
-  </properties>
-  
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
