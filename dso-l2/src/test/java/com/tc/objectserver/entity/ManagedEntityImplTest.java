@@ -2,14 +2,12 @@ package com.tc.objectserver.entity;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.terracotta.TestEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -31,7 +29,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
-@Category(CheckShorts.class)
 public class ManagedEntityImplTest {
   private EntityID entityID;
   private ClientInstanceID clientInstanceID;

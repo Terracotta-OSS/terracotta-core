@@ -4,9 +4,7 @@
 package com.tc.objectserver.persistence;
 
 import com.tc.services.EmptyServiceProviderConfiguration;
-import org.junit.experimental.categories.Category;
 import org.terracotta.entity.Service;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.test.TCTestCase;
 
@@ -20,9 +18,7 @@ import org.terracotta.persistence.KeyValueStorage;
 
 /**
  * VERY simple tests of FlatFileStorageServiceProvider and some of what it produces.
- * The test is part of CheckShorts for now but may be removed in the future.
  */
-@Category(CheckShorts.class)
 public class FlatFileStorageServiceProviderTest extends TCTestCase {
   private FlatFileStorageServiceProvider provider;
   

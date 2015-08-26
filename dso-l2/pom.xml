@@ -75,6 +75,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.test</groupId>
       <artifactId>test-common</artifactId>
       <version>${project.version}</version>

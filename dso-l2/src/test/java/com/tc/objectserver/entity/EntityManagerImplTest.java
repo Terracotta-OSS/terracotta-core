@@ -2,9 +2,7 @@ package com.tc.objectserver.entity;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.terracotta.TestEntity;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
@@ -15,7 +13,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-@Category(CheckShorts.class)
 public class EntityManagerImplTest {
   
   private EntityManager entityManager;

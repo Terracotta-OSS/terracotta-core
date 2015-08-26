@@ -7,11 +7,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientInstanceID;
@@ -20,7 +18,6 @@ import com.tc.object.EntityID;
 import com.tc.util.Assert;
 
 
-@Category(CheckShorts.class)
 public class TerracottaEntityRefTest {
   @Test
   /**

@@ -6,9 +6,7 @@ import static org.mockito.Mockito.when;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.terracotta.TestEntity;
-import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -43,7 +41,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 
-@Category(CheckShorts.class)
 public class ProcessTransactionHandlerTest {
   private TerracottaServiceProviderRegistry terracottaServiceProviderRegistry;
   private EntityPersistor entityPersistor;

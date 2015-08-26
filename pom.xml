@@ -26,7 +26,6 @@
 
   <modules>
     <module>build-parent</module>
-    <module>build-data</module>
     <module>test-common</module>
     <module>tc-messaging</module>
     <module>common</module>
@@ -65,15 +64,15 @@
 
   <distributionManagement>
     <repository>
-      <id>terracotta-nexus-staging</id>
-      <name>Terracotta Nexus Staging Repository</name>
-      <url>${terracotta-nexus-staging-url}</url>
+      <id>terracotta-os-releases</id>
+      <name>Terracotta OS Releases Repository</name>
+      <url>${terracotta-os-releases-url}</url>
     </repository>
     <snapshotRepository>
-      <id>terracotta-ee-snapshots</id>
-       <uniqueVersion>false</uniqueVersion>
-       <name>Terracotta EE Snapshots Repository</name>
-       <url>${terracotta-ee-snapshots-url}</url>
+      <id>terracotta-os-snapshots</id>
+      <uniqueVersion>false</uniqueVersion>
+      <name>Terracotta OS Snapshots Repository</name>
+      <url>${terracotta-os-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 
