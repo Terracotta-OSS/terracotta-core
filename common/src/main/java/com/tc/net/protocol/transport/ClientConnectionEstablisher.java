@@ -400,16 +400,15 @@ public class ClientConnectionEstablisher {
       disableThreadSpawn = true;
     }
     
-    private void waitForThread(boolean mayInterruptIfRunning) {
+    private void waitForThread(Thread oldThread, boolean mayInterruptIfRunning) {
       boolean isInterrupted = false;
       try {
-        if (Thread.currentThread() != connectionEstablisherThread && connectionEstablisherThread != null) {
+        if (Thread.currentThread() != oldThread && oldThread != null) {
           if (mayInterruptIfRunning) {
-            connectionEstablisherThread.interrupt();
+            oldThread.interrupt();
           }
-          connectionEstablisherThread.join();
+          oldThread.join();
         }
-        connectionEstablisherThread = null;
       } catch (InterruptedException e) {
         LOGGER.warn("Got interrupted while waiting for connectionEstablisherThread to complete");
         isInterrupted = true;
@@ -419,12 +418,18 @@ public class ClientConnectionEstablisher {
     }
 
     private void awaitTermination(boolean mayInterruptIfRunning) {
+      Thread oldThread = null;
       synchronized (this) {
+        if (!stopped) {
+          throw new AssertionError("not stopped");
+        }
         connectionRequests.clear();
         LOGGER.info("waiting for connection establisher to finish " + connectionEstablisherThread);
         this.notifyAll();
+        oldThread = connectionEstablisherThread;
+        connectionEstablisherThread = null;
       }
-      waitForThread(mayInterruptIfRunning);
+      waitForThread(oldThread, mayInterruptIfRunning);
     }
 
     public synchronized void stop() {
