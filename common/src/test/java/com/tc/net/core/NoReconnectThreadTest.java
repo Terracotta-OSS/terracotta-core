@@ -211,7 +211,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     Thread[] allThreads = ThreadDumpUtil.getAllThreads();
     int count = 0;
     for (Thread t : allThreads) {
-      if (t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME)) {
+      if (t.getName().contains(absentThreadName)) {
         count++;
       }
     }

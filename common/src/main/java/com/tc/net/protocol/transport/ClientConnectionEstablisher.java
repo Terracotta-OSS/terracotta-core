@@ -433,9 +433,11 @@ public class ClientConnectionEstablisher {
     }
 
     public synchronized void putConnectionRequest(ConnectionRequest request) {
-      startThreadIfNecessary();
-      connectionRequests.add(request);
-      this.notifyAll();
+      if (!stopped) {
+        startThreadIfNecessary();
+        connectionRequests.add(request);
+        this.notifyAll();
+      }
     }
 
     // for testing only
