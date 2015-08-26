@@ -401,7 +401,6 @@ public class ClientConnectionEstablisher {
     }
     
     private void waitForThread(boolean mayInterruptIfRunning) {
-  //  Should be synchronized by caller
       boolean isInterrupted = false;
       try {
         if (Thread.currentThread() != connectionEstablisherThread && connectionEstablisherThread != null) {
