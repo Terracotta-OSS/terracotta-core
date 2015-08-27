@@ -43,14 +43,17 @@ import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 public class TCWorkerCommManagerTest extends TCTestCase {
   private static final int L1_RECONNECT_TIMEOUT = 15000;
   TCLogger          logger               = TCLogging.getLogger(TCWorkerCommManager.class);
+  List<ClientMessageTransport> transports = new ArrayList<ClientMessageTransport>();
 
-  private ClientMessageTransport createClient(String clientName, int serverPort) {
+  private synchronized ClientMessageTransport createClient(String clientName, int serverPort) {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(clientName + "CommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy());
@@ -62,8 +65,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                                                     new ConnectionInfo[] { connInfo }),
                                                                       0, 1000, ReconnectionRejectedHandlerL1.SINGLETON);
 
-    return new ClientMessageTransport(cce, createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
+    ClientMessageTransport cmt = new ClientMessageTransport(cce, createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
                                       new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT);
+    transports.add(cmt);
+    return cmt;
   }
 
   private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean enableReconnect) {
@@ -125,6 +130,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       Assert.eval(workerI.getTotalBytesWritten() > 0);
 
     }
+    
+    client1.close();
+    client2.close();
+    client3.close();
+    client4.close();
 
     listener.stop(5000);
   }
@@ -370,6 +380,13 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                            + (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1))
                            + (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2)));
 
+    client1.close();
+    client2.close();
+    client3.close();
+    client4.close();
+    client5.close();
+    client6.close();
+    
     listener.stop(5000);
   }
 
@@ -457,5 +474,9 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+    for (ClientMessageTransport t : transports) {
+      t.close();
+    }
+    transports.clear();
   }
 }

@@ -41,11 +41,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
   private final int             L1_RECONNECT_TIMEOUT = 5000;
   private final AtomicInteger connections          = new AtomicInteger(0);
+  private int baseAsyncThreads;
+  
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     connections.set(0);
+    baseAsyncThreads = getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
   }
 
   private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean enableReconnect) {
@@ -135,7 +138,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
     // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client
     // CommsManager is created with reconnect 0. we might need to wait till the created CCE gets quit request.
-    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > 0) {
+    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > baseAsyncThreads) {
       ThreadUtil.reallySleep(1000);
       System.err.println("-");
     }
@@ -199,7 +202,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
     // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client CommsManager
     // is created with reconnect 0
-    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > 0) {
+    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > baseAsyncThreads) {
       ThreadUtil.reallySleep(1000);
       System.err.println("-");
     }
