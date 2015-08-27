@@ -6,6 +6,7 @@ package com.tc.object;
 import com.tc.client.ClientFactory;
 import com.tc.cluster.ClusterImpl;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
+import com.tc.config.schema.setup.ClientConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
@@ -14,11 +15,14 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.license.ProductID;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.ClientConfigImpl;
+import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.SingleLoaderClassProvider;
@@ -53,11 +57,7 @@ public class DistributedObjectClientFactory {
   public DistributedObjectClient create() throws ConfigurationSetupException {
     final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<>();
 
-    StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
-                                                                                                    (String[]) null,
-                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
-                                                                                                    configSpec,
-                                                                                                    securityManager);
+    ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, configSpec, securityManager);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager(securityInfo);
     config.setupLogging();
