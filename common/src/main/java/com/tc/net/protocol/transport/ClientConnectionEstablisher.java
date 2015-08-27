@@ -349,10 +349,6 @@ public class ClientConnectionEstablisher {
     putConnectionRequest(ConnectionRequest.newRestoreConnectionRequest(cmt, sa, callback, timeoutMillis));
   }
 
-  void switchAsyncReconnectForTests(AsyncReconnect tmpAsyncReconnect) {
-    this.asyncReconnect = tmpAsyncReconnect;
-  }
-
   private void putConnectionRequest(ConnectionRequest request) {
     if (!this.allowReconnects.get() || asyncReconnect.isStopped()) {
       LOGGER.info("Ignoring connection request: " + request + " as allowReconnects: " + allowReconnects.get()
@@ -418,7 +414,6 @@ public class ClientConnectionEstablisher {
     }
 
     private void awaitTermination(boolean mayInterruptIfRunning) {
-      Thread oldThread = null;
       synchronized (this) {
         if (!stopped) {
           throw new AssertionError("not stopped");
@@ -426,10 +421,8 @@ public class ClientConnectionEstablisher {
         connectionRequests.clear();
         LOGGER.info("waiting for connection establisher to finish " + connectionEstablisherThread);
         this.notifyAll();
-        oldThread = connectionEstablisherThread;
-        connectionEstablisherThread = null;
       }
-      waitForThread(oldThread, mayInterruptIfRunning);
+      waitForThread(connectionEstablisherThread, mayInterruptIfRunning);
     }
 
     public synchronized void stop() {
