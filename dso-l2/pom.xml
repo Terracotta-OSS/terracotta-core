@@ -9,13 +9,12 @@
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
-    <groupId>org.terracotta</groupId>
+    <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
     <version>5.0.0-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
-  <groupId>org.terracotta.internal</groupId>
   <artifactId>dso-l2</artifactId>
   <packaging>jar</packaging>
   <name>dso-l2</name>

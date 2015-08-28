@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta</groupId>
+    <groupId>org.terracotta.internal</groupId>
     <artifactId>terracotta-root</artifactId>
     <version>5.0.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
@@ -23,8 +23,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <connection-api.version>1.0-SNAPSHOT</connection-api.version>
-    <entity-api.version>1.0-SNAPSHOT</entity-api.version>
+    <terracotta-apis.version>1.0-SNAPSHOT</terracotta-apis.version>
     <slf4j.version>1.7.7</slf4j.version>
     <management-core-version>2.0.8</management-core-version>
     <tc-messaging.version>2.0.0-SNAPSHOT</tc-messaging.version>
@@ -73,30 +72,30 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>connection-api</artifactId>
-        <version>${connection-api.version}</version>
+        <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>standard-cluster-services</artifactId>
-        <version>${entity-api.version}</version>
+        <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>entity-server-api</artifactId>
-        <version>${entity-api.version}</version>
+        <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>entity-client-api</artifactId>
-        <version>${entity-api.version}</version>
+        <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>test-entity-distribution</artifactId>
-        <version>${entity-api.version}</version>
+        <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta</groupId>
+        <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-messaging</artifactId>
         <version>${tc-messaging.version}</version>
       </dependency>
@@ -159,7 +158,7 @@
 
       <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
-        <groupId>org.terracotta</groupId>
+        <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${tcconfig.version}</version>
       </dependency>
