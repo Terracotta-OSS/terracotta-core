@@ -45,7 +45,6 @@ public final class ProductInfo {
   private static final String               BUILD_DATA_VERSION_KEY     = "version";
   private static final String               BUILD_DATA_TIMESTAMP_KEY   = "timestamp";
   private static final String               BUILD_DATA_REVISION_KEY    = "revision";
-  private static final String               BUILD_DATA_EE_REVISION_KEY = "ee.revision";
   private static final String               BUILD_DATA_BRANCH_KEY      = "branch";
   private static final String               PATCH_DATA_ROOT_KEY        = "terracotta.patch.";
   private static final String               PATCH_DATA_LEVEL_KEY       = "level";
@@ -59,13 +58,11 @@ public final class ProductInfo {
   private final String                      branch;
   private final String                      edition;
   private final String                      revision;
-  private final String                      ee_revision;
   private final String                      kitID;
 
   private final String                      patchLevel;
   private final String                      patchTimestamp;
   private final String                      patchRevision;
-  private final String                      patchEERevision;
   private final String                      patchBranch;
 
   private final String                      buildVersion;
@@ -105,13 +102,11 @@ public final class ProductInfo {
     this.timestamp = getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
     this.branch = getBuildProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
     this.revision = getBuildProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
-    this.ee_revision = getBuildProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
 
     // Get all patch build properties
     this.patchLevel = getPatchProperty(properties, PATCH_DATA_LEVEL_KEY, UNKNOWN_VALUE);
     this.patchTimestamp = getPatchProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
     this.patchRevision = getPatchProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
-    this.patchEERevision = getPatchProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
     this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
 
     Matcher matcher = KITIDPATTERN.matcher(buildVersion);
@@ -292,10 +287,6 @@ public final class ProductInfo {
     return revision;
   }
 
-  public String buildRevisionFromEE() {
-    return ee_revision;
-  }
-
   public boolean isPatched() {
     return !UNKNOWN_VALUE.equals(patchLevel);
   }
@@ -314,10 +305,6 @@ public final class ProductInfo {
 
   public String patchRevision() {
     return patchRevision;
-  }
-
-  public String patchEERevision() {
-    return patchEERevision;
   }
 
   public String patchBranch() {

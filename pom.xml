@@ -26,6 +26,7 @@
 
   <modules>
     <module>build-parent</module>
+    <module>build-data</module>
     <module>test-common</module>
     <module>tc-messaging</module>
     <module>common</module>
@@ -97,4 +98,10 @@
       <url>http://www.terracotta.org/download/reflector/releases</url>
     </pluginRepository>
   </pluginRepositories>
+
+  <scm>
+    <connection>scm:git:ssh://git@irepo.eur.ad.sag:7999/tab/terracotta-core.git</connection>
+    <developerConnection>scm:git:ssh://git@irepo.eur.ad.sag:7999/tab/terracotta-core.git</developerConnection>
+  </scm>
+
 </project>

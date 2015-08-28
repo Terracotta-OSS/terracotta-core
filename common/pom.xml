@@ -43,7 +43,6 @@ Apache Ivy version: 2.2.0 20100923230623
       <groupId>org.terracotta.internal</groupId>
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>

@@ -1,0 +1,5 @@
+terracotta.build.productname=terracotta
+terracotta.build.version=${project.version}
+terracotta.build.timestamp=${timestamp}
+terracotta.build.revision=${buildNumber}
+terracotta.build.branch=${scmBranch}
