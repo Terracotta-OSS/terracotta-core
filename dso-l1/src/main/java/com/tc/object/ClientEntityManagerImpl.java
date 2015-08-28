@@ -112,7 +112,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public void handleMessage(EntityDescriptor entityDescriptor, byte[] message) {
-    @SuppressWarnings("resource")
     EntityClientEndpoint endpoint = this.objectStoreMap.get(entityDescriptor);
     if (endpoint != null) {
       EntityClientEndpointImpl endpointImpl = (EntityClientEndpointImpl) endpoint;
@@ -222,7 +221,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       EntityID entityID = descriptor.getEntityID();
       long entityVersion = descriptor.getClientSideVersion();
       ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
-      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID);
+      byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
+      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
       handshakeMessage.addReconnectReference(context);
     }
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.

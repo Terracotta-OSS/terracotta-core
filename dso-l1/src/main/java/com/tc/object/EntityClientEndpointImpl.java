@@ -2,6 +2,7 @@ package com.tc.object;
 
 import org.terracotta.entity.EndpointListener;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityClientReconnectHandler;
 import org.terracotta.entity.InvocationBuilder;
 
 import com.tc.entity.VoltronEntityMessage;
@@ -20,6 +21,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   private final byte[] configuration;
   private final EntityDescriptor entityDescriptor;
   private final Runnable closeHook;
+  private EntityClientReconnectHandler reconnectHandler;
 
   /**
    * @param entityDescriptor The server-side entity and corresponding client-side instance ID.
@@ -101,6 +103,23 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
         throw new IllegalStateException("Already invoked");
       }
     }
+  }
+
+  @Override
+  public void setReconnectHandler(EntityClientReconnectHandler handler) {
+    this.reconnectHandler = handler;
+  }
+
+  @Override
+  public byte[] getExtendedReconnectData() {
+    byte[] reconnectData = null;
+    if (null != this.reconnectHandler) {
+      reconnectData = this.reconnectHandler.createExtendedReconnectData();
+    }
+    if (null == reconnectData) {
+      reconnectData = new byte[0];
+    }
+    return reconnectData;
   }
 
   @Override

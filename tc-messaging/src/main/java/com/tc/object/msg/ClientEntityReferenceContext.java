@@ -20,15 +20,17 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
   private EntityID entityID;
   private long entityVersion;
   private ClientInstanceID clientInstanceID;
+  private byte[] extendedReconnectData;
 
   public ClientEntityReferenceContext() {
     // to make TCSerializable happy
   }
 
-  public ClientEntityReferenceContext(EntityID entityID, long entityVersion, ClientInstanceID clientInstanceID) {
+  public ClientEntityReferenceContext(EntityID entityID, long entityVersion, ClientInstanceID clientInstanceID, byte[] extendedReconnectData) {
     this.entityID = entityID;
     this.entityVersion = entityVersion;
     this.clientInstanceID = clientInstanceID;
+    this.extendedReconnectData = extendedReconnectData;
   }
 
   public EntityID getEntityID() {
@@ -43,6 +45,10 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
     return new EntityDescriptor(this.entityID, this.clientInstanceID, this.entityVersion);
   }
 
+  public byte[] getExtendedReconnectData() {
+    return this.extendedReconnectData;
+  }
+
   @Override
   public boolean equals(Object o) {
     boolean isEqual = (this == o);
@@ -51,12 +57,23 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
       isEqual = this.entityID.equals(other.entityID)
           && (this.entityVersion == other.entityVersion)
           && this.clientInstanceID.equals(other.clientInstanceID);
+      // Now, compare the extended data arrays.  This is arguably gratuitous but it makes tests easier to write and clearer.
+      if (this.extendedReconnectData.length == other.extendedReconnectData.length) {
+        int i = 0;
+        while (isEqual && (i < this.extendedReconnectData.length)) {
+          isEqual = (this.extendedReconnectData[i] == other.extendedReconnectData[i]);
+          i += 1;
+        }
+      } else {
+        isEqual = false;
+      }
     }
     return isEqual;
   }
 
   @Override
   public int hashCode() {
+    // We won't bother computing a hashcode for the extended data, here.
     return (13 * this.entityID.hashCode())
         ^ (7 * (int)(this.entityVersion))
         ^ (3 * this.clientInstanceID.hashCode());
@@ -67,6 +84,8 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
     this.entityID.serializeTo(output);
     output.writeLong(this.entityVersion);
     this.clientInstanceID.serializeTo(output);
+    output.writeInt(this.extendedReconnectData.length);
+    output.write(this.extendedReconnectData);
   }
 
   @Override
@@ -74,6 +93,9 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
     this.entityID = EntityID.readFrom(input);
     this.entityVersion = input.readLong();
     this.clientInstanceID = ClientInstanceID.readFrom(input);
+    int extendedDataLength = input.readInt();
+    this.extendedReconnectData = new byte[extendedDataLength];
+    input.readFully(this.extendedReconnectData);
     return this;
   }
 
@@ -82,6 +104,7 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
     return "ClientEntityReferenceContext [entityID=" + this.entityID
         + ", entityVersion=" + this.entityVersion
         + ", clientInstanceID=" + this.clientInstanceID
+        + ", extendedData size=" + this.extendedReconnectData.length
         + "]";
   }
 }

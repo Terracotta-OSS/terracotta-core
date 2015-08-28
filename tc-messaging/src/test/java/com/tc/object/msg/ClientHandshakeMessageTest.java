@@ -18,7 +18,6 @@ import static org.mockito.Mockito.mock;
 
 
 public class ClientHandshakeMessageTest {
-  @SuppressWarnings("resource")
   @Test
   public void testMessage() throws Exception {
 
@@ -33,9 +32,12 @@ public class ClientHandshakeMessageTest {
     long entityVersion = 1;
     long instanceID = 0;
     ClientInstanceID clientInstanceID = new ClientInstanceID(instanceID);
-    ClientEntityReferenceContext ref1 = new ClientEntityReferenceContext(entity1, entityVersion, clientInstanceID);
-    ClientEntityReferenceContext ref2 = new ClientEntityReferenceContext(entity2, entityVersion, clientInstanceID);
-    ClientEntityReferenceContext ref3 = new ClientEntityReferenceContext(entity3, entityVersion, clientInstanceID);
+    byte[] extendedReconnectData1 = {};
+    byte[] extendedReconnectData2 = {1, 2, 3};
+    byte[] extendedReconnectData3 = {3, 4, 5, 6};
+    ClientEntityReferenceContext ref1 = new ClientEntityReferenceContext(entity1, entityVersion, clientInstanceID, extendedReconnectData1);
+    ClientEntityReferenceContext ref2 = new ClientEntityReferenceContext(entity2, entityVersion, clientInstanceID, extendedReconnectData2);
+    ClientEntityReferenceContext ref3 = new ClientEntityReferenceContext(entity3, entityVersion, clientInstanceID, extendedReconnectData3);
     Assert.assertNotEquals(ref1, ref2);
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
