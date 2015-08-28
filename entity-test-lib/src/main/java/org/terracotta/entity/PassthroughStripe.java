@@ -175,6 +175,16 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     public void close() {
       PassthroughStripe.this.connectCountMap.put(this.entityName, PassthroughStripe.this.connectCountMap.get(this.entityName).intValue() - 1);
     }
+
+    @Override
+    public void setReconnectHandler(EntityClientReconnectHandler handler) {
+      Assert.fail("Not implemented");
+    }
+
+    @Override
+    public byte[] getExtendedReconnectData() {
+      return new byte[0];
+    }
   }
   
   private class FakeClientDescriptor implements ClientDescriptor {

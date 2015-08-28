@@ -26,6 +26,8 @@ import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import org.junit.Assert;
+
 
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
@@ -123,5 +125,15 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   @Override
   public void close() {
     // In a real implementation, this is where a call to the PlatformService, to clean up, would be.
+  }
+
+  @Override
+  public void setReconnectHandler(EntityClientReconnectHandler handler) {
+    Assert.fail("Not implemented");
+  }
+
+  @Override
+  public byte[] getExtendedReconnectData() {
+    return new byte[0];
   }
 }

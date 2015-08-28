@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 
 import org.terracotta.entity.EndpointListener;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityClientReconnectHandler;
 import org.terracotta.entity.InvocationBuilder;
 
 
@@ -68,5 +69,15 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     for (EndpointListener listener : this.listeners) {
       listener.handleMessage(payload);
     }
+  }
+
+  @Override
+  public void setReconnectHandler(EntityClientReconnectHandler handler) {
+    Assert.unimplemented();
+  }
+
+  @Override
+  public byte[] getExtendedReconnectData() {
+    return new byte[0];
   }
 }
