@@ -54,10 +54,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor) {
+  public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
     EntityDescriptor entityDescriptor = getEntityDescriptorForSource(clientDescriptor);
     clientEntityStateManager.addReference(nodeID, entityDescriptor);
     this.activeServerEntity.connected(clientDescriptor);
+    this.activeServerEntity.handleReconnect(clientDescriptor, extendedReconnectData);
   }
   
 

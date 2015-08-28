@@ -118,7 +118,8 @@ public class ServerClientHandshakeManager {
           Assert.assertTrue(entity.isPresent());
           EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
           ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
-          entity.get().reconnectClient(clientID, clientDescriptor);
+          byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
+          entity.get().reconnectClient(clientID, clientDescriptor, extendedReconnectData);
         }
         
         // Find any resent messages and re-apply them in the transaction handler.
