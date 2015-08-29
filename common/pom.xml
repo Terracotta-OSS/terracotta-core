@@ -25,21 +25,6 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>tc-messaging</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-server-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tcconfig-schema</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>

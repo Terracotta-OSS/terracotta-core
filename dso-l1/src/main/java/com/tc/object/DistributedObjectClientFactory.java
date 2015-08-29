@@ -5,28 +5,22 @@ package com.tc.object;
 
 import com.tc.client.ClientFactory;
 import com.tc.cluster.ClusterImpl;
-import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ClientConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.license.ProductID;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.ClientConfigImpl;
-import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.SingleLoaderClassProvider;
-import com.tc.util.Assert;
 import com.tc.util.UUID;
 import com.tcclient.cluster.ClusterInternal;
 
@@ -109,9 +103,6 @@ public class DistributedObjectClientFactory {
   }
 
   private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1ConfigurationSetupManager config) {
-    L2Data[] l2Data = config.l2Config().l2Data();
-    Assert.assertNotNull(l2Data);
-
     return new PreparedComponentsFromL2Connection(config);
   }
 
