@@ -90,7 +90,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createInvokeMessage(Class<?> clazz, String entityName, long clientInstanceID, byte[] payload) {
+  public static PassthroughMessage createInvokeMessage(Class<?> clazz, String entityName, long clientInstanceID, byte[] payload, boolean shouldReplicateToPassives) {
     return new PassthroughMessage() {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {

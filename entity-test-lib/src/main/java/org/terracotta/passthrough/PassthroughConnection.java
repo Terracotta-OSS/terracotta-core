@@ -63,8 +63,7 @@ public class PassthroughConnection implements Connection {
   /**
    * This entry-point is specifically used for entity-defined action messages.
    */
-  public Future<byte[]> invokeActionAndWaitForAcks(Class<?> entityClass, String entityName, long clientInstanceID, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldReplicate, byte[] payload) {
-    PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(entityClass, entityName, clientInstanceID, payload);
+  public Future<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     return invokeAndWait(message, shouldWaitForReceived, shouldWaitForCompleted);
   }
 

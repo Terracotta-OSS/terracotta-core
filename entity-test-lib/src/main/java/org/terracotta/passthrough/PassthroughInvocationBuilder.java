@@ -54,7 +54,8 @@ public class PassthroughInvocationBuilder implements InvocationBuilder {
 
   @Override
   public Future<byte[]> invoke() {
-    return this.connection.invokeActionAndWaitForAcks(this.entityClass, this.entityName, this.clientInstanceID, this.shouldWaitForReceived, this.shouldWaitForCompleted, this.shouldReplicate, this.payload);
+    PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, this.clientInstanceID, this.payload, this.shouldReplicate);
+    return this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForReceived, this.shouldWaitForCompleted);
   }
 
 }
