@@ -57,12 +57,6 @@ public class TerracottaConnection implements Connection {
   }
 
   @Override
-  public synchronized <T extends Entity, C> Collection<EntityRef<T, C>> getEntityRefsOfType(Class<T> cls, long version) {
-    checkShutdown();
-    throw new UnsupportedOperationException("Implement me!");
-  }
-
-  @Override
   public synchronized void close() {
     checkShutdown();
     shutdown.run();
