@@ -39,10 +39,14 @@ public class PassthroughServer {
     Assert.assertTrue(this.hasStarted);
     return new PassthroughConnection(this.serverProcess, this.entityClientServices);
   }
-  
+
   public void start() {
     this.hasStarted = true;
     this.serverProcess.start();
+  }
+
+  public void stop() {
+    this.serverProcess.shutdown();
   }
 
   public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider) {
