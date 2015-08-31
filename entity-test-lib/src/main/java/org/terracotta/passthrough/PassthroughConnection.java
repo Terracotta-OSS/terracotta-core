@@ -204,12 +204,6 @@ public class PassthroughConnection implements Connection {
     return new PassthroughMaintenanceRef<>(this, service, cls, version, name);
   }
 
-  @Override
-  public <T extends Entity, C> Collection<EntityRef<T, C>> getEntityRefsOfType(Class<T> cls, long version) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   @SuppressWarnings({ "rawtypes", "unchecked" })
   private EntityClientService<?, ?> getEntityClientService(Class rawClass) {
     EntityClientService<?, ?> selected = null;
