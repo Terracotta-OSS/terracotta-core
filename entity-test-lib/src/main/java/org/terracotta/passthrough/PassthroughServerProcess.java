@@ -71,6 +71,7 @@ public class PassthroughServerProcess {
   }
   
   private synchronized void runServerThread() {
+    Thread.currentThread().setName("Server thread");
     while (this.isRunning) {
       if (!this.messageQueue.isEmpty()) {
         MessageContainer container = this.messageQueue.remove(0);

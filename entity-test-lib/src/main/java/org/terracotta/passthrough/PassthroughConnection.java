@@ -1,7 +1,6 @@
 package org.terracotta.passthrough;
 
 import java.io.DataInputStream;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +99,7 @@ public class PassthroughConnection implements Connection {
   }
   
   private synchronized void runClientThread() {
+    Thread.currentThread().setName("Client thread");
     while (this.isRunning) {
       if (!this.messageQueue.isEmpty()) {
         byte[] message = this.messageQueue.remove(0);
