@@ -14,18 +14,30 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  */
 public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.Decoder<Void> {
   private final MessageHandler messageHandler;
-  private final PassthroughConnection sender;
+  private final PassthroughServerProcess downstreamPassive;
+  private final IMessageSenderWrapper sender;
+  private final byte[] message;
 
-  public PassthroughServerMessageDecoder(MessageHandler messageHandler, PassthroughConnection sender) {
+  public PassthroughServerMessageDecoder(MessageHandler messageHandler, PassthroughServerProcess downstreamPassive, IMessageSenderWrapper sender, byte[] message) {
     this.messageHandler = messageHandler;
+    this.downstreamPassive = downstreamPassive;
     this.sender = sender;
+    this.message = message;
   }
   @Override
   public Void decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
     // First step, send the ack.
     PassthroughMessage ack = PassthroughMessageCodec.createAckMessage();
     ack.setTransactionID(transactionID);
-    sender.sendMessageToClient(ack.asSerializedBytes());
+    sender.sendAck(ack);
+    
+    // Now, before we can actually RUN the message, we need to make sure that we wait for its replicated copy to complete
+    // on the passive.
+    if (shouldReplicate && (null != this.downstreamPassive)) {
+      ServerSender wrapper = new ServerSender();
+      this.downstreamPassive.sendMessageToServerFromActive(wrapper, message);
+      wrapper.waitForComplete();
+    }
     
     // Now, decode the message and interpret it.
     switch (type) {
@@ -72,7 +84,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         Exception error = null;
         try {
-          PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(sender, clientInstanceID);
+          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           // We respond with the config, if found.
           response = this.messageHandler.fetch(clientDescriptor, entityClassName, entityName, version);
         } catch (Exception e) {
@@ -88,7 +100,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         Exception error = null;
         try {
-          PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(sender, clientInstanceID);
+          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           // There is no response on successful delete.
           this.messageHandler.release(clientDescriptor, entityClassName, entityName);
         } catch (Exception e) {
@@ -106,7 +118,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         Exception error = null;
         try {
-          PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(sender, clientInstanceID);
+          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           // We respond with the config, if found.
           response = this.messageHandler.invoke(clientDescriptor, entityClassName, entityName, payload);
         } catch (Exception e) {
@@ -128,10 +140,42 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     return null;
   }
 
-  private void sendCompleteResponse(PassthroughConnection sender, long transactionID, byte[] response, Exception error) {
+  private void sendCompleteResponse(IMessageSenderWrapper sender, long transactionID, byte[] response, Exception error) {
     PassthroughMessage complete = PassthroughMessageCodec.createCompleteMessage(response, error);
     complete.setTransactionID(transactionID);
-    sender.sendMessageToClient(complete.asSerializedBytes());
+    sender.sendComplete(complete);
+  }
+
+
+  /**
+   * In the case where we are an active sending a message to a downstream passive, we use this implementation to provide the
+   * basic interlock across the 2 threads.
+   */
+  private static class ServerSender implements IMessageSenderWrapper {
+    private boolean isDone = false;
+    
+    public synchronized void waitForComplete() {
+      while (!this.isDone) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          Assert.unexpected(e);
+        }
+      }
+    }
+    @Override
+    public void sendAck(PassthroughMessage ack) {
+    }
+    @Override
+    public synchronized void sendComplete(PassthroughMessage complete) {
+      this.isDone = true;
+      notifyAll();
+    }
+    @Override
+    public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
+      Assert.unreachable();
+      return null;
+    }
   }
 
 

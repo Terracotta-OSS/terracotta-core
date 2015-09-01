@@ -12,16 +12,16 @@ import org.terracotta.entity.ServiceProvider;
 
 /**
  * The top-level "server" of the passthrough testing system.
- * This essentially represents a single "active", within the cluster.  In the future, it will likely be extended to have
- * either active or passive modes, for testing active-passive stripes.
+ * The server can be put into either an "active" or "passive" mode when constructed.  This determines whether server can have
+ * downstream passives attached to it.
  */
 public class PassthroughServer {
   private final PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?>> entityClientServices;
   
-  public PassthroughServer() {
-    this.serverProcess = new PassthroughServerProcess();
+  public PassthroughServer(boolean isActiveMode) {
+    this.serverProcess = new PassthroughServerProcess(isActiveMode);
     this.entityClientServices = new Vector<>();
   }
 
@@ -51,5 +51,9 @@ public class PassthroughServer {
 
   public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider) {
     this.serverProcess.registerServiceProviderForType(clazz, serviceProvider);
+  }
+
+  public void attachDownstreamPassive(PassthroughServer passiveServer) {
+    this.serverProcess.setDownstreamPassiveServerProcess(passiveServer.serverProcess);
   }
 }
