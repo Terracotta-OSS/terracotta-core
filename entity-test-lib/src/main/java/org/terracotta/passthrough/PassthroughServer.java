@@ -5,6 +5,7 @@ import java.util.Vector;
 
 import org.junit.Assert;
 import org.terracotta.connection.Connection;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
@@ -23,6 +24,10 @@ public class PassthroughServer {
   public PassthroughServer(boolean isActiveMode) {
     this.serverProcess = new PassthroughServerProcess(isActiveMode);
     this.entityClientServices = new Vector<>();
+    
+    // Register built-in services.
+    PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
+    this.serverProcess.registerServiceProviderForType(ClientCommunicator.class, communicatorServiceProvider);
   }
 
   public void registerServerEntityService(ServerEntityService<?, ?> service) {
