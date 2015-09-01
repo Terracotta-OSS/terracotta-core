@@ -1,6 +1,5 @@
 package org.terracotta.passthrough;
 
-import java.io.DataInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +8,7 @@ import java.util.Vector;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.passthrough.PassthroughMessage.Type;
+import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 
 
 /**
@@ -18,7 +17,7 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  * In the future, message execution will likely be split out into other threads to better support entity read-write locking
  * and also test concurrency strategy.
  */
-public class PassthroughServerProcess {
+public class PassthroughServerProcess implements MessageHandler {
   private boolean isRunning;
   private final List<ServerEntityService<?, ?>> entityServices;
   private final Thread serverThread;
@@ -61,7 +60,7 @@ public class PassthroughServerProcess {
       Assert.unexpected(e);
     }
   }
-  
+
   public synchronized void sendMessageToServer(PassthroughConnection sender, byte[] message) {
     MessageContainer container = new MessageContainer();
     container.sender = sender;
@@ -90,124 +89,12 @@ public class PassthroughServerProcess {
   
   private void serverThreadHandleMessage(PassthroughConnection sender, byte[] message) {
     // Called on the server thread to handle a message.
-    PassthroughMessageCodec.Decoder<Void> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
-      
-      // First step, send the ack.
-      PassthroughMessage ack = PassthroughMessageCodec.createAckMessage();
-      ack.setTransactionID(transactionID);
-      sender.sendMessageToClient(ack.asSerializedBytes());
-      
-      // Now, decode the message and interpret it.
-      switch (type) {
-        case CREATE_ENTITY: {
-          String entityClassName = input.readUTF();
-          String entityName = input.readUTF();
-          long version = input.readLong();
-          byte[] serializedConfiguration = new byte[input.readInt()];
-          input.readFully(serializedConfiguration);
-          byte[] response = null;
-          Exception error = null;
-          try {
-            // There is no response on successful create.
-            handleCreate(entityClassName, entityName, version, serializedConfiguration);
-          } catch (Exception e) {
-            error = e;
-          }
-          sendCompleteResponse(sender, transactionID, response, error);
-          break;
-        }
-        case DESTROY_ENTITY: {
-          String entityClassName = input.readUTF();
-          String entityName = input.readUTF();
-          byte[] response = null;
-          Exception error = null;
-          try {
-            // There is no response on successful delete.
-            handleDestroy(entityClassName, entityName);
-          } catch (Exception e) {
-            error = e;
-          }
-          sendCompleteResponse(sender, transactionID, response, error);
-          break;
-        }
-        case DOES_ENTITY_EXIST:
-          // TODO:  Implement.
-          Assert.unimplemented();
-          break;
-        case FETCH_ENTITY: {
-          String entityClassName = input.readUTF();
-          String entityName = input.readUTF();
-          long clientInstanceID = input.readLong();
-          long version = input.readLong();
-          byte[] response = null;
-          Exception error = null;
-          try {
-            PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(sender, clientInstanceID);
-            // We respond with the config, if found.
-            response = handleFetch(clientDescriptor, entityClassName, entityName, version);
-          } catch (Exception e) {
-            error = e;
-          }
-          sendCompleteResponse(sender, transactionID, response, error);
-          break;
-        }
-        case RELEASE_ENTITY: {
-          String entityClassName = input.readUTF();
-          String entityName = input.readUTF();
-          long clientInstanceID = input.readLong();
-          byte[] response = null;
-          Exception error = null;
-          try {
-            PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(sender, clientInstanceID);
-            // There is no response on successful delete.
-            handleRelease(clientDescriptor, entityClassName, entityName);
-          } catch (Exception e) {
-            error = e;
-          }
-          sendCompleteResponse(sender, transactionID, response, error);
-          break;
-        }
-        case INVOKE_ON_SERVER: {
-          String entityClassName = input.readUTF();
-          String entityName = input.readUTF();
-          long clientInstanceID = input.readLong();
-          byte[] payload = new byte[input.readInt()];
-          input.readFully(payload);
-          byte[] response = null;
-          Exception error = null;
-          try {
-            PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(sender, clientInstanceID);
-            // We respond with the config, if found.
-            response = handleInvoke(clientDescriptor, entityClassName, entityName, payload);
-          } catch (Exception e) {
-            error = e;
-          }
-          sendCompleteResponse(sender, transactionID, response, error);
-          break;
-        }
-        case ACK_FROM_SERVER:
-        case COMPLETE_FROM_SERVER:
-        case INVOKE_ON_CLIENT:
-          // Not invoked on server.
-          Assert.unreachable();
-          break;
-        default:
-          Assert.unreachable();
-          break;
-      }
-      return null;
-    };
+    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, sender);
     PassthroughMessageCodec.decodeRawMessage(decoder, message);
   }
 
-  private void sendCompleteResponse(PassthroughConnection sender, long transactionID, byte[] response, Exception error) {
-    PassthroughMessage complete = PassthroughMessageCodec.createCompleteMessage(response, error);
-    complete.setTransactionID(transactionID);
-    sender.sendMessageToClient(complete.asSerializedBytes());
-  }
-
-
-  private byte[] handleInvoke(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, byte[] payload) throws Exception {
+  @Override
+  public byte[] invoke(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, byte[] payload) throws Exception {
     byte[] response = null;
     ActiveServerEntity entity = this.createdEntities.get(entityName);
     if (null != entity) {
@@ -218,7 +105,8 @@ public class PassthroughServerProcess {
     return response;
   }
 
-  private byte[] handleFetch(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, long version) throws Exception {
+  @Override
+  public byte[] fetch(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, long version) throws Exception {
     byte[] config = null;
     ActiveServerEntity entity = this.createdEntities.get(entityName);
     if (null != entity) {
@@ -234,7 +122,8 @@ public class PassthroughServerProcess {
     return config;
   }
 
-  private void handleRelease(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName) throws Exception {
+  @Override
+  public void release(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName) throws Exception {
     ActiveServerEntity entity = this.createdEntities.get(entityName);
     if (null != entity) {
       entity.disconnected(clientDescriptor);
@@ -243,7 +132,8 @@ public class PassthroughServerProcess {
     }
   }
 
-  private void handleCreate(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws Exception {
+  @Override
+  public void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws Exception {
     if (this.createdEntities.containsKey(entityName)) {
       throw new Exception("Already exists");
     }
@@ -259,7 +149,8 @@ public class PassthroughServerProcess {
     this.createdEntities.put(entityName, entity);
   }
 
-  private void handleDestroy(String entityClassName, String entityName) throws Exception {
+  @Override
+  public void destroy(String entityClassName, String entityName) throws Exception {
     ActiveServerEntity entity = this.createdEntities.remove(entityName);
     if (null != entity) {
       // Success.
