@@ -9,7 +9,7 @@ import java.util.Vector;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.passthrough.PassthroughMessageCodec.Type;
+import org.terracotta.passthrough.PassthroughMessage.Type;
 
 
 /**
@@ -90,11 +90,7 @@ public class PassthroughServerProcess {
   
   private void serverThreadHandleMessage(PassthroughConnection sender, byte[] message) {
     // Called on the server thread to handle a message.
-    PassthroughMessageCodec.Decoder<Void> decoder = (DataInputStream input) -> {
-      // Decode the usual, transactionID followed by type ordinal.
-      long transactionID = input.readLong();
-      int ordinal = input.readInt();
-      Type type = PassthroughMessageCodec.Type.values()[ordinal];
+    PassthroughMessageCodec.Decoder<Void> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
       
       // First step, send the ack.
       PassthroughMessage ack = PassthroughMessageCodec.createAckMessage();

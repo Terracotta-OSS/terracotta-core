@@ -12,7 +12,7 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityMaintenanceRef;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
-import org.terracotta.passthrough.PassthroughMessageCodec.Type;
+import org.terracotta.passthrough.PassthroughMessage.Type;
 
 
 /**
@@ -114,11 +114,7 @@ public class PassthroughConnection implements Connection {
   }
 
   private void clientThreadHandleMessage(byte[] message) {
-    PassthroughMessageCodec.Decoder<Void> decoder = (DataInputStream input) -> {
-      // Decode the usual, transactionID followed by type ordinal.
-      long transactionID = input.readLong();
-      int ordinal = input.readInt();
-      Type type = PassthroughMessageCodec.Type.values()[ordinal];
+    PassthroughMessageCodec.Decoder<Void> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
       switch (type) {
         case ACK_FROM_SERVER:
           handleAck(transactionID);

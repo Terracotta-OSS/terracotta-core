@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import org.terracotta.passthrough.PassthroughMessage.Type;
+
 
 /**
  * A common utility class to encode/decode passthrough messages since they are stored as byte[] instances, on client and
@@ -16,28 +18,11 @@ import java.io.ObjectOutputStream;
  * the same process).  Serializing them ensures that there are no invalid assumptions being made on either side, however.
  */
 public class PassthroughMessageCodec {
-  public enum Type {
-    FETCH_ENTITY,
-    RELEASE_ENTITY,
-    DOES_ENTITY_EXIST,
-    CREATE_ENTITY,
-    DESTROY_ENTITY,
-    INVOKE_ON_SERVER,
-    ACK_FROM_SERVER,
-    COMPLETE_FROM_SERVER,
-    INVOKE_ON_CLIENT,
-  }
-
-  public static Type getType(DataInputStream input) throws IOException {
-    int ordinal = input.readInt();
-    return Type.values()[ordinal];
-  }
-
   public static PassthroughMessage createFetchMessage(Class<?> clazz, String entityName, long clientInstanceID, long version) {
-    return new PassthroughMessage() {
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.FETCH_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.FETCH_ENTITY.ordinal());
         output.writeUTF(clazz.getCanonicalName());
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
@@ -46,10 +31,10 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createReleaseMessage(Class<?> entityClass, String entityName, long clientInstanceID) {
-    return new PassthroughMessage() {
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.RELEASE_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.RELEASE_ENTITY.ordinal());
         output.writeUTF(entityClass.getCanonicalName());
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
@@ -57,10 +42,10 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createExistsMessage(Class<?> entityClass, String entityName, long version) {
-    return new PassthroughMessage() {
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.DOES_ENTITY_EXIST, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.DOES_ENTITY_EXIST.ordinal());
         output.writeUTF(entityClass.getCanonicalName());
         output.writeUTF(entityName);
         output.writeLong(version);
@@ -68,20 +53,20 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createDestroyMessage(Class<?> entityClass, String entityName) {
-    return new PassthroughMessage() {
+    boolean shouldReplicateToPassives = true;
+    return new PassthroughMessage(Type.DESTROY_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.DESTROY_ENTITY.ordinal());
         output.writeUTF(entityClass.getCanonicalName());
         output.writeUTF(entityName);
       }};
   }
 
   public static PassthroughMessage createCreateMessage(Class<?> entityClass, String entityName, long version, byte[] serializedConfiguration) {
-    return new PassthroughMessage() {
+    boolean shouldReplicateToPassives = true;
+    return new PassthroughMessage(Type.CREATE_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.CREATE_ENTITY.ordinal());
         output.writeUTF(entityClass.getCanonicalName());
         output.writeUTF(entityName);
         output.writeLong(version);
@@ -91,10 +76,9 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createInvokeMessage(Class<?> clazz, String entityName, long clientInstanceID, byte[] payload, boolean shouldReplicateToPassives) {
-    return new PassthroughMessage() {
+    return new PassthroughMessage(Type.INVOKE_ON_SERVER, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.INVOKE_ON_SERVER.ordinal());
         output.writeUTF(clazz.getCanonicalName());
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
@@ -104,7 +88,9 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createAckMessage() {
-    return new PassthroughMessage() {
+    // Replication ignored in this context.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.ACK_FROM_SERVER, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
         output.writeInt(Type.ACK_FROM_SERVER.ordinal());
@@ -112,10 +98,11 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createCompleteMessage(byte[] response, Exception error) {
-    return new PassthroughMessage() {
+    // Replication ignored in this context.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.COMPLETE_FROM_SERVER, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.COMPLETE_FROM_SERVER.ordinal());
         boolean isSuccess = (null == error);
         output.writeBoolean(isSuccess);
         if (isSuccess) {
@@ -134,10 +121,11 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createMessageToClient(long clientInstanceID, byte[] payload) {
-    return new PassthroughMessage() {
+    // Replication ignored in this context.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.INVOKE_ON_CLIENT, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeInt(Type.INVOKE_ON_CLIENT.ordinal());
         output.writeLong(clientInstanceID);
         output.writeInt(payload.length);
         output.write(payload);
@@ -149,9 +137,7 @@ public class PassthroughMessageCodec {
   }
   
   public static long decodeTransactionIDFromRawMessage(byte[] rawMessage) {
-    Decoder<Long> decoder = (DataInputStream input) -> {
-      // The transactionID is always the first long in the stream.
-      long transactionID = input.readLong();
+    Decoder<Long> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
       return transactionID;
     };
     Long result = runRawDecoder(decoder, rawMessage);
@@ -159,7 +145,7 @@ public class PassthroughMessageCodec {
   }
   
   public static Type decodeTransactionTypeFromRawMessage(byte[] rawMessage) {
-    Decoder<Type> decoder = (DataInputStream input) -> {
+    Decoder<Type> decoder = (Type type, boolean shouldReplicate, long transactionID, DataInputStream input) -> {
       // The type is an int ordinal after the transactionID.
       input.readLong();
       int ordinal = input.readInt();
@@ -201,7 +187,11 @@ public class PassthroughMessageCodec {
     DataInputStream input = new DataInputStream(new ByteArrayInputStream(rawMessage));
     R result = null;
     try {
-      result = decoder.decode(input);
+      int ordinal = input.readInt();
+      Type type = Type.values()[ordinal];
+      boolean shouldReplicate = input.readBoolean();
+      long transactionID = input.readLong();
+      result = decoder.decode(type, shouldReplicate, transactionID, input);
     } catch (IOException e) {
       // Can't happen with a byte array.
       Assert.unexpected(e);
@@ -210,6 +200,6 @@ public class PassthroughMessageCodec {
   }
 
   public interface Decoder<R> {
-    public R decode(DataInputStream input) throws IOException;
+    public R decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException;
   }
 }
