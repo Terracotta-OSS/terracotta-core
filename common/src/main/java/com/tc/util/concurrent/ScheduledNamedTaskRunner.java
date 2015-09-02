@@ -43,9 +43,9 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
 
   private static final TCLogger logger = TCLogging.getLogger(ScheduledNamedTaskRunner.class);
   // to restore the initial thread's name after a task execution
-  private final ThreadLocal<String> initialThreadName = new ThreadLocal<>();
+  private final ThreadLocal<String> initialThreadName = new ThreadLocal<String>();
   // to be able to cancel all tasks related to a particular timer
-  private final Map<Timer, Set<Future<?>>> timerTasks = new HashMap<>();
+  private final Map<Timer, Set<Future<?>>> timerTasks = new HashMap<Timer, Set<Future<?>>>();
 
   public ScheduledNamedTaskRunner(int corePoolSize) {
     super(corePoolSize);
@@ -92,7 +92,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     final Timer timer = namedRunnable.getTimer();
     Set<Future<?>> tasks = timerTasks.get(timer);
     if (tasks == null) {
-      tasks = new HashSet<>();
+      tasks = new HashSet<Future<?>>();
       timerTasks.put(timer, tasks);
     }
     tasks.add(namedRunnable);
@@ -166,7 +166,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
                                                         RunnableScheduledFuture<V> task) {
     if (runnable instanceof TimerNamedRunnable) {
       final TimerNamedRunnable namedRunnable = (TimerNamedRunnable)runnable;
-      return new NamedRunnableScheduledFuture<>(namedRunnable, task);
+      return new NamedRunnableScheduledFuture<V>(namedRunnable, task);
     } else {
       return super.decorateTask(runnable, task);
     }

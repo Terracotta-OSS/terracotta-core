@@ -19,7 +19,7 @@ public class MockChildBeanFetcher implements ChildBeanFetcher {
 
   public MockChildBeanFetcher() {
     this.returnedChildren = new Object[] { null };
-    this.lastParents = new ArrayList<>();
+    this.lastParents = new ArrayList<Object>();
 
     reset();
   }

@@ -75,7 +75,7 @@ public class MergableLinkedList<T> {
    * Adds to the end of the list
    */
   public void add(T t) {
-    MergableLinkedList.Node<T> n = new Node<>(t);
+    MergableLinkedList.Node<T> n = new Node<T>(t);
     if (head == null) {
       // first node
       head = n;

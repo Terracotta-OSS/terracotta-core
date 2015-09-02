@@ -60,7 +60,7 @@ public class StageImpl<EC> implements Stage<EC> {
     if (threadsToQueueRatio > threadCount) {
       logger.warn("Thread to Queue Ratio " + threadsToQueueRatio + " > Worker Threads " + threadCount);
     }
-    this.stageQueue = new StageQueueImpl<>(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name, queueSize);
+    this.stageQueue = new StageQueueImpl<EC>(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name, queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
@@ -96,7 +96,7 @@ public class StageImpl<EC> implements Stage<EC> {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread<>(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs, pausable, name);
+      threads[i] = new WorkerThread<EC>(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs, pausable, name);
       threads[i].start();
     }
   }

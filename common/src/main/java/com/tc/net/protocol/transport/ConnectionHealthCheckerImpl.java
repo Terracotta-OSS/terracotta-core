@@ -122,7 +122,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   static class HealthCheckerMonitorThreadEngine implements Runnable {
     private final ConcurrentMap<ConnectionID, MessageTransportBase> connectionMap =
-        new ConcurrentHashMap<>();
+        new ConcurrentHashMap<ConnectionID, MessageTransportBase>();
     private final long                pingIdleTime;
     private final long                pingInterval;
     private final int                 pingProbes;

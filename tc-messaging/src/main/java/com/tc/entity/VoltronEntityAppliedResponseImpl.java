@@ -83,8 +83,13 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
       Assert.assertNotNull(this.failureException);
       // We need to manually serialize the exception using Java serialization.
       ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      try (ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput)) {
-        objectOutput.writeObject(this.failureException);
+      try {
+        ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput);      
+        try {
+          objectOutput.writeObject(this.failureException);
+        } finally {
+          objectOutput.close();
+        }
       } catch (IOException e) {
         throw new AssertionError(e);
       }
@@ -108,10 +113,13 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
       this.successResponse = getBytesArray();
     } else {
       ByteArrayInputStream byteInput = new ByteArrayInputStream(getBytesArray());
-      try (ObjectInputStream objectInput = new ObjectInputStream(byteInput)) {
-        this.failureException = (Exception) objectInput.readObject();
+      ObjectInputStream objectInput = new ObjectInputStream(byteInput);
+      try {
+          this.failureException = (Exception) objectInput.readObject();
       } catch (ClassNotFoundException e) {
         this.failureException = new Exception("Operation failed but exception class not found.", e);
+      } finally {
+        objectInput.close();
       }
     }
     return true;

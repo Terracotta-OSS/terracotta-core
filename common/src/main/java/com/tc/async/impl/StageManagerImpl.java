@@ -36,8 +36,8 @@ public class StageManagerImpl implements StageManager {
   private static final long        MONITOR_DELAY = TCPropertiesImpl.getProperties()
                                                      .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
 
-  private final Map<String, Stage<?>>   stages        = new ConcurrentHashMap<>();
-  private final Map<String, Class<?>> classVerifications = new ConcurrentHashMap<>();
+  private final Map<String, Stage<?>>   stages        = new ConcurrentHashMap<String, Stage<?>>();
+  private final Map<String, Class<?>> classVerifications = new ConcurrentHashMap<String, Class<?>>();
   private TCLoggerProvider           loggerProvider;
   private final ThreadGroup          group;
   private String[]                   stageNames    = new String[] {};
@@ -102,7 +102,7 @@ public class StageManagerImpl implements StageManager {
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
     @SuppressWarnings("unchecked")
     QueueFactory<ContextWrapper<EC>> queueFactory = (QueueFactory<ContextWrapper<EC>>) this.queueFactory;
-    Stage<EC> s = new StageImpl<>(loggerProvider, name, handler, threads, threadsToQueueRatio, group, queueFactory, capacity);
+    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, handler, threads, threadsToQueueRatio, group, queueFactory, capacity);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;
@@ -141,7 +141,7 @@ public class StageManagerImpl implements StageManager {
   @Override
   public void cleanup() {
     // TODO: ClientConfigurationContext is not visible so can't use ClientConfigurationContext.CLUSTER_EVENTS_STAGE
-    Collection<String> skipStages = new HashSet<>();
+    Collection<String> skipStages = new HashSet<String>();
     skipStages.add("cluster_events_stage");
     for (Stage<?> s : stages.values()) {
       if (!skipStages.contains(s.getName())) {

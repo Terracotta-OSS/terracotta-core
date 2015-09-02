@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class ExceptionHelperImpl implements ExceptionHelper {
   
-  private final List<ExceptionHelper> helpers = new LinkedList<>();
+  private final List<ExceptionHelper> helpers = new LinkedList<ExceptionHelper>();
   private final ExceptionHelper nullHelper = new NullExceptionHelper();
   
   @Override

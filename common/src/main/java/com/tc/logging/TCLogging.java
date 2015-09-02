@@ -224,7 +224,7 @@ public class TCLogging {
   private static boolean customConfiguration() {
     try {
       // First one wins:
-      List<File> locations = new ArrayList<>();
+      List<File> locations = new ArrayList<File>();
       if (System.getenv("TC_INSTALL_DIR") != null) {
         locations.add(new File(System.getenv("TC_INSTALL_DIR"), LOG4J_CUSTOM_FILENAME));
       }
@@ -445,7 +445,7 @@ public class TCLogging {
     consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
     operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
 
-    List<Logger> internalLoggers = new ArrayList<>();
+    List<Logger> internalLoggers = new ArrayList<Logger>();
     for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
       internalLoggers.add(Logger.getLogger(nameSpace));
     }
@@ -512,7 +512,7 @@ public class TCLogging {
   }
 
   private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
-    List<Logger> loggers = new ArrayList<>();
+    List<Logger> loggers = new ArrayList<Logger>();
     loggers.addAll(internalLoggers);
     loggers.add(customerLogger);
     return loggers.toArray(new Logger[] {});
@@ -553,7 +553,7 @@ public class TCLogging {
       Properties properties = System.getProperties();
       int maxKeyLength = 1;
 
-      List<String> keys = new ArrayList<>();
+      List<String> keys = new ArrayList<String>();
       for (Map.Entry<Object, Object> entry : properties.entrySet()) {
         Object objKey = entry.getKey();
         Object objValue = entry.getValue();

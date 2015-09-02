@@ -10,7 +10,7 @@ import java.util.List;
 
 public class CommonShutDownHook implements Runnable {
   private static final SetOnceFlag run       = new SetOnceFlag();
-  private static final List<Runnable>        runnables = new ArrayList<>();
+  private static final List<Runnable>        runnables = new ArrayList<Runnable>();
   private static Thread            hooker;                       // ;-)
   private static boolean           shutdown;
 

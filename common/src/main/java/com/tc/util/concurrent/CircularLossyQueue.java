@@ -15,7 +15,7 @@ public class CircularLossyQueue<T> {
   public CircularLossyQueue(int size) {
     this.circularArray = initRefArray(size);
     for (int i = 0; i < size; i++) {
-      this.circularArray[i] = new AtomicReference<>();
+      this.circularArray[i] = new AtomicReference<T>();
     }
     this.maxSize = size;
   }

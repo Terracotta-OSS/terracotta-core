@@ -24,7 +24,7 @@ public class TCMessageRouterTest extends TestCase {
       // expected
     }
 
-    final AtomicReference<TCMessage> msg = new AtomicReference<>(null);
+    final AtomicReference<TCMessage> msg = new AtomicReference<TCMessage>(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
       @Override
       public void putMessage(TCMessage message) {
@@ -47,7 +47,7 @@ public class TCMessageRouterTest extends TestCase {
   }
 
   public void testRouteByType() {
-    final AtomicReference<TCMessage> defmsg = new AtomicReference<>(null);
+    final AtomicReference<TCMessage> defmsg = new AtomicReference<TCMessage>(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
       @Override
       public void putMessage(TCMessage m) {
@@ -55,7 +55,7 @@ public class TCMessageRouterTest extends TestCase {
       }
     });
 
-    final AtomicReference<TCMessage> msg = new AtomicReference<>(null);
+    final AtomicReference<TCMessage> msg = new AtomicReference<TCMessage>(null);
     router.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       @Override
       public void putMessage(TCMessage m) {
@@ -77,7 +77,7 @@ public class TCMessageRouterTest extends TestCase {
 
   public void testConcurrency() throws Exception {
     final Random random = new SecureRandom();
-    final AtomicReference<Throwable> error = new AtomicReference<>(null);
+    final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
     final SetOnceFlag stop = new SetOnceFlag();
     final TCMessageSink nullSink = new TCMessageSink() {
       @Override

@@ -69,23 +69,23 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private final BufferManagerFactory            bufferManagerFactory;
   private final AtomicBoolean                   transportEstablished        = new AtomicBoolean(false);
-  private final LinkedList<TCNetworkMessage>    writeMessages               = new LinkedList<>();
+  private final LinkedList<TCNetworkMessage>    writeMessages               = new LinkedList<TCNetworkMessage>();
   private final TCConnectionManagerImpl         parent;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
   private final AtomicLong                      lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
   private final AtomicLong                      lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
   private final AtomicLong                      connectTime                 = new AtomicLong(NO_CONNECT_TIME);
-  private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<>();
+  private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<TCConnectionEventListener>();
   private final TCProtocolAdaptor               protocolAdaptor;
   private final AtomicBoolean                   isSocketEndpoint            = new AtomicBoolean(false);
   private final SetOnceFlag                     closed                      = new SetOnceFlag();
   private final AtomicBoolean                   connected                   = new AtomicBoolean(false);
-  private final SetOnceRef<TCSocketAddress>     localSocketAddress          = new SetOnceRef<>();
-  private final SetOnceRef<TCSocketAddress>     remoteSocketAddress         = new SetOnceRef<>();
+  private final SetOnceRef<TCSocketAddress>     localSocketAddress          = new SetOnceRef<TCSocketAddress>();
+  private final SetOnceRef<TCSocketAddress>     remoteSocketAddress         = new SetOnceRef<TCSocketAddress>();
   private final SocketParams                    socketParams;
   private final AtomicLong                      totalRead                   = new AtomicLong(0);
   private final AtomicLong                      totalWrite                  = new AtomicLong(0);
-  private final ArrayList<WriteContext>         writeContexts               = new ArrayList<>();
+  private final ArrayList<WriteContext>         writeContexts               = new ArrayList<WriteContext>();
   private final Object                          pipeSocketWriteInterestLock = new Object();
   private boolean                               hasPipeSocketWriteInterest  = false;
   private int                                   writeBufferSize             = 0;
@@ -109,7 +109,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   // having this variable at instance level helps reducing memory pressure at VM;
-  private final ArrayList<TCNetworkMessage>     messagesToBatch             = new ArrayList<>();
+  private final ArrayList<TCNetworkMessage>     messagesToBatch             = new ArrayList<TCNetworkMessage>();
 
   // for creating unconnected client connections
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
@@ -604,7 +604,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return isClosed();
   }
 
-  private final Runnable createCloseCallback(CountDownLatch latch) {
+  private final Runnable createCloseCallback(final CountDownLatch latch) {
     final boolean fireClose = isConnected();
 
     return new Runnable() {

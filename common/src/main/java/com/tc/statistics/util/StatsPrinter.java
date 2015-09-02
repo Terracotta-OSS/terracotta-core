@@ -24,7 +24,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
 
   private final static TCLogger   statsLogger  = TCLogging.getLogger(StatsPrinter.class);
   private final long              timeInterval;
-  private final ConcurrentMap<String, StatsRecord> statsRecords = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, StatsRecord> statsRecords = new ConcurrentHashMap<String, StatsRecord>();
   private final MessageFormat     formatLine;
   private final String            header;
   private volatile int            keyMaxSize   = 0;
@@ -147,7 +147,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
 
   private static final class StatsRecord {
     private final String               key;
-    private final CopyOnWriteArrayList<AtomicLong> counterList = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<AtomicLong> counterList = new CopyOnWriteArrayList<AtomicLong>();
 
     public StatsRecord(String key) {
       this.key = key;
@@ -183,7 +183,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
   }
 
   private static class Aggregator implements Runnable {
-    private final List<StatsPrinter> printers = new ArrayList<>();
+    private final List<StatsPrinter> printers = new ArrayList<StatsPrinter>();
     public static long timeInterval = TCPropertiesImpl.getProperties()
                                         .getLong(TCPropertiesConsts.STATS_PRINTER_INTERVAL);
     private Thread     thread;

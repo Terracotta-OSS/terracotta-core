@@ -15,7 +15,7 @@ public class BatchSequenceTest extends TestCase {
   public void test() throws Exception {
     TestRemoteBatchIDProvider remote = new TestRemoteBatchIDProvider();
     final BatchSequence sequence = new BatchSequence(remote, 5);
-    final BlockingQueue<Long> longs = new LinkedBlockingQueue<>();
+    final BlockingQueue<Long> longs = new LinkedBlockingQueue<Long>();
 
     Thread t = new Thread(new Runnable() {
       @Override
@@ -49,7 +49,7 @@ public class BatchSequenceTest extends TestCase {
 
   private static class TestRemoteBatchIDProvider implements BatchSequenceProvider {
     public volatile int      size  = -1;
-    public final BlockingQueue<BatchSequenceReceiver> queue = new LinkedBlockingQueue<>();
+    public final BlockingQueue<BatchSequenceReceiver> queue = new LinkedBlockingQueue<BatchSequenceReceiver>();
 
     @Override
     public void requestBatch(BatchSequenceReceiver theProvider, int theSize) {

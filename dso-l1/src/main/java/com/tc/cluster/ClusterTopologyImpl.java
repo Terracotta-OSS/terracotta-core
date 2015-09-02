@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClusterTopologyImpl implements ClusterTopology {
-  private final ConcurrentMap<NodeID, NodeInternal> nodes          = new ConcurrentHashMap<>();
+  private final ConcurrentMap<NodeID, NodeInternal> nodes          = new ConcurrentHashMap<NodeID, NodeInternal>();
 
   private final ReentrantReadWriteLock                 nodesLock      = new ReentrantReadWriteLock();
   private final ReentrantReadWriteLock.ReadLock        nodesReadLock  = nodesLock.readLock();
@@ -30,7 +30,7 @@ public class ClusterTopologyImpl implements ClusterTopology {
   Collection<NodeInternal> getInternalNodes() {
     nodesReadLock.lock();
     try {
-      return Collections.unmodifiableCollection(new ArrayList<>(nodes.values()));
+      return Collections.unmodifiableCollection(new ArrayList<NodeInternal>(nodes.values()));
     } finally {
       nodesReadLock.unlock();
     }

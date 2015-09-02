@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DGCSequenceProvider implements SequencePublisher {
 
   private final MutableSequence                      dgcSequence;
-  private final CopyOnWriteArrayList<DGCIdPublisher> dgcIdListeners = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArrayList<DGCIdPublisher> dgcIdListeners = new CopyOnWriteArrayList<DGCIdPublisher>();
 
   public DGCSequenceProvider(MutableSequence dgcSequence) {
     this.dgcSequence = dgcSequence;

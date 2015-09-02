@@ -17,8 +17,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class TestGroupManager implements GroupManager<GroupMessage> {
 
   public NodeID                            localNodeID         = new ServerID("Test-Server", new byte[] { 5, 6, 6 });
-  public LinkedBlockingQueue<GroupMessage> broadcastedMessages = new LinkedBlockingQueue<>();
-  public LinkedBlockingQueue<Object[]>     sentMessages        = new LinkedBlockingQueue<>();
+  public LinkedBlockingQueue<GroupMessage> broadcastedMessages = new LinkedBlockingQueue<GroupMessage>();
+  public LinkedBlockingQueue<Object[]>     sentMessages        = new LinkedBlockingQueue<Object[]>();
 
   @Override
   public NodeID getLocalNodeID() {

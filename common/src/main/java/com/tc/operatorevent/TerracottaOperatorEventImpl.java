@@ -178,7 +178,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   public TerracottaOperatorEvent cloneEvent() {
     Map<String, Integer> nodesCopy;
     synchronized (this) {
-      nodesCopy = new HashMap<>(this.nodes);
+      nodesCopy = new HashMap<String, Integer>(this.nodes);
     }
     return new TerracottaOperatorEventImpl(this.eventLevel, this.subSystem, this.eventType, this.time,
                                            this.eventMessage,

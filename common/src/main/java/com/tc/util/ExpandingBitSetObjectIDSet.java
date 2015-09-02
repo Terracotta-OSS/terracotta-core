@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 public class ExpandingBitSetObjectIDSet extends ObjectIDSet {
 
   private int size;
-  private final AATreeSet<BitSet> ranges = new AATreeSet<>();
+  private final AATreeSet<BitSet> ranges = new AATreeSet<BitSet>();
   private volatile int modCount;
 
   public ExpandingBitSetObjectIDSet(Collection<ObjectID> c) {

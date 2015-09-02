@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TCMessageRouterImpl implements TCMessageRouter {
   private static final TCLogger logger       = TCLogging.getLogger(TCMessageRouter.class);
-  private final Map<TCMessageType, TCMessageSink> routesByType = new ConcurrentHashMap<>();
+  private final Map<TCMessageType, TCMessageSink> routesByType = new ConcurrentHashMap<TCMessageType, TCMessageSink>();
   private final TCMessageSink   defaultRoute;
 
   public TCMessageRouterImpl() {

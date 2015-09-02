@@ -24,8 +24,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 abstract class AbstractMessageChannel implements MessageChannelInternal {
 
-  private final ConcurrentMap<String, Object> attachments = new ConcurrentHashMap<>();
-  private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<>();
+  private final ConcurrentMap<String, Object> attachments = new ConcurrentHashMap<String, Object>();
+  private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<ChannelEventListener>();
   private final ChannelStatus                 status      = new ChannelStatus();
   private final TCMessageFactory              msgFactory;
   private final ProductID                     productId;
@@ -155,7 +155,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public void send(TCNetworkMessage message) {
+  public void send(final TCNetworkMessage message) {
     if (logger.isDebugEnabled()) {
       final Runnable logMsg = new Runnable() {
         @Override

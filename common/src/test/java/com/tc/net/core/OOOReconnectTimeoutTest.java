@@ -14,9 +14,13 @@ import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryIm
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -91,10 +95,11 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                                                "Test Server"),
                                                                    new ServerID(),
                                                                    new TransportHandshakeErrorNullHandler(),
-                                                                   Collections.emptyMap(), Collections.emptyMap(), null);
+                                                                   Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                                   Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

@@ -33,7 +33,7 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
   private MemoryPoolMXBean getOldGenMemoryPoolBean() {
     List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
-    List<String> poolNames = new ArrayList<>();
+    List<String> poolNames = new ArrayList<String>();
     for (MemoryPoolMXBean mpBean : pools) {
       String name = mpBean.getName();
       poolNames.add(name);
@@ -47,7 +47,7 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
   private GarbageCollectorMXBean getOldGenCollectorBean() {
     List<GarbageCollectorMXBean> gcs = ManagementFactory.getGarbageCollectorMXBeans();
-    HashMap<String, List<String>> gcs2Pools = new HashMap<>();
+    HashMap<String, List<String>> gcs2Pools = new HashMap<String, List<String>>();
     for (GarbageCollectorMXBean gc : gcs) {
       String[] managedPools = gc.getMemoryPoolNames();
       if (gc.isValid() && managedPools != null) {

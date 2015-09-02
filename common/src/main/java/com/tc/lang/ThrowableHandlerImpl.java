@@ -41,8 +41,8 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
   private static final String                        OOME_ERROR_MSG                  = "Fatal error: out of available memory. Exiting...";
   protected final TCLogger                           logger;
   private final ExceptionHelperImpl                  helper;
-  private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList<>();
-  private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap<>();
+  private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList<CallbackOnExitHandler>();
+  private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap<Class<?>, CallbackOnExitHandler>();
   private final Object                               dumpLock                        = new Object();
 
   private static final long                          TIME_OUT                        = TCPropertiesImpl
@@ -172,7 +172,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     }
   }
 
-  private synchronized void scheduleExit(CallbackOnExitState throwableState) {
+  private synchronized void scheduleExit(final CallbackOnExitState throwableState) {
     if (isExitScheduled) { return; }
     isExitScheduled = true;
 

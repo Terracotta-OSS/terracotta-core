@@ -26,8 +26,8 @@ public class ZipBuilder implements ArchiveBuilder {
 
   private final CRC32           crc32    = new CRC32();
   private final ZipOutputStream zout;
-  private final Set<String>     dirSet   = new HashSet<>();
-  private final Set<String>     entrySet = new HashSet<>();
+  private final Set<String>     dirSet   = new HashSet<String>();
+  private final Set<String>     entrySet = new HashSet<String>();
   private final boolean         verbose;
 
   public ZipBuilder(File archiveFile, boolean useCompression) throws IOException {

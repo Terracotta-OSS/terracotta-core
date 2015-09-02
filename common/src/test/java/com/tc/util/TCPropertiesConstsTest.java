@@ -18,7 +18,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
   // This file resides in src.resource/com/tc/properties directory
   private static final String      DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
-  private static final Set<String> exemptedProperties         = new HashSet<>();
+  private static final Set<String> exemptedProperties         = new HashSet<String>();
 
   private final Properties         props                      = new Properties();
 
@@ -107,7 +107,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
   }
 
   public void testAllConstsDeclared() {
-    Set<String> tcPropertiesConsts = new HashSet<>();
+    Set<String> tcPropertiesConsts = new HashSet<String>();
     Field[] fields = TCPropertiesConsts.class.getDeclaredFields();
     for (Field field : fields) {
       try {
@@ -145,7 +145,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
   }
 
   private static Set<String> getKeys(Properties props) {
-    Set<String> keys = new HashSet<>();
+    Set<String> keys = new HashSet<String>();
     for (Object key : props.keySet()) {
       keys.add((String) key);
     }

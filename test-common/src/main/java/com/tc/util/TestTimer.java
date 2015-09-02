@@ -12,8 +12,8 @@ import java.util.TimerTask;
 
 public class TestTimer extends Timer {
 
-  public List<ScheduleCallContext> scheduleCalls = new ArrayList<>();
-  public List<Object> cancelCalls   = new ArrayList<>();
+  public List<ScheduleCallContext> scheduleCalls = new ArrayList<ScheduleCallContext>();
+  public List<Object> cancelCalls   = new ArrayList<Object>();
 
   @Override
   public void cancel() {

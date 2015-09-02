@@ -28,7 +28,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final LockRequestMessageFactory      messageFactory;
   private final ClientIDProvider               clientIdProvider;
 
-  private final Queue<RecallBatchContext>      queue                       = new LinkedList<>();
+  private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
   private boolean                              shutdown;
 
   private final Timer                          batchRecallTimer;

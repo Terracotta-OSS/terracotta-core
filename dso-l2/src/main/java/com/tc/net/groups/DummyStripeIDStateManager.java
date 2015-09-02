@@ -18,7 +18,7 @@ public class DummyStripeIDStateManager implements StripeIDStateManager {
 
   @Override
   public Map<GroupID, StripeID> getStripeIDMap(boolean fromAACoordinator) {
-    return new HashMap<>();
+    return new HashMap<GroupID, StripeID>();
   }
 
   @Override

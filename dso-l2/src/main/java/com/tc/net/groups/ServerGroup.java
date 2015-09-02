@@ -27,7 +27,7 @@ public class ServerGroup {
   public ServerGroup(ActiveServerGroupConfig group) {
     this.groupId = group.getGroupId();
     this.members = group.getMembers();
-    this.nodes = new ConcurrentHashMap<>();
+    this.nodes = new ConcurrentHashMap<String, Node>();
   }
 
   public ReloadConfigChangeContext reloadGroup(L2ConfigurationSetupManager manager, ActiveServerGroupConfig group)
@@ -43,7 +43,7 @@ public class ServerGroup {
   }
 
   private ArrayList<String> convertStringToList(String[] strArray) {
-    ArrayList<String> list = new ArrayList<>();
+    ArrayList<String> list = new ArrayList<String>();
     for (String str : strArray) {
       list.add(str);
     }

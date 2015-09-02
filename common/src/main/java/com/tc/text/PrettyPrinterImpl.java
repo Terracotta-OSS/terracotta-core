@@ -130,7 +130,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
    * Creates a policy path. Each policy is searched in order.
    */
   private Collection<PrintPolicy> initPolicies() {
-    Collection<PrintPolicy> rv = new ArrayList<>();
+    Collection<PrintPolicy> rv = new ArrayList<PrintPolicy>();
     rv.add(new PrettyPrintablePrintPolicy());
     rv.add(new ShallowMapPrintPolicy());
     rv.add(new ShallowCollectionPrintPolicy());

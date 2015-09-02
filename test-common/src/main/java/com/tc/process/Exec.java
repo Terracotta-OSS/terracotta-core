@@ -68,8 +68,8 @@ public class Exec {
   }
 
   @SuppressWarnings("resource")
-  public static Result execute(Process process, String cmd[], String outputLog, byte[] input, File workingDir,
-                               long timeout) throws Exception {
+  public static Result execute(final Process process, String cmd[], String outputLog, byte[] input, File workingDir,
+                               final long timeout) throws Exception {
     final AtomicBoolean processFinished = new AtomicBoolean();
     if (timeout > 0) {
       Thread timeoutThread = new Thread() {

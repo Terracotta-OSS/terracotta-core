@@ -11,7 +11,6 @@ import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
-import java.util.Optional;
 
 /**
  * @author twu
@@ -23,7 +22,7 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
 
   private byte[] message;
   private EntityDescriptor entityDescriptor;
-  private Optional<Long> responseId = Optional.empty();
+  private Long responseId;
 
   public ServerEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
@@ -43,11 +42,11 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   public void setMessage(EntityDescriptor entityDescriptor, byte[] payload, long responseId) {
     this.entityDescriptor = entityDescriptor;
     this.message = payload;
-    this.responseId = Optional.of(responseId);
+    this.responseId = responseId;
   }
 
   @Override
-  public Optional<Long> getResponseId() {
+  public Long getResponseId() {
     return responseId;
   }
 
@@ -64,9 +63,9 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   @Override
   protected void dehydrateValues() {
     putNVPair(ENTITY_DESCRIPTOR, this.entityDescriptor);
-    responseId.ifPresent(id -> {
-      putNVPair(RESPONSE_ID, id);
-    });
+    if (responseId != null) {
+      putNVPair(RESPONSE_ID, responseId);
+    }
     putNVPair(MESSAGE, message.length);
     getOutputStream().write(message);
   }
@@ -84,7 +83,7 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
         didMatch = true;
         break;
       case RESPONSE_ID:
-        responseId = Optional.of(getLongValue());
+        responseId = getLongValue();
         didMatch = true;
         break;
       default:

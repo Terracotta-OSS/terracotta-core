@@ -176,7 +176,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private boolean notify(ThreadID thread, boolean all) {
     boolean result;
-    final Collection<LockWaiter> waiters = new ArrayList<>();
+    final Collection<LockWaiter> waiters = new ArrayList<LockWaiter>();
 
     synchronized (this) {
       if (!isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
@@ -300,7 +300,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized Stack<LockHold> releaseAll(RemoteLockManager remote, ThreadID thread) {
-    final Stack<LockHold> holds = new Stack<>();
+    final Stack<LockHold> holds = new Stack<LockHold>();
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
       final LockStateNode node = it.next();
       if ((node instanceof LockHold) && node.getOwner().equals(thread)) {
@@ -346,14 +346,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private static <T> Stack<T> copyStack(Stack<T> toCopy) {
-    Stack<T> newStack = new Stack<>();
+    Stack<T> newStack = new Stack<T>();
     newStack.addAll(toCopy);
     return newStack;
   }
 
   @Override
   public synchronized Collection<ClientServerExchangeLockContext> getStateSnapshot(ClientID client) {
-    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<>();
+    final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
 
     switch (this.greediness) {
       case GARBAGE:
@@ -1070,7 +1070,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private void unparkSubsequentTryLocks(LockStateNode node) {
-    Collection<PendingTryLockHold> pending = new ArrayList<>();
+    Collection<PendingTryLockHold> pending = new ArrayList<PendingTryLockHold>();
     synchronized (this) {
       PendingLockHold a = getNextQueuedAcquire(node);
       while (a != null) {
@@ -1268,10 +1268,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private synchronized Collection<ClientServerExchangeLockContext> getFilteredStateSnapshot(ClientID client,
                                                                                             boolean greedy) {
-    final Collection<ClientServerExchangeLockContext> legacyState = new ArrayList<>();
+    final Collection<ClientServerExchangeLockContext> legacyState = new ArrayList<ClientServerExchangeLockContext>();
 
-    final Map<ThreadID, ClientServerExchangeLockContext> holds = new HashMap<>();
-    final Map<ThreadID, ClientServerExchangeLockContext> pends = new HashMap<>();
+    final Map<ThreadID, ClientServerExchangeLockContext> holds = new HashMap<ThreadID, ClientServerExchangeLockContext>();
+    final Map<ThreadID, ClientServerExchangeLockContext> pends = new HashMap<ThreadID, ClientServerExchangeLockContext>();
 
     for (final ClientServerExchangeLockContext context : getStateSnapshot(client)) {
       switch (context.getState()) {
@@ -1313,7 +1313,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   private synchronized Collection<ClientServerExchangeLockContext> getRecallCommitStateSnapshot(ClientID client) {
     final ClientGreediness postRecallGreediness = this.greediness.recallCommitted();
     if (postRecallGreediness.isGreedy()) {
-      final List<ClientServerExchangeLockContext> contexts = new ArrayList<>();
+      final List<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
       contexts.add(postRecallGreediness.toContext(this.lock, client));
       return contexts;
     } else {

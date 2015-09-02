@@ -27,7 +27,7 @@ public class JMXUtils {
    */
   public static JMXConnector getJMXConnector(String username, String password, String host, int port)
       throws MalformedURLException, IOException {
-    Map<String, Object> env = new HashMap<>();
+    Map<String, Object> env = new HashMap<String, Object>();
     if (username != null && password != null) {
       String[] creds = { username, password };
       env.put("jmx.remote.credentials", creds);
@@ -47,7 +47,7 @@ public class JMXUtils {
   public static JMXConnector getSecuredJmxConnector(String username, char[] password, String host, int port) {
     SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
     SslRMIServerSocketFactory ssf = new SslRMIServerSocketFactory();
-    HashMap<String, Object> env = new HashMap<>();
+    HashMap<String, Object> env = new HashMap<String, Object>();
     env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
     env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, ssf);
 

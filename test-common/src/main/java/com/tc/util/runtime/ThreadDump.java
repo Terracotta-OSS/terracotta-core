@@ -177,7 +177,7 @@ public class ThreadDump {
   }
 
   static Set<PID> findAllJavaPIDs() {
-    Set<PID> pids = new HashSet<>();
+    Set<PID> pids = new HashSet<PID>();
 
     File jpsCmd = getProgram("jps");
     if (!jpsCmd.isFile()) {

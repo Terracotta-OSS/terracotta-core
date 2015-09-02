@@ -30,7 +30,7 @@ public class RemoteJMXAttributeProcessor {
                                       new NamedThreadFactory("RemoteJMXAttributeProcessorWorker"));
   }
 
-  public void add(JMXAttributeContext attributeContext) {
+  public void add(final JMXAttributeContext attributeContext) {
     try {
       int retries = 0;
       while (true) {

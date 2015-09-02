@@ -142,7 +142,7 @@ public class ClientMessageTransport extends MessageTransportBase {
    * Do not trigger reconnection
    */
   private void cleanConnectionWithoutNotifyListeners() {
-    List<MessageTransportListener> tl = new ArrayList<>(this.getTransportListeners());
+    List<MessageTransportListener> tl = new ArrayList<MessageTransportListener>(this.getTransportListeners());
     this.removeTransportListeners();
     clearConnection();
     this.addTransportListeners(tl);

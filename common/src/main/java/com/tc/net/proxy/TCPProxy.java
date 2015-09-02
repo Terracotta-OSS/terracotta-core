@@ -42,7 +42,7 @@ public class TCPProxy {
   private ServerSocket              serverSocket;
   private Thread                    acceptThread;
   private volatile boolean          stop;
-  private final Set<Connection>     connections        = new HashSet<>();
+  private final Set<Connection>     connections        = new HashSet<Connection>();
   private final File                logDir;
   private final boolean             logData;
   private boolean                   reuseAddress       = false;

@@ -58,7 +58,7 @@ public class TCLoggingTest extends TCTestCase {
   }
 
   private void createLogs(String logDir) {
-    List<String> params = new ArrayList<>();
+    List<String> params = new ArrayList<String>();
     params.add(logDir);
     LinkedJavaProcess logWorkerProcess = new LinkedJavaProcess(LogWorker.class.getName(), params, null);
     try {

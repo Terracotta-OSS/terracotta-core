@@ -157,8 +157,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
   }
 
   public void testTypedArrayFactory() throws Exception {
-    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<>(
-new TypedArrayFactory() {
+    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>(new TypedArrayFactory() {
 
       @Override
       public String[] createTypedArray(int size) {
@@ -179,7 +178,7 @@ new TypedArrayFactory() {
   }
 
   public void testConcurrentMod() {
-    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<>();
+    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>();
     cam.put(1l, "abc");
     cam.put(2l, "fff");
     Iterator<Long> keyItr = cam.keySet().iterator();

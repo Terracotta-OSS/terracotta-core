@@ -49,7 +49,7 @@ public class DistributedObjectClientFactory {
   }
 
   public DistributedObjectClient create() throws ConfigurationSetupException {
-    final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<>();
+    final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<DistributedObjectClient>();
 
     ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, configSpec, securityManager);
 

@@ -20,8 +20,8 @@ import java.util.List;
 
 public class TestMessageChannel implements MessageChannel {
 
-  public List<CreateMessageContext>               createMessageContexts = new ArrayList<>();
-  public NoExceptionLinkedQueue<TCNetworkMessage> sendQueue             = new NoExceptionLinkedQueue<>();
+  public List<CreateMessageContext>               createMessageContexts = new ArrayList<CreateMessageContext>();
+  public NoExceptionLinkedQueue<TCNetworkMessage> sendQueue             = new NoExceptionLinkedQueue<TCNetworkMessage>();
   public TCMessage                                message;
   public ChannelID                                channelID             = new ChannelID(1);
   private NodeID                                  source                = ClientID.NULL_ID;

@@ -25,7 +25,7 @@ public class OrderedSink implements Sink<OrderedEventContext> {
   private final TCLogger logger;
 
   private long           current = 0;
-  private final SortedSet<OrderedEventContext> pending = new TreeSet<>(new Comparator<OrderedEventContext>() {
+  private final SortedSet<OrderedEventContext> pending = new TreeSet<OrderedEventContext>(new Comparator<OrderedEventContext>() {
       @Override
       public int compare(OrderedEventContext o1, OrderedEventContext o2) {
         long s1 = o1.getSequenceID();

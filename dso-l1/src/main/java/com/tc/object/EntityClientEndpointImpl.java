@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 
 
 public class EntityClientEndpointImpl implements EntityClientEndpoint {
-  private final List<EndpointListener> listeners = new CopyOnWriteArrayList<>();
+  private final List<EndpointListener> listeners = new CopyOnWriteArrayList<EndpointListener>();
   private final InvocationHandler invocationHandler;
   private final byte[] configuration;
   private final EntityDescriptor entityDescriptor;

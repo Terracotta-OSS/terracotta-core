@@ -15,6 +15,7 @@ import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryIm
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
@@ -50,7 +51,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
                                                                            .getLogger(ConnectionHealthCheckerImpl.class);
   TCPProxy                                                proxy        = null;
   int                                                     proxyPort    = 0;
-  private final LinkedBlockingQueue<ClientMessageChannel> channelQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<ClientMessageChannel> channelQueue = new LinkedBlockingQueue<ClientMessageChannel>();
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     super.setUp();
@@ -69,23 +70,27 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     if (serverHCConf != null) {
       serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(), serverMessageRouter,
                                                   networkStackHarnessFactory, new NullConnectionPolicy(), serverHCConf,
-                                                  Collections.emptyMap(), Collections.emptyMap());
+                                                  Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                  Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
     } else {
       serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(), serverMessageRouter,
                                                   networkStackHarnessFactory, new NullConnectionPolicy(),
-                                                  new DisabledHealthCheckerConfigImpl(), Collections.emptyMap(),
-                                                  Collections.emptyMap());
+                                                  new DisabledHealthCheckerConfigImpl(),
+                                                  Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                  Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
     }
 
     if (clientHCConf != null) {
       clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(), clientMessageRouter,
                                                   networkStackHarnessFactory, new NullConnectionPolicy(), clientHCConf,
-                                                  Collections.emptyMap(), Collections.emptyMap());
+                                                  Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                  Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
     } else {
       clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(), clientMessageRouter,
                                                   networkStackHarnessFactory, new NullConnectionPolicy(),
-                                                  new DisabledHealthCheckerConfigImpl(), Collections.emptyMap(),
-                                                  Collections.emptyMap());
+                                                  new DisabledHealthCheckerConfigImpl(),
+                                                  Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                  Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     }
 

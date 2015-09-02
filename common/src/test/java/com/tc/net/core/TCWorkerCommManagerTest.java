@@ -15,11 +15,15 @@ import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryIm
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
@@ -98,7 +102,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 4);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
 
     ClientMessageTransport client1 = createClient("client1", port);
@@ -146,7 +150,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
 
     ClientMessageChannel client1 = createClientMsgCh(port, false);
@@ -200,7 +204,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
 
     ClientMessageChannel client1 = createClientMsgCh(port, false);
@@ -293,10 +297,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                                                "Test Server"),
                                                                    new ServerID(),
                                                                    new TransportHandshakeErrorNullHandler(),
-                                                                   Collections.emptyMap(), Collections.emptyMap(), null);
+                                                                   Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                                   Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();
@@ -390,7 +395,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.stop(5000);
   }
 
-  private static void waitForConnected(ClientMessageChannel... channels) throws Exception {
+  private static void waitForConnected(final ClientMessageChannel... channels) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -404,7 +409,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private static void waitForConnected(ClientMessageTransport... transports) throws Exception {
+  private static void waitForConnected(final ClientMessageTransport... transports) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -418,7 +423,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private static void waitForWeight(CommunicationsManager communicationsManager, int commId, int weight) throws Exception {
+  private static void waitForWeight(final CommunicationsManager communicationsManager, final int commId, final int weight) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -428,7 +433,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private static void waitForTotalWeights(CommunicationsManager communicationsManager, int workers, int weight) throws Exception {
+  private static void waitForTotalWeights(final CommunicationsManager communicationsManager, final int workers, final int weight) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -442,7 +447,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private static void waitForRead(CoreNIOServices commThread) throws Exception {
+  private static void waitForRead(final CoreNIOServices commThread) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -451,7 +456,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private static void waitForWritten(CoreNIOServices commThread) throws Exception {
+  private static void waitForWritten(final CoreNIOServices commThread) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

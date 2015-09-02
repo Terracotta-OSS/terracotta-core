@@ -16,11 +16,15 @@ import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -98,11 +102,12 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
-                                                                         Collections.emptyMap(), Collections.emptyMap(),
+                                                                         Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(),
                                                                          null);
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();
@@ -159,11 +164,12 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
-                                                                         Collections.emptyMap(), Collections.emptyMap(),
+                                                                         Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(),
                                                                          null);
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
-    listener.start(Collections.emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

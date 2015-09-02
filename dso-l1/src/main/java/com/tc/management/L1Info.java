@@ -155,7 +155,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   private String format(Properties properties, String keyPrefix) {
     StringBuffer sb = new StringBuffer();
     Enumeration<?> keys = properties.propertyNames();
-    ArrayList<String> l = new ArrayList<>();
+    ArrayList<String> l = new ArrayList<String>();
 
     while (keys.hasMoreElements()) {
       Object o = keys.nextElement();
@@ -199,7 +199,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     if (args == null) {
       return inputArgs.toArray(new String[inputArgs.size()]);
     } else {
-      List<String> l = new ArrayList<>();
+      List<String> l = new ArrayList<String>();
       l.add(StringUtil.toString(args, " ", null, null));
       l.addAll(inputArgs);
       return l.toArray(new String[l.size()]);
@@ -229,7 +229,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
 
   @Override
   public Map<String, Object> getStatistics() {
-    Map<String, Object> map = new HashMap<>();
+    Map<String, Object> map = new HashMap<String, Object>();
 
     map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
     map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));

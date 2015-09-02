@@ -88,7 +88,7 @@ public class TCFileUtils {
    * copy one file to another. Can also copy directories
    */
   public static void copyFile(File src, File dest) throws IOException {
-    List<CopyTask> queue = new LinkedList<>();
+    List<CopyTask> queue = new LinkedList<CopyTask>();
     queue.add(new CopyTask(src.getCanonicalFile(), dest.getCanonicalFile()));
 
     while (queue.size() > 0) {

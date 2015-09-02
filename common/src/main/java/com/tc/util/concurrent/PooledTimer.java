@@ -68,7 +68,7 @@ class PooledTimer implements Timer {
     cancelled = true;
   }
 
-  private Runnable wrap(Runnable r) {
+  private Runnable wrap(final Runnable r) {
     return (StringUtils.isNotBlank(name)) ? new TimerNamedRunnable() {
       @Override
       public String getName() {

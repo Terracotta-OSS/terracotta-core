@@ -12,8 +12,8 @@ import java.util.TreeSet;
 
 public class DefaultGlobalTransactionIDGenerator implements GlobalTransactionIDGenerator {
 
-  SortedSet<GlobalTransactionID> gidSet = new TreeSet<>();
-  Map<ServerTransactionID, GlobalTransactionID> sid2Gid = new HashMap<>();
+  SortedSet<GlobalTransactionID> gidSet = new TreeSet<GlobalTransactionID>();
+  Map<ServerTransactionID, GlobalTransactionID> sid2Gid = new HashMap<ServerTransactionID, GlobalTransactionID>();
   long      id      = 0;
 
   @Override

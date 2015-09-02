@@ -362,7 +362,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   public void testBasic() throws Exception {
     final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    final List<Object> data = new ArrayList<>();
+    final List<Object> data = new ArrayList<Object>();
     data.add(new ObjectID(1));
     data.add("one");
     data.add(new Boolean(true));

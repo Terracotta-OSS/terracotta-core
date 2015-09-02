@@ -28,8 +28,8 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
   private ReconnectConfig             reconnectConfig;
 
   public void setUp(ReconnectConfig reconnectCfg) {
-    clientReceiveQueue = new LinkedBlockingQueue<>();
-    serverReceiveQueue = new LinkedBlockingQueue<>();
+    clientReceiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
+    serverReceiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
 
     reconnectConfig = reconnectCfg;
     clientDelivery = new TestProtocolMessageDelivery(clientReceiveQueue);

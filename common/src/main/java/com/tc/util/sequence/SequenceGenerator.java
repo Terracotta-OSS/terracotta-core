@@ -24,7 +24,7 @@ public class SequenceGenerator {
 
   }
 
-  private final Map<Object, Sequence>     map = new ConcurrentHashMap<>();
+  private final Map<Object, Sequence>     map = new ConcurrentHashMap<Object, Sequence>();
   private final SequenceGeneratorListener listener;
 
   public SequenceGenerator() {

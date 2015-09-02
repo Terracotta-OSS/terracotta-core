@@ -16,7 +16,7 @@ import java.util.List;
 public class OrderedSinkTest extends TCTestCase {
 
   public void testBasic() throws Exception {
-    MockSink<OrderedEventContext> des = new MockSink<>();
+    MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
     Sink<OrderedEventContext> s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
 
     OrderedEventContext oc = new MyOrderedEventContext(1);
@@ -47,7 +47,7 @@ public class OrderedSinkTest extends TCTestCase {
   }
 
   public void testComplex() throws Exception {
-    MockSink<OrderedEventContext> des = new MockSink<>();
+    MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
     Sink<OrderedEventContext> s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
     
     List<MyOrderedEventContext> l = createOrderedEvents(1000);
@@ -63,7 +63,7 @@ public class OrderedSinkTest extends TCTestCase {
   }
 
   private List<MyOrderedEventContext> createOrderedEvents(int count) {
-    List<MyOrderedEventContext> al = new ArrayList<>(count);
+    List<MyOrderedEventContext> al = new ArrayList<MyOrderedEventContext>(count);
     for (int i = 1; i <= count; i++) {
       al.add(new MyOrderedEventContext(i));
     }

@@ -28,7 +28,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   private final TCLogger             logger;
   private final int                  timeoutInterval;
   private final String               remoteNodeDesc;
-  private final CopyOnWriteArrayList<HealthCheckerSocketConnectEventListener> listeners                     = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArrayList<HealthCheckerSocketConnectEventListener> listeners  = new CopyOnWriteArrayList<HealthCheckerSocketConnectEventListener>();
   private State                      currentState;
   private short                      socketConnectNoReplyWaitCount = 0;
 

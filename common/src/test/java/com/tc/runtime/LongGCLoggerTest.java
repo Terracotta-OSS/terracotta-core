@@ -83,7 +83,7 @@ public class LongGCLoggerTest extends TCTestCase {
   }
 
   private void addObjectsToArrayList() {
-    List<Integer> list = new ArrayList<>();
+    List<Integer> list = new ArrayList<Integer>();
 
     for (int i = 0; i < OBJECT_COUNT; i++) {
       list.add(new Integer(i));

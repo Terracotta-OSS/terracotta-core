@@ -27,7 +27,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   private final Map<ChannelID, MessageChannelInternal> channels;
   private final boolean                                transportDisconnectRemovesChannel;
   private final ServerMessageChannelFactory            channelFactory;
-  private final List<ChannelManagerEventListener>      eventListeners      = new CopyOnWriteArrayList<>();
+  private final List<ChannelManagerEventListener>      eventListeners      = new CopyOnWriteArrayList<ChannelManagerEventListener>();
 
   public ChannelManagerImpl(boolean transportDisconnectRemovesChannel, ServerMessageChannelFactory channelFactory) {
     this.channels = Maps.newHashMap();
@@ -78,7 +78,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
 
   @Override
   public synchronized Set<ChannelID> getAllChannelIDs() {
-    return new HashSet<>(channels.keySet());
+    return new HashSet<ChannelID>(channels.keySet());
   }
 
   @Override

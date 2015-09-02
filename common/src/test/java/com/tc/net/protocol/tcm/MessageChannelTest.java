@@ -62,7 +62,7 @@ public class MessageChannelTest extends TCTestCase {
   ClientMessageChannel         clientChannel;
   MessageSendAndReceiveWatcher clientWatcher;
   MessageSendAndReceiveWatcher serverWatcher;
-  AtomicReference<Throwable>   error         = new AtomicReference<>(null);
+  AtomicReference<Throwable>   error         = new AtomicReference<Throwable>(null);
   SequenceGenerator            sq            = new SequenceGenerator();
 
   // Disabled until MNK-3330
@@ -97,21 +97,21 @@ public class MessageChannelTest extends TCTestCase {
     MessageMonitor mm = new NullMessageMonitor();
     clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, clientMessageRouter,
                                                 clientStackHarnessFactory, new NullConnectionPolicy(),
-                                                new DisabledHealthCheckerConfigImpl(), Collections.emptyMap(),
-                                                Collections.emptyMap());
+                                                new DisabledHealthCheckerConfigImpl(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     serverComms = new CommunicationsManagerImpl("TestCommMgr-server", mm, serverMessageRouter,
                                                 serverStackHarnessFactory, new NullConnectionPolicy(),
-                                                new DisabledHealthCheckerConfigImpl(), Collections.emptyMap(),
-                                                Collections.emptyMap());
+                                                new DisabledHealthCheckerConfigImpl(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
     this.clientChannel = createClientMessageChannel(maxReconnectTries);
     this.setUpClientReceiveSink();
   }
 
-  private void initListener(MessageSendAndReceiveWatcher myClientSenderWatcher,
-                            MessageSendAndReceiveWatcher myServerSenderWatcher, boolean dumbServerSink, int port) throws IOException, TCTimeoutException {
+  private void initListener(final MessageSendAndReceiveWatcher myClientSenderWatcher,
+                            final MessageSendAndReceiveWatcher myServerSenderWatcher, boolean dumbServerSink, int port) throws IOException, TCTimeoutException {
       if (lsnr != null) {
         lsnr.stop(WAIT);
       }
@@ -301,8 +301,8 @@ public class MessageChannelTest extends TCTestCase {
     return rv;
   }
 
-  private void addCommsMappingAndRouting(MessageSendAndReceiveWatcher clientWatcher2,
-                                         MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
+  private void addCommsMappingAndRouting(final MessageSendAndReceiveWatcher clientWatcher2,
+                                         final MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
                                          CommunicationsManager serverComms1) {
     serverComms1.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ((CommunicationsManagerImpl) serverComms1).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
@@ -491,7 +491,7 @@ public class MessageChannelTest extends TCTestCase {
     setUp(0);
     clientChannel.open();
     int count = 100;
-    List<PingMessage> messages = new LinkedList<>();
+    List<PingMessage> messages = new LinkedList<PingMessage>();
     for (int i = 0; i < count; i++) {
       messages.add(createAndSendMessage());
     }
@@ -652,8 +652,8 @@ public class MessageChannelTest extends TCTestCase {
 
   public static class MessageSendAndReceiveWatcher {
 
-    private final Set<Long> sentSequences     = new HashSet<>();
-    private final Set<Long> receivedSequences = new HashSet<>();
+    private final Set<Long> sentSequences     = new HashSet<Long>();
+    private final Set<Long> receivedSequences = new HashSet<Long>();
 
     public synchronized void addMessageSent(PingMessage sent) {
       sentSequences.add(sent.getSequence());

@@ -34,7 +34,7 @@ public class ClusterImpl implements ClusterInternal {
   private volatile NodeInternal                          currentNode;
 
   private final ClusterTopologyImpl                      topology             = new ClusterTopologyImpl();
-  private final CopyOnWriteArrayList<ClusterListener>    listeners            = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArrayList<ClusterListener>    listeners            = new CopyOnWriteArrayList<ClusterListener>();
   private final Object                                   nodeJoinsClusterSync = new Object();
 
   private final ReentrantReadWriteLock                   stateLock            = new ReentrantReadWriteLock();
@@ -284,8 +284,8 @@ public class ClusterImpl implements ClusterInternal {
     firedEventsStatus.operationsDisabledFired();
   }
 
-  private void fireEvent(ClusterEventType eventType, ClusterEvent event,
-                         ClusterListener listener) {
+  private void fireEvent(final ClusterEventType eventType, final ClusterEvent event,
+                         final ClusterListener listener) {
     /**
      * use out-of-band notification depending on listener otherwise use the single threaded eventProcessorSink to
      * process the cluster event.
@@ -380,7 +380,7 @@ public class ClusterImpl implements ClusterInternal {
                                                                          .getProperties()
                                                                          .getLong(TCPropertiesConsts.L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS,
                                                                                   100);
-    private final LinkedBlockingQueue<Runnable> taskQueue            = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Runnable> taskQueue            = new LinkedBlockingQueue<Runnable>();
     private volatile long                       count                = 0;
     private volatile boolean                    shutdown;
 

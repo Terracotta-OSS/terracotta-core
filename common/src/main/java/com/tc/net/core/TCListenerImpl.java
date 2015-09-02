@@ -42,7 +42,7 @@ final class TCListenerImpl implements TCListener {
   private final SetOnceFlag                                  closeEventFired = new SetOnceFlag();
   private final SetOnceFlag                                  stopPending     = new SetOnceFlag();
   private final SetOnceFlag                                  stopped         = new SetOnceFlag();
-  private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<>();
+  private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<TCListenerEventListener>();
   private final ProtocolAdaptorFactory                       factory;
   private final CoreNIOServices                              commNIOServiceThread;
   private final TCSecurityManager                            securityManager;

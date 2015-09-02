@@ -29,20 +29,20 @@ import java.util.Set;
 public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
   public ObjectIDSet            clientObjectIds                = new BitSetObjectIDSet();
   public ObjectIDSet            validateObjectIds              = new BitSetObjectIDSet();
-  public NoExceptionLinkedQueue<Object> sendCalls              = new NoExceptionLinkedQueue<>();
+  public NoExceptionLinkedQueue<Object> sendCalls              = new NoExceptionLinkedQueue<Object>();
   public ClientID               clientID;
-  public List<ClientServerExchangeLockContext> lockContexts    = new ArrayList<>();
+  public List<ClientServerExchangeLockContext> lockContexts    = new ArrayList<ClientServerExchangeLockContext>();
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
   private boolean               enterpriseClient               = false;
-  public NoExceptionLinkedQueue<List<SequenceID>> setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue<>();
-  public NoExceptionLinkedQueue<List<TransactionID>> setTransactionIDsCalls         = new NoExceptionLinkedQueue<>();
-  public List<SequenceID>                   transactionSequenceIDs         = new ArrayList<>();
-  public List<TransactionID>                   transactionIDs                 = new ArrayList<>();
+  public NoExceptionLinkedQueue<List<SequenceID>> setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue<List<SequenceID>>();
+  public NoExceptionLinkedQueue<List<TransactionID>> setTransactionIDsCalls         = new NoExceptionLinkedQueue<List<TransactionID>>();
+  public List<SequenceID>                   transactionSequenceIDs         = new ArrayList<SequenceID>();
+  public List<TransactionID>                   transactionIDs                 = new ArrayList<TransactionID>();
   private TestMessageChannel    channel;
   private String                clientVersion;
-  private final Set<ClientEntityReferenceContext> reconnectReferenceSet = new HashSet<>();
-  private final Set<ResendVoltronEntityMessage> resendMessageSet = new HashSet<>();
+  private final Set<ClientEntityReferenceContext> reconnectReferenceSet = new HashSet<ClientEntityReferenceContext>();
+  private final Set<ResendVoltronEntityMessage> resendMessageSet = new HashSet<ResendVoltronEntityMessage>();
 
   @Override
   public void send() {

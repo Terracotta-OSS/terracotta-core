@@ -30,7 +30,7 @@ public class ThrottledTaskExecutor {
   public ThrottledTaskExecutor(int maxOutstandingTasks) {
     Assert.eval(maxOutstandingTasks > 0);
     this.semaphore = new Semaphore(maxOutstandingTasks);
-    this.scheduledTasks = new ConcurrentLinkedQueue<>();
+    this.scheduledTasks = new ConcurrentLinkedQueue<Task>();
     this.sequenceID = new AtomicLong(0);
   }
 

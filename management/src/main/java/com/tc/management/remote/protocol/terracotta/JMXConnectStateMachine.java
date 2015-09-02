@@ -162,7 +162,7 @@ public class JMXConnectStateMachine {
         return;
       }
 
-      Map<String, Object> environment = new HashMap<>();
+      Map<String, Object> environment = new HashMap<String, Object>();
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(ClientProvider.JMX_MESSAGE_CHANNEL, channel);
       environment.put("jmx.remote.x.request.timeout", Long.valueOf(Long.MAX_VALUE));
@@ -197,9 +197,9 @@ public class JMXConnectStateMachine {
     }
   }
 
-  private static JMXConnector jmxConnect(MessageChannel channel, JMXServiceURL serviceURL, Map<String, Object> environment)
+  private static JMXConnector jmxConnect(MessageChannel channel, final JMXServiceURL serviceURL, final Map<String, Object> environment)
       throws IOException {
-    final AtomicReference<Object> ref = new AtomicReference<>();
+    final AtomicReference<Object> ref = new AtomicReference<Object>();
 
     Thread connectThread = new Thread("JMX Connect for " + channel.getChannelID()) {
       @Override

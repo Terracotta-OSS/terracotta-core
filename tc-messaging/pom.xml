@@ -18,6 +18,10 @@
   <name>Terracotta Messaging</name>
   <version>2.0.0-SNAPSHOT</version>
 
+  <properties>
+    <java.build.version>1.6</java.build.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>

@@ -17,7 +17,7 @@ import java.util.NoSuchElementException;
 public class BitSetObjectIDSet extends ObjectIDSet {
 
   private int size = 0;
-  private final AATreeSet<BitSet> ranges = new AATreeSet<>();
+  private final AATreeSet<BitSet> ranges = new AATreeSet<BitSet>();
   private volatile int modCount = 0;
 
   public BitSetObjectIDSet(Collection<ObjectID> c) {
@@ -41,7 +41,7 @@ public class BitSetObjectIDSet extends ObjectIDSet {
     final int oldSize = this.size;
     final Iterator<BitSet> myRanges = this.ranges.iterator();
     final Iterator<BitSet> otherRanges = o.ranges.iterator();
-    final List<BitSet> toAdd = new ArrayList<>();
+    final List<BitSet> toAdd = new ArrayList<BitSet>();
     BitSet currentMine = null;
     while (otherRanges.hasNext()) {
       if (currentMine == null) {

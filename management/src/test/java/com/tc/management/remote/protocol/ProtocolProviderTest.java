@@ -18,7 +18,7 @@ public class ProtocolProviderTest {
 
   @Test
   public void testJmxEnvSetsClassLoaderDelegatingToThreadContextClassLoader() throws Exception {
-    Map<String, Object> env = new HashMap<>();
+    Map<String, Object> env = new HashMap<String, Object>();
     ProtocolProvider.addTerracottaJmxProvider(env);
 
     assertThat(env.get("jmx.remote.default.class.loader"), is(notNullValue()));

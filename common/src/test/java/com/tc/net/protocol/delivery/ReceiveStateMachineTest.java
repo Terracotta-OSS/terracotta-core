@@ -19,7 +19,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class ReceiveStateMachineTest extends TCTestCase {
 
   public void tests() throws Exception {
-    BlockingQueue<TCNetworkMessage> receiveQueue = new LinkedBlockingQueue<>();
+    BlockingQueue<TCNetworkMessage> receiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);
     ReceiveStateMachine rsm = new ReceiveStateMachine(delivery, new L1ReconnectConfigImpl(), true);
     TestProtocolMessage tpm = new TestProtocolMessage();

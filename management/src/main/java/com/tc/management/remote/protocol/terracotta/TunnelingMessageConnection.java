@@ -30,7 +30,7 @@ public class TunnelingMessageConnection implements MessageConnection {
    */
   public TunnelingMessageConnection(MessageChannel channel, boolean isJmxConnectionServer) {
     this.isJmxConnectionServer = new AtomicBoolean(isJmxConnectionServer);
-    this.inbox = new LinkedBlockingQueue<>();
+    this.inbox = new LinkedBlockingQueue<Message>();
     this.channel = channel;
   }
 

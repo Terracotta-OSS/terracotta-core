@@ -15,7 +15,7 @@ import static org.junit.matchers.JUnitMatchers.hasItems;
 public class TCConcurrentMultiMapTest {
   @Test
   public void testAdd() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
     assertTrue(mmap.add("foo", "bar"));
     assertTrue(mmap.get("foo").contains("bar"));
     assertFalse(mmap.add("foo", "baz"));
@@ -31,7 +31,7 @@ public class TCConcurrentMultiMapTest {
 
   @Test
   public void testRemove() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
     mmap.add("foo", "bar");
     mmap.add("foo", "baz");
     assertTrue(mmap.remove("foo", "bar"));
@@ -49,7 +49,7 @@ public class TCConcurrentMultiMapTest {
 
   @Test
   public void testRemoveAll() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
     mmap.add("foo", "bar");
     mmap.add("foo", "baz");
     mmap.add("foo", "boo");
@@ -59,7 +59,7 @@ public class TCConcurrentMultiMapTest {
 
   @Test
   public void testAddAll() throws Exception {
-    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<>();
+    TCConcurrentMultiMap<String, String> mmap = new TCConcurrentMultiMap<String, String>();
     assertTrue(mmap.addAll("foo", Sets.newSet("bar", "baz", "boo")));
     assertThat(mmap.get("foo"), hasItems("bar", "baz", "boo"));
     assertTrue(mmap.remove("foo", "boo"));

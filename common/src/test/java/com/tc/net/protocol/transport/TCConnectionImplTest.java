@@ -151,7 +151,7 @@ public class TCConnectionImplTest extends TestCase {
 
   private TCNetworkMessage getMessages(int bufCunt) {
     MessageMonitor monitor = new NullMessageMonitor();
-    ArrayList<TCByteBuffer> bufs = new ArrayList<>();
+    ArrayList<TCByteBuffer> bufs = new ArrayList<TCByteBuffer>();
     int len = 0;
     long totLen = 0;
     while (bufCunt > 0) {

@@ -22,7 +22,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   private static final int           RECONNECTION_REJECTED = 6;
 
   protected ConnectionIdLogger       logger;
-  private final CopyOnWriteArrayList<MessageTransportListener> listeners             = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArrayList<MessageTransportListener> listeners             = new CopyOnWriteArrayList<MessageTransportListener>();
 
   public AbstractMessageTransport(TCLogger logger) {
     this.logger = new ConnectionIdLogger(this, logger);

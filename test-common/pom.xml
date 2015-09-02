@@ -20,6 +20,10 @@
   <packaging>jar</packaging>
   <name>test-common</name>
 
+  <properties>
+    <java.build.version>1.6</java.build.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class PwProviderUtil {
 
-  private static AtomicReference<PwProvider> backend = new AtomicReference<>();
+  private static AtomicReference<PwProvider> backend = new AtomicReference<PwProvider>();
 
   public static char[] getPasswordTo(URI uri) {
     final PwProvider tcSecurityManager = backend.get();

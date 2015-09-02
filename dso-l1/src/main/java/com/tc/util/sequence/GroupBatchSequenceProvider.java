@@ -9,7 +9,7 @@ import java.util.LinkedList;
 public class GroupBatchSequenceProvider implements BatchSequenceProvider, BatchSequenceReceiver {
   private final int                   requestBatchSize;
   private final BatchSequenceProvider remoteSequenceProvider;
-  private final LinkedList<Request>   requests                 = new LinkedList<>();
+  private final LinkedList<Request>   requests                 = new LinkedList<Request>();
   private SequenceBatch               currentBatchIdsAvailable = new SequenceBatch(0, 0);
   private boolean                     isRequestInProgress      = false;
 

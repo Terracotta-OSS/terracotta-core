@@ -27,7 +27,7 @@ public class ClientProvider implements JMXConnectorProvider {
                                                                   + jmxserviceurl.getProtocol());
       throw exception;
     }
-    final Map<String, Object> terracottaEnvironment = initialEnvironment != null ? new HashMap<>(initialEnvironment) : new HashMap<>();
+    final Map<String, Object> terracottaEnvironment = initialEnvironment != null ? new HashMap<String, Object>(initialEnvironment) : new HashMap<String, Object>();
     final MessageChannel channel = (MessageChannel) terracottaEnvironment.remove(JMX_MESSAGE_CHANNEL);
     final TunnelingMessageConnectionWrapper tmc = new TunnelingMessageConnectionWrapper(channel, false);
 

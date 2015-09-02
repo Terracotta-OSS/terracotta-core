@@ -44,7 +44,7 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     
   }
   

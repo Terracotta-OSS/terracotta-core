@@ -16,7 +16,7 @@ import java.util.Map;
 public class TSAManagementEventPayload implements Serializable {
 
   private String type;
-  private final Map<String, Object> attributes = new HashMap<>();
+  private final Map<String, Object> attributes = new HashMap<String, Object>();
 
   public TSAManagementEventPayload() {
   }

@@ -35,7 +35,7 @@ public class TCNotRunningTest extends TestCase {
       stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory<TestEventContext>());
       callbackOnExitHandler = new TestCallbackOnExitHandler();
       throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
-      testHandler = new TestHandler<>();
+      testHandler = new TestHandler<TestEventContext>();
     } catch (Throwable t) {
       t.printStackTrace();
     }

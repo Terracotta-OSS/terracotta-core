@@ -85,7 +85,7 @@ public class VersionTest extends TestCase {
   }
   
   public void testSortList() {
-    List<Version> stuff = new ArrayList<>();
+    List<Version> stuff = new ArrayList<Version>();
     stuff.add(new Version("1.2.0")); 
     stuff.add(new Version("1.1.0-SNAPSHOT"));
     stuff.add(new Version("1.1.0"));

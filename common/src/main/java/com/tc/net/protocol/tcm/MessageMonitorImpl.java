@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageMonitorImpl implements MessageMonitor {
 
-  private final Map<TCMessageType, MessageCounter> counters     = new TreeMap<>(
+  private final Map<TCMessageType, MessageCounter> counters     = new TreeMap<TCMessageType, MessageCounter>(
                                                                                                              new TCMessageTypeComparator());
   private final StringFormatter                    formatter    = new StringFormatter();
   private final Timer                              timer;
@@ -40,7 +40,7 @@ public class MessageMonitorImpl implements MessageMonitor {
     this.timer = new Timer("MessageMonitor logger", true);
   }
 
-  public void startLogging(TCLogger logger, int intervalSeconds) {
+  public void startLogging(final TCLogger logger, int intervalSeconds) {
     if (intervalSeconds < 1) { throw new IllegalArgumentException("invalid interval: " + intervalSeconds); }
     TimerTask task = new TimerTask() {
       @Override

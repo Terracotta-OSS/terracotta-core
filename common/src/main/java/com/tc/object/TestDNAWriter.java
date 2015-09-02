@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TestDNAWriter implements DNAWriter {
-  private final List<Object> actions = new ArrayList<>();
+  private final List<Object> actions = new ArrayList<Object>();
 
   public TestDNAWriter() {
     //

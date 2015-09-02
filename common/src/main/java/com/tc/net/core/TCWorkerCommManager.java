@@ -65,7 +65,7 @@ public class TCWorkerCommManager {
   }
 
   private List<CoreNIOServices> getLeastWeightWorkerComms() {
-    List<CoreNIOServices> selectedWorkerComms = new ArrayList<>();
+    List<CoreNIOServices> selectedWorkerComms = new ArrayList<CoreNIOServices>();
     int leastValue = Integer.MAX_VALUE;
     for (CoreNIOServices workerComm : workerCommThreads) {
       int presentValue = workerComm.getWeight();

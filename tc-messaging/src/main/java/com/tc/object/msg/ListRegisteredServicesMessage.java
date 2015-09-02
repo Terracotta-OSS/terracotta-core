@@ -25,7 +25,7 @@ public class ListRegisteredServicesMessage extends AbstractManagementMessage {
   private static final byte SERVICE_IDS = 1;
   private static final byte INCLUDE_CALL_DESCRIPTORS = 2;
 
-  private ServiceIDCollection serviceIDs = new ServiceIDCollection();
+  private TCSerializableCollection<ServiceID> serviceIDs = new ServiceIDCollection();
   private boolean includeCallDescriptors;
 
   public ListRegisteredServicesMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
@@ -66,7 +66,7 @@ public class ListRegisteredServicesMessage extends AbstractManagementMessage {
     if (!super.hydrateValue(name)) {
       switch (name) {
         case SERVICE_IDS:
-          serviceIDs = (ServiceIDCollection)getObject(new ServiceIDCollection());
+          serviceIDs = this.<TCSerializableCollection<ServiceID>>getObject(new ServiceIDCollection());
           return true;
 
         case INCLUDE_CALL_DESCRIPTORS:

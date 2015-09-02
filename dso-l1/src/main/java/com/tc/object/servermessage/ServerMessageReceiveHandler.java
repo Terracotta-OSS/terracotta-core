@@ -25,11 +25,12 @@ public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
     ServerEntityMessage message = (ServerEntityMessage) context;
     EntityDescriptor entityDescriptor = message.getEntityDescriptor();
     clientEntityManager.handleMessage(entityDescriptor, message.getMessage());
-    message.getResponseId().ifPresent(responseId -> {
+    Long responseId = message.getResponseId();
+    if (responseId != null) {
       ServerEntityResponseMessage response = (ServerEntityResponseMessage) clientMessageChannel.createMessage(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE);
       response.setResponseId(responseId);
       response.send();
-    });
+    };
   }
 
   @Override
