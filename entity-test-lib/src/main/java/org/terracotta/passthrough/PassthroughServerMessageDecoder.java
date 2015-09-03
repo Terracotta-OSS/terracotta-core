@@ -139,6 +139,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
       case LOCK_ACQUIRE: {
         // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
         // "clientInstanceIDs" for maintenance mode refs).
+        String entityClassName = input.readUTF();
         String entityName = input.readUTF();
         Runnable onAcquire = new Runnable() {
           @Override
@@ -150,7 +151,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
           }
         };
         try {
-          this.messageHandler.acquireWriteLock(sender, entityName, onAcquire);
+          this.messageHandler.acquireWriteLock(sender, entityClassName, entityName, onAcquire);
         } catch (Exception error) {
           // An unexpected exception is the only case where we send the response at this level.
           sendCompleteResponse(sender, transactionID, null, error);
@@ -160,11 +161,12 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
       case LOCK_RELEASE: {
         // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
         // "clientInstanceIDs" for maintenance mode refs).
+        String entityClassName = input.readUTF();
         String entityName = input.readUTF();
         byte[] response = null;
         Exception error = null;
         try {
-          this.messageHandler.releaseWriteLock(sender, entityName);
+          this.messageHandler.releaseWriteLock(sender, entityClassName, entityName);
           response = new byte[0];
         } catch (Exception e) {
           error = e;
@@ -232,7 +234,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     void fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version, IFetchResult onFetch);
     void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws Exception;
     byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws Exception;
-    void acquireWriteLock(IMessageSenderWrapper sender, String entityName, Runnable onAcquire);
-    void releaseWriteLock(IMessageSenderWrapper sender, String entityName);
+    void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
+    void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
   }
 }

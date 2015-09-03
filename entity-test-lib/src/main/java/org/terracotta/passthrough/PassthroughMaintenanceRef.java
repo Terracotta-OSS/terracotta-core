@@ -30,7 +30,7 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
     this.entityName = name;
     
     // A maintenance ref needs the write-lock on this entity name.
-    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.entityName);
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.entityClass, this.entityName);
     try {
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
     } catch (InterruptedException e) {
@@ -87,7 +87,7 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
   @Override
   public void close() {
     // Release our write-lock.
-    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.entityName);
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.entityClass, this.entityName);
     try {
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
     } catch (InterruptedException e) {

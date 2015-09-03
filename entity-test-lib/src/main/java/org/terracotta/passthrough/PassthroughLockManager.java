@@ -22,51 +22,51 @@ import java.util.Vector;
  * changes, in the future, if that becomes multi-threaded.
  */
 public class PassthroughLockManager {
-  private final Map<String, LockState> locks;
+  private final Map<PassthroughEntityTuple, LockState> locks;
 
   public PassthroughLockManager() {
-    this.locks = new HashMap<String, LockState>();
+    this.locks = new HashMap<PassthroughEntityTuple, LockState>();
   }
 
-  public void acquireWriteLock(String entityName, PassthroughConnection sender, Runnable onAcquire) {
-    LockState state = getStateForName(entityName);
+  public void acquireWriteLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, Runnable onAcquire) {
+    LockState state = getStateForName(entityTuple);
     // Write-locks have no clientInstanceID.
     long clientInstanceID = 0;
     Target target = new Target(sender, clientInstanceID, onAcquire);
     state.writeWaits.add(target);
-    findAndAwardNewOwners(state, entityName);
+    findAndAwardNewOwners(state);
   }
 
-  public void releaseWriteLock(String entityName, PassthroughConnection sender) {
-    LockState state = getStateForName(entityName);
+  public void releaseWriteLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender) {
+    LockState state = getStateForName(entityTuple);
     // Write-locks have no clientInstanceID.
     long clientInstanceID = 0;
     Target target = new Target(sender, clientInstanceID, null);
     Assert.assertTrue(state.writeOwner.equals(target));
     state.writeOwner = null;
-    findAndAwardNewOwners(state, entityName);
+    findAndAwardNewOwners(state);
   }
 
-  public void acquireReadLock(String entityName, PassthroughConnection sender, long clientInstanceID, Runnable onAcquire) {
-    LockState state = getStateForName(entityName);
+  public void acquireReadLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, long clientInstanceID, Runnable onAcquire) {
+    LockState state = getStateForName(entityTuple);
     Target target = new Target(sender, clientInstanceID, onAcquire);
     state.readWaits.add(target);
-    findAndAwardNewOwners(state, entityName);
+    findAndAwardNewOwners(state);
   }
 
-  public void releaseReadLock(String entityName, PassthroughConnection sender, long clientInstanceID) {
-    LockState state = getStateForName(entityName);
+  public void releaseReadLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, long clientInstanceID) {
+    LockState state = getStateForName(entityTuple);
     Target target = new Target(sender, clientInstanceID, null);
     boolean didRemove = state.readOwners.remove(target);
     Assert.assertTrue(didRemove);
-    findAndAwardNewOwners(state, entityName);
+    findAndAwardNewOwners(state);
   }
 
-  private LockState getStateForName(String entityName) {
-    LockState state = this.locks.get(entityName);
+  private LockState getStateForName(PassthroughEntityTuple entityTuple) {
+    LockState state = this.locks.get(entityTuple);
     if (null == state) {
       state = new LockState();
-      this.locks.put(entityName, state);
+      this.locks.put(entityTuple, state);
     }
     return state;
   }
@@ -75,9 +75,8 @@ public class PassthroughLockManager {
    * Called whenever a lock state changes (either someone released or tried to acquire) to determine any ownership change.
    * 
    * @param state
-   * @param entityName
    */
-  private void findAndAwardNewOwners(LockState state, String entityName) {
+  private void findAndAwardNewOwners(LockState state) {
     // If the write lock is owned, we can't change anything.
     boolean isWriteOwned = (null != state.writeOwner);
     if (!isWriteOwned) {
