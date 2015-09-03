@@ -33,7 +33,7 @@ public class TCLoggingTest extends TCTestCase {
     }
   }
 
-  public void testRollover() {
+  public void testRollover() throws Exception {
     String logDir = "/tmp/terracotta/test/com/tc/logging";
     File logDirFolder = new File(logDir);
     logDirFolder.mkdirs();
@@ -86,13 +86,14 @@ public class TCLoggingTest extends TCTestCase {
         new ByteArrayInputStream(dirbytes.toByteArray()))).getProperty("whoami"), "userdir");
   }
 
-  private void createLogs(String logDir) {
+  private void createLogs(String logDir) throws Exception {
     List<String> params = new ArrayList<String>();
     params.add(logDir);
     LinkedJavaProcess logWorkerProcess = new LinkedJavaProcess(LogWorker.class.getName(), params, null);
+    logWorkerProcess.setDirectory(getTempDirectory());
     try {
       logWorkerProcess.start();
-      Result result = Exec.execute(logWorkerProcess, logWorkerProcess.getCommand(), null, null, null);
+      Result result = Exec.execute(logWorkerProcess, logWorkerProcess.getCommand(), null, null, getTempDirectory());
       if (result.getExitCode() != 0) { throw new AssertionError("LogWorker Exit code is " + result.getExitCode()); }
 
     } catch (Exception e) {
