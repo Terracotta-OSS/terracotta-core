@@ -36,7 +36,6 @@ public class PassthroughServerProcess implements MessageHandler {
     this.isRunning = true;
     this.entityServices = new Vector<ServerEntityService<?, ?>>();
     this.serverThread = new Thread(new Runnable() {
-
       @Override
       public void run() {
         runServerThread();
@@ -127,12 +126,13 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public byte[] invoke(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, byte[] payload) throws Exception {
+  public byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws Exception {
     byte[] response = null;
     if (null != this.activeEntities) {
       // Invoke on active.
       ActiveServerEntity entity = this.activeEntities.get(entityName);
       if (null != entity) {
+        PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
         response = entity.invoke(clientDescriptor, payload);
       } else {
         throw new Exception("Not fetched");
@@ -151,7 +151,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public byte[] fetch(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, long version) throws Exception {
+  public byte[] fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version) throws Exception {
     byte[] config = null;
     // Fetch should never be replicated and only handled on the active.
     Assert.assertTrue(null != this.activeEntities);
@@ -161,6 +161,7 @@ public class PassthroughServerProcess implements MessageHandler {
       if (service.getVersion() != version) {
         throw new Exception("Version mis-match");
       }
+      PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.connected(clientDescriptor);
       config = entity.getConfig();
     } else {
@@ -170,11 +171,12 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public void release(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName) throws Exception {
+  public void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws Exception {
     // Release should never be replicated and only handled on the active.
     Assert.assertTrue(null != this.activeEntities);
     ActiveServerEntity entity = this.activeEntities.get(entityName);
     if (null != entity) {
+      PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.disconnected(clientDescriptor);
     } else {
       throw new Exception("Not found");
@@ -239,7 +241,6 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassive = serverProcess;
   }
-
 
 
   private static class MessageContainer {

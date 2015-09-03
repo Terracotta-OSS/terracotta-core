@@ -84,9 +84,8 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         Exception error = null;
         try {
-          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           // We respond with the config, if found.
-          response = this.messageHandler.fetch(clientDescriptor, entityClassName, entityName, version);
+          response = this.messageHandler.fetch(sender, clientInstanceID, entityClassName, entityName, version);
         } catch (Exception e) {
           error = e;
         }
@@ -100,9 +99,8 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         Exception error = null;
         try {
-          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           // There is no response on successful delete.
-          this.messageHandler.release(clientDescriptor, entityClassName, entityName);
+          this.messageHandler.release(sender, clientInstanceID, entityClassName, entityName);
         } catch (Exception e) {
           error = e;
         }
@@ -118,9 +116,8 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         Exception error = null;
         try {
-          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           // We respond with the config, if found.
-          response = this.messageHandler.invoke(clientDescriptor, entityClassName, entityName, payload);
+          response = this.messageHandler.invoke(sender, clientInstanceID, entityClassName, entityName, payload);
         } catch (Exception e) {
           error = e;
         }
@@ -186,8 +183,8 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   public static interface MessageHandler {
     void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws Exception;
     void destroy(String entityClassName, String entityName) throws Exception;
-    byte[] fetch(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, long version) throws Exception;
-    void release(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName) throws Exception;
-    byte[] invoke(PassthroughClientDescriptor clientDescriptor, String entityClassName, String entityName, byte[] payload) throws Exception;
+    byte[] fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version) throws Exception;
+    void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws Exception;
+    byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws Exception;
   }
 }
