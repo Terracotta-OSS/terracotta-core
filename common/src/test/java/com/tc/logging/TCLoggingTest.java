@@ -10,11 +10,16 @@ import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import org.junit.Test;
 
 
 public class TCLoggingTest extends TCTestCase {
@@ -28,7 +33,7 @@ public class TCLoggingTest extends TCTestCase {
     }
   }
 
-  public void testRollover() {
+  public void testRollover() throws Exception {
     String logDir = "/tmp/terracotta/test/com/tc/logging";
     File logDirFolder = new File(logDir);
     logDirFolder.mkdirs();
@@ -56,14 +61,39 @@ public class TCLoggingTest extends TCTestCase {
     Assert.assertEquals(LOG_ITERATIONS + 1, logFileCount);
 
   }
+  
+  @Test
+  public void testDeveloperOverlay() throws Exception {
+    Properties classpath = new Properties();
+    Properties userhome = new Properties();
+    Properties userdir = new Properties();
+    
+    classpath.setProperty("whoami", "classpath");
+    userhome.setProperty("whoami", "userhome");
+    userdir.setProperty("whoami", "userdir");
+    
+    ByteArrayOutputStream classbytes = new ByteArrayOutputStream();
+    ByteArrayOutputStream homebytes = new ByteArrayOutputStream();
+    ByteArrayOutputStream dirbytes = new ByteArrayOutputStream();
+    
+    classpath.store(classbytes, null);
+    userhome.store(homebytes, null);
+    userdir.store(dirbytes, null);
+    
+    Assert.assertEquals(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+        new ByteArrayInputStream(classbytes.toByteArray()),
+        new ByteArrayInputStream(homebytes.toByteArray()),
+        new ByteArrayInputStream(dirbytes.toByteArray()))).getProperty("whoami"), "userdir");
+  }
 
-  private void createLogs(String logDir) {
+  private void createLogs(String logDir) throws Exception {
     List<String> params = new ArrayList<String>();
     params.add(logDir);
     LinkedJavaProcess logWorkerProcess = new LinkedJavaProcess(LogWorker.class.getName(), params, null);
+    logWorkerProcess.setDirectory(getTempDirectory());
     try {
       logWorkerProcess.start();
-      Result result = Exec.execute(logWorkerProcess, logWorkerProcess.getCommand(), null, null, null);
+      Result result = Exec.execute(logWorkerProcess, logWorkerProcess.getCommand(), null, null, getTempDirectory());
       if (result.getExitCode() != 0) { throw new AssertionError("LogWorker Exit code is " + result.getExitCode()); }
 
     } catch (Exception e) {
