@@ -6,7 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
@@ -31,7 +34,13 @@ public class PassthroughConnection implements Connection {
   // ivars related to message passing and client thread.
   private boolean isRunning;
   private Thread clientThread;
-  private List<byte[]> messageQueue;
+  private final List<byte[]> messageQueue;
+  // NOTE:  this queue exists to carry any Futures pushed in when the server-side injects a message to the client.
+  // This approach is an ugly work-around for limitations imposed by running the server message processing and server
+  // execution on a single thread.  Ideally, we would send another message to the server, in this case, to better emulate
+  // the real implementation.
+  // TODO:  Remove this in favor of splitting the server-side execution thread from its message processing thread.
+  private final List<Waiter> clientResponseWaitQueue;
 
 
   public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices) {
@@ -50,6 +59,7 @@ public class PassthroughConnection implements Connection {
       }
     });
     this.messageQueue = new Vector<byte[]>();
+    this.clientResponseWaitQueue = new Vector<Waiter>();
     
     // Note:  This should probably not be in the constructor.
     this.clientThread.start();
@@ -125,7 +135,6 @@ public class PassthroughConnection implements Connection {
 
   private void clientThreadHandleMessage(byte[] message) {
     PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughMessageCodec.Decoder<Void>() {
-
       @Override
       public Void decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
         switch (type) {
@@ -158,7 +167,12 @@ public class PassthroughConnection implements Connection {
             int length = input.readInt();
             byte[] result = new byte[length];
             input.readFully(result);
+            // First we handle the invoke.
             handleInvokeOnClient(clientInstanceID, result);
+            // Now, we need to send this response as a sort of ack, to the server.  They typically don't wait for it but
+            // they can.
+            // TODO:  Remove this in favor of splitting the server-side execution thread from its message processing thread.
+            PassthroughConnection.this.clientResponseWaitQueue.remove(0).finish();
             break;
           }
           case CREATE_ENTITY:
@@ -229,5 +243,48 @@ public class PassthroughConnection implements Connection {
     long thisClientEndpointID = this.nextClientEndpointID;
     this.nextClientEndpointID += 1;
     return thisClientEndpointID;
+  }
+
+  public synchronized Future<Void> createClientResponseFuture() {
+    Waiter waiter = new Waiter();
+    this.clientResponseWaitQueue.add(waiter);
+    return waiter;
+  }
+
+
+  // TODO:  Remove this in favor of splitting the server-side execution thread from its message processing thread and using
+  // a real message, instead of this shared Future.
+  private static class Waiter implements Future<Void> {
+    private boolean isDone = false;
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      Assert.unreachable();
+      return false;
+    }
+    @Override
+    public synchronized Void get() throws InterruptedException, ExecutionException {
+      while (!this.isDone) {
+        wait();
+      }
+      return null;
+    }
+    @Override
+    public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      Assert.unreachable();
+      return null;
+    }
+    @Override
+    public boolean isCancelled() {
+      Assert.unreachable();
+      return false;
+    }
+    @Override
+    public synchronized boolean isDone() {
+      return this.isDone;
+    }
+    public synchronized void finish() {
+      this.isDone = true;
+      notifyAll();
+    }
   }
 }

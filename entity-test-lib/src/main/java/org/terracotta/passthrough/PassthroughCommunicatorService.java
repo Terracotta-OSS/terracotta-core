@@ -16,18 +16,12 @@ import org.terracotta.entity.ServiceConfiguration;
 public class PassthroughCommunicatorService implements Service<ClientCommunicator>, ClientCommunicator {
   @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
-    PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;
-    PassthroughConnection connection = rawDescriptor.sender;
-    long clientInstanceID = rawDescriptor.clientInstanceID;
-    PassthroughMessage message = PassthroughMessageCodec.createMessageToClient(clientInstanceID, payload);
-    connection.sendMessageToClient(message.asSerializedBytes());
+    prepareAndSendMessage(clientDescriptor, payload);
   }
 
   @Override
   public Future<Void> send(ClientDescriptor clientDescriptor, byte[] payload) {
-    // TODO:  Handle the case where we want to block here.
-    Assert.unimplemented();
-    return null;
+    return prepareAndSendMessage(clientDescriptor, payload);
   }
 
   @Override
@@ -42,5 +36,15 @@ public class PassthroughCommunicatorService implements Service<ClientCommunicato
   @Override
   public void destroy() {
     // Do nothing.
+  }
+
+  private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, byte[] payload) {
+    PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;
+    PassthroughConnection connection = rawDescriptor.sender;
+    long clientInstanceID = rawDescriptor.clientInstanceID;
+    Future<Void> waiter = connection.createClientResponseFuture();
+    PassthroughMessage message = PassthroughMessageCodec.createMessageToClient(clientInstanceID, payload);
+    connection.sendMessageToClient(message.asSerializedBytes());
+    return waiter;
   }
 }
