@@ -220,17 +220,20 @@ public class PassthroughServerProcess implements MessageHandler {
     }
     // TODO:  Make this ID real.
     long consumerID = 0;
+    CommonServerEntity newEntity = null;
     if (null != this.activeEntities) {
       PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
-      ActiveServerEntity entity = null;
-      entity = service.createActiveEntity(registry, serializedConfiguration);
+      ActiveServerEntity entity = service.createActiveEntity(registry, serializedConfiguration);
       this.activeEntities.put(entityName, entity);
+      newEntity = entity;
     } else {
       PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
-      PassiveServerEntity entity = null;
-      entity = service.createPassiveEntity(registry, serializedConfiguration);
+      PassiveServerEntity entity = service.createPassiveEntity(registry, serializedConfiguration);
       this.passiveEntities.put(entityName, entity);
+      newEntity = entity;
     }
+    // Tell the entity to create itself as something new.
+    newEntity.createNew();
   }
 
   @Override
