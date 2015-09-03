@@ -12,4 +12,9 @@ public interface IMessageSenderWrapper {
   void sendAck(PassthroughMessage ack);
   void sendComplete(PassthroughMessage complete);
   PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID);
+  /**
+   * Returns the underlying connection on the client.
+   * NOTE:  This can only be used for identity-matching purposes (could be replaced with a client-unique ID, later on).
+   */
+  PassthroughConnection getClientOrigin();
 }

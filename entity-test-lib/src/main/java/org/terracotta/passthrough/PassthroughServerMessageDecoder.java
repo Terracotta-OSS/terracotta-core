@@ -25,7 +25,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     this.message = message;
   }
   @Override
-  public Void decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+  public Void decode(Type type, boolean shouldReplicate, final long transactionID, DataInputStream input) throws IOException {
     // First step, send the ack.
     PassthroughMessage ack = PassthroughMessageCodec.createAckMessage();
     ack.setTransactionID(transactionID);
@@ -81,15 +81,21 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         String entityName = input.readUTF();
         long clientInstanceID = input.readLong();
         long version = input.readLong();
-        byte[] response = null;
-        Exception error = null;
+        
+        // Note that the fetch is asynchronous since it may be blocked acquiring the read-lock (which is asynchronous).
+        IFetchResult onFetch = new IFetchResult() {
+          @Override
+          public void onFetchComplete(byte[] config, Exception error) {
+            sendCompleteResponse(sender, transactionID, config, error);
+          }
+        };
         try {
-          // We respond with the config, if found.
-          response = this.messageHandler.fetch(sender, clientInstanceID, entityClassName, entityName, version);
-        } catch (Exception e) {
-          error = e;
+          this.messageHandler.fetch(sender, clientInstanceID, entityClassName, entityName, version, onFetch);
+        } catch (Exception error) {
+          // An unexpected exception is the only case where we send the response at this level.
+          byte[] response = null;
+          sendCompleteResponse(sender, transactionID, response, error);
         }
-        sendCompleteResponse(sender, transactionID, response, error);
         break;
       }
       case RELEASE_ENTITY: {
@@ -130,6 +136,42 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         // Not invoked on server.
         Assert.unreachable();
         break;
+      case LOCK_ACQUIRE: {
+        // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
+        // "clientInstanceIDs" for maintenance mode refs).
+        String entityName = input.readUTF();
+        Runnable onAcquire = new Runnable() {
+          @Override
+          public void run() {
+            // We will just send an empty response, with no error, on acquire.
+            byte[] response = new byte[0];
+            Exception error = null;
+            sendCompleteResponse(sender, transactionID, response, error);
+          }
+        };
+        try {
+          this.messageHandler.acquireWriteLock(sender, entityName, onAcquire);
+        } catch (Exception error) {
+          // An unexpected exception is the only case where we send the response at this level.
+          sendCompleteResponse(sender, transactionID, null, error);
+        }
+        break;
+      }
+      case LOCK_RELEASE: {
+        // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
+        // "clientInstanceIDs" for maintenance mode refs).
+        String entityName = input.readUTF();
+        byte[] response = null;
+        Exception error = null;
+        try {
+          this.messageHandler.releaseWriteLock(sender, entityName);
+          response = new byte[0];
+        } catch (Exception e) {
+          error = e;
+        }
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
       default:
         Assert.unreachable();
         break;
@@ -148,7 +190,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
    * In the case where we are an active sending a message to a downstream passive, we use this implementation to provide the
    * basic interlock across the 2 threads.
    */
-  private static class ServerSender implements IMessageSenderWrapper {
+  private class ServerSender implements IMessageSenderWrapper {
     private boolean isDone = false;
     
     public synchronized void waitForComplete() {
@@ -173,6 +215,10 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
       Assert.unreachable();
       return null;
     }
+    @Override
+    public PassthroughConnection getClientOrigin() {
+      return sender.getClientOrigin();
+    }
   }
 
 
@@ -183,8 +229,10 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   public static interface MessageHandler {
     void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws Exception;
     void destroy(String entityClassName, String entityName) throws Exception;
-    byte[] fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version) throws Exception;
+    void fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version, IFetchResult onFetch);
     void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws Exception;
     byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws Exception;
+    void acquireWriteLock(IMessageSenderWrapper sender, String entityName, Runnable onAcquire);
+    void releaseWriteLock(IMessageSenderWrapper sender, String entityName);
   }
 }

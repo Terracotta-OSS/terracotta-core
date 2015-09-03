@@ -12,8 +12,6 @@ import org.terracotta.entity.EntityClientService;
  * Similar to PassthroughEntityRef, although for maintenance operations.  This means that checks of the existence of named
  * entity, as well as creation and destruction of the server-side instance are managed through this object.
  * 
- * TODO:  The maintenance ref does not yet hold a write-lock on the server-side entity until close() is called.
- * 
  * @param <T> The entity type
  * @param <C> The configuration type
  */
@@ -30,6 +28,16 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
     this.version = version;
     this.entityClass = clazz;
     this.entityName = name;
+    
+    // A maintenance ref needs the write-lock on this entity name.
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.entityName);
+    try {
+      this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
+    } catch (InterruptedException e) {
+      Assert.unexpected(e);
+    } catch (ExecutionException e) {
+      Assert.unexpected(e);
+    }
   }
 
   @Override
@@ -78,7 +86,14 @@ public class PassthroughMaintenanceRef <T extends Entity, C> implements EntityMa
 
   @Override
   public void close() {
-    // TODO Auto-generated method stub
-    
+    // Release our write-lock.
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.entityName);
+    try {
+      this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
+    } catch (InterruptedException e) {
+      Assert.unexpected(e);
+    } catch (ExecutionException e) {
+      Assert.unexpected(e);
+    }
   }
 }

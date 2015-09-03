@@ -24,6 +24,7 @@ public class PassthroughServerProcess implements MessageHandler {
   private final List<ServerEntityService<?, ?>> entityServices;
   private final Thread serverThread;
   private final List<MessageContainer> messageQueue;
+  private final PassthroughLockManager lockManager;
   // Currently, for simplicity, we will resolve entities by name.
   // Technically, these should be resolved by class+name.
   // Note that only ONE of the active or passive entities will be non-null.
@@ -42,6 +43,7 @@ public class PassthroughServerProcess implements MessageHandler {
       }
     });
     this.messageQueue = new Vector<MessageContainer>();
+    this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<String, ActiveServerEntity>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<String, PassiveServerEntity>());
     this.serviceProviderMap = new HashMap<Class<?>, ServiceProvider>();
@@ -86,6 +88,10 @@ public class PassthroughServerProcess implements MessageHandler {
       @Override
       public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
         return new PassthroughClientDescriptor(sender, clientInstanceID);
+      }
+      @Override
+      public PassthroughConnection getClientOrigin() {
+        return sender;
       }
     };
     container.message = message;
@@ -151,23 +157,41 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public byte[] fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version) throws Exception {
-    byte[] config = null;
-    // Fetch should never be replicated and only handled on the active.
-    Assert.assertTrue(null != this.activeEntities);
-    ActiveServerEntity entity = this.activeEntities.get(entityName);
-    if (null != entity) {
-      ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
-      if (service.getVersion() != version) {
-        throw new Exception("Version mis-match");
+  public void fetch(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName, final long version, final IFetchResult onFetch) {
+    // We need to get the read lock before the fetch so we wrap the actual fetch in the onAcquire.
+    // Note that this could technically be a little simpler by getting the lock after the fetch but this keeps the semantic
+    // ordering we would need if the process were to be made multi-threaded or re-factored.
+    Runnable onAcquire = new Runnable() {
+      @Override
+      public void run() {
+        // Fetch the entity now that we have the read lock on the name.
+        byte[] config = null;
+        Exception error = null;
+        // Fetch should never be replicated and only handled on the active.
+        Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
+        ActiveServerEntity entity = PassthroughServerProcess.this.activeEntities.get(entityName);
+        if (null != entity) {
+          ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
+          if (service.getVersion() == version) {
+            PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
+            entity.connected(clientDescriptor);
+            config = entity.getConfig();
+          } else {
+            error = new Exception("Version mis-match");
+          }
+        } else {
+          error = new Exception("Not found");
+        }
+        // Release the lock if there was a failure.
+        if (null != error) {
+          lockManager.releaseReadLock(entityName, sender.getClientOrigin(), clientInstanceID);
+        }
+        onFetch.onFetchComplete(config, error);
       }
-      PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-      entity.connected(clientDescriptor);
-      config = entity.getConfig();
-    } else {
-      throw new Exception("Not found");
-    }
-    return config;
+      
+    };
+    // The onAcquire callback will fetch the entity asynchronously.
+    this.lockManager.acquireReadLock(entityName, sender.getClientOrigin(), clientInstanceID, onAcquire);
   }
 
   @Override
@@ -178,6 +202,7 @@ public class PassthroughServerProcess implements MessageHandler {
     if (null != entity) {
       PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.disconnected(clientDescriptor);
+      this.lockManager.releaseReadLock(entityName, sender.getClientOrigin(), clientInstanceID);
     } else {
       throw new Exception("Not found");
     }
@@ -219,7 +244,18 @@ public class PassthroughServerProcess implements MessageHandler {
       throw new Exception("Not found");
     }
   }
-  
+
+  @Override
+  public void acquireWriteLock(IMessageSenderWrapper sender, String entityName, Runnable onAcquire) {
+    this.lockManager.acquireWriteLock(entityName, sender.getClientOrigin(), onAcquire);
+  }
+
+  @Override
+  public void releaseWriteLock(IMessageSenderWrapper sender, String entityName) {
+    this.lockManager.releaseWriteLock(entityName, sender.getClientOrigin());
+  }
+
+
   private ServerEntityService<?, ?> getEntityServiceForClassName(String entityClassName) {
     ServerEntityService<?, ?> foundService = null;
     for (ServerEntityService<?, ?> service : this.entityServices) {

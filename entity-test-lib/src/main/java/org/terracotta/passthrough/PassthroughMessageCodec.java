@@ -132,6 +132,26 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createWriteLockAcquireMessage(final String entityName) {
+    // Lock-state must be preserved on passive.
+    boolean shouldReplicateToPassives = true;
+    return new PassthroughMessage(Type.LOCK_ACQUIRE, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityName);
+      }};
+  }
+
+  public static PassthroughMessage createWriteLockReleaseMessage(final String entityName) {
+    // Lock-state must be preserved on passive.
+    boolean shouldReplicateToPassives = true;
+    return new PassthroughMessage(Type.LOCK_RELEASE, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityName);
+      }};
+  }
+
   public static <R> R decodeRawMessage(Decoder<R> decoder, byte[] rawMessage) {
     return runRawDecoder(decoder, rawMessage);
   }

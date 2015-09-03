@@ -20,6 +20,8 @@ public abstract class PassthroughMessage {
     ACK_FROM_SERVER,
     COMPLETE_FROM_SERVER,
     INVOKE_ON_CLIENT,
+    LOCK_ACQUIRE,
+    LOCK_RELEASE,
   }
 
   public static Type getType(DataInputStream input) throws IOException {
