@@ -194,19 +194,20 @@ public class TCLogging {
         } finally {
           stream.close();
         }
-      } else {
-        for (File propFile : devLoggingLocations) {
-          if (propFile.isFile() && propFile.canRead()) {
-            devLog4JPropsFilePresent = true;
-            InputStream in = new FileInputStream(propFile);
-            try {
-              devLoggingProperties.load(in);
-            } finally {
-              in.close();
-            }
+      }
+        
+      for (File propFile : devLoggingLocations) {
+        if (propFile.isFile() && propFile.canRead()) {
+          devLog4JPropsFilePresent = true;
+          InputStream in = new FileInputStream(propFile);
+          try {
+            devLoggingProperties.load(in);
+          } finally {
+            in.close();
           }
         }
       }
+
       if (devLog4JPropsFilePresent) {
         Logger.getRootLogger().setLevel(Level.INFO);
         PropertyConfigurator.configure(devLoggingProperties);
@@ -461,9 +462,6 @@ public class TCLogging {
       boolean isDev = customLogging ? false : developmentConfiguration();
 
       if (!customLogging) {
-        Logger jettyLogger = Logger.getLogger("org.mortbay");
-        jettyLogger.setLevel(Level.OFF);
-
         for (Logger internalLogger : internalLoggers) {
           internalLogger.setLevel(Level.INFO);
         }
