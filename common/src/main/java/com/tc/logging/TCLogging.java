@@ -197,7 +197,7 @@ public class TCLogging {
       }
 
       Properties developerProps = layerDevelopmentConfiguration(configStreams);
-      if (!developerProps.isEmpty()) {
+      if (developerProps != null) {
         Logger.getRootLogger().setLevel(Level.INFO);
         PropertyConfigurator.configure(loggingProperties);
         loggingProperties = developerProps;
@@ -211,6 +211,9 @@ public class TCLogging {
   }
   
   static Properties layerDevelopmentConfiguration(Collection<? extends InputStream> list) {
+    if (list.isEmpty()) {
+      return null;
+    }
     Properties isDev = new Properties();
     for (InputStream in : list) {
       try {
