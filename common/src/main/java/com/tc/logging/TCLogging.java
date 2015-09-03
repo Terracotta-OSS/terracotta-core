@@ -199,7 +199,7 @@ public class TCLogging {
       Properties developerProps = layerDevelopmentConfiguration(configStreams);
       if (developerProps != null) {
         Logger.getRootLogger().setLevel(Level.INFO);
-        PropertyConfigurator.configure(loggingProperties);
+        PropertyConfigurator.configure(developerProps);
         loggingProperties = developerProps;
         return true;
       }
