@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import org.junit.Test;
@@ -84,6 +85,13 @@ public class TCLoggingTest extends TCTestCase {
         new ByteArrayInputStream(classbytes.toByteArray()),
         new ByteArrayInputStream(homebytes.toByteArray()),
         new ByteArrayInputStream(dirbytes.toByteArray()))).getProperty("whoami"), "userdir");
+// make sure empty streams return a valid props file
+    Assert.assertNotNull(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+        new ByteArrayInputStream(new byte[0]),
+        new ByteArrayInputStream(new byte[0]),
+        new ByteArrayInputStream(new byte[0]))));    
+// make sure an empty list returns null
+    Assert.assertNull(Collections.emptyList());
   }
 
   private void createLogs(String logDir) throws Exception {
