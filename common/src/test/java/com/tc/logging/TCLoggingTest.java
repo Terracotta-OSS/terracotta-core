@@ -10,11 +10,16 @@ import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import org.junit.Test;
 
 
 public class TCLoggingTest extends TCTestCase {
@@ -55,6 +60,30 @@ public class TCLoggingTest extends TCTestCase {
     // Always one extra file is created by log4j
     Assert.assertEquals(LOG_ITERATIONS + 1, logFileCount);
 
+  }
+  
+  @Test
+  public void testDeveloperOverlay() throws Exception {
+    Properties classpath = new Properties();
+    Properties userhome = new Properties();
+    Properties userdir = new Properties();
+    
+    classpath.setProperty("whoami", "classpath");
+    userhome.setProperty("whoami", "userhome");
+    userdir.setProperty("whoami", "userdir");
+    
+    ByteArrayOutputStream classbytes = new ByteArrayOutputStream();
+    ByteArrayOutputStream homebytes = new ByteArrayOutputStream();
+    ByteArrayOutputStream dirbytes = new ByteArrayOutputStream();
+    
+    classpath.store(classbytes, null);
+    userhome.store(homebytes, null);
+    userdir.store(dirbytes, null);
+    
+    Assert.assertEquals(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+        new ByteArrayInputStream(classbytes.toByteArray()),
+        new ByteArrayInputStream(homebytes.toByteArray()),
+        new ByteArrayInputStream(dirbytes.toByteArray()))).getProperty("whoami"), "userdir");
   }
 
   private void createLogs(String logDir) {

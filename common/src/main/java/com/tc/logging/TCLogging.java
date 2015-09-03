@@ -33,6 +33,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -179,39 +180,27 @@ public class TCLogging {
 
   private static boolean developmentConfiguration() {
     try {
-      Properties devLoggingProperties = new Properties();
-
+      List<InputStream> configStreams = new ArrayList<InputStream>();
       // Specify the order of LEAST importance; last one in wins
       File[] devLoggingLocations = new File[] { new File(System.getProperty("user.home"), LOG4J_PROPERTIES_FILENAME),
           new File(System.getProperty("user.dir"), LOG4J_PROPERTIES_FILENAME) };
 
-      boolean devLog4JPropsFilePresent = false;
       InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(LOG4J_PROPERTIES_FILENAME);
       if (stream != null) {
-        devLog4JPropsFilePresent = true;
-        try {
-          devLoggingProperties.load(stream);
-        } finally {
-          stream.close();
-        }
+        configStreams.add(stream);
       }
         
       for (File propFile : devLoggingLocations) {
         if (propFile.isFile() && propFile.canRead()) {
-          devLog4JPropsFilePresent = true;
-          InputStream in = new FileInputStream(propFile);
-          try {
-            devLoggingProperties.load(in);
-          } finally {
-            in.close();
-          }
+          configStreams.add(new FileInputStream(propFile));
         }
       }
 
-      if (devLog4JPropsFilePresent) {
+      Properties developerProps = layerDevelopmentConfiguration(configStreams);
+      if (!developerProps.isEmpty()) {
         Logger.getRootLogger().setLevel(Level.INFO);
-        PropertyConfigurator.configure(devLoggingProperties);
-        loggingProperties = devLoggingProperties;
+        PropertyConfigurator.configure(loggingProperties);
+        loggingProperties = developerProps;
         return true;
       }
     } catch (Exception e) {
@@ -220,7 +209,18 @@ public class TCLogging {
 
     return false;
   }
-
+  
+  static Properties layerDevelopmentConfiguration(Collection<? extends InputStream> list) {
+    Properties isDev = new Properties();
+    for (InputStream in : list) {
+      try {
+        isDev.load(in);
+      } catch (IOException ioe) {
+        reportLoggingError(ioe);
+      } 
+    }
+    return isDev;
+  }
 
   private static boolean customConfiguration() {
     try {
