@@ -22,8 +22,12 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
 
   @Override
   public <T> Service<T> getService(ServiceConfiguration<T> configuration) {
+    Service<T> service = null;
     ServiceProvider provider = this.serviceProviderMap.get(configuration.getServiceType());
-    return provider.getService(this.consumerID, configuration);
+    if (null != provider) {
+      service = provider.getService(this.consumerID, configuration);
+    }
+    return service;
   }
 
   @Override
