@@ -154,6 +154,18 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createReconnectMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID) {
+    // This is equivalent to a FETCH so we don't care about replication.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.RECONNECT, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityName);
+        output.writeLong(clientInstanceID);
+      }};
+  }
+
   public static <R> R decodeRawMessage(Decoder<R> decoder, byte[] rawMessage) {
     return runRawDecoder(decoder, rawMessage);
   }

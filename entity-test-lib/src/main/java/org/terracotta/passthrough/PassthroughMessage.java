@@ -22,6 +22,7 @@ public abstract class PassthroughMessage {
     INVOKE_ON_CLIENT,
     LOCK_ACQUIRE,
     LOCK_RELEASE,
+    RECONNECT,
   }
 
   public static Type getType(DataInputStream input) throws IOException {

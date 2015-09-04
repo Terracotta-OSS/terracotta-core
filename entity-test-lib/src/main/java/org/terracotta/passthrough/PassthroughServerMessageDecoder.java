@@ -174,6 +174,24 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         sendCompleteResponse(sender, transactionID, response, error);
         break;
       }
+      case RECONNECT: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        long clientInstanceID = input.readLong();
+        
+        // This is similar to FETCH but fully synchronous since we can't wait for lock on reconnect.
+        byte[] response = null;
+        Exception error = null;
+        try {
+          this.messageHandler.reconnect(sender, clientInstanceID, entityClassName, entityName);
+          // No response;
+          response = new byte[0];
+        } catch (Exception e) {
+          error = e;
+        }
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
       default:
         Assert.unreachable();
         break;
@@ -236,5 +254,6 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws Exception;
     void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
     void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
+    void reconnect(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName);
   }
 }

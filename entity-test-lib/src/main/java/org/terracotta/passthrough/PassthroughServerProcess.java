@@ -258,6 +258,10 @@ public class PassthroughServerProcess implements MessageHandler {
     this.lockManager.releaseWriteLock(entityTuple, sender.getClientOrigin());
   }
 
+  @Override
+  public void reconnect(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName) {
+    Assert.unimplemented();
+  }
 
   private ServerEntityService<?, ?> getEntityServiceForClassName(String entityClassName) {
     ServerEntityService<?, ?> foundService = null;

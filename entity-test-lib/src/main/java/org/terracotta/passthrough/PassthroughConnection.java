@@ -183,6 +183,7 @@ public class PassthroughConnection implements Connection {
           case FETCH_ENTITY:
           case RELEASE_ENTITY:
           case INVOKE_ON_SERVER:
+          case RECONNECT:
             // Not handled on client.
             Assert.unreachable();
             break;
