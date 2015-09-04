@@ -14,9 +14,8 @@ import org.terracotta.connection.entity.EntityRef;
  * TODO:  Fetched entities do not yet hold a read-lock on the server-side entity.
  * 
  * @param <T> The entity type
- * @param <C> The configuration type
  */
-public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C> {
+public class PassthroughEntityRef<T extends Entity> implements EntityRef<T> {
   private final PassthroughConnection passthroughConnection;
   private final Class<T> clazz;
   private final long version;

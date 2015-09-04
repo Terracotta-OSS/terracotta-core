@@ -221,8 +221,8 @@ public class PassthroughConnection implements Connection {
   }
 
   @Override
-  public <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
-    return new PassthroughEntityRef<T, C>(this, cls, version, name);
+  public <T extends Entity> EntityRef<T> getEntityRef(Class<T> cls, long version, String name) {
+    return new PassthroughEntityRef<T>(this, cls, version, name);
   }
 
   @Override
