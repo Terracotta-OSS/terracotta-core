@@ -1,5 +1,7 @@
 package org.terracotta.passthrough;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,8 +11,12 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.Service;
+import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
+import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.KeyValueStorage;
 
 
 /**
@@ -33,8 +39,8 @@ public class PassthroughServerProcess implements MessageHandler {
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
   private PassthroughServerProcess downstreamPassive;
   private long nextConsumerID;
-  @SuppressWarnings("unused")
   private PassthroughServiceRegistry platformServiceRegistry;
+  private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
   
   public PassthroughServerProcess(boolean isActiveMode) {
     this.isRunning = true;
@@ -57,6 +63,31 @@ public class PassthroughServerProcess implements MessageHandler {
   public void start() {
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry();
+    // See if we have persistence support.
+    ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new ServiceConfiguration<IPersistentStorage>() {
+      @Override
+      public Class<IPersistentStorage> getServiceType() {
+        return IPersistentStorage.class;
+      }
+    };
+    Service<IPersistentStorage> persistentStorageService = this.platformServiceRegistry.getService(persistenceConfiguration);
+    if (null != persistentStorageService) {
+      IPersistentStorage persistentStorage = persistentStorageService.get();
+      try {
+        persistentStorage.open();
+      } catch (IOException e) {
+        // Fall back to creating a new one since this probably means it doesn't exist and the Persitor has no notion of which
+        // mode (open/create) it should prefer.
+        try {
+          persistentStorage.create();
+        } catch (IOException e1) {
+          // We are not expecting both to fail.
+          Assert.unexpected(e1);
+        }
+      }
+      // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference, within the passthrough system, and it would require the creation of an almost completely-redundant container class.
+      this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+    }
     // And start the server thread.
     this.serverThread.start();
   }
@@ -226,11 +257,22 @@ public class PassthroughServerProcess implements MessageHandler {
       || ((null != this.passiveEntities) && this.passiveEntities.containsKey(entityTuple))) {
       throw new Exception("Already exists");
     }
+    // Capture which consumerID we will use for this entity.
+    long consumerID = this.nextConsumerID;
     ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, version);
     PassthroughServiceRegistry registry = getNextServiceRegistry();
     CommonServerEntity newEntity = createAndStoreEntity(serializedConfiguration, entityTuple, service, registry);
     // Tell the entity to create itself as something new.
     newEntity.createNew();
+    // If we have a persistence layer, record this.
+    if (null != this.persistedEntitiesByConsumerID) {
+      EntityData data = new EntityData();
+      data.className = entityClassName;
+      data.version = version;
+      data.entityName = entityName;
+      data.configuration = serializedConfiguration;
+      this.persistedEntitiesByConsumerID.put(consumerID, data);
+    }
   }
 
   @Override
@@ -317,5 +359,13 @@ public class PassthroughServerProcess implements MessageHandler {
   private static class MessageContainer {
     public IMessageSenderWrapper sender;
     public byte[] message;
+  }
+
+  private static class EntityData implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public String className;
+    public long version;
+    public String entityName;
+    public byte[] configuration;
   }
 }
