@@ -38,7 +38,7 @@ public class TerracottaEntityRefTest {
     
     // Now, run the test.
     long version = 1;
-    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService);
+    TerracottaEntityRef<Entity> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService);
     Entity entity1 = testRef.fetchEntity();
     verify(mockMaintenanceModeService).readLockEntity(Entity.class, "TEST");
     verify(mockClientEntityManager).fetchEntity(eq(new EntityDescriptor(new EntityID(Entity.class.getName(), "TEST"), new ClientInstanceID(1), version)), any(Runnable.class));

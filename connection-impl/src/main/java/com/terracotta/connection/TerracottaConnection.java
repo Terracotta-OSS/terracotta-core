@@ -15,7 +15,6 @@ import com.terracotta.connection.entity.TerracottaEntityRef;
 import com.terracotta.connection.entity.TerracottaMaintenanceModeRef;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -35,7 +34,7 @@ public class TerracottaConnection implements Connection {
   }
 
   @Override
-  public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
+  public synchronized <T extends Entity> EntityRef<T> getEntityRef(Class<T> cls, long version, String name) {
     checkShutdown();
     return new TerracottaEntityRef<>(this.entityManager, this.maintenanceModeService, cls, version, name, getEntityService(cls));
   }
