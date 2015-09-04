@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,7 +92,7 @@ public class TCLoggingTest extends TCTestCase {
         new ByteArrayInputStream(new byte[0]),
         new ByteArrayInputStream(new byte[0]))));    
 // make sure an empty list returns null
-    Assert.assertNull(Collections.emptyList());
+    Assert.assertNull(TCLogging.layerDevelopmentConfiguration(Collections.<InputStream>emptyList()));
   }
 
   private void createLogs(String logDir) throws Exception {
