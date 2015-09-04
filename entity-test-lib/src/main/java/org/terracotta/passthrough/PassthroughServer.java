@@ -1,6 +1,8 @@
 package org.terracotta.passthrough;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.junit.Assert;
@@ -20,18 +22,34 @@ public class PassthroughServer {
   private final PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?>> entityClientServices;
+  // Note that we don't currently use the connection ID outside of this class but it is convenient and may be exposed outside, later.
+  private long nextConnectionID;
+  
+  // We also track various information for the restart case.
+  private final List<ServerEntityService<?, ?>> savedServerEntityServices;
+  private final Map<Class<?>, ServiceProvider> savedServiceProviders;
+  private final Map<Long, PassthroughConnection> savedClientConnections;
+  @SuppressWarnings("unused")
+  private PassthroughServer savedPassiveServer;
   
   public PassthroughServer(boolean isActiveMode) {
     this.serverProcess = new PassthroughServerProcess(isActiveMode);
     this.entityClientServices = new Vector<EntityClientService<?, ?>>();
+    this.nextConnectionID = 1;
+    
+    // Create the containers we will use for tracking the state we will need to repopulate on restart.
+    this.savedServerEntityServices = new Vector<ServerEntityService<?, ?>>();
+    this.savedServiceProviders = new HashMap<Class<?>, ServiceProvider>();
+    this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
     
     // Register built-in services.
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
-    this.serverProcess.registerServiceProviderForType(ClientCommunicator.class, communicatorServiceProvider);
+    registerServiceProvider(ClientCommunicator.class, communicatorServiceProvider);
   }
 
   public void registerServerEntityService(ServerEntityService<?, ?> service) {
     Assert.assertFalse(this.hasStarted);
+    this.savedServerEntityServices.add(service);
     this.serverProcess.registerEntityService(service);
   }
 
@@ -42,7 +60,18 @@ public class PassthroughServer {
 
   public Connection connectNewClient() {
     Assert.assertTrue(this.hasStarted);
-    return new PassthroughConnection(this.serverProcess, this.entityClientServices);
+    final long thisConnectionID = this.nextConnectionID;
+    this.nextConnectionID += 1;
+    // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
+    Runnable onClose = new Runnable() {
+      @Override
+      public void run() {
+        PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
+      }
+    };
+    PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose);
+    this.savedClientConnections.put(thisConnectionID, connection);
+    return connection;
   }
 
   public void start() {
@@ -55,10 +84,16 @@ public class PassthroughServer {
   }
 
   public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider) {
-    this.serverProcess.registerServiceProviderForType(clazz, serviceProvider);
+    registerServiceProvider(clazz, serviceProvider);
   }
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
+    this.savedPassiveServer = passiveServer;
     this.serverProcess.setDownstreamPassiveServerProcess(passiveServer.serverProcess);
+  }
+
+  private <T> void registerServiceProvider(Class<T> clazz, ServiceProvider serviceProvider) {
+    this.savedServiceProviders.put(clazz, serviceProvider);
+    this.serverProcess.registerServiceProviderForType(clazz, serviceProvider);
   }
 }

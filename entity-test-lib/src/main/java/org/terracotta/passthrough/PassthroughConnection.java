@@ -30,6 +30,7 @@ public class PassthroughConnection implements Connection {
   private final Map<Long, PassthroughWait> inFlight;
   private final PassthroughServerProcess serverProcess;
   private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
+  private final Runnable onClose;
   
   // ivars related to message passing and client thread.
   private boolean isRunning;
@@ -43,13 +44,14 @@ public class PassthroughConnection implements Connection {
   private final List<Waiter> clientResponseWaitQueue;
 
 
-  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices) {
+  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices, Runnable onClose) {
     this.entityClientServices = entityClientServices;
     this.nextTransactionID = 1;
     this.nextClientEndpointID = 1;
     this.inFlight = new HashMap<Long, PassthroughWait>();
     this.serverProcess = serverProcess;
     this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint>();
+    this.onClose = onClose;
     
     this.isRunning = true;
     this.clientThread = new Thread(new Runnable() {
@@ -213,6 +215,8 @@ public class PassthroughConnection implements Connection {
 
   @Override
   public void close() {
+    // The only cleanup we need is to call our runnable onClose hook.
+    this.onClose.run();
   }
 
   @Override
