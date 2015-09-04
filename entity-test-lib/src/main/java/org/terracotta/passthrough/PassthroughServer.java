@@ -3,6 +3,7 @@ package org.terracotta.passthrough;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 import org.junit.Assert;
@@ -19,7 +20,7 @@ import org.terracotta.entity.ServiceProvider;
  * downstream passives attached to it.
  */
 public class PassthroughServer {
-  private final PassthroughServerProcess serverProcess;
+  private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?>> entityClientServices;
   // Note that we don't currently use the connection ID outside of this class but it is convenient and may be exposed outside, later.
@@ -29,7 +30,6 @@ public class PassthroughServer {
   private final List<ServerEntityService<?, ?>> savedServerEntityServices;
   private final Map<Class<?>, ServiceProvider> savedServiceProviders;
   private final Map<Long, PassthroughConnection> savedClientConnections;
-  @SuppressWarnings("unused")
   private PassthroughServer savedPassiveServer;
   
   public PassthroughServer(boolean isActiveMode) {
@@ -90,6 +90,38 @@ public class PassthroughServer {
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
     this.savedPassiveServer = passiveServer;
     this.serverProcess.setDownstreamPassiveServerProcess(passiveServer.serverProcess);
+  }
+
+  /**
+   * Called to act as though the server suddenly crashed and then restarted.  The method returns only when the server is
+   * back up, ready to receive reconnects (potentially having already handled them) and/or new calls.
+   */
+  public void restart() {
+    // Shut down the server process.
+    this.serverProcess.shutdown();
+    // Start a new one.
+    // (for now, we only do this to active servers)
+    boolean isActiveMode = true;
+    this.serverProcess = new PassthroughServerProcess(isActiveMode);
+    // Populate the server with its services.
+    for (ServerEntityService<?, ?> serverEntityService : this.savedServerEntityServices) {
+      this.serverProcess.registerEntityService(serverEntityService);
+    }
+    for (Entry<Class<?>, ServiceProvider> entry : this.savedServiceProviders.entrySet()) {
+      this.serverProcess.registerServiceProviderForType(entry.getKey(), entry.getValue());
+    }
+    // Set the downstream.
+    if (null != this.savedPassiveServer) {
+      this.serverProcess.setDownstreamPassiveServerProcess(this.savedPassiveServer.serverProcess);
+    }
+    // Start the server.
+    this.serverProcess.start();
+    // Tell it to load its entities state.
+    this.serverProcess.reloadEntities();
+    // Reconnect all the connections.
+    for(PassthroughConnection connection : this.savedClientConnections.values()) {
+      connection.reconnect(this.serverProcess);
+    }
   }
 
   private <T> void registerServiceProvider(Class<T> clazz, ServiceProvider serviceProvider) {

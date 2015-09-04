@@ -28,7 +28,7 @@ public class PassthroughConnection implements Connection {
   private long nextTransactionID;
   private long nextClientEndpointID;
   private final Map<Long, PassthroughWait> inFlight;
-  private final PassthroughServerProcess serverProcess;
+  private PassthroughServerProcess serverProcess;
   private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
   private final Runnable onClose;
   
@@ -290,6 +290,21 @@ public class PassthroughConnection implements Connection {
     public synchronized void finish() {
       this.isDone = true;
       notifyAll();
+    }
+  }
+
+
+  /**
+   * Called after the server restarts to reconnect us to the new instance.
+   */
+  public void reconnect(PassthroughServerProcess serverProcess) {
+    // Re-send not currently supported.
+    Assert.assertTrue(0 == this.inFlight.size());
+    this.serverProcess = serverProcess;
+    
+    // Tell all of our still-open end-points to reconnect to the server.
+    for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
+      endpoint.reconnect();
     }
   }
 }

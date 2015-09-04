@@ -102,6 +102,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
   
   public void shutdown() {
+    // TODO:  Find a way to cut the connections of any current task so that they can't send a response to the client.
     synchronized(this) {
       this.isRunning = false;
       this.notifyAll();
@@ -302,8 +303,34 @@ public class PassthroughServerProcess implements MessageHandler {
 
   @Override
   public void reconnect(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName) {
-    Assert.unimplemented();
+    final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    
+    // We need to get the lock, but we can't fail or wait, during the reconnect, so we handle that internally.
+    // NOTE:  This use of "didRun" is a somewhat ugly way to avoid creating an entirely new Runnable class so we could ask
+    // for the result but we are only using this in an assert, within this method, so it does maintain clarity.
+    final boolean[] didRun = new boolean[1];
+    Runnable onAcquire = new Runnable() {
+      @Override
+      public void run() {
+        // Fetch the entity now that we have the read lock on the name.
+        // Fetch should never be replicated and only handled on the active.
+        Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
+        ActiveServerEntity entity = PassthroughServerProcess.this.activeEntities.get(entityTuple);
+        if (null != entity) {
+          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
+          entity.connected(clientDescriptor);
+          didRun[0] = true;
+        } else {
+          Assert.unexpected(new Exception("Entity not found in reconnect"));
+          lockManager.releaseReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID);
+        }
+      }
+    };
+    // The onAcquire callback will fetch the entity asynchronously.
+    this.lockManager.acquireReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID, onAcquire);
+    Assert.assertTrue(didRun[0]);
   }
+
 
   private ServerEntityService<?, ?> getEntityServiceForClassName(String entityClassName) {
     ServerEntityService<?, ?> foundService = null;
@@ -325,6 +352,38 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassive = serverProcess;
+  }
+
+  /**
+   * Called upon restart to reload our entities from disk.
+   * Note that this will do nothing if the server was not persistent.
+   */
+  @SuppressWarnings("deprecation")
+  public void reloadEntities() {
+    if (null != this.persistedEntitiesByConsumerID) {
+      for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
+        // Create the registry for the entity.
+        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
+        // Construct the entity.
+        EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
+        ServerEntityService<?, ?> service = null;
+        try {
+          service = getServerEntityServiceForVersion(entityData.className, entityData.version);
+        } catch (Exception e) {
+          // We don't expect a version mismatch here or other failure in this test system.
+          Assert.unexpected(e);
+        }
+        PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
+        CommonServerEntity newEntity = createAndStoreEntity(entityData.configuration, entityTuple, service, registry);
+        // Tell the entity to load itself from storage.
+        newEntity.loadExisting();
+        
+        // See if we need to bump up the next consumerID for future entities.
+        if (consumerID >= this.nextConsumerID) {
+          this.nextConsumerID = consumerID + 1;
+        }
+      }
+    }
   }
 
   private PassthroughServiceRegistry getNextServiceRegistry() {
