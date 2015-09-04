@@ -32,6 +32,9 @@ public class PassthroughServerProcess implements MessageHandler {
   private final Map<PassthroughEntityTuple, PassiveServerEntity> passiveEntities;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
   private PassthroughServerProcess downstreamPassive;
+  private long nextConsumerID;
+  @SuppressWarnings("unused")
+  private PassthroughServiceRegistry platformServiceRegistry;
   
   public PassthroughServerProcess(boolean isActiveMode) {
     this.isRunning = true;
@@ -47,9 +50,14 @@ public class PassthroughServerProcess implements MessageHandler {
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, ActiveServerEntity>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, PassiveServerEntity>());
     this.serviceProviderMap = new HashMap<Class<?>, ServiceProvider>();
+    // Consumer IDs start at 0 since that is the one the platform gives itself.
+    this.nextConsumerID = 0;
   }
   
   public void start() {
+    // We can now get the service registry for the platform.
+    this.platformServiceRegistry = getNextServiceRegistry();
+    // And start the server thread.
     this.serverThread.start();
   }
 
@@ -218,24 +226,9 @@ public class PassthroughServerProcess implements MessageHandler {
       || ((null != this.passiveEntities) && this.passiveEntities.containsKey(entityTuple))) {
       throw new Exception("Already exists");
     }
-    ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
-    if (service.getVersion() != version) {
-      throw new Exception("Version mis-match");
-    }
-    // TODO:  Make this ID real.
-    long consumerID = 0;
-    CommonServerEntity newEntity = null;
-    if (null != this.activeEntities) {
-      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
-      ActiveServerEntity entity = service.createActiveEntity(registry, serializedConfiguration);
-      this.activeEntities.put(entityTuple, entity);
-      newEntity = entity;
-    } else {
-      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
-      PassiveServerEntity entity = service.createPassiveEntity(registry, serializedConfiguration);
-      this.passiveEntities.put(entityTuple, entity);
-      newEntity = entity;
-    }
+    ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, version);
+    PassthroughServiceRegistry registry = getNextServiceRegistry();
+    CommonServerEntity newEntity = createAndStoreEntity(serializedConfiguration, entityTuple, service, registry);
     // Tell the entity to create itself as something new.
     newEntity.createNew();
   }
@@ -286,6 +279,34 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassive = serverProcess;
+  }
+
+  private PassthroughServiceRegistry getNextServiceRegistry() {
+    long thisConsumerID = this.nextConsumerID;
+    this.nextConsumerID += 1;
+    return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviderMap);
+  }
+
+  private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, long version) throws Exception {
+    ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
+    if (service.getVersion() != version) {
+      throw new Exception("Version mis-match");
+    }
+    return service;
+  }
+
+  private CommonServerEntity createAndStoreEntity(byte[] serializedConfiguration, PassthroughEntityTuple entityTuple, ServerEntityService<?, ?> service, PassthroughServiceRegistry registry) {
+    CommonServerEntity newEntity = null;
+    if (null != this.activeEntities) {
+      ActiveServerEntity entity = service.createActiveEntity(registry, serializedConfiguration);
+      this.activeEntities.put(entityTuple, entity);
+      newEntity = entity;
+    } else {
+      PassiveServerEntity entity = service.createPassiveEntity(registry, serializedConfiguration);
+      this.passiveEntities.put(entityTuple, entity);
+      newEntity = entity;
+    }
+    return newEntity;
   }
 
 
