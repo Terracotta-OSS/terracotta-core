@@ -98,6 +98,10 @@ public class PassthroughServer {
    * back up, ready to receive reconnects (potentially having already handled them) and/or new calls.
    */
   public void restart() {
+    // Disconnect all connections before shutdown.
+    for(PassthroughConnection connection : this.savedClientConnections.values()) {
+      connection.disconnect();
+    }
     // Shut down the server process.
     this.serverProcess.shutdown();
     // Start a new one.

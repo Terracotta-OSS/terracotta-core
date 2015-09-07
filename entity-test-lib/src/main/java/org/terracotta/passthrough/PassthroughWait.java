@@ -12,13 +12,22 @@ import java.util.concurrent.TimeoutException;
  * processing the corresponding acks and completion messages.
  */
 public class PassthroughWait implements Future<byte[]> {
+  // Save the information used to reset this object on resend.
+  private byte[] rawMessageForResend;
+  private final boolean shouldWaitForReceived;
+  private final boolean shouldWaitForCompleted;
+  
+  // The active state of the instance after the send.
   private boolean waitingForReceive;
   private boolean waitingForComplete;
   private boolean didComplete;
   private byte[] response;
   private Exception error;
-  
+
   public PassthroughWait(boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+    this.shouldWaitForReceived = shouldWaitForReceived;
+    this.shouldWaitForCompleted = shouldWaitForCompleted;
+    
     this.waitingForReceive = shouldWaitForReceived;
     this.waitingForComplete = shouldWaitForCompleted;
     this.didComplete = false;
@@ -78,5 +87,21 @@ public class PassthroughWait implements Future<byte[]> {
     this.response = result;
     this.error = error;
     notifyAll();
+  }
+
+  public void saveRawMessageForResend(byte[] raw) {
+    this.rawMessageForResend = raw;
+  }
+
+  /**
+   * Resets the ACK wait state for the receiver and returns the raw message for the caller to re-send.
+   */
+  public byte[] resetAndGetMessageForResend() {
+    this.waitingForReceive = this.shouldWaitForReceived;
+    this.waitingForComplete = this.shouldWaitForCompleted;
+    this.didComplete = false;
+    this.response = null;
+    this.error = null;
+    return this.rawMessageForResend;
   }
 }

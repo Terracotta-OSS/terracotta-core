@@ -158,15 +158,15 @@ public class PassthroughServerProcess implements MessageHandler {
     container.sender = new IMessageSenderWrapper() {
       @Override
       public void sendAck(PassthroughMessage ack) {
-        sender.sendMessageToClient(ack.asSerializedBytes());
+        sender.sendMessageToClient(PassthroughServerProcess.this, ack.asSerializedBytes());
       }
       @Override
       public void sendComplete(PassthroughMessage complete) {
-        sender.sendMessageToClient(complete.asSerializedBytes());
+        sender.sendMessageToClient(PassthroughServerProcess.this, complete.asSerializedBytes());
       }
       @Override
       public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-        return new PassthroughClientDescriptor(sender, clientInstanceID);
+        return new PassthroughClientDescriptor(PassthroughServerProcess.this, sender, clientInstanceID);
       }
       @Override
       public PassthroughConnection getClientOrigin() {

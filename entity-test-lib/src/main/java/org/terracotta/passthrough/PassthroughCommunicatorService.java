@@ -44,7 +44,7 @@ public class PassthroughCommunicatorService implements Service<ClientCommunicato
     long clientInstanceID = rawDescriptor.clientInstanceID;
     Future<Void> waiter = connection.createClientResponseFuture();
     PassthroughMessage message = PassthroughMessageCodec.createMessageToClient(clientInstanceID, payload);
-    connection.sendMessageToClient(message.asSerializedBytes());
+    connection.sendMessageToClient(rawDescriptor.server, message.asSerializedBytes());
     return waiter;
   }
 }

@@ -9,10 +9,12 @@ import org.terracotta.entity.ClientDescriptor;
  * it messages.
  */
 public class PassthroughClientDescriptor implements ClientDescriptor {
+  public final PassthroughServerProcess server;
   public final PassthroughConnection sender;
   public final long clientInstanceID;
 
-  public PassthroughClientDescriptor(PassthroughConnection sender, long clientInstanceID) {
+  public PassthroughClientDescriptor(PassthroughServerProcess server, PassthroughConnection sender, long clientInstanceID) {
+    this.server = server;
     this.sender = sender;
     this.clientInstanceID = clientInstanceID;
   }

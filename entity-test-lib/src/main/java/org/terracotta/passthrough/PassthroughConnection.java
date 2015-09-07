@@ -94,6 +94,7 @@ public class PassthroughConnection implements Connection {
       this.inFlight.put(transactionID, waiter);
     }
     byte[] raw = message.asSerializedBytes();
+    waiter.saveRawMessageForResend(raw);
     this.serverProcess.sendMessageToServer(this, raw);
     waiter.waitForAck();
     return waiter;
@@ -114,9 +115,12 @@ public class PassthroughConnection implements Connection {
     return (T) service.create(endpoint);
   }
 
-  public synchronized void sendMessageToClient(byte[] payload) {
-    this.messageQueue.add(payload);
-    notifyAll();
+  public synchronized void sendMessageToClient(PassthroughServerProcess sender, byte[] payload) {
+    // The sender is used to determine if this is a message coming in from a stale connection.
+    if (sender == this.serverProcess) {
+      this.messageQueue.add(payload);
+      notifyAll();
+    }
   }
   
   private synchronized void runClientThread() {
@@ -298,13 +302,25 @@ public class PassthroughConnection implements Connection {
    * Called after the server restarts to reconnect us to the new instance.
    */
   public void reconnect(PassthroughServerProcess serverProcess) {
-    // Re-send not currently supported.
-    Assert.assertTrue(0 == this.inFlight.size());
-    this.serverProcess = serverProcess;
+    synchronized (this) {
+      Assert.assertTrue(null == this.serverProcess);
+      this.serverProcess = serverProcess;
+    }
     
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
       endpoint.reconnect();
     }
+    
+    // Re-send the existing in-flight messages.
+    for (PassthroughWait waiter : this.inFlight.values()) {
+      byte[] raw = waiter.resetAndGetMessageForResend();
+      this.serverProcess.sendMessageToServer(this, raw);
+      waiter.waitForAck();
+    }
+  }
+
+  public synchronized void disconnect() {
+    this.serverProcess = null;
   }
 }
