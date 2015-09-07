@@ -76,7 +76,8 @@ public class PassthroughServer {
 
   public void start() {
     this.hasStarted = true;
-    this.serverProcess.start();
+    boolean shouldLoadStorage = false;
+    this.serverProcess.start(shouldLoadStorage);
   }
 
   public void stop() {
@@ -114,10 +115,9 @@ public class PassthroughServer {
     if (null != this.savedPassiveServer) {
       this.serverProcess.setDownstreamPassiveServerProcess(this.savedPassiveServer.serverProcess);
     }
-    // Start the server.
-    this.serverProcess.start();
-    // Tell it to load its entities state.
-    this.serverProcess.reloadEntities();
+    // Start the server with a reloaded state.
+    boolean shouldLoadStorage = true;
+    this.serverProcess.start(shouldLoadStorage);
     // Reconnect all the connections.
     for(PassthroughConnection connection : this.savedClientConnections.values()) {
       connection.reconnect(this.serverProcess);

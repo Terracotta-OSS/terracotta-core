@@ -60,10 +60,42 @@ public class PassthroughServerProcess implements MessageHandler {
     this.nextConsumerID = 0;
   }
   
-  public void start() {
+  @SuppressWarnings("deprecation")
+  public void start(boolean shouldLoadStorage) {
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry();
     // See if we have persistence support.
+    this.persistedEntitiesByConsumerID = setupEntityMap(shouldLoadStorage);
+    if (null != this.persistedEntitiesByConsumerID) {
+      // Load the entities.
+      for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
+        // Create the registry for the entity.
+        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
+        // Construct the entity.
+        EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
+        ServerEntityService<?, ?> service = null;
+        try {
+          service = getServerEntityServiceForVersion(entityData.className, entityData.version);
+        } catch (Exception e) {
+          // We don't expect a version mismatch here or other failure in this test system.
+          Assert.unexpected(e);
+        }
+        PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
+        CommonServerEntity newEntity = createAndStoreEntity(entityData.configuration, entityTuple, service, registry);
+        // Tell the entity to load itself from storage.
+        newEntity.loadExisting();
+        
+        // See if we need to bump up the next consumerID for future entities.
+        if (consumerID >= this.nextConsumerID) {
+          this.nextConsumerID = consumerID + 1;
+        }
+      }
+    }
+    // And start the server thread.
+    this.serverThread.start();
+  }
+
+  private KeyValueStorage<Long, EntityData> setupEntityMap(boolean shouldLoadStorage) {
     ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new ServiceConfiguration<IPersistentStorage>() {
       @Override
       public Class<IPersistentStorage> getServiceType() {
@@ -71,25 +103,32 @@ public class PassthroughServerProcess implements MessageHandler {
       }
     };
     Service<IPersistentStorage> persistentStorageService = this.platformServiceRegistry.getService(persistenceConfiguration);
-    if (null != persistentStorageService) {
-      IPersistentStorage persistentStorage = persistentStorageService.get();
+    IPersistentStorage persistentStorage = null;
+    if (shouldLoadStorage) {
+      Assert.assertTrue(null != persistentStorageService);
+      persistentStorage = persistentStorageService.get();
       try {
         persistentStorage.open();
       } catch (IOException e) {
-        // Fall back to creating a new one since this probably means it doesn't exist and the Persitor has no notion of which
-        // mode (open/create) it should prefer.
+        Assert.unexpected(e);
+      }
+    } else {
+      if (null != persistentStorageService) {
+        persistentStorage = persistentStorageService.get();
         try {
           persistentStorage.create();
-        } catch (IOException e1) {
+        } catch (IOException e) {
           // We are not expecting both to fail.
-          Assert.unexpected(e1);
+          Assert.unexpected(e);
         }
       }
-      // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference, within the passthrough system, and it would require the creation of an almost completely-redundant container class.
-      this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
     }
-    // And start the server thread.
-    this.serverThread.start();
+    KeyValueStorage<Long, EntityData> entityMap = null;
+    if (null != persistentStorage) {
+      // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference, within the passthrough system, and it would require the creation of an almost completely-redundant container class.
+      entityMap = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+    }
+    return entityMap;
   }
 
   /**
@@ -352,38 +391,6 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassive = serverProcess;
-  }
-
-  /**
-   * Called upon restart to reload our entities from disk.
-   * Note that this will do nothing if the server was not persistent.
-   */
-  @SuppressWarnings("deprecation")
-  public void reloadEntities() {
-    if (null != this.persistedEntitiesByConsumerID) {
-      for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
-        // Create the registry for the entity.
-        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
-        // Construct the entity.
-        EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
-        ServerEntityService<?, ?> service = null;
-        try {
-          service = getServerEntityServiceForVersion(entityData.className, entityData.version);
-        } catch (Exception e) {
-          // We don't expect a version mismatch here or other failure in this test system.
-          Assert.unexpected(e);
-        }
-        PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
-        CommonServerEntity newEntity = createAndStoreEntity(entityData.configuration, entityTuple, service, registry);
-        // Tell the entity to load itself from storage.
-        newEntity.loadExisting();
-        
-        // See if we need to bump up the next consumerID for future entities.
-        if (consumerID >= this.nextConsumerID) {
-          this.nextConsumerID = consumerID + 1;
-        }
-      }
-    }
   }
 
   private PassthroughServiceRegistry getNextServiceRegistry() {
