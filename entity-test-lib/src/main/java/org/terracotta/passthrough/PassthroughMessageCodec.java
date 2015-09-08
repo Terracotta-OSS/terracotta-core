@@ -154,7 +154,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createReconnectMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID) {
+  public static PassthroughMessage createReconnectMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID, final byte[] extendedData) {
     // This is equivalent to a FETCH so we don't care about replication.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.RECONNECT, shouldReplicateToPassives) {
@@ -163,6 +163,8 @@ public class PassthroughMessageCodec {
         output.writeUTF(entityClass.getCanonicalName());
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
+        output.writeInt(extendedData.length);
+        output.write(extendedData);
       }};
   }
 

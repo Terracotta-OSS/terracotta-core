@@ -341,7 +341,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public void reconnect(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName) {
+  public void reconnect(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName, final byte[] extendedData) {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     
     // We need to get the lock, but we can't fail or wait, during the reconnect, so we handle that internally.
@@ -358,6 +358,7 @@ public class PassthroughServerProcess implements MessageHandler {
         if (null != entity) {
           PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           entity.connected(clientDescriptor);
+          entity.handleReconnect(clientDescriptor, extendedData);
           didRun[0] = true;
         } else {
           Assert.unexpected(new Exception("Entity not found in reconnect"));

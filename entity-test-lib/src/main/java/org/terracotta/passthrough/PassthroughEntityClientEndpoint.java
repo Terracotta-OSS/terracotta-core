@@ -24,6 +24,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   private final byte[] config;
   private final Runnable onClose;
   private final List<EndpointListener> listeners;
+  private EntityClientReconnectHandler reconnectHandler;
   
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, Runnable onClose) {
     this.connection = passthroughConnection;
@@ -73,18 +74,20 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
 
   @Override
   public void setReconnectHandler(EntityClientReconnectHandler handler) {
-    Assert.unimplemented();
+    this.reconnectHandler = handler;
   }
 
   @Override
   public byte[] getExtendedReconnectData() {
-    return new byte[0];
+    return (null != this.reconnectHandler)
+        ? this.reconnectHandler.createExtendedReconnectData()
+        : new byte[0];
   }
 
-  public void reconnect() {
+  public void reconnect(byte[] extendedData) {
     // Construct the reconnect message.
     // NOTE:  This currently only describes the entity we are referencing.
-    PassthroughMessage reconnectMessage = PassthroughMessageCodec.createReconnectMessage(this.entityClass, this.entityName, this.clientInstanceID);
+    PassthroughMessage reconnectMessage = PassthroughMessageCodec.createReconnectMessage(this.entityClass, this.entityName, this.clientInstanceID, extendedData);
     // We ignore the return value.
     this.connection.sendInternalMessageAfterAcks(reconnectMessage);
   }

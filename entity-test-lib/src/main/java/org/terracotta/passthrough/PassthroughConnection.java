@@ -309,7 +309,8 @@ public class PassthroughConnection implements Connection {
     
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
-      endpoint.reconnect();
+      byte[] extendedData = endpoint.getExtendedReconnectData();
+      endpoint.reconnect(extendedData);
     }
     
     // Re-send the existing in-flight messages.
