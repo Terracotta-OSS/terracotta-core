@@ -3,9 +3,12 @@ package com.tc.classloader;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceRegistry;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -15,10 +18,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 public class ServiceLocatorTest {
 
@@ -79,7 +84,7 @@ public class ServiceLocatorTest {
     for (ServiceProvider p : providers) {
       ClassLoader loader = p.getClass().getClassLoader();
       //this is required so that we know that system class loader is used
-      Assert.assertTrue("Check if right class loader is used",loader instanceof ComponentLoader);
+      Assert.assertTrue("Check if right class loader is used", loader instanceof ComponentLoader);
       //Make sure that we are not loading both interface and implementation at same scope
       Assert.assertNotEquals(ServiceProvider.class.getClassLoader(), loader);
       //add to set to check number of implementation to check uniques across implementations.
@@ -92,7 +97,7 @@ public class ServiceLocatorTest {
   }
 
   @Test
-  public void testHierarchicalLoading() throws Exception {
+  public void testHierarchicalServiceLoading() throws Exception {
     //limit the scope of search
     URL[] listOfJars = getListOfJars();
     Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
@@ -102,10 +107,9 @@ public class ServiceLocatorTest {
     List<ServiceProvider> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
     Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
 
-
     //XXX introspective code to test hirearchy
     for (ServiceProvider p : providers) {
-      Service<Object> s = p.getService(1, new ServiceConfiguration<Object>() {
+      ServiceConfiguration<Object> serviceConfiguration = new ServiceConfiguration<Object>() {
         @Override
         public Class<Object> getServiceType() {
           try {
@@ -115,7 +119,8 @@ public class ServiceLocatorTest {
           }
           return null;
         }
-      });
+      };
+      Service<Object> s = p.getService(1, serviceConfiguration);
       Object o = s.get();
       Class<?> aClass = o.getClass();
       Method gcl = aClass.getDeclaredMethod("getClassLoader");
@@ -125,6 +130,62 @@ public class ServiceLocatorTest {
       //IClassloading defines two methods to return implementation classloader and type class loader
       Assert.assertNotEquals("Concrete implementation and API should not be having same classloader", gcl.invoke(o), gpl.invoke(o));
       Assert.assertEquals("Check the parent loader which we create for loading components are followed", gpl.invoke(o), parent);
+    }
+  }
+
+  @Test
+  public void testEntityServiceLoadingHierarchical() {
+    //limit the scope of search
+    URL[] listOfJars = getListOfJars();
+    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
+    final URLClassLoader parent = new URLClassLoader(listOfJars);
+
+    //Check if right implementations are created with right loaders
+    final List<ServiceProvider> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
+    Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
+
+    final Map<Class<?>, List<ServiceProvider>> serviceProviderMap = new HashMap<Class<?>, List<ServiceProvider>>();
+
+    for (ServiceProvider p : providers) {
+      for (Class<?> serviceType : p.getProvidedServiceTypes()) {
+        List<ServiceProvider> listForType = serviceProviderMap.get(serviceType);
+        if (null == listForType) {
+          listForType = new Vector<ServiceProvider>();
+          serviceProviderMap.put(serviceType, listForType);
+        }
+        listForType.add(p);
+      }
+    }
+    ServiceRegistry registry = new ServiceRegistry() {
+      @Override
+      public <T> Service<T> getService(ServiceConfiguration<T> serviceConfiguration) {
+        List<ServiceProvider> providers1 = serviceProviderMap.get(serviceConfiguration.getServiceType());
+        if(providers1.isEmpty()) {
+          Assert.fail("Entity queried for something which does not exist, this should never happen!!!");
+        }
+        return providers1.get(0).getService(1, serviceConfiguration);
+      }
+      @Override
+      public void destroy() {
+      }
+    };
+
+    //We are not testing service to service hirearchy loading as it is tested in other test case
+
+    //discover entities & inject service!!
+    List<ServerEntityService> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
+    for (ServerEntityService es : entityServices) {
+      ActiveServerEntity activeEntity = es.createActiveEntity(registry, null);
+      //get class name of IClassLoader type
+      String gpl = new String(activeEntity.invoke(null, "gpl".getBytes()));
+      //get class name of the entity loader
+      String gel = new String(activeEntity.invoke(null, "gel".getBytes()));
+      //get reference of the IClassloader loader
+      String plr = new String(activeEntity.invoke(null, "plr".getBytes()));
+      Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
+      //XXX works only because on same VM
+      Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,
+          Integer.toString(System.identityHashCode(parent)));
     }
   }
 
