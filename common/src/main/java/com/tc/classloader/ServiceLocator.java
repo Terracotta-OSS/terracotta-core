@@ -24,7 +24,7 @@ public class ServiceLocator {
    * @param interfaceName service interface name to be queried
    * @return Map containing Implementation name and URL of resource to load it from
    */
-  public static Map<String, String> initalize(ClassLoader loader, String interfaceName) {
+  public static Map<String, String> discoverImplementations(ClassLoader loader, String interfaceName) {
     try {
       HashMap<String, String> urls = new HashMap<String, String>();
       Enumeration<URL> urlEnumeration = loader.getResources(
@@ -61,7 +61,7 @@ public class ServiceLocator {
    * @return list of implementation
    */
   public static <T> List<T> getImplementations(Class<T> interfaceName, ClassLoader parent) {
-    Map<String, String> urls = initalize(parent, interfaceName.getName());
+    Map<String, String> urls = discoverImplementations(parent, interfaceName.getName());
     ArrayList<T> implementations = new ArrayList<T>();
     if (null == urls || urls.isEmpty()) {
       return implementations;

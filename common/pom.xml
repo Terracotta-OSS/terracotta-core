@@ -95,5 +95,12 @@ Apache Ivy version: 2.2.0 20100923230623
       <version>1.0.8</version>
       <scope>test</scope>
     </dependency>
+    <!-- XXX should we even do this -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
