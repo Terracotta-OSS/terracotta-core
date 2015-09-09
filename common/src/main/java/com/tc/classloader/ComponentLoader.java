@@ -12,6 +12,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -24,14 +25,14 @@ public class ComponentLoader extends ClassLoader {
 
   //URL which the classloader looksup to load class definitions
   private final URL url;
-  private final HashMap<String, String> contents;
-  private final HashMap<String, WeakReference<Class<?>>> loadedClasses;
+  private final ConcurrentHashMap<String, String> contents;
+  private final ConcurrentHashMap<String, WeakReference<Class<?>>> loadedClasses;
 
   public ComponentLoader(URL url, ClassLoader parent) {
     super(parent);
     this.url = url;
-    this.contents = new HashMap<String, String>();
-    this.loadedClasses = new HashMap<String, WeakReference<Class<?>>>();
+    this.contents = new ConcurrentHashMap<String, String>();
+    this.loadedClasses = new ConcurrentHashMap<String, WeakReference<Class<?>>>();
     populateContents();
   }
 
@@ -77,6 +78,7 @@ public class ComponentLoader extends ClassLoader {
         return klass;
       }
     }
+    //Should we lock on interned rep of String to make sure class is only loaded once?
     String spec = contents.get(name);
     if (spec == null) {
       return getParent().loadClass(name);
