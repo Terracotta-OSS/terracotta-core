@@ -17,7 +17,8 @@ import java.util.jar.JarFile;
 
 /**
  * Top level component loader class which loads content within a single jar URL.
- * It does not delegate any loading to its parent unless in case of exceptions.
+ * It does not delegate any loading to its parent unless in case of exceptions, which is inverse of
+ * what most of the JVM classloader do (i.e. Ask parent first before loading anything).
  */
 public class ComponentLoader extends ClassLoader {
 
@@ -69,7 +70,6 @@ public class ComponentLoader extends ClassLoader {
 
   @Override
   protected Class<?> findClass(String name) throws ClassNotFoundException {
-    //TODO: Plugin the loaded class cache in here!!!
     WeakReference<Class<?>> classWeakReference = loadedClasses.get(name);
     if (classWeakReference != null) {
       Class<?> klass = classWeakReference.get();

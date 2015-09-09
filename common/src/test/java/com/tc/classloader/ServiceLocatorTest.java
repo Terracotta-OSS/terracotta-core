@@ -189,4 +189,20 @@ public class ServiceLocatorTest {
     }
   }
 
+  @Test
+  public void testMultipleServiceImplInSameJar() throws Exception {
+    //limit the scope of search
+    URL[] listOfJars = getListOfJars();
+    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
+    final URLClassLoader parent = new URLClassLoader(listOfJars);
+
+    //Check if right implementations are created with right loaders
+    final List<Object> providers = (List<Object>) ServiceLocator.getImplementations(Class.forName("com.terracotta.sample.service.MyService",
+        true, parent), parent);
+
+    //We use same service names in 2 jars, so we discover only 2 implementation, which is normal ServiceLoader in java
+    //behaviour.
+    Assert.assertEquals(2, providers);
+  }
+
 }
