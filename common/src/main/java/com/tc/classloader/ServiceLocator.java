@@ -1,5 +1,9 @@
 package com.tc.classloader;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLoggingService;
+import com.tc.util.ServiceUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -14,6 +18,8 @@ import java.util.Map;
  * Top level service locator class used to identify and isolate service dependencies in its own classloader.
  */
 public class ServiceLocator {
+
+  private static final TCLogger LOG = ServiceUtil.loadService(TCLoggingService.class).getLogger(ServiceLocator.class);
 
   private static final String METAINFCONST = "META-INF/services/";
 
@@ -44,6 +50,9 @@ public class ServiceLocator {
         }
         sb.setLength(0);
       }
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("The list of implementation to URL to find them is " + urls.toString());
+      }
       return urls;
     } catch (IOException e) {
       e.printStackTrace();
@@ -61,9 +70,15 @@ public class ServiceLocator {
    * @return list of implementation
    */
   public static <T> List<T> getImplementations(Class<T> interfaceName, ClassLoader parent) {
+    if(LOG.isDebugEnabled()) {
+      LOG.debug("Discovering " + interfaceName.getName() + " with parent classloader " + parent.getClass().getName());
+    }
     Map<String, String> urls = discoverImplementations(parent, interfaceName.getName());
     ArrayList<T> implementations = new ArrayList<T>();
     if (null == urls || urls.isEmpty()) {
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("No implementations found for " + interfaceName.getName());
+      }
       return implementations;
     }
     for (Map.Entry<String, String> entry : urls.entrySet()) {

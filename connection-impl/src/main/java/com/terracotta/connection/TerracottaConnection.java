@@ -6,7 +6,6 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityMaintenanceRef;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
-import org.terracotta.entity.EntityClientServiceFactory;
 
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;

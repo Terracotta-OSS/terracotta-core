@@ -3,7 +3,6 @@ package com.tc.objectserver.entity;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityFactory;
 import org.terracotta.entity.ServerEntityService;
 
 import com.tc.net.NodeID;

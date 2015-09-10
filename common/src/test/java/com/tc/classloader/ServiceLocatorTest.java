@@ -202,7 +202,7 @@ public class ServiceLocatorTest {
 
     //We use same service names in 2 jars, so we discover only 2 implementation, which is normal ServiceLoader in java
     //behaviour.
-    Assert.assertEquals(2, providers);
+    Assert.assertEquals(2, providers.size());
   }
 
 }

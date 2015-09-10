@@ -1,6 +1,9 @@
 package com.tc.classloader;
 
 import com.google.common.io.ByteStreams;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLoggingService;
+import com.tc.util.ServiceUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +25,7 @@ import java.util.jar.JarFile;
  * what most of the JVM classloader do (i.e. Ask parent first before loading anything).
  */
 public class ComponentLoader extends ClassLoader {
+  private static final TCLogger LOG = ServiceUtil.loadService(TCLoggingService.class).getLogger(ComponentLoader.class);
 
   //URL which the classloader looksup to load class definitions
   private final URL url;
@@ -63,7 +67,13 @@ public class ComponentLoader extends ClassLoader {
   public Class<?> loadClass(String name) throws ClassNotFoundException {
     //check if we need to load this class
     if (contents.get(name) != null) {
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("Loading " + name + " within an isloated container alongwith depedencies");
+      }
       return findClass(name);
+    }
+    if(LOG.isDebugEnabled()) {
+      LOG.debug("Loading " + name + " at parent level");
     }
     //ask our parent to load the class
     return getParent().loadClass(name);
