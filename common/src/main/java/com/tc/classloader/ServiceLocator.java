@@ -46,7 +46,11 @@ public class ServiceLocator {
         s.close();
         String[] splits = sb.toString().split("\n");
         for (String split : splits) {
-          urls.put(split, x.getFile().split("!")[0]);
+          String trim = split.replaceAll("\n", "").trim();
+          if(split.startsWith("#") || trim.isEmpty()) {
+            continue;
+          }
+          urls.put(trim, x.getFile().split("!")[0]);
         }
         sb.setLength(0);
       }
