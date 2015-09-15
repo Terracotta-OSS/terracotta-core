@@ -6,7 +6,6 @@ package com.tc.object;
 import org.terracotta.entity.EntityClientEndpoint;
 
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Futures;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
@@ -552,7 +551,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       long end = System.nanoTime() + unit.toNanos(timeout);
       while (!done) {
         long remainingNanos = end - System.nanoTime();
-        wait(TimeUnit.NANOSECONDS.toMillis(remainingNanos)); // only millisecond resolution. Close enough...?
+        if (remainingNanos <= 0) {
+          throw new TimeoutException();
+        } else {
+          wait(TimeUnit.NANOSECONDS.toMillis(remainingNanos)); // only millisecond resolution. Close enough...?
+        }
       }
       if (exception != null) {
         throw new ExecutionException(exception);

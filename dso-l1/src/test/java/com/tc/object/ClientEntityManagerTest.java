@@ -27,9 +27,12 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
+import org.hamcrest.Matchers;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -253,6 +256,33 @@ public class ClientEntityManagerTest extends TestCase {
     byte[] last = result.get();
     assertTrue(resultObject == last);
   }
+  
+  
+  @Test
+  public void testSingleInvokeTimeout() throws Exception {
+    byte[] resultObject = new byte[0];
+    Exception resultException = null;
+    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
+    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
+    Future<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
+    // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
+    long start = System.currentTimeMillis();
+    try {
+      byte[] last = result.get(1, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (TimeoutException to) {
+      assertThat(System.currentTimeMillis() - start, Matchers.greaterThan(1000L));
+      //  expected
+    }
+    start = System.currentTimeMillis();
+    try {
+      byte[] last = result.get(2, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (TimeoutException to) {
+      assertThat(System.currentTimeMillis() - start, Matchers.greaterThan(2000L));
+      //  expected
+    }
+  }  
 
   @Test
   public void testCreate() throws Exception {
