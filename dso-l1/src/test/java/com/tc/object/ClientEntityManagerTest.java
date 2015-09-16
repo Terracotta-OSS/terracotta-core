@@ -271,7 +271,7 @@ public class ClientEntityManagerTest extends TestCase {
       byte[] last = result.get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException to) {
-      assertThat(System.currentTimeMillis() - start, Matchers.greaterThan(1000L));
+      assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(1000L));
       //  expected
     }
     start = System.currentTimeMillis();
@@ -279,7 +279,7 @@ public class ClientEntityManagerTest extends TestCase {
       byte[] last = result.get(2, TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException to) {
-      assertThat(System.currentTimeMillis() - start, Matchers.greaterThan(2000L));
+      assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(2000L));
       //  expected
     }
   }  
