@@ -550,11 +550,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     public synchronized byte[] get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       long end = System.nanoTime() + unit.toNanos(timeout);
       while (!done) {
-        long remainingMillis = TimeUnit.NANOSECONDS.toMillis(end - System.nanoTime());
-        if (remainingMillis <= 0) {
+        long timing = end - System.nanoTime();
+        if (timing <= 0) {
           throw new TimeoutException();
         } else {
-          wait(remainingMillis); // only millisecond resolution. Close enough...?
+          wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
         }
       }
       if (exception != null) {
