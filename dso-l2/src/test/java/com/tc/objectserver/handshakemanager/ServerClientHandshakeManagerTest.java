@@ -128,4 +128,18 @@ public class ServerClientHandshakeManagerTest {
     verify(this.lockManager).start();
     verify(this.transactionHandler).executeAllResends();
   }
+
+  @Test
+  public void testFailedReconnects() throws Exception {
+    ClientID client1 = new ClientID(1);
+    ConnectionID connection1 = mock(ConnectionID.class);
+    when(connection1.getChannelID()).thenReturn(1L);
+    when(this.channelManager.getClientIDFor(new ChannelID(1))).thenReturn(client1);
+
+    Set<ConnectionID> existingConnections = new HashSet<>();
+    existingConnections.add(connection1);
+    this.manager.setStarting(existingConnections);
+    this.manager.notifyTimeout();
+    assertTrue(this.manager.getUnconnectedClients().isEmpty());
+  }
 }

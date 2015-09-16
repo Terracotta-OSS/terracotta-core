@@ -161,9 +161,7 @@ public class ServerClientHandshakeManager {
           .info("Reconnect window closing.  Killing any previously connected clients that failed to connect in time: "
                 + this.existingUnconnectedClients);
       this.channelManager.closeAll(this.existingUnconnectedClients);
-      for (final Iterator<ClientID> i = this.existingUnconnectedClients.iterator(); i.hasNext();) {
-        i.remove();
-      }
+      this.existingUnconnectedClients.clear();
       this.consoleLogger.info("Reconnect window closed. All dead clients removed.");
       start();
     } else {
