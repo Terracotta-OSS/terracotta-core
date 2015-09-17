@@ -105,6 +105,8 @@ public class PassthroughServerProcess implements MessageHandler {
     Service<IPersistentStorage> persistentStorageService = this.platformServiceRegistry.getService(persistenceConfiguration);
     IPersistentStorage persistentStorage = null;
     if (shouldLoadStorage) {
+      // Note that we are told to load storage in the cases where the system is restarting.  In that case, we MUST have
+      // persistent storage or else the restart doesn't even make sense:  we would have no way of reconnecting the clients.
       Assert.assertTrue(null != persistentStorageService);
       persistentStorage = persistentStorageService.get();
       try {

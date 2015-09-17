@@ -58,7 +58,7 @@ public class PassthroughServer {
     this.entityClientServices.add(service);
   }
 
-  public Connection connectNewClient() {
+  public synchronized Connection connectNewClient() {
     Assert.assertTrue(this.hasStarted);
     final long thisConnectionID = this.nextConnectionID;
     this.nextConnectionID += 1;
@@ -66,7 +66,9 @@ public class PassthroughServer {
     Runnable onClose = new Runnable() {
       @Override
       public void run() {
-        PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
+        synchronized (PassthroughServer.this) {
+          PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
+        }
       }
     };
     PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose);
@@ -97,7 +99,7 @@ public class PassthroughServer {
    * Called to act as though the server suddenly crashed and then restarted.  The method returns only when the server is
    * back up, ready to receive reconnects (potentially having already handled them) and/or new calls.
    */
-  public void restart() {
+  public synchronized void restart() {
     // Disconnect all connections before shutdown.
     for(PassthroughConnection connection : this.savedClientConnections.values()) {
       connection.disconnect();
