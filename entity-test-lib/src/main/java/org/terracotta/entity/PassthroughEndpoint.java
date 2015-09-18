@@ -136,11 +136,14 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   @Override
   public void setReconnectHandler(EntityClientReconnectHandler handler) {
-    Assert.fail("Not implemented");
+    // The reconnect handler isn't used in this case since there is no reconnect in this testing system.
+    // We can safely ignore this.
   }
 
   @Override
   public byte[] getExtendedReconnectData() {
-    return new byte[0];
+    // This should never be called since there is no reconnect.
+    Assert.fail("Reconnect not supported");
+    return null;
   }
 }
