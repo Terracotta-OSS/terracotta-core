@@ -138,7 +138,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
     acknowledgeHandshake(handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
-                         handshakeAck.getServerVersion());
+        handshakeAck.getServerVersion());
   }
 
   protected void acknowledgeHandshake(boolean persistentServer, ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
@@ -177,22 +177,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       c.shutdown(fromShutdownHook);
     }
     //TODO add hook to disconnect handlers at this point, if not called from shutdown-hook?
-  }
-
-  @Override
-  public void reset() {
-    // clean up all L1 stages and other ClearableCallback which are not ClientHandshakeCallback
-    for (ClearableCallback clearable : clearCallbacks) {
-      clearable.cleanup();
-    }
-
-    logger.info("reconnection rejected or closed from server, disconnecting");
-    disconnected();
-
-    // clean up ClientHandshakeCallback (all L1 managers) and other ClearableCallback
-    for (ClientHandshakeCallback c : callBacks) {
-      c.cleanup();
-    }
   }
 
   private void pauseCallbacks() {
