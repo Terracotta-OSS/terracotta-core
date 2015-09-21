@@ -176,6 +176,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     for (ClientHandshakeCallback c : this.callBacks) {
       c.shutdown(fromShutdownHook);
     }
+    //TODO add hook to disconnect handlers at this point, if not called from shutdown-hook?
   }
 
   @Override
