@@ -6,11 +6,9 @@ package com.tcclient.cluster;
 
 import com.tc.async.api.Stage;
 import com.tc.cluster.Cluster;
-import com.tc.object.ClearableCallback;
 
 
-public interface ClusterInternal extends Cluster, ClusterInternalEventsGun, ClusterEventsNotifier, ClearableCallback {
-
+public interface ClusterInternal extends Cluster, ClusterInternalEventsGun, ClusterEventsNotifier {
   public static enum ClusterEventType {
     NODE_JOIN("Node Joined"), NODE_LEFT("Node Left"), OPERATIONS_ENABLED("Operations Enabled"), OPERATIONS_DISABLED(
         "Operations Disabled"), NODE_REJOINED("Node Rejoined"), NODE_ERROR("NODE ERROR");
@@ -31,4 +29,5 @@ public interface ClusterInternal extends Cluster, ClusterInternalEventsGun, Clus
 
   public void shutdown();
 
+  public void cleanup();
 }
