@@ -3,11 +3,10 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.object.ClearableCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 
-public interface ClientHandshakeCallback extends ClearableCallback {
 
+public interface ClientHandshakeCallback {
   /**
    * Pauses this callback, should be UnInterruptable.
    */
@@ -19,4 +18,5 @@ public interface ClientHandshakeCallback extends ClearableCallback {
 
   public void shutdown(boolean fromShutdownHook);
 
+  public void cleanup();
 }

@@ -5,13 +5,12 @@ package com.tc.object.locks;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
-import com.tc.object.ClearableCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 
 import java.util.Collection;
 
-public interface ClientLock extends ClearableCallback {
 
+public interface ClientLock {
   /**
    * Blocking acquire
    * 
@@ -225,4 +224,6 @@ public interface ClientLock extends ClearableCallback {
   public boolean isAwardValid(long awardIDParam);
 
   public long getAwardID();
+
+  public void cleanup();
 }

@@ -4,11 +4,11 @@
 package com.tc.object.locks;
 
 import com.tc.net.ClientID;
-import com.tc.object.ClearableCallback;
 
 import java.util.Collection;
 
-public interface RemoteLockManager extends ClearableCallback {
+
+public interface RemoteLockManager {
   public ClientID getClientID();
 
   public void lock(LockID lock, ThreadID thread, ServerLockLevel level);
@@ -33,4 +33,5 @@ public interface RemoteLockManager extends ClearableCallback {
 
   public boolean isShutdown();
 
+  public void cleanup();
 }
