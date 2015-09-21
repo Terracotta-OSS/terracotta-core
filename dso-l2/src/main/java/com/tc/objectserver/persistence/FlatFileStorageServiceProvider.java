@@ -26,7 +26,11 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
-    this.directory = Paths.get(".").toAbsolutePath().normalize();
+    if (configuration instanceof FlatFileStorageProviderConfiguration) {
+      this.directory = ((FlatFileStorageProviderConfiguration)configuration).getBasedir().toPath();
+    } else {
+      this.directory = Paths.get(".").toAbsolutePath().normalize();
+    }
     logger.info("Initialized flat file storage to: " + this.directory);
     return true;
   }

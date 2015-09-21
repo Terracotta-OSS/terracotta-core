@@ -23,9 +23,9 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   private FlatFileStorageServiceProvider provider;
   
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
     provider = new FlatFileStorageServiceProvider();
-    provider.initialize(new EmptyServiceProviderConfiguration(FlatFileStorageServiceProvider.class));
+    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory()));
   }
 
   public void testServiceType() {
