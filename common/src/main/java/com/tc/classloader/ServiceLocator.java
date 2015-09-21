@@ -87,7 +87,7 @@ public class ServiceLocator {
     }
     for (Map.Entry<String, String> entry : urls.entrySet()) {
       try {
-        ComponentLoader loader = new ComponentLoader(new URL(entry.getValue()), parent);
+        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, parent);
         implementations.add((T)
             Class.forName(entry.getKey(), false, loader).newInstance());
       } catch (Exception e) {
