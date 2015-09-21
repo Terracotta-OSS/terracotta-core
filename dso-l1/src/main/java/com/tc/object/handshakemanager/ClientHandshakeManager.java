@@ -22,8 +22,6 @@ public interface ClientHandshakeManager {
 
   public void waitForHandshake();
 
-  public void reset();
-
   public void shutdown(boolean fromShutdownHook);
 
   public boolean isShutdown();
