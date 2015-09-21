@@ -72,10 +72,9 @@ public class EnterpriseNonAAClientBuilder extends StandardClientBuilder {
                                                              SessionManager sessionManager,
                                                              ClusterInternalEventsGun clusterEventsGun,
                                                              String clientVersion,
-                                                             Collection<ClientHandshakeCallback> callbacks,
-                                                             Collection<ClearableCallback> clearCallbacks) {
+                                                             Collection<ClientHandshakeCallback> callbacks) {
     return new EnterpriseClientHandshakeManagerImpl(logger, chmf, pauseSink, sessionManager, clusterEventsGun,
-                                                    clientVersion, callbacks, clearCallbacks);
+                                                    clientVersion, callbacks);
   }
 
   @Override

@@ -7,7 +7,6 @@ package com.tc.object.handshakemanager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
-import com.tc.object.ClearableCallback;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -44,11 +43,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private final Lock lock = new ReentrantLock();
   private final ClusterInternalEventsGun clusterEventsGun;
-  private final Collection<ClearableCallback> clearCallbacks;
 
   public ClientHandshakeManagerImpl(TCLogger logger, ClientHandshakeMessageFactory chmf,
                                     SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, String clientVersion,
-                                    Collection<ClientHandshakeCallback> callbacks, Collection<ClearableCallback> clearCallbacks) {
+                                    Collection<ClientHandshakeCallback> callbacks) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
@@ -58,7 +56,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.state = State.PAUSED;
     this.disconnected = true;
     pauseCallbacks();
-    this.clearCallbacks = clearCallbacks;
   }
 
   @Override

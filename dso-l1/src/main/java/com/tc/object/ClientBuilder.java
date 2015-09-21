@@ -76,8 +76,7 @@ public interface ClientBuilder {
                                                       SessionManager sessionManager,
                                                       ClusterInternalEventsGun clusterEventsGun,
                                                       String clientVersion,
-                                                      Collection<ClientHandshakeCallback> callbacks,
-                                                      Collection<ClearableCallback> clearCallbacks);
+                                                      Collection<ClientHandshakeCallback> callbacks);
 
   L1Management createL1Management(TunnelingEventHandler teh, String rawConfigText,
                                   DistributedObjectClient distributedObjectClient);

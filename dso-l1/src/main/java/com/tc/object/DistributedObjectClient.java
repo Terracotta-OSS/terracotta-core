@@ -128,7 +128,6 @@ import com.tcclient.cluster.ClusterInternalEventsContext;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -453,16 +452,12 @@ public class DistributedObjectClient implements TCClient {
     // in RemoteServerMapManager.initializeHandshake()
     clientHandshakeCallbacks.add(this.clientEntityManager);
     final ProductInfo pInfo = ProductInfo.getInstance();
-    final Collection<ClearableCallback> clearCallbacks = new ArrayList<ClearableCallback>();
-    clearCallbacks.add(this.communicationStageManager);
-    clearCallbacks.add(cluster);
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(new ClientIDLogger(this.channel, TCLogging
                                           .getLogger(ClientHandshakeManagerImpl.class)), this.channel
                                           .getClientHandshakeMessageFactory(), pauseSink, sessionManager,
                                       cluster, pInfo.version(), Collections
-                                          .unmodifiableCollection(clientHandshakeCallbacks), Collections
-                                          .unmodifiableCollection(clearCallbacks));
+                                          .unmodifiableCollection(clientHandshakeCallbacks));
 
     ClientChannelEventController.connectChannelEventListener(channel, pauseSink, clientHandshakeManager);
 
