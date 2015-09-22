@@ -242,6 +242,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.state = State.STOPPED;
     // Notify anyone waiting for this state.
     notifyAll();
+    
+    // We also want to notify any end-points that they have been disconnected.
+    for(EntityClientEndpoint endpoint : this.objectStoreMap.values()) {
+      endpoint.didCloseUnexpectedly();
+    }
+    // And then drop them.
+    this.objectStoreMap.clear();
   }
 
   @Override

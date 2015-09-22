@@ -169,10 +169,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   private void shutdownCallbacks(boolean fromShutdownHook) {
+    // Now that the handshake manager has concluded that it is entering into a shutdown state, anyone else wishing to use it
+    // needs to be notified that they cannot.
     for (ClientHandshakeCallback c : this.callBacks) {
       c.shutdown(fromShutdownHook);
     }
-    //TODO add hook to disconnect handlers at this point, if not called from shutdown-hook?
   }
 
   private void pauseCallbacks() {
