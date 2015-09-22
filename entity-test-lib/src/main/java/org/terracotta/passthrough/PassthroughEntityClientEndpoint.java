@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.terracotta.entity.EndpointListener;
+import org.terracotta.entity.EntityClientDisconnectHandler;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientReconnectHandler;
 import org.terracotta.entity.InvocationBuilder;
@@ -25,6 +26,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   private final Runnable onClose;
   private final List<EndpointListener> listeners;
   private EntityClientReconnectHandler reconnectHandler;
+  private EntityClientDisconnectHandler disconnectHandler;
   
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, Runnable onClose) {
     this.connection = passthroughConnection;
@@ -66,6 +68,13 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     onClose.run();
   }
 
+  @Override
+  public void didCloseUnexpectedly() {
+    if (null != this.disconnectHandler) {
+      this.disconnectHandler.didDisconnectUnexpectedly();
+    }
+  }
+
   public void handleMessageFromServer(byte[] payload) {
     for (EndpointListener listener : this.listeners) {
       listener.handleMessage(payload);
@@ -75,6 +84,11 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   @Override
   public void setReconnectHandler(EntityClientReconnectHandler handler) {
     this.reconnectHandler = handler;
+  }
+
+  @Override
+  public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
+    this.disconnectHandler = handler;
   }
 
   @Override

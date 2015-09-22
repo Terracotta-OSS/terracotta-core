@@ -220,8 +220,13 @@ public class PassthroughConnection implements Connection {
 
   @Override
   public void close() {
-    // The only cleanup we need is to call our runnable onClose hook.
+    // First, call the runnable hook.
     this.onClose.run();
+    // Second, walk any end-points still open and tell them they were disconnected.
+    for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
+      endpoint.didCloseUnexpectedly();
+    }
+    this.localEndpoints.clear();
   }
 
   @Override

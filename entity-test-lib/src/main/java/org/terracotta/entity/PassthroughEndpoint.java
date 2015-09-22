@@ -141,9 +141,19 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   @Override
+  public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
+    // Not used in this case so this can be ignored.
+  }
+
+  @Override
   public byte[] getExtendedReconnectData() {
     // This should never be called since there is no reconnect.
     Assert.fail("Reconnect not supported");
     return null;
+  }
+
+  @Override
+  public void didCloseUnexpectedly() {
+    Assert.fail("Not expecting this close");
   }
 }

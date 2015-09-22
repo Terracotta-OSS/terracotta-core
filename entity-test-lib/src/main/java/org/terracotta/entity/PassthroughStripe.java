@@ -182,8 +182,18 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     }
 
     @Override
+    public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
+      Assert.fail("Not implemented");
+    }
+
+    @Override
     public byte[] getExtendedReconnectData() {
       return new byte[0];
+    }
+
+    @Override
+    public void didCloseUnexpectedly() {
+      Assert.fail("Not expecting this close");
     }
   }
   
