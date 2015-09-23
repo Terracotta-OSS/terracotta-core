@@ -475,7 +475,7 @@ public class DistributedObjectClient implements TCClient {
     openChannel(serverHost, serverPort);
     waitForHandshake();
 
-    setLoggerOnExit();
+    //setLoggerOnExit();
   }
 
   private void openChannel(String serverHost, int serverPort) {
