@@ -3,7 +3,6 @@ package com.terracotta.connection.api;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionService;
-import org.terracotta.connection.DisconnectHandler;
 
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientStaticFactory;
@@ -29,7 +28,7 @@ public class TerracottaConnectionService implements ConnectionService {
   }
 
   @Override
-  public Connection connect(URI uri, DisconnectHandler disconnectHandler, Properties properties) throws ConnectionException {
+  public Connection connect(URI uri, Properties properties) throws ConnectionException {
     if (!handlesURI(uri)) {
       throw new IllegalArgumentException("Unknown URI " + uri);
     }
