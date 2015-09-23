@@ -1,6 +1,7 @@
 package com.tc.object;
 
 import org.terracotta.entity.EndpointListener;
+import org.terracotta.entity.EntityClientDisconnectHandler;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientReconnectHandler;
 import org.terracotta.entity.InvocationBuilder;
@@ -22,6 +23,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   private final EntityDescriptor entityDescriptor;
   private final Runnable closeHook;
   private EntityClientReconnectHandler reconnectHandler;
+  private EntityClientDisconnectHandler disconnectHandler;
 
   /**
    * @param entityDescriptor The server-side entity and corresponding client-side instance ID.
@@ -111,6 +113,11 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   }
 
   @Override
+  public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
+    this.disconnectHandler = handler;
+  }
+
+  @Override
   public byte[] getExtendedReconnectData() {
     byte[] reconnectData = null;
     if (null != this.reconnectHandler) {
@@ -125,5 +132,14 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   @Override
   public void close() {
     this.closeHook.run();
+  }
+
+  @Override
+  public void didCloseUnexpectedly() {
+    // NOTE:  We do NOT run the close hook in this situation since it is assuming that the close was requested and that the
+    // underlying connection is still viable.
+    if (null != this.disconnectHandler) {
+      this.disconnectHandler.didDisconnectUnexpectedly();
+    }
   }
 }

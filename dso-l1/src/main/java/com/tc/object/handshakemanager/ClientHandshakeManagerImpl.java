@@ -76,8 +76,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     return isShutdown;
   }
 
-  @Override
-  public void initiateHandshake() {
+  private void initiateHandshake() {
     this.logger.debug("Initiating handshake...");
     ClientHandshakeMessage handshakeMessage;
     lock.lock();
@@ -106,17 +105,19 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public void disconnected() {
-    if (checkShutdown()) return;
-    lock.lock();
-    try {
-      boolean isPaused = changeToPaused();
-      if (isPaused) {
-        pauseCallbacks();
-        this.sessionManager.newSession();
-        this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
+    // We ignore the disconnected call if we are shutting down.
+    if (!checkShutdown()) {
+      lock.lock();
+      try {
+        boolean isPaused = changeToPaused();
+        if (isPaused) {
+          pauseCallbacks();
+          this.sessionManager.newSession();
+          this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
+        }
+      } finally {
+        lock.unlock();
       }
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -125,11 +126,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.logger.info("Connected: Unpausing from " + getState());
     if (getState() != State.PAUSED) {
       this.logger.warn("Ignoring unpause while " + getState());
-      return;
+    } else if (!checkShutdown()) {
+      // drop handshaking if shutting down
+      initiateHandshake();
     }
-    // drop handshaking if shutting down
-    if (checkShutdown()) return;
-    initiateHandshake();
   }
 
   @Override
@@ -142,20 +142,19 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.logger.info("Received Handshake ack");
     if (getState() != State.STARTING) {
       this.logger.warn("Ignoring handshake acknowledgement while " + getState());
-      return;
-    }
+    } else {
+      checkClientServerVersionCompatibility(serverVersion);
+      this.serverIsPersistent = persistentServer;
+      lock.lock();
+      try {
+        changeToRunning();
+        unpauseCallbacks();
+      } finally {
+        lock.unlock();
+      }
 
-    checkClientServerVersionCompatibility(serverVersion);
-    this.serverIsPersistent = persistentServer;
-    lock.lock();
-    try {
-      changeToRunning();
-      unpauseCallbacks();
-    } finally {
-      lock.unlock();
+      clusterEventsGun.fireThisNodeJoined(thisNodeId, clusterMembers);
     }
-
-    clusterEventsGun.fireThisNodeJoined(thisNodeId, clusterMembers);
   }
 
   protected void checkClientServerVersionCompatibility(String serverVersion) {
@@ -170,10 +169,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   private void shutdownCallbacks(boolean fromShutdownHook) {
+    // Now that the handshake manager has concluded that it is entering into a shutdown state, anyone else wishing to use it
+    // needs to be notified that they cannot.
     for (ClientHandshakeCallback c : this.callBacks) {
       c.shutdown(fromShutdownHook);
     }
-    //TODO add hook to disconnect handlers at this point, if not called from shutdown-hook?
   }
 
   private void pauseCallbacks() {
@@ -218,22 +218,23 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   // returns true if PAUSED else return false if already PAUSED
   private synchronized boolean changeToPaused() {
-    final State old = state;
-    if (old == State.PAUSED) { return false; }
-    
-    state = State.PAUSED;
+    final State old = this.state;
+    boolean didChangeToPaused = false;
+    if (old != State.PAUSED) {
+      this.state = State.PAUSED;
+      didChangeToPaused = true;
 
-    this.logger.info("Disconnected: Pausing from " + old + ". Disconnect count: " + disconnected);
+      this.logger.info("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
 
-    if (old == State.RUNNING) {
-      this.disconnected = true;
+      if (old == State.RUNNING) {
+        this.disconnected = true;
+        // A thread might be waiting for us to change whether or not we are disconnected.
+        notifyAll();
+      }
+
+      this.clusterEventsGun.fireOperationsDisabled();
     }
-
-    notifyAll();
-
-    clusterEventsGun.fireOperationsDisabled();
-
-    return true;
+    return didChangeToPaused;
   }
 
   private synchronized void changeToStarting() {
