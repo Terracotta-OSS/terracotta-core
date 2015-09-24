@@ -21,8 +21,8 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   
   @Override
   public void setUp() {
-    this.persistentStorage = new FlatFilePersistentStorage(TEMP_FILE);
     try {
+      this.persistentStorage = new FlatFilePersistentStorage(getTempFile(TEMP_FILE).getAbsolutePath());
       this.persistentStorage.create();
     } catch (IOException e) {
       fail(e);

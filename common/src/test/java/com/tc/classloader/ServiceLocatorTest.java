@@ -17,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -84,7 +83,7 @@ public class ServiceLocatorTest {
     for (ServiceProvider p : providers) {
       ClassLoader loader = p.getClass().getClassLoader();
       //this is required so that we know that system class loader is used
-      Assert.assertTrue("Check if right class loader is used", loader instanceof ComponentLoader);
+      Assert.assertTrue("Check if right class loader is used", loader instanceof ComponentURLClassLoader);
       //Make sure that we are not loading both interface and implementation at same scope
       Assert.assertNotEquals(ServiceProvider.class.getClassLoader(), loader);
       //add to set to check number of implementation to check uniques across implementations.
