@@ -10,7 +10,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ *  Tagging a class with this annotation will force the ComponentURLClassloader not load
+ *  the tagged class and force the parent class loader to load the class or interface
+ *  @see com.tc.classloader.ComponentURLClassLoader#loadClass(java.lang.String, boolean) 
  */
 @Target( ElementType.TYPE )
 @Retention( RetentionPolicy.RUNTIME )
