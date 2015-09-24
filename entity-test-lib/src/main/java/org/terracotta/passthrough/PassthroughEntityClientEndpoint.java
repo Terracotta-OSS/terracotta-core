@@ -1,14 +1,10 @@
 package org.terracotta.passthrough;
 
-import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.terracotta.entity.EndpointListener;
-import org.terracotta.entity.EntityClientDisconnectHandler;
+import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityClientReconnectHandler;
 import org.terracotta.entity.InvocationBuilder;
 
 
@@ -24,9 +20,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   private final long clientInstanceID;
   private final byte[] config;
   private final Runnable onClose;
-  private final List<EndpointListener> listeners;
-  private EntityClientReconnectHandler reconnectHandler;
-  private EntityClientDisconnectHandler disconnectHandler;
+  private EndpointDelegate delegate;
   
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, Runnable onClose) {
     this.connection = passthroughConnection;
@@ -35,7 +29,6 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     this.clientInstanceID = clientInstanceID;
     this.config = config;
     this.onClose = onClose;
-    this.listeners = new Vector<EndpointListener>();
   }
 
   @Override
@@ -44,8 +37,9 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   }
 
   @Override
-  public void registerListener(EndpointListener listener) {
-    this.listeners.add(listener);
+  public void setDelegate(EndpointDelegate delegate) {
+    Assert.assertTrue(null == this.delegate);
+    this.delegate = delegate;
   }
 
   @Override
@@ -70,31 +64,21 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
 
   @Override
   public void didCloseUnexpectedly() {
-    if (null != this.disconnectHandler) {
-      this.disconnectHandler.didDisconnectUnexpectedly();
+    if (null != this.delegate) {
+      this.delegate.didDisconnectUnexpectedly();
     }
   }
 
   public void handleMessageFromServer(byte[] payload) {
-    for (EndpointListener listener : this.listeners) {
-      listener.handleMessage(payload);
+    if (null != this.delegate) {
+      this.delegate.handleMessage(payload);
     }
   }
 
   @Override
-  public void setReconnectHandler(EntityClientReconnectHandler handler) {
-    this.reconnectHandler = handler;
-  }
-
-  @Override
-  public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
-    this.disconnectHandler = handler;
-  }
-
-  @Override
   public byte[] getExtendedReconnectData() {
-    return (null != this.reconnectHandler)
-        ? this.reconnectHandler.createExtendedReconnectData()
+    return (null != this.delegate)
+        ? this.delegate.createExtendedReconnectData()
         : new byte[0];
   }
 

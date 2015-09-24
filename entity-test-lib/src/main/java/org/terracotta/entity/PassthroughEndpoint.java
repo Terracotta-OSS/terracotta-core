@@ -21,9 +21,6 @@ package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Set;
 import java.util.concurrent.Future;
 
 import org.junit.Assert;
@@ -32,7 +29,7 @@ import org.junit.Assert;
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity entity;
-  private final Set<EndpointListener> listeners = Collections.newSetFromMap(new IdentityHashMap<EndpointListener, Boolean>());
+  private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
 
   public PassthroughEndpoint(ActiveServerEntity entity) {
@@ -52,8 +49,9 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   }
 
   @Override
-  public void registerListener(EndpointListener listener) {
-    listeners.add(listener);
+  public void setDelegate(EndpointDelegate delegate) {
+    Assert.assertNull(this.delegate);
+    this.delegate = delegate;
   }
 
   @Override
@@ -116,8 +114,8 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     @Override
     public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
       if (clientDescriptor == PassthroughEndpoint.this.clientDescriptor) {
-        for (EndpointListener listener : listeners) {
-          listener.handleMessage(payload);
+        if (null != PassthroughEndpoint.this.delegate) {
+          PassthroughEndpoint.this.delegate.handleMessage(payload);
         }
       }
     }
@@ -132,17 +130,6 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   @Override
   public void close() {
     // In a real implementation, this is where a call to the PlatformService, to clean up, would be.
-  }
-
-  @Override
-  public void setReconnectHandler(EntityClientReconnectHandler handler) {
-    // The reconnect handler isn't used in this case since there is no reconnect in this testing system.
-    // We can safely ignore this.
-  }
-
-  @Override
-  public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
-    // Not used in this case so this can be ignored.
   }
 
   @Override

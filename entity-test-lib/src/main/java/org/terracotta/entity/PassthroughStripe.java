@@ -20,9 +20,7 @@
 package org.terracotta.entity;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.Futures;
@@ -138,7 +136,7 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
   }
   
   private class FakeEndpoint implements EntityClientEndpoint {
-    private final List<EndpointListener> listeners = new Vector<EndpointListener>();
+    private EndpointDelegate delegate;
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
     
@@ -148,8 +146,8 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     }
 
     public void sendNoResponse(byte[] payload) {
-      for (EndpointListener listener : listeners) {
-        listener.handleMessage(payload);
+      if (null != this.delegate) {
+        this.delegate.handleMessage(payload);
       }
     }
 
@@ -159,8 +157,9 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     }
 
     @Override
-    public void registerListener(EndpointListener listener) {
-      listeners.add(listener);
+    public void setDelegate(EndpointDelegate delegate) {
+      Assert.assertNull(this.delegate);
+      this.delegate = delegate;
     }
 
     @Override
@@ -174,16 +173,6 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     @Override
     public void close() {
       PassthroughStripe.this.connectCountMap.put(this.entityName, PassthroughStripe.this.connectCountMap.get(this.entityName).intValue() - 1);
-    }
-
-    @Override
-    public void setReconnectHandler(EntityClientReconnectHandler handler) {
-      Assert.fail("Not implemented");
-    }
-
-    @Override
-    public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
-      Assert.fail("Not implemented");
     }
 
     @Override
