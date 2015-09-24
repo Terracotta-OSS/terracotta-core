@@ -1,29 +1,23 @@
 package com.tc.object;
 
-import org.terracotta.entity.EndpointListener;
-import org.terracotta.entity.EntityClientDisconnectHandler;
+import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityClientReconnectHandler;
 import org.terracotta.entity.InvocationBuilder;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.util.Assert;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
 
 public class EntityClientEndpointImpl implements EntityClientEndpoint {
-  private final List<EndpointListener> listeners = new CopyOnWriteArrayList<EndpointListener>();
   private final InvocationHandler invocationHandler;
   private final byte[] configuration;
   private final EntityDescriptor entityDescriptor;
   private final Runnable closeHook;
-  private EntityClientReconnectHandler reconnectHandler;
-  private EntityClientDisconnectHandler disconnectHandler;
+  private EndpointDelegate delegate;
 
   /**
    * @param entityDescriptor The server-side entity and corresponding client-side instance ID.
@@ -45,13 +39,14 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   }
 
   @Override
-  public void registerListener(EndpointListener listener) {
-    listeners.add(listener);
+  public void setDelegate(EndpointDelegate delegate) {
+    Assert.assertNull(this.delegate);
+    this.delegate = delegate;
   }
   
   public void handleMessage(byte[] message) {
-    for (EndpointListener listener : listeners) {
-      listener.handleMessage(message);
+    if (null != this.delegate) {
+      this.delegate.handleMessage(message);
     }
   }
 
@@ -108,20 +103,10 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   }
 
   @Override
-  public void setReconnectHandler(EntityClientReconnectHandler handler) {
-    this.reconnectHandler = handler;
-  }
-
-  @Override
-  public void setUnexpectedDisconnectHandler(EntityClientDisconnectHandler handler) {
-    this.disconnectHandler = handler;
-  }
-
-  @Override
   public byte[] getExtendedReconnectData() {
     byte[] reconnectData = null;
-    if (null != this.reconnectHandler) {
-      reconnectData = this.reconnectHandler.createExtendedReconnectData();
+    if (null != this.delegate) {
+      reconnectData = this.delegate.createExtendedReconnectData();
     }
     if (null == reconnectData) {
       reconnectData = new byte[0];
@@ -138,8 +123,8 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   public void didCloseUnexpectedly() {
     // NOTE:  We do NOT run the close hook in this situation since it is assuming that the close was requested and that the
     // underlying connection is still viable.
-    if (null != this.disconnectHandler) {
-      this.disconnectHandler.didDisconnectUnexpectedly();
+    if (null != this.delegate) {
+      this.delegate.didDisconnectUnexpectedly();
     }
   }
 }
