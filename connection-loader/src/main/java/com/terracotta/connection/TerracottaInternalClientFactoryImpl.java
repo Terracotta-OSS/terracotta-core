@@ -38,8 +38,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
                                                 Set<String> tunneledMBeanDomains, String productId) {
 
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
-    TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, getClass()
-        .getClassLoader(), rejoinClient, tunneledMBeanDomains, productId, new ConcurrentHashMap<>(env));
+    TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains, productId, new ConcurrentHashMap<>(env));
     return client;
   }
 

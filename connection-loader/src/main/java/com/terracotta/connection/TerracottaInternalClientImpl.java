@@ -6,7 +6,6 @@ package com.terracotta.connection;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,28 +18,19 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     private static final long serialVersionUID = 1L;
   }
 
-  private final AppClassLoader        appClassLoader;
   private final ClientCreatorCallable clientCreator;
   private final Set<String>           tunneledMBeanDomains = new HashSet<>();
   private volatile ClientHandle       clientHandle;
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
 
-  TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader, boolean rejoinEnabled,
+  TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, boolean rejoinEnabled,
                                Set<String> tunneledMBeanDomains, String productId, Map<String, Object> env) {
     if (tunneledMBeanDomains != null) {
       this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
     }
     try {
-      this.appClassLoader = new AppClassLoader(appLoader);
-
-      @SuppressWarnings("unchecked")
-      Class<Callable<ClientCreatorCallable>> bootClass = (Class<Callable<ClientCreatorCallable>>) appClassLoader.loadClass(CreateClient.class.getName());
-      
-      Constructor<Callable<ClientCreatorCallable>> cstr = bootClass.getConstructor(String.class, Boolean.TYPE, ClassLoader.class, Boolean.TYPE,
-                                                     String.class, Map.class);
-
-      Callable<ClientCreatorCallable> boot = cstr.newInstance(tcConfig, isUrlConfig, appClassLoader, rejoinEnabled, productId, env);
+      Callable<ClientCreatorCallable> boot = new CreateClient(tcConfig, isUrlConfig, rejoinEnabled, productId, env);
       this.clientCreator = boot.call();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -95,7 +85,6 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
       }
     } finally {
       clientHandle = null;
-      appClassLoader.clear();
     }
   }
 

@@ -32,18 +32,16 @@ public class DistributedObjectClientFactory {
   private final String            configSpec;
   private final TCSecurityManager securityManager;
   private final SecurityInfo      securityInfo;
-  private final ClassLoader       loader;
   private final ProductID         productId;
   private final UUID                      uuid;
 
   public DistributedObjectClientFactory(String configSpec, TCSecurityManager securityManager,
-                                        SecurityInfo securityInfo, ClassLoader loader, 
+                                        SecurityInfo securityInfo, 
                                         ProductID productId,
                                         UUID uuid) {
     this.configSpec = configSpec;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
-    this.loader = loader;
     this.productId = productId;
     this.uuid = uuid;
   }
@@ -75,9 +73,7 @@ public class DistributedObjectClientFactory {
                                                                  });
     final TCThreadGroup group = new TCThreadGroup(throwableHandler);
 
-    final ClassProvider classProvider = new SingleLoaderClassProvider(
-                                                                      loader == null ? DistributedObjectClientFactory.class
-                                                                          .getClassLoader() : loader);
+    final ClassProvider classProvider = new SingleLoaderClassProvider(DistributedObjectClientFactory.class.getClassLoader());
 
     final ClusterInternal cluster = new ClusterImpl();
 
