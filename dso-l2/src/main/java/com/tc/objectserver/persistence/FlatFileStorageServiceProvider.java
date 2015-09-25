@@ -1,10 +1,8 @@
 package com.tc.objectserver.persistence;
 
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -35,11 +33,10 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
     return true;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T> Service<T> getService(long consumerID, ServiceConfiguration<T> configuration) {
+  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     String filename = "consumer_" + consumerID + ".dat";
-    return (Service<T>) new FlatFileStorageService(this.directory.resolve(filename));
+    return configuration.getServiceType().cast(new FlatFilePersistentStorage(this.directory.resolve(filename).toString()));
   }
 
   @Override

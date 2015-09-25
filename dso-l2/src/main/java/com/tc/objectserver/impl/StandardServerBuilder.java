@@ -53,7 +53,6 @@ import com.tc.util.sequence.DGCSequenceProvider;
 import java.net.InetAddress;
 
 import javax.management.MBeanServer;
-import org.terracotta.entity.Service;
 import org.terracotta.persistence.IPersistentStorage;
 
 
@@ -159,10 +158,9 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public Persistor createPersistor(ServiceRegistry serviceRegistry) {
-    Service<IPersistentStorage> persistentStorageService = serviceRegistry.getService(new PersistentStorageServiceConfiguration());
+    IPersistentStorage persistentStorage = serviceRegistry.getService(new PersistentStorageServiceConfiguration());
     // We can't fail to find persistence support (at least not in our current environment).
-    Assert.assertNotNull(persistentStorageService);
-    IPersistentStorage persistentStorage = persistentStorageService.get();
+    Assert.assertNotNull(persistentStorage);
     return new Persistor(persistentStorage);
   }
 

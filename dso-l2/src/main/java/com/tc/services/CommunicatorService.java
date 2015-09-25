@@ -16,7 +16,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.ClientCommunicator;
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
@@ -102,8 +101,8 @@ public class CommunicatorService implements ServiceProvider, DSOChannelManagerEv
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> Service<T> getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return (Service<T>) new EntityClientCommunicatorService(clientAccounts);
+  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+    return configuration.getServiceType().cast(new EntityClientCommunicatorService(clientAccounts));
   }
 
   @Override

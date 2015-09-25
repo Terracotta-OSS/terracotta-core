@@ -68,7 +68,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSimpleSendNoResponse() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     clientCommunicator.sendNoResponse(clientDescriptor, payload);
 
     verify(serverEntityMessage).setMessage(entityDescriptor, payload);
@@ -77,7 +77,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSendWaitForResponse() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(clientDescriptor, payload);
 
     verify(serverEntityMessage).setMessage(entityDescriptor, payload, 0L);
@@ -96,7 +96,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testClientLeavesWhileResponseOutstanding() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(clientDescriptor, payload);
 
     communicatorService.channelRemoved(messageChannel);
@@ -105,7 +105,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSendToDisconnectedClient() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(new ClientDescriptorImpl(new ClientID(2), entityDescriptor), payload);
     future.get();
 
@@ -114,7 +114,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSendNoResponseToDisconnectedClient() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     clientCommunicator.sendNoResponse(new ClientDescriptorImpl(new ClientID(2), entityDescriptor), payload);
 
     verify(serverEntityMessage, never()).send();
@@ -134,7 +134,7 @@ public class CommunicatorServiceTest {
     ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
     ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
     
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     
     // Send the message to client one and ensure that the correct payload went through to the correct entity.
     when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage1);
@@ -165,7 +165,7 @@ public class CommunicatorServiceTest {
     ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
     ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
     
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration()).get();
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
     
     // Send the message to client one and ensure that the correct payload went through to the correct entity.
     when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage1);

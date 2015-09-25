@@ -11,7 +11,6 @@ import com.tc.logging.TCLogging;
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 
 /**
@@ -69,9 +68,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> Service<T> getService(long consumerId, ServiceConfiguration<T> config) {
+  public <T> T getService(long consumerId, ServiceConfiguration<T> config) {
     for(ServiceProvider provider : serviceProviders) {
-        Service s = provider.getService(consumerId, config);
+        T s = provider.getService(consumerId, config);
         if (s != null) {
           return s;
         }
