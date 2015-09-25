@@ -9,16 +9,16 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class DelegatingServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
-  private final ConcurrentMap serviceInstances = new ConcurrentHashMap();
+  private final ConcurrentMap<ServiceConfiguration<? extends Object>, Object>  serviceInstances = new ConcurrentHashMap<>();
 
   public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers) {
     this.consumerID = consumerID;
@@ -27,7 +27,7 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
         List<ServiceProvider> listForType = temp.get(serviceType);
         if (null == listForType) {
-          listForType = new Vector<>();
+          listForType = new LinkedList<>();
           temp.put(serviceType, listForType);
         }
         listForType.add(provider);
@@ -40,7 +40,7 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
     if(serviceInstances.get(configuration)!= null) {
-      return (T)serviceInstances.get(configuration);
+      return configuration.getServiceType().cast(serviceInstances.get(configuration));
     }
     List<ServiceProvider> serviceProviders = serviceProviderMap.get(configuration.getServiceType());
     if (serviceProviders == null) {
