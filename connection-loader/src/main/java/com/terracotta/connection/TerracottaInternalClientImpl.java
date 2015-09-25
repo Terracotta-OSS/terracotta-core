@@ -3,7 +3,6 @@
  */
 package com.terracotta.connection;
 
-import com.google.common.base.Throwables;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
 
@@ -14,13 +13,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
-  private static final String CLIENT_HANDLE_IMPL                                               = "com.terracotta.connection.ClientHandleImpl";
-  public static final String  SECRET_PROVIDER                                                  = "com.terracotta.express.SecretProvider";
-
+public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   static class ClientShutdownException extends Exception {
-    //
+    private static final long serialVersionUID = 1L;
   }
 
   private final AppClassLoader        appClassLoader;
@@ -56,8 +52,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     if (isInitialized) { return; }
 
     try {
-      Class<?> clientHandleImpl = appClassLoader.loadClass(CLIENT_HANDLE_IMPL);
-      clientHandle = (ClientHandle) clientHandleImpl.getConstructor(Object.class).newInstance(clientCreator.call());
+      clientHandle = new ClientHandleImpl(clientCreator.call());
 
       isInitialized = true;
       join(tunneledMBeanDomains);
@@ -84,25 +79,6 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
         this.tunneledMBeanDomains.addAll(tunnelledMBeanDomainsParam);
       }
     }
-  }
-
-  @Override
-  public <T> T instantiate(String className, Class<?>[] cstrArgTypes, Object[] cstrArgs) throws Exception {
-    try {
-      @SuppressWarnings("unchecked")
-      Class<T> clazz = (Class<T>) appClassLoader.loadClass(className);
-      
-      Constructor<T> cstr = clazz.getConstructor(cstrArgTypes);
-      return cstr.newInstance(cstrArgs);
-    } catch (InvocationTargetException e) {
-      Throwable targetEx = e.getTargetException();
-      throw Throwables.propagate(targetEx);
-    }
-  }
-
-  @Override
-  public Class<?> loadClass(String className) throws ClassNotFoundException {
-    return appClassLoader.loadClass(className);
   }
 
   @Override

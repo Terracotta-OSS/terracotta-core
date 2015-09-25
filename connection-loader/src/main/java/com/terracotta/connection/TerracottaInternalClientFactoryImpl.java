@@ -11,7 +11,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
+  public static final String  SECRET_PROVIDER = "com.terracotta.express.SecretProvider";
   private final ConcurrentMap<String, Map<String, Object>> envByUrl     = new ConcurrentHashMap<>();
 
   // public nullary constructor needed as entry point from SPI
@@ -66,7 +68,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
 
   private Map<String, Object> createNewEnv() {
     final Map<String, Object> env = new HashMap<>();
-    final String secretProviderClass = System.getProperty(TerracottaInternalClientImpl.SECRET_PROVIDER);
+    final String secretProviderClass = System.getProperty(SECRET_PROVIDER);
     if (secretProviderClass != null) {
       Object instance = newInstance(secretProviderClass);
       try {
@@ -74,7 +76,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       } catch (Exception e) {
         throw new RuntimeException("Error invoking fetchSecret on " + secretProviderClass, e);
       }
-      env.put(TerracottaInternalClientImpl.SECRET_PROVIDER, instance);
+      env.put(SECRET_PROVIDER, instance);
     }
     return env;
   }

@@ -39,6 +39,12 @@
       <scope>provided</scope>
     </dependency>  
     <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>connection-impl</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>  
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
