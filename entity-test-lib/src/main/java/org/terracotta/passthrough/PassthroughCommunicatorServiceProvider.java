@@ -27,7 +27,7 @@ public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
   @SuppressWarnings("unchecked")
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return (T)new PassthroughCommunicatorService();
+    return configuration.getServiceType().cast(new PassthroughCommunicatorService());
   }
 
   @Override

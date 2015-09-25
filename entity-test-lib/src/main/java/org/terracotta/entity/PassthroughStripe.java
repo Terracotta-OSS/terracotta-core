@@ -95,7 +95,7 @@ public class PassthroughStripe implements ClientCommunicator {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getService(ServiceConfiguration<T> configuration) {
-      return (T)PassthroughStripe.this;
+      return configuration.getServiceType().cast(PassthroughStripe.this);
     }
   }
   
