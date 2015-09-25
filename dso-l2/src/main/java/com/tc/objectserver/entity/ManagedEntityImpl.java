@@ -109,7 +109,6 @@ public class ManagedEntityImpl implements ManagedEntity {
       EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
       clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
       commonServerEntity.destroy();
-      registry.destroy();
     }
     request.complete();
   }

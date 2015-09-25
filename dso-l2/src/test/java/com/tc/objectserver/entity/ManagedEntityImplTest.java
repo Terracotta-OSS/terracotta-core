@@ -221,7 +221,6 @@ public class ManagedEntityImplTest {
     managedEntity.invoke(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY));
 
     verify(activeServerEntity).destroy();
-    verify(serviceRegistry).destroy();
   }
 
   private ServerEntityRequest mockCreateEntityRequest(Serializable config) throws IOException {

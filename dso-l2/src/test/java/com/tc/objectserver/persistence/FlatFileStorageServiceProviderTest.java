@@ -3,15 +3,13 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.tc.services.EmptyServiceProviderConfiguration;
-import org.terracotta.entity.Service;
-
 import com.tc.test.TCTestCase;
 
 import java.io.IOException;
 import java.util.Collection;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -37,20 +35,19 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   public void testGetService() throws IOException {
     long consumerID = 1;
     PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
-    Service<IPersistentStorage> service = provider.getService(consumerID, configuration);
-    assertTrue(service instanceof FlatFileStorageService);
-    IPersistentStorage storage = service.get();
+    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    IPersistentStorage storage = provider.getService(consumerID, configuration);
+    assertTrue(storage instanceof FlatFilePersistentStorage);
     storage.create();
     KeyValueStorage<Integer, String> keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
     keyValueStorage.put(2, "two");
     keyValueStorage.put(3, "three");
     keyValueStorage.put(1, "one");
     assertEquals("three", keyValueStorage.get(3));
-    service.destroy();
+    storage.close();
     
     // Reload it to see if the data is still there.
-    service = provider.getService(consumerID, configuration);
-    storage = service.get();
+    storage = provider.getService(consumerID, configuration);
     storage.open();
     keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
     assertEquals("one", keyValueStorage.get(1));
@@ -61,18 +58,17 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   public void testCreateReplacesData() throws IOException {
     long consumerID = 1;
     PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
-    Service<IPersistentStorage> service = provider.getService(consumerID, configuration);
-    assertTrue(service instanceof FlatFileStorageService);
-    IPersistentStorage storage = service.get();
+    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    IPersistentStorage storage = provider.getService(consumerID, configuration);
+    assertTrue(storage instanceof FlatFilePersistentStorage);
     storage.create();
     KeyValueStorage<Integer, String> keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
     keyValueStorage.put(1, "one");
     assertEquals("one", keyValueStorage.get(1));
-    service.destroy();
+    storage.close();
     
     // Recreate the storage and verify that the data is NOT there.
-    service = provider.getService(consumerID, configuration);
-    storage = service.get();
+    storage = provider.getService(consumerID, configuration);
     storage.create();
     keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
     assertEquals(null, keyValueStorage.get(1));

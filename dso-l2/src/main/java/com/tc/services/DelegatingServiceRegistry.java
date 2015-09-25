@@ -4,7 +4,6 @@ package com.tc.services;
 import com.google.common.collect.ImmutableMap;
 import com.tc.util.Assert;
 
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
@@ -19,7 +18,7 @@ import java.util.concurrent.ConcurrentMap;
 public class DelegatingServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
-  private final ConcurrentMap<ServiceConfiguration<?>, Service<?>> serviceInstances = new ConcurrentHashMap<>();
+  private final ConcurrentMap serviceInstances = new ConcurrentHashMap();
 
   public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers) {
     this.consumerID = consumerID;
@@ -39,17 +38,17 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
 
 
   @Override
-  public <T> Service<T> getService(ServiceConfiguration<T> configuration) {
+  public <T> T getService(ServiceConfiguration<T> configuration) {
     if(serviceInstances.get(configuration)!= null) {
-      return (Service<T>)serviceInstances.get(configuration);
+      return (T)serviceInstances.get(configuration);
     }
     List<ServiceProvider> serviceProviders = serviceProviderMap.get(configuration.getServiceType());
     if (serviceProviders == null) {
      return null;
     }
-    Service<T> service = null;
+    T service = null;
     for (ServiceProvider provider : serviceProviders) {
-      Service<T> oneService = provider.getService(this.consumerID, configuration);
+      T oneService = provider.getService(this.consumerID, configuration);
       if (null != oneService) {
         // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
         Assert.assertNull(service);
@@ -60,10 +59,5 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
       serviceInstances.put(configuration, service);
     }
     return service;
-  }
-
-  @Override
-  public void destroy() {
-    serviceInstances.forEach((serviceConfiguration, service) -> service.destroy());
   }
 }

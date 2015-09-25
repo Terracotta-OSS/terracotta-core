@@ -1,6 +1,5 @@
 package com.tc.services;
 
-import org.terracotta.entity.Service;
 
 import com.tc.object.EntityID;
 
@@ -14,5 +13,5 @@ public interface EntityServiceWrapper<T> {
    * @param entityID id of the entity
    * @return service
    */
-  Service<T> entitySubservice(EntityID entityID);
+  T entitySubservice(EntityID entityID);
 }

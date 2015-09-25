@@ -3,7 +3,6 @@ package com.tc.services;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 
@@ -47,5 +46,5 @@ public interface TerracottaServiceProviderRegistry {
    * @param <T> service type
    * @return instance of service
    */
-  <T> Service<T> getService(long consumerId, ServiceConfiguration<T> config);
+  <T> T getService(long consumerId, ServiceConfiguration<T> config);
 }
