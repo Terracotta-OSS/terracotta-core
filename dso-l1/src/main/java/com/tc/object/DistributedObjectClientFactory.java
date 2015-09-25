@@ -19,8 +19,6 @@ import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.ClientConfigImpl;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.SingleLoaderClassProvider;
 import com.tc.util.UUID;
 import com.tcclient.cluster.ClusterInternal;
 
@@ -73,15 +71,12 @@ public class DistributedObjectClientFactory {
                                                                  });
     final TCThreadGroup group = new TCThreadGroup(throwableHandler);
 
-    final ClassProvider classProvider = new SingleLoaderClassProvider(DistributedObjectClientFactory.class.getClassLoader());
-
     final ClusterInternal cluster = new ClusterImpl();
 
     final StartupAction action = new StartupHelper.StartupAction() {
       @Override
       public void execute() throws Throwable {
-        DistributedObjectClient client = ClientFactory.createClient(configHelper, group, classProvider,
-            connectionComponents, cluster, securityManager,
+        DistributedObjectClient client = ClientFactory.createClient(configHelper, group, connectionComponents, cluster, securityManager,
             uuid,
             productId);
 
