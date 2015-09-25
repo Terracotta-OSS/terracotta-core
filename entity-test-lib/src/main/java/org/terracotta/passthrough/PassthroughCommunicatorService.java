@@ -4,7 +4,6 @@ import java.util.concurrent.Future;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 
 
@@ -13,7 +12,7 @@ import org.terracotta.entity.ServiceConfiguration;
  * This is used, by server-side entities, to send messages back to specific client-side instances.
  * TODO:  we currently need to determine how to handle the synchronous send.
  */
-public class PassthroughCommunicatorService implements Service<ClientCommunicator>, ClientCommunicator {
+public class PassthroughCommunicatorService implements ClientCommunicator {
   @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
     prepareAndSendMessage(clientDescriptor, payload);
@@ -22,20 +21,6 @@ public class PassthroughCommunicatorService implements Service<ClientCommunicato
   @Override
   public Future<Void> send(ClientDescriptor clientDescriptor, byte[] payload) {
     return prepareAndSendMessage(clientDescriptor, payload);
-  }
-
-  @Override
-  public void initialize(ServiceConfiguration<? extends ClientCommunicator> configuration) {
-  }
-
-  @Override
-  public ClientCommunicator get() {
-    return this;
-  }
-
-  @Override
-  public void destroy() {
-    // Do nothing.
   }
 
   private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, byte[] payload) {

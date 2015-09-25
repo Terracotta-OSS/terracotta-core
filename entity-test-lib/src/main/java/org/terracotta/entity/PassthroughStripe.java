@@ -31,7 +31,7 @@ import org.junit.Assert;
  * Similar to the PassthroughEndpoint although designed to handle the broader cases of active/passive distinction,
  *  creation/destruction of entities, and multiple clients connected to one entity.
  */
-public class PassthroughStripe implements Service<ClientCommunicator>, ClientCommunicator {
+public class PassthroughStripe implements ClientCommunicator {
 
   private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
@@ -91,47 +91,11 @@ public class PassthroughStripe implements Service<ClientCommunicator>, ClientCom
     return Futures.immediateFuture(null);
   }
 
-  @Override
-  public void initialize(ServiceConfiguration<? extends ClientCommunicator> configuration) {
-    //do nothing
-  }
-
-  @Override
-  public ClientCommunicator get() {
-    return this;
-  }
-
-  @Override
-  public void destroy() {
-    //TODO what should be done for this?
-  }
-
-
   private class FakeServiceRegistry implements ServiceRegistry {
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Service<T> getService(ServiceConfiguration<T> configuration) {
-      Service<PassthroughStripe> service = new Service<PassthroughStripe>() {
-        @Override
-        public PassthroughStripe get() {
-          return PassthroughStripe.this;
-        }
-
-        @Override
-        public void initialize(ServiceConfiguration<? extends PassthroughStripe> configuration) {
-        }
-
-        @Override
-        public void destroy() {
-        }  
-      };
-      return (Service<T>)service;
-    }
-
-    @Override
-    public void destroy() {
-      // Not implemented for this test.
-      Assert.fail();
+    public <T> T getService(ServiceConfiguration<T> configuration) {
+      return (T)PassthroughStripe.this;
     }
   }
   

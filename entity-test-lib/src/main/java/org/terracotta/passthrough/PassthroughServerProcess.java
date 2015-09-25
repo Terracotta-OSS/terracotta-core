@@ -11,7 +11,6 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
@@ -102,21 +101,18 @@ public class PassthroughServerProcess implements MessageHandler {
         return IPersistentStorage.class;
       }
     };
-    Service<IPersistentStorage> persistentStorageService = this.platformServiceRegistry.getService(persistenceConfiguration);
-    IPersistentStorage persistentStorage = null;
+    IPersistentStorage persistentStorage = this.platformServiceRegistry.getService(persistenceConfiguration);
     if (shouldLoadStorage) {
       // Note that we are told to load storage in the cases where the system is restarting.  In that case, we MUST have
       // persistent storage or else the restart doesn't even make sense:  we would have no way of reconnecting the clients.
-      Assert.assertTrue(null != persistentStorageService);
-      persistentStorage = persistentStorageService.get();
+      Assert.assertTrue(null != persistentStorage);
       try {
         persistentStorage.open();
       } catch (IOException e) {
         Assert.unexpected(e);
       }
     } else {
-      if (null != persistentStorageService) {
-        persistentStorage = persistentStorageService.get();
+      if (null != persistentStorage) {
         try {
           persistentStorage.create();
         } catch (IOException e) {

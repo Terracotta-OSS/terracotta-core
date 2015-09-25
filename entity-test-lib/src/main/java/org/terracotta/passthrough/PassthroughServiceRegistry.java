@@ -2,7 +2,6 @@ package org.terracotta.passthrough;
 
 import java.util.Map;
 
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
@@ -21,18 +20,12 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   }
 
   @Override
-  public <T> Service<T> getService(ServiceConfiguration<T> configuration) {
-    Service<T> service = null;
+  public <T> T getService(ServiceConfiguration<T> configuration) {
     ServiceProvider provider = this.serviceProviderMap.get(configuration.getServiceType());
+    T service = null;
     if (null != provider) {
       service = provider.getService(this.consumerID, configuration);
     }
     return service;
-  }
-
-  @Override
-  public void destroy() {
-    // TODO Auto-generated method stub
-
   }
 }

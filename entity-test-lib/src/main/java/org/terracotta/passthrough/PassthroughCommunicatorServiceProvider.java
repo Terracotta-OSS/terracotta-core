@@ -2,7 +2,6 @@ package org.terracotta.passthrough;
 
 import java.util.Collection;
 
-import org.terracotta.entity.Service;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -27,8 +26,8 @@ public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> Service<T> getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return (Service<T>) new PassthroughCommunicatorService();
+  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+    return (T)new PassthroughCommunicatorService();
   }
 
   @Override
