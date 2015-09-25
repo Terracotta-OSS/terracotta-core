@@ -12,6 +12,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.Util;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TerracottaEntityRef<T extends Entity> implements EntityRef<T> {
@@ -24,16 +25,18 @@ public class TerracottaEntityRef<T extends Entity> implements EntityRef<T> {
   private final EntityClientService<T, ?> entityClientService;
 
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
-  private long nextClientInstanceID = 1;
+  private final AtomicLong nextClientInstanceID;
 
   public TerracottaEntityRef(ClientEntityManager entityManager, MaintenanceModeService maintenanceModeService,
-                             Class<T> type, long version, String name, EntityClientService<T, ?> entityClientService) {
+                             Class<T> type, long version, String name, EntityClientService<T, ?> entityClientService, 
+                            AtomicLong clientIds) {
     this.entityManager = entityManager;
     this.maintenanceModeService = maintenanceModeService;
     this.type = type;
     this.version = version;
     this.name = name;
     this.entityClientService = entityClientService;
+    this.nextClientInstanceID = clientIds;
   }
 
   @SuppressWarnings("resource")
@@ -49,8 +52,7 @@ public class TerracottaEntityRef<T extends Entity> implements EntityRef<T> {
     
     EntityClientEndpoint endpoint = null;
     try {
-      ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID);
-      this.nextClientInstanceID += 1;
+      ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
       EntityDescriptor entityDescriptor = new EntityDescriptor(getEntityID(), clientInstanceID, this.version);
       endpoint = this.entityManager.fetchEntity(entityDescriptor, closeHook);
     } catch (final Throwable t) {
