@@ -12,13 +12,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class DelegatingServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
-  private final ConcurrentMap<ServiceConfiguration<? extends Object>, Object>  serviceInstances = new ConcurrentHashMap<>();
 
   public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers) {
     this.consumerID = consumerID;
@@ -39,9 +36,6 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
-    if(serviceInstances.get(configuration)!= null) {
-      return configuration.getServiceType().cast(serviceInstances.get(configuration));
-    }
     List<ServiceProvider> serviceProviders = serviceProviderMap.get(configuration.getServiceType());
     if (serviceProviders == null) {
      return null;
@@ -54,9 +48,6 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
         Assert.assertNull(service);
         service = oneService;
       }
-    }
-    if (service != null) {
-      serviceInstances.put(configuration, service);
     }
     return service;
   }
