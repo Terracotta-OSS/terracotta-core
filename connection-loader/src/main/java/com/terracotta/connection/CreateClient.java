@@ -12,11 +12,11 @@ import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClientFactory;
-import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
+
 
 public class CreateClient implements Callable<ClientCreatorCallable> {
 
@@ -35,13 +35,12 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
   private final String              embeddedTcConfig;
   private final boolean             isURLConfig;
   private final String              productIdName;
-  private final ClassLoader         loader;
   private final boolean             rejoin;
 
   private final SecurityInfo        securityInfo;
   private final Map<String, Object> env;
 
-  public CreateClient(String embeddedTcConfig, boolean isURLConfig, ClassLoader loader, boolean rejoin,
+  public CreateClient(String embeddedTcConfig, boolean isURLConfig, boolean rejoin,
                       String productIdName, Map<String, Object> env) {
     this.embeddedTcConfig = embeddedTcConfig;
     this.isURLConfig = isURLConfig;
@@ -51,7 +50,6 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
       username = URLConfigUtil.getUsername(embeddedTcConfig);
     }
     this.securityInfo = new SecurityInfo(username != null, username);
-    this.loader = loader;
     this.rejoin = rejoin;
     this.env = env;
   }
@@ -73,7 +71,6 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
                                                                                                              configSpec,
                                                                                                              securityManager,
                                                                                                              securityInfo,
-                                                                                                             loader,
                                                                                                              productId,
         uuid);
     return new ClientCreatorCallableImpl(distributedObjectClientFactory, uuid);

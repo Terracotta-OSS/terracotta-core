@@ -19,8 +19,6 @@ import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.ClientConfigImpl;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.SingleLoaderClassProvider;
 import com.tc.util.UUID;
 import com.tcclient.cluster.ClusterInternal;
 
@@ -32,18 +30,16 @@ public class DistributedObjectClientFactory {
   private final String            configSpec;
   private final TCSecurityManager securityManager;
   private final SecurityInfo      securityInfo;
-  private final ClassLoader       loader;
   private final ProductID         productId;
   private final UUID                      uuid;
 
   public DistributedObjectClientFactory(String configSpec, TCSecurityManager securityManager,
-                                        SecurityInfo securityInfo, ClassLoader loader, 
+                                        SecurityInfo securityInfo, 
                                         ProductID productId,
                                         UUID uuid) {
     this.configSpec = configSpec;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
-    this.loader = loader;
     this.productId = productId;
     this.uuid = uuid;
   }
@@ -75,17 +71,12 @@ public class DistributedObjectClientFactory {
                                                                  });
     final TCThreadGroup group = new TCThreadGroup(throwableHandler);
 
-    final ClassProvider classProvider = new SingleLoaderClassProvider(
-                                                                      loader == null ? DistributedObjectClientFactory.class
-                                                                          .getClassLoader() : loader);
-
     final ClusterInternal cluster = new ClusterImpl();
 
     final StartupAction action = new StartupHelper.StartupAction() {
       @Override
       public void execute() throws Throwable {
-        DistributedObjectClient client = ClientFactory.createClient(configHelper, group, classProvider,
-            connectionComponents, cluster, securityManager,
+        DistributedObjectClient client = ClientFactory.createClient(configHelper, group, connectionComponents, cluster, securityManager,
             uuid,
             productId);
 

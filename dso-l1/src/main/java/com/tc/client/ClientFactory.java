@@ -11,7 +11,6 @@ import com.tc.object.DistributedObjectClient;
 import com.tc.object.EnterpriseDistributedObjectClient;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.loaders.ClassProvider;
 import com.tc.util.UUID;
 import com.tcclient.cluster.ClusterInternal;
 
@@ -20,7 +19,6 @@ public class ClientFactory {
   // Note that we don't currently use classProvider in this path but it is left here as a remnant from the old shape until
   //  we can verify that it won't be used here.
   public static DistributedObjectClient createClient(ClientConfig config, TCThreadGroup threadGroup,
-                                                     ClassProvider classProvider,
                                                      PreparedComponentsFromL2Connection connectionComponents,
                                                      ClusterInternal cluster,
                                                      TCSecurityManager securityManager,
