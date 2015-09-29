@@ -24,7 +24,7 @@ public class TerracottaConnection implements Connection {
   private final MaintenanceModeService maintenanceModeService;
   private final Runnable shutdown;
   private final ConcurrentMap<Class<? extends Entity>, EntityClientService> cachedEntityServices = new ConcurrentHashMap<>();
-  private final AtomicLong  clientIds = new AtomicLong();
+  private final AtomicLong  clientIds = new AtomicLong(1); // initialize to 1 because zero client is a special case for uninitialized
 
   private boolean isShutdown = false;
 
