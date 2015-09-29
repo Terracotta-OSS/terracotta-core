@@ -16,6 +16,7 @@ import com.terracotta.connection.entity.TerracottaMaintenanceModeRef;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TerracottaConnection implements Connection {
@@ -23,6 +24,7 @@ public class TerracottaConnection implements Connection {
   private final MaintenanceModeService maintenanceModeService;
   private final Runnable shutdown;
   private final ConcurrentMap<Class<? extends Entity>, EntityClientService> cachedEntityServices = new ConcurrentHashMap<>();
+  private final AtomicLong  clientIds = new AtomicLong();
 
   private boolean isShutdown = false;
 
@@ -35,7 +37,7 @@ public class TerracottaConnection implements Connection {
   @Override
   public synchronized <T extends Entity> EntityRef<T> getEntityRef(Class<T> cls, long version, String name) {
     checkShutdown();
-    return new TerracottaEntityRef<>(this.entityManager, this.maintenanceModeService, cls, version, name, getEntityService(cls));
+    return new TerracottaEntityRef<>(this.entityManager, this.maintenanceModeService, cls, version, name, getEntityService(cls), clientIds);
   }
 
   @Override

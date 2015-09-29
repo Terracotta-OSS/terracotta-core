@@ -16,6 +16,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TerracottaEntityRefTest {
@@ -38,7 +39,7 @@ public class TerracottaEntityRefTest {
     
     // Now, run the test.
     long version = 1;
-    TerracottaEntityRef<Entity> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService);
+    TerracottaEntityRef<Entity> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong());
     Entity entity1 = testRef.fetchEntity();
     verify(mockMaintenanceModeService).readLockEntity(Entity.class, "TEST");
     verify(mockClientEntityManager).fetchEntity(eq(new EntityDescriptor(new EntityID(Entity.class.getName(), "TEST"), new ClientInstanceID(1), version)), any(Runnable.class));
