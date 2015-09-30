@@ -363,7 +363,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   /**
    * TODO:  Which operations need to wait on this?  Is it both outgoing calls _and_ incoming acks?
    */
-  private void waitUntilRunning() {
+  private synchronized void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
       while (State.RUNNING != this.state) {
@@ -384,7 +384,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   }
 
-  private synchronized byte[] internalRetrieve(EntityDescriptor entityDescriptor) {
+  private byte[] internalRetrieve(EntityDescriptor entityDescriptor) {
     waitUntilRunning();
     
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
