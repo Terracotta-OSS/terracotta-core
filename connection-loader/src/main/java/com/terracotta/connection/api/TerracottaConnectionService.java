@@ -7,7 +7,6 @@ import org.terracotta.connection.ConnectionService;
 import com.terracotta.connection.TerracottaConnection;
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientStaticFactory;
-import com.terracotta.connection.client.TerracottaClientConfig;
 import com.terracotta.connection.client.TerracottaClientConfigParams;
 
 import java.net.URI;
@@ -32,9 +31,8 @@ public class TerracottaConnectionService implements ConnectionService {
     // TODO: hook in the connection listener
 
     String tcConfigUrlParam = (uri.getUserInfo() != null ? uri.getUserInfo() + "@" : "") + (uri.getHost() + ":" + uri.getPort());
-    TerracottaClientConfig clientConfig = new TerracottaClientConfigParams()
-        .tcConfigUrl(tcConfigUrlParam)
-        .newTerracottaClientConfig();
+    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams()
+        .tcConfigUrl(tcConfigUrlParam);
     final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
     client.init();
     try {

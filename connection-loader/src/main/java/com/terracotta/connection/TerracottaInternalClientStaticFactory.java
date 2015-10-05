@@ -4,7 +4,7 @@
 package com.terracotta.connection;
 
 
-import com.terracotta.connection.client.TerracottaClientConfig;
+import com.terracotta.connection.client.TerracottaClientConfigParams;
 
 public class TerracottaInternalClientStaticFactory {
 
@@ -18,7 +18,7 @@ public class TerracottaInternalClientStaticFactory {
     // not instantiable
   }
 
-  public static TerracottaInternalClient getOrCreateTerracottaInternalClient(TerracottaClientConfig config) {
+  public static TerracottaInternalClient getOrCreateTerracottaInternalClient(TerracottaClientConfigParams config) {
     return INSTANCE.createL1Client(config);
   }
 }

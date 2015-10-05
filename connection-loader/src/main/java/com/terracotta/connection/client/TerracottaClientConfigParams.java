@@ -57,10 +57,6 @@ public class TerracottaClientConfigParams {
     return nonStop;
   }
 
-  public TerracottaClientConfig newTerracottaClientConfig() {
-    return new TerracottaClientConfig(this);
-  }
-
   public String getProductId() {
     return productId;
   }
