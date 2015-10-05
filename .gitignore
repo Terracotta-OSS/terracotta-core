@@ -9,3 +9,4 @@ target/
 /bin/
 *~
 nb-configuration.xml
+nbactions.xml
