@@ -166,7 +166,7 @@ public class ProcessTransactionHandlerTest {
   private NetworkVoltronEntityMessage createMockRequest(VoltronEntityMessage.Type type, EntityID entityID, TransactionID transactionID) {
     NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
     when(request.getSource()).thenReturn(this.source);
-    when(request.getType()).thenReturn(type);
+    when(request.getVoltronType()).thenReturn(type);
     EntityDescriptor entityDescriptor = mock(EntityDescriptor.class);
     when(entityDescriptor.getClientSideVersion()).thenReturn((long) 1);
     when(entityDescriptor.getEntityID()).thenReturn(entityID);

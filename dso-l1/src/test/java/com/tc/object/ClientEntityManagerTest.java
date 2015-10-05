@@ -456,7 +456,7 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
     @Override
-    public Type getType() {
+    public Type getVoltronType() {
       throw new UnsupportedOperationException();
     }
     @Override

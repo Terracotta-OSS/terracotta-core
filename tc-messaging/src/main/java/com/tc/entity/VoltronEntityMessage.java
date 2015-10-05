@@ -54,7 +54,7 @@ public interface VoltronEntityMessage {
 
   boolean doesRequireReplication();
   
-  Type getType();
+  Type getVoltronType();
   
   byte[] getExtendedData();
   

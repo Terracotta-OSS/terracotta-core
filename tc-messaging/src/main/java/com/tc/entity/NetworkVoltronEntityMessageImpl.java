@@ -49,7 +49,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
   
   @Override
-  public Type getType() {
+  public Type getVoltronType() {
     Assert.assertNotNull(this.type);
     return this.type;
   }

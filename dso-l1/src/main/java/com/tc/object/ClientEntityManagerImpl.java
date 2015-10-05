@@ -232,7 +232,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       NetworkVoltronEntityMessage message = inFlight.getMessage();
-      ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), message.getEntityDescriptor(), message.getType(), message.doesRequireReplication(), message.getExtendedData(), message.getOldestTransactionOnClient());
+      ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
+          message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData(), 
+          message.getOldestTransactionOnClient());
       handshakeMessage.addResendMessage(packaged);
     }
   }

@@ -62,7 +62,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
   }
   
   @Override
-  public Type getType() {
+  public Type getVoltronType() {
     Assert.assertNotNull(this.type);
     return this.type;
   }

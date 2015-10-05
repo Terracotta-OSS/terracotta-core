@@ -49,7 +49,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
     public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
       NodeID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
-      ServerEntityAction action = decodeMessageType(message.getType());
+      ServerEntityAction action = decodeMessageType(message.getVoltronType());
       byte[] extendedData = message.getExtendedData();
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
@@ -196,7 +196,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
   private void executeResend(ResendVoltronEntityMessage message) {
     NodeID sourceNodeID = message.getSource();
     EntityDescriptor descriptor = message.getEntityDescriptor();
-    ServerEntityAction action = decodeMessageType(message.getType());
+    ServerEntityAction action = decodeMessageType(message.getVoltronType());
     byte[] extendedData = message.getExtendedData();
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
