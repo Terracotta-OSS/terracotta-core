@@ -5,10 +5,9 @@ package com.terracotta.connection.client;
 
 import java.util.Set;
 
-public class TerracottaClientConfig {
 
-  private final String      tcConfigSnippetOrUrl;
-  private final boolean     isUrl;
+public class TerracottaClientConfig {
+  private final String      tcConfigUrl;
   private final Set<String> tunnelledMBeanDomains;
   private final boolean     rejoin;
   private final boolean     nonStop;
@@ -16,8 +15,7 @@ public class TerracottaClientConfig {
   private final ClassLoader classLoader;
 
   TerracottaClientConfig(TerracottaClientConfigParams params) {
-    this.tcConfigSnippetOrUrl = params.getTcConfigSnippetOrUrl();
-    this.isUrl = params.isUrl();
+    this.tcConfigUrl = params.getTcConfigUrl();
     this.tunnelledMBeanDomains = params.getTunnelledMBeanDomains();
     this.rejoin = params.isRejoin();
     this.nonStop = params.isNonStop();
@@ -25,12 +23,8 @@ public class TerracottaClientConfig {
     this.classLoader = params.getClassLoader();
   }
 
-  public String getTcConfigSnippetOrUrl() {
-    return tcConfigSnippetOrUrl;
-  }
-
-  public boolean isUrl() {
-    return isUrl;
+  public String getTcConfigUrl() {
+    return this.tcConfigUrl;
   }
 
   public Set<String> getTunnelledMBeanDomains() {

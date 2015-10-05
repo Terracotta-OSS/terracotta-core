@@ -3,8 +3,6 @@
  */
 package com.terracotta.connection;
 
-import org.terracotta.license.util.Base64;
-
 import com.google.common.collect.MapMaker;
 import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
@@ -33,22 +31,17 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
   private static TCLogger           logger = TCLogging.getLogger(CreateClient.class);
 
   private final String              embeddedTcConfig;
-  private final boolean             isURLConfig;
   private final String              productIdName;
   private final boolean             rejoin;
 
   private final SecurityInfo        securityInfo;
   private final Map<String, Object> env;
 
-  public CreateClient(String embeddedTcConfig, boolean isURLConfig, boolean rejoin,
+  public CreateClient(String embeddedTcConfig, boolean rejoin,
                       String productIdName, Map<String, Object> env) {
     this.embeddedTcConfig = embeddedTcConfig;
-    this.isURLConfig = isURLConfig;
     this.productIdName = productIdName;
-    String username = null;
-    if (isURLConfig) {
-      username = URLConfigUtil.getUsername(embeddedTcConfig);
-    }
+    String username = URLConfigUtil.getUsername(embeddedTcConfig);
     this.securityInfo = new SecurityInfo(username != null, username);
     this.rejoin = rejoin;
     this.env = env;
@@ -58,17 +51,9 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
   public ClientCreatorCallable call() throws Exception {
     TCSecurityManager securityManager = null;
 
-    String configSpec = embeddedTcConfig;
-    if (!isURLConfig) {
-      // convert to base64 string configuration source
-      configSpec = "base64://"
-                   + Base64.encodeBytes(embeddedTcConfig.getBytes("UTF-8"), Base64.GZIP | Base64.DONT_BREAK_LINES);
-    }
-
     ProductID productId = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
     UUID uuid = UUID.getUUID();
-    final DistributedObjectClientFactory distributedObjectClientFactory = new DistributedObjectClientFactory(
-                                                                                                             configSpec,
+    final DistributedObjectClientFactory distributedObjectClientFactory = new DistributedObjectClientFactory(embeddedTcConfig,
                                                                                                              securityManager,
                                                                                                              securityInfo,
                                                                                                              productId,

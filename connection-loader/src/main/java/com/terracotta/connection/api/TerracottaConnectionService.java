@@ -31,9 +31,10 @@ public class TerracottaConnectionService implements ConnectionService {
     // TODO: Make use of those properties
     // TODO: hook in the connection listener
 
-    String tcConfigSnippetOrUrlParam = (uri.getUserInfo() != null ? uri.getUserInfo() + "@" : "") + (uri.getHost() + ":" + uri.getPort());
-    TerracottaClientConfig clientConfig = new TerracottaClientConfigParams().isUrl(true)
-        .tcConfigSnippetOrUrl(tcConfigSnippetOrUrlParam).newTerracottaClientConfig();
+    String tcConfigUrlParam = (uri.getUserInfo() != null ? uri.getUserInfo() + "@" : "") + (uri.getHost() + ":" + uri.getPort());
+    TerracottaClientConfig clientConfig = new TerracottaClientConfigParams()
+        .tcConfigUrl(tcConfigUrlParam)
+        .newTerracottaClientConfig();
     final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
     client.init();
     try {

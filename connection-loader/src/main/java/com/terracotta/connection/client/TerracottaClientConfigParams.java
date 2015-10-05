@@ -6,37 +6,19 @@ package com.terracotta.connection.client;
 import java.util.Set;
 
 public class TerracottaClientConfigParams {
-  private String      tcConfigSnippetOrUrl;
-  private boolean     isUrl;
+  private String      tcConfigUrl;
   private Set<String> tunnelledMBeanDomains;
   private boolean     rejoin;
   private boolean     nonStop;
   private String      productId;
   private ClassLoader clasLoader;
 
-  public String getTcConfigSnippetOrUrl() {
-    return tcConfigSnippetOrUrl;
+  public String getTcConfigUrl() {
+    return this.tcConfigUrl;
   }
 
-  public void setTcConfigSnippetOrUrl(String tcConfigSnippetOrUrl) {
-    this.tcConfigSnippetOrUrl = tcConfigSnippetOrUrl;
-  }
-
-  public TerracottaClientConfigParams tcConfigSnippetOrUrl(String tcConfigSnippetOrUrlParam) {
-    setTcConfigSnippetOrUrl(tcConfigSnippetOrUrlParam);
-    return this;
-  }
-
-  public boolean isUrl() {
-    return isUrl;
-  }
-
-  public void setUrl(boolean isUrl) {
-    this.isUrl = isUrl;
-  }
-
-  public TerracottaClientConfigParams isUrl(boolean isUrlParam) {
-    this.isUrl = isUrlParam;
+  public TerracottaClientConfigParams tcConfigUrl(String tcConfigUrlParam) {
+    this.tcConfigUrl = tcConfigUrlParam;
     return this;
   }
 

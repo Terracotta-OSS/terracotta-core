@@ -26,19 +26,16 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
 
   @Override
   public TerracottaInternalClient createL1Client(TerracottaClientConfig config) {
-    String tcConfig = config.getTcConfigSnippetOrUrl();
-    if (config.isUrl()) {
-      tcConfig = URLConfigUtil.translateSystemProperties(tcConfig);
-    }
-    return createClient(tcConfig, config.isUrl(), config.isRejoin(), config.getTunnelledMBeanDomains(), config.getProductId());
+    String initialTcConfigUrl = config.getTcConfigUrl();
+    String expandedTcConfigUrl = URLConfigUtil.translateSystemProperties(initialTcConfigUrl);
+    return createClient(expandedTcConfigUrl, config.isRejoin(), config.getTunnelledMBeanDomains(), config.getProductId());
   }
 
 
-  private TerracottaInternalClient createClient(String tcConfig, boolean isUrlConfig, boolean rejoinClient,
-                                                Set<String> tunneledMBeanDomains, String productId) {
+  private TerracottaInternalClient createClient(String tcConfig, boolean rejoinClient, Set<String> tunneledMBeanDomains, String productId) {
 
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
-    TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains, productId, new ConcurrentHashMap<>(env));
+    TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, rejoinClient, tunneledMBeanDomains, productId, new ConcurrentHashMap<>(env));
     return client;
   }
 
