@@ -5,8 +5,6 @@ package com.terracotta.connection;
 
 import com.google.common.collect.MapMaker;
 import com.tc.license.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClientFactory;
@@ -28,23 +26,16 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
     dummy.put("dummy", new Object());
   }
 
-  private static TCLogger           logger = TCLogging.getLogger(CreateClient.class);
-
   private final String              embeddedTcConfig;
   private final String              productIdName;
-  private final boolean             rejoin;
 
   private final SecurityInfo        securityInfo;
-  private final Map<String, Object> env;
 
-  public CreateClient(String embeddedTcConfig, boolean rejoin,
-                      String productIdName, Map<String, Object> env) {
+  public CreateClient(String embeddedTcConfig, String productIdName) {
     this.embeddedTcConfig = embeddedTcConfig;
     this.productIdName = productIdName;
     String username = URLConfigUtil.getUsername(embeddedTcConfig);
     this.securityInfo = new SecurityInfo(username != null, username);
-    this.rejoin = rejoin;
-    this.env = env;
   }
 
   @Override

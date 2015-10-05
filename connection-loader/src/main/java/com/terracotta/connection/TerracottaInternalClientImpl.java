@@ -8,7 +8,6 @@ import com.tc.object.locks.ClientLockManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -24,13 +23,12 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
 
-  TerracottaInternalClientImpl(String tcConfig, boolean rejoinEnabled,
-                               Set<String> tunneledMBeanDomains, String productId, Map<String, Object> env) {
+  TerracottaInternalClientImpl(String tcConfig, Set<String> tunneledMBeanDomains, String productId) {
     if (tunneledMBeanDomains != null) {
       this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
     }
     try {
-      Callable<ClientCreatorCallable> boot = new CreateClient(tcConfig, rejoinEnabled, productId, env);
+      Callable<ClientCreatorCallable> boot = new CreateClient(tcConfig, productId);
       this.clientCreator = boot.call();
     } catch (Exception e) {
       throw new RuntimeException(e);
