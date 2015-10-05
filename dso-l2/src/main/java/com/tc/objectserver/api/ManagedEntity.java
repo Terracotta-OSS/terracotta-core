@@ -2,6 +2,8 @@ package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
 import com.tc.net.NodeID;
+import com.tc.net.groups.GroupException;
+import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
 
 
@@ -27,4 +29,6 @@ public interface ManagedEntity {
    * @param extendedReconnectData Free-formed data sent by the client to help restore the in-memory state of the entity
    */
   public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData);
+  
+  void sync(NodeID passive, GroupManager mgr) throws GroupException;
 }

@@ -17,7 +17,9 @@ import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +66,13 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
     try {
       passiveNodes.add(newNode);
       groups.sendTo(newNode, new PassiveSyncMessage(true));
-//  TODO: sync state for all entities
+      Collection<ManagedEntity> currentEntities = entities.getAll();
+      for (ManagedEntity entity : currentEntities) {
+  // TODO: this is a stub implementation and needs to be fully designed
+          entity.sync(newNode, groups);
+  //  create entity on passive
+  //  start passive sync for entity      
+      }
       groups.sendTo(newNode, new PassiveSyncMessage(false));
     }  catch (GroupException ge) {
       logger.info(ge);
@@ -115,6 +123,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
         break;
       case RELEASE_ENTITY:
         actionCode = ReplicationMessage.RELEASE_ENTITY;
+        break;
+      case SYNC_ENTITY:
+        actionCode = ReplicationMessage.SYNC_ENTITY;
         break;
       default:
         break;

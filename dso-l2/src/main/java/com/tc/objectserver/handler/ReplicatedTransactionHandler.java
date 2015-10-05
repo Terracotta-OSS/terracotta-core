@@ -28,15 +28,17 @@ public class ReplicatedTransactionHandler {
   private final GroupManager groupManager;
   private final ActiveToPassiveReplication replication;
   private final TransactionOrderPersistor orderedTransactions;
+  private final PassiveSyncFilter filter;
   private final Sink<Runnable> finalExecution;
 
-  public ReplicatedTransactionHandler(ActiveToPassiveReplication replication, TransactionOrderPersistor transactionOrderPersistor, 
+  public ReplicatedTransactionHandler(ActiveToPassiveReplication replication, PassiveSyncFilter filter, TransactionOrderPersistor transactionOrderPersistor, 
       EntityManager manager, EntityPersistor entityPersistor, GroupManager groupManager, Sink<Runnable> execution) {
     this.replication = replication;
     this.entityManager = manager;
     this.entityPersistor = entityPersistor;
     this.groupManager = groupManager;
     this.orderedTransactions = transactionOrderPersistor;
+    this.filter = filter;
     this.finalExecution = execution;
   }
 
@@ -59,6 +61,7 @@ public class ReplicatedTransactionHandler {
         } else {
           orderedTransactions.removeTrackingForClient(rep.getSource());
         }
+        if (!filter.filter(rep)) {
         switch (rep.getAction()) {
           case ReplicationMessage.NOOP:
             break;
@@ -77,9 +80,11 @@ public class ReplicatedTransactionHandler {
             break;
           case ReplicationMessage.RELEASE_ENTITY:
           case ReplicationMessage.PROMOTE_ENTITY_TO_ACTIVE:
+          case ReplicationMessage.SYNC_ENTITY:
           default:
             break;
           }
+        }
 //  when is the right time to send the ack?
         groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
       } else {
@@ -91,5 +96,4 @@ public class ReplicatedTransactionHandler {
     }
     throw new RuntimeException();
   }
-  
 }

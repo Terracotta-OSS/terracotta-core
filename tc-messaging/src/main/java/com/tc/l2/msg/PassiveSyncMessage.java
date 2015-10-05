@@ -12,7 +12,6 @@ import java.io.IOException;
 
 /**
  *
- * @author mscott
  */
 public class PassiveSyncMessage extends AbstractGroupMessage {
 //  message types  

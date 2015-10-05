@@ -44,6 +44,7 @@ import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
+import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.lang.TCThreadGroup;
@@ -200,6 +201,7 @@ import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
+import com.tc.objectserver.handler.PassiveSyncHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.services.EmptyServiceProviderConfiguration;
@@ -656,13 +658,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replication.getSink());
     processor.setReplication(passives); 
+    PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage("replication receiver TO BE ADDED TO CONTEXT", ReplicationMessage.class, 
-        new ReplicatedTransactionHandler(passives, this.persistor.getTransactionOrderPersistor(), entityManager, 
+        new ReplicatedTransactionHandler(passives, psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
             this.persistor.getEntityPersistor(), groupCommManager, requestProcessorSink).getEventHandler(), 1, maxStageSize);
+    Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage("passive sync TO BE ADDED TO CONTEXT", PassiveSyncMessage.class, 
+        psync.getEventHandler(), 1, maxStageSize);
+  //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered
     this.groupCommManager.routeMessages(ReplicationMessage.class, new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink()));
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStage.getSink());
+    this.groupCommManager.routeMessages(PassiveSyncMessage.class, passiveSyncStage.getSink());
     
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);

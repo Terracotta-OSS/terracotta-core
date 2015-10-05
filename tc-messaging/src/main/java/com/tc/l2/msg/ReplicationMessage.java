@@ -31,6 +31,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   public static final int RELEASE_ENTITY = 4;
   public static final int DESTROY_ENTITY = 5;
   public static final int PROMOTE_ENTITY_TO_ACTIVE = 6;
+  public static final int SYNC_ENTITY = 7;  
   
   EntityDescriptor descriptor;
   long version;
