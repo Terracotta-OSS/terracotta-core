@@ -27,9 +27,9 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
   private byte[] returnValue = null;
   private Exception failure = null;
 
-  public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, NodeID nodes) {
+  public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, TransactionID oldest, NodeID nodes) {
     // This replication argument (the "true") is redundant, in this case.
-    super(descriptor, action, payload, transaction, nodes, true);
+    super(descriptor, action, payload, transaction, oldest, nodes, true);
   }
 
   @Override

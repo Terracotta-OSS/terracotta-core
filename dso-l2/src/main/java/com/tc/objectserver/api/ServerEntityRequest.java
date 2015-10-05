@@ -12,6 +12,8 @@ public interface ServerEntityRequest {
   NodeID getNodeID();
   
   TransactionID getTransaction();
+  
+  TransactionID getOldestTransactionOnClient();
   /**
    * The descriptor referring to the specific client-side object instance which issued the request.
    */

@@ -13,6 +13,8 @@ import com.tc.object.EntityID;
 public interface ManagedEntity {
   public EntityID getID();
   
+  public long getVersion();
+  
   public void addRequest(ServerEntityRequest request);
   
   /**

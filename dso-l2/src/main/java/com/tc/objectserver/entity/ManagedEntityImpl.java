@@ -18,10 +18,10 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final RequestProcessor executor;
 
   private final EntityID id;
+  private final long version;
   private final ServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> factory;
-  
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
   private volatile ActiveServerEntity activeServerEntity;
@@ -31,11 +31,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] configFromPassiveCreate;
 
-  ManagedEntityImpl(EntityID id, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
+  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
                     RequestProcessor process, 
                     ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> factory,
                     boolean isInActiveState) {
     this.id = id;
+    this.version = version;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.factory = factory;
@@ -49,8 +50,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
+  public long getVersion() {
+    return version;
+  }
+
+  @Override
   public void addRequest(ServerEntityRequest request) {
-    executor.scheduleRequest(this, activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null, request);
+    ClientDescriptor client = request.getSourceDescriptor();
+    executor.scheduleRequest(this, getEntityDescriptorForSource(client), activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null, request);
   }
 
   @Override

@@ -14,6 +14,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
+import java.util.Collection;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +61,7 @@ public class
   public void createEntity(EntityID id, long version, long consumerID) {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, serviceRegistry.subRegistry(consumerID),
+    ManagedEntity temp = new ManagedEntityImpl(id, version, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(id, temp) != null) {
       throw new IllegalStateException("Double create for entity " + id);
@@ -71,7 +72,7 @@ public class
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }
@@ -94,6 +95,10 @@ public class
     // Note that we ignore the return value, only interested in validating that the version is consistent.
     getVersionCheckedService(id, version);
     return Optional.ofNullable(entities.get(id));
+  }
+  
+  public Collection<ManagedEntity> getAll() {
+    return entities.values();
   }
   
   private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> getVersionCheckedService(EntityID entityID, long version) {
@@ -167,6 +172,11 @@ public class
 
     @Override
     public TransactionID getTransaction() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public TransactionID getOldestTransactionOnClient() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

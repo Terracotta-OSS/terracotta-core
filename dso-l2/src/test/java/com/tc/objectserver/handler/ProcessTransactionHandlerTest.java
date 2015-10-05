@@ -71,7 +71,7 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink = new RunnableSink();
     
     this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
-    RequestProcessor processor = new RequestProcessor(new NoReplicationBroker(), this.requestProcessorSink);
+    RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, processor);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
