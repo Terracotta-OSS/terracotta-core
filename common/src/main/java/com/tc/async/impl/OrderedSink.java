@@ -18,10 +18,11 @@ import java.util.TreeSet;
  * This class provides an order to the events processed. If events are added out of order, this class orderes them
  * before adding it to the destination sink. If Messages went missing, then this class waits till the missing message
  * arrives before pushing the events to the destination sink.
+ * @param <T> Type the sink accepts
  */
 public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
-  private final Sink<OrderedEventContext> sink;
+  private final Sink<T> sink;
   private final TCLogger logger;
 
   private long           current = 0;
@@ -38,7 +39,7 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
   public OrderedSink(TCLogger logger, Sink<T> sink) {
     this.logger = logger;
-    this.sink = (Sink<OrderedEventContext>)sink;
+    this.sink = sink;
   }
 
   @Override
