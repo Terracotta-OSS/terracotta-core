@@ -6,6 +6,7 @@ import com.tc.logging.TCLogger;
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,22 +18,22 @@ public class ClientConfigurationSetupManagerFactory {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
   private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
   private final String[] args;
-  private final String configurationSpec;
+  private final List<String> stripeMemberUris;
   private final PwProvider securityManager;
 
-  public ClientConfigurationSetupManagerFactory(String[] args, String configurationSpec, PwProvider securityManager) {
+  public ClientConfigurationSetupManagerFactory(String[] args, List<String> stripeMemberUris, PwProvider securityManager) {
     this.args = args;
-    this.configurationSpec = configurationSpec;
+    this.stripeMemberUris = stripeMemberUris;
     this.securityManager = securityManager;
   }
 
   public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) throws ConfigurationSetupException {
-    String[] configUrls = configurationSpec.split(",");
-    String[] hosts = new String[configUrls.length];
-    int[] ports = new int[configUrls.length];
+    int memberCount = stripeMemberUris.size();
+    String[] hosts = new String[memberCount];
+    int[] ports = new int[memberCount];
     int index = 0;
-    for(String configUrl : configUrls) {
-      Matcher matcher = SERVER_PATTERN.matcher(configUrl);
+    for (String stripeMemberUri : this.stripeMemberUris) {
+      Matcher matcher = SERVER_PATTERN.matcher(stripeMemberUri);
       if (matcher.matches()) {
         String host = matcher.group(1);
         int userSeparatorIndex = host.indexOf('@');
@@ -43,12 +44,12 @@ public class ClientConfigurationSetupManagerFactory {
         hosts[index] = host;
         ports[index] = port;
       } else {
-        String errMsg = "Invalid configuration URL: " + configUrl;
+        String errMsg = "Invalid configuration URL: " + stripeMemberUri;
         consoleLogger.error(errMsg);
         throw new ConfigurationSetupException(errMsg);
       }
       index++;
     }
-    return new ClientConfigurationSetupManager(configurationSpec, args, hosts, ports, securityInfo);
+    return new ClientConfigurationSetupManager(this.stripeMemberUris, args, hosts, ports, securityInfo);
   }
 }

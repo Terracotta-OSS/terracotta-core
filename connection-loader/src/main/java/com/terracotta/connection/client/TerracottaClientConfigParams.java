@@ -3,22 +3,30 @@
  */
 package com.terracotta.connection.client;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.Vector;
+
 
 public class TerracottaClientConfigParams {
-  private String      tcConfigUrl;
+  private final List<String> stripeMembers;
   private Set<String> tunnelledMBeanDomains;
   private boolean     rejoin;
   private boolean     nonStop;
   private String      productId;
   private ClassLoader clasLoader;
 
-  public String getTcConfigUrl() {
-    return this.tcConfigUrl;
+  public TerracottaClientConfigParams() {
+    this.stripeMembers = new Vector<String>();
   }
 
-  public TerracottaClientConfigParams tcConfigUrl(String tcConfigUrlParam) {
-    this.tcConfigUrl = tcConfigUrlParam;
+  public List<String> getStripeMemberUris() {
+    return Collections.unmodifiableList(this.stripeMembers);
+  }
+
+  public TerracottaClientConfigParams addStripeMemberUri(String stripeMember) {
+    this.stripeMembers.add(stripeMember);
     return this;
   }
 

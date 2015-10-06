@@ -30,9 +30,9 @@ public class TerracottaConnectionService implements ConnectionService {
     // TODO: Make use of those properties
     // TODO: hook in the connection listener
 
-    String tcConfigUrlParam = (uri.getUserInfo() != null ? uri.getUserInfo() + "@" : "") + (uri.getHost() + ":" + uri.getPort());
+    String stripeLeaderUri = (uri.getUserInfo() != null ? uri.getUserInfo() + "@" : "") + (uri.getHost() + ":" + uri.getPort());
     TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams()
-        .tcConfigUrl(tcConfigUrlParam);
+        .addStripeMemberUri(stripeLeaderUri);
     final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
     client.init();
     try {

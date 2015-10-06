@@ -9,6 +9,7 @@ import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.util.UUID;
+import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -26,15 +27,15 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
     dummy.put("dummy", new Object());
   }
 
-  private final String              embeddedTcConfig;
+  private final TerracottaClientStripeConnectionConfig stripeConnectionConfig;
   private final String              productIdName;
 
   private final SecurityInfo        securityInfo;
 
-  public CreateClient(String embeddedTcConfig, String productIdName) {
-    this.embeddedTcConfig = embeddedTcConfig;
+  public CreateClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productIdName) {
+    this.stripeConnectionConfig = stripeConnectionConfig;
     this.productIdName = productIdName;
-    String username = URLConfigUtil.getUsername(embeddedTcConfig);
+    String username = stripeConnectionConfig.getUsername();
     this.securityInfo = new SecurityInfo(username != null, username);
   }
 
@@ -44,7 +45,7 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
 
     ProductID productId = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
     UUID uuid = UUID.getUUID();
-    final DistributedObjectClientFactory distributedObjectClientFactory = new DistributedObjectClientFactory(embeddedTcConfig,
+    final DistributedObjectClientFactory distributedObjectClientFactory = new DistributedObjectClientFactory(this.stripeConnectionConfig.getStripeMemberUris(),
                                                                                                              securityManager,
                                                                                                              securityInfo,
                                                                                                              productId,

@@ -22,22 +22,22 @@ import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.util.UUID;
 import com.tcclient.cluster.ClusterInternal;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DistributedObjectClientFactory {
-
-  private final String            configSpec;
+  private final List<String> stripeMemberUris;
   private final TCSecurityManager securityManager;
   private final SecurityInfo      securityInfo;
   private final ProductID         productId;
   private final UUID                      uuid;
 
-  public DistributedObjectClientFactory(String configSpec, TCSecurityManager securityManager,
+  public DistributedObjectClientFactory(List<String> stripeMemberUris, TCSecurityManager securityManager,
                                         SecurityInfo securityInfo, 
                                         ProductID productId,
                                         UUID uuid) {
-    this.configSpec = configSpec;
+    this.stripeMemberUris = stripeMemberUris;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
     this.productId = productId;
@@ -47,7 +47,7 @@ public class DistributedObjectClientFactory {
   public DistributedObjectClient create() throws ConfigurationSetupException {
     final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<DistributedObjectClient>();
 
-    ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, configSpec, securityManager);
+    ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris, securityManager);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager(securityInfo);
     config.setupLogging();

@@ -4,6 +4,7 @@
 package com.terracotta.connection;
 
 import com.terracotta.connection.client.TerracottaClientConfigParams;
+import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Set;
 
@@ -21,14 +22,18 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
 
   @Override
   public TerracottaInternalClient createL1Client(TerracottaClientConfigParams config) {
-    String initialTcConfigUrl = config.getTcConfigUrl();
-    String expandedTcConfigUrl = URLConfigUtil.translateSystemProperties(initialTcConfigUrl);
-    return createClient(expandedTcConfigUrl, config.getTunnelledMBeanDomains(), config.getProductId());
+    // Translate the URIs for the stripe with the system properties and use that to create the stripe config.
+    TerracottaClientStripeConnectionConfig stripeConnectionConfig = new TerracottaClientStripeConnectionConfig();
+    for (String memberUri : config.getStripeMemberUris()) {
+      String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
+      stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
+    }
+    return createClient(stripeConnectionConfig, config.getTunnelledMBeanDomains(), config.getProductId());
   }
 
 
-  private TerracottaInternalClient createClient(String tcConfig, Set<String> tunneledMBeanDomains, String productId) {
-    TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, tunneledMBeanDomains, productId);
+  private TerracottaInternalClient createClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Set<String> tunneledMBeanDomains, String productId) {
+    TerracottaInternalClient client = new TerracottaInternalClientImpl(stripeConnectionConfig, tunneledMBeanDomains, productId);
     return client;
   }
 

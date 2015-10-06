@@ -17,37 +17,26 @@ public class URLConfigUtil {
   private static final Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
 
   /**
-   * Parses the input string for ${.*} patterns and expands individual pattern based on the system property
+   * Parses the input URI for ${.*} patterns and expands individual pattern based on the system property
    * 
-   * @input String. ${tc_active} , ${tc_passive_1}, ${tc_passive_2}, ..
-   * @return String. activeHost:9510, passive1Host:9510, passive2Host:9510, ..
+   * @input String. ${tc_active}
+   * @return String. activeHost:9510
    */
   public static String translateSystemProperties(String urlConfig) {
-
-    String rv = "";
-    String[] urlConfigSources = urlConfig.split(",");
-
-    for (String source : urlConfigSources) {
-      source = source.trim();
-
-      Set<String> properties = extractPropertyTokens(source);
-
-      for (String token : properties) {
-        String leftTrimmed = token.replaceAll("\\$\\{", "");
-        String trimmedToken = leftTrimmed.replaceAll("\\}", "");
-
-        String property = System.getProperty(trimmedToken);
-        if (property != null) {
-          String propertyWithQuotesProtected = Matcher.quoteReplacement(property);
-          source = source.replaceAll("\\$\\{" + trimmedToken + "\\}", propertyWithQuotesProtected);
-        }
-      }
-
-      if (source != null) {
-        rv = rv + (rv == "" ? "" : ", ") + source;
+    String workingUrl = urlConfig.trim();
+    Set<String> properties = extractPropertyTokens(workingUrl);
+    
+    for (String token : properties) {
+      String leftTrimmed = token.replaceAll("\\$\\{", "");
+      String trimmedToken = leftTrimmed.replaceAll("\\}", "");
+      String property = System.getProperty(trimmedToken);
+      
+      if (property != null) {
+        String propertyWithQuotesProtected = Matcher.quoteReplacement(property);
+        workingUrl = workingUrl.replaceAll("\\$\\{" + trimmedToken + "\\}", propertyWithQuotesProtected);
       }
     }
-    return rv;
+    return workingUrl;
   }
 
   /**
