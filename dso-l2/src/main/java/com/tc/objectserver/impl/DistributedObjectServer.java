@@ -662,7 +662,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         new ReplicatedTransactionHandler(passives, psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
-            this.persistor.getEntityPersistor(), groupCommManager, requestProcessorSink).getEventHandler(), 1, maxStageSize);
+            this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
     Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
         psync.getEventHandler(), 1, maxStageSize);
   //  TODO:  These stages should probably be activated and destroyed dynamically    

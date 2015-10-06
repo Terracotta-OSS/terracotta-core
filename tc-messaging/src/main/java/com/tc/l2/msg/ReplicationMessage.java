@@ -35,9 +35,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   
   EntityDescriptor descriptor;
   long version;
-  
-  int concurrency;
-  
+    
   NodeID src;
   Iterable<NodeID> destination;
   TransactionID tid;
@@ -56,13 +54,12 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     super(RESPONSE, mid);
   }  
   
-  public ReplicationMessage(EntityDescriptor descriptor, long version, int concurrency, NodeID src, 
+  public ReplicationMessage(EntityDescriptor descriptor, long version, NodeID src, 
       Iterable<NodeID> dest, TransactionID tid, TransactionID oldest, 
       int action, byte[] payload, long rid) {
     super(REPLICATE);
     this.descriptor = descriptor;
     this.version = version;
-    this.concurrency = concurrency;
     this.src = src;
     this.destination = dest;
     this.tid = tid;
@@ -79,10 +76,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   
   public long getVersion() {
     return version;
-  }
-
-  public int getConcurrency() {
-    return concurrency;
   }
 
   @Override
@@ -134,7 +127,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
       this.rid = in.readLong();
       this.descriptor = EntityDescriptor.readFrom(in);
       this.version = in.readLong();
-      this.concurrency = in.readInt();
       if (in.read() != NodeID.CLIENT_NODE_TYPE) {
         throw new AssertionError();
       }
@@ -159,7 +151,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
       out.writeLong(rid);
       this.descriptor.serializeTo(out);
       out.writeLong(version);
-      out.writeInt(concurrency);
       out.write(this.src.getNodeType());
       this.src.serializeTo(out);
       out.writeLong(tid.toLong());
@@ -176,8 +167,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor + ", concurrency=" + 
-        concurrency + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + '}';
+    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + '}';
   }
   
   private VoltronEntityMessage.Type decodeServerActionType(int networkType) {

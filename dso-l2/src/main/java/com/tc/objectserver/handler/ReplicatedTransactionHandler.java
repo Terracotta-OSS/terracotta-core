@@ -7,15 +7,21 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.ActiveToPassiveReplication;
+import com.tc.objectserver.entity.ManagedEntityImpl;
+import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import java.util.Optional;
 
 /**
  *
@@ -29,17 +35,15 @@ public class ReplicatedTransactionHandler {
   private final ActiveToPassiveReplication replication;
   private final TransactionOrderPersistor orderedTransactions;
   private final PassiveSyncFilter filter;
-  private final Sink<Runnable> finalExecution;
 
   public ReplicatedTransactionHandler(ActiveToPassiveReplication replication, PassiveSyncFilter filter, TransactionOrderPersistor transactionOrderPersistor, 
-      EntityManager manager, EntityPersistor entityPersistor, GroupManager groupManager, Sink<Runnable> execution) {
+      EntityManager manager, EntityPersistor entityPersistor, GroupManager groupManager) {
     this.replication = replication;
     this.entityManager = manager;
     this.entityPersistor = entityPersistor;
     this.groupManager = groupManager;
     this.orderedTransactions = transactionOrderPersistor;
     this.filter = filter;
-    this.finalExecution = execution;
   }
 
   private final EventHandler<ReplicationMessage> eventHorizon = new AbstractEventHandler<ReplicationMessage>() {
@@ -76,7 +80,10 @@ public class ReplicatedTransactionHandler {
           case ReplicationMessage.GET_ENTITY:
             break;
           case ReplicationMessage.INVOKE_ACTION:
-            finalExecution.addMultiThreaded(null);
+            Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
+            if (entity.isPresent()) {
+              entity.get().addRequest(make(rep));
+            }
             break;
           case ReplicationMessage.RELEASE_ENTITY:
           case ReplicationMessage.PROMOTE_ENTITY_TO_ACTIVE:
@@ -95,5 +102,10 @@ public class ReplicatedTransactionHandler {
 
     }
     throw new RuntimeException();
+  }
+  
+  private ServerEntityRequest make(ReplicationMessage rep) {
+    return new ServerEntityRequestImpl(rep.getEntityDescriptor(), ProcessTransactionHandler.decodeMessageType(rep.getVoltronType()),
+        rep.getExtendedData(), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty());
   }
 }

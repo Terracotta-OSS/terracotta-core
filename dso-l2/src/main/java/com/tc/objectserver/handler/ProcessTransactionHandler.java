@@ -205,7 +205,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
     ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
-  private ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
+  public static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
     // Decode the appropriate server-internal action from this request type.
     ServerEntityAction action = null;
     switch (type) {

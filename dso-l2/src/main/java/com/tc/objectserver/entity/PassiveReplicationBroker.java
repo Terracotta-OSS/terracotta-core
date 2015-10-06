@@ -11,7 +11,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import java.util.concurrent.Future;
 
 public interface PassiveReplicationBroker {
-    Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, int concurrency, 
+    Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, 
         ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload);
     boolean isActive();
     void setActive(boolean active);

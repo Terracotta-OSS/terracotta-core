@@ -91,7 +91,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
   }    
 
   @Override
-  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, int concurrency, 
+  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload) {
     if (!isActive || passiveNodes.isEmpty()) {
       return NoReplicationBroker.NOOP_FUTURE;
@@ -130,7 +130,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
       default:
         break;
     }
-    final ReplicationMessage msg = new ReplicationMessage(id, version, concurrency, src, all, tid, oldest, actionCode, payload, rid.incrementAndGet());
+    final ReplicationMessage msg = new ReplicationMessage(id, version, src, all, tid, oldest, actionCode, payload, rid.incrementAndGet());
     
     if (!all.isEmpty()) {
       waiters.put(msg.getMessageID(), all);

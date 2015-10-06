@@ -45,7 +45,7 @@ public class NoReplicationBroker implements PassiveReplicationBroker {
   };
 
   @Override
-  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, int concurrency, ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload) {
+  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload) {
     return NOOP_FUTURE;
   }
 

@@ -6,9 +6,11 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import org.hamcrest.BaseMatcher;
@@ -100,6 +102,7 @@ public class RequestProcessorTest {
     when(request.getPayload()).thenReturn(intToArray(key));
     Sink dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
     int expResult = key;
     int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
@@ -123,6 +126,7 @@ public class RequestProcessorTest {
     Sink dump = mock(Sink.class);
 
     RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
     int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
@@ -146,6 +150,7 @@ public class RequestProcessorTest {
     Sink dump = mock(Sink.class);
 
     RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.MANAGEMENT_KEY;
     int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
@@ -158,16 +163,28 @@ public class RequestProcessorTest {
     System.out.println("replication");
     EntityID testid = new EntityID("MockEntity", "foo");
     EntityDescriptor descriptor = new EntityDescriptor(testid, ClientInstanceID.NULL_ID, 1);
+    
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     when(entity.getID()).thenReturn(testid);
+    when(entity.getVersion()).thenReturn(1L);
+
     ConcurrencyStrategy strategy = mock(ConcurrencyStrategy.class);
     when(strategy.concurrencyKey(Matchers.any())).thenReturn(ConcurrencyStrategy.UNIVERSAL_KEY);
+    
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     when(request.requiresReplication()).thenReturn(Boolean.TRUE);
-    Sink dump = mock(Sink.class);
-    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
+    when(request.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(request.getTransaction()).thenReturn(TransactionID.NULL_ID);
+    when(request.getPayload()).thenReturn(new byte[0]);
+    when(request.getNodeID()).thenReturn(mock(NodeID.class));
     
+    Sink dump = mock(Sink.class);
+
+    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
+    when(broker.replicateMessage(Matchers.any(), Matchers.anyLong(), Matchers.any(), 
+        Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
+        Matchers.any(TransactionID.class), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     
@@ -175,7 +192,10 @@ public class RequestProcessorTest {
     int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
 //  assume args from mocked request are passed.  just testing execution
-    verify(broker).replicateMessage(Matchers.eq(descriptor), Matchers.any(), Matchers.any(), Matchers.eq(expResult), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
+    verify(broker).replicateMessage(Matchers.eq(descriptor), Matchers.anyLong(), 
+        Matchers.any(), Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
+        Matchers.any(TransactionID.class), Matchers.any());
+//    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
   }
   
   private static byte[] intToArray(int val) {

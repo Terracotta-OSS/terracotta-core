@@ -42,8 +42,8 @@ public class RequestProcessor implements StateChangeListener {
     int index = (strategy == null || request.getAction() != ServerEntityAction.INVOKE_ACTION) ? 
         ConcurrencyStrategy.MANAGEMENT_KEY : 
         strategy.concurrencyKey(request.getPayload());
-    Future<Void> token = (passives != null && (request.requiresReplication() || index >= 0))
-        ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), index, request.getAction(), 
+    Future<Void> token = (passives != null && request.requiresReplication())
+        ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload())
         : NoReplicationBroker.NOOP_FUTURE;
     EntityRequest entityRequest =  new EntityRequest(impl, entity, request, index, token);
