@@ -654,16 +654,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       .getElectionTimeInSecs(), haConfig
                                                                       .getNodesStore());
 // setup replication    
-    final Stage<ReplicationMessage> replication = stageManager.createStage("replication stage TO BE ADDED TO CONTEXT", ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
+    final Stage<ReplicationMessage> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replication.getSink());
+    ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
     processor.setReplication(passives); 
     PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
 //  routing for passive to receive replication    
-    Stage<ReplicationMessage> replicationStage = stageManager.createStage("replication receiver TO BE ADDED TO CONTEXT", ReplicationMessage.class, 
+    Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         new ReplicatedTransactionHandler(passives, psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
             this.persistor.getEntityPersistor(), groupCommManager, requestProcessorSink).getEventHandler(), 1, maxStageSize);
-    Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage("passive sync TO BE ADDED TO CONTEXT", PassiveSyncMessage.class, 
+    Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
         psync.getEventHandler(), 1, maxStageSize);
   //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered

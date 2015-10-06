@@ -65,7 +65,11 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SERVER_ENTITY_MESSAGE_RESPONSE_STAGE               = "server_entity_response_message_stage";
   
   public static final String REQUEST_PROCESSOR_STAGE                            = "request_processor_stage";
-
+  
+  public static final String ACTIVE_TO_PASSIVE_DRIVER_STAGE                       = "active_to_passive_driver_stage";
+  public static final String PASSIVE_REPLICATION_STAGE                            = "passive_replication_stage";
+  public static final String PASSIVE_SYNCHRONIZATION_STAGE                        = "passive_synchronization_stage";
+  
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
