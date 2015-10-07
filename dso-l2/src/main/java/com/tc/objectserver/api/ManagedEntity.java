@@ -29,6 +29,12 @@ public interface ManagedEntity {
    * @param extendedReconnectData Free-formed data sent by the client to help restore the in-memory state of the entity
    */
   public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData);
-  
+  /**
+   * Called to sync an entity.  Caller initiates sync of an entity through this method.  
+   * 
+   * @param passive target passive
+   * @param mgr message channel
+   * @throws GroupException 
+   */
   void sync(NodeID passive, GroupManager mgr) throws GroupException;
 }

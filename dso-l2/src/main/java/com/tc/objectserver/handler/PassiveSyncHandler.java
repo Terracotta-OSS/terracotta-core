@@ -10,7 +10,10 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupManager;
+import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.persistence.EntityPersistor;
 
@@ -18,6 +21,7 @@ import com.tc.objectserver.persistence.EntityPersistor;
  *
  */
 public class PassiveSyncHandler {
+  private static final TCLogger logger = TCLogging.getLogger(PassiveSyncHandler.class);
   private final StateManager stateManager;
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
@@ -50,9 +54,16 @@ public class PassiveSyncHandler {
         //  do something
         break;
       case PassiveSyncMessage.ENTITY_BEGIN:
-        long consumerID = entityPersistor.getNextConsumerID();
-        this.entityManager.createEntity(sync.getEntityID(), sync.getVersion(), consumerID);
-        this.entityPersistor.entityCreated(sync.getEntityID(), sync.getVersion(), consumerID, sync.getPayload());
+        try {
+          if (!this.entityManager.getEntity(sync.getEntityID(), sync.getVersion()).isPresent()) {
+            long consumerID = entityPersistor.getNextConsumerID();
+            this.entityManager.createEntity(sync.getEntityID(), sync.getVersion(), consumerID);
+            this.entityPersistor.entityCreated(sync.getEntityID(), sync.getVersion(), consumerID, sync.getPayload());
+          }
+        } catch (IllegalStateException state) {
+//  TODO: this needs to be controlled.  
+          logger.warn("entity has already been created", state);
+        }
         break;
       case PassiveSyncMessage.ENTITY_END:
         //  do something?

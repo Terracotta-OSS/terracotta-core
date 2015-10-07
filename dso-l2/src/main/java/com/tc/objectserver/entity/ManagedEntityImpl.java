@@ -252,13 +252,17 @@ public class ManagedEntityImpl implements ManagedEntity {
   public void sync(NodeID passive, GroupManager mgr) throws GroupException {
     mgr.sendTo(passive, new PassiveSyncMessage(id, version, true));
 // TODO:  This is a stub, the real implementation is to be designed
+// iterate through all the concurrency keys of an entity
     for (Integer concurrency : activeServerEntity.getConcurrencyStrategy()) {
+// send the start message of a concurrency index and of an entity
       mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
       PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
       executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req);
       req.waitFor();
+// send the end message of a concurrency index and of an entity
       mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
     }
+//  end passive sync for an entity
     mgr.sendTo(passive, new PassiveSyncMessage(id, version, false));
   }
 

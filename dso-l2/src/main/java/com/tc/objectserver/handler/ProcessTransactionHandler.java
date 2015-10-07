@@ -80,7 +80,8 @@ public class ProcessTransactionHandler implements StateChangeListener {
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new Vector<>();
   }
-
+// TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
+//   adding any new messages to the PTH
   private void addMessage(NodeID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.

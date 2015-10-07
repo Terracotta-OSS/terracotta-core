@@ -26,6 +26,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -44,6 +46,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
   private final Sink<ReplicationMessage> replicate;
   private final AtomicLong rid = new AtomicLong();
   private boolean isActive;
+  private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
   public ActiveToPassiveReplication(GroupManager group, EntityManagerImpl entities, Sink<ReplicationMessage> replicate) {
     this.entities = entities;
@@ -63,20 +66,36 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
   }
   
   private void startPassiveSync(GroupManager groups, NodeID newNode) {
-    try {
       passiveNodes.add(newNode);
-      groups.sendTo(newNode, new PassiveSyncMessage(true));
-      Collection<ManagedEntity> currentEntities = entities.getAll();
-      for (ManagedEntity entity : currentEntities) {
-  // TODO: this is a stub implementation and needs to be fully designed
-          entity.sync(newNode, groups);
-  //  create entity on passive
-  //  start passive sync for entity      
-      }
-      groups.sendTo(newNode, new PassiveSyncMessage(false));
-    }  catch (GroupException ge) {
-      logger.info(ge);
+      executePassiveSync(groups, newNode);
+  }
+  /**
+   * Using an executor service here to sync multiple passives at once
+   * @param groups
+   * @param newNode 
+   */
+  private void executePassiveSync(final GroupManager groups,final NodeID newNode) {
+    passiveSyncPool.execute(new Runnable() {
+      @Override
+      public void run() {
+        try {
+        // start passive sync message
+            groups.sendTo(newNode, new PassiveSyncMessage(true));
+            Collection<ManagedEntity> currentEntities = entities.getAll();
+            for (ManagedEntity entity : currentEntities) {
+        // TODO: this is a stub implementation and needs to be fully designed
+                entity.sync(newNode, groups);
+        //  create entity on passive
+        //  start passive sync for entity      
+            }
+      //  passive sync done message.  causes passive to go into passive standby mode
+            groups.sendTo(newNode, new PassiveSyncMessage(false));
+        }  catch (GroupException ge) {
+          logger.info(ge);
+        }
     }
+    
+    });
   }
 
   public void acknowledge(GroupMessage msg) {
