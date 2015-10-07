@@ -19,6 +19,7 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Iterator;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.ReplicableActiveServerEntity;
 
 public class ManagedEntityImpl implements ManagedEntity {
   private final RequestProcessor executor;
@@ -165,7 +166,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         int concurrency = PassiveSyncServerEntityRequest.getConcurrency(wrappedRequest.getPayload());
-        for (byte[] payload : this.activeServerEntity.sync(concurrency)) {
+//  cast is ok here because theree is no way to get here without this entity being replicable
+        for (byte[] payload : ((ReplicableActiveServerEntity)this.activeServerEntity).sync(concurrency)) {
           ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(new PassiveSyncMessage(id, concurrency, payload));
         }
         wrappedRequest.complete();
@@ -253,14 +255,17 @@ public class ManagedEntityImpl implements ManagedEntity {
     mgr.sendTo(passive, new PassiveSyncMessage(id, version, true));
 // TODO:  This is a stub, the real implementation is to be designed
 // iterate through all the concurrency keys of an entity
-    for (Integer concurrency : activeServerEntity.getConcurrencyStrategy()) {
-// send the start message of a concurrency index and of an entity
-      mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
-      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
-      executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req);
-      req.waitFor();
-// send the end message of a concurrency index and of an entity
-      mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
+    if (activeServerEntity instanceof ReplicableActiveServerEntity) {
+      ReplicableActiveServerEntity replication = (ReplicableActiveServerEntity)activeServerEntity;
+      for (Integer concurrency : replication.getConcurrencyStrategy()) {
+  // send the start message of a concurrency index and of an entity
+        mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
+        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
+        executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req);
+        req.waitFor();
+  // send the end message of a concurrency index and of an entity
+        mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
+      }
     }
 //  end passive sync for an entity
     mgr.sendTo(passive, new PassiveSyncMessage(id, version, false));
@@ -301,12 +306,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     @Override
     public int concurrencyKey(byte[] payload) {
       return target;
-    }
-
-    @Override
-    public Iterator<Integer> iterator() {
-      return Collections.singleton(target).iterator();
-    }
-    
+    }    
   }
 }
