@@ -20,6 +20,7 @@ import java.util.Optional;
 public abstract class AbstractServerEntityRequest implements ServerEntityRequest {
   private final ServerEntityAction action;
   private final TransactionID transaction;
+  private final TransactionID oldest;
   private final NodeID  src;
   private final byte[]  payload;
   private final EntityDescriptor descriptor;
@@ -27,9 +28,10 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   
   private boolean done = false;
 
-  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, NodeID src, boolean requiresReplication) {
+  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication) {
     this.action = action;
     this.transaction = transaction;
+    this.oldest = oldest;
     this.src = src;
     this.payload = payload;
     this.descriptor = descriptor;
@@ -43,6 +45,14 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
     return transaction;
   }
   
+  @Override
+  public TransactionID getOldestTransactionOnClient() {
+    if (oldest == null) {
+      return TransactionID.NULL_ID;
+    }
+    return oldest;
+  }
+
   @Override
   public boolean requiresReplication() {
     return this.requiresReplication;

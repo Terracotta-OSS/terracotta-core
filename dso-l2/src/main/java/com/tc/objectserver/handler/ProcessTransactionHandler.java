@@ -49,7 +49,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
     public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
       NodeID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
-      ServerEntityAction action = decodeMessageType(message.getType());
+      ServerEntityAction action = decodeMessageType(message.getVoltronType());
       byte[] extendedData = message.getExtendedData();
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
@@ -80,7 +80,8 @@ public class ProcessTransactionHandler implements StateChangeListener {
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new Vector<>();
   }
-
+// TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
+//   adding any new messages to the PTH
   private void addMessage(NodeID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
@@ -108,7 +109,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
     }
     
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action,  extendedData, transactionID, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
+    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action,  extendedData, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     if (null != oldestTransactionOnClient) {
       // This client still needs transaction order persistence.
@@ -196,7 +197,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
   private void executeResend(ResendVoltronEntityMessage message) {
     NodeID sourceNodeID = message.getSource();
     EntityDescriptor descriptor = message.getEntityDescriptor();
-    ServerEntityAction action = decodeMessageType(message.getType());
+    ServerEntityAction action = decodeMessageType(message.getVoltronType());
     byte[] extendedData = message.getExtendedData();
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
@@ -205,7 +206,7 @@ public class ProcessTransactionHandler implements StateChangeListener {
     ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
-  private ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
+  public static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
     // Decode the appropriate server-internal action from this request type.
     ServerEntityAction action = null;
     switch (type) {

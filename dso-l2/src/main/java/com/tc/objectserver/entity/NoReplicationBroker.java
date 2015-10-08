@@ -5,7 +5,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.net.NodeID;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import java.util.concurrent.ExecutionException;
@@ -45,8 +45,20 @@ public class NoReplicationBroker implements PassiveReplicationBroker {
   };
 
   @Override
-  public Future<Void> replicateMessage(EntityID id, NodeID src, int concurrency, ServerEntityAction type, TransactionID tid, byte[] payload) {
+  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload) {
     return NOOP_FUTURE;
   }
+
+  @Override
+  public boolean isActive() {
+    return false;
+}
+
+  @Override
+  public void setActive(boolean active) {
+    throw new IllegalStateException("this replication broker cannot go active");
+  }
+  
+  
 
 }

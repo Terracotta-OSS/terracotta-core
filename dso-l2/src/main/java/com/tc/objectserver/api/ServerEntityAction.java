@@ -36,7 +36,11 @@ public enum ServerEntityAction {
    */
   PROMOTE_ENTITY_TO_ACTIVE,
   /**
+   * Ask entity to sync a portion of its state.
+   */
+  SYNC_ENTITY,
+  /**
    * An internally-created action to communicate that an entity should be loaded from its existing disk state.
    */
-  LOAD_EXISTING_ENTITY,
+  LOAD_EXISTING_ENTITY;
 }

@@ -72,7 +72,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
     }
 
     @Override
-    public Type getType() {
+    public Type getVoltronType() {
       return Type.RELEASE_ENTITY;
     }
 

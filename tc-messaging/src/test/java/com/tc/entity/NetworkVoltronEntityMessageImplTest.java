@@ -58,7 +58,7 @@ public class NetworkVoltronEntityMessageImplTest {
     assertEquals(clientID, decodingMessage.getSource());
     assertEquals(transactionID, decodingMessage.getTransactionID());
     assertEquals(entityDescriptor, decodingMessage.getEntityDescriptor());
-    assertEquals(messageType, decodingMessage.getType());
+    assertEquals(messageType, decodingMessage.getVoltronType());
     assertEquals(oldestTransactionPending, decodingMessage.getOldestTransactionOnClient());
   }
 }

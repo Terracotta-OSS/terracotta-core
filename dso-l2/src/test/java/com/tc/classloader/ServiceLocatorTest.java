@@ -3,11 +3,6 @@ package com.tc.classloader;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.terracotta.entity.ActiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
-import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceRegistry;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -23,6 +18,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import org.junit.Ignore;
+import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceRegistry;
 
 public class ServiceLocatorTest {
 

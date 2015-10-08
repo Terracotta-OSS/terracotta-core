@@ -18,16 +18,17 @@ import java.util.TreeSet;
  * This class provides an order to the events processed. If events are added out of order, this class orderes them
  * before adding it to the destination sink. If Messages went missing, then this class waits till the missing message
  * arrives before pushing the events to the destination sink.
+ * @param <T> Type the sink accepts
  */
-public class OrderedSink implements Sink<OrderedEventContext> {
+public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
-  private final Sink<OrderedEventContext> sink;
+  private final Sink<T> sink;
   private final TCLogger logger;
 
   private long           current = 0;
-  private final SortedSet<OrderedEventContext> pending = new TreeSet<OrderedEventContext>(new Comparator<OrderedEventContext>() {
+  private final SortedSet<T> pending = new TreeSet<T>(new Comparator<T>() {
       @Override
-      public int compare(OrderedEventContext o1, OrderedEventContext o2) {
+      public int compare(T o1, T o2) {
         long s1 = o1.getSequenceID();
         long s2 = o2.getSequenceID();
         if (s1 < s2) return -1;
@@ -36,13 +37,13 @@ public class OrderedSink implements Sink<OrderedEventContext> {
       }
   });
 
-  public OrderedSink(TCLogger logger, Sink<OrderedEventContext> sink) {
+  public OrderedSink(TCLogger logger, Sink<T> sink) {
     this.logger = logger;
     this.sink = sink;
   }
 
   @Override
-  public synchronized void addSingleThreaded(OrderedEventContext oc) {
+  public synchronized void addSingleThreaded(T oc) {
     long seq = oc.getSequenceID();
     if (seq <= current) {
       throw new AssertionError("Received Event with a sequence less than the current sequence. Current = " + current
@@ -74,8 +75,8 @@ public class OrderedSink implements Sink<OrderedEventContext> {
 
   private void processPendingIfNecessary() {
     if (!pending.isEmpty()) {
-      for (Iterator<OrderedEventContext> i = pending.iterator(); i.hasNext();) {
-        OrderedEventContext oc = i.next();
+      for (Iterator<T> i = pending.iterator(); i.hasNext();) {
+        T oc = i.next();
         long seq = oc.getSequenceID();
         if (seq == current + 1) {
           current = seq;

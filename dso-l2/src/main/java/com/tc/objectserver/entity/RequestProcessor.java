@@ -6,42 +6,60 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.state.StateChangeListener;
+import com.tc.object.EntityDescriptor;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.util.Assert;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
 
-public class RequestProcessor {
+public class RequestProcessor implements StateChangeListener {
   
-  private final PassiveReplicationBroker passives;
+  private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
 //  TODO: do some accounting for transaction de-dupping on failover
 
-  public RequestProcessor(PassiveReplicationBroker passives, Sink<Runnable> requestExecution) {
-    this.passives = passives;
+  public RequestProcessor(Sink<Runnable> requestExecution) {
     this.requestExecution = requestExecution;
   }
   
-  int scheduleRequest(ManagedEntityImpl entity, ConcurrencyStrategy strategy, ServerEntityRequest request) {
+  public void setReplication(PassiveReplicationBroker passives) {
+    Assert.assertNull(this.passives);
+    this.passives = passives;
+  }
+
+  @Override
+  public void l2StateChanged(StateChangedEvent sce) {
+    if (passives != null) {
+      this.passives.setActive(sce.movedToActive());
+    }
+  }
+  
+  int scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ConcurrencyStrategy strategy, ServerEntityRequest request) {
     int index = (strategy == null || request.getAction() != ServerEntityAction.INVOKE_ACTION) ? 
         ConcurrencyStrategy.MANAGEMENT_KEY : 
         strategy.concurrencyKey(request.getPayload());
-    Future<Void> token = (request.requiresReplication())
-        ? passives.replicateMessage(entity.getID(), request.getNodeID(), index, request.getAction(), request.getTransaction(), request.getPayload())
+    Future<Void> token = (passives != null && request.requiresReplication())
+        ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
+            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload())
         : NoReplicationBroker.NOOP_FUTURE;
-    EntityRequest entityRequest =  new EntityRequest(entity, request, index, token);
+    EntityRequest entityRequest =  new EntityRequest(impl, entity, request, index, token);
     requestExecution.addMultiThreaded(entityRequest);
     return index;
   }
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {
-    private final ManagedEntityImpl entity;
+    private final ManagedEntityImpl impl;
+    private final EntityDescriptor entity;
     private final ServerEntityRequest request;
     private final Future<Void>  token;
     private final int key;
 
-    public EntityRequest(ManagedEntityImpl entity, ServerEntityRequest request, int concurrencyIndex, Future<Void>  token) {
+    public EntityRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, int concurrencyIndex, Future<Void>  token) {
+      this.impl = impl;
       this.entity = entity;
       this.request = request;
       this.key = concurrencyIndex;
@@ -54,7 +72,7 @@ public class RequestProcessor {
         return null;
       }
 //  create some additional entropy so all entities are not ordered the same
-      return key ^ entity.getID().hashCode();
+      return key ^ entity.getEntityID().hashCode();
     }
 //  Runnable so handler can cast and execute
     @Override
@@ -65,7 +83,7 @@ public class RequestProcessor {
     void invoke()  {
       try {
         token.get();
-        entity.invoke(request);
+        impl.invoke(request);
       } catch (InterruptedException interrupted) {
 //  shutdown logic?  uniterruptable?
         throw new RuntimeException(interrupted);

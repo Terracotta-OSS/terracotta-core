@@ -13,7 +13,7 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.NullSink;
+import com.tc.async.impl.OrderedSink;
 import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -44,6 +44,9 @@ import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
+import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
@@ -123,6 +126,7 @@ import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
@@ -195,9 +199,11 @@ import javax.management.remote.JMXConnectorServer;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
-import com.tc.objectserver.entity.NoReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
+import com.tc.objectserver.handler.PassiveSyncHandler;
+import com.tc.objectserver.handler.ReplicatedTransactionHandler;
+import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.services.EmptyServiceProviderConfiguration;
 
 import org.terracotta.entity.ServiceProvider;
@@ -556,7 +562,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // We can now initialize the internal managers used by the processTransactionHandler.
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(voltronMessageSink);
-    RequestProcessor processor = new RequestProcessor(new NoReplicationBroker(), requestProcessorSink);
+
+    RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, processor);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
@@ -646,11 +653,31 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                   configSetupManager.getActiveServerGroupForThisL2()
                                                                       .getElectionTimeInSecs(), haConfig
                                                                       .getNodesStore());
+// setup replication    
+    final Stage<ReplicationMessage> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
+    
+    ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
+    processor.setReplication(passives); 
+    PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
+//  routing for passive to receive replication    
+    Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
+        new ReplicatedTransactionHandler(passives, psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
+            this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
+    Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
+        psync.getEventHandler(), 1, maxStageSize);
+  //  TODO:  These stages should probably be activated and destroyed dynamically    
+//  Replicated messages need to be ordered
+    this.groupCommManager.routeMessages(ReplicationMessage.class, new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink()));
+    this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStage.getSink());
+    this.groupCommManager.routeMessages(PassiveSyncMessage.class, passiveSyncStage.getSink());
+    
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
     // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
     //  and passive.
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(processTransactionHandler);
+    this.l2Coordinator.getStateManager().registerForStateChangeEvents(processor);
+    
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,

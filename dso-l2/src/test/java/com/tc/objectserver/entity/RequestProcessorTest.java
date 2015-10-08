@@ -6,7 +6,11 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import org.hamcrest.BaseMatcher;
@@ -64,9 +68,9 @@ public class RequestProcessorTest {
     when(request.requiresReplication()).thenReturn(Boolean.FALSE);
     when(request.getPayload()).thenReturn(new byte[0]);
     Sink<Runnable> dump = mock(Sink.class);
-    RequestProcessor instance = new RequestProcessor(new NoReplicationBroker(), dump);
+    RequestProcessor instance = new RequestProcessor(dump);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    int result = instance.scheduleRequest(entity, strategy, request);
+    int result = instance.scheduleRequest(entity, mock(EntityDescriptor.class), strategy, request);
     assertEquals(expResult, result);
     
     verify(dump).addMultiThreaded(Matchers.any());
@@ -76,7 +80,9 @@ public class RequestProcessorTest {
   @Test
   public void testConcurrencyStrategy() {
     System.out.println("concurrency");
+    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     EntityID testid = new EntityID("MockEntity", "foo");
+    EntityDescriptor descriptor = new EntityDescriptor(testid, ClientInstanceID.NULL_ID, 1);
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     when(entity.getID()).thenReturn(testid);
     ConcurrencyStrategy strategy = mock(ConcurrencyStrategy.class);
@@ -95,9 +101,10 @@ public class RequestProcessorTest {
     when(request.requiresReplication()).thenReturn(Boolean.FALSE);
     when(request.getPayload()).thenReturn(intToArray(key));
     Sink dump = mock(Sink.class);
-    RequestProcessor instance = new RequestProcessor(new NoReplicationBroker(), dump);
+    RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
     int expResult = key;
-    int result = instance.scheduleRequest(entity, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
@@ -106,7 +113,9 @@ public class RequestProcessorTest {
   @Test
   public void testUniversalKey() {
     System.out.println("univeral key");
+    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     EntityID testid = new EntityID("MockEntity", "foo");
+    EntityDescriptor descriptor = new EntityDescriptor(testid, ClientInstanceID.NULL_ID, 1);
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     when(entity.getID()).thenReturn(testid);
     ConcurrencyStrategy strategy = mock(ConcurrencyStrategy.class);
@@ -116,9 +125,10 @@ public class RequestProcessorTest {
     when(request.requiresReplication()).thenReturn(Boolean.FALSE);
     Sink dump = mock(Sink.class);
 
-    RequestProcessor instance = new RequestProcessor(new NoReplicationBroker(), dump);
+    RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    int result = instance.scheduleRequest(entity, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
@@ -127,7 +137,9 @@ public class RequestProcessorTest {
   @Test
   public void testManagementKey() {
     System.out.println("management key");
+    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     EntityID testid = new EntityID("MockEntity", "foo");
+    EntityDescriptor descriptor = new EntityDescriptor(testid, ClientInstanceID.NULL_ID, 1);
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     when(entity.getID()).thenReturn(testid);
     ConcurrencyStrategy strategy = mock(ConcurrencyStrategy.class);
@@ -137,9 +149,10 @@ public class RequestProcessorTest {
     when(request.getAction()).thenReturn(ServerEntityAction.CREATE_ENTITY);
     Sink dump = mock(Sink.class);
 
-    RequestProcessor instance = new RequestProcessor(new NoReplicationBroker(), dump);
+    RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.MANAGEMENT_KEY;
-    int result = instance.scheduleRequest(entity, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
@@ -149,22 +162,40 @@ public class RequestProcessorTest {
   public void testReplicationCall() {
     System.out.println("replication");
     EntityID testid = new EntityID("MockEntity", "foo");
+    EntityDescriptor descriptor = new EntityDescriptor(testid, ClientInstanceID.NULL_ID, 1);
+    
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     when(entity.getID()).thenReturn(testid);
+    when(entity.getVersion()).thenReturn(1L);
+
     ConcurrencyStrategy strategy = mock(ConcurrencyStrategy.class);
     when(strategy.concurrencyKey(Matchers.any())).thenReturn(ConcurrencyStrategy.UNIVERSAL_KEY);
+    
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     when(request.requiresReplication()).thenReturn(Boolean.TRUE);
-    Sink dump = mock(Sink.class);
-    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
+    when(request.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(request.getTransaction()).thenReturn(TransactionID.NULL_ID);
+    when(request.getPayload()).thenReturn(new byte[0]);
+    when(request.getNodeID()).thenReturn(mock(NodeID.class));
     
-    RequestProcessor instance = new RequestProcessor(broker, dump);
+    Sink dump = mock(Sink.class);
+
+    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
+    when(broker.replicateMessage(Matchers.any(), Matchers.anyLong(), Matchers.any(), 
+        Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
+        Matchers.any(TransactionID.class), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
+    RequestProcessor instance = new RequestProcessor(dump);
+    instance.setReplication(broker);
+    
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    int result = instance.scheduleRequest(entity, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
     assertEquals(expResult, result);
 //  assume args from mocked request are passed.  just testing execution
-    verify(broker).replicateMessage(Matchers.eq(testid), Matchers.any(), Matchers.eq(expResult), Matchers.any(), Matchers.any(), Matchers.any());
+    verify(broker).replicateMessage(Matchers.eq(descriptor), Matchers.anyLong(), 
+        Matchers.any(), Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
+        Matchers.any(TransactionID.class), Matchers.any());
+//    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
   }
   
   private static byte[] intToArray(int val) {

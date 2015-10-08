@@ -1,5 +1,8 @@
 package com.tc.objectserver.entity;
 
+import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.net.groups.GroupException;
+import com.tc.net.groups.GroupManager;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
@@ -13,15 +16,19 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
+import java.util.Collections;
+import java.util.Iterator;
+import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.ReplicableActiveServerEntity;
 
 public class ManagedEntityImpl implements ManagedEntity {
   private final RequestProcessor executor;
 
   private final EntityID id;
+  private final long version;
   private final ServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> factory;
-  
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
   private volatile ActiveServerEntity activeServerEntity;
@@ -31,11 +38,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] configFromPassiveCreate;
 
-  ManagedEntityImpl(EntityID id, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
+  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
                     RequestProcessor process, 
                     ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> factory,
                     boolean isInActiveState) {
     this.id = id;
+    this.version = version;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.factory = factory;
@@ -49,8 +57,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
+  public long getVersion() {
+    return version;
+  }
+
+  @Override
   public void addRequest(ServerEntityRequest request) {
-    executor.scheduleRequest(this, activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null, request);
+    ClientDescriptor client = request.getSourceDescriptor();
+    executor.scheduleRequest(this, getEntityDescriptorForSource(client), activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null, request);
   }
 
   @Override
@@ -84,11 +98,16 @@ public class ManagedEntityImpl implements ManagedEntity {
             releaseEntity(request);
             break;
           case DESTROY_ENTITY:
+//  TODO: need a way to flush the concurrency queues to make sure no other actions
+//            are scheduled on this entity before destruction
             destroyEntity(request);
             break;
           case PROMOTE_ENTITY_TO_ACTIVE:
             promoteEntity(request);
             break;
+          case SYNC_ENTITY:
+//  use typing for this distinction since it is server generated?
+            performSync(request);
           case LOAD_EXISTING_ENTITY:
             loadExisting(request);
             break;
@@ -140,6 +159,28 @@ public class ManagedEntityImpl implements ManagedEntity {
     entityToCreate.createNew();
   }
 
+  //  TODO: stub implementation.  This is supposed to send the data to the passive server for sync
+  private void performSync(ServerEntityRequest wrappedRequest) {
+    if (this.isInActiveState) {
+      if (null == this.activeServerEntity) {
+        throw new IllegalStateException("Actions on a non-existent entity.");
+      } else {
+        int concurrency = PassiveSyncServerEntityRequest.getConcurrency(wrappedRequest.getPayload());
+//  cast is ok here because theree is no way to get here without this entity being replicable
+        for (byte[] payload : ((ReplicableActiveServerEntity)this.activeServerEntity).sync(concurrency)) {
+          ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(new PassiveSyncMessage(id, concurrency, payload));
+        }
+        wrappedRequest.complete();
+      }
+    } else {
+      if (null == this.passiveServerEntity) {
+        throw new IllegalStateException("Actions on a non-existent entity.");
+      } else {
+//  doing nothing for sync
+      }
+    }
+  }
+  
   private void performAction(ServerEntityRequest wrappedRequest) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
@@ -209,6 +250,27 @@ public class ManagedEntityImpl implements ManagedEntity {
     request.complete();
   }
 
+  @Override
+  public void sync(NodeID passive, GroupManager mgr) throws GroupException {
+    mgr.sendTo(passive, new PassiveSyncMessage(id, version, true));
+// TODO:  This is a stub, the real implementation is to be designed
+// iterate through all the concurrency keys of an entity
+    if (activeServerEntity instanceof ReplicableActiveServerEntity) {
+      ReplicableActiveServerEntity replication = (ReplicableActiveServerEntity)activeServerEntity;
+      for (Integer concurrency : replication.getConcurrencyStrategy()) {
+  // send the start message of a concurrency index and of an entity
+        mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
+        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
+        executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req);
+        req.waitFor();
+  // send the end message of a concurrency index and of an entity
+        mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
+      }
+    }
+//  end passive sync for an entity
+    mgr.sendTo(passive, new PassiveSyncMessage(id, version, false));
+  }
+
   private void loadExisting(ServerEntityRequest loadEntityRequest) {
     byte[] configuration = loadEntityRequest.getPayload();
     CommonServerEntity entityToLoad = null;
@@ -232,5 +294,18 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     loadEntityRequest.complete();
     entityToLoad.loadExisting();
+  }
+  
+  private static class DirectConcurrencyStrategy implements ConcurrencyStrategy {
+    private final int target;
+
+    public DirectConcurrencyStrategy(int target) {
+      this.target = target;
+    }
+    
+    @Override
+    public int concurrencyKey(byte[] payload) {
+      return target;
+    }    
   }
 }

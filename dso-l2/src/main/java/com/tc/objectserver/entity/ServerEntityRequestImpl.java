@@ -17,8 +17,9 @@ public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
 
   protected final Optional<MessageChannel> returnChannel;
 
-  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, NodeID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
-    super(descriptor, action, payload, transaction, src, requiresReplication);
+  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, 
+      TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
+    super(descriptor, action, payload, transaction, oldest, src, requiresReplication);
     this.returnChannel = returnChannel;
   }
 

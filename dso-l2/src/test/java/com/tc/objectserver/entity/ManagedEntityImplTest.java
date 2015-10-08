@@ -61,7 +61,7 @@ public class ManagedEntityImplTest {
 
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, serviceRegistry, clientEntityStateManager, requestMulti, serverEntityService, isInActiveState);
+    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, requestMulti, serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
   }
 

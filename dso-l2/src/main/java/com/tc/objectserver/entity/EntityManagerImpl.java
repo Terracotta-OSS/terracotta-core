@@ -1,11 +1,14 @@
 package com.tc.objectserver.entity;
 
+import com.tc.net.ClientID;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 
 import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
@@ -14,13 +17,13 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
+import java.util.Collection;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class
-    EntityManagerImpl implements EntityManager {
+public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> entityServices = new ConcurrentHashMap<>();
 
@@ -50,8 +53,8 @@ public class
     // NOTE:  While it would seem more direct (and not require adding new request types) to distinguish active/passive
     //  via ManagedEntity implementations, we would need to ensure that all pending requests for a ManagedEntity had
     //  been processed.  Thus, we will use addRequest, unless we can prove state of the entity request queue, at this point.
-    InternalRequest request = new InternalRequest(ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE, null);
     for(ManagedEntity entity : this.entities.values()) {
+      InternalRequest request = new InternalRequest(entity.getID(), entity.getVersion(), ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE, null);
       entity.addRequest(request);
     }
   }
@@ -60,7 +63,7 @@ public class
   public void createEntity(EntityID id, long version, long consumerID) {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, serviceRegistry.subRegistry(consumerID),
+    ManagedEntity temp = new ManagedEntityImpl(id, version, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(id, temp) != null) {
       throw new IllegalStateException("Double create for entity " + id);
@@ -71,11 +74,11 @@ public class
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }
-    InternalRequest request = new InternalRequest(ServerEntityAction.LOAD_EXISTING_ENTITY, configuration);
+    InternalRequest request = new InternalRequest(entityID, recordedVersion, ServerEntityAction.LOAD_EXISTING_ENTITY, configuration);
     temp.addRequest(request);
   }
 
@@ -94,6 +97,10 @@ public class
     // Note that we ignore the return value, only interested in validating that the version is consistent.
     getVersionCheckedService(id, version);
     return Optional.ofNullable(entities.get(id));
+  }
+  
+  public Collection<ManagedEntity> getAll() {
+    return entities.values();
   }
   
   private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> getVersionCheckedService(EntityID entityID, long version) {
@@ -123,10 +130,14 @@ public class
    * This implementation does nothing beyond providing the desired action type.
    */
   private static class InternalRequest implements ServerEntityRequest {
+    private final EntityID entity;
+    private final long version;
     private final ServerEntityAction action;
     private final byte[] payload;
     
-    public InternalRequest(ServerEntityAction action, byte[] payload) {
+    public InternalRequest(EntityID id, long version, ServerEntityAction action, byte[] payload) {
+      this.entity = id;
+      this.version = version;
       this.action = action;
       this.payload = payload;
     }
@@ -136,11 +147,11 @@ public class
     }
     @Override
     public NodeID getNodeID() {
-      throw new UnsupportedOperationException();
+      return ClientID.NULL_ID;
     }
     @Override
     public ClientDescriptor getSourceDescriptor() {
-      throw new UnsupportedOperationException();
+      return new ClientDescriptorImpl(ClientID.NULL_ID, new EntityDescriptor(entity, ClientInstanceID.NULL_ID, version));
     }
     @Override
     public byte[] getPayload() {
@@ -167,7 +178,12 @@ public class
 
     @Override
     public TransactionID getTransaction() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return TransactionID.NULL_ID;
+    }
+
+    @Override
+    public TransactionID getOldestTransactionOnClient() {
+      return TransactionID.NULL_ID;
     }
 
     @Override

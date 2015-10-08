@@ -49,7 +49,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
   
   @Override
-  public Type getType() {
+  public Type getVoltronType() {
     Assert.assertNotNull(this.type);
     return this.type;
   }
@@ -112,6 +112,8 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     outputStream.writeInt(extendedData.length);
     outputStream.write(extendedData);
     
+    outputStream.writeBoolean(requiresReplication);
+    
     outputStream.writeLong(this.oldestTransactionPending.toLong());
   }
   
@@ -127,6 +129,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
     this.type = Type.values()[getIntValue()];
     this.extendedData = getBytesArray();
+    this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
     return true;
   }

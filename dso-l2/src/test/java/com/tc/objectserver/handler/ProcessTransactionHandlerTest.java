@@ -27,7 +27,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
-import com.tc.objectserver.entity.NoReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -71,7 +70,7 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink = new RunnableSink();
     
     this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
-    RequestProcessor processor = new RequestProcessor(new NoReplicationBroker(), this.requestProcessorSink);
+    RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, processor);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
@@ -166,7 +165,7 @@ public class ProcessTransactionHandlerTest {
   private NetworkVoltronEntityMessage createMockRequest(VoltronEntityMessage.Type type, EntityID entityID, TransactionID transactionID) {
     NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
     when(request.getSource()).thenReturn(this.source);
-    when(request.getType()).thenReturn(type);
+    when(request.getVoltronType()).thenReturn(type);
     EntityDescriptor entityDescriptor = mock(EntityDescriptor.class);
     when(entityDescriptor.getClientSideVersion()).thenReturn((long) 1);
     when(entityDescriptor.getEntityID()).thenReturn(entityID);
