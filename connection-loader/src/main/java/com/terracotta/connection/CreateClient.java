@@ -3,16 +3,13 @@
  */
 package com.terracotta.connection;
 
-import org.terracotta.license.util.Base64;
-
 import com.google.common.collect.MapMaker;
 import com.tc.license.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.util.UUID;
+import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -30,45 +27,25 @@ public class CreateClient implements Callable<ClientCreatorCallable> {
     dummy.put("dummy", new Object());
   }
 
-  private static TCLogger           logger = TCLogging.getLogger(CreateClient.class);
-
-  private final String              embeddedTcConfig;
-  private final boolean             isURLConfig;
+  private final TerracottaClientStripeConnectionConfig stripeConnectionConfig;
   private final String              productIdName;
-  private final boolean             rejoin;
 
   private final SecurityInfo        securityInfo;
-  private final Map<String, Object> env;
 
-  public CreateClient(String embeddedTcConfig, boolean isURLConfig, boolean rejoin,
-                      String productIdName, Map<String, Object> env) {
-    this.embeddedTcConfig = embeddedTcConfig;
-    this.isURLConfig = isURLConfig;
+  public CreateClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productIdName) {
+    this.stripeConnectionConfig = stripeConnectionConfig;
     this.productIdName = productIdName;
-    String username = null;
-    if (isURLConfig) {
-      username = URLConfigUtil.getUsername(embeddedTcConfig);
-    }
+    String username = stripeConnectionConfig.getUsername();
     this.securityInfo = new SecurityInfo(username != null, username);
-    this.rejoin = rejoin;
-    this.env = env;
   }
 
   @Override
   public ClientCreatorCallable call() throws Exception {
     TCSecurityManager securityManager = null;
 
-    String configSpec = embeddedTcConfig;
-    if (!isURLConfig) {
-      // convert to base64 string configuration source
-      configSpec = "base64://"
-                   + Base64.encodeBytes(embeddedTcConfig.getBytes("UTF-8"), Base64.GZIP | Base64.DONT_BREAK_LINES);
-    }
-
     ProductID productId = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
     UUID uuid = UUID.getUUID();
-    final DistributedObjectClientFactory distributedObjectClientFactory = new DistributedObjectClientFactory(
-                                                                                                             configSpec,
+    final DistributedObjectClientFactory distributedObjectClientFactory = new DistributedObjectClientFactory(this.stripeConnectionConfig.getStripeMemberUris(),
                                                                                                              securityManager,
                                                                                                              securityInfo,
                                                                                                              productId,

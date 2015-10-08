@@ -3,40 +3,30 @@
  */
 package com.terracotta.connection.client;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.Vector;
+
 
 public class TerracottaClientConfigParams {
-  private String      tcConfigSnippetOrUrl;
-  private boolean     isUrl;
+  private final List<String> stripeMembers;
   private Set<String> tunnelledMBeanDomains;
   private boolean     rejoin;
   private boolean     nonStop;
   private String      productId;
   private ClassLoader clasLoader;
 
-  public String getTcConfigSnippetOrUrl() {
-    return tcConfigSnippetOrUrl;
+  public TerracottaClientConfigParams() {
+    this.stripeMembers = new Vector<String>();
   }
 
-  public void setTcConfigSnippetOrUrl(String tcConfigSnippetOrUrl) {
-    this.tcConfigSnippetOrUrl = tcConfigSnippetOrUrl;
+  public List<String> getStripeMemberUris() {
+    return Collections.unmodifiableList(this.stripeMembers);
   }
 
-  public TerracottaClientConfigParams tcConfigSnippetOrUrl(String tcConfigSnippetOrUrlParam) {
-    setTcConfigSnippetOrUrl(tcConfigSnippetOrUrlParam);
-    return this;
-  }
-
-  public boolean isUrl() {
-    return isUrl;
-  }
-
-  public void setUrl(boolean isUrl) {
-    this.isUrl = isUrl;
-  }
-
-  public TerracottaClientConfigParams isUrl(boolean isUrlParam) {
-    this.isUrl = isUrlParam;
+  public TerracottaClientConfigParams addStripeMemberUri(String stripeMember) {
+    this.stripeMembers.add(stripeMember);
     return this;
   }
 
@@ -73,10 +63,6 @@ public class TerracottaClientConfigParams {
 
   public boolean isNonStop() {
     return nonStop;
-  }
-
-  public TerracottaClientConfig newTerracottaClientConfig() {
-    return new TerracottaClientConfig(this);
   }
 
   public String getProductId() {

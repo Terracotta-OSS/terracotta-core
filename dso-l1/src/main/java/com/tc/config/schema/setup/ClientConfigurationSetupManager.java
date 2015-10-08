@@ -3,7 +3,9 @@ package com.tc.config.schema.setup;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.net.core.SecurityInfo;
+
 import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -11,18 +13,29 @@ import java.util.Arrays;
  */
 public class ClientConfigurationSetupManager implements L1ConfigurationSetupManager {
   private final String[] args;
-  private final String source;
   private L2ConfigForL1.L2Data[] l2Data;
   private final SecurityInfo securityInfo;
+  // For historical reasons, we need to serialize the list of member URIs.
+  private final String legacyStripeConfigText;
 
-  public ClientConfigurationSetupManager(String source, String[] args, String[] hosts, int[] ports, SecurityInfo securityInfo) {
-    this.source = source;
+  public ClientConfigurationSetupManager(List<String> stripeMemberUris, String[] args, String[] hosts, int[] ports, SecurityInfo securityInfo) {
     this.args = args;
     this.securityInfo = securityInfo;
     l2Data = new L2ConfigForL1.L2Data[hosts.length];
     for(int i = 0; i < hosts.length; i++) {
       l2Data[i] = new L2ConfigForL1.L2Data(hosts[i], ports[i], securityInfo != null ? securityInfo.isSecure() : false);
     }
+    
+    // Build the legacyStripeConfigText.
+    String stripeText = null;
+    for (String member : stripeMemberUris) {
+      if (null == stripeText) {
+        stripeText = member;
+      } else {
+        stripeText = stripeText + "," + member;
+      }
+    }
+    this.legacyStripeConfigText = stripeText;
   }
   
   public void addServer(String host, int port) {
@@ -42,12 +55,12 @@ public class ClientConfigurationSetupManager implements L1ConfigurationSetupMana
 
   @Override
   public String rawConfigText() {
-    return source;
+    return this.legacyStripeConfigText;
   }
 
   @Override
   public String source() {
-    return source;
+    return this.legacyStripeConfigText;
   }
 
   @Override
