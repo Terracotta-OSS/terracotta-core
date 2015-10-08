@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -17,7 +18,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import org.junit.Ignore;
+import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceRegistry;
 
 public class ServiceLocatorTest {
 
@@ -109,26 +114,26 @@ public class ServiceLocatorTest {
 
     //XXX introspective code to test hirearchy
     for (ServiceProvider p : providers) {
-//      ServiceConfiguration<Object> serviceConfiguration = new ServiceConfiguration<Object>() {
-//        @Override
-//        public Class<Object> getServiceType() {
-//          try {
-//            return (Class<Object>) Class.forName("com.terracotta.sample.service.IClassLoading", false, parent);
-//          } catch (ClassNotFoundException e) {
-//            e.printStackTrace();
-//          }
-//          return null;
-//        }
-//      };
-//      Object o = p.getService(1, serviceConfiguration);
-//      Class<?> aClass = o.getClass();
-//      Method gcl = aClass.getDeclaredMethod("getClassLoader");
-//      gcl.setAccessible(true);
-//      Method gpl = aClass.getDeclaredMethod("getParentTypeLoader");
-//      gpl.setAccessible(true);
-//      //IClassloading defines two methods to return implementation classloader and type class loader
-//      Assert.assertNotEquals("Concrete implementation and API should not be having same classloader", gcl.invoke(o), gpl.invoke(o));
-//      Assert.assertEquals("Check the parent loader which we create for loading components are followed", gpl.invoke(o), parent);
+      ServiceConfiguration<Object> serviceConfiguration = new ServiceConfiguration<Object>() {
+        @Override
+        public Class<Object> getServiceType() {
+          try {
+            return (Class<Object>) Class.forName("com.terracotta.sample.service.IClassLoading", false, parent);
+          } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+          }
+          return null;
+        }
+      };
+      Object o = p.getService(1, serviceConfiguration);
+      Class<?> aClass = o.getClass();
+      Method gcl = aClass.getDeclaredMethod("getClassLoader");
+      gcl.setAccessible(true);
+      Method gpl = aClass.getDeclaredMethod("getParentTypeLoader");
+      gpl.setAccessible(true);
+      //IClassloading defines two methods to return implementation classloader and type class loader
+      Assert.assertNotEquals("Concrete implementation and API should not be having same classloader", gcl.invoke(o), gpl.invoke(o));
+      Assert.assertEquals("Check the parent loader which we create for loading components are followed", gpl.invoke(o), parent);
     }
   }
 /* disabling this test for now.  refactoring makes the test jars invalid.  Need to find
@@ -157,34 +162,34 @@ public class ServiceLocatorTest {
         listForType.add(p);
       }
     }
-//    ServiceRegistry registry = new ServiceRegistry() {
-//      @Override
-//      public <T> T getService(ServiceConfiguration<T> serviceConfiguration) {
-//        List<ServiceProvider> providers1 = serviceProviderMap.get(serviceConfiguration.getServiceType());
-//        if(providers1.isEmpty()) {
-//          Assert.fail("Entity queried for something which does not exist, this should never happen!!!");
-//        }
-//        return providers1.get(0).getService(1, serviceConfiguration);
-//      }
-//    };
+    ServiceRegistry registry = new ServiceRegistry() {
+      @Override
+      public <T> T getService(ServiceConfiguration<T> serviceConfiguration) {
+        List<ServiceProvider> providers1 = serviceProviderMap.get(serviceConfiguration.getServiceType());
+        if(providers1.isEmpty()) {
+          Assert.fail("Entity queried for something which does not exist, this should never happen!!!");
+        }
+        return providers1.get(0).getService(1, serviceConfiguration);
+      }
+    };
 
     //We are not testing service to service hirearchy loading as it is tested in other test case
 
     //discover entities & inject service!!
-//    List<ServerEntityService> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
-//    for (ServerEntityService es : entityServices) {
-//      ActiveServerEntity activeEntity = es.createActiveEntity(registry, null);
-//      //get class name of IClassLoader type
-//      String gpl = new String(activeEntity.invoke(null, "gpl".getBytes()));
-//      //get class name of the entity loader
-//      String gel = new String(activeEntity.invoke(null, "gel".getBytes()));
-//      //get reference of the IClassloader loader
-//      String plr = new String(activeEntity.invoke(null, "plr".getBytes()));
-//      Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
-//      //XXX works only because on same VM
-//      Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,
-//          Integer.toString(System.identityHashCode(parent)));
-//    }
+    List<ServerEntityService> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
+    for (ServerEntityService es : entityServices) {
+      ActiveServerEntity activeEntity = es.createActiveEntity(registry, null);
+      //get class name of IClassLoader type
+      String gpl = new String(activeEntity.invoke(null, "gpl".getBytes()));
+      //get class name of the entity loader
+      String gel = new String(activeEntity.invoke(null, "gel".getBytes()));
+      //get reference of the IClassloader loader
+      String plr = new String(activeEntity.invoke(null, "plr".getBytes()));
+      Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
+      //XXX works only because on same VM
+      Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,
+          Integer.toString(System.identityHashCode(parent)));
+    }
   }
 
   @Test
