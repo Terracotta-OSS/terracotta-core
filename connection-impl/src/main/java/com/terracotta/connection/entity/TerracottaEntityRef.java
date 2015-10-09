@@ -15,20 +15,20 @@ import com.tc.util.Util;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class TerracottaEntityRef<T extends Entity> implements EntityRef<T> {
+public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C> {
   private final TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
   private final ClientEntityManager entityManager;
   private final MaintenanceModeService maintenanceModeService;
   private final Class<T> type;
   private final long version;
   private final String name;
-  private final EntityClientService<T, ?> entityClientService;
+  private final EntityClientService<T, C> entityClientService;
 
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
   private final AtomicLong nextClientInstanceID;
 
   public TerracottaEntityRef(ClientEntityManager entityManager, MaintenanceModeService maintenanceModeService,
-                             Class<T> type, long version, String name, EntityClientService<T, ?> entityClientService, 
+                             Class<T> type, long version, String name, EntityClientService<T, C> entityClientService, 
                             AtomicLong clientIds) {
     this.entityManager = entityManager;
     this.maintenanceModeService = maintenanceModeService;
