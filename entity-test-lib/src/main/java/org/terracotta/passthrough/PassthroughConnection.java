@@ -13,7 +13,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
-import org.terracotta.connection.entity.EntityMaintenanceRef;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.passthrough.PassthroughMessage.Type;
@@ -231,14 +230,9 @@ public class PassthroughConnection implements Connection {
 
   @Override
   public <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
-    return new PassthroughEntityRef<T, C>(this, cls, version, name);
-  }
-
-  @Override
-  public <T extends Entity, C> EntityMaintenanceRef<T, C> acquireMaintenanceModeRef(Class<T> cls, long version, String name) {
     @SuppressWarnings("unchecked")
     EntityClientService<T, C> service = (EntityClientService<T, C>) getEntityClientService(cls);
-    return new PassthroughMaintenanceRef<T, C>(this, service, cls, version, name);
+    return new PassthroughEntityRef<T, C>(this, service, cls, version, name);
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })

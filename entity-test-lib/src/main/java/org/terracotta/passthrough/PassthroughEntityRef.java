@@ -5,6 +5,7 @@ import java.util.concurrent.Future;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
+import org.terracotta.entity.EntityClientService;
 
 
 /**
@@ -18,12 +19,14 @@ import org.terracotta.connection.entity.EntityRef;
  */
 public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C> {
   private final PassthroughConnection passthroughConnection;
+  private final EntityClientService<T, C> service;
   private final Class<T> clazz;
   private final long version;
   private final String name;
   
-  public PassthroughEntityRef(PassthroughConnection passthroughConnection, Class<T> clazz, long version, String name) {
+  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C> service, Class<T> clazz, long version, String name) {
     this.passthroughConnection = passthroughConnection;
+    this.service = service;
     this.clazz = clazz;
     this.version = version;
     this.name = name;
@@ -50,5 +53,25 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   @Override
   public String getName() {
     return this.name;
+  }
+
+  @Override
+  public void create(C configuration) {
+    PassthroughMaintenanceRef<T, C> ref = new PassthroughMaintenanceRef<T, C>(this.passthroughConnection, this.service, this.clazz, version, name);
+    try {
+      ref.create(configuration);
+    } finally {
+      ref.close();
+    }
+  }
+
+  @Override
+  public void destroy() {
+    PassthroughMaintenanceRef<T, C> ref = new PassthroughMaintenanceRef<T, C>(this.passthroughConnection, this.service, this.clazz, version, name);
+    try {
+      ref.destroy();
+    } finally {
+      ref.close();
+    }
   }
 }
