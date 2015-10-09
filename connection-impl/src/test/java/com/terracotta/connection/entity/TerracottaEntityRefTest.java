@@ -30,10 +30,8 @@ public class TerracottaEntityRefTest {
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
     MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
     EntityClientService<Entity, Void> mockEntityClientService = mock(EntityClientService.class);
-    @SuppressWarnings("resource")
     Entity testEntity = mock(Entity.class);
     when(mockEntityClientService.create(any(EntityClientEndpoint.class))).thenReturn(testEntity);
-    @SuppressWarnings("resource")
     EntityClientEndpoint mockTestEntityClientEndpoint = mock(EntityClientEndpoint.class);
     when(mockClientEntityManager.fetchEntity(any(EntityDescriptor.class), any(Runnable.class))).thenReturn(mockTestEntityClientEndpoint);
     

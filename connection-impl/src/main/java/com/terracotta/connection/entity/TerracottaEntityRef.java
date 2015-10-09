@@ -39,7 +39,6 @@ public class TerracottaEntityRef<T extends Entity> implements EntityRef<T> {
     this.nextClientInstanceID = clientIds;
   }
 
-  @SuppressWarnings("resource")
   @Override
   public synchronized T fetchEntity() {
     maintenanceModeService.readLockEntity(type, name);
