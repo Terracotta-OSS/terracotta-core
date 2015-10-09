@@ -2,7 +2,6 @@ package com.terracotta.connection;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
-import org.terracotta.connection.entity.EntityMaintenanceRef;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 
@@ -10,7 +9,6 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
 import com.terracotta.connection.entity.MaintenanceModeService;
 import com.terracotta.connection.entity.TerracottaEntityRef;
-import com.terracotta.connection.entity.TerracottaMaintenanceModeRef;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,12 +35,6 @@ public class TerracottaConnection implements Connection {
   public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
     checkShutdown();
     return new TerracottaEntityRef<>(this.entityManager, this.maintenanceModeService, cls, version, name, getEntityService(cls), clientIds);
-  }
-
-  @Override
-  public <T extends Entity, C> EntityMaintenanceRef<T, C> acquireMaintenanceModeRef(Class<T> cls, long version, String name) {
-    checkShutdown();
-    return new TerracottaMaintenanceModeRef<>(this.entityManager, maintenanceModeService, cls, version, name, getEntityService(cls));
   }
 
   private <T extends Entity, C> EntityClientService<T, C> getEntityService(Class<T> entityClass) {

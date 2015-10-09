@@ -73,4 +73,18 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   private EntityID getEntityID() {
     return new EntityID(type.getName(), name);
   }
+
+  @Override
+  public void create(C configuration) {
+    try (TerracottaMaintenanceModeRef<T, C> internalRef = new TerracottaMaintenanceModeRef<T, C>(this.entityManager, this.maintenanceModeService, this.type, this.version, this.name, this.entityClientService)) {
+      internalRef.create(configuration);
+    }
+  }
+
+  @Override
+  public void destroy() {
+    try (TerracottaMaintenanceModeRef<T, C> internalRef = new TerracottaMaintenanceModeRef<T, C>(this.entityManager, this.maintenanceModeService, this.type, this.version, this.name, this.entityClientService)) {
+      internalRef.destroy();
+    }
+  }
 }
