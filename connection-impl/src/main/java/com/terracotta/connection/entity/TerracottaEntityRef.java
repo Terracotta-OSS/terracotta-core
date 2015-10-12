@@ -5,6 +5,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientEntityManager;
@@ -12,6 +13,10 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.Util;
+
+import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -76,15 +81,44 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
 
   @Override
   public void create(C configuration) {
-    try (TerracottaMaintenanceModeRef<T, C> internalRef = new TerracottaMaintenanceModeRef<T, C>(this.entityManager, this.maintenanceModeService, this.type, this.version, this.name, this.entityClientService)) {
-      internalRef.create(configuration);
+    EntityID entityID = getEntityID();
+    this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
+    try {
+      boolean doesExist = this.entityManager.doesEntityExist(entityID, this.version);
+      if (!doesExist) {
+        try {
+          this.entityManager.createEntity(entityID, this.version, Collections.singleton(VoltronEntityMessage.Acks.APPLIED), entityClientService.serializeConfiguration(configuration)).get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      } else {
+        throw new IllegalStateException("Already exists");
+      }
+    } finally {
+      this.maintenanceModeService.exitMaintenanceMode(this.type, this.name);
     }
   }
 
   @Override
   public void destroy() {
-    try (TerracottaMaintenanceModeRef<T, C> internalRef = new TerracottaMaintenanceModeRef<T, C>(this.entityManager, this.maintenanceModeService, this.type, this.version, this.name, this.entityClientService)) {
-      internalRef.destroy();
+    EntityID entityID = getEntityID();
+    this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
+    try {
+      Future<Void> future = this.entityManager.destroyEntity(entityID, this.version, Collections.emptySet());
+      boolean interrupted = false;
+      while (true) {
+        try {
+          future.get();
+          break;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        } catch (ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      Util.selfInterruptIfNeeded(interrupted);
+    } finally {
+      this.maintenanceModeService.exitMaintenanceMode(this.type, this.name);
     }
   }
 }
