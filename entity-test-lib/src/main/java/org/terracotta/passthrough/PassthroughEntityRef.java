@@ -57,21 +57,61 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
 
   @Override
   public void create(C configuration) {
-    PassthroughMaintenanceRef<T, C> ref = new PassthroughMaintenanceRef<T, C>(this.passthroughConnection, this.service, this.clazz, version, name);
+    getWriteLock();
     try {
-      ref.create(configuration);
+      byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
+      PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
+      Future<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+      try {
+        received.get();
+      } catch (InterruptedException e) {
+        Assert.unexpected(e);
+      } catch (ExecutionException e) {
+        // This means there was actually a problem with the call, which we want to communicate back.
+        throw new IllegalStateException(e);
+      }
     } finally {
-      ref.close();
+      releaseWriteLock();
     }
   }
 
   @Override
   public void destroy() {
-    PassthroughMaintenanceRef<T, C> ref = new PassthroughMaintenanceRef<T, C>(this.passthroughConnection, this.service, this.clazz, version, name);
+    getWriteLock();
     try {
-      ref.destroy();
+      PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
+      Future<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+      try {
+        received.get();
+      } catch (InterruptedException e) {
+        Assert.unexpected(e);
+      } catch (ExecutionException e) {
+        Assert.unexpected(e);
+      }
     } finally {
-      ref.close();
+      releaseWriteLock();
+    }
+  }
+
+  private void getWriteLock() {
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.clazz, this.name);
+    try {
+      this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
+    } catch (InterruptedException e) {
+      Assert.unexpected(e);
+    } catch (ExecutionException e) {
+      Assert.unexpected(e);
+    }
+  }
+
+  private void releaseWriteLock() {
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.clazz, this.name);
+    try {
+      this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
+    } catch (InterruptedException e) {
+      Assert.unexpected(e);
+    } catch (ExecutionException e) {
+      Assert.unexpected(e);
     }
   }
 }
