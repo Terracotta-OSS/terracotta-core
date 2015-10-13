@@ -1,9 +1,7 @@
 package com.terracotta.connection;
 
-
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
-import org.terracotta.connection.entity.EntityMaintenanceRef;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 
@@ -11,7 +9,6 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
 import com.terracotta.connection.entity.MaintenanceModeService;
 import com.terracotta.connection.entity.TerracottaEntityRef;
-import com.terracotta.connection.entity.TerracottaMaintenanceModeRef;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +20,7 @@ public class TerracottaConnection implements Connection {
   private final ClientEntityManager entityManager;
   private final MaintenanceModeService maintenanceModeService;
   private final Runnable shutdown;
-  private final ConcurrentMap<Class<? extends Entity>, EntityClientService> cachedEntityServices = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?>> cachedEntityServices = new ConcurrentHashMap<>();
   private final AtomicLong  clientIds = new AtomicLong(1); // initialize to 1 because zero client is a special case for uninitialized
 
   private boolean isShutdown = false;
@@ -35,22 +32,18 @@ public class TerracottaConnection implements Connection {
   }
 
   @Override
-  public synchronized <T extends Entity> EntityRef<T> getEntityRef(Class<T> cls, long version, String name) {
+  public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
     checkShutdown();
     return new TerracottaEntityRef<>(this.entityManager, this.maintenanceModeService, cls, version, name, getEntityService(cls), clientIds);
   }
 
-  @Override
-  public <T extends Entity, C> EntityMaintenanceRef<T, C> acquireMaintenanceModeRef(Class<T> cls, long version, String name) {
-    checkShutdown();
-    return new TerracottaMaintenanceModeRef<>(this.entityManager, maintenanceModeService, cls, version, name, getEntityService(cls));
-  }
-
   private <T extends Entity, C> EntityClientService<T, C> getEntityService(Class<T> entityClass) {
-    EntityClientService<T, C> service = cachedEntityServices.get(entityClass);
+    @SuppressWarnings("unchecked")
+    EntityClientService<T, C> service = (EntityClientService<T, C>) cachedEntityServices.get(entityClass);
     if (service == null) {
       service = EntityClientServiceFactory.creationServiceForType(entityClass, TerracottaConnection.class.getClassLoader());
-      EntityClientService tmp = cachedEntityServices.putIfAbsent(entityClass, service);
+      @SuppressWarnings("unchecked")
+      EntityClientService<T, C> tmp = (EntityClientService<T, C>) cachedEntityServices.putIfAbsent(entityClass, service);
       service = tmp == null ? service : tmp;
     }
     return service;
