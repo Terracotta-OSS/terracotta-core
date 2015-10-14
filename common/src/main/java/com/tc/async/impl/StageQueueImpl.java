@@ -126,12 +126,13 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
 
     boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
+    MultiThreadedEventContext cxt = (MultiThreadedEventContext)context;
+    int index = getSourceQueueFor(cxt);
+    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context, index) : new HandledContext<EC>(context);
     try {
       while (true) {
         try {
-          SourceQueueImpl<ContextWrapper<EC>> sourceQueue = getSourceQueueFor((MultiThreadedEventContext)context);
-          sourceQueue.put(wrapper);
+          this.sourceQueues[index].put(wrapper);
           break;
         } catch (InterruptedException e) {
           this.logger.debug("StageQueue Add: " + e);
@@ -143,17 +144,17 @@ public class StageQueueImpl<EC> implements Sink<EC> {
         Thread.currentThread().interrupt();
       }
     }
-   }
+  }
 
   @Override
   public void addSpecialized(SpecializedEventContext specialized) {
     ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
     boolean interrupted = Thread.interrupted();
-    SourceQueueImpl<ContextWrapper<EC>> queue = getSourceQueueFor(specialized);
+    int index = getSourceQueueFor(specialized);
     try {
       while (true) {
         try {
-          queue.put(wrapper);
+          this.sourceQueues[index].put(wrapper);
           break;
         } catch (InterruptedException e) {
           this.logger.debug("StageQueue Add: " + e);
@@ -169,7 +170,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   
   private volatile int fcheck = 0;
 //  TODO:  Way too busy. need a better way
-  private SourceQueueImpl<ContextWrapper<EC>> findShortestQueue() {
+  private int findShortestQueueIndex() {
       int stop = (fcheck++) % this.sourceQueues.length;
       int pointer = stop+1;
       int min = Integer.MAX_VALUE;
@@ -181,7 +182,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
         }
         SourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[pointer];
         if (impl.isEmpty()) {
-          return impl;
+          return pointer;
         } else {
           if (Math.min(min, impl.size()) != min) {
             can = pointer;
@@ -189,16 +190,16 @@ public class StageQueueImpl<EC> implements Sink<EC> {
           }
         }
       }
-      return this.sourceQueues[can];
+      return can;
   }
 
-  private SourceQueueImpl<ContextWrapper<EC>> getSourceQueueFor(MultiThreadedEventContext context) {
+  private int getSourceQueueFor(MultiThreadedEventContext context) {
     Object schedulingKey = context.getSchedulingKey();
     if (null == schedulingKey) {
-      return findShortestQueue();
+      return findShortestQueueIndex();
     } else {
       int index = hashCodeToArrayIndex(schedulingKey.hashCode(), this.sourceQueues.length);
-      return this.sourceQueues[index];
+      return index;
     }
   }
 
@@ -494,4 +495,48 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       return super.equals(obj);
     }
   }
+  
+  private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
+    private final EC context;
+    private final int offset;
+    private int executionCount = 0;
+    public FlushingHandledContext(EC context, int offset) {
+      this.context = context;
+      this.offset = offset;
+    }
+    
+    @Override
+    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
+      if (++executionCount == sourceQueues.length) {
+//  been through all the queues.  execute now.
+        handler.handleEvent(this.context);
+      } else {
+//  move to next queue
+        boolean interrupted = false;
+        try {
+          while (true) {
+            try {
+              sourceQueues[(executionCount + offset) % sourceQueues.length].put(this);
+              break;
+            } catch (InterruptedException e) {
+              logger.debug("FlushingHandledContext move to next queue: " + e + " : " + ((executionCount + offset) % sourceQueues.length));
+              interrupted = true;
+            }
+          }
+        } finally {
+          if (interrupted) {
+            Thread.currentThread().interrupt();
+          }
+        }
+      }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (context.getClass().isInstance(obj)) {
+        return context.equals(obj);
+      }
+      return super.equals(obj);
+    }
+  }  
 }

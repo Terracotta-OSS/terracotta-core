@@ -23,4 +23,9 @@ public class InvalidateObjectsForClientContext implements MultiThreadedEventCont
     return clientID;
   }
 
+  @Override
+  public boolean flush() {
+//  this is independent for each client and does not require a flush
+    return false;
+  }
 }

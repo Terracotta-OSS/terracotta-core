@@ -149,7 +149,7 @@ public class StageManagerImplTest extends TestCase {
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 9);
     stageManager.stopAll();
   }
-
+  
   /*
    * @see TestCase#tearDown()
    */
@@ -167,19 +167,31 @@ public class StageManagerImplTest extends TestCase {
 
   private static class TestMultiThreadedEventContext implements MultiThreadedEventContext {
     final Object name;
+    final boolean flush;
 
     public TestMultiThreadedEventContext() {
       name = new Object();
+      flush = false;
     }
 
     public TestMultiThreadedEventContext(String string) {
       name = string;
+      flush = false;
     }
 
+    public TestMultiThreadedEventContext(String string, boolean flush) {
+      name = string;
+      this.flush = flush;
+    }
+    
     @Override
     public Object getSchedulingKey() {
       return name;
     }
 
+    @Override
+    public boolean flush() {
+      return flush;
+    }
   }
 }

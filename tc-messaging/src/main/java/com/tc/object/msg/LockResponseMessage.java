@@ -197,4 +197,8 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
     return this.getSourceNodeID();
   }
 
+  @Override
+  public boolean flush() {
+    return false;
+  }
 }

@@ -21,4 +21,10 @@ public interface MultiThreadedEventContext {
    * @return The key for scheduling (null in the case of "any scheduling").
    */
   Object getSchedulingKey();
+  /**
+   * Flush all the threads of the multi-threaded scheduler that this event context is executed on.  When flush returns true,
+   * all events scheduled before this one will have been fully executed before this event is processed.
+   * @return true if a flush is requested
+   */
+  boolean flush();
 }

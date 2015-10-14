@@ -47,4 +47,9 @@ public class InBandMoveToNextSink<EC> implements SpecializedEventContext {
     return nodeID;
   }
 
+  @Override
+  public boolean flush() {
+//  in-band always needs to flush all threads
+    return true;
+  }
 }

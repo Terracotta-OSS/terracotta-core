@@ -16,8 +16,6 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
-import java.util.Collections;
-import java.util.Iterator;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ReplicableActiveServerEntity;
 

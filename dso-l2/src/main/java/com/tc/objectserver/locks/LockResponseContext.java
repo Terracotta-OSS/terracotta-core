@@ -141,4 +141,10 @@ public class LockResponseContext implements MultiThreadedEventContext {
   public Object getSchedulingKey() {
     return nodeID;
   }
+
+  @Override
+  public boolean flush() {
+//  lock operations are independent, no flush needed
+    return true;
+  }
 }
