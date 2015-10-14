@@ -14,8 +14,9 @@ public class InBandMoveToNextSink<EC> implements SpecializedEventContext {
   private final SpecializedEventContext specialized;
   private final Sink<EC>         sink;
   private final NodeID       nodeID;
+  private final boolean     flush;
 
-  public InBandMoveToNextSink(EC event, SpecializedEventContext specialized, Sink<EC> sink, NodeID nodeID) {
+  public InBandMoveToNextSink(EC event, SpecializedEventContext specialized, Sink<EC> sink, NodeID nodeID, boolean flush) {
     // We can only wrap one of the events.
     int countOfEvents = 0;
     if (null != event) {
@@ -31,6 +32,7 @@ public class InBandMoveToNextSink<EC> implements SpecializedEventContext {
     this.specialized = specialized;
     this.sink = sink;
     this.nodeID = nodeID;
+    this.flush = flush;
   }
 
   @Override
@@ -49,7 +51,6 @@ public class InBandMoveToNextSink<EC> implements SpecializedEventContext {
 
   @Override
   public boolean flush() {
-//  in-band always needs to flush all threads
-    return true;
+    return flush;
   }
 }

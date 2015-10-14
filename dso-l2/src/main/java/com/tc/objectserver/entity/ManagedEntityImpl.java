@@ -96,8 +96,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             releaseEntity(request);
             break;
           case DESTROY_ENTITY:
-//  TODO: need a way to flush the concurrency queues to make sure no other actions
-//            are scheduled on this entity before destruction
+//  all request queues are flushed because this action is on the MGMT_KEY
             destroyEntity(request);
             break;
           case PROMOTE_ENTITY_TO_ACTIVE:
