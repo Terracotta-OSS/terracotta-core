@@ -7,6 +7,7 @@ package com.tc.object;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.InvokeFuture;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
@@ -26,7 +27,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -251,7 +251,7 @@ public class ClientEntityManagerTest extends TestCase {
     Exception resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    Future<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -264,11 +264,11 @@ public class ClientEntityManagerTest extends TestCase {
     Exception resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    Future<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     long start = System.currentTimeMillis();
     try {
-      byte[] last = result.get(1, TimeUnit.SECONDS);
+      result.getWithTimeout(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException to) {
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(1000L));
@@ -276,7 +276,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     start = System.currentTimeMillis();
     try {
-      byte[] last = result.get(2, TimeUnit.SECONDS);
+      result.getWithTimeout(2, TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException to) {
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(2000L));
@@ -292,7 +292,7 @@ public class ClientEntityManagerTest extends TestCase {
     Exception resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    Future<Void> waiter = this.manager.createEntity(entityID, version, Collections.<Acks>emptySet(), config);
+    InvokeFuture<byte[]> waiter = this.manager.createEntity(entityID, version, Collections.<Acks>emptySet(), config);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     waiter.get();
   }

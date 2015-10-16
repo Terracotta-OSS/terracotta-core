@@ -4,6 +4,7 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.entity.InvokeFuture;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.logging.TCLogger;
@@ -16,7 +17,6 @@ import com.tc.util.Util;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -108,7 +108,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     EntityID entityID = getEntityID();
     this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
     try {
-      Future<Void> future = this.entityManager.destroyEntity(entityID, this.version, Collections.<VoltronEntityMessage.Acks>emptySet());
+      InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version, Collections<VoltronEntityMessage.Acks>.emptySet());
       boolean interrupted = false;
       while (true) {
         try {

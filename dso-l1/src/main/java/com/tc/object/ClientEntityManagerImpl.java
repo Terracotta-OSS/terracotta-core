@@ -4,6 +4,7 @@
 package com.tc.object;
 
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.InvokeFuture;
 
 import com.google.common.base.Throwables;
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -31,7 +32,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -126,25 +126,25 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public Future<Void> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config) {
+  public InvokeFuture<byte[]> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config) {
     // A create needs to be replicated.
     boolean requiresReplication = true;
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
-    return (Future) createInFlightMessageAfterAcks(message, requestedAcks);
+    return createInFlightMessageAfterAcks(message, requestedAcks);
   }
 
   @Override
-  public Future<Void> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks) {
+  public InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks) {
     // A destroy needs to be replicated.
     boolean requiresReplication = true;
     // A destroy call has no extended data.
     byte[] emtpyExtendedData = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
-    return (Future) createInFlightMessageAfterAcks(message, requestedAcks);
+    return createInFlightMessageAfterAcks(message, requestedAcks);
   }
 
   @Override
-  public Future<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, byte[] payload) {
+  public InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, byte[] payload) {
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION);
     return createInFlightMessageAfterAcks(message, requestedAcks);
   }
@@ -468,7 +468,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
    * This is essentially a wrapper over an in-flight VoltronEntityMessage, used for tracking its response.
    * The message is stored here, since it is sent asynchronously, along with storage for the return value.
    */
-  private class InFlightMessage implements Future<byte[]> {
+  private class InFlightMessage implements InvokeFuture<byte[]> {
     private final NetworkVoltronEntityMessage message;
     /**
      * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
@@ -529,13 +529,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
+    public void interrupt() {
       throw new UnsupportedOperationException("Implement me!");
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return false;
     }
 
     @Override
@@ -556,7 +551,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public synchronized byte[] get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       long end = System.nanoTime() + unit.toNanos(timeout);
       while (!done) {
         long timing = end - System.nanoTime();

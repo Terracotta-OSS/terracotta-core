@@ -4,6 +4,7 @@
 package com.tc.object;
 
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.InvokeFuture;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -11,7 +12,6 @@ import com.tc.object.request.RequestResponseHandler;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Set;
-import java.util.concurrent.Future;
 
 
 /**
@@ -56,9 +56,9 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    */
   void handleMessage(EntityDescriptor entityDescriptor, byte[] message);
 
-  Future<Void> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
+  InvokeFuture<byte[]> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
   
-  Future<Void> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks);
+  InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks);
   
   /**
    * Called to retrieve the entityDescriptor, returning its instance configuration, if found.  Note that this call will have

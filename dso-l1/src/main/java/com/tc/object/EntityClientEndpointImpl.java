@@ -3,13 +3,13 @@ package com.tc.object;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvokeFuture;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.util.Assert;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 
 public class EntityClientEndpointImpl implements EntityClientEndpoint {
@@ -89,7 +89,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     }
 
     @Override
-    public synchronized Future<byte[]> invoke() {
+    public synchronized InvokeFuture invoke() {
       checkInvoked();
       invoked = true;
       return invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, this.payload);
