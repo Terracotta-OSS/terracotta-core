@@ -206,14 +206,15 @@ public class PassthroughStripe implements ClientCommunicator {
     }
 
     @Override
-    public Future<byte[]> invoke() {
+    public InvokeFuture<byte[]> invoke() {
+      byte[] result = null;
+      Exception error = null;
       try {
-        Future<byte[]> activeResult = Futures.immediateFuture(activeServerEntity.invoke(clientDescriptor, payload));
-        passiveServerEntity.invoke(payload);
-        return activeResult;
+        result = activeServerEntity.invoke(clientDescriptor, payload);
       } catch (Exception e) {
-        return Futures.immediateFailedCheckedFuture(e);
+        error = e;
       }
+      return new ImmediateInvokeFuture<byte[]>(result, error);
     }
   }
 }

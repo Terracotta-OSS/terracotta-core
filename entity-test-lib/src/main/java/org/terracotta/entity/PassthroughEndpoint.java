@@ -90,18 +90,21 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     }
 
     @Override
-    public Future<byte[]> invoke() {
+    public InvokeFuture<byte[]> invoke() {
       // Note that the passthrough end-point wants to preserve the semantics of a single-threaded server, no matter how
       // complicated the caller is (since multiple threads often are used to simulate multiple clients or multiple threads
       // using one client).
       // We will synchronize on the entity instance so it will only ever see one caller at a time, no matter how many
       // end-points connect to it.
       synchronized (entity) {
+        byte[] result = null;
+        Exception error = null;
         try {
-          return Futures.immediateFuture(entity.invoke(clientDescriptor, payload));
+          result = entity.invoke(clientDescriptor, payload);
         } catch (Exception e) {
-          return Futures.immediateFailedCheckedFuture(e);
+          error = e;
         }
+        return new ImmediateInvokeFuture<byte[]>(result, error);
       }
     }
   }

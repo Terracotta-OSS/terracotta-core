@@ -1,9 +1,10 @@
 package org.terracotta.passthrough;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.terracotta.entity.InvokeFuture;
 
 
 /**
@@ -11,7 +12,7 @@ import java.util.concurrent.TimeoutException;
  * client code's thread to block on acks or completion, and be unblocked by the client-send message processing thread
  * processing the corresponding acks and completion messages.
  */
-public class PassthroughWait implements Future<byte[]> {
+public class PassthroughWait implements InvokeFuture<byte[]> {
   // Save the information used to reset this object on resend.
   private byte[] rawMessageForResend;
   private final boolean shouldWaitForReceived;
@@ -46,13 +47,8 @@ public class PassthroughWait implements Future<byte[]> {
   }
 
   @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
+  public void interrupt() {
     throw new IllegalStateException("Not supported");
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return false;
   }
 
   @Override
@@ -72,7 +68,7 @@ public class PassthroughWait implements Future<byte[]> {
   }
 
   @Override
-  public byte[] get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     throw new IllegalStateException("Not supported");
   }
 

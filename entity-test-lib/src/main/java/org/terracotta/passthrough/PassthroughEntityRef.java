@@ -1,11 +1,11 @@
 package org.terracotta.passthrough;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.entity.InvokeFuture;
 
 
 /**
@@ -36,7 +36,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   public T fetchEntity() {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
     PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
-    Future<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+    PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
     // Wait for the config on the response.
     byte[] rawConfig = null;
     try {
@@ -61,7 +61,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     try {
       byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
       PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
-      Future<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+      InvokeFuture<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
       try {
         received.get();
       } catch (InterruptedException e) {
@@ -80,7 +80,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     getWriteLock();
     try {
       PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
-      Future<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+      InvokeFuture<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
       try {
         received.get();
       } catch (InterruptedException e) {

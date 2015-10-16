@@ -1,11 +1,11 @@
 package org.terracotta.passthrough;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvokeFuture;
 
 
 /**
@@ -51,7 +51,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   public void close() {
     // We need to release this entity.
     PassthroughMessage releaseMessage = PassthroughMessageCodec.createReleaseMessage(this.entityClass, this.entityName, this.clientInstanceID);
-    Future<byte[]> received = this.connection.sendInternalMessageAfterAcks(releaseMessage);
+    InvokeFuture<byte[]> received = this.connection.sendInternalMessageAfterAcks(releaseMessage);
     try {
       received.get();
     } catch (InterruptedException e) {

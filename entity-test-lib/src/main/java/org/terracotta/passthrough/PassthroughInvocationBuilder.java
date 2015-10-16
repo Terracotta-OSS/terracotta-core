@@ -1,8 +1,7 @@
 package org.terracotta.passthrough;
 
-import java.util.concurrent.Future;
-
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvokeFuture;
 
 
 /**
@@ -53,7 +52,7 @@ public class PassthroughInvocationBuilder implements InvocationBuilder {
   }
 
   @Override
-  public Future<byte[]> invoke() {
+  public InvokeFuture<byte[]> invoke() {
     PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, this.clientInstanceID, this.payload, this.shouldReplicate);
     return this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForReceived, this.shouldWaitForCompleted);
   }

@@ -15,6 +15,7 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.entity.InvokeFuture;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
 
@@ -71,7 +72,7 @@ public class PassthroughConnection implements Connection {
    * @param message
    * @return
    */
-  public Future<byte[]> sendInternalMessageAfterAcks(PassthroughMessage message) {
+  public PassthroughWait sendInternalMessageAfterAcks(PassthroughMessage message) {
     boolean shouldWaitForReceived = true;
     boolean shouldWaitForCompleted = true;
     return invokeAndWait(message, shouldWaitForReceived, shouldWaitForCompleted);
@@ -80,11 +81,11 @@ public class PassthroughConnection implements Connection {
   /**
    * This entry-point is specifically used for entity-defined action messages.
    */
-  public Future<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+  public InvokeFuture<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     return invokeAndWait(message, shouldWaitForReceived, shouldWaitForCompleted);
   }
 
-  private Future<byte[]> invokeAndWait(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     PassthroughWait waiter = new PassthroughWait(shouldWaitForReceived, shouldWaitForCompleted);
     synchronized(this) {
       long transactionID = this.nextTransactionID;
