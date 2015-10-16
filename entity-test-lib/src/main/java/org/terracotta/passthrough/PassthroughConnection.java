@@ -16,6 +16,7 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
 
@@ -159,7 +160,7 @@ public class PassthroughConnection implements Connection {
               input.readFully(bytes);
             }
             byte[] result = null;
-            Exception error = null;
+            EntityException error = null;
             if (isSuccess) {
               result = bytes;
             } else {
@@ -207,7 +208,7 @@ public class PassthroughConnection implements Connection {
     waiter.handleAck();
   }
 
-  private void handleComplete(long transactionID, byte[] result, Exception error) {
+  private void handleComplete(long transactionID, byte[] result, EntityException error) {
     PassthroughWait waiter = this.inFlight.get(transactionID);
     Assert.assertTrue(null != waiter);
     this.inFlight.remove(transactionID);

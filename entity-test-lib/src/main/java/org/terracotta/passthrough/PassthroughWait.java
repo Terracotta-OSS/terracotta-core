@@ -1,10 +1,10 @@
 package org.terracotta.passthrough;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 
 
 /**
@@ -23,7 +23,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   private boolean waitingForComplete;
   private boolean didComplete;
   private byte[] response;
-  private Exception error;
+  private EntityException error;
 
   public PassthroughWait(boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     this.shouldWaitForReceived = shouldWaitForReceived;
@@ -57,18 +57,18 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public synchronized byte[] get() throws InterruptedException, ExecutionException {
+  public synchronized byte[] get() throws InterruptedException, EntityException {
     while (!this.didComplete) {
       this.wait();
     }
     if (null != this.error) {
-      throw new ExecutionException(this.error);
+      throw this.error;
     }
     return this.response;
   }
 
   @Override
-  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     throw new IllegalStateException("Not supported");
   }
 
@@ -77,7 +77,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     notifyAll();
   }
 
-  public synchronized void handleComplete(byte[] result, Exception error) {
+  public synchronized void handleComplete(byte[] result, EntityException error) {
     this.waitingForComplete = false;
     this.didComplete = true;
     this.response = result;

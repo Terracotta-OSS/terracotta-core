@@ -1,11 +1,10 @@
 package org.terracotta.passthrough;
 
-import java.util.concurrent.ExecutionException;
-
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 
 
 /**
@@ -56,7 +55,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
       received.get();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
-    } catch (ExecutionException e) {
+    } catch (EntityException e) {
       Assert.unexpected(e);
     }
     onClose.run();

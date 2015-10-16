@@ -13,6 +13,9 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
+import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
@@ -74,7 +77,7 @@ public class PassthroughServerProcess implements MessageHandler {
         EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
         ServerEntityService<?, ?> service = null;
         try {
-          service = getServerEntityServiceForVersion(entityData.className, entityData.version);
+          service = getServerEntityServiceForVersion(entityData.className, entityData.entityName, entityData.version);
         } catch (Exception e) {
           // We don't expect a version mismatch here or other failure in this test system.
           Assert.unexpected(e);
@@ -251,15 +254,16 @@ public class PassthroughServerProcess implements MessageHandler {
         ActiveServerEntity entity = PassthroughServerProcess.this.activeEntities.get(entityTuple);
         if (null != entity) {
           ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
-          if (service.getVersion() == version) {
+          long expectedVersion = service.getVersion();
+          if (expectedVersion == version) {
             PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
             entity.connected(clientDescriptor);
             config = entity.getConfig();
           } else {
-            error = new Exception("Version mis-match");
+            error = new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
           }
         } else {
-          error = new Exception("Not found");
+          error = new EntityNotFoundException(entityClassName, entityName);
         }
         // Release the lock if there was a failure.
         if (null != error) {
@@ -284,7 +288,7 @@ public class PassthroughServerProcess implements MessageHandler {
       entity.disconnected(clientDescriptor);
       this.lockManager.releaseReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID);
     } else {
-      throw new Exception("Not found");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
@@ -293,11 +297,11 @@ public class PassthroughServerProcess implements MessageHandler {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     if (((null != this.activeEntities) && this.activeEntities.containsKey(entityTuple))
       || ((null != this.passiveEntities) && this.passiveEntities.containsKey(entityTuple))) {
-      throw new Exception("Already exists");
+      throw new EntityAlreadyExistsException(entityClassName, entityName);
     }
     // Capture which consumerID we will use for this entity.
     long consumerID = this.nextConsumerID;
-    ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, version);
+    ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
     PassthroughServiceRegistry registry = getNextServiceRegistry();
     CommonServerEntity newEntity = createAndStoreEntity(serializedConfiguration, entityTuple, service, registry);
     // Tell the entity to create itself as something new.
@@ -322,7 +326,7 @@ public class PassthroughServerProcess implements MessageHandler {
     if (null != entity) {
       // Success.
     } else {
-      throw new Exception("Not found");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
@@ -398,10 +402,11 @@ public class PassthroughServerProcess implements MessageHandler {
     return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviderMap);
   }
 
-  private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, long version) throws Exception {
+  private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException {
     ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
-    if (service.getVersion() != version) {
-      throw new Exception("Version mis-match");
+    long expectedVersion = service.getVersion();
+    if (expectedVersion != version) {
+      throw new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
     }
     return service;
   }

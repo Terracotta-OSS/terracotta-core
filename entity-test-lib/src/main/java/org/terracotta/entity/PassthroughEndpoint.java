@@ -24,6 +24,8 @@ import com.google.common.util.concurrent.Futures;
 import java.util.concurrent.Future;
 
 import org.junit.Assert;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityUserException;
 
 
 public class PassthroughEndpoint implements EntityClientEndpoint {
@@ -98,11 +100,11 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
       // end-points connect to it.
       synchronized (entity) {
         byte[] result = null;
-        Exception error = null;
+        EntityException error = null;
         try {
           result = entity.invoke(clientDescriptor, payload);
         } catch (Exception e) {
-          error = e;
+          error = new EntityUserException(null, null, e);
         }
         return new ImmediateInvokeFuture<byte[]>(result, error);
       }

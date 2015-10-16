@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
 
@@ -214,13 +215,13 @@ public class PassthroughMessageCodec {
     return byteOutput.toByteArray();
   }
   
-  public static Exception deserializeExceptionFromArray(byte[] bytes) {
-    Exception exception = null;
+  public static EntityException deserializeExceptionFromArray(byte[] bytes) {
+    EntityException exception = null;
     ByteArrayInputStream byteInput = new ByteArrayInputStream(bytes);
     try {
       ObjectInputStream objectInput = new ObjectInputStream(byteInput);
       try {
-        exception = (Exception) objectInput.readObject();
+        exception = (EntityException) objectInput.readObject();
       } finally {
         objectInput.close();
       }

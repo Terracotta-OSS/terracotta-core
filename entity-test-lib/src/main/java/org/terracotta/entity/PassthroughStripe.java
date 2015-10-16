@@ -25,6 +25,8 @@ import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.Futures;
 import org.junit.Assert;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityUserException;
 
 
 /**
@@ -208,11 +210,11 @@ public class PassthroughStripe implements ClientCommunicator {
     @Override
     public InvokeFuture<byte[]> invoke() {
       byte[] result = null;
-      Exception error = null;
+      EntityException error = null;
       try {
         result = activeServerEntity.invoke(clientDescriptor, payload);
       } catch (Exception e) {
-        error = e;
+        error = new EntityUserException(null, null, e);
       }
       return new ImmediateInvokeFuture<byte[]>(result, error);
     }

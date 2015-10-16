@@ -1,11 +1,10 @@
 package org.terracotta.passthrough;
 
-import java.util.concurrent.ExecutionException;
-
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
-import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotProvidedException;
 
 
 /**
@@ -33,7 +32,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public T fetchEntity() {
+  public T fetchEntity() throws EntityException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
     PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
@@ -43,9 +42,6 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
       rawConfig = received.get();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
-    } catch (ExecutionException e) {
-      // This is the actual failure case.
-      throw new IllegalStateException(e);
     }
     return this.passthroughConnection.createEntityInstance(this.clazz, this.name, clientInstanceID, this.version, rawConfig);
   }
@@ -56,36 +52,36 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public void create(C configuration) {
-    getWriteLock();
-    try {
-      byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-      PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
-      InvokeFuture<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+  public void create(C configuration) throws EntityException {
+    // Make sure that we have a service provider.
+    if (null != this.service) {
+      getWriteLock();
       try {
-        received.get();
-      } catch (InterruptedException e) {
-        Assert.unexpected(e);
-      } catch (ExecutionException e) {
-        // This means there was actually a problem with the call, which we want to communicate back.
-        throw new IllegalStateException(e);
+        byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
+        PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
+        PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+        try {
+          received.get();
+        } catch (InterruptedException e) {
+          Assert.unexpected(e);
+        }
+      } finally {
+        releaseWriteLock();
       }
-    } finally {
-      releaseWriteLock();
+    } else {
+      throw new EntityNotProvidedException(this.clazz.getName(), this.name);
     }
   }
 
   @Override
-  public void destroy() {
+  public void destroy() throws EntityException {
     getWriteLock();
     try {
       PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
-      InvokeFuture<byte[]> received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
       try {
         received.get();
       } catch (InterruptedException e) {
-        Assert.unexpected(e);
-      } catch (ExecutionException e) {
         Assert.unexpected(e);
       }
     } finally {
@@ -99,7 +95,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
-    } catch (ExecutionException e) {
+    } catch (EntityException e) {
       Assert.unexpected(e);
     }
   }
@@ -110,7 +106,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
-    } catch (ExecutionException e) {
+    } catch (EntityException e) {
       Assert.unexpected(e);
     }
   }

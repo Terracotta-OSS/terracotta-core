@@ -19,16 +19,17 @@
 
 package org.terracotta.entity;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.terracotta.exception.EntityException;
 
 
 public class ImmediateInvokeFuture<T> implements InvokeFuture<T> {
   final T result;
-  final Exception error;
+  final EntityException error;
 
-  public ImmediateInvokeFuture(T result, Exception error) {
+  public ImmediateInvokeFuture(T result, EntityException error) {
     this.result = result;
     this.error = error;
   }
@@ -38,17 +39,17 @@ public class ImmediateInvokeFuture<T> implements InvokeFuture<T> {
     return true;
   }
   @Override
-  public T get() throws InterruptedException, ExecutionException {
+  public T get() throws InterruptedException, EntityException {
     if (null != error) {
-      throw new ExecutionException(error);
+      throw error;
     } else {
       return result;
     }
   }
   @Override
-  public T getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public T getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     if (null != error) {
-      throw new ExecutionException(error);
+      throw error;
     } else {
       return result;
     }
