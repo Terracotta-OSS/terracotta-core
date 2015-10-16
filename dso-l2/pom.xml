@@ -105,7 +105,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
    

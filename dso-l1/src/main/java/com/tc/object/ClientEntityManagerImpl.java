@@ -5,6 +5,7 @@ package com.tc.object;
 
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 
 import com.google.common.base.Throwables;
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -12,7 +13,6 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
-import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -98,19 +97,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       synchronousWaitForResponse(message, requestedAcks);
       // If we don't throw an exception, it means the entity exists.
       doesExist = true;
-    } catch (ExecutionException e) {
-      // We get a not found exception if the entity didn't exist.
+    } catch (EntityException e) {
+      // We will handle any of the exception types as meaning that it doesn't exist.
     }
     return doesExist;
   }
 
   @Override
-  public synchronized EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) {
+  public synchronized EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
     return internalLookup(entityDescriptor, closeHook);
   }
 
   @Override
-  public void releaseEntity(EntityDescriptor entityDescriptor) {
+  public void releaseEntity(EntityDescriptor entityDescriptor) throws EntityException {
     internalRelease(entityDescriptor);
   }
 
@@ -188,7 +187,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public void failed(TransactionID id, Exception e) {
+  public void failed(TransactionID id, EntityException e) {
     // Note that this call comes the platform, potentially concurrently with received().
     InFlightMessage inFlight = inFlightMessages.remove(id);
     if (inFlight == null) {
@@ -266,17 +265,17 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public byte[] retrieve(EntityDescriptor entityDescriptor) {
+  public byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException {
     return internalRetrieve(entityDescriptor);
   }
 
   @Override
-  public void release(EntityDescriptor entityDescriptor) {
+  public void release(EntityDescriptor entityDescriptor) throws EntityException {
     internalRelease(entityDescriptor);
   }
 
 
-  private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) {
+  private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
     if (State.REJOIN_IN_PROGRESS == this.state) {
       throw new PlatformRejoinException("Unable to start lookup for EntityDescriptor " + entityDescriptor
@@ -294,7 +293,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       Runnable compoundRunnable = new Runnable() {
         @Override
         public void run() {
-          internalRelease(entityDescriptor);
+          try {
+            internalRelease(entityDescriptor);
+          } catch (EntityException e) {
+            // We aren't expecting there to be any problems releasing an entity in the close hook so we will just log and re-throw.
+            Util.printLogAndRethrowError(e, logger);
+          }
           closeHook.run();
         }
       };
@@ -305,25 +309,24 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
                              + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(resolvedEndpoint)) + "] ");
       }
       this.objectStoreMap.put(entityDescriptor, resolvedEndpoint);
-    } catch (TCObjectNotFoundException e) {
-      // In this case, we failed to find the object in a well-defined way so we will return that we didn't find it.
-      resolvedEndpoint = null;
+    } catch (EntityException e) {
+      // Release the entity and re-throw to the higher level.
+      internalRelease(entityDescriptor);
+      // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
+      throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
       logger.warn("Exception retrieving entity descriptor " + entityDescriptor, t);
       // Clean up any client-side or server-side state regarding this failed connection.
       internalRelease(entityDescriptor);
+      // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw Throwables.propagate(t);
     }
 
-    // If we created the end-point, it will handle the closeHook.  If we failed to look it up, we need to call the closeHook, ourselves.
-    if (null == resolvedEndpoint) {
-      closeHook.run();
-    }
     return resolvedEndpoint;
   }
 
-  private void internalRelease(EntityDescriptor entityDescriptor) {
+  private void internalRelease(EntityDescriptor entityDescriptor) throws EntityException {
     waitUntilRunning();
     
     // We will immediately remove this from our map so that we don't try to service new calls _from_ the server while we
@@ -336,20 +339,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     boolean requiresReplication = false;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY);
-    try {
-      synchronousWaitForResponse(message, requestedAcks);
-    } catch (ExecutionException e) {
-      // Currently, we will interpret this as being unable to find the entity to release but we may want to change this, in the future.
-      // TODO:  Rationalize these exceptions so we can throw back exactly what we got from the server.
-      throw new TCObjectNotFoundException(entityDescriptor.toString());
-    }
+    synchronousWaitForResponse(message, requestedAcks);
   }
 
   /**
    * Sends the message, waiting for requestedAcks, then waits for the response to come back.
    * @return The returned byte[], on success, or throws the ExecutionException representing the failure.
    */
-  private byte[] synchronousWaitForResponse(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks) throws ExecutionException {
+  private byte[] synchronousWaitForResponse(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks) throws EntityException {
     InFlightMessage inFlight = createInFlightMessageAfterAcks(message, requestedAcks);
     // Just wait for it.
     byte[] result = null;
@@ -386,7 +383,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   }
 
-  private byte[] internalRetrieve(EntityDescriptor entityDescriptor) {
+  private byte[] internalRetrieve(EntityDescriptor entityDescriptor) throws EntityException {
     waitUntilRunning();
     
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
@@ -395,16 +392,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     boolean requiresReplication = false;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.FETCH_ENTITY);
-    byte[] result = null;
-    try {
-      result = synchronousWaitForResponse(message, requestedAcks);
-    } catch (ExecutionException e) {
-      // There was a failure in the GET.
-      // Currently, we only communicate this back via a TCObjectNotFoundException.
-      // TODO:  Rationalize these exceptions so we can throw back exactly what we got from the server.
-      throw new TCObjectNotFoundException(entityDescriptor.toString());
-    }
-    return result;
+    return synchronousWaitForResponse(message, requestedAcks);
   }
 
   private void sendLoop() {
@@ -479,7 +467,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     private final Set<VoltronEntityMessage.Acks> pendingAcks;
 
     private boolean isSent;
-    private Exception exception;
+    private EntityException exception;
     private byte[] value;
     private boolean done;
 
@@ -539,19 +527,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public synchronized byte[] get() throws InterruptedException, ExecutionException {
+    public synchronized byte[] get() throws InterruptedException, EntityException {
       while (!done) {
         wait();
       }
       if (exception != null) {
-        throw new ExecutionException(exception);
+        throw this.exception;
       } else {
         return value;
       }
     }
 
     @Override
-    public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
       long end = System.nanoTime() + unit.toNanos(timeout);
       while (!done) {
         long timing = end - System.nanoTime();
@@ -562,13 +550,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         }
       }
       if (exception != null) {
-        throw new ExecutionException(exception);
+        throw this.exception;
       } else {
         return value;
       }
     }
 
-    synchronized void setResult(byte[] value, Exception e) {
+    synchronized void setResult(byte[] value, EntityException e) {
       this.pendingAcks.remove(VoltronEntityMessage.Acks.APPLIED);
       this.exception = e;
       this.value = value;

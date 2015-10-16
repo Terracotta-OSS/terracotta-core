@@ -2,6 +2,8 @@ package com.tc.objectserver.entity;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.TestEntity;
 
 import com.tc.object.EntityID;
@@ -42,7 +44,7 @@ public class EntityManagerImplTest {
     assertThat(entityManager.getEntity(id, version).get().getID(), is(id));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = EntityAlreadyExistsException.class)
   public void testCreateExistingEntity() throws Exception {
     entityManager.createEntity(id, version, consumerID);
     entityManager.createEntity(id, version, consumerID);
@@ -55,7 +57,7 @@ public class EntityManagerImplTest {
     assertThat(entityManager.getEntity(id, version), is(empty()));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = EntityNotFoundException.class)
   public void testDestroyNoExistent() throws Exception {
     entityManager.destroyEntity(id);
   }

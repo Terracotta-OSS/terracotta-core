@@ -17,12 +17,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityUserException;
+
 
 public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements VoltronEntityAppliedResponse {
   private TransactionID transactionID;
   private boolean isSuccess;
   private byte[] successResponse;
-  private Exception failureException;
+  private EntityException failureException;
   
   @Override
   public VoltronEntityMessage.Acks getAckType() {
@@ -43,7 +46,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   }
   
   @Override
-  public void setFailure(TransactionID transactionID, Exception exception) {
+  public void setFailure(TransactionID transactionID, EntityException exception) {
     Assert.assertNull(this.transactionID);
     Assert.assertNull(this.successResponse);
     Assert.assertNull(this.failureException);
@@ -114,9 +117,11 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
       ByteArrayInputStream byteInput = new ByteArrayInputStream(getBytesArray());
       ObjectInputStream objectInput = new ObjectInputStream(byteInput);
       try {
-          this.failureException = (Exception) objectInput.readObject();
+          this.failureException = (EntityException) objectInput.readObject();
       } catch (ClassNotFoundException e) {
-        this.failureException = new Exception("Operation failed but exception class not found.", e);
+        // We may want to make this into an assertion but we do have a mechanism to pass it up to the next level so wrap
+        // it in a user exception.
+        this.failureException = new EntityUserException(null, null, e);
       } finally {
         objectInput.close();
       }
@@ -135,7 +140,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   }
 
   @Override
-  public Exception getFailureException() {
+  public EntityException getFailureException() {
     return this.failureException;
   }
 }

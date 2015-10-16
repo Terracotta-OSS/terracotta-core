@@ -8,12 +8,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.exception.TCNotRunningException;
-import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -63,7 +64,7 @@ public class ClientEntityManagerTest extends TestCase {
     
     // Set the target for success.
     byte[] resultObject = new byte[0];
-    Exception resultException = null;
+    EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     
@@ -83,7 +84,7 @@ public class ClientEntityManagerTest extends TestCase {
     
     // Set the target for failure.
     byte[] resultObject = null;
-    Exception resultException = new RuntimeException("Entity not found!");
+    EntityException resultException = new EntityNotFoundException(null, null);
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     
@@ -98,7 +99,7 @@ public class ClientEntityManagerTest extends TestCase {
 
   // Test pause will block progress but it the lookup will complete (failing to find the entity) after unpause.
   public void testLookupStalledByPause() throws Exception {
-    Exception resultException = new RuntimeException("Entity not found!");
+    EntityException resultException = new EntityNotFoundException(null, null);
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, null, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     
@@ -129,7 +130,7 @@ public class ClientEntityManagerTest extends TestCase {
     
     // Set the target for success.
     byte[] resultObject = new byte[0];
-    Exception resultException = null;
+    EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     
@@ -152,7 +153,7 @@ public class ClientEntityManagerTest extends TestCase {
     
     // Set the target for failure.
     byte[] resultObject = null;
-    Exception resultException = new RuntimeException("Entity not found!");
+    EntityException resultException = new EntityNotFoundException(null, null);
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     
@@ -164,12 +165,12 @@ public class ClientEntityManagerTest extends TestCase {
     // We expect that we couldn't find the entity.
     assertFalse(didFindEndpoint(fetcher));
     
-    // Now, release it and expect to see the exception thrown, directly (since we are accessing the manage, directly).
+    // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
     boolean didRelease = false;
     try {
       this.manager.releaseEntity(entityDescriptor);
       didRelease = true;
-    } catch (TCObjectNotFoundException e) {
+    } catch (EntityException e) {
       // Expected.
       didRelease = false;
     }
@@ -211,7 +212,7 @@ public class ClientEntityManagerTest extends TestCase {
   public void testObjectNotFoundConcurrentLookup() throws Exception {
     // Configure the test to return the failure for this.
     byte[] resultObject = null;
-    Exception resultException = new RuntimeException("Entity not found!");
+    EntityException resultException = new EntityNotFoundException(null, null);
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     
@@ -248,7 +249,7 @@ public class ClientEntityManagerTest extends TestCase {
   @Test
   public void testSingleInvoke() throws Exception {
     byte[] resultObject = new byte[0];
-    Exception resultException = null;
+    EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
@@ -261,7 +262,7 @@ public class ClientEntityManagerTest extends TestCase {
   @Test
   public void testSingleInvokeTimeout() throws Exception {
     byte[] resultObject = new byte[0];
-    Exception resultException = null;
+    EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
@@ -289,7 +290,7 @@ public class ClientEntityManagerTest extends TestCase {
     long version = 1;
     byte[] config = new byte[0];
     byte[] resultObject = new byte[0];
-    Exception resultException = null;
+    EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
     InvokeFuture<byte[]> waiter = this.manager.createEntity(entityID, version, Collections.<Acks>emptySet(), config);
@@ -319,7 +320,7 @@ public class ClientEntityManagerTest extends TestCase {
     this.manager.received(message.getTransactionID());
     
     byte[] resultObject = new byte[0];
-    Exception resultException = null;
+    EntityException resultException = null;
     message.explicitComplete(resultObject, resultException);
     
     t.join();
@@ -327,17 +328,19 @@ public class ClientEntityManagerTest extends TestCase {
   }
 
   private boolean didFindEndpoint(TestFetcher fetcher) {
-    EntityClientEndpoint endpoint = null;
+    boolean didFind = false;
     try {
-      endpoint = fetcher.getResult();
+      EntityClientEndpoint endpoint = fetcher.getResult();
+      didFind = true;
+      endpoint.close();
+    } catch (EntityNotFoundException e) {
+      // This is how we flag something as not found.
+      didFind = false;
     } catch (Throwable e) {
       // No exception expected.
       fail();
     }
-    if (null != endpoint) {
-      endpoint.close();
-    }
-    return (null != endpoint);
+    return didFind;
   }
 
 
@@ -371,17 +374,17 @@ public class ClientEntityManagerTest extends TestCase {
   private static class TestRequestBatchMessage implements NetworkVoltronEntityMessage {
     private final ClientEntityManager clientEntityManager;
     private final byte[] resultObject;
-    private final Exception resultException;
+    private final EntityException resultException;
     private final boolean autoComplete;
     private TransactionID transactionID;
     
-    public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, Exception resultException, boolean autoComplete) {
+    public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, EntityException resultException, boolean autoComplete) {
       this.clientEntityManager = clientEntityManager;
       this.resultObject = resultObject;
       this.resultException = resultException;
       this.autoComplete = autoComplete;
     }
-    public void explicitComplete(byte[] explicitResult, Exception resultException) {
+    public void explicitComplete(byte[] explicitResult, EntityException resultException) {
       Assert.assertFalse(this.autoComplete);
       if (null != explicitResult) {
         this.clientEntityManager.complete(this.transactionID, explicitResult);

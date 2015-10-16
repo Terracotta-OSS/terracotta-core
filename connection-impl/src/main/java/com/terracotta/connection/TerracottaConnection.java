@@ -4,6 +4,8 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
@@ -32,9 +34,14 @@ public class TerracottaConnection implements Connection {
   }
 
   @Override
-  public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
+  public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) throws EntityException {
     checkShutdown();
-    return new TerracottaEntityRef<T, C>(this.entityManager, this.maintenanceModeService, cls, version, name, (EntityClientService<T, C>)getEntityService(cls), clientIds);
+    EntityClientService<T, C> service = getEntityService(cls);
+    if (null == service) {
+      // We failed to find a provider for this class.
+      throw new EntityNotProvidedException(cls.getName(), name);
+    }
+    return new TerracottaEntityRef<T, C>(this.entityManager, this.maintenanceModeService, cls, version, name, service, clientIds);
   }
 
   private <T extends Entity> EntityClientService<T, ?> getEntityService(Class<T> entityClass) {
@@ -42,9 +49,11 @@ public class TerracottaConnection implements Connection {
     EntityClientService<T, ?> service = (EntityClientService<T, ?>) cachedEntityServices.get(entityClass);
     if (service == null) {
       service = EntityClientServiceFactory.creationServiceForType(entityClass, TerracottaConnection.class.getClassLoader());
-      @SuppressWarnings("unchecked")
-      EntityClientService<T, ?> tmp = (EntityClientService<T, ?>) cachedEntityServices.putIfAbsent(entityClass, service);
-      service = tmp == null ? service : tmp;
+      if (null != service) {
+        @SuppressWarnings("unchecked")
+        EntityClientService<T, ?> tmp = (EntityClientService<T, ?>) cachedEntityServices.putIfAbsent(entityClass, service);
+        service = tmp == null ? service : tmp;
+      }
     }
     return service;
   }

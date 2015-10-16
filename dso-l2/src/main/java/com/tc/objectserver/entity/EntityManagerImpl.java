@@ -5,6 +5,10 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
+import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityVersionMismatchException;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -22,6 +26,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 
 public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
@@ -60,18 +65,18 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void createEntity(EntityID id, long version, long consumerID) {
+  public void createEntity(EntityID id, long version, long consumerID) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     ManagedEntity temp = new ManagedEntityImpl(id, version, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(id, temp) != null) {
-      throw new IllegalStateException("Double create for entity " + id);
+      throw new EntityAlreadyExistsException(id.getClassName(), id.getEntityName());
     }
   }
 
   @Override
-  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) {
+  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
     ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
@@ -83,14 +88,14 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void destroyEntity(EntityID id) {
+  public void destroyEntity(EntityID id) throws EntityException {
     if (entities.remove(id) == null) {
-      throw new IllegalStateException("Deleted an non-existent entity " + id);
+      throw new EntityNotFoundException(id.getClassName(), id.getEntityName());
     }
   }
 
   @Override
-  public Optional<ManagedEntity> getEntity(EntityID id, long version) {
+  public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     // Ask the service which provides this type of entity whether or not this is the version it supports.
@@ -103,7 +108,7 @@ public class EntityManagerImpl implements EntityManager {
     return entities.values();
   }
   
-  private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> getVersionCheckedService(EntityID entityID, long version) {
+  private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
@@ -121,7 +126,7 @@ public class EntityManagerImpl implements EntityManager {
     Assert.assertNotNull(service);
     long serviceVersion = service.getVersion();
     if (serviceVersion != version) {
-      throw new IllegalArgumentException("Version " + version + " not supported by " + typeName + "entity factory (expects version " + serviceVersion + ")");
+      throw new EntityVersionMismatchException(typeName, entityID.getEntityName(), serviceVersion, version);
     }
     return service;
   }
@@ -167,7 +172,7 @@ public class EntityManagerImpl implements EntityManager {
       throw new UnsupportedOperationException("Complete does not support a value");
     }
     @Override
-    public void failure(Exception e) {
+    public void failure(EntityException e) {
       throw new UnsupportedOperationException("Failure not expected for InternalRequest handling", e);
     }
     @Override
