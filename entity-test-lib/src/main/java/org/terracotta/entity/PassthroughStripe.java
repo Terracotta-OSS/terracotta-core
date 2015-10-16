@@ -92,7 +92,6 @@ public class PassthroughStripe implements ClientCommunicator {
   }
 
   private class FakeServiceRegistry implements ServiceRegistry {
-    @SuppressWarnings("unchecked")
     @Override
     public <T> T getService(ServiceConfiguration<T> configuration) {
       return configuration.getServiceType().cast(PassthroughStripe.this);

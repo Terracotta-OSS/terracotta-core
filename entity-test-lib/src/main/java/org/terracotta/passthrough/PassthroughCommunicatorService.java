@@ -4,7 +4,6 @@ import java.util.concurrent.Future;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ServiceConfiguration;
 
 
 /**
