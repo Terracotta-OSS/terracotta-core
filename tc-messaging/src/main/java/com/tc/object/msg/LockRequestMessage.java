@@ -256,4 +256,9 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
   public Object getSchedulingKey() {
     return this.getSourceNodeID();
   }
+
+  @Override
+  public boolean flush() {
+    return false;
+  }
 }

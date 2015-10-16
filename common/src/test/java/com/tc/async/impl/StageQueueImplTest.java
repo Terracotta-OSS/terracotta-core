@@ -20,7 +20,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.mockito.Matchers;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -72,7 +74,7 @@ public class StageQueueImplTest {
       }
     
     });
-    StageQueueImpl<Object> instance = new StageQueueImpl<Object>(size, 1, context, logger, "mock", 16);
+    StageQueueImpl<Object> instance = new StageQueueImpl<Object>(size, context, logger, "mock", 16);
     for (int x=0;x<cxts.size();x++) {
       assertNotNull(instance.getSource(index));
     }
@@ -117,5 +119,4 @@ public class StageQueueImplTest {
 //  tests specific implementation.  test expectation
     assertEquals(cxts.get(rand % cxts.size()).poll(), context1);
   }
-
 }

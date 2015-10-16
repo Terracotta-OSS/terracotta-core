@@ -73,7 +73,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedStage() throws Exception {
-    stageManager.createStage("testStage2", TestEventContext.class, testEventHandler, 3, 1, 30);
+    stageManager.createStage("testStage2", TestEventContext.class, testEventHandler, 3, 30);
     Stage<TestEventContext> s = stageManager.getStage("testStage2", TestEventContext.class);
     assertTrue(s != null);
     s.getSink().addSingleThreaded(new TestEventContext());
@@ -98,7 +98,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedContext() throws Exception {
-    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 1, 30);
+    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 30);
     Stage<TestMultiThreadedEventContext> s = multiThreadedStageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
     assertTrue(s != null);
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
@@ -123,7 +123,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedContextExtended() throws Exception {
-    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 1, 10);
+    multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 10);
     Stage<TestMultiThreadedEventContext> s = multiThreadedStageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
     assertTrue(s != null);
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-1"));
@@ -149,7 +149,7 @@ public class StageManagerImplTest extends TestCase {
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 9);
     stageManager.stopAll();
   }
-
+  
   /*
    * @see TestCase#tearDown()
    */
@@ -167,19 +167,31 @@ public class StageManagerImplTest extends TestCase {
 
   private static class TestMultiThreadedEventContext implements MultiThreadedEventContext {
     final Object name;
+    final boolean flush;
 
     public TestMultiThreadedEventContext() {
       name = new Object();
+      flush = false;
     }
 
     public TestMultiThreadedEventContext(String string) {
       name = string;
+      flush = false;
     }
 
+    public TestMultiThreadedEventContext(String string, boolean flush) {
+      name = string;
+      this.flush = flush;
+    }
+    
     @Override
     public Object getSchedulingKey() {
       return name;
     }
 
+    @Override
+    public boolean flush() {
+      return flush;
+    }
   }
 }

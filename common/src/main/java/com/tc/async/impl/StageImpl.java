@@ -51,16 +51,13 @@ public class StageImpl<EC> implements Stage<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler<EC> handler, int threadCount,
-                   int threadsToQueueRatio, ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize) {
+  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler<EC> handler, int queueCount,
+                   ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
-    this.threads = new WorkerThread[threadCount];
-    if (threadsToQueueRatio > threadCount) {
-      logger.warn("Thread to Queue Ratio " + threadsToQueueRatio + " > Worker Threads " + threadCount);
-    }
-    this.stageQueue = new StageQueueImpl<EC>(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name, queueSize);
+    this.threads = new WorkerThread[queueCount];
+    this.stageQueue = new StageQueueImpl<EC>(queueCount, queueFactory, loggerProvider, name, queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {

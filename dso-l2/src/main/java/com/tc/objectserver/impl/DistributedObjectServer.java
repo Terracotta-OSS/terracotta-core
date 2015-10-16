@@ -555,7 +555,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor());
-    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), 1, maxStageSize);
+    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
     
@@ -580,7 +580,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(new ClientChannelOperatorEventlistener());
 
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(), 1, maxStageSize);
-    this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, stageWorkerThreadCount, maxStageSize);
+    this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
 
     ClientConnectEventHandler clientConnectEventHandler = new ClientConnectEventHandler();
     final Stage<L1ConnectionMessage.Connecting> jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE, L1ConnectionMessage.Connecting.class, clientConnectEventHandler.getJxmConnectHandler(), 1, maxStageSize);

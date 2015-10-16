@@ -276,7 +276,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE, HydrateContext.class,new HydrateHandler(), 1, maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
-    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, 1, maxStageSize);
+    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize);
   }
 
   private Map<TCMessageType, Class<? extends TCMessage>> initMessageTypeClassMapping(Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping) {

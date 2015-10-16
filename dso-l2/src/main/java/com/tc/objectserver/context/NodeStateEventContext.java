@@ -36,6 +36,12 @@ public class NodeStateEventContext implements MultiThreadedEventContext {
     return nodeID;
   }
 
+  @Override
+  public boolean flush() {
+//  node state needs to flush all events
+    return true;
+  }
+  
   public ProductID getProductId() {
     return productId;
   }

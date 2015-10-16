@@ -28,4 +28,10 @@ public class HydrateContext implements MultiThreadedEventContext {
   public Object getSchedulingKey() {
     return message.getSourceNodeID();
   }
+  
+  @Override
+  public boolean flush() {
+//  hydrate operations are independent and don't need a flush
+    return false;
+  }
 }

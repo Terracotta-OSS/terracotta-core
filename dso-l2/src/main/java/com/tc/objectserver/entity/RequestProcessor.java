@@ -92,6 +92,13 @@ public class RequestProcessor implements StateChangeListener {
         throw new RuntimeException(exec);
       }
     }
+
+    @Override
+    public boolean flush() {
+// anything on the management key needs a complete flush of all the queues
+// the hydrate stage does not need to be flushed as each client 
+      return (key == ConcurrencyStrategy.MANAGEMENT_KEY);
+    }
   }
   
 }
