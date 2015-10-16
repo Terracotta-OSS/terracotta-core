@@ -46,41 +46,26 @@ public class StageQueueImpl<EC> implements Sink<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  public StageQueueImpl(int threadCount, int threadsToQueueRatio, QueueFactory<ContextWrapper<EC>> queueFactory,
+  public StageQueueImpl(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory,
                         TCLoggerProvider loggerProvider, String stageName, int queueSize) {
-    Assert.eval(threadCount > 0);
+    Assert.eval(queueCount > 0);
     this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
     this.stageName = stageName;
-    this.sourceQueues = new SourceQueueImpl[threadCount];
-    createWorkerQueues(threadCount, threadsToQueueRatio, queueFactory, queueSize, loggerProvider, stageName);
+    this.sourceQueues = new SourceQueueImpl[queueCount];
+    createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
   }
 
-  private void createWorkerQueues(int threads, int threadsToQueueRatio, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize,
-                                  TCLoggerProvider loggerProvider, String stage) {
+  private void createWorkerQueues(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
     BlockingQueue<ContextWrapper<EC>> q = null;
-    int queueCount = -1;
 
     if (queueSize != Integer.MAX_VALUE) {
-      int totalQueueToBeConstructed = (int) Math.ceil(((double) threads) / threadsToQueueRatio);
-      queueSize = (int) Math.ceil(((double) queueSize) / totalQueueToBeConstructed);
+      queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
     }
     Assert.eval(queueSize > 0);
 
-    for (int i = 0; i < threads; i++) {
-      if (threadsToQueueRatio > 0) {
-        if (i % threadsToQueueRatio == 0) {
-          // creating new worker queue
-          q = queueFactory.createInstance(queueSize);
-          queueCount++;
-        } else {
-          // use same queue for this worker too
-        }
-      } else if (q == null) {
-        // all workers share the same queue, create queue only once
-        q = queueFactory.createInstance(queueSize);
-        queueCount++;
-      }
+    for (int i = 0; i < queueCount; i++) {
+      q = queueFactory.createInstance(queueSize);
       this.sourceQueues[i] = new SourceQueueImpl<ContextWrapper<EC>>(q, String.valueOf(queueCount), statsCollector);
     }
   }

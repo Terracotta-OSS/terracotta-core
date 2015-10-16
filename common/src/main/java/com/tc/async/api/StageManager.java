@@ -17,8 +17,6 @@ import java.util.List;
 public interface StageManager extends PrettyPrintable {
   public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize);
 
-  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int queueRatio, int maxSize);
-
   public void startAll(ConfigurationContext context, List<PostInit> toInit);
 
   public void stopAll();

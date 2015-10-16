@@ -99,7 +99,7 @@ public class StageImplTest {
       }
     
     });
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, size, 1, null, context, 16);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, size, null, context, 16);
     assertEquals(cxts.size(), size);
     instance.start(null);
     
