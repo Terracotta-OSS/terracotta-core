@@ -66,7 +66,6 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
 
   @Override
   protected void dehydrateValues() {
-    @SuppressWarnings("resource")
     TCByteBufferOutputStream outputStream = getOutputStream();
     // We don't want to use the NVpair stuff:  it is horrendously complicated, doesn't work well with all types, and doesn't buy us anything.
     putNVPair((byte)0, (byte)0);
