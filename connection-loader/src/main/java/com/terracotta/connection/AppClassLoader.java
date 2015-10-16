@@ -16,10 +16,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 class AppClassLoader extends ClassLoader {
 
-  private static final Enumeration<URL>          EMPTY_URL_ENUMERATION = new EmptyEnumeration<>();
+  private static final Enumeration<URL>          EMPTY_URL_ENUMERATION = new EmptyEnumeration<URL>();
 
-  private final List<WeakReference<ClassLoader>> loaders               = new CopyOnWriteArrayList<>();
-  private final ReferenceQueue<ClassLoader>      refQueue              = new ReferenceQueue<>();
+  private final List<WeakReference<ClassLoader>> loaders               = new CopyOnWriteArrayList<WeakReference<ClassLoader>>();
+  private final ReferenceQueue<ClassLoader>      refQueue              = new ReferenceQueue<ClassLoader>();
 
   AppClassLoader(ClassLoader parent) {
     super(parent);
@@ -124,7 +124,7 @@ class AppClassLoader extends ClassLoader {
         if (cl == loader) { return; }
       }
 
-      loaders.add(new WeakReference<>(loader, refQueue));
+      loaders.add(new WeakReference<ClassLoader>(loader, refQueue));
     }
   }
 

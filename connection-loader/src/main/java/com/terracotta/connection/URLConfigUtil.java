@@ -46,7 +46,7 @@ public class URLConfigUtil {
    * @return a Set of properties
    */
   static Set<String> extractPropertyTokens(String sourceString) {
-    Set<String> propertyTokens = new HashSet<>();
+    Set<String> propertyTokens = new HashSet<String>();
     Matcher matcher = pattern.matcher(sourceString);
     while (matcher.find()) {
       String token = matcher.group();

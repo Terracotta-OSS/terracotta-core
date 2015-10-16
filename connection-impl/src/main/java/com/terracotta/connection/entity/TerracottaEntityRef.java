@@ -50,8 +50,10 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     // We need to pass the corresponding unlock into the lookupEntity.  It is responsible for calling the hook
     //  if it fails to look up the entity OR delegating that responsibility to the end-point it found for it to
     //  call when it is closed.
-    Runnable closeHook = () -> {
-      maintenanceModeService.readUnlockEntity(type, name);
+    Runnable closeHook = new Runnable() {
+      public void run() {
+        maintenanceModeService.readUnlockEntity(type, name);
+      }
     };
     
     EntityClientEndpoint endpoint = null;
@@ -88,7 +90,9 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       if (!doesExist) {
         try {
           this.entityManager.createEntity(entityID, this.version, Collections.singleton(VoltronEntityMessage.Acks.APPLIED), entityClientService.serializeConfiguration(configuration)).get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException i) {
+          throw new RuntimeException(i);
+        }catch (ExecutionException e) {
           throw new RuntimeException(e);
         }
       } else {
@@ -104,7 +108,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     EntityID entityID = getEntityID();
     this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
     try {
-      Future<Void> future = this.entityManager.destroyEntity(entityID, this.version, Collections.emptySet());
+      Future<Void> future = this.entityManager.destroyEntity(entityID, this.version, Collections.<VoltronEntityMessage.Acks>emptySet());
       boolean interrupted = false;
       while (true) {
         try {

@@ -62,7 +62,13 @@ public class TerracottaConnectionService implements ConnectionService {
     final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
     client.init();
     try {
-      return new TerracottaConnection(client.getClientEntityManager(), client.getClientLockManager(), (Runnable) () -> client.shutdown());
+      
+      return new TerracottaConnection(client.getClientEntityManager(), client.getClientLockManager(), new Runnable() {
+        public void run() {
+          client.shutdown();
+          }
+        }
+      );
     } catch (Exception e) {
       throw new ConnectionException(e);
     }

@@ -40,7 +40,7 @@ public class MaintenanceModeService {
     }
   }
 
-  public <T extends Entity> void readLockEntity(Class<T> c, String name) {
+  public <T extends Entity> void readLockEntity(final Class<T> c, final String name) {
     await(executorService.submit(new Runnable() {
       @Override
       public void run() {
@@ -50,7 +50,7 @@ public class MaintenanceModeService {
     }));
   }
 
-  public <T extends Entity> void readUnlockEntity(Class<T> c, String name) {
+  public <T extends Entity> void readUnlockEntity(final Class<T> c, final String name) {
     await(executorService.submit(new Runnable() {
       @Override
       public void run() {
@@ -60,7 +60,7 @@ public class MaintenanceModeService {
     }));
   }
 
-  public <T extends Entity> void enterMaintenanceMode(Class<T> c, String name) {
+  public <T extends Entity> void enterMaintenanceMode(final Class<T> c, final String name) {
     await(executorService.submit(new Runnable() {
       @Override
       public void run() {
@@ -70,7 +70,7 @@ public class MaintenanceModeService {
     }));
   }
 
-  public <T extends Entity> void exitMaintenanceMode(Class<T> c, String name) {
+  public <T extends Entity> void exitMaintenanceMode(final Class<T> c, final String name) {
     await(executorService.submit(new Runnable() {
       @Override
       public void run() {

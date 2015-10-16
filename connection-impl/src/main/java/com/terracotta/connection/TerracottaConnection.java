@@ -20,7 +20,7 @@ public class TerracottaConnection implements Connection {
   private final ClientEntityManager entityManager;
   private final MaintenanceModeService maintenanceModeService;
   private final Runnable shutdown;
-  private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?>> cachedEntityServices = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?>> cachedEntityServices = new ConcurrentHashMap<Class<? extends Entity>, EntityClientService<?, ?>>();
   private final AtomicLong  clientIds = new AtomicLong(1); // initialize to 1 because zero client is a special case for uninitialized
 
   private boolean isShutdown = false;
@@ -34,16 +34,16 @@ public class TerracottaConnection implements Connection {
   @Override
   public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
     checkShutdown();
-    return new TerracottaEntityRef<>(this.entityManager, this.maintenanceModeService, cls, version, name, getEntityService(cls), clientIds);
+    return new TerracottaEntityRef<T, C>(this.entityManager, this.maintenanceModeService, cls, version, name, (EntityClientService<T, C>)getEntityService(cls), clientIds);
   }
 
-  private <T extends Entity, C> EntityClientService<T, C> getEntityService(Class<T> entityClass) {
+  private <T extends Entity> EntityClientService<T, ?> getEntityService(Class<T> entityClass) {
     @SuppressWarnings("unchecked")
-    EntityClientService<T, C> service = (EntityClientService<T, C>) cachedEntityServices.get(entityClass);
+    EntityClientService<T, ?> service = (EntityClientService<T, ?>) cachedEntityServices.get(entityClass);
     if (service == null) {
       service = EntityClientServiceFactory.creationServiceForType(entityClass, TerracottaConnection.class.getClassLoader());
       @SuppressWarnings("unchecked")
-      EntityClientService<T, C> tmp = (EntityClientService<T, C>) cachedEntityServices.putIfAbsent(entityClass, service);
+      EntityClientService<T, ?> tmp = (EntityClientService<T, ?>) cachedEntityServices.putIfAbsent(entityClass, service);
       service = tmp == null ? service : tmp;
     }
     return service;
