@@ -1,5 +1,6 @@
 package com.tc.object.request;
 
+import org.terracotta.exception.EntityException;
 import com.tc.object.tx.TransactionID;
 
 
@@ -27,7 +28,8 @@ public interface RequestResponseHandler {
 
   /**
    * Called when the server sends back a response that the request completed with a failure, as described by the
-   * exception.  This implies an APPLIED acknowledgement.
+   * exception.  This implies an APPLIED acknowledgement.  Note that all of our wire-level exceptions are now
+   * EntityException instances.
    */
-  void failed(TransactionID id, Exception e);
+  void failed(TransactionID id, EntityException e);
 }

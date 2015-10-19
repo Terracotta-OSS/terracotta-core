@@ -1,5 +1,6 @@
 package com.tc.object.request;
 
+import org.terracotta.exception.EntityException;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityAppliedResponse;
@@ -21,7 +22,7 @@ public class RequestReceiveHandler extends AbstractEventHandler<VoltronEntityRes
     switch (response.getAckType()) {
       case APPLIED:
         VoltronEntityAppliedResponse appliedResponse = (VoltronEntityAppliedResponse) response;
-        Exception failureException = appliedResponse.getFailureException();
+        EntityException failureException = appliedResponse.getFailureException();
         if (failureException != null) {
           this.handler.failed(transactionID, failureException);
         } else {

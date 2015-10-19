@@ -11,6 +11,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import java.util.Optional;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.exception.EntityException;
 
 
 /**
@@ -25,7 +26,7 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
   private ClientDescriptor client;
   private Optional<MessageChannel> returnChannel;
   private byte[] returnValue = null;
-  private Exception failure = null;
+  private EntityException failure = null;
 
   public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, TransactionID oldest, NodeID nodes) {
     // This replication argument (the "true") is redundant, in this case.
@@ -39,7 +40,7 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
   }
 
   @Override
-  public synchronized void failure(Exception e) {
+  public synchronized void failure(EntityException e) {
     failure = e;
     super.failure(e); 
   }

@@ -8,6 +8,8 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityNotFoundException;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -98,7 +100,7 @@ public class ManagedEntityImplTest {
     managedEntity.addRequest(request);
     managedEntity.invoke(mockCreateEntityRequest("foo"));
     managedEntity.invoke(request);
-    verify(request).failure(any(IllegalStateException.class));
+    verify(request).failure(any(EntityAlreadyExistsException.class));
     verify(request, never()).complete();
   }
 
@@ -135,7 +137,7 @@ public class ManagedEntityImplTest {
   public void testPerformActionMissingEntity() throws Exception {
     ServerEntityRequest request = mockInvokeRequest(new byte[0]);
     managedEntity.invoke(request);
-    verify(request).failure(any(IllegalStateException.class));
+    verify(request).failure(any(EntityNotFoundException.class));
   }
 
   @Test
@@ -196,7 +198,7 @@ public class ManagedEntityImplTest {
     // Verify that we fail to create it again.
     ServerEntityRequest failedCreateRequest = mockCreateEntityRequest(null);
     managedEntity.invoke(failedCreateRequest);
-    verify(failedCreateRequest).failure(any(IllegalStateException.class));
+    verify(failedCreateRequest).failure(any(EntityAlreadyExistsException.class));
     verify(failedCreateRequest, never()).complete();
     
     // Verify that we can get and release, just like with any other active.

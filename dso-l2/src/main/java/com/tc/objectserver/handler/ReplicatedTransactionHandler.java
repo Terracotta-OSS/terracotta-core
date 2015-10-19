@@ -7,8 +7,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.net.groups.GroupException;
@@ -17,18 +15,16 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.ActiveToPassiveReplication;
-import com.tc.objectserver.entity.ManagedEntityImpl;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import com.tc.util.Assert;
 import java.util.Optional;
 
-/**
- *
- */
-public class ReplicatedTransactionHandler {
-  
+import org.terracotta.exception.EntityException;
 
+
+public class ReplicatedTransactionHandler {
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
   private final GroupManager groupManager;
@@ -49,7 +45,13 @@ public class ReplicatedTransactionHandler {
   private final EventHandler<ReplicationMessage> eventHorizon = new AbstractEventHandler<ReplicationMessage>() {
     @Override
     public void handleEvent(ReplicationMessage message) throws EventHandlerException {
-      processMessage(message);
+      try {
+        processMessage(message);
+      } catch (EntityException e) {
+        // We don't expect to see an exception executing a replicated message.
+        // TODO:  Find a better way to handle this error.
+        Assert.failure("Unexpected exception executing replicated message", e);
+      }
     }
   };
   
@@ -57,7 +59,7 @@ public class ReplicatedTransactionHandler {
     return eventHorizon;
   }
 
-  private void processMessage(ReplicationMessage rep) {
+  private void processMessage(ReplicationMessage rep) throws EntityException {
     try {
       if (rep.getType() == ReplicationMessage.REPLICATE) {
         if (!rep.getOldestTransactionOnClient().isNull()) {

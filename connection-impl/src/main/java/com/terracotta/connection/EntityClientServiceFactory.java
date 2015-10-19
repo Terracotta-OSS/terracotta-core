@@ -24,22 +24,25 @@ import org.terracotta.entity.EntityClientService;
 
 import java.util.List;
 
-/**
- * @author twu
- */
+
 public class EntityClientServiceFactory {
   public static <T extends Entity, C> EntityClientService<T, C> creationServiceForType(Class<T> cls) {
     return creationServiceForType(cls, EntityClientServiceFactory.class.getClassLoader());
   }
 
+  /**
+   * Note that this returns the service or null if no service could be found.
+   */
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public static <T extends Entity, C> EntityClientService<T, C> creationServiceForType(Class<T> cls, ClassLoader classLoader) {
+    EntityClientService<T, C> foundService = null;
     List<EntityClientService> implementations = ServiceLocator.getImplementations(EntityClientService.class,  classLoader);
     for (EntityClientService<T, C> entityClientService : implementations) {
       if (entityClientService.handlesEntityType(cls)) {
-        return entityClientService;
+        foundService = entityClientService;
+        break;
       }
     }
-    throw new IllegalArgumentException("Can't handle entity type " + cls.getName());
+    return foundService;
   }
 }

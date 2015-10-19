@@ -18,6 +18,8 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ReplicableActiveServerEntity;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityUserException;
 
 public class ManagedEntityImpl implements ManagedEntity {
   private final RequestProcessor executor;
@@ -112,7 +114,9 @@ public class ManagedEntityImpl implements ManagedEntity {
             throw new IllegalArgumentException("Unknown request " + request);
         }
       } catch (Exception e) {
-        request.failure(e);
+        // Wrap this exception.
+        EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+        request.failure(wrapper);
       }
   }
   

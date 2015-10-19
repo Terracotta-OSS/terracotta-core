@@ -16,6 +16,8 @@ import com.tc.objectserver.api.ServerEntityRequest;
 
 import java.util.Optional;
 
+import org.terracotta.exception.EntityException;
+
 
 public abstract class AbstractServerEntityRequest implements ServerEntityRequest {
   private final ServerEntityAction action;
@@ -74,7 +76,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   }
   
   @Override
-  public synchronized void failure(Exception e) {
+  public synchronized void failure(EntityException e) {
     if (isDone()) throw new AssertionError("Error after successful complete");
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);

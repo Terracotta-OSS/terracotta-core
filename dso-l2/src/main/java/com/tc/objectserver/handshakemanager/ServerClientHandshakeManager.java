@@ -5,6 +5,7 @@
 package com.tc.objectserver.handshakemanager;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.logging.TCLogger;
@@ -112,7 +113,14 @@ public class ServerClientHandshakeManager {
         for(ClientEntityReferenceContext referenceContext : handshake.getReconnectReferences()) {
           EntityID entityID = referenceContext.getEntityID();
           long version = referenceContext.getEntityVersion();
-          Optional<ManagedEntity> entity = this.entityManager.getEntity(entityID, version);
+          Optional<ManagedEntity> entity = null;
+          try {
+            entity = this.entityManager.getEntity(entityID, version);
+          } catch (EntityException e) {
+            // We don't expect to fail at this point.
+            // TODO:  Determine if we have a meaningful way to handle this error.
+            Assert.failure("Unexpected failure to get entity in handshake", e);
+          }
           // If we fail to find this, something is seriously wrong since either the restart/failover was incorrect or this message is invalid.
           // TODO:  Determine if we have a meaningful way to handle this error.
           Assert.assertTrue(entity.isPresent());

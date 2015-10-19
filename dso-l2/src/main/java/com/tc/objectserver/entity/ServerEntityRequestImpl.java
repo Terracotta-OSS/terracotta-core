@@ -7,6 +7,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import java.util.Optional;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.exception.EntityException;
 
 
 /**
@@ -41,7 +42,7 @@ public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
   }
 
   @Override
-  public synchronized void failure(Exception e) {
+  public synchronized void failure(EntityException e) {
     if (isDone()) throw new AssertionError("Double-sending response", e);
     super.failure(e); //To change body of generated methods, choose Tools | Templates.
   }

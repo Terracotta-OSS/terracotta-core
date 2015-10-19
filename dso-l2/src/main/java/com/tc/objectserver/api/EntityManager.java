@@ -4,6 +4,8 @@ import com.tc.object.EntityID;
 
 import java.util.Optional;
 
+import org.terracotta.exception.EntityException;
+
 public interface EntityManager {
 
   /**
@@ -18,14 +20,14 @@ public interface EntityManager {
    * @param version the version of the entity on the calling client
    * @param consumerID the unique consumerID this entity uses when interacting with services
    */
-  void createEntity(EntityID id, long version, long consumerID);
+  void createEntity(EntityID id, long version, long consumerID) throws EntityException;
 
   /**
    * Deletes an existing entity.
    *
    * @param id id of the entity to delete
    */
-  void destroyEntity(EntityID id);
+  void destroyEntity(EntityID id) throws EntityException;
 
   /**
    * Get the stub for the specified entity
@@ -34,7 +36,7 @@ public interface EntityManager {
    * @param version the version of the entity on the calling client
    * @return ManagedEntity wrapper for the entity
    */
-  Optional<ManagedEntity> getEntity(EntityID id, long version);
+  Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException;
 
   /**
    * Creates an entity instance from existing storage.  This case is called during restart.
@@ -48,6 +50,6 @@ public interface EntityManager {
    * @param consumerID the unique consumerID this entity uses when interacting with services
    * @param configuration The opaque configuration to use in the creation.
    */
-  void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration);
+  void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException;
 
 }

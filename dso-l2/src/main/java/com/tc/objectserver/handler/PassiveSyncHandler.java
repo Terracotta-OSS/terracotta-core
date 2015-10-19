@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.handler;
 
+import org.terracotta.exception.EntityException;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -13,13 +14,10 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupManager;
-import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.persistence.EntityPersistor;
 
-/**
- *
- */
+
 public class PassiveSyncHandler {
   private static final TCLogger logger = TCLogging.getLogger(PassiveSyncHandler.class);
   private final StateManager stateManager;
@@ -60,7 +58,7 @@ public class PassiveSyncHandler {
             this.entityManager.createEntity(sync.getEntityID(), sync.getVersion(), consumerID);
             this.entityPersistor.entityCreated(sync.getEntityID(), sync.getVersion(), consumerID, sync.getPayload());
           }
-        } catch (IllegalStateException state) {
+        } catch (EntityException state) {
 //  TODO: this needs to be controlled.  
           logger.warn("entity has already been created", state);
         }

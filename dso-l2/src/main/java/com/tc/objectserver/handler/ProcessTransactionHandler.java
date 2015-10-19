@@ -32,6 +32,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
 
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityUserException;
+
 
 public class ProcessTransactionHandler implements StateChangeListener {
   private final EntityPersistor entityPersistor;
@@ -85,11 +89,11 @@ public class ProcessTransactionHandler implements StateChangeListener {
   private void addMessage(NodeID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
+    EntityID entityID = descriptor.getEntityID();
     ManagedEntity entity = null;
-    Exception uncaughtException = null;
+    EntityException uncaughtException = null;
     try {
       // The create/destroy cases are passed to the entityManager.
-      EntityID entityID = descriptor.getEntityID();
       if (ServerEntityAction.CREATE_ENTITY == action) {
         long clientSideVersion = descriptor.getClientSideVersion();
         long consumerID = this.entityPersistor.getNextConsumerID();
@@ -104,8 +108,11 @@ public class ProcessTransactionHandler implements StateChangeListener {
         entityManager.destroyEntity(entityID);
         this.entityPersistor.entityDeleted(entityID);
       }
-    } catch (Exception e) {
+    } catch (EntityException e) {
       uncaughtException = e;
+    } catch (Exception e) {
+      // Wrap the exception.
+      uncaughtException = new EntityUserException(entityID.getClassName(), entityID.getEntityName(), e);
     }
     
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
@@ -122,17 +129,16 @@ public class ProcessTransactionHandler implements StateChangeListener {
     if (null == uncaughtException) {
       // If no exception has been fired, do any special handling required by the message type.
       boolean entityFound = (null != entity);
-      if (ServerEntityAction.DOES_EXIST == action) {
-        // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-        if (entityFound) {
+      // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
+      if (entityFound) {
+        // We special-case the DOES_EXIST check to complete without interacting with the entity.
+        if (ServerEntityAction.DOES_EXIST == action) {
           serverEntityRequest.complete();
         } else {
-          serverEntityRequest.failure(new RuntimeException("Entity not found!"));
+          entity.addRequest(serverEntityRequest);
         }
-      } else if (entityFound) {
-        entity.addRequest(serverEntityRequest);
-      } else if (ServerEntityAction.FETCH_ENTITY == action) {
-        serverEntityRequest.failure(new RuntimeException("Entity not found!"));
+      } else {
+        serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
       }
     } else {
       // If there was an exception of any sort, just pass it back as a failure.
@@ -155,7 +161,12 @@ public class ProcessTransactionHandler implements StateChangeListener {
       Assert.assertTrue(entityValue.version > 0);
       Assert.assertTrue(entityValue.consumerID > 0);
       EntityID entityID = new EntityID(entityValue.className, entityValue.entityName);
-      entityManager.loadExisting(entityID, entityValue.version, entityValue.consumerID, entityValue.configuration);
+      try {
+        entityManager.loadExisting(entityID, entityValue.version, entityValue.consumerID, entityValue.configuration);
+      } catch (EntityException e) {
+        // We aren't expecting to fail loading anything from the existing set.
+        throw new IllegalArgumentException(e);
+      }
     }
   }
 

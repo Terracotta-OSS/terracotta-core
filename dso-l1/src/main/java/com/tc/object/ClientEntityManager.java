@@ -4,6 +4,8 @@
 package com.tc.object;
 
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -11,7 +13,6 @@ import com.tc.object.request.RequestResponseHandler;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Set;
-import java.util.concurrent.Future;
 
 
 /**
@@ -38,14 +39,14 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    * @param closeHook To be passed into the found EntityClientEndpoint for it to call on close or called, directly, if lookup fails.
    * @return The end-point or null if the entity doesn't exist
    */
-  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook);
+  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException;
 
   /**
    * Release the client's reference to the given entityID.
    * 
    * @param entityDescriptor the entity to release and the instance making the request.
    */
-  void releaseEntity(EntityDescriptor entityDescriptor);
+  void releaseEntity(EntityDescriptor entityDescriptor) throws EntityException;
 
   /**
    * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
@@ -56,18 +57,18 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    */
   void handleMessage(EntityDescriptor entityDescriptor, byte[] message);
 
-  Future<Void> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
+  InvokeFuture<byte[]> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
   
-  Future<Void> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks);
+  InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks);
   
   /**
    * Called to retrieve the entityDescriptor, returning its instance configuration, if found.  Note that this call will have
    * the side-effect of adding a reference to this server-side entity, from this client.
    */
-  byte[] retrieve(EntityDescriptor entityDescriptor);
+  byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException;
 
   /**
    * This method is the opposite of "retrieve()":  ask the implementation to tell the remote side we no longer want the entity.
    */
-  void release(EntityDescriptor entityDescriptor);
+  void release(EntityDescriptor entityDescriptor) throws EntityException;
 }
