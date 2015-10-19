@@ -4,7 +4,6 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
-import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
@@ -34,7 +33,7 @@ public class TerracottaConnection implements Connection {
   }
 
   @Override
-  public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) throws EntityException {
+  public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) throws EntityNotProvidedException {
     checkShutdown();
     @SuppressWarnings("unchecked")
     EntityClientService<T, C> service = (EntityClientService<T, C>)getEntityService(cls);
