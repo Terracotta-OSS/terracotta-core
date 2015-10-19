@@ -104,7 +104,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     EntityID entityID = getEntityID();
     this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
     try {
-      InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version, Collections<VoltronEntityMessage.Acks>.emptySet());
+      InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version, Collections.<VoltronEntityMessage.Acks>emptySet());
       boolean interrupted = false;
       while (true) {
         try {

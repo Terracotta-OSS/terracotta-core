@@ -36,7 +36,8 @@ public class TerracottaConnection implements Connection {
   @Override
   public synchronized <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) throws EntityException {
     checkShutdown();
-    EntityClientService<T, C> service = getEntityService(cls);
+    @SuppressWarnings("unchecked")
+    EntityClientService<T, C> service = (EntityClientService<T, C>)getEntityService(cls);
     if (null == service) {
       // We failed to find a provider for this class.
       throw new EntityNotProvidedException(cls.getName(), name);
