@@ -53,7 +53,7 @@ public class TunnelingEventHandler extends AbstractEventHandler<JmxRemoteTunnelM
     sentReadyMessage = false;
     this.uuid = uuid;
   }
-
+/*
   @Override
   public void cleanup() {
     synchronized (this) {
@@ -65,7 +65,7 @@ public class TunnelingEventHandler extends AbstractEventHandler<JmxRemoteTunnelM
       }
     }
   }
-
+*/
   public MessageChannel getMessageChannel() {
     return channel;
   }

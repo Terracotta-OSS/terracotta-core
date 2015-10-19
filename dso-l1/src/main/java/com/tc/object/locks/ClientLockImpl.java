@@ -3,7 +3,6 @@
  */
 package com.tc.object.locks;
 
-import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
@@ -71,7 +70,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private void removeAndUnpark(LockStateNode lockState, Iterator<LockStateNode> it) {
     try {
-      lockState.setrejoinInProgress(true);
       it.remove();
       lockState.unpark();
     } catch (AssertionError e) {
@@ -268,7 +266,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       unparkFirstQueuedAcquire();
       waitOnLockWaiter(remote, thread, waiter, listener);
     } finally {
-      if (waiter != null && !waiter.isRejoinInProgress()) {
+      if (waiter != null) {
         moveWaiterToPending(waiter);
         acquireAll(remote, thread, waiter.getReacquires());
       } else if (!isLockedBy(thread, WRITE_LEVELS)) {
@@ -329,7 +327,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
       throw e;
     }
-    if (waiter.isRejoinInProgress()) { throw new PlatformRejoinException(); }
   }
 
   private void acquireAll(RemoteLockManager remote,
@@ -487,12 +484,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized void addPendingAcquires(LockWaiter waiter) {
-    if (!waiter.isRejoinInProgress()) {
-      Stack<PendingLockHold> reacquires = waiter.getReacquires();
-      java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
-      while (it.hasPrevious()) {
-        addLast(it.previous());
-      }
+    Stack<PendingLockHold> reacquires = waiter.getReacquires();
+    java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
+    while (it.hasPrevious()) {
+      addLast(it.previous());
     }
   }
 
@@ -917,7 +912,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
           if (remote.isShutdown()) { throw new TCNotRunningException(); }
         }
-        if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
       }
     } catch (final RuntimeException ex) {
       abortAndRemove(remote, node);
@@ -965,7 +959,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         if (Thread.interrupted()) {
           break;
         }
-        if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
       }
     } catch (final RuntimeException ex) {
       abortAndRemove(remote, node);
@@ -1018,7 +1011,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           abortAndRemove(remote, node);
           throw new InterruptedException();
         }
-        if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
         final long now = System.currentTimeMillis();
         timeout -= now - lastTime;
         // possibility of changing node timeout here...
