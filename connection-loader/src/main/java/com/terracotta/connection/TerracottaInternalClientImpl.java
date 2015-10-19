@@ -19,7 +19,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   private final ClientCreatorCallable clientCreator;
-  private final Set<String>           tunneledMBeanDomains = new HashSet<>();
+  private final Set<String>           tunneledMBeanDomains = new HashSet<String>();
   private volatile ClientHandle       clientHandle;
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
