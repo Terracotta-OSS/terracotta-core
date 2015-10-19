@@ -3,8 +3,11 @@ package org.terracotta.passthrough;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.EntityVersionMismatchException;
 
 
 /**
@@ -32,7 +35,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public T fetchEntity() throws EntityException {
+  public T fetchEntity() throws EntityNotFoundException, EntityVersionMismatchException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
     PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
@@ -40,6 +43,15 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     byte[] rawConfig = null;
     try {
       rawConfig = received.get();
+    } catch (EntityException e) {
+      // Check that this is the correct type.
+      if (e instanceof EntityNotFoundException) {
+        throw (EntityNotFoundException) e;
+      } else if (e instanceof EntityVersionMismatchException) {
+        throw (EntityVersionMismatchException) e;
+      } else {
+        Assert.unexpected(e);
+      }
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
@@ -52,7 +64,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public void create(C configuration) throws EntityException {
+  public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException {
     // Make sure that we have a service provider.
     if (null != this.service) {
       getWriteLock();
@@ -62,6 +74,17 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
         PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
         try {
           received.get();
+        } catch (EntityException e) {
+          // Check that this is the correct type.
+          if (e instanceof EntityNotProvidedException) {
+            throw (EntityNotProvidedException) e;
+          } else if (e instanceof EntityAlreadyExistsException) {
+            throw (EntityAlreadyExistsException) e;
+          } else if (e instanceof EntityVersionMismatchException) {
+            throw (EntityVersionMismatchException) e;
+          } else {
+            Assert.unexpected(e);
+          }
         } catch (InterruptedException e) {
           Assert.unexpected(e);
         }
@@ -74,13 +97,22 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public void destroy() throws EntityException {
+  public void destroy() throws EntityNotProvidedException, EntityNotFoundException {
     getWriteLock();
     try {
       PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
       PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
       try {
         received.get();
+      } catch (EntityException e) {
+        // Check that this is the correct type.
+        if (e instanceof EntityNotProvidedException) {
+          throw (EntityNotProvidedException) e;
+        } else if (e instanceof EntityNotFoundException) {
+          throw (EntityNotFoundException) e;
+        } else {
+          Assert.unexpected(e);
+        }
       } catch (InterruptedException e) {
         Assert.unexpected(e);
       }
