@@ -13,6 +13,10 @@ import java.util.Map;
 
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
+
+import com.tc.util.Assert;
+
+
 /**
  * Implements the simple key-value storage persistence system.  Note that any modifications made to the data stored within
  * this (via a returned key-value storage object) will invoke a flush of all data back to the disk.
@@ -33,7 +37,8 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
         out.writeObject(maps);
         out.close();
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        // If something happened here, that is a serious bug so we need to assert.
+        Assert.failure("Failure flushing FlatFileKeyValueStorage", e);
       }
     }
   };

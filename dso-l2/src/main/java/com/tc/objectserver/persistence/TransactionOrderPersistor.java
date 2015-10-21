@@ -5,6 +5,7 @@ import org.terracotta.persistence.KeyValueStorage;
 
 import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 
 import java.io.Serializable;
 import java.util.List;
@@ -33,6 +34,9 @@ public class TransactionOrderPersistor {
     this.listContainer = storageManager.getKeyValueStorage(LIST_CONTAINER, String.class, (Class)List.class);
     if (!this.listContainer.containsKey(LIST_KEY)) {
       this.listContainer.put(LIST_KEY, new Vector<>());
+    } else {
+      // TAB-6411 : Add additional checks to track down an intermittent bug.
+      Assert.assertTrue(this.listContainer.get(LIST_KEY) instanceof Vector);
     }
   }
 
@@ -68,6 +72,9 @@ public class TransactionOrderPersistor {
     }
     
     List<ClientTransaction> globalList = this.listContainer.get(LIST_KEY);
+    // TAB-6411 : Add additional checks to track down an intermittent bug.
+    Assert.assertNotNull(globalList);
+    Assert.assertTrue(globalList instanceof Vector);
     // Remove anything the client no longer cares about.
     while ((localList.size() > 0) && (-1 == localList.get(0).id.compareTo(oldestTransactionOnClient))) {
       ClientTransaction removed = localList.remove(0);
@@ -100,6 +107,7 @@ public class TransactionOrderPersistor {
   }
 
   private static class ClientTransaction implements Serializable {
+    private static final long serialVersionUID = 1L;
     public NodeID client;
     public TransactionID id;
 

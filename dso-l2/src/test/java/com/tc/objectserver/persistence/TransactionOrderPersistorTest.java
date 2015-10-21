@@ -18,7 +18,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   private TransactionOrderPersistor orderPersistor;
   private NodeID client1;
   private NodeID client2;
-  
+
   @Override
   public void setUp() {
     try {
@@ -227,5 +227,101 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     TransactionID newTransaction = new TransactionID(10);
     this.orderPersistor.updateWithNewMessage(this.client1, newTransaction, oldest);
     assertEquals(0, this.orderPersistor.getIndexToReplay(this.client1, newTransaction));
+  }
+
+  public void testSaveReloadEmpty() throws IOException {
+    final String reloadable = "reloadable_file";
+    
+    // Create the storage.
+    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable).getAbsolutePath());
+    storage.create();
+    new TransactionOrderPersistor(storage);
+    
+    // Now, try to reload it.
+    storage = new FlatFilePersistentStorage(getTempFile(reloadable).getAbsolutePath());
+    storage.open();
+    new TransactionOrderPersistor(storage);
+  }
+
+  public void testSaveReloadSimple() throws IOException {
+    final String reloadable = "reloadable_file";
+    ClientID client1 = new ClientID(1);
+    ClientID client2 = new ClientID(2);
+    TransactionID oldest = new TransactionID(0);
+
+    // Create the storage.
+    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable).getAbsolutePath());
+    storage.create();
+    TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage);
+    for (int i = 1; i < 100; ++i) {
+      TransactionID transaction = new TransactionID(i);
+      persistor.updateWithNewMessage(client1, transaction, oldest);
+      persistor.updateWithNewMessage(client2, transaction, oldest);
+    }
+    
+    // Now, try to reload it.
+    storage = new FlatFilePersistentStorage(getTempFile(reloadable).getAbsolutePath());
+    storage.open();
+    persistor = new TransactionOrderPersistor(storage);
+    for (int i = 100; i < 200; ++i) {
+      TransactionID transaction = new TransactionID(i);
+      persistor.updateWithNewMessage(client1, transaction, oldest);
+      persistor.updateWithNewMessage(client2, transaction, oldest);
+    }
+  }
+
+  public void testSaveReloadMultipleThreads() throws IOException, InterruptedException {
+    final String reloadable = "reloadable_file";
+    TransactionID oldest = new TransactionID(0);
+
+    // Create the storage.
+    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable).getAbsolutePath());
+    storage.create();
+    TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage);
+    ClientThread thread1 = new ClientThread(persistor, new ClientID(1), oldest, 1, 100);
+    ClientThread thread2 = new ClientThread(persistor, new ClientID(2), oldest, 1, 100);
+    
+    thread1.start();
+    thread2.start();
+    thread1.join();
+    thread2.join();
+    
+    // Now, try to reload it.
+    oldest = new TransactionID(99);
+    storage = new FlatFilePersistentStorage(getTempFile(reloadable).getAbsolutePath());
+    storage.open();
+    persistor = new TransactionOrderPersistor(storage);
+    thread1 = new ClientThread(persistor, new ClientID(1), oldest, 100, 200);
+    thread2 = new ClientThread(persistor, new ClientID(2), oldest, 100, 200);
+    
+    thread1.start();
+    thread2.start();
+    thread1.join();
+    thread2.join();
+  }
+
+
+  private static class ClientThread extends Thread {
+    private TransactionOrderPersistor persistor;
+    private ClientID client;
+    private TransactionID oldest;
+    private int start;
+    private int end;
+    
+    public ClientThread(TransactionOrderPersistor persistor, ClientID client, TransactionID oldest, int start, int end) {
+      this.persistor = persistor;
+      this.client = client;
+      this.oldest = oldest;
+      this.start = start;
+      this.end = end;
+    }
+    
+    @Override
+    public void run() {
+      for (int i = this.start; i < this.end; ++i) {
+        TransactionID transaction = new TransactionID(i);
+        this.persistor.updateWithNewMessage(this.client, transaction, this.oldest);
+      }
+    }
   }
 }
