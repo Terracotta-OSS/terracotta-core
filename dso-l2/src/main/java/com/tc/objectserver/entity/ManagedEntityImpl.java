@@ -18,7 +18,6 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ReplicableActiveServerEntity;
-import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityUserException;
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -36,7 +35,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   // NOTE:  This may be removed in the future if we change how we access the config from the ServerEntityService but
   //  it presently holds the config we used when we first created passiveServerEntity (if it isn't null).  It is used
   //  when we promote to an active.
-  private byte[] configuration;
+  private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
                     RequestProcessor process, 
@@ -134,21 +133,21 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private void createEntity(ServerEntityRequest createEntityRequest) {
-    configuration = createEntityRequest.getPayload();
+    constructorInfo = createEntityRequest.getPayload();
     CommonServerEntity entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " already exists.");
       } else {
-        this.activeServerEntity = factory.createActiveEntity(registry, configuration);
+        this.activeServerEntity = factory.createActiveEntity(registry, constructorInfo);
         entityToCreate = this.activeServerEntity;
       }
     } else {
       if (null != this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " already exists.");
       } else {
-        this.passiveServerEntity = factory.createPassiveEntity(registry, configuration);
+        this.passiveServerEntity = factory.createPassiveEntity(registry, constructorInfo);
         // Store the configuration in case we promote.
         entityToCreate = this.passiveServerEntity;
       }
@@ -241,7 +240,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     
     this.isInActiveState = true;
     if (null != this.passiveServerEntity) {
-      this.activeServerEntity = factory.createActiveEntity(this.registry, configuration);
+      this.activeServerEntity = factory.createActiveEntity(this.registry, constructorInfo);
       this.activeServerEntity.loadExisting();
       this.passiveServerEntity = null;
     }
@@ -250,7 +249,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void sync(NodeID passive, GroupManager mgr) throws GroupException {
-    mgr.sendTo(passive, new PassiveSyncMessage(id, version, configuration));
+    mgr.sendTo(passive, new PassiveSyncMessage(id, version, constructorInfo));
 // TODO:  This is a stub, the real implementation is to be designed
 // iterate through all the concurrency keys of an entity
     if (activeServerEntity instanceof ReplicableActiveServerEntity) {
@@ -270,21 +269,21 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private void loadExisting(ServerEntityRequest loadEntityRequest) {
-    configuration = loadEntityRequest.getPayload();
+    constructorInfo = loadEntityRequest.getPayload();
     CommonServerEntity entityToLoad = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " already exists.");
       } else {
-        this.activeServerEntity = factory.createActiveEntity(registry, configuration);
+        this.activeServerEntity = factory.createActiveEntity(registry, constructorInfo);
         entityToLoad = this.activeServerEntity;
       }
     } else {
       if (null != this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " already exists.");
       } else {
-        this.passiveServerEntity = factory.createPassiveEntity(registry, configuration);
+        this.passiveServerEntity = factory.createPassiveEntity(registry, constructorInfo);
         // Store the configuration in case we promote.
         entityToLoad = this.passiveServerEntity;
       }
