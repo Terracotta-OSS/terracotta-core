@@ -89,7 +89,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     }
 
     @Override
-    public synchronized InvokeFuture invoke() {
+    public synchronized InvokeFuture<byte[]> invoke() {
       checkInvoked();
       invoked = true;
       return invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, this.payload);
