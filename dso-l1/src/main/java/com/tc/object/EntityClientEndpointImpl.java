@@ -18,6 +18,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
   private final EntityDescriptor entityDescriptor;
   private final Runnable closeHook;
   private EndpointDelegate delegate;
+  private boolean isOpen;
 
   /**
    * @param entityDescriptor The server-side entity and corresponding client-side instance ID.
@@ -31,20 +32,28 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     this.configuration = entityConfiguration;
     Assert.assertNotNull("Endpoint didn't have close hook", closeHook);
     this.closeHook = closeHook;
+    // We start in the open state.
+    this.isOpen = true;
   }
 
   @Override
   public byte[] getEntityConfiguration() {
+    // This is harmless while closed but shouldn't be called so check open.
+    checkEndpointOpen();
     return configuration;
   }
 
   @Override
   public void setDelegate(EndpointDelegate delegate) {
+    // This is harmless while closed but shouldn't be called so check open.
+    checkEndpointOpen();
     Assert.assertNull(this.delegate);
     this.delegate = delegate;
   }
   
   public void handleMessage(byte[] message) {
+    // We technically allow messages to come back from the server, after we are closed, simple because it means that the
+    // server hasn't yet handled the close.
     if (null != this.delegate) {
       this.delegate.handleMessage(message);
     }
@@ -52,6 +61,8 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
 
   @Override
   public InvocationBuilder beginInvoke() {
+    // We can't create new invocations when the endpoint is closed.
+    checkEndpointOpen();
     return new InvocationBuilderImpl();
   }
 
@@ -89,7 +100,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     }
 
     @Override
-    public synchronized InvokeFuture invoke() {
+    public synchronized InvokeFuture<byte[]> invoke() {
       checkInvoked();
       invoked = true;
       return invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, this.payload);
@@ -104,6 +115,8 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
 
   @Override
   public byte[] getExtendedReconnectData() {
+    // TODO:  Determine if we need to limit anything here on closed.  The call can come from another thread so it may not
+    // yet know that we are closed when the call originated.
     byte[] reconnectData = null;
     if (null != this.delegate) {
       reconnectData = this.delegate.createExtendedReconnectData();
@@ -116,15 +129,27 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
 
   @Override
   public void close() {
+    // We can't close twice.
+    checkEndpointOpen();
     this.closeHook.run();
+    // We also need to invalidate ourselves so we don't continue allowing new messages through when disconnecting.
+    this.isOpen = false;
   }
 
   @Override
   public void didCloseUnexpectedly() {
+    // TODO:  Determine if we need to limit anything here on closed.  The call can come from another thread so it may not
+    // yet know that we are closed when the call originated.
     // NOTE:  We do NOT run the close hook in this situation since it is assuming that the close was requested and that the
     // underlying connection is still viable.
     if (null != this.delegate) {
       this.delegate.didDisconnectUnexpectedly();
+    }
+  }
+
+  private void checkEndpointOpen() {
+    if (!this.isOpen) {
+      throw new IllegalStateException("Endpoint closed");
     }
   }
 }
