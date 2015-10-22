@@ -41,10 +41,11 @@ public class PassiveSyncMessage extends AbstractGroupMessage {
     id = new EntityID("", "");
   }
   
-  public PassiveSyncMessage(EntityID id, long version, boolean start) {
-    super(start ? ENTITY_BEGIN : ENTITY_END);
+  public PassiveSyncMessage(EntityID id, long version, byte[] configPayload) {
+    super(configPayload != null ? ENTITY_BEGIN : ENTITY_END);
     this.id = id;
     this.version = version;
+    this.payload = configPayload;
   }
   
   public PassiveSyncMessage(EntityID id, int concurrency, boolean start) {
