@@ -34,11 +34,8 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
 
-  public PassthroughEndpoint(ActiveServerEntity entity) {
-    attach(entity);
+  public PassthroughEndpoint() {
   }
-
-  public PassthroughEndpoint() {}
 
   public void attach(ActiveServerEntity entity) {
     this.entity = entity;
