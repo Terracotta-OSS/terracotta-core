@@ -20,6 +20,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   private final byte[] config;
   private final Runnable onClose;
   private EndpointDelegate delegate;
+  private boolean isOpen;
   
   public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, Runnable onClose) {
     this.connection = passthroughConnection;
@@ -28,26 +29,37 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     this.clientInstanceID = clientInstanceID;
     this.config = config;
     this.onClose = onClose;
+    // We start in the open state.
+    this.isOpen = true;
   }
 
   @Override
   public byte[] getEntityConfiguration() {
+    // This is harmless while closed but shouldn't be called so check open.
+    checkEndpointOpen();
     return this.config;
   }
 
   @Override
   public void setDelegate(EndpointDelegate delegate) {
+    // This is harmless while closed but shouldn't be called so check open.
+    checkEndpointOpen();
     Assert.assertTrue(null == this.delegate);
     this.delegate = delegate;
   }
 
   @Override
   public InvocationBuilder beginInvoke() {
+    // We can't create new invocations when the endpoint is closed.
+    checkEndpointOpen();
     return new PassthroughInvocationBuilder(this.connection, this.entityClass, this.entityName, this.clientInstanceID);
   }
 
   @Override
   public void close() {
+    // We can't close twice.
+    checkEndpointOpen();
+    this.isOpen = false;
     // We need to release this entity.
     PassthroughMessage releaseMessage = PassthroughMessageCodec.createReleaseMessage(this.entityClass, this.entityName, this.clientInstanceID);
     InvokeFuture<byte[]> received = this.connection.sendInternalMessageAfterAcks(releaseMessage);
@@ -87,5 +99,11 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     PassthroughMessage reconnectMessage = PassthroughMessageCodec.createReconnectMessage(this.entityClass, this.entityName, this.clientInstanceID, extendedData);
     // We ignore the return value.
     this.connection.sendInternalMessageAfterAcks(reconnectMessage);
+  }
+
+  private void checkEndpointOpen() {
+    if (!this.isOpen) {
+      throw new IllegalStateException("Endpoint closed");
+    }
   }
 }

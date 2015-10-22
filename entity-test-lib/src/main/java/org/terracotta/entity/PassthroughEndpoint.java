@@ -33,8 +33,11 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   private ActiveServerEntity entity;
   private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
+  private boolean isOpen;
 
   public PassthroughEndpoint() {
+    // We start in the open state.
+    this.isOpen = true;
   }
 
   public void attach(ActiveServerEntity entity) {
@@ -44,17 +47,23 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   @Override
   public byte[] getEntityConfiguration() {
+    // This is harmless while closed but shouldn't be called so check open.
+    checkEndpointOpen();
     return entity.getConfig();
   }
 
   @Override
   public void setDelegate(EndpointDelegate delegate) {
+    // This is harmless while closed but shouldn't be called so check open.
+    checkEndpointOpen();
     Assert.assertNull(this.delegate);
     this.delegate = delegate;
   }
 
   @Override
   public InvocationBuilder beginInvoke() {
+    // We can't create new invocations when the endpoint is closed.
+    checkEndpointOpen();
     return new InvocationBuilderImpl();
   }
 
@@ -131,6 +140,9 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   @Override
   public void close() {
+    // We can't close twice.
+    checkEndpointOpen();
+    this.isOpen = false;
     // In a real implementation, this is where a call to the PlatformService, to clean up, would be.
   }
 
@@ -144,5 +156,11 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
   @Override
   public void didCloseUnexpectedly() {
     Assert.fail("Not expecting this close");
+  }
+
+  private void checkEndpointOpen() {
+    if (!this.isOpen) {
+      throw new IllegalStateException("Endpoint closed");
+    }
   }
 }
