@@ -102,6 +102,11 @@ public class RemoteJMXProcessor implements Sink<CallbackExecuteContext> {
   }
 
   @Override
+  public void setClosed(boolean closed) {
+    throw new UnsupportedOperationException();
+  }
+  
+  @Override
   public void clear() {
     throw new UnsupportedOperationException();
   }

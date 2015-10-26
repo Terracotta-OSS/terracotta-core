@@ -252,6 +252,12 @@ public class ProcessTransactionHandlerTest {
     public void addMultiThreaded(Runnable context) {
       this.runnableQueue.add(context);
     }
+
+    @Override
+    public void setClosed(boolean closed) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
   }
 
 
@@ -274,5 +280,12 @@ public class ProcessTransactionHandlerTest {
     public void addMultiThreaded(VoltronEntityMessage context) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void setClosed(boolean closed) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
+    
+    
+}
 }

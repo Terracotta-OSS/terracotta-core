@@ -77,6 +77,11 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   }
 
   @Override
+  public void setClosed(boolean closed) {
+    this.sink.setClosed(closed);
+  }
+
+  @Override
   public void addMultiThreaded(OrderedEventContext specialized) {
     // Not used in the ordered case.
     throw new UnsupportedOperationException();

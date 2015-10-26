@@ -49,6 +49,8 @@ public class StageImpl<EC> implements Stage<EC> {
   private final boolean        pausable;
 
   private volatile boolean     paused;
+  private volatile boolean     shutdown = true;
+
   /**
    * The Constructor.
    * 
@@ -86,11 +88,19 @@ public class StageImpl<EC> implements Stage<EC> {
 
   @Override
   public void destroy() {
+    shutdown = true;
+    stageQueue.setClosed(true);
     stopThreads();
+    handler.destroy();
   }
 
   @Override
   public void start(ConfigurationContext context) {
+    if (!shutdown) {
+      return;
+    }
+    shutdown = false;
+    stageQueue.setClosed(false);
     handler.initializeContext(context);
     startThreads();
   }
@@ -126,10 +136,13 @@ public class StageImpl<EC> implements Stage<EC> {
 
   private void stopThreads() {
     for (WorkerThread<EC> thread : threads) {
-      thread.shutdown();
       thread.interrupt();
+      try {
+        thread.join();
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
     }
-    handler.destroy();
   }
 
   @Override
@@ -145,7 +158,6 @@ public class StageImpl<EC> implements Stage<EC> {
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
     private final EventHandler<EC> handler;
-    private volatile boolean   shutdownRequested = false;
     private final TCLogger     tcLogger;
     private final int          sleepMs;
     private final boolean      pausable;
@@ -162,14 +174,6 @@ public class StageImpl<EC> implements Stage<EC> {
       this.stageName = stageName;
     }
 
-    public void shutdown() {
-      this.shutdownRequested = true;
-    }
-
-    private boolean shutdownRequested() {
-      return this.shutdownRequested;
-    }
-
     private void handleStageDebugPauses() {
       if (sleepMs > 0) {
         ThreadUtil.reallySleep(sleepMs);
@@ -182,7 +186,7 @@ public class StageImpl<EC> implements Stage<EC> {
 
     @Override
     public void run() {
-      while (!shutdownRequested()) {
+      while (!shutdown || !source.isEmpty()) {
         ContextWrapper<EC> ctxt = null;
         try {
           ctxt = source.poll(pollTime);
@@ -191,16 +195,14 @@ public class StageImpl<EC> implements Stage<EC> {
             ctxt.runWithHandler(handler);
           }
         } catch (InterruptedException ie) {
-          if (shutdownRequested()) { return; }
+          if (shutdown) { continue; }
           throw new TCRuntimeException(ie);
         } catch (EventHandlerException ie) {
-          if (shutdownRequested()) return;
+          if (shutdown) { continue; }
           throw new TCRuntimeException(ie);
         } catch (Exception e) {
           if (isTCNotRunningException(e)) {
-            if (shutdownRequested()) {
-              return;
-            }
+            if (shutdown) { continue; }
             tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
                           + ctxt);
           } else {

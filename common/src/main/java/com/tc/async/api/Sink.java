@@ -62,4 +62,6 @@ public interface Sink<EC> extends Monitorable {
 
   public void clear();
 
+  public void setClosed(boolean closed);
+
 }

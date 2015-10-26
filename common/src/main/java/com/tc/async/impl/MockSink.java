@@ -31,6 +31,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class MockSink<EC> implements Sink<EC> {
 
+  private volatile boolean closed = false;
   public BlockingQueue<EC> queue = new LinkedBlockingQueue<EC>(); // its not bounded
 
   public EC take() {
@@ -42,7 +43,15 @@ public class MockSink<EC> implements Sink<EC> {
   }
 
   @Override
+  public void setClosed(boolean closed) {
+    this.closed = closed;
+  }
+
+  @Override
   public void addSingleThreaded(EC context) {
+    if (closed) {
+      throw new IllegalStateException("closed");
+    }
     try {
       this.queue.put(context);
     } catch (Exception e) {

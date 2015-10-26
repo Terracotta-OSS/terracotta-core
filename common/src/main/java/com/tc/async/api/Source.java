@@ -30,4 +30,5 @@ public interface Source<EC> {
 
   public String getSourceName();
 
+  public boolean isEmpty();
 }

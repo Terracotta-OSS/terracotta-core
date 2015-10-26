@@ -53,6 +53,11 @@ public class TestSink<EC> implements Sink<EC> {
     
   }
 
+  @Override
+  public void setClosed(boolean closed) {
+
+  }
+
   public EC waitForAdd(long millis) throws InterruptedException {
     synchronized (queue) {
       if (queue.size() < 1) {

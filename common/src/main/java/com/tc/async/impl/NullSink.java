@@ -52,6 +52,10 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
+  public void setClosed(boolean closed) {
+  }
+
+  @Override
   public void clear() {
     throw new UnsupportedOperationException();
   }
