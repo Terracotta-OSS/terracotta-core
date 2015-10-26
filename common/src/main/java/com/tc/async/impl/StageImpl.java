@@ -48,6 +48,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final int            sleepMs;
   private final boolean        pausable;
 
+  private volatile boolean     paused;
   /**
    * The Constructor.
    * 
@@ -99,6 +100,17 @@ public class StageImpl<EC> implements Stage<EC> {
     return stageQueue;
   }
 
+  @Override
+  public int pause() {
+    paused = true;
+    return stageQueue.size();
+  }
+
+  @Override
+  public void unpause() {
+    paused = false;
+  }
+ 
   private synchronized void startThreads() {
     for (int i = 0; i < threads.length; i++) {
       String threadName = "WorkerThread(" + name + ", " + i;
@@ -130,7 +142,7 @@ public class StageImpl<EC> implements Stage<EC> {
     return "StageImpl(" + name + ")";
   }
 
-  private static class WorkerThread<EC> extends Thread {
+  private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
     private final EventHandler<EC> handler;
     private volatile boolean   shutdownRequested = false;
@@ -162,7 +174,7 @@ public class StageImpl<EC> implements Stage<EC> {
       if (sleepMs > 0) {
         ThreadUtil.reallySleep(sleepMs);
       }
-      while (pausable && "paused".equalsIgnoreCase(System.getProperty(stageName))) {
+      while (paused || (pausable && "paused".equalsIgnoreCase(System.getProperty(stageName)))) {
         tcLogger.info("Stage paused, sleeping for 1s");
         ThreadUtil.reallySleep(1000);
       }

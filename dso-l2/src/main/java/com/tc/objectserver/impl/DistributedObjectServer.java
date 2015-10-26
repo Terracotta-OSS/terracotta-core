@@ -661,7 +661,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  this.lockManager,
                                                                                                  entityManager,
                                                                                                  processTransactionHandler,
-        new Timer(
+                                                                                                 processTransactionStage_voltron,
+                                                                                                 new Timer(
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                                  reconnectTimeout,

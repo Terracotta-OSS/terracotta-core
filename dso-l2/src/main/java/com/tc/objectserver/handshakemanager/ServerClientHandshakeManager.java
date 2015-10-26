@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.handshakemanager;
 
+import com.tc.async.api.Stage;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
@@ -42,7 +43,6 @@ import com.tc.util.Assert;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
@@ -64,6 +64,7 @@ public class ServerClientHandshakeManager {
   private final LockManager              lockManager;
   private final EntityManager entityManager;
   private final ProcessTransactionHandler transactionHandler;
+  private final Stage<?> messageStage;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
   private final TCLogger                 logger;
@@ -72,7 +73,9 @@ public class ServerClientHandshakeManager {
   private final TCLogger                 consoleLogger;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
-                                      LockManager lockManager, EntityManager entityManager, ProcessTransactionHandler transactionHandler,
+                                      LockManager lockManager, EntityManager entityManager, 
+                                      ProcessTransactionHandler transactionHandler,
+                                      Stage<?> messageStage, 
                                       Timer timer, long reconnectTimeout,
                                       boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
@@ -80,6 +83,7 @@ public class ServerClientHandshakeManager {
     this.lockManager = lockManager;
     this.entityManager = entityManager;
     this.transactionHandler = transactionHandler;
+    this.messageStage = messageStage;
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
     this.persistent = persistent;
@@ -204,10 +208,12 @@ public class ServerClientHandshakeManager {
     // Tell the transaction handler the message to replay any resends we received.
     this.transactionHandler.executeAllResends();
     this.state = State.STARTED;
+    messageStage.unpause();
   }
 
   public synchronized void setStarting(Set<ConnectionID> existingConnections) {
     assertInit();
+    messageStage.pause();
     this.state = State.STARTING;
     if (existingConnections.isEmpty()) {
       start();
