@@ -72,27 +72,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.lockLeaseTimer = taskRunner.newTimer("ClientLockManager Lock Lease Timer");
     this.gcTimer.scheduleWithFixedDelay(new LockGcTimerTask(), gcPeriod, gcPeriod, TimeUnit.MILLISECONDS);
   }
-/*
-  @Override
-  public void cleanup() {
-    this.stateGuard.writeLock().lock();
-    try {
-      checkAndSetstate();
-      for (ClientLock clientLock : locks.values()) {
-        clientLock.cleanup();
-      }
-      locks.clear();
-      remoteLockManager.cleanup();
-      inFlightLockQueries.clear();
-    } finally {
-      this.stateGuard.writeLock().unlock();
-    }
-  }
-  private void checkAndSetstate() {
-    state = state.rejoin_in_progress();
-    runningCondition.signalAll();
-  }
-*/
 
   private ClientLock getOrCreateClientLockState(LockID lock) {
     stateGuard.readLock().lock();
@@ -654,7 +633,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       while (this.state != State.RUNNING) {
         try {
           if (isShutdown()) { throw new TCNotRunningException(); }
-//          if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
           interrupted = true;
@@ -671,7 +649,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
    */
   private void throwExceptionIfNecessary() {
     if (isShutdown()) { throw new TCNotRunningException(); }
-//    if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
   }
 
   /**
@@ -691,16 +668,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
      */
     return this.state == State.PAUSED;
   }
-/*
-  private boolean isRejoinInProgress() {
-    return this.state == State.REJOIN_IN_PROGRESS;
-  }
-  
-  private boolean isPausedOrRejoinInProgress() {
-    State current = this.state;
-    return current == State.PAUSED || current == State.REJOIN_IN_PROGRESS;
-  }
-*/
+
   static enum State {
     RUNNING {
       @Override
@@ -717,12 +685,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
       }
-/*
-      @Override
-      State rejoin_in_progress() {
-        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
-      }
-*/
+
       @Override
       State shutdown() {
         return SHUTDOWN;
@@ -744,12 +707,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
       }
-/*
-      @Override
-      State rejoin_in_progress() {
-        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
-      }
-*/
+
       @Override
       State shutdown() {
         return SHUTDOWN;
@@ -771,12 +729,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       State initialize() {
         return STARTING;
       }
-/*
-      @Override
-      State rejoin_in_progress() {
-        return REJOIN_IN_PROGRESS;
-      }
-*/
+
       @Override
       State shutdown() {
         return SHUTDOWN;
@@ -798,12 +751,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       State initialize() {
         return SHUTDOWN;
       }
-/*
-      @Override
-      State rejoin_in_progress() {
-        return SHUTDOWN;
-      }
-*/
+
       @Override
       State shutdown() {
         return SHUTDOWN;
@@ -815,9 +763,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     abstract State unpause();
 
     abstract State initialize();
-/*
-    abstract State rejoin_in_progress();
-*/
+
     abstract State shutdown();
 
   }
