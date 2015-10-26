@@ -82,6 +82,12 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     }
 
     @Override
+    public InvocationBuilder ackSent() {
+      acks.add(VoltronEntityMessage.Acks.SENT);
+      return this;
+    }
+
+    @Override
     public InvocationBuilder ackReceived() {
       acks.add(VoltronEntityMessage.Acks.RECEIVED);
       return this;

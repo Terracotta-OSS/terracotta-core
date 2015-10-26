@@ -104,7 +104,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public synchronized EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
+  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
     return internalLookup(entityDescriptor, closeHook);
   }
 
@@ -400,7 +400,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     while (!interrupted) {
       try {
         InFlightMessage first = outbound.take();
-        inFlightMessages.put(first.getTransactionID(), first);
+        synchronized (this) {
+          inFlightMessages.put(first.getTransactionID(), first);
+          first.sent();
+        }
         first.send();
       } catch (InterruptedException e) {
         logger.info("ClientRequestManager interrupted! bailing out.");
@@ -505,6 +508,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       }
       if (interrupted) {
         Thread.currentThread().interrupt();
+      }
+    }
+
+    public synchronized void sent() {
+      if (this.pendingAcks.remove(VoltronEntityMessage.Acks.SENT)) {
+        if (this.pendingAcks.isEmpty()) {
+          notifyAll();
+        }
       }
     }
 
