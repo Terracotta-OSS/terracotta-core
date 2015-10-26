@@ -35,6 +35,12 @@ public interface VoltronEntityMessage {
   
   enum Acks {
     /**
+     * Sent when the local client has determined that the message is now "in-flight".  This means that a reconnect during
+     * send will result in this message being re-sent as the reconnect handshake, as opposed to being sent as a new
+     * transaction.
+     */
+    SENT,
+    /**
      * Sent when the active receives the message and after it has enqueued it for execution in the entity.
      */
     RECEIVED,
