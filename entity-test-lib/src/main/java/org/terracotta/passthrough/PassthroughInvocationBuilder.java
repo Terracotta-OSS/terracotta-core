@@ -15,6 +15,7 @@ public class PassthroughInvocationBuilder implements InvocationBuilder {
   private final String entityName;
   private final long clientInstanceID;
   
+  private boolean shouldWaitForSent;
   private boolean shouldWaitForReceived;
   private boolean shouldWaitForCompleted;
   private boolean shouldReplicate;
@@ -26,7 +27,13 @@ public class PassthroughInvocationBuilder implements InvocationBuilder {
     this.entityName = entityName;
     this.clientInstanceID = clientInstanceID;
   }
-  
+
+  @Override
+  public InvocationBuilder ackSent() {
+    this.shouldWaitForSent = true;
+    return this;
+  }
+
   @Override
   public InvocationBuilder ackReceived() {
     this.shouldWaitForReceived = true;
@@ -54,7 +61,7 @@ public class PassthroughInvocationBuilder implements InvocationBuilder {
   @Override
   public InvokeFuture<byte[]> invoke() {
     PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, this.clientInstanceID, this.payload, this.shouldReplicate);
-    return this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForReceived, this.shouldWaitForCompleted);
+    return this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted);
   }
 
 }

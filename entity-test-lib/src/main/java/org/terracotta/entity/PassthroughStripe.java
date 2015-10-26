@@ -184,6 +184,12 @@ public class PassthroughStripe implements ClientCommunicator {
     }
 
     @Override
+    public InvocationBuilder ackSent() {
+      // ACKs ignored in this implementation.
+      return this;
+    }
+
+    @Override
     public InvocationBuilder ackReceived() {
       // ACKs ignored in this implementation.
       return this;

@@ -19,16 +19,18 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   private final boolean shouldWaitForCompleted;
   
   // The active state of the instance after the send.
+  private boolean waitingForSent;
   private boolean waitingForReceive;
   private boolean waitingForComplete;
   private boolean didComplete;
   private byte[] response;
   private EntityException error;
 
-  public PassthroughWait(boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+  public PassthroughWait(boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     this.shouldWaitForReceived = shouldWaitForReceived;
     this.shouldWaitForCompleted = shouldWaitForCompleted;
     
+    this.waitingForSent = shouldWaitForSent;
     this.waitingForReceive = shouldWaitForReceived;
     this.waitingForComplete = shouldWaitForCompleted;
     this.didComplete = false;
@@ -37,7 +39,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   }
   
   public synchronized void waitForAck() {
-    while (this.waitingForReceive || this.waitingForComplete) {
+    while (this.waitingForSent || this.waitingForReceive || this.waitingForComplete) {
       try {
         wait();
       } catch (InterruptedException e) {
@@ -70,6 +72,11 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   @Override
   public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     throw new IllegalStateException("Not supported");
+  }
+
+  public synchronized void sent() {
+    this.waitingForSent = false;
+    notifyAll();
   }
 
   public synchronized void handleAck() {

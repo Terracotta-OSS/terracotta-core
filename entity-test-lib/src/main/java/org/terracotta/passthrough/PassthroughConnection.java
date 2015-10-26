@@ -74,25 +74,29 @@ public class PassthroughConnection implements Connection {
    * @return
    */
   public PassthroughWait sendInternalMessageAfterAcks(PassthroughMessage message) {
+    boolean shouldWaitForSent = true;
     boolean shouldWaitForReceived = true;
     boolean shouldWaitForCompleted = true;
-    return invokeAndWait(message, shouldWaitForReceived, shouldWaitForCompleted);
+    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
   }
 
   /**
    * This entry-point is specifically used for entity-defined action messages.
    */
-  public InvokeFuture<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
-    return invokeAndWait(message, shouldWaitForReceived, shouldWaitForCompleted);
+  public InvokeFuture<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
   }
 
-  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
-    PassthroughWait waiter = new PassthroughWait(shouldWaitForReceived, shouldWaitForCompleted);
+  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
     synchronized(this) {
       long transactionID = this.nextTransactionID;
       this.nextTransactionID += 1;
       message.setTransactionID(transactionID);
       this.inFlight.put(transactionID, waiter);
+      if (shouldWaitForSent) {
+        waiter.sent();
+      }
     }
     byte[] raw = message.asSerializedBytes();
     waiter.saveRawMessageForResend(raw);
