@@ -20,6 +20,7 @@ package com.tc.l2.ha;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
+import com.tc.async.impl.StageController;
 import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
@@ -111,7 +112,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                            this.server.getConnectionIdFactory(),
                                                        this.thisGroupID,
                                                        stripeIDStateManager);
-    final Sink<StateChangedEvent> stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(), 1, MAX_STAGE_SIZE).getSink();
+
+    
+    final Sink<StateChangedEvent> stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController()), 1, MAX_STAGE_SIZE).getSink();
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(electionTimeInSecs),
@@ -147,6 +150,31 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.groupManager.registerForGroupEvents(dispatcher);
 
     passiveListeners.add(new OperatorEventsPassiveServerConnectionListener(nodesStore));
+  }
+
+  private StageController createStageController() {
+    StageController control = new StageController();
+//    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+//    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE);
+//    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    return control;
+  }
+
+  private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager() {
+    final WeightGeneratorFactory wgf = new WeightGeneratorFactory();
+    // TODO::FIXME :: this is probably not the right thing to do since a runnign active might have current gid < curreng
+    // gid in a just turned active because of how things are wired.
+    //
+    // final Sequence gidSequence = gtxm.getGlobalTransactionIDSequence();
+    // wgf.add(new WeightGenerator() {
+    // public long getWeight() {
+    // return gidSequence.current();
+    // }
+    // });
+    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    return wgf;
   }
 
   @Override
