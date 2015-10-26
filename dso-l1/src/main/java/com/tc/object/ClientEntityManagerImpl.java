@@ -11,7 +11,6 @@ import com.google.common.base.Throwables;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -43,7 +42,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private static final int MAX_QUEUED_REQUESTS = 100;
   
   private static enum State {
-    PAUSED, RUNNING, REJOIN_IN_PROGRESS, STARTING, STOPPED
+    PAUSED, RUNNING, STARTING, STOPPED
   }
   
   private final TCLogger logger;
@@ -216,7 +215,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     if (this.state != State.STOPPED) {
-      Assert.assertTrue("Attempt to initiateHandshake: " + this.state, this.state == State.PAUSED || this.state == State.REJOIN_IN_PROGRESS);
+      Assert.assertTrue("Attempt to initiateHandshake: " + this.state, this.state == State.PAUSED);
       this.state = State.STARTING;
     }
     // Walk the objectStoreMap and add reconnect references for any objects found there.
@@ -253,18 +252,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public synchronized void cleanup() {
-    if (state != State.PAUSED) {
-      String message = "cleanup unexpected state: expected " + State.PAUSED + " but found " + state;
-      throw new IllegalStateException(message);
-    }
-    state = State.REJOIN_IN_PROGRESS;
-    objectStoreMap.clear();
-    // Notify anyone waiting for this state.
-    notifyAll();
-  }
-
-  @Override
   public byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException {
     return internalRetrieve(entityDescriptor);
   }
@@ -277,10 +264,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
-    if (State.REJOIN_IN_PROGRESS == this.state) {
-      throw new PlatformRejoinException("Unable to start lookup for EntityDescriptor " + entityDescriptor
-                                        + " due to rejoin in progress state");
-    }
     
     EntityClientEndpoint resolvedEndpoint = null;
     try {
@@ -368,9 +351,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       while (State.RUNNING != this.state) {
         if (State.STOPPED == this.state) {
           throw new TCNotRunningException();
-        }
-        if (State.REJOIN_IN_PROGRESS == this.state) {
-          throw new PlatformRejoinException();
         }
         try {
           wait();

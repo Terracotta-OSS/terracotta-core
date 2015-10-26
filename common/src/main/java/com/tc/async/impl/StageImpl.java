@@ -9,7 +9,6 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.Stage;
-import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
@@ -177,12 +176,6 @@ public class StageImpl<EC> implements Stage<EC> {
             }
             tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
                           + ctxt);
-          } else if (isRejoinInProgressException(e)) {
-            if (shutdownRequested()) {
-              return;
-            }
-            tcLogger.info("Ignoring " + PlatformRejoinException.class.getSimpleName() + " while handling context: "
-                          + ctxt, e);
           } else {
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
@@ -203,15 +196,6 @@ public class StageImpl<EC> implements Stage<EC> {
       e = e.getCause();
     }
     return rootCause instanceof TCNotRunningException;
-  }
-
-  private static boolean isRejoinInProgressException(Throwable e) {
-    Throwable rootCause = null;
-    while (e != null) {
-      rootCause = e;
-      e = e.getCause();
-    }
-    return rootCause instanceof PlatformRejoinException;
   }
 
   @Override

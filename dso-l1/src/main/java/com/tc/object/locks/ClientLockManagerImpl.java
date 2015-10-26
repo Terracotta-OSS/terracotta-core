@@ -3,7 +3,6 @@
  */
 package com.tc.object.locks;
 
-import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientIDProvider;
@@ -72,27 +71,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.gcTimer = taskRunner.newTimer("ClientLockManager LockGC");
     this.lockLeaseTimer = taskRunner.newTimer("ClientLockManager Lock Lease Timer");
     this.gcTimer.scheduleWithFixedDelay(new LockGcTimerTask(), gcPeriod, gcPeriod, TimeUnit.MILLISECONDS);
-  }
-
-  @Override
-  public void cleanup() {
-    this.stateGuard.writeLock().lock();
-    try {
-      checkAndSetstate();
-      for (ClientLock clientLock : locks.values()) {
-        clientLock.cleanup();
-      }
-      locks.clear();
-      remoteLockManager.cleanup();
-      inFlightLockQueries.clear();
-    } finally {
-      this.stateGuard.writeLock().unlock();
-    }
-  }
-
-  private void checkAndSetstate() {
-    state = state.rejoin_in_progress();
-    runningCondition.signalAll();
   }
 
   private ClientLock getOrCreateClientLockState(LockID lock) {
@@ -418,7 +396,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void award(SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     this.stateGuard.readLock().lock();
     try {
-      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(session)) {
+      if (!this.sessionManager.isCurrentSession(session)) {
         this.logger.warn("Ignoring lock award from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
@@ -457,11 +435,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void notified(LockID lock, ThreadID thread) {
     this.stateGuard.readLock().lock();
     try {
-      if (isPausedOrRejoinInProgress()) {
-        this.logger.warn("Ignoring notified call from dead server : " + lock + ", " + thread);
-        return;
-      }
-
       if (this.logger.isDebugEnabled()) {
         this.logger.debug("Got a notification for " + lock + " with thread " + thread);
       }
@@ -488,7 +461,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void recall(SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch) {
     this.stateGuard.readLock().lock();
     try {
-      if (isPausedOrRejoinInProgress() || isShutdown()
+      if (isShutdown()
           || (!sessionManager.isCurrentSession(session))) {
         this.logger.warn("Ignoring recall request from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + ", interestedLevel : " + level + " state: " + state);
@@ -512,7 +485,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
                      ServerLockLevel level) {
     this.stateGuard.readLock().lock();
     try {
-      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(session)) {
+      if (!this.sessionManager.isCurrentSession(session)) {
         this.logger.warn("Ignoring lock refuse from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
@@ -660,7 +633,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       while (this.state != State.RUNNING) {
         try {
           if (isShutdown()) { throw new TCNotRunningException(); }
-          if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
           interrupted = true;
@@ -677,7 +649,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
    */
   private void throwExceptionIfNecessary() {
     if (isShutdown()) { throw new TCNotRunningException(); }
-    if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
   }
 
   /**
@@ -698,15 +669,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     return this.state == State.PAUSED;
   }
 
-  private boolean isRejoinInProgress() {
-    return this.state == State.REJOIN_IN_PROGRESS;
-  }
-
-  private boolean isPausedOrRejoinInProgress() {
-    State current = this.state;
-    return current == State.PAUSED || current == State.REJOIN_IN_PROGRESS;
-  }
-
   static enum State {
     RUNNING {
       @Override
@@ -722,11 +684,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       @Override
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
-      }
-
-      @Override
-      State rejoin_in_progress() {
-        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override
@@ -752,11 +709,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       }
 
       @Override
-      State rejoin_in_progress() {
-        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
-      }
-
-      @Override
       State shutdown() {
         return SHUTDOWN;
       }
@@ -776,11 +728,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       @Override
       State initialize() {
         return STARTING;
-      }
-
-      @Override
-      State rejoin_in_progress() {
-        return REJOIN_IN_PROGRESS;
       }
 
       @Override
@@ -806,38 +753,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       }
 
       @Override
-      State rejoin_in_progress() {
-        return SHUTDOWN;
-      }
-
-      @Override
-      State shutdown() {
-        return SHUTDOWN;
-      }
-    },
-
-    REJOIN_IN_PROGRESS {
-      @Override
-      State pause() {
-        throw new AssertionError("pause is an invalid state transition for " + this);
-      }
-
-      @Override
-      State unpause() {
-        throw new AssertionError("unpause is an invalid state transition for " + this);
-      }
-
-      @Override
-      State initialize() {
-        return STARTING;
-      }
-
-      @Override
-      State rejoin_in_progress() {
-        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
-      }
-
-      @Override
       State shutdown() {
         return SHUTDOWN;
       }
@@ -848,8 +763,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     abstract State unpause();
 
     abstract State initialize();
-
-    abstract State rejoin_in_progress();
 
     abstract State shutdown();
 
@@ -932,8 +845,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         ClientLockManagerImpl.this.recall(session, lock, level, -1, batch);
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
-      } catch (PlatformRejoinException e) {
-        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       }
     }
   }
@@ -973,8 +884,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
             lockGCEventListener.fireLockGCEvent(gcCount);
           }
         }
-      } catch (PlatformRejoinException e) {
-        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
       }

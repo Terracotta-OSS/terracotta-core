@@ -54,18 +54,6 @@ public class TunnelingEventHandler extends AbstractEventHandler<JmxRemoteTunnelM
     this.uuid = uuid;
   }
 
-  @Override
-  public void cleanup() {
-    synchronized (this) {
-      notifyAll();
-      acceptOk = false;
-      synchronized (jmxReadyLock) {
-        sentReadyMessage = false;
-        transportConnected = false;
-      }
-    }
-  }
-
   public MessageChannel getMessageChannel() {
     return channel;
   }
