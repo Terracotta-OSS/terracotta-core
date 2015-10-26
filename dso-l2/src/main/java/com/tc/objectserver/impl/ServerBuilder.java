@@ -53,7 +53,6 @@ import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.StartupLock;
-import com.tc.util.sequence.DGCSequenceProvider;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -84,7 +83,6 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,
                                       StripeIDStateManager stripeStateManager,
-                                      DGCSequenceProvider dgcSequenceProvider,
                                       int electionTimeInSecs, NodesStore nodesStore);
 
   L2Management createL2Management(boolean listenerEnabled, TCServerInfoMBean tcServerInfoMBean,

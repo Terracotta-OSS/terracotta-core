@@ -39,57 +39,6 @@ public class TerracottaOperatorEventFactory {
   }
 
   /**
-   * DGC events
-   */
-  public static TerracottaOperatorEvent createDGCStartedEvent(int gcIteration) {
-    return new TerracottaOperatorEventImpl(
-                                           EventLevel.INFO,
-                                           EventSubsystem.DGC,
-                                           EventType.DGC_PERIODIC_STARTED,
-                                           MessageFormat.format(TerracottaOperatorEventResources.getDGCStartedMessage(),
-                                                                new Object[] { gcIteration }), "dgc started");
-  }
-
-  public static TerracottaOperatorEvent createDGCFinishedEvent(int gcIteration, long beginObjectCount, long collected,
-                                                               long elapsedTime, long endObjectCount) {
-    return new TerracottaOperatorEventImpl(EventLevel.INFO, EventSubsystem.DGC, EventType.DGC_PERIODIC_FINISHED,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getDGCFinishedMessage(), new Object[] { gcIteration, beginObjectCount,
-                                               collected, elapsedTime, endObjectCount }), "dgc finished");
-  }
-
-  public static TerracottaOperatorEvent createDGCCanceledEvent(int gcIteration) {
-    return new TerracottaOperatorEventImpl(EventLevel.INFO, EventSubsystem.DGC, EventType.DGC_PERIODIC_CANCELED,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getDGCCanceledMessage(), new Object[] { gcIteration }), "dgc canceled");
-  }
-
-  public static TerracottaOperatorEvent createInlineDGCCleanupStartedEvent(int gcIteration) {
-    return new TerracottaOperatorEventImpl(EventLevel.INFO, EventSubsystem.DGC, EventType.DGC_INLINE_CLEANUP_STARTED,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getInlineDGCReferenceCleanupStartedMessage(), gcIteration),
-                                           "cleanup started.");
-  }
-
-  public static TerracottaOperatorEvent createInlineDGCCleanupFinishedEvent(int gcIteration, long beginObjectCount,
-                                                                            long collected, long elapsedTime,
-                                                                            long endObjectCount) {
-    return new TerracottaOperatorEventImpl(EventLevel.INFO, EventSubsystem.DGC, EventType.DGC_INLINE_CLEANUP_FINISHED,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                                                    .getInlineDGCReferenceCleanupFinishedMessage(),
-                                                                gcIteration,
-                                                                beginObjectCount, collected, elapsedTime,
-                                                                endObjectCount), "cleanup finished.");
-  }
-
-  public static TerracottaOperatorEvent createInlineDGCCleanupCanceledEvent(int gcIteration) {
-    return new TerracottaOperatorEventImpl(EventLevel.INFO, EventSubsystem.DGC, EventType.DGC_INLINE_CLEANUP_CANCELED,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getInlineDGCReferenceCleanupCanceledMessage(), gcIteration),
-                                           "cleanup canceled.");
-  }
-
-  /**
    * High availability events
    */
   public static TerracottaOperatorEvent createNodeConnectedEvent(String nodeName) {

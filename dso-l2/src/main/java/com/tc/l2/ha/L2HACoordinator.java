@@ -55,7 +55,6 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -88,7 +87,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          WeightGeneratorFactory weightGeneratorFactory,
                          L2ConfigurationSetupManager configurationSetupManager,
                          GroupID thisGroupID, StripeIDStateManager stripeIDStateManager,
-                         DGCSequenceProvider dgcSequenceProvider,
                          int electionTimInSecs,
                          NodesStore nodesStore) {
     this.consoleLogger = consoleLogger;
@@ -98,14 +96,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.configSetupManager = configurationSetupManager;
 
     init(stageManager, clusterStatePersistor,
-        weightGeneratorFactory, stripeIDStateManager,
-        dgcSequenceProvider, electionTimInSecs, nodesStore);
+        weightGeneratorFactory, stripeIDStateManager, electionTimInSecs, nodesStore);
   }
 
   private void init(StageManager stageManager, ClusterStatePersistor statePersistor,
                     WeightGeneratorFactory weightGeneratorFactory,
                     StripeIDStateManager stripeIDStateManager,
-                    DGCSequenceProvider dgcSequenceProvider,
                     int electionTimeInSecs,
                     NodesStore nodesStore) {
 

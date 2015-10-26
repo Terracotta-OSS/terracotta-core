@@ -41,7 +41,6 @@ import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
@@ -97,7 +96,6 @@ public class L2Management extends TerracottaManagement {
   protected final L2ConfigurationSetupManager configurationSetupManager;
   private final TCServerInfoMBean             tcServerInfo;
   private final TCDumper                      tcDumper;
-  private final ObjectManagementMonitor       objectManagementBean;
   protected final int                         jmxPort;
   protected final InetAddress                 bindAddress;
   private final Sink                          remoteEventsSink;
@@ -124,14 +122,6 @@ public class L2Management extends TerracottaManagement {
     this.remoteEventsSink = remoteEventsSink;
     this.mBeanServer = ManagementFactory.getPlatformMBeanServer();
     this.securityManager = securityManager;
-
-    try {
-      objectManagementBean = new ObjectManagementMonitor();
-    } catch (NotCompliantMBeanException ncmbe) {
-      throw new TCRuntimeException(
-                                   "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
-                                   ncmbe);
-    }
 
     registerMBeans();
   }
@@ -299,15 +289,10 @@ public class L2Management extends TerracottaManagement {
     return jmxConnectorServer;
   }
 
-  public ObjectManagementMonitor findObjectManagementMonitorMBean() {
-    return objectManagementBean;
-  }
-
   protected void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
-    mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
     mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 

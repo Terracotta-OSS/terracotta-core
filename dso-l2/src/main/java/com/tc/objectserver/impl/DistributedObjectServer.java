@@ -138,7 +138,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.objectserver.api.SequenceNames;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -195,8 +194,6 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.NullThreadIDMapImpl;
 import com.tc.util.runtime.ThreadIDMap;
-import com.tc.util.sequence.DGCSequenceProvider;
-import com.tc.util.sequence.MutableSequence;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
@@ -674,10 +671,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
-    // initialize the garbage collector
-    final MutableSequence dgcSequence = persistor.getSequenceManager()
-        .getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
-    final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                   this.groupCommManager, this.persistor
@@ -685,7 +678,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
                                                                   this.stripeIDStateManager,
-                                                                  dgcSequenceProvider,
                                                                   configSetupManager.getActiveServerGroupForThisL2()
                                                                       .getElectionTimeInSecs(), haConfig
                                                                       .getNodesStore());

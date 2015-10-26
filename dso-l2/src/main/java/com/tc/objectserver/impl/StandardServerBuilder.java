@@ -63,7 +63,6 @@ import com.tc.util.Assert;
 import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.util.sequence.DGCSequenceProvider;
 
 import java.net.InetAddress;
 
@@ -132,12 +131,11 @@ public class StandardServerBuilder implements ServerBuilder {
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              L2ConfigurationSetupManager configurationSetupManager,
                                              StripeIDStateManager stripeStateManager,
-                                             DGCSequenceProvider dgcSequenceProvider,
                                              int electionTimeInSecs, NodesStore nodesStore) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
         weightGeneratorFactory, configurationSetupManager,
         haConfig.getThisGroupID(), stripeStateManager,
-        dgcSequenceProvider, electionTimeInSecs, nodesStore);
+        electionTimeInSecs, nodesStore);
   }
 
   @Override

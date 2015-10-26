@@ -39,25 +39,6 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
     Assert.assertTrue(TerracottaOperatorEventResources.getLongGCMessage().equals(this.resources.getObject("long.gc")));
 
     /**
-     * DGC messages
-     */
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCStartedMessage().equals(this.resources
-                                                                                         .getObject("dgc.started")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCFinishedMessage().equals(this.resources
-                                                                                          .getObject("dgc.finished")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCCanceledMessage().equals(this.resources
-                                                                                          .getObject("dgc.canceled")));
-    /**
-     * Inline DGC
-     */
-    Assert.assertTrue(TerracottaOperatorEventResources.getInlineDGCReferenceCleanupStartedMessage()
-        .equals(this.resources.getObject("inlineDgc.cleanup.started")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getInlineDGCReferenceCleanupFinishedMessage()
-        .equals(this.resources.getObject("inlineDgc.cleanup.finished")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getInlineDGCReferenceCleanupCanceledMessage()
-        .equals(this.resources.getObject("inlineDgc.cleanup.canceled")));
-
-    /**
      * HA Messages
      */
     Assert.assertTrue(TerracottaOperatorEventResources.getNodeAvailabiltyMessage()
