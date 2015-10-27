@@ -156,6 +156,7 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createReconnectMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID, final byte[] extendedData) {
+    Assert.assertTrue(null != extendedData);
     // This is equivalent to a FETCH so we don't care about replication.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.RECONNECT, shouldReplicateToPassives) {

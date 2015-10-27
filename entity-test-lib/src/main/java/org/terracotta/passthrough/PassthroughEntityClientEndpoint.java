@@ -88,9 +88,15 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
 
   @Override
   public byte[] getExtendedReconnectData() {
-    return (null != this.delegate)
-        ? this.delegate.createExtendedReconnectData()
-        : new byte[0];
+    byte[] toReturn = null;
+    if (null != this.delegate) {
+      toReturn = this.delegate.createExtendedReconnectData();
+    }
+    // We can't return a null byte array.
+    if (null == toReturn) {
+      toReturn = new byte[0];
+    }
+    return toReturn;
   }
 
   public void reconnect(byte[] extendedData) {
