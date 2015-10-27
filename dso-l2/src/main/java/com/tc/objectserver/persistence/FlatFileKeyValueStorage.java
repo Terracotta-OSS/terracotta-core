@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import org.terracotta.persistence.KeyValueStorage;
 
 /**
@@ -33,7 +34,7 @@ import org.terracotta.persistence.KeyValueStorage;
  */
 public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Serializable {
   private final HashMap<K, V> storage;
-  private transient Runnable doFlush;
+  private transient FlatFileWrite doFlush;
   
   /**
    * This constructor is only used in the case of serialization.
@@ -46,7 +47,7 @@ public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Ser
   /**
    * This constructor is used when creating the storage for the first time, not from disk.
    */
-  public FlatFileKeyValueStorage(Runnable doFlush) {
+  public FlatFileKeyValueStorage(FlatFileWrite doFlush) {
     this.storage = new HashMap<>();
     this.doFlush = doFlush;
   }
@@ -55,15 +56,14 @@ public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Ser
    * Provided for the deserialization case so that the flush method can be set after loading the object from disk.
    * Note that this will assert if called on an instance which already has a flush callback.
    */
-  public void setFlushCallback(Runnable doFlush) {
+  public void setFlushCallback(FlatFileWrite doFlush) {
     Assert.assertNull(this.doFlush);
     this.doFlush = doFlush;
   }
   
   @Override
   public void clear() {
-    storage.clear();
-    doFlush.run();
+    doFlush.run(makeCallable(()->storage.clear()));
   }
 
   @Override
@@ -83,8 +83,7 @@ public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Ser
 
   @Override
   public void put(K key, V value) {
-    storage.put(key, value);
-    doFlush.run();
+    doFlush.run(()->storage.put(key, value));
   }
 
   @Override
@@ -94,17 +93,12 @@ public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Ser
 
   @Override
   public boolean remove(K key) {
-    boolean didRemove = (null != storage.remove(key));
-    doFlush.run();
-    return didRemove;
+    return doFlush.run(()->(null != storage.remove(key)));
   }
 
   @Override
   public void removeAll(Collection<K> keys) {
-    for (K key : keys) {
-      storage.remove(key);
-    }
-    doFlush.run();
+    doFlush.run(makeCallable(()->keys.stream().forEach(key -> storage.remove(key))));
   }
 
   @Override
@@ -115,5 +109,9 @@ public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Ser
   @Override
   public Collection<V> values() {
     return storage.values();
+  }
+
+  private static Callable<Void> makeCallable(Runnable r) {
+    return ()-> { r.run(); return null; };
   }
 }
