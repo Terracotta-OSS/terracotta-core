@@ -54,10 +54,11 @@ import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
+import com.tc.l2.ha.ServerIdentifierWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
-import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
@@ -653,9 +654,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
 
-    final WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
-                                                                                                     channelManager,
-        host, serverPort);
+
+    final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
+    weightGeneratorFactory.add(new ChannelWeightGenerator(channelManager));
+    weightGeneratorFactory.add(new ServerIdentifierWeightGenerator(host, serverPort));
+    // add a random generator to break tie
+    weightGeneratorFactory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                   this.groupCommManager, this.persistor
