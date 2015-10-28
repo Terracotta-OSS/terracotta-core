@@ -540,7 +540,7 @@ public class ActiveServerIDStateManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, gm, chgSinks[localIndex], config,
-                                            WeightGeneratorFactory.createDefaultFactory(), new TestClusterStatePersistor());
+                                            WeightGeneratorFactory.createTestingFactory(2), new TestClusterStatePersistor());
     chgSinks[localIndex].setStateManager(mgr);
     messageStages[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStages[localIndex].getSink());

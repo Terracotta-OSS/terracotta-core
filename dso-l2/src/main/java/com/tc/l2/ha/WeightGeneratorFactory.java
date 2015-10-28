@@ -24,8 +24,8 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class WeightGeneratorFactory {
-  
   private final List<WeightGenerator> generators = new ArrayList<>();
   
   public static final WeightGenerator RANDOM_WEIGHT_GENERATOR = new WeightGenerator() {
@@ -36,18 +36,9 @@ public class WeightGeneratorFactory {
     }
   };
   
-  public WeightGeneratorFactory() {
-    super();
-  }
-  
   public synchronized void add(WeightGenerator g) {
     Assert.assertNotNull(g);
     generators.add(g);
-  }
-  
-  public synchronized void remove(WeightGenerator g) {
-    Assert.assertNotNull(g);
-    generators.remove(g);
   }
   
   public synchronized long[] generateWeightSequence() {
@@ -66,15 +57,25 @@ public class WeightGeneratorFactory {
     return weights;
   }
   
-  public static WeightGeneratorFactory createDefaultFactory() {
+  /**
+   * A helper used only in tests (and kept here since it is used in a selection of different tests) which creates a generator
+   * factory, populated only with random weight generators.
+   * 
+   * @param generatorsToUse The number of random weight generator instances to add to the factory.
+   * @return A generator which will produce generatorsToUse random weights.
+   */
+  public static WeightGeneratorFactory createTestingFactory(int generatorsToUse) {
     WeightGeneratorFactory wgf = new WeightGeneratorFactory();
-    wgf.add(RANDOM_WEIGHT_GENERATOR);
-    wgf.add(RANDOM_WEIGHT_GENERATOR);
+    for (int i = 0; i < generatorsToUse; ++i) {
+      wgf.add(RANDOM_WEIGHT_GENERATOR);
+    }
     return wgf;
   }
 
+  /**
+   * The interface of any weight generator which wants to be registered in this factory.
+   */
   public static interface WeightGenerator {
     public long getWeight();
   }
-
 }

@@ -554,7 +554,7 @@ public class ActiveServerGroupManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, virtualMgr[localIndex], chgSinks[localIndex], config,
-                                            WeightGeneratorFactory.createDefaultFactory(), new TestClusterStatePersistor());
+                                            WeightGeneratorFactory.createTestingFactory(2), new TestClusterStatePersistor());
     chgSinks[localIndex].setStateManager(mgr);
     return (mgr);
   }
