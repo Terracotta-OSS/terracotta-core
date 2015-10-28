@@ -33,6 +33,7 @@ import org.terracotta.persistence.KeyValueStorage;
 import com.tc.util.Assert;
 import java.io.File;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -42,10 +43,9 @@ import java.util.concurrent.Callable;
  * well as any key-value storage objects or properties maps it returns.
  */
 public class FlatFilePersistentStorage implements IPersistentStorage {
-  private final String path;
   private final File store;
   private FlatFileProperties properties;
-  private HashMap<String, FlatFileKeyValueStorage<?, ?>> maps;
+  private Map<String, FlatFileKeyValueStorage<?, ?>> maps;
   
   private final FlatFileWrite doFlush = new FlatFileWrite() {
     @Override
@@ -76,7 +76,6 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
   };
   
   public FlatFilePersistentStorage(String path) {
-    this.path = path;
     store = new File(path);
   }
   
@@ -109,7 +108,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
   @Override
   public void create() throws IOException {
     this.properties = new FlatFileProperties(doFlush);
-    this.maps = new HashMap<>();
+    this.maps = new ConcurrentHashMap<>();
     // Write the file, for the first time, so that we can attempt to open it later, even if we don't write anything.
     this.doFlush.run(()->null);
   }

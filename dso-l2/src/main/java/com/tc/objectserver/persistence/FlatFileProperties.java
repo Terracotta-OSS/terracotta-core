@@ -19,12 +19,12 @@
 package com.tc.objectserver.persistence;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
  */
-public class FlatFileProperties extends HashMap<String, String> implements Serializable {
+public class FlatFileProperties extends ConcurrentHashMap<String, String> implements Serializable {
   
   private transient FlatFileWrite write;
 
