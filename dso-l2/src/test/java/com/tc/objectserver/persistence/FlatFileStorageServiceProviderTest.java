@@ -22,6 +22,13 @@ import com.tc.test.TCTestCase;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -88,4 +95,50 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
     keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
     assertEquals(null, keyValueStorage.get(1));
   }
+  
+  public void testMultiThreaded() throws Exception {
+//  very dumb random test that makes sure we can do things multi-threaded without blowing up.
+    long consumerID = 1;
+    PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
+    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    IPersistentStorage storage = provider.getService(consumerID, configuration);
+    assertTrue(storage instanceof FlatFilePersistentStorage);
+    storage.create();
+    final KeyValueStorage<Integer, Integer> keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, Integer.class);
+    ExecutorService e = Executors.newFixedThreadPool(5);
+    Runnable mutator = ()-> {
+      int next = 0;
+      while (next < 1000) {
+        keyValueStorage.put(((int)(Math.random() * 100)) % 10, next++);
+      }
+    };
+    AtomicBoolean bool = new AtomicBoolean(true);
+    Callable<Integer> reader = () -> {
+      int count = 0;
+      while (bool.get()) {
+        keyValueStorage.get(((int)(Math.random() * 100)) % 10);
+        count++;
+      }
+      return count;
+    };
+    
+    Future<Integer> r = e.submit(reader);
+    Future<?> w = e.submit(mutator);
+    Future<?> w1 = e.submit(mutator);
+    Future<?> w2 = e.submit(mutator);
+    Future<?> w3 = e.submit(mutator);
+    
+    w.get();
+    w1.get();
+    w2.get();
+    w3.get();
+    bool.set(false);
+    int ec = r.get();
+    Assert.assertThat(ec, Matchers.greaterThan(0));
+    // Recreate the storage and verify that the data is NOT there.
+    storage = provider.getService(consumerID, configuration);
+    storage.open();
+    assertNotNull(storage.getKeyValueStorage("numbers", Integer.class, Integer.class).get(((int)(Math.random() * 100)) % 10));
+    assertEquals(storage.getKeyValueStorage("numbers", Integer.class, Integer.class).size(), 10);
+  } 
 }

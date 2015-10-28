@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.google.common.io.Files;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,6 +31,9 @@ import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
 import com.tc.util.Assert;
+import java.io.File;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -39,58 +43,79 @@ import com.tc.util.Assert;
  * well as any key-value storage objects or properties maps it returns.
  */
 public class FlatFilePersistentStorage implements IPersistentStorage {
-  private final String path;
-  private HashMap<String, String> properties;
-  private HashMap<String, FlatFileKeyValueStorage<?, ?>> maps;
+  private final File store;
+  private FlatFileProperties properties;
+  private Map<String, FlatFileKeyValueStorage<?, ?>> maps;
   
-  private final Runnable doFlush = new Runnable() {
+  private final FlatFileWrite doFlush = new FlatFileWrite() {
     @Override
-    public synchronized void run() {
+    public <T> T run(Callable<T> r) {
+      T result = null;
       try {
-        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(path));
+    synchronized (store) {
+        result = r.call();
+        File temp = File.createTempFile("ffs", ".obj");
+        FileOutputStream file = new FileOutputStream(temp);
+        ObjectOutputStream out = new ObjectOutputStream(file);
         out.writeObject(properties);
         out.writeObject(maps);
+        out.flush();
         out.close();
+        file.flush();
+        file.close();
+        if (!temp.renameTo(store)) {
+          Files.move(temp, store);
+        }
+    }
       } catch (Exception e) {
         // If something happened here, that is a serious bug so we need to assert.
         Assert.failure("Failure flushing FlatFileKeyValueStorage", e);
       }
+      return result;
     }
   };
   
   public FlatFilePersistentStorage(String path) {
-    this.path = path;
+    store = new File(path);
   }
   
   @Override
   @SuppressWarnings("unchecked")
   public void open() throws IOException {
     // Note that we will fail out for FileNotFound and other IOExceptions since those are the checked kinds of failure to open.
+    if (!store.exists()) {
+      throw new IOException("not found");
+    }
     try {
-      ObjectInputStream in = new ObjectInputStream(new FileInputStream(path));
-      this.properties = (HashMap<String, String>) in.readObject();
+      ObjectInputStream in = new ObjectInputStream(new FileInputStream(store));
+      this.properties = (FlatFileProperties)in.readObject();
       this.maps = (HashMap<String, FlatFileKeyValueStorage<?, ?>>) in.readObject();
       in.close();
       for (Map.Entry<String, FlatFileKeyValueStorage<?, ?>> entry : maps.entrySet()) {
         entry.getValue().setFlushCallback(doFlush);
       }
+      this.properties.setWriter(doFlush);
+      System.out.println(properties);
+      System.out.println(maps);
     } catch (ClassNotFoundException e) {
       // ClassNotFoundException is NOT expected so re-throw it as a runtime exception.
       throw new RuntimeException(e);
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
     }
   }
 
   @Override
   public void create() throws IOException {
-    this.properties = new HashMap<>();
-    this.maps = new HashMap<>();
+    this.properties = new FlatFileProperties(doFlush);
+    this.maps = new ConcurrentHashMap<>();
     // Write the file, for the first time, so that we can attempt to open it later, even if we don't write anything.
-    this.doFlush.run();
+    this.doFlush.run(()->null);
   }
 
   @Override
   public void close() {
-    doFlush.run();
+    doFlush.run(()->null);
   }
 
   @Override
@@ -102,28 +127,34 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
   @SuppressWarnings("unchecked")
   public synchronized <K, V> KeyValueStorage<K, V> getKeyValueStorage(String name, Class<K> keyClass, Class<V> valueClass) {
     // It appears as though we often don't create these, ahead-of-time.
+    synchronized (store) {
     if (!maps.containsKey(name)) {
       FlatFileKeyValueStorage<K, V> storage = new FlatFileKeyValueStorage<>(doFlush);
       maps.put(name, storage);
     }
     return (KeyValueStorage<K, V>) maps.get(name);
+    }
   }
 
   @Override
   public synchronized <K, V> KeyValueStorage<K, V> createKeyValueStorage(String name, Class<K> keyClass, Class<V> valueClass) {
+    synchronized (store) {
     if (!maps.containsKey(name)) {
       FlatFileKeyValueStorage<K, V> storage = new FlatFileKeyValueStorage<>(doFlush);
       maps.put(name, storage);
       return storage;
     }
     return (KeyValueStorage<K, V>)maps.get(name);
+    }
   }
 
   @Override
   public <K, V> KeyValueStorage<K, V> destroyKeyValueStorage(String name) {
+    synchronized (store) {
     KeyValueStorage<K, V> storage =  (KeyValueStorage<K, V>)maps.get(name);
     maps.remove(name);
     return storage;
+    }
   }  
 
   @Override
@@ -132,7 +163,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
 
       @Override
       public void commit() {
-        doFlush.run();
+        doFlush.run(()->null);
       }
 
       @Override
