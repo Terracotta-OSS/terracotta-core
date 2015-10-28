@@ -26,7 +26,6 @@ import com.google.common.base.Throwables;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.exception.TCNotRunningException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -55,11 +54,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ClientEntityManagerImpl implements ClientEntityManager {
   private static final int MAX_PENDING_REQUESTS = 5000;
   private static final int MAX_QUEUED_REQUESTS = 100;
-  
-  private static enum State {
-    PAUSED, RUNNING, STARTING, STOPPED
-  }
-  
   private final TCLogger logger;
   
   private final ClientMessageChannel channel;
@@ -68,8 +62,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final BlockingQueue<InFlightMessage> outbound;
   private final Semaphore requestTickets;
   private final AtomicLong currentTransactionID;
-  
-  private volatile State state;
+
+  private final ClientEntityStateManager stateManager;
   private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint> objectStoreMap;
 
   
@@ -88,8 +82,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.outbound = new LinkedBlockingQueue<InFlightMessage>(MAX_QUEUED_REQUESTS);
     this.requestTickets = new Semaphore(MAX_PENDING_REQUESTS);
     this.currentTransactionID = new AtomicLong();
-    
-    this.state = State.RUNNING;
+    this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint>(10240, 0.75f, 128);
     
     // TODO:  This constructor should not be starting a thread so we probably want some external methods to manage the
@@ -165,7 +158,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
-    out.duplicateAndIndent().indent().print(this.state).flush();
+    out.duplicateAndIndent().indent().print(this.stateManager.getCurrentState()).flush();
     out.duplicateAndIndent().indent().print("inFlightMessages size: ").print(Integer.valueOf(this.inFlightMessages.size())).flush();
     out.duplicateAndIndent().indent().print("outbound size: ").print(Integer.valueOf(this.outbound.size())).flush();
     out.duplicateAndIndent().indent().print("objectStoreMap size: ").print(Integer.valueOf(this.objectStoreMap.size())).flush();
@@ -213,26 +206,17 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public synchronized void pause() {
-    Assert.assertTrue("Attempt to pause while PAUSED: " + this.state, State.PAUSED != this.state);
-    this.state = State.PAUSED;
-    // Notify anyone waiting for this state.
-    notifyAll();
+    stateManager.pause();
   }
 
   @Override
   public synchronized void unpause() {
-    Assert.assertTrue("Attempt to unpause while RUNNING: " + this.state, State.RUNNING != this.state);
-    this.state = State.RUNNING;
-    // Notify anyone waiting for this state.
-    notifyAll();
+    stateManager.running();
   }
 
   @Override
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
-    if (this.state != State.STOPPED) {
-      Assert.assertTrue("Attempt to initiateHandshake: " + this.state, this.state == State.PAUSED);
-      this.state = State.STARTING;
-    }
+    stateManager.start();
     // Walk the objectStoreMap and add reconnect references for any objects found there.
     for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
       EntityID entityID = descriptor.getEntityID();
@@ -254,10 +238,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public synchronized void shutdown(boolean fromShutdownHook) {
-    this.state = State.STOPPED;
-    // Notify anyone waiting for this state.
-    notifyAll();
-    
+    stateManager.stop();
     // We also want to notify any end-points that they have been disconnected.
     for(EntityClientEndpoint endpoint : this.objectStoreMap.values()) {
       endpoint.didCloseUnexpectedly();
@@ -279,7 +260,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
-    
+
     EntityClientEndpoint resolvedEndpoint = null;
     try {
       byte[] config = internalRetrieve(entityDescriptor);
@@ -325,8 +306,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private void internalRelease(EntityDescriptor entityDescriptor) throws EntityException {
-    waitUntilRunning();
-    
+    stateManager.waitUntilRunning();
+
     // We will immediately remove this from our map so that we don't try to service new calls _from_ the server while we
     //  are trying to release.
     this.objectStoreMap.remove(entityDescriptor);
@@ -357,30 +338,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return result;
   }
 
-  /**
-   * TODO:  Which operations need to wait on this?  Is it both outgoing calls _and_ incoming acks?
-   */
-  private synchronized void waitUntilRunning() {
-    boolean isInterrupted = false;
-    try {
-      while (State.RUNNING != this.state) {
-        if (State.STOPPED == this.state) {
-          throw new TCNotRunningException();
-        }
-        try {
-          wait();
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
-        }
-      }
-    } finally {
-      Util.selfInterruptIfNeeded(isInterrupted);
-    }
-  }
-
   private byte[] internalRetrieve(EntityDescriptor entityDescriptor) throws EntityException {
-    waitUntilRunning();
-    
+    stateManager.waitUntilRunning();
+
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
     // We don't care about whether a "FETCH" is replicated.
