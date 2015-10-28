@@ -89,7 +89,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
     try {
       ObjectInputStream in = new ObjectInputStream(new FileInputStream(store));
       this.properties = (FlatFileProperties)in.readObject();
-      this.maps = (HashMap<String, FlatFileKeyValueStorage<?, ?>>) in.readObject();
+      this.maps = (Map<String, FlatFileKeyValueStorage<?, ?>>) in.readObject();
       in.close();
       for (Map.Entry<String, FlatFileKeyValueStorage<?, ?>> entry : maps.entrySet()) {
         entry.getValue().setFlushCallback(doFlush);
