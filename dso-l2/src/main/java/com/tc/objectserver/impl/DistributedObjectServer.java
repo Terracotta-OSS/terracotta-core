@@ -56,6 +56,7 @@ import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.ServerIdentifierWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -201,6 +202,7 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -659,7 +661,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     weightGeneratorFactory.add(new ChannelWeightGenerator(channelManager));
     weightGeneratorFactory.add(new ServerIdentifierWeightGenerator(host, serverPort));
     // add a random generator to break tie
-    weightGeneratorFactory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    weightGeneratorFactory.add(new RandomWeightGenerator(new SecureRandom()));
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                   this.groupCommManager, this.persistor

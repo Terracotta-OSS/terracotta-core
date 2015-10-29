@@ -29,7 +29,7 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
@@ -63,6 +63,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
+
 
 public class ActiveServerGroupManagerTest extends TCTestCase {
 
@@ -554,7 +555,7 @@ public class ActiveServerGroupManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, virtualMgr[localIndex], chgSinks[localIndex], config,
-                                            WeightGeneratorFactory.createTestingFactory(2), new TestClusterStatePersistor());
+        RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
     chgSinks[localIndex].setStateManager(mgr);
     return (mgr);
   }

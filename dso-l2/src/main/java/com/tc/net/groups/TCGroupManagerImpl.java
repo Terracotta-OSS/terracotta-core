@@ -30,6 +30,7 @@ import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
@@ -98,6 +99,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -113,6 +115,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyChangeListener {
   private static final TCLogger                             logger                      = TCLogging
@@ -243,7 +246,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         return System.currentTimeMillis() - start;
       }
     });
-    factory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    factory.add(new RandomWeightGenerator(new SecureRandom()));
   }
 
   private void init(TCSocketAddress socketAddress) {

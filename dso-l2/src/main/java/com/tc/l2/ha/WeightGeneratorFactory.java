@@ -20,22 +20,13 @@ package com.tc.l2.ha;
 
 import com.tc.util.Assert;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class WeightGeneratorFactory {
   private final List<WeightGenerator> generators = new ArrayList<>();
-  
-  public static final WeightGenerator RANDOM_WEIGHT_GENERATOR = new WeightGenerator() {
-    @Override
-    public long getWeight() {
-      SecureRandom r = new SecureRandom();
-      return r.nextLong();
-    }
-  };
-  
+
   public synchronized void add(WeightGenerator g) {
     Assert.assertNotNull(g);
     generators.add(g);
@@ -55,21 +46,6 @@ public class WeightGeneratorFactory {
       weights[i] = Long.MAX_VALUE;
     }
     return weights;
-  }
-  
-  /**
-   * A helper used only in tests (and kept here since it is used in a selection of different tests) which creates a generator
-   * factory, populated only with random weight generators.
-   * 
-   * @param generatorsToUse The number of random weight generator instances to add to the factory.
-   * @return A generator which will produce generatorsToUse random weights.
-   */
-  public static WeightGeneratorFactory createTestingFactory(int generatorsToUse) {
-    WeightGeneratorFactory wgf = new WeightGeneratorFactory();
-    for (int i = 0; i < generatorsToUse; ++i) {
-      wgf.add(RANDOM_WEIGHT_GENERATOR);
-    }
-    return wgf;
   }
 
   /**

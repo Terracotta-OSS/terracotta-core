@@ -62,6 +62,7 @@ import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
@@ -165,8 +166,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     // return gidSequence.current();
     // }
     // });
-    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
-    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    wgf.add(new RandomWeightGenerator(new SecureRandom()));
+    wgf.add(new RandomWeightGenerator(new SecureRandom()));
     return wgf;
   }
 

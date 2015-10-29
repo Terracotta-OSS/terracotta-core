@@ -30,7 +30,7 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerConfig;
@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.TestCase;
+
 
 public class ActiveServerIDStateManagerTest extends TCTestCase {
 
@@ -540,7 +541,7 @@ public class ActiveServerIDStateManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, gm, chgSinks[localIndex], config,
-                                            WeightGeneratorFactory.createTestingFactory(2), new TestClusterStatePersistor());
+        RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
     chgSinks[localIndex].setStateManager(mgr);
     messageStages[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStages[localIndex].getSink());
