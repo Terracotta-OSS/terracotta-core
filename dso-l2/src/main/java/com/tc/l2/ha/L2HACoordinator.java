@@ -161,22 +161,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     return control;
   }
 
-  private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager() {
-    final WeightGeneratorFactory wgf = new WeightGeneratorFactory();
-    // TODO::FIXME :: this is probably not the right thing to do since a runnign active might have current gid < curreng
-    // gid in a just turned active because of how things are wired.
-    //
-    // final Sequence gidSequence = gtxm.getGlobalTransactionIDSequence();
-    // wgf.add(new WeightGenerator() {
-    // public long getWeight() {
-    // return gidSequence.current();
-    // }
-    // });
-    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
-    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
-    return wgf;
-  }
-
   @Override
   public void start() {
     this.stateManager.startElection();
