@@ -40,9 +40,13 @@ public class TransactionOrderPersistor {
   private static final String CLIENT_LOCAL_LISTS = "client_local_lists";
   private static final String LIST_CONTAINER = "list_container";
   private static final String LIST_KEY = "list_container:key";
+  private static final String LOCAL_VARIABLES = "local_variables";
+  private static final String RECEIVED_TRANSACTION_COUNT = "local_variables:received_transaction_count";
 
   private final KeyValueStorage<NodeID, List<ClientTransaction>> clientLocals;
   private final KeyValueStorage<String, List<ClientTransaction>> listContainer;
+  private final KeyValueStorage<String, Long> localVariables;
+  
 
   // Unchecked and raw warnings because we are trying to use Class<List<?>>, which the compiler doesn't like but has no runtime meaning.
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -56,6 +60,10 @@ public class TransactionOrderPersistor {
     } else {
       // TAB-6411 : Add additional checks to track down an intermittent bug.
       Assert.assertTrue(this.listContainer.get(LIST_KEY) instanceof Vector);
+    }
+    this.localVariables = storageManager.getKeyValueStorage(LOCAL_VARIABLES, String.class, (Class)Long.class);
+    if (!this.localVariables.containsKey(RECEIVED_TRANSACTION_COUNT)) {
+      this.localVariables.put(RECEIVED_TRANSACTION_COUNT, 0L);
     }
   }
 
@@ -79,6 +87,9 @@ public class TransactionOrderPersistor {
       localList = new Vector<>();
       clientLocals.put(source, localList);
     }
+    
+    // Increment the number of received transactions.
+    this.localVariables.put(RECEIVED_TRANSACTION_COUNT, this.localVariables.get(RECEIVED_TRANSACTION_COUNT) + 1);
     
     // Create the new pair.
     ClientTransaction transaction = new ClientTransaction();
@@ -172,5 +183,12 @@ public class TransactionOrderPersistor {
     this.clientLocals.clear();
     this.listContainer.clear();
     this.listContainer.put(LIST_KEY, new Vector<>());
+  }
+
+  /**
+   * @return The number of transactions which have been observed by the persistor (NOT the number persisted).
+   */
+  public long getReceivedTransactionCount() {
+    return this.localVariables.get(RECEIVED_TRANSACTION_COUNT);
   }
 }
