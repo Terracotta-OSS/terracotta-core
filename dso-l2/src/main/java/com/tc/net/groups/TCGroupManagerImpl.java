@@ -31,6 +31,7 @@ import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.RandomWeightGenerator;
+import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
@@ -238,14 +239,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         return members.size();
       }
     });
-    factory.add(new WeightGeneratorFactory.WeightGenerator() {
-      // Uptime weight
-      final long start = System.currentTimeMillis();
-      @Override
-      public long getWeight() {
-        return System.currentTimeMillis() - start;
-      }
-    });
+    factory.add(new ServerUptimeWeightGenerator());
     factory.add(new RandomWeightGenerator(new SecureRandom()));
   }
 
