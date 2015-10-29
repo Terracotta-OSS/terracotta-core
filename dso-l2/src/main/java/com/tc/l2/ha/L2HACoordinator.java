@@ -18,7 +18,6 @@
  */
 package com.tc.l2.ha;
 
-
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.NodesStore;
@@ -62,11 +61,10 @@ import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
 
+public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
   private static final TCLogger logger = TCLogging.getLogger(L2HACoordinator.class);
 
   private final TCLogger                                    consoleLogger;
@@ -121,7 +119,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(electionTimeInSecs),
-                                             createWeightGeneratorFactoryForStateManager(), statePersistor);
+                                             weightGeneratorFactory, statePersistor);
     this.sequenceGenerator = new SequenceGenerator(this);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
@@ -153,22 +151,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.groupManager.registerForGroupEvents(dispatcher);
 
     passiveListeners.add(new OperatorEventsPassiveServerConnectionListener(nodesStore));
-  }
-
-  private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager() {
-    final WeightGeneratorFactory wgf = new WeightGeneratorFactory();
-    // TODO::FIXME :: this is probably not the right thing to do since a runnign active might have current gid < curreng
-    // gid in a just turned active because of how things are wired.
-    //
-    // final Sequence gidSequence = gtxm.getGlobalTransactionIDSequence();
-    // wgf.add(new WeightGenerator() {
-    // public long getWeight() {
-    // return gidSequence.current();
-    // }
-    // });
-    wgf.add(new RandomWeightGenerator(new SecureRandom()));
-    wgf.add(new RandomWeightGenerator(new SecureRandom()));
-    return wgf;
   }
 
   @Override
