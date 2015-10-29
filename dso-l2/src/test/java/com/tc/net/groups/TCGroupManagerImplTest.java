@@ -27,6 +27,7 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
@@ -72,6 +73,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
+
 //TODO: Fix this test to use something other than concrete message types (that incidentally no longer exist)
 public class TCGroupManagerImplTest extends TCTestCase {
 
@@ -112,7 +114,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < n; ++i) {
       StageManager stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler),
                                                        new QueueFactory());
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager, null);
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager, null, RandomWeightGenerator.createTestingFactory(2));
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.emptyList());
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));
@@ -597,25 +599,22 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   public void testVersionCompatibilityCheck() throws Exception {
     PortChooser portChooser = new PortChooser();
-    TCGroupManagerImpl tcGroupManager = spy(new TCGroupManagerImpl(new NullConnectionPolicy(), "localhost",
-        portChooser.chooseRandomPort(), portChooser.chooseRandomPort(),
-        mock(StageManager.class, RETURNS_MOCKS.get()), mock(TCSecurityManager.class)) {
-      @Override
-      protected void initializeWeights(WeightGeneratorFactory weightGeneratorFactory) {
-        weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+    WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
+    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
           @Override
           public long getWeight() {
             return 5;
           }
         });
-        weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
-          @Override
-          public long getWeight() {
-            return 6;
-          }
-        });
+    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
+      @Override
+      public long getWeight() {
+        return 6;
       }
-
+    });
+    TCGroupManagerImpl tcGroupManager = spy(new TCGroupManagerImpl(new NullConnectionPolicy(), "localhost",
+        portChooser.chooseRandomPort(), portChooser.chooseRandomPort(),
+        mock(StageManager.class, RETURNS_MOCKS.get()), mock(TCSecurityManager.class), weightGeneratorFactory) {
       @Override
       protected String getVersion() {
         return "4.2.0";

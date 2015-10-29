@@ -354,7 +354,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), nodes[localIndex].getHost(),
                                                    nodes[localIndex].getPort(), nodes[localIndex].getGroupPort(),
-                                                   stageManager, null);
+                                                   stageManager, null, RandomWeightGenerator.createTestingFactory(2));
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
     stageManager.startAll(context, Collections.emptyList());
     gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));

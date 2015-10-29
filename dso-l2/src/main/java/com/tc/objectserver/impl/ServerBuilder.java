@@ -60,11 +60,11 @@ import java.net.InetAddress;
 
 import javax.management.MBeanServer;
 
-public interface ServerBuilder extends TCDumper, PostInit {
 
+public interface ServerBuilder extends TCDumper, PostInit {
   GroupManager createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID,
-                                      StripeIDStateManager stripeStateManager);
+                                      StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
                                                               LockManager lockMgr, DSOChannelManager channelManager,

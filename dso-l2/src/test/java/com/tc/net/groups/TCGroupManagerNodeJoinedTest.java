@@ -26,6 +26,7 @@ import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.logging.TCLogger;
@@ -53,6 +54,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
@@ -123,7 +125,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.emptyList());
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
@@ -178,7 +180,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.emptyList());
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
@@ -247,7 +249,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.emptyList());
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));

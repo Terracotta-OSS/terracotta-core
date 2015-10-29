@@ -58,6 +58,7 @@ import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.ServerIdentifierWeightGenerator;
+import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.PassiveSyncMessage;
@@ -224,6 +225,7 @@ import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.services.EmptyServiceProviderConfiguration;
 
 import org.terracotta.entity.ServiceProvider;
+
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -646,9 +648,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  restartable,
                                                                                                  consoleLogger);
 
+    // Create the weight generator for the comm manager.
+    final WeightGeneratorFactory commManagerWeightGeneratorFactory = new WeightGeneratorFactory();
+    commManagerWeightGeneratorFactory.add(new ChannelWeightGenerator(channelManager));
+    commManagerWeightGeneratorFactory.add(new ServerUptimeWeightGenerator());
+    // add a random generator to break tie
+    commManagerWeightGeneratorFactory.add(new RandomWeightGenerator(new SecureRandom()));
+
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
-                                                                      this.stripeIDStateManager);
+                                                                      this.stripeIDStateManager, commManagerWeightGeneratorFactory);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
