@@ -57,9 +57,9 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.RandomWeightGenerator;
-import com.tc.l2.ha.ServerIdentifierWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
+import com.tc.l2.ha.TransactionCountWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
@@ -275,6 +275,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private final TaskRunner                       taskRunner;
   private final TerracottaServiceProviderRegistry serviceRegistry;
+  private WeightGeneratorFactory globalWeightGeneratorFactory;
 
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -528,6 +529,25 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(clientTunnelingEventHandler);
     channelManager.addEventListener(this.connectionIdFactory);
 
+    final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
+    // At this point, we can create the weight generator factory we will use for elections and other inter-server consensus decisions.
+    // Generators to produce:
+    // 1)  TransactionCountWeightGenerator - needs the TransactionOrderPersistor.
+    final TransactionCountWeightGenerator transactionCountWeightGenerator = new TransactionCountWeightGenerator(this.persistor.getTransactionOrderPersistor());
+    weightGeneratorFactory.add(transactionCountWeightGenerator);
+    // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
+    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(channelManager);
+    weightGeneratorFactory.add(connectedClientCountWeightGenerator);
+    // 3)  ServerUptimeWeightGenerator.
+    final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator();
+    weightGeneratorFactory.add(serverUptimeWeightGenerator);
+    // 4)  RandomWeightGenerator.
+    final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom());
+    weightGeneratorFactory.add(randomWeightGenerator);
+    // -We can now install the generator as it is built.
+    this.globalWeightGeneratorFactory = weightGeneratorFactory;
+    
+
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
@@ -648,16 +668,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  restartable,
                                                                                                  consoleLogger);
 
-    // Create the weight generator for the comm manager.
-    final WeightGeneratorFactory commManagerWeightGeneratorFactory = new WeightGeneratorFactory();
-    commManagerWeightGeneratorFactory.add(new ChannelWeightGenerator(channelManager));
-    commManagerWeightGeneratorFactory.add(new ServerUptimeWeightGenerator());
-    // add a random generator to break tie
-    commManagerWeightGeneratorFactory.add(new RandomWeightGenerator(new SecureRandom()));
-
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
-                                                                      this.stripeIDStateManager, commManagerWeightGeneratorFactory);
+                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
@@ -665,17 +678,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
 
-
-    final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
-    weightGeneratorFactory.add(new ChannelWeightGenerator(channelManager));
-    weightGeneratorFactory.add(new ServerIdentifierWeightGenerator(host, serverPort));
-    // add a random generator to break tie
-    weightGeneratorFactory.add(new RandomWeightGenerator(new SecureRandom()));
-
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                   this.groupCommManager, this.persistor
                                                                       .getClusterStatePersistor(),
-                                                                  weightGeneratorFactory,
+                                                                      this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
                                                                   this.stripeIDStateManager,
                                                                   dgcSequenceProvider,
