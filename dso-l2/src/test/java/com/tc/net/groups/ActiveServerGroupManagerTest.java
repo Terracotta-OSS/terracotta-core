@@ -29,7 +29,7 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
@@ -63,6 +63,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
+
 
 public class ActiveServerGroupManagerTest extends TCTestCase {
 
@@ -540,8 +541,7 @@ public class ActiveServerGroupManagerTest extends TCTestCase {
 
   private TCGroupManagerImpl createTCGroupManager(Node node) throws Exception {
     StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
-    TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node
-        .getGroupPort(), stageManager, null);
+    TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node.getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
     stageManager.startAll(context, Collections.emptyList());
     return gm;
@@ -554,7 +554,7 @@ public class ActiveServerGroupManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, virtualMgr[localIndex], chgSinks[localIndex], config,
-                                            WeightGeneratorFactory.createDefaultFactory(), new TestClusterStatePersistor());
+        RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
     chgSinks[localIndex].setStateManager(mgr);
     return (mgr);
   }

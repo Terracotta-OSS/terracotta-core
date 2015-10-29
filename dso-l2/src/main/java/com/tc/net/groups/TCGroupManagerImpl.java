@@ -114,6 +114,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyChangeListener {
   private static final TCLogger                             logger                      = TCLogging
                                                                                             .getLogger(TCGroupManagerImpl.class);
@@ -141,7 +142,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final StageManager                                stageManager;
   private final boolean                                     isUseOOOLayer;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
-  private final WeightGeneratorFactory                      weightGeneratorFactory      = new WeightGeneratorFactory();
+  private final WeightGeneratorFactory                      weightGeneratorFactory;
 
   private CommunicationsManager                             communicationsManager;
   private NetworkListener                                   groupListener;
@@ -158,13 +159,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, NodesStore nodesStore, TCSecurityManager securityManager) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, nodesStore, securityManager);
+                            ServerID thisNodeID, NodesStore nodesStore, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, nodesStore, securityManager, weightGenerator);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, NodesStore nodesStore,
-                            TCSecurityManager securityManager) {
+                            TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
@@ -173,11 +174,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
 
-    initializeWeights(weightGeneratorFactory);
-
     L2Config l2DSOConfig = configSetupManager.dsoL2Config();
 
     this.groupPort = l2DSOConfig.tsaGroupPort().getValue();
+    this.weightGeneratorFactory = weightGenerator;
 
     TCSocketAddress socketAddress;
     try {
@@ -214,7 +214,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                            StageManager stageManager, TCSecurityManager securityManager) {
+                            StageManager stageManager, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.securityManager = securityManager;
@@ -222,28 +222,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
     this.version = getVersion();
+    this.weightGeneratorFactory = weightGenerator;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + thisNodeID);
-    initializeWeights(weightGeneratorFactory);
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
-  }
-
-  protected void initializeWeights(WeightGeneratorFactory factory) {
-    factory.add(new WeightGeneratorFactory.WeightGenerator() {
-      @Override
-      public long getWeight() {
-        return members.size();
-      }
-    });
-    factory.add(new WeightGeneratorFactory.WeightGenerator() {
-      // Uptime weight
-      final long start = System.currentTimeMillis();
-      @Override
-      public long getWeight() {
-        return System.currentTimeMillis() - start;
-      }
-    });
-    factory.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
   }
 
   private void init(TCSocketAddress socketAddress) {

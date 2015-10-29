@@ -18,17 +18,18 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.object.net.DSOChannelManager;
+import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
 
-public class ZapNodeProcessorWeightGeneratorFactory extends WeightGeneratorFactory {
-  public ZapNodeProcessorWeightGeneratorFactory(DSOChannelManager channelManager,
-                                                String host, int port) {
-    super();
 
-    add(new ChannelWeightGenerator(channelManager));
-    add(new ServerIdentifierWeightGenerator(host, port));
-    // add a random generator to break tie
-    add(RANDOM_WEIGHT_GENERATOR);
+public class ServerUptimeWeightGenerator implements WeightGenerator {
+  private final long startMillis;
 
+  public ServerUptimeWeightGenerator() {
+    this.startMillis = System.currentTimeMillis();
+  }
+
+  @Override
+  public long getWeight() {
+    return System.currentTimeMillis() - this.startMillis;
   }
 }

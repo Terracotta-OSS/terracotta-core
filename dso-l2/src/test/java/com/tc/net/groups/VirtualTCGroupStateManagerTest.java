@@ -28,7 +28,7 @@ import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerConfig;
@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+
 
 public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
@@ -420,8 +421,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
   private TCGroupManagerImpl createTCGroupManager(Node node) throws Exception {
     StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
-    TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node
-        .getGroupPort(), stageManager, null);
+    TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node.getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
     stageManager.startAll(context, Collections.emptyList());
     return gm;
@@ -437,8 +437,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     sinks[localIndex] = new ChangeSink(localIndex);
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
-    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory
-        .createDefaultFactory(), new TestClusterStatePersistor());
+    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();

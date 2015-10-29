@@ -20,34 +20,16 @@ package com.tc.l2.ha;
 
 import com.tc.util.Assert;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class WeightGeneratorFactory {
-  
   private final List<WeightGenerator> generators = new ArrayList<>();
-  
-  public static final WeightGenerator RANDOM_WEIGHT_GENERATOR = new WeightGenerator() {
-    @Override
-    public long getWeight() {
-      SecureRandom r = new SecureRandom();
-      return r.nextLong();
-    }
-  };
-  
-  public WeightGeneratorFactory() {
-    super();
-  }
-  
+
   public synchronized void add(WeightGenerator g) {
     Assert.assertNotNull(g);
     generators.add(g);
-  }
-  
-  public synchronized void remove(WeightGenerator g) {
-    Assert.assertNotNull(g);
-    generators.remove(g);
   }
   
   public synchronized long[] generateWeightSequence() {
@@ -65,16 +47,11 @@ public class WeightGeneratorFactory {
     }
     return weights;
   }
-  
-  public static WeightGeneratorFactory createDefaultFactory() {
-    WeightGeneratorFactory wgf = new WeightGeneratorFactory();
-    wgf.add(RANDOM_WEIGHT_GENERATOR);
-    wgf.add(RANDOM_WEIGHT_GENERATOR);
-    return wgf;
-  }
 
+  /**
+   * The interface of any weight generator which wants to be registered in this factory.
+   */
   public static interface WeightGenerator {
     public long getWeight();
   }
-
 }

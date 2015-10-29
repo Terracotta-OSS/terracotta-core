@@ -88,9 +88,8 @@ public class StandardServerBuilder implements ServerBuilder {
   @Override
   public GroupManager createGroupCommManager(L2ConfigurationSetupManager configManager,
                                              StageManager stageManager, ServerID serverNodeID,
-                                             StripeIDStateManager stripeStateManager) {
-    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getNodesStore(),
-                                  securityManager);
+                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory) {
+    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getNodesStore(), securityManager, weightGeneratorFactory);
   }
 
   @Override
