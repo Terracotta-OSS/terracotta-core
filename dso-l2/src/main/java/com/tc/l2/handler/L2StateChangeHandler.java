@@ -37,6 +37,9 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
 
   @Override
   public void handleEvent(StateChangedEvent sce) {
+// execute state transition before notifying any listeners.  Listener notification 
+// can happen in any order.  State transition happens in specfic order as dictated 
+// by the stage controller.
     stageManager.transition(context, sce.getOldState(), sce.getCurrentState());
     stateManager.fireStateChangedEvent(sce);
   }

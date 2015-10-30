@@ -28,7 +28,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
@@ -42,13 +41,11 @@ public class ReplicatedTransactionHandler {
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
   private final GroupManager groupManager;
-  private final ActiveToPassiveReplication replication;
   private final TransactionOrderPersistor orderedTransactions;
   private final PassiveSyncFilter filter;
 
-  public ReplicatedTransactionHandler(ActiveToPassiveReplication replication, PassiveSyncFilter filter, TransactionOrderPersistor transactionOrderPersistor, 
+  public ReplicatedTransactionHandler(PassiveSyncFilter filter, TransactionOrderPersistor transactionOrderPersistor, 
       EntityManager manager, EntityPersistor entityPersistor, GroupManager groupManager) {
-    this.replication = replication;
     this.entityManager = manager;
     this.entityPersistor = entityPersistor;
     this.groupManager = groupManager;
@@ -110,8 +107,6 @@ public class ReplicatedTransactionHandler {
         }
 //  when is the right time to send the ack?
         groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
-      } else {
-        replication.acknowledge(rep);
       }
       return;
     } catch (GroupException ge) {

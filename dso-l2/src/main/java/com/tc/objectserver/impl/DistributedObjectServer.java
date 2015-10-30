@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandlerException;
 import com.tc.objectserver.handler.EnterpriseClientHandshakeHandler;
 
 import org.terracotta.entity.ServiceRegistry;
@@ -684,26 +686,32 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 // setup replication    
     final Stage<ReplicationMessage> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
     processor.setReplication(passives); 
     PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
-        new ReplicatedTransactionHandler(passives, psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
+        new ReplicatedTransactionHandler(psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
             this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
+    Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
+        new AbstractEventHandler<ReplicationMessageAck>() {
+          @Override
+          public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
+            passives.acknowledge(context);
+          }
+        }, 1, maxStageSize);
     Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
         psync.getEventHandler(), 1, maxStageSize);
   //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered
     this.groupCommManager.routeMessages(ReplicationMessage.class, new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink()));
-    this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStage.getSink());
+    this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     this.groupCommManager.routeMessages(PassiveSyncMessage.class, passiveSyncStage.getSink());
     
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
     // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
     //  and passive.
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents(processTransactionHandler);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(processor);
     
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
@@ -729,8 +737,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        this.l1Listener.getChannelManager(), this
     );
     toInit.add(this.serverBuilder);
-
-    stageManager.startAll(this.context, toInit);
+//  exclude from startup specific stages that are controlled by the stage controller. 
+    stageManager.startAll(this.context, toInit, 
+        ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
+        ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
+        ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE
+      );
 
     final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);

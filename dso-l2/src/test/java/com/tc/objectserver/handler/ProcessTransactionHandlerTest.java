@@ -145,12 +145,7 @@ public class ProcessTransactionHandlerTest {
   }
 
   @Test
-  public void testChannelManagement() throws Exception {
-    // We want to run in an active mode.
-    StateChangedEvent event = mock(StateChangedEvent.class);
-    when(event.movedToActive()).thenReturn(true);
-    this.processTransactionHandler.l2StateChanged(event);
-    
+  public void testChannelManagement() throws Exception {    
     // Set up the channel.
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getRemoteNodeID()).thenReturn(this.source);

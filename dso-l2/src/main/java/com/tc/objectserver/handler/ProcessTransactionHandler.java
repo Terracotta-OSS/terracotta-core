@@ -19,11 +19,10 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.state.StateChangeListener;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
@@ -51,7 +50,7 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 
 
-public class ProcessTransactionHandler implements StateChangeListener {
+public class ProcessTransactionHandler {
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
   
@@ -74,6 +73,13 @@ public class ProcessTransactionHandler implements StateChangeListener {
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       
       ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+    }
+
+    @Override
+    protected void initialize(ConfigurationContext context) {
+      super.initialize(context); 
+//  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
+      entityManager.enterActiveState();
     }
   };
   public AbstractEventHandler<VoltronEntityMessage> getVoltronMessageHandler() {
@@ -157,16 +163,6 @@ public class ProcessTransactionHandler implements StateChangeListener {
     } else {
       // If there was an exception of any sort, just pass it back as a failure.
       serverEntityRequest.failure(uncaughtException);
-    }
-  }
-
-  @Override
-  public void l2StateChanged(StateChangedEvent sce) {
-    // Interpret the change of state to determine whether entities should be created as active or passive.
-    // Additionally, we may need to promote existing entities, if this is a fail-over.
-    if (sce.movedToActive()) {
-      // For now, this is the only case we use since we default to passive mode and this is where we change to active.
-      entityManager.enterActiveState();
     }
   }
 
