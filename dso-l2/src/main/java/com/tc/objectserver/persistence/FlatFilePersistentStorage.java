@@ -52,21 +52,19 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
     public <T> T run(Callable<T> r) {
       T result = null;
       try {
-    synchronized (store) {
-        result = r.call();
-        File temp = File.createTempFile("ffs", ".obj");
-        FileOutputStream file = new FileOutputStream(temp);
-        ObjectOutputStream out = new ObjectOutputStream(file);
-        out.writeObject(properties);
-        out.writeObject(maps);
-        out.flush();
-        out.close();
-        file.flush();
-        file.close();
-        if (!temp.renameTo(store)) {
-          Files.move(temp, store);
+        synchronized (store) {
+            result = r.call();
+            File temp = File.createTempFile("ffs", ".obj");
+            FileOutputStream file = new FileOutputStream(temp);
+            ObjectOutputStream out = new ObjectOutputStream(file);
+            out.writeObject(properties);
+            out.writeObject(maps);
+            out.flush();
+            out.close();
+            file.flush();
+            file.close();
+            Files.move(temp, store);
         }
-    }
       } catch (Exception e) {
         // If something happened here, that is a serious bug so we need to assert.
         Assert.failure("Failure flushing FlatFileKeyValueStorage", e);
@@ -95,8 +93,6 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
         entry.getValue().setFlushCallback(doFlush);
       }
       this.properties.setWriter(doFlush);
-      System.out.println(properties);
-      System.out.println(maps);
     } catch (ClassNotFoundException e) {
       // ClassNotFoundException is NOT expected so re-throw it as a runtime exception.
       throw new RuntimeException(e);
