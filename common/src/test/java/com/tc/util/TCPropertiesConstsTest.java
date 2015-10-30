@@ -58,7 +58,6 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE);
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE);
 
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_OIDSET_TYPE);

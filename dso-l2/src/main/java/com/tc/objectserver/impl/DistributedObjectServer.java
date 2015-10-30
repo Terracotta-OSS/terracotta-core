@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandlerException;
 import com.tc.objectserver.handler.EnterpriseClientHandshakeHandler;
 
 import org.terracotta.entity.ServiceRegistry;
@@ -138,7 +140,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.objectserver.api.SequenceNames;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -195,8 +196,6 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.NullThreadIDMapImpl;
 import com.tc.util.runtime.ThreadIDMap;
-import com.tc.util.sequence.DGCSequenceProvider;
-import com.tc.util.sequence.MutableSequence;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
@@ -661,7 +660,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  this.lockManager,
                                                                                                  entityManager,
                                                                                                  processTransactionHandler,
-        new Timer(
+                                                                                                 processTransactionStage_voltron,
+                                                                                                 new Timer(
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                                  reconnectTimeout,
@@ -673,10 +673,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
-    // initialize the garbage collector
-    final MutableSequence dgcSequence = persistor.getSequenceManager()
-        .getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
-    final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                   this.groupCommManager, this.persistor
@@ -684,33 +680,38 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
                                                                   this.stripeIDStateManager,
-                                                                  dgcSequenceProvider,
                                                                   configSetupManager.getActiveServerGroupForThisL2()
                                                                       .getElectionTimeInSecs(), haConfig
                                                                       .getNodesStore());
 // setup replication    
     final Stage<ReplicationMessage> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
     processor.setReplication(passives); 
     PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
-        new ReplicatedTransactionHandler(passives, psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
+        new ReplicatedTransactionHandler(psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
             this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
+    Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
+        new AbstractEventHandler<ReplicationMessageAck>() {
+          @Override
+          public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
+            passives.acknowledge(context);
+          }
+        }, 1, maxStageSize);
     Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
         psync.getEventHandler(), 1, maxStageSize);
   //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered
     this.groupCommManager.routeMessages(ReplicationMessage.class, new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink()));
-    this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStage.getSink());
+    this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     this.groupCommManager.routeMessages(PassiveSyncMessage.class, passiveSyncStage.getSink());
     
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
     // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
     //  and passive.
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents(processTransactionHandler);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(processor);
     
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
@@ -736,8 +737,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        this.l1Listener.getChannelManager(), this
     );
     toInit.add(this.serverBuilder);
-
-    stageManager.startAll(this.context, toInit);
+//  exclude from startup specific stages that are controlled by the stage controller. 
+    stageManager.startAll(this.context, toInit, 
+        ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
+        ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
+        ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE
+      );
 
     final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);

@@ -26,8 +26,7 @@ public enum SequenceNames {
   CLIENTID_SEQUENCE_NAME("clientids"),
   OID_STORE_LOG_SEQUENCE_DB_NAME("oid_store_log_sequence"),
   TRANSACTION_SEQUENCE_DB_NAME("transactionsequence"),
-  OBJECTID_SEQUENCE_NAME("objectids"),
-  DGC_SEQUENCE_NAME("dgcSequence");
+  OBJECTID_SEQUENCE_NAME("objectids");
   
   String name;
   

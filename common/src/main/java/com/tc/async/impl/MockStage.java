@@ -52,6 +52,17 @@ public class MockStage implements Stage {
   }
 
   @Override
+  public int pause() {
+//
+    return 0;
+  }
+
+  @Override
+  public void unpause() {
+//
+  }
+
+  @Override
   public String toString() {
     return "MockStage(" + name + ")";
   }

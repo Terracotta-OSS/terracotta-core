@@ -36,33 +36,6 @@ class TerracottaOperatorEventResources {
   }
 
   /**
-   * DGC messages
-   */
-  static String getDGCStartedMessage() {
-    return instance.resources.getString("dgc.started");
-  }
-
-  static String getDGCFinishedMessage() {
-    return instance.resources.getString("dgc.finished");
-  }
-
-  static String getDGCCanceledMessage() {
-    return instance.resources.getString("dgc.canceled");
-  }
-
-  static String getInlineDGCReferenceCleanupStartedMessage() {
-    return instance.resources.getString("inlineDgc.cleanup.started");
-  }
-
-  static String getInlineDGCReferenceCleanupFinishedMessage() {
-    return instance.resources.getString("inlineDgc.cleanup.finished");
-  }
-
-  static String getInlineDGCReferenceCleanupCanceledMessage() {
-    return instance.resources.getString("inlineDgc.cleanup.canceled");
-  }
-
-  /**
    * HA Messages
    */
   static String getNodeAvailabiltyMessage() {

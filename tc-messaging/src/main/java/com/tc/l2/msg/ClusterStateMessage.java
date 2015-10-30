@@ -43,7 +43,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
 
   private long                   nextAvailableObjectID;
   private long                   nextAvailableGID;
-  private long                   nextAvailableDGCId;
   private String                 clusterID;
   private ConnectionID           connectionID;
   private long                   nextAvailableChannelID;
@@ -79,7 +78,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableObjectID = in.readLong();
         nextAvailableGID = in.readLong();
         nextAvailableChannelID = in.readLong();
-        nextAvailableDGCId = in.readLong();
         clusterID = in.readString();
         int size = in.readInt();
         connectionIDs = new HashSet<ConnectionID>(size);
@@ -109,7 +107,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         out.writeLong(nextAvailableObjectID);
         out.writeLong(nextAvailableGID);
         out.writeLong(nextAvailableChannelID);
-        out.writeLong(nextAvailableDGCId);
         out.writeString(clusterID);
         out.writeInt(connectionIDs.size());
         for (ConnectionID id : connectionIDs) {

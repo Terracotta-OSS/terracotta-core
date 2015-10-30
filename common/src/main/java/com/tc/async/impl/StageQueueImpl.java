@@ -45,7 +45,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   private final String            stageName;
   private final TCLogger          logger;
   private final SourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
-
+  private volatile boolean closed = false;
   /**
    * The Constructor.
    * 
@@ -90,9 +90,17 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   }
 
   @Override
+  public void setClosed(boolean closed) {
+    this.closed = closed;
+  }
+
+  @Override
   public void addSingleThreaded(EC context) {
     Assert.assertNotNull(context);
     Assert.assertFalse(context instanceof MultiThreadedEventContext);
+    if (closed) {
+      throw new IllegalStateException("closed");
+    }
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -120,6 +128,9 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   public void addMultiThreaded(EC context) {
     Assert.assertNotNull(context);
     Assert.assertTrue(context instanceof MultiThreadedEventContext);
+    if (closed) {
+      throw new IllegalStateException("closed");
+    }
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -148,6 +159,9 @@ public class StageQueueImpl<EC> implements Sink<EC> {
 
   @Override
   public void addSpecialized(SpecializedEventContext specialized) {
+    if (closed) {
+      throw new IllegalStateException("closed");
+    }
     ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
     boolean interrupted = Thread.interrupted();
     int index = getSourceQueueFor(specialized);
@@ -329,6 +343,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       }
     }
 
+    @Override
     public boolean isEmpty() {
       return this.queue.isEmpty();
     }

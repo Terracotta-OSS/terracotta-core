@@ -145,12 +145,7 @@ public class ProcessTransactionHandlerTest {
   }
 
   @Test
-  public void testChannelManagement() throws Exception {
-    // We want to run in an active mode.
-    StateChangedEvent event = mock(StateChangedEvent.class);
-    when(event.movedToActive()).thenReturn(true);
-    this.processTransactionHandler.l2StateChanged(event);
-    
+  public void testChannelManagement() throws Exception {    
     // Set up the channel.
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getRemoteNodeID()).thenReturn(this.source);
@@ -252,6 +247,12 @@ public class ProcessTransactionHandlerTest {
     public void addMultiThreaded(Runnable context) {
       this.runnableQueue.add(context);
     }
+
+    @Override
+    public void setClosed(boolean closed) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
   }
 
 
@@ -274,5 +275,12 @@ public class ProcessTransactionHandlerTest {
     public void addMultiThreaded(VoltronEntityMessage context) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void setClosed(boolean closed) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
+    
+    
+}
 }

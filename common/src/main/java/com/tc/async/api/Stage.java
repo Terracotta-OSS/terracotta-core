@@ -31,6 +31,10 @@ public interface Stage<EC> extends PrettyPrintable {
 
   public void start(ConfigurationContext context);
 
+  public int pause();
+  
+  public void unpause();
+    
   public String getName();
 
 }

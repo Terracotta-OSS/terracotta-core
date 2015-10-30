@@ -127,13 +127,16 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit) {
+  public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit, String...exclusion) {
     for (PostInit mgr : toInit) {
       mgr.initializeContext(context);
 
     }
+    Arrays.sort(exclusion);
     for (Stage<?> s : stages.values()) {
-      s.start(context);
+      if (Arrays.binarySearch(exclusion, s.getName()) < 0) {
+        s.start(context);
+      }
     }
     started = true;
   }
@@ -163,7 +166,7 @@ public class StageManagerImpl implements StageManager {
   @SuppressWarnings("unchecked")
   @Override
   public  <EC> Stage<EC> getStage(String name, Class<EC> verification) {
-    Assert.assertTrue(this.classVerifications.get(name).equals(verification));
+    Assert.assertTrue(verification.isAssignableFrom(classVerifications.get(name)));
     return (Stage<EC>) stages.get(name);
   }
 

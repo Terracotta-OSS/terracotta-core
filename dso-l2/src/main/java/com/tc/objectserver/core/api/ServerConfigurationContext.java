@@ -82,6 +82,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   
   public static final String ACTIVE_TO_PASSIVE_DRIVER_STAGE                       = "active_to_passive_driver_stage";
   public static final String PASSIVE_REPLICATION_STAGE                            = "passive_replication_stage";
+  public static final String PASSIVE_REPLICATION_ACK_STAGE                            = "passive_replication_ack_stage";
   public static final String PASSIVE_SYNCHRONIZATION_STAGE                        = "passive_synchronization_stage";
   
   // TODO::Move to enterprise

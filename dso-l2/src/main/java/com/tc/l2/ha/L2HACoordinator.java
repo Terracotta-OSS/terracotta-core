@@ -20,6 +20,7 @@ package com.tc.l2.ha;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
+import com.tc.async.impl.StageController;
 import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
@@ -55,7 +56,6 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -88,7 +88,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          WeightGeneratorFactory weightGeneratorFactory,
                          L2ConfigurationSetupManager configurationSetupManager,
                          GroupID thisGroupID, StripeIDStateManager stripeIDStateManager,
-                         DGCSequenceProvider dgcSequenceProvider,
                          int electionTimInSecs,
                          NodesStore nodesStore) {
     this.consoleLogger = consoleLogger;
@@ -98,14 +97,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.configSetupManager = configurationSetupManager;
 
     init(stageManager, clusterStatePersistor,
-        weightGeneratorFactory, stripeIDStateManager,
-        dgcSequenceProvider, electionTimInSecs, nodesStore);
+        weightGeneratorFactory, stripeIDStateManager, electionTimInSecs, nodesStore);
   }
 
   private void init(StageManager stageManager, ClusterStatePersistor statePersistor,
                     WeightGeneratorFactory weightGeneratorFactory,
                     StripeIDStateManager stripeIDStateManager,
-                    DGCSequenceProvider dgcSequenceProvider,
                     int electionTimeInSecs,
                     NodesStore nodesStore) {
 
@@ -115,7 +112,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                            this.server.getConnectionIdFactory(),
                                                        this.thisGroupID,
                                                        stripeIDStateManager);
-    final Sink<StateChangedEvent> stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(), 1, MAX_STAGE_SIZE).getSink();
+
+    
+    final Sink<StateChangedEvent> stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController()), 1, MAX_STAGE_SIZE).getSink();
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(electionTimeInSecs),
@@ -151,6 +150,21 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.groupManager.registerForGroupEvents(dispatcher);
 
     passiveListeners.add(new OperatorEventsPassiveServerConnectionListener(nodesStore));
+  }
+
+  private StageController createStageController() {
+    StageController control = new StageController();
+//  PASSIVE-UNINITIALIZED handle replicate messages right away.  SYNC also needs to be handled
+    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE);
+    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC goes away
+    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
+//  active to start
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    return control;
   }
 
   @Override

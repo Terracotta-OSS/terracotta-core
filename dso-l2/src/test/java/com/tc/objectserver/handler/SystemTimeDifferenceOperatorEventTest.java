@@ -121,7 +121,7 @@ public class SystemTimeDifferenceOperatorEventTest extends TCTestCase {
   private static class TestServerClientHandshakeManager extends ServerClientHandshakeManager {
 
     public TestServerClientHandshakeManager() {
-      super(null, null, null, null, null, null, 0, false, null);
+      super(null, null, null, null, null, null, null, 0, false, null);
     }
 
     @Override

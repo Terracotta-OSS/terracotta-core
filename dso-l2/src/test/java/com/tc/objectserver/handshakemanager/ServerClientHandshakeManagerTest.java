@@ -19,6 +19,7 @@
 
 package com.tc.objectserver.handshakemanager;
 
+import com.tc.async.api.Stage;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,7 +64,7 @@ public class ServerClientHandshakeManagerTest {
     long reconnectTimeout = 1000;
     boolean persistent = true;
     TCLogger consoleLogger = mock(TCLogger.class);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, this.lockManager, entityManager, this.transactionHandler, timer, reconnectTimeout, persistent, consoleLogger);
+    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, this.lockManager, entityManager, this.transactionHandler, mock(Stage.class), timer, reconnectTimeout, persistent, consoleLogger);
   }
 
   @Test

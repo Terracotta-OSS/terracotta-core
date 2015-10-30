@@ -38,8 +38,6 @@ public interface TCPropertiesConsts {
       "l2.objectmanager.loadObjectID.measure.performance", "console.showObjectID", "l2.lfu.debug.enabled",
       "l1.serverarray.objectCreationStrategy.roundRobin.coordinatorLoad", "l2.objectmanager.loadObjectID.fastLoad",
       "ehcache.incoherent.putsBatchSize", "ehcache.incoherent.throttlePutsAtSize",
-      "l2.objectmanager.dgc.young.enabled", "l2.objectmanager.dgc.young.frequencyInMillis",
-      "l2.objectmanager.dgc.enterpriseMarkStageInterval", "l2.objectmanager.dgc.faulting.optimization",
       "l2.cachemanager.enabled", "l2.cachemanager.logging.enabled", "l2.cachemanager.leastCount",
       "l2.cachemanager.percentageToEvict", "l2.cachemanager.sleepInterval", "l2.cachemanager.criticalThreshold",
       "l2.cachemanager.threshold", "l2.cachemanager.monitorOldGenOnly", "l2.cachemanager.criticalObjectThreshold",
@@ -74,8 +72,7 @@ public interface TCPropertiesConsts {
       "l1.cachemanager.leastCount", "l1.cachemanager.percentageToEvict", "l1.cachemanager.sleepInterval",
       "l1.cachemanager.criticalThreshold", "l1.cachemanager.threshold", "l1.cachemanager.monitorOldGenOnly",
       "l1.cachemanager.criticalObjectThreshold", "l1.connect.versionMatchCheck.enabled", "l1.jvm.check.compatibility",
-      "l1.max.connect.retries", "l1.objectmanager.fault.count", "l2.objectmanager.dgc.throttle.timeInMillis",
-      "l2.objectmanager.dgc.throttle.requestsPerThrottle", "l1.objectmanager.fault.count", "l2.serverarray.2pc.enabled",                                     
+      "l1.max.connect.retries", "l1.objectmanager.fault.count", "l1.objectmanager.fault.count", "l2.serverarray.2pc.enabled",                                     
       "l1.transactionmanager.folding.enabled", "l1.transactionmanager.folding.object.limit",
       "l1.transactionmanager.folding.lock.limit", "l1.transactionmanager.folding.debug",
       "l1.objectmanager.remote.maxDNALRUSize", "l1.objectmanager.remote.logging.enabled",
@@ -149,14 +146,6 @@ public interface TCPropertiesConsts {
    *                                  active to passive while synching
    * passive.sync.throttle.timeInMillis - Time to wait before sending the next batch of
    *                                  objects to the passive
-   * dgc.throttle.timeInMillis     - Throttle time for dgc for each cycle for every requestsPerThrottle
-   *                                 requests for references from object manager
-   * dgc.throttle.requestsPerThrottle - Number of objects for which object references are requested
-   *                                 from object manager after which dgc will throttle
-   * dgc.inline.enabled             - Enables/disable inline dgc of CDSMs.
-   * dgc.inline.intervalInSeconds   - Interval in seconds at which to delete objects selected by inline dgc.
-   * dgc.inline.maxObjects          - Maximum inline dgc batch size
-   * dgc.inline.cleanup.delaySeconds - Seconds to delay the start of inline dgc cleanup after a server becomes active
    * l2.objectmanager.invalidate.strong.cache.enabled - Enable/disable invalidations for strong cache
    * </code>
    ********************************************************************************************************************/
@@ -171,10 +160,6 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_MESSAGE_MAXSIZE_MB               = "l2.objectmanager.passive.sync.message.maxSizeInMegaBytes";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                    = "l2.objectmanager.passive.sync.throttle.timeInMillis";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_PENDING_MSGS            = "l2.objectmanager.passive.sync.throttle.maxPendingMessages";
-  public static final String L2_OBJECTMANAGER_DGC_INLINE_ENABLED                            = "l2.objectmanager.dgc.inline.enabled";
-  public static final String L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS                   = "l2.objectmanager.dgc.inline.intervalInSeconds";
-  public static final String L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS                        = "l2.objectmanager.dgc.inline.maxObjects";
-  public static final String L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS              = "l2.objectmanager.dgc.inline.cleanup.delaySeconds";
   public static final String L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED               = "l2.objectmanager.invalidateStrongCache.enabled";
   public static final String L2_OBJECTMANAGER_OIDSET_TYPE                                   = "l2.objectmanager.oidset.type";
   public static final String L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD                = "l2.objectmanager.client.state.verbose.threshold";
@@ -459,7 +444,6 @@ public interface TCPropertiesConsts {
    * Section : Common Logging properties for both L1 and L2
    * Description : Logging attributes that can be overridden.
    * maxBackups       - The maximum number of backup log files to keep maxLogFileSize - The maximum size of a log file in megabytes
-   * longgc.threshold - DGC taking greater than the time mentioned will be logged
    * </code>
    ********************************************************************************************************************/
   public static final String LOGGING_MAXBACKUPS                                             = "logging.maxBackups";

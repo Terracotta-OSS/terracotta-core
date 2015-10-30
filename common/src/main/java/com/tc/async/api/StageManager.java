@@ -27,9 +27,14 @@ import java.util.List;
 
 public interface StageManager extends PrettyPrintable {
   public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize);
-
-  public void startAll(ConfigurationContext context, List<PostInit> toInit);
-
+/**
+ * Start all the stages created on this stage manager.
+ * @param context 
+ * @param toInit these items are executed before stage start
+ * @param exclusion a list of stage names that should not be started.  
+ */
+  public void startAll(ConfigurationContext context, List<PostInit> toInit, String...exclusion);
+  
   public void stopAll();
 
   public <EC> Stage<EC> getStage(String name, Class<EC> verification);
