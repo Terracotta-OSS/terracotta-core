@@ -318,8 +318,9 @@ public class PassthroughConnection implements Connection {
       endpoint.reconnect(extendedData);
     }
     
-    // Re-send the existing in-flight messages.
-    for (PassthroughWait waiter : this.inFlight.values()) {
+    // Re-send the existing in-flight messages - note that we need to take a snapshot of these instead of walking the map since it will change as the responses come back.
+    Vector<PassthroughWait> waiters = new Vector<PassthroughWait>(this.inFlight.values());
+    for (PassthroughWait waiter : waiters) {
       byte[] raw = waiter.resetAndGetMessageForResend();
       this.serverProcess.sendMessageToServer(this, raw);
       waiter.waitForAck();
