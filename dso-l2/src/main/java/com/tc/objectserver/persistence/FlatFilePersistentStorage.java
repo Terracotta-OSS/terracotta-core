@@ -18,13 +18,11 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.google.common.io.Files;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.terracotta.persistence.IPersistentStorage;
@@ -32,6 +30,9 @@ import org.terracotta.persistence.KeyValueStorage;
 
 import com.tc.util.Assert;
 import java.io.File;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -63,7 +64,8 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
             out.close();
             file.flush();
             file.close();
-            Files.move(temp, store);
+            Files.move(temp.toPath(), store.toPath(), 
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         }
       } catch (Exception e) {
         // If something happened here, that is a serious bug so we need to assert.
