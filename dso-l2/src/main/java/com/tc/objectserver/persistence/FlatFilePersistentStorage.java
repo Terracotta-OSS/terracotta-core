@@ -30,7 +30,6 @@ import org.terracotta.persistence.KeyValueStorage;
 
 import com.tc.util.Assert;
 import java.io.File;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Callable;
@@ -55,7 +54,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
       try {
         synchronized (store) {
             result = r.call();
-            File temp = File.createTempFile("ffs", ".obj");
+            File temp = new File(store.getParentFile(), "temp_" + store.getName());
             FileOutputStream file = new FileOutputStream(temp);
             ObjectOutputStream out = new ObjectOutputStream(file);
             out.writeObject(properties);
