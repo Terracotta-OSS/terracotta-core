@@ -35,17 +35,17 @@ import org.terracotta.exception.EntityUserException;
  */
 public class PassthroughStripe implements ClientCommunicator {
 
-  private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service;
+  private final ServerEntityService<? extends ActiveServerEntity<?>, ? extends PassiveServerEntity<?>> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
-  private final Map<String, ActiveServerEntity> activeMap = new HashMap<String, ActiveServerEntity>();
-  private final Map<String, PassiveServerEntity> passiveMap = new HashMap<String, PassiveServerEntity>();
+  private final Map<String, ActiveServerEntity<?>> activeMap = new HashMap<String, ActiveServerEntity<?>>();
+  private final Map<String, PassiveServerEntity<?>> passiveMap = new HashMap<String, PassiveServerEntity<?>>();
   private final Map<String, byte[]> configMap = new HashMap<String, byte[]>();
   private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
   private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
   
   private int nextClientID = 1;
 
-  public PassthroughStripe(ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> service, Class<?> clazz) {
+  public PassthroughStripe(ServerEntityService<? extends ActiveServerEntity<?>, ? extends PassiveServerEntity<?>> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
     this.service = service;
   }
@@ -54,8 +54,8 @@ public class PassthroughStripe implements ClientCommunicator {
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
       // Create the instances.
-      ActiveServerEntity active = service.createActiveEntity(serviceRegistry, configuration);
-      PassiveServerEntity passive = service.createPassiveEntity(serviceRegistry, configuration);
+      ActiveServerEntity<?> active = service.createActiveEntity(serviceRegistry, configuration);
+      PassiveServerEntity<?> passive = service.createPassiveEntity(serviceRegistry, configuration);
       // Set them as new instances.
       active.createNew();
       passive.createNew();
@@ -171,13 +171,13 @@ public class PassthroughStripe implements ClientCommunicator {
 
   private class StripeInvocationBuilder implements InvocationBuilder {
     private final ClientDescriptor clientDescriptor;
-    private final ActiveServerEntity activeServerEntity;
-    private final PassiveServerEntity passiveServerEntity;
+    private final ActiveServerEntity<?> activeServerEntity;
+    private final PassiveServerEntity<?> passiveServerEntity;
     private byte[] payload = null;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
-        ActiveServerEntity activeServerEntity,
-        PassiveServerEntity passiveServerEntity) {
+        ActiveServerEntity<?> activeServerEntity,
+        PassiveServerEntity<?> passiveServerEntity) {
       this.clientDescriptor = clientDescriptor;
       this.activeServerEntity = activeServerEntity;
       this.passiveServerEntity = passiveServerEntity;
@@ -218,11 +218,21 @@ public class PassthroughStripe implements ClientCommunicator {
       byte[] result = null;
       EntityException error = null;
       try {
-        result = activeServerEntity.invoke(clientDescriptor, payload);
-      } catch (Exception e) {
-        error = new EntityUserException(null, null, e);
+        result = sendInvocation(activeServerEntity);
+      } catch (EntityUserException e) {
+        error = e;
       }
       return new ImmediateInvokeFuture<byte[]>(result, error);
+    }
+    
+    private <M extends EntityMessage> byte[] sendInvocation(ActiveServerEntity<M> entity) throws EntityUserException {
+      byte[] result = null;
+      try {
+        result = entity.invoke(clientDescriptor, entity.getMessageDeserializer().deserialize(payload));
+      } catch (Exception e) {
+        throw new EntityUserException(null, null, e);
+      }
+      return result;
     }
   }
 }
