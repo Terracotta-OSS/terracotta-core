@@ -25,6 +25,7 @@ import com.tc.net.groups.GroupManager;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
@@ -33,6 +34,7 @@ import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -46,11 +48,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final long version;
   private final ServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
-  private final ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> factory;
+  private final ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> factory;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
-  private volatile ActiveServerEntity activeServerEntity;
-  private volatile PassiveServerEntity passiveServerEntity;
+  private volatile ActiveServerEntity<EntityMessage> activeServerEntity;
+  private volatile PassiveServerEntity<EntityMessage> passiveServerEntity;
   // NOTE:  This may be removed in the future if we change how we access the config from the ServerEntityService but
   //  it presently holds the config we used when we first created passiveServerEntity (if it isn't null).  It is used
   //  when we promote to an active.
@@ -58,7 +60,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
                     RequestProcessor process, 
-                    ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> factory,
+                    ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
@@ -82,7 +84,13 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public void addRequest(ServerEntityRequest request) {
     ClientDescriptor client = request.getSourceDescriptor();
-    executor.scheduleRequest(this, getEntityDescriptorForSource(client), activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null, request);
+    ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
+    EntityMessage message = null;
+    // We only decode messages for INVOKE requests.
+    if (ServerEntityAction.INVOKE_ACTION == request.getAction()) {
+      message = (null != this.activeServerEntity) ? this.activeServerEntity.getMessageDeserializer().deserialize(request.getPayload()) : null;
+    }
+    executor.scheduleRequest(this, getEntityDescriptorForSource(client), concurrencyStrategy, request, message);
   }
 
   @Override
@@ -139,7 +147,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void destroyEntity(ServerEntityRequest request) {
-    CommonServerEntity commonServerEntity = this.isInActiveState
+    CommonServerEntity<EntityMessage> commonServerEntity = this.isInActiveState
         ? activeServerEntity
         : passiveServerEntity;
     if (null != commonServerEntity) {
@@ -153,7 +161,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void createEntity(ServerEntityRequest createEntityRequest) {
     constructorInfo = createEntityRequest.getPayload();
-    CommonServerEntity entityToCreate = null;
+    CommonServerEntity<EntityMessage> entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
@@ -204,13 +212,15 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        wrappedRequest.complete(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), wrappedRequest.getPayload()));
+        EntityMessage message = this.activeServerEntity.getMessageDeserializer().deserialize(wrappedRequest.getPayload());
+        wrappedRequest.complete(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
       }
     } else {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        this.passiveServerEntity.invoke(wrappedRequest.getPayload());
+        EntityMessage message = this.passiveServerEntity.getMessageDeserializer().deserialize(wrappedRequest.getPayload());
+        this.passiveServerEntity.invoke(message);
         wrappedRequest.complete();
       }
     }
@@ -277,7 +287,9 @@ public class ManagedEntityImpl implements ManagedEntity {
   // send the start message of a concurrency index and of an entity
         mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
         PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
-        executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req);
+        // We don't actually use the message in the direct strategy so this is safe.
+        EntityMessage message = null;
+        executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req, message);
         req.waitFor();
   // send the end message of a concurrency index and of an entity
         mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
@@ -289,7 +301,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void loadExisting(ServerEntityRequest loadEntityRequest) {
     constructorInfo = loadEntityRequest.getPayload();
-    CommonServerEntity entityToLoad = null;
+    CommonServerEntity<EntityMessage> entityToLoad = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
@@ -311,7 +323,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     entityToLoad.loadExisting();
   }
   
-  private static class DirectConcurrencyStrategy implements ConcurrencyStrategy {
+  private static class DirectConcurrencyStrategy implements ConcurrencyStrategy<EntityMessage> {
     private final int target;
 
     public DirectConcurrencyStrategy(int target) {
@@ -319,7 +331,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     @Override
-    public int concurrencyKey(byte[] payload) {
+    public int concurrencyKey(EntityMessage payload) {
       return target;
     }    
   }

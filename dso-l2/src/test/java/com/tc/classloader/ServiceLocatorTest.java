@@ -38,6 +38,8 @@ import java.util.Set;
 import java.util.Vector;
 import org.junit.Ignore;
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageDeserializer;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -192,23 +194,29 @@ public class ServiceLocatorTest {
       }
     };
 
-    //We are not testing service to service hirearchy loading as it is tested in other test case
+    //We are not testing service to service hierarchy loading as it is tested in other test case
 
     //discover entities & inject service!!
+    @SuppressWarnings("rawtypes")
     List<ServerEntityService> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
-    for (ServerEntityService es : entityServices) {
-      ActiveServerEntity activeEntity = es.createActiveEntity(registry, null);
-      //get class name of IClassLoader type
-      String gpl = new String(activeEntity.invoke(null, "gpl".getBytes()));
-      //get class name of the entity loader
-      String gel = new String(activeEntity.invoke(null, "gel".getBytes()));
-      //get reference of the IClassloader loader
-      String plr = new String(activeEntity.invoke(null, "plr".getBytes()));
-      Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
-      //XXX works only because on same VM
-      Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,
-          Integer.toString(System.identityHashCode(parent)));
+    for (@SuppressWarnings("rawtypes") ServerEntityService es : entityServices) {
+      handleService(parent, registry, es);
     }
+  }
+
+  private <A extends EntityMessage> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A>, ?> es) {
+    ActiveServerEntity<A> activeEntity = es.createActiveEntity(registry, null);
+    MessageDeserializer<A> deserializer = activeEntity.getMessageDeserializer();
+    //get class name of IClassLoader type
+    String gpl = new String(activeEntity.invoke(null, deserializer.deserialize("gpl".getBytes())));
+    //get class name of the entity loader
+    String gel = new String(activeEntity.invoke(null, deserializer.deserialize("gel".getBytes())));
+    //get reference of the IClassloader loader
+    String plr = new String(activeEntity.invoke(null, deserializer.deserialize("plr".getBytes())));
+    Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
+    //XXX works only because on same VM
+    Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,
+        Integer.toString(System.identityHashCode(parent)));
   }
 
   @Test
