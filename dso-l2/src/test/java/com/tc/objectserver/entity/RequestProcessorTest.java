@@ -42,6 +42,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityMessage;
 
 /**
  *
@@ -84,7 +85,7 @@ public class RequestProcessorTest {
     Sink<Runnable> dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    int result = instance.scheduleRequest(entity, mock(EntityDescriptor.class), strategy, request);
+    int result = instance.scheduleRequest(entity, mock(EntityDescriptor.class), strategy, request, new ByteArrayMessage(request.getPayload()));
     assertEquals(expResult, result);
     
     verify(dump).addMultiThreaded(Matchers.any());
@@ -104,8 +105,8 @@ public class RequestProcessorTest {
 
       @Override
       public Integer answer(InvocationOnMock invocation) throws Throwable {
-        byte[] payload = (byte[])invocation.getArguments()[0];
-        return arrayToInt(payload);
+        ByteArrayMessage message = (ByteArrayMessage)invocation.getArguments()[0];
+        return message.messageAsInt();
       }
       
     });
@@ -113,12 +114,13 @@ public class RequestProcessorTest {
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     int key = Math.abs((int)(Math.random() * Integer.MAX_VALUE));
     when(request.requiresReplication()).thenReturn(Boolean.FALSE);
-    when(request.getPayload()).thenReturn(intToArray(key));
+    byte[] payload = intToArray(key);
+    when(request.getPayload()).thenReturn(payload);
     Sink dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     int expResult = key;
-    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request, new ByteArrayMessage(request.getPayload()));
     assertEquals(expResult, result);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
@@ -142,7 +144,7 @@ public class RequestProcessorTest {
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request, new ByteArrayMessage(new byte[0]));
     assertEquals(expResult, result);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
@@ -166,7 +168,7 @@ public class RequestProcessorTest {
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.MANAGEMENT_KEY;
-    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request, new ByteArrayMessage(new byte[0]));
     assertEquals(expResult, result);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
@@ -203,7 +205,7 @@ public class RequestProcessorTest {
     instance.setReplication(broker);
     
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    int result = instance.scheduleRequest(entity, descriptor, strategy, request);
+    int result = instance.scheduleRequest(entity, descriptor, strategy, request, new ByteArrayMessage(request.getPayload()));
     assertEquals(expResult, result);
 //  assume args from mocked request are passed.  just testing execution
     verify(broker).replicateMessage(Matchers.eq(descriptor), Matchers.anyLong(), 
@@ -259,4 +261,13 @@ public class RequestProcessorTest {
     
   }
   
+  private static class ByteArrayMessage implements EntityMessage {
+    private final byte[] message;
+    public ByteArrayMessage(byte[] message) {
+      this.message = message;
+    }
+    public int messageAsInt() {
+      return arrayToInt(this.message);
+    }
+  }
 }

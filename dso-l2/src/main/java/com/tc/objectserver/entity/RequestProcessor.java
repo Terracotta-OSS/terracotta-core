@@ -29,6 +29,7 @@ import com.tc.util.Assert;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityMessage;
 
 public class RequestProcessor implements StateChangeListener {
   
@@ -52,10 +53,10 @@ public class RequestProcessor implements StateChangeListener {
     }
   }
   
-  int scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ConcurrencyStrategy strategy, ServerEntityRequest request) {
+  public int scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ConcurrencyStrategy<EntityMessage> strategy, ServerEntityRequest request, EntityMessage message) {
     int index = (strategy == null || request.getAction() != ServerEntityAction.INVOKE_ACTION) ? 
         ConcurrencyStrategy.MANAGEMENT_KEY : 
-        strategy.concurrencyKey(request.getPayload());
+        strategy.concurrencyKey(message);
     Future<Void> token = (passives != null && request.requiresReplication())
         ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload())

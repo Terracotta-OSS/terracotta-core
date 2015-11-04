@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.terracotta.TestEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageDeserializer;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
@@ -43,6 +45,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -82,7 +85,7 @@ public class ManagedEntityImplTest {
 
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, requestMulti, serverEntityService, isInActiveState);
+    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>>) serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
   }
 
@@ -166,11 +169,16 @@ public class ManagedEntityImplTest {
     
     byte[] payload = { 0 };
     byte[] returnValue = { 1 };
-    when(activeServerEntity.invoke(clientDescriptor, payload)).thenReturn(returnValue);
+    when(activeServerEntity.getMessageDeserializer()).thenReturn(new MessageDeserializer(){
+      @Override
+      public EntityMessage deserialize(byte[] payload) {
+        return new EntityMessage() {};
+      }});
+    when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(returnValue);
     ServerEntityRequest invokeRequest = mockInvokeRequest(payload);
     managedEntity.invoke(invokeRequest);
     
-    verify(activeServerEntity).invoke(clientDescriptor, payload);
+    verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
   }
   
