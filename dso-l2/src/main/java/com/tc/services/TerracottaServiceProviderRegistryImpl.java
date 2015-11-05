@@ -32,9 +32,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import org.terracotta.entity.ServiceConfiguration;
 
-/**
- * @author twu
- */
+
 public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceProviderRegistry {
   private static final TCLogger logger = TCLogging.getLogger(TerracottaServiceProviderRegistryImpl.class);
 
@@ -42,7 +40,6 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   //  built-ins.
   private final Set<ServiceProvider> serviceProviders = new HashSet<>();
 
-  @SuppressWarnings("unchecked")
   @Override
   public void initialize(String serverName, TcConfiguration configuration) {
     for (ServiceProviderConfiguration config : configuration.getServiceConfigurations().get(serverName)) {
@@ -74,7 +71,6 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public  void registerBuiltin(ServiceProvider service) {
     registerNewServiceProvider(service);
@@ -85,7 +81,6 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]));
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public <T> T getService(long consumerId, ServiceConfiguration<T> config) {
     for(ServiceProvider provider : serviceProviders) {
