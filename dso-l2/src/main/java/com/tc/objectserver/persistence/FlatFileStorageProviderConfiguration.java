@@ -22,11 +22,8 @@ import java.io.File;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-/**
- *
- */
+
 public class FlatFileStorageProviderConfiguration implements ServiceProviderConfiguration {
-  
   private final File basedir;
 
   public FlatFileStorageProviderConfiguration(File basedir) {
@@ -34,12 +31,11 @@ public class FlatFileStorageProviderConfiguration implements ServiceProviderConf
   }
 
   public File getBasedir() {
-    return basedir;
+    return this.basedir;
   }
 
   @Override
   public Class<? extends ServiceProvider> getServiceProviderType() {
     return FlatFileStorageServiceProvider.class;
   }
-  
 }

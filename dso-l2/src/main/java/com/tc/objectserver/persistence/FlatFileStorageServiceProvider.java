@@ -25,11 +25,15 @@ import org.terracotta.persistence.IPersistentStorage;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.Assert;
+
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import org.terracotta.entity.ServiceProviderConfiguration;
+
 
 /**
  * This service provides a very simple key-value storage persistence system.  It allows key-value data to be serialized to
@@ -43,8 +47,13 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
-    if (configuration instanceof FlatFileStorageProviderConfiguration) {
-      this.directory = ((FlatFileStorageProviderConfiguration)configuration).getBasedir().toPath();
+    // Currently, this provider is created directly so there is no chance of seeing any other kind of provider.
+    // In the future, this may change.
+    Assert.assertTrue(configuration instanceof FlatFileStorageProviderConfiguration);
+    FlatFileStorageProviderConfiguration flatFileConfiguration = (FlatFileStorageProviderConfiguration)configuration;
+    File targetDirectory = flatFileConfiguration.getBasedir();
+    if (null != targetDirectory) {
+      this.directory = targetDirectory.toPath();
     } else {
       this.directory = Paths.get(".").toAbsolutePath().normalize();
     }
