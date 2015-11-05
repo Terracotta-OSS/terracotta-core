@@ -74,8 +74,8 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
     }
   };
   
-  public FlatFilePersistentStorage(String path) {
-    store = new File(path);
+  public FlatFilePersistentStorage(File file) {
+    this.store = file;
   }
   
   @Override
@@ -133,6 +133,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public synchronized <K, V> KeyValueStorage<K, V> createKeyValueStorage(String name, Class<K> keyClass, Class<V> valueClass) {
     synchronized (store) {
@@ -148,9 +149,10 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
   @Override
   public <K, V> KeyValueStorage<K, V> destroyKeyValueStorage(String name) {
     synchronized (store) {
-    KeyValueStorage<K, V> storage =  (KeyValueStorage<K, V>)maps.get(name);
-    maps.remove(name);
-    return storage;
+      @SuppressWarnings("unchecked")
+      KeyValueStorage<K, V> storage =  (KeyValueStorage<K, V>)maps.get(name);
+      maps.remove(name);
+      return storage;
     }
   }  
 

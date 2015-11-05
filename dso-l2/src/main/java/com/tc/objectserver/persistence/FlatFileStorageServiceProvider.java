@@ -64,7 +64,7 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     String filename = "consumer_" + consumerID + ".dat";
-    return configuration.getServiceType().cast(new FlatFilePersistentStorage(this.directory.resolve(filename).toString()));
+    return configuration.getServiceType().cast(new FlatFilePersistentStorage(this.directory.resolve(filename).toFile()));
   }
 
   @Override
