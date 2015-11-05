@@ -25,11 +25,15 @@ import org.terracotta.persistence.IPersistentStorage;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.Assert;
+
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import org.terracotta.entity.ServiceProviderConfiguration;
+
 
 /**
  * This service provides a very simple key-value storage persistence system.  It allows key-value data to be serialized to
@@ -39,12 +43,19 @@ import org.terracotta.entity.ServiceProviderConfiguration;
  */
 public class FlatFileStorageServiceProvider implements ServiceProvider {
   private static final TCLogger logger = TCLogging.getLogger(FlatFileStorageServiceProvider.class);
+  private boolean shouldPersistAcrossRestarts;
   private Path directory;
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
-    if (configuration instanceof FlatFileStorageProviderConfiguration) {
-      this.directory = ((FlatFileStorageProviderConfiguration)configuration).getBasedir().toPath();
+    // Currently, this provider is created directly so there is no chance of seeing any other kind of provider.
+    // In the future, this may change.
+    Assert.assertTrue(configuration instanceof FlatFileStorageProviderConfiguration);
+    FlatFileStorageProviderConfiguration flatFileConfiguration = (FlatFileStorageProviderConfiguration)configuration;
+    this.shouldPersistAcrossRestarts = flatFileConfiguration.shouldPersistAcrossRestarts();
+    File targetDirectory = flatFileConfiguration.getBasedir();
+    if (null != targetDirectory) {
+      this.directory = targetDirectory.toPath();
     } else {
       this.directory = Paths.get(".").toAbsolutePath().normalize();
     }
@@ -55,7 +66,13 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     String filename = "consumer_" + consumerID + ".dat";
-    return configuration.getServiceType().cast(new FlatFilePersistentStorage(this.directory.resolve(filename).toString()));
+    File file = this.directory.resolve(filename).toFile();
+    // If this is being configured as non-restartable, we want to delete the file before anyone tries to use it.
+    // However, this means that a given instance can be closed and re-opened, within the same run, without issue.
+    if (!this.shouldPersistAcrossRestarts) {
+      file.delete();
+    }
+    return configuration.getServiceType().cast(new FlatFilePersistentStorage(file));
   }
 
   @Override

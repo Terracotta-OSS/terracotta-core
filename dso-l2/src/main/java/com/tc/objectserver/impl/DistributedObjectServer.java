@@ -156,6 +156,7 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
+import com.tc.objectserver.persistence.FlatFileStorageProviderConfiguration;
 import com.tc.objectserver.persistence.FlatFileStorageServiceProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.operatorevent.OperatorEventHistoryProviderImpl;
@@ -221,9 +222,6 @@ import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.handler.PassiveSyncHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
-import com.tc.services.EmptyServiceProviderConfiguration;
-
-import org.terracotta.entity.ServiceProvider;
 
 
 /**
@@ -437,8 +435,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
     //  services or be discarded, entirely.
     FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
-    if (!flatFileService.initialize(new EmptyServiceProviderConfiguration(ServiceProvider.class))) {
-      throw new AssertionError("bad flat fle initialization");
+    if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(null, restartable))) {
+      flatFileService.close();
+      throw new AssertionError("bad flat file initialization");
     }
     serviceRegistry.registerBuiltin(flatFileService);
 
