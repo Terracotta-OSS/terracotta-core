@@ -45,7 +45,8 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   @Override
   public void setUp() throws Exception {
     provider = new FlatFileStorageServiceProvider();
-    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory()));
+    boolean shouldPersistAcrossRestarts = true;
+    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory(), shouldPersistAcrossRestarts));
   }
 
   public void testServiceType() {
@@ -96,6 +97,7 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
     assertEquals(null, keyValueStorage.get(1));
   }
   
+  @SuppressWarnings("deprecation")
   public void testMultiThreaded() throws Exception {
 //  very dumb random test that makes sure we can do things multi-threaded without blowing up.
     long consumerID = 1;
@@ -141,4 +143,47 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
     assertNotNull(storage.getKeyValueStorage("numbers", Integer.class, Integer.class).get(((int)(Math.random() * 100)) % 10));
     assertEquals(storage.getKeyValueStorage("numbers", Integer.class, Integer.class).size(), 10);
   } 
+  
+  public void testNotRestartable() throws IOException {
+    FlatFileStorageServiceProvider provider = new FlatFileStorageServiceProvider();
+    boolean shouldPersistAcrossRestarts = false;
+    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory(), shouldPersistAcrossRestarts));
+    long consumerID = 1;
+    PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
+    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    IPersistentStorage storage = provider.getService(consumerID, configuration);
+    assertTrue(storage instanceof FlatFilePersistentStorage);
+    storage.create();
+    KeyValueStorage<Integer, String> keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
+    keyValueStorage.put(2, "two");
+    keyValueStorage.put(3, "three");
+    keyValueStorage.put(1, "one");
+    assertEquals("three", keyValueStorage.get(3));
+    storage.close();
+    
+    // See that we can re-open it, without restarting, and there is still content.
+    storage.open();
+    keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
+    assertEquals("one", keyValueStorage.get(1));
+    assertEquals("two", keyValueStorage.get(2));
+    assertEquals("three", keyValueStorage.get(3));
+    
+    // But then try to re-open a new instance and observe that the storage can't be opened.
+    storage = provider.getService(consumerID, configuration);
+    try {
+      storage.open();
+      fail();
+    } catch (IOException e) {
+      // Expected.
+    }
+    
+    // Ask to create the storage and ensure that the data from before isn't there.
+    storage.create();
+    keyValueStorage = storage.getKeyValueStorage("numbers", Integer.class, String.class);
+    assertEquals(null, keyValueStorage.get(1));
+    assertEquals(null, keyValueStorage.get(2));
+    assertEquals(null, keyValueStorage.get(3));
+    
+    provider.close();
+  }
 }

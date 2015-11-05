@@ -43,6 +43,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
  */
 public class FlatFileStorageServiceProvider implements ServiceProvider {
   private static final TCLogger logger = TCLogging.getLogger(FlatFileStorageServiceProvider.class);
+  private boolean shouldPersistAcrossRestarts;
   private Path directory;
 
   @Override
@@ -51,6 +52,7 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
     // In the future, this may change.
     Assert.assertTrue(configuration instanceof FlatFileStorageProviderConfiguration);
     FlatFileStorageProviderConfiguration flatFileConfiguration = (FlatFileStorageProviderConfiguration)configuration;
+    this.shouldPersistAcrossRestarts = flatFileConfiguration.shouldPersistAcrossRestarts();
     File targetDirectory = flatFileConfiguration.getBasedir();
     if (null != targetDirectory) {
       this.directory = targetDirectory.toPath();
@@ -64,7 +66,13 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     String filename = "consumer_" + consumerID + ".dat";
-    return configuration.getServiceType().cast(new FlatFilePersistentStorage(this.directory.resolve(filename).toFile()));
+    File file = this.directory.resolve(filename).toFile();
+    // If this is being configured as non-restartable, we want to delete the file before anyone tries to use it.
+    // However, this means that a given instance can be closed and re-opened, within the same run, without issue.
+    if (!this.shouldPersistAcrossRestarts) {
+      file.delete();
+    }
+    return configuration.getServiceType().cast(new FlatFilePersistentStorage(file));
   }
 
   @Override
