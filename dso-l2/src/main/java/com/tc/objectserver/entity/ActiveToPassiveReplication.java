@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -50,11 +51,12 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  *
  */
-public class ActiveToPassiveReplication implements PassiveReplicationBroker {
+public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
   private final EntityManagerImpl entities;
   private final GroupManager groups;
+  private final StateManager state;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<NodeID>();
   private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationMessage> replicate;
@@ -62,11 +64,11 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
   private boolean isActive;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
-  public ActiveToPassiveReplication(GroupManager group, EntityManagerImpl entities, Sink<ReplicationMessage> replicate) {
+  public ActiveToPassiveReplication(GroupManager group, EntityManagerImpl entities, StateManager state, Sink<ReplicationMessage> replicate) {
     this.entities = entities;
+    this.state = state;
     this.replicate = replicate;
     this.groups = group;
-    this.groups.registerForGroupEvents(new GroupEvents());
   }
 
   @Override
@@ -223,18 +225,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker {
     }
   }
   
-  class GroupEvents implements GroupEventsListener { 
-
-    @Override
-    public void nodeJoined(NodeID nodeID) {
-      if (isActive()) {
-        startPassiveSync(groups, nodeID);
-      }
+  @Override
+  public void nodeJoined(NodeID nodeID) {
+    if (state.isActiveCoordinator()) {
+      startPassiveSync(groups, nodeID);
     }
+  }
 
-    @Override
-    public void nodeLeft(NodeID nodeID) {
-      removePassive(nodeID);
-    }
+  @Override
+  public void nodeLeft(NodeID nodeID) {
+    removePassive(nodeID);
   }
 }

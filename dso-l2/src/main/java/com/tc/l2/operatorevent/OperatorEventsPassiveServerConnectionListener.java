@@ -22,12 +22,11 @@ import com.tc.config.NodesStore;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.ServerID;
-import com.tc.net.groups.PassiveServerListener;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 
-public class OperatorEventsPassiveServerConnectionListener implements PassiveServerListener {
+public class OperatorEventsPassiveServerConnectionListener {
 
   private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
   private final NodesStore                    nodesStore;
@@ -36,14 +35,10 @@ public class OperatorEventsPassiveServerConnectionListener implements PassiveSer
     this.nodesStore = nodesStore;
   }
 
-
-  @Override
   public void passiveServerJoined(ServerID nodeID) {
     // no-op
   }
 
-
-  @Override
   public void passiveServerLeft(ServerID nodeID) {
     String serverName = nodesStore.getServerNameFromNodeName(nodeID.getName());
     if (serverName == null) {

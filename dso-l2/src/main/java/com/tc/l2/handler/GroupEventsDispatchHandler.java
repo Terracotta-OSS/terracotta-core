@@ -46,8 +46,12 @@ public class GroupEventsDispatchHandler extends AbstractEventHandler<GroupEvent>
       }
     }
   }
+  
+  public GroupEventsListener createDispatcher(Sink<GroupEvent> sink) {
+    return new GroupEventsDispatcher(sink);
+  }
 
-  public static final class GroupEventsDispatcher implements GroupEventsListener {
+  private static final class GroupEventsDispatcher implements GroupEventsListener {
     private final Sink<GroupEvent> sink;
 
     public GroupEventsDispatcher(Sink<GroupEvent> sink) {

@@ -89,7 +89,7 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     private boolean invoked = false;
     private byte[] payload;
     private final Set<VoltronEntityMessage.Acks> acks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
-    private boolean requiresReplication = false;
+    private boolean requiresReplication = true;
 
     // TODO: fill in durability/consistency options here.
 
