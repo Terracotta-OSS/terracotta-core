@@ -98,7 +98,9 @@ public class TransactionOrderPersistor {
     
     // Make sure that this transaction isn't already in this list.
     if (localList.contains(transaction)) {
-      throw new IllegalArgumentException("Transaction already exists for this client");
+//      throw new IllegalArgumentException("Transaction already exists for this client");
+// hitting this during replication.  is it possible for the same transaction to be added twice?  TODO: confirm
+      return;
     }
     
     List<ClientTransaction> globalList = this.listContainer.get(LIST_KEY);

@@ -21,8 +21,11 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.api.EntityManager;
@@ -38,6 +41,7 @@ import org.terracotta.exception.EntityException;
 
 
 public class ReplicatedTransactionHandler {
+  private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
   private final GroupManager groupManager;
@@ -71,7 +75,6 @@ public class ReplicatedTransactionHandler {
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
-    try {
       if (rep.getType() == ReplicationMessage.REPLICATE) {
         if (!rep.getOldestTransactionOnClient().isNull()) {
           orderedTransactions.updateWithNewMessage(rep.getSource(), rep.getTransactionID(), rep.getOldestTransactionOnClient());
@@ -79,43 +82,41 @@ public class ReplicatedTransactionHandler {
           orderedTransactions.removeTrackingForClient(rep.getSource());
         }
         if (!filter.filter(rep)) {
-        switch (rep.getAction()) {
-          case ReplicationMessage.NOOP:
-            break;
-          case ReplicationMessage.CREATE_ENTITY:
+          int action = rep.getAction();
+          if (action == ReplicationMessage.CREATE_ENTITY) {
             long consumerID = entityPersistor.getNextConsumerID();
             entityManager.createEntity(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID);
             this.entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
-            break;
-          case ReplicationMessage.DESTROY_ENTITY:
-            entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
-            break;
-          case ReplicationMessage.GET_ENTITY:
-            break;
-          case ReplicationMessage.INVOKE_ACTION:
-            Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
-            if (entity.isPresent()) {
-              entity.get().addRequest(make(rep));
+          }
+          Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
+          if (entity.isPresent()) {
+            ServerEntityRequest request = make(rep);
+            if (request != null) {
+              entity.get().addRequest(request);
             }
-            break;
-          case ReplicationMessage.RELEASE_ENTITY:
-          case ReplicationMessage.PROMOTE_ENTITY_TO_ACTIVE:
-          case ReplicationMessage.SYNC_ENTITY:
-          default:
-            break;
+          }
+          if (ReplicationMessage.DESTROY_ENTITY == rep.getAction()) {
+            entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
           }
         }
 //  when is the right time to send the ack?
-        groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
-      }
+        try {
+          groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+        } catch (GroupException ge) {
+//  Passive must have died.  Swallow the exception
+          LOGGER.info("passive died on ack", ge);
+        }
       return;
-    } catch (GroupException ge) {
-
     }
+
     throw new RuntimeException();
   }
   
   private ServerEntityRequest make(ReplicationMessage rep) {
+    Type type = rep.getVoltronType();
+    if (type == null) {
+      return null;
+    }
     return new ServerEntityRequestImpl(rep.getEntityDescriptor(), ProcessTransactionHandler.decodeMessageType(rep.getVoltronType()),
         rep.getExtendedData(), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty());
   }
