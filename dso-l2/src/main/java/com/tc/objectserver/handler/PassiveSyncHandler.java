@@ -27,9 +27,19 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.groups.GroupManager;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
+import java.util.Optional;
 
 
 public class PassiveSyncHandler {
@@ -71,6 +81,10 @@ public class PassiveSyncHandler {
             long consumerID = entityPersistor.getNextConsumerID();
             this.entityManager.createEntity(sync.getEntityID(), sync.getVersion(), consumerID);
             this.entityPersistor.entityCreated(sync.getEntityID(), sync.getVersion(), consumerID, sync.getPayload());
+            Optional<ManagedEntity> entity = entityManager.getEntity(sync.getEntityID(),sync.getVersion());
+            if (entity.isPresent()) {
+              entity.get().addRequest(make(sync));
+            }
           }
         } catch (EntityException state) {
 //  TODO: this needs to be controlled.  
@@ -101,4 +115,9 @@ public class PassiveSyncHandler {
       }
     };
   }
+  
+  private ServerEntityRequest make(PassiveSyncMessage rep) {
+    return new ServerEntityRequestImpl(new EntityDescriptor(rep.getEntityID(), ClientInstanceID.NULL_ID, rep.getVersion()), ServerEntityAction.CREATE_ENTITY,
+        rep.getPayload(), TransactionID.NULL_ID, null, ClientID.NULL_ID, false, Optional.empty());
+  }  
 }

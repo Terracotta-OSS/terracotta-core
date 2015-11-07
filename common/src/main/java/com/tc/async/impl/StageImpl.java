@@ -179,7 +179,9 @@ public class StageImpl<EC> implements Stage<EC> {
         ThreadUtil.reallySleep(sleepMs);
       }
       while (paused || (pausable && "paused".equalsIgnoreCase(System.getProperty(stageName)))) {
-        tcLogger.info("Stage paused, sleeping for 1s");
+        if (!paused) {
+          tcLogger.info("Stage paused, sleeping for 1s");
+        }
         ThreadUtil.reallySleep(1000);
       }
     }

@@ -21,10 +21,11 @@ package com.tc.l2.api;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
 import com.tc.text.PrettyPrintable;
 
-public interface L2Coordinator extends StateChangeListener, PrettyPrintable {
+public interface L2Coordinator extends GroupEventsListener, PrettyPrintable {
 
   public void start();
 

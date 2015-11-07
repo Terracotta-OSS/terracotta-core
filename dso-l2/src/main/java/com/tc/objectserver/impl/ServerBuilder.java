@@ -25,11 +25,11 @@ import org.terracotta.entity.ServiceRegistry;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
-import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
@@ -78,12 +78,12 @@ public interface ServerBuilder extends TCDumper, PostInit {
   GroupManager getClusterGroupCommManager();
 
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
-                                      StageManager stageManager, GroupManager groupCommsManager,
+                                      StageManager stageManager, StateManager stateMgr, 
+                                      GroupManager groupCommsManager,
                                       ClusterStatePersistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,
-                                      StripeIDStateManager stripeStateManager,
-                                      int electionTimeInSecs, NodesStore nodesStore);
+                                      StripeIDStateManager stripeStateManager);
 
   L2Management createL2Management(boolean listenerEnabled, TCServerInfoMBean tcServerInfoMBean,
                                   L2ConfigurationSetupManager configSetupManager,

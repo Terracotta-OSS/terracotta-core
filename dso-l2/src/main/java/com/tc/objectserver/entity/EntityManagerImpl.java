@@ -80,6 +80,7 @@ public class EntityManagerImpl implements EntityManager {
     for(ManagedEntity entity : this.entities.values()) {
       InternalRequest request = new InternalRequest(entity.getID(), entity.getVersion(), ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE, null);
       entity.addRequest(request);
+      request.waitForCompletion();
     }
   }
 
@@ -118,9 +119,12 @@ public class EntityManagerImpl implements EntityManager {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     // Ask the service which provides this type of entity whether or not this is the version it supports.
+    ManagedEntity entity = entities.get(id);
+    if (entity != null) {
     // Note that we ignore the return value, only interested in validating that the version is consistent.
-    getVersionCheckedService(id, version);
-    return Optional.ofNullable(entities.get(id));
+      getVersionCheckedService(id, version);
+    }
+    return Optional.ofNullable(entity);
   }
   
   public Collection<ManagedEntity> getAll() {
@@ -158,7 +162,8 @@ public class EntityManagerImpl implements EntityManager {
     private final long version;
     private final ServerEntityAction action;
     private final byte[] payload;
-    
+    private boolean complete = false;
+
     public InternalRequest(EntityID id, long version, ServerEntityAction action, byte[] payload) {
       this.entity = id;
       this.version = version;
@@ -182,8 +187,9 @@ public class EntityManagerImpl implements EntityManager {
       return this.payload;
     }
     @Override
-    public void complete() {
-      // No special action.
+    public synchronized void complete() {
+      complete = true;
+      notify();
     }
     @Override
     public void complete(byte[] value) {
@@ -215,5 +221,23 @@ public class EntityManagerImpl implements EntityManager {
       // These are internal requests so they are never replicated.
       return false;
     }
+    
+    public synchronized void waitForCompletion() {
+      boolean interrupted = false;
+      try {
+        while(!complete) {
+          try {
+            wait();
+          } catch (InterruptedException ie) {
+            interrupted = true;
+          }
+        }
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
   }
 }
+

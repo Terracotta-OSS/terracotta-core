@@ -37,6 +37,9 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ReplicableActiveServerEntity;
 import org.terracotta.exception.EntityUserException;
@@ -53,6 +56,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   private boolean isInActiveState;
   private volatile ActiveServerEntity<EntityMessage> activeServerEntity;
   private volatile PassiveServerEntity<EntityMessage> passiveServerEntity;
+  //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
+  private final ReadWriteLock reconnectAccessLock = new ReentrantReadWriteLock();
   // NOTE:  This may be removed in the future if we change how we access the config from the ServerEntityService but
   //  it presently holds the config we used when we first created passiveServerEntity (if it isn't null).  It is used
   //  when we promote to an active.
@@ -97,8 +102,19 @@ public class ManagedEntityImpl implements ManagedEntity {
   public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
     EntityDescriptor entityDescriptor = getEntityDescriptorForSource(clientDescriptor);
     clientEntityStateManager.addReference(nodeID, entityDescriptor);
-    this.activeServerEntity.connected(clientDescriptor);
-    this.activeServerEntity.handleReconnect(clientDescriptor, extendedReconnectData);
+    if (!this.isInActiveState) {
+      throw new IllegalStateException("server is not active");
+    }
+    Assert.assertNotNull(this.activeServerEntity);
+    Lock write = reconnectAccessLock.writeLock();
+    try {
+      write.lock();
+      this.activeServerEntity.connected(clientDescriptor);
+      this.activeServerEntity.handleReconnect(clientDescriptor, extendedReconnectData);      
+    } finally {
+      write.unlock();
+    }
+
   }
   
 
@@ -109,7 +125,9 @@ public class ManagedEntityImpl implements ManagedEntity {
    * @param request
    */
   public void invoke(ServerEntityRequest request) {
+    Lock read = reconnectAccessLock.readLock();
       try {
+        read.lock();
         switch (request.getAction()) {
           case CREATE_ENTITY:
             createEntity(request);
@@ -143,6 +161,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
         request.failure(wrapper);
+      } finally {
+        read.unlock();
       }
   }
   
@@ -272,6 +292,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.activeServerEntity = factory.createActiveEntity(this.registry, constructorInfo);
       this.activeServerEntity.loadExisting();
       this.passiveServerEntity = null;
+    } else {
+      throw new IllegalStateException("no entity to promote");
     }
     request.complete();
   }

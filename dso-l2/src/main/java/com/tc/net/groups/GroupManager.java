@@ -22,7 +22,6 @@ import com.tc.async.api.Sink;
 import com.tc.config.NodesStore;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.groups.GroupMessage;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Set;

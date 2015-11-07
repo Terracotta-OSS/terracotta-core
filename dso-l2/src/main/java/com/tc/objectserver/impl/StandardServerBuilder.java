@@ -24,12 +24,12 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
-import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -126,16 +126,16 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
-                                             StageManager stageManager, GroupManager groupCommsManager,
+                                             StageManager stageManager, StateManager stateMgr, 
+                                             GroupManager groupCommsManager,
                                              ClusterStatePersistor clusterStatePersistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              L2ConfigurationSetupManager configurationSetupManager,
-                                             StripeIDStateManager stripeStateManager,
-                                             int electionTimeInSecs, NodesStore nodesStore) {
-    return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
+                                             StripeIDStateManager stripeStateManager) {
+    return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
+        groupCommsManager, clusterStatePersistor,
         weightGeneratorFactory, configurationSetupManager,
-        haConfig.getThisGroupID(), stripeStateManager,
-        electionTimeInSecs, nodesStore);
+        haConfig.getThisGroupID(), stripeStateManager);
   }
 
   @Override

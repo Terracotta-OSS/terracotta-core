@@ -20,7 +20,6 @@ package com.tc.objectserver.impl;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.objectserver.handler.EnterpriseClientHandshakeHandler;
 
 import org.terracotta.entity.ServiceRegistry;
 
@@ -30,8 +29,10 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
+import com.tc.async.impl.StageController;
 import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
+import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
@@ -56,6 +57,8 @@ import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.api.ReplicatedClusterStateManager;
+import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -63,9 +66,19 @@ import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.TransactionCountWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.handler.GroupEvent;
+import com.tc.l2.handler.GroupEventsDispatchHandler;
+import com.tc.l2.handler.L2StateChangeHandler;
+import com.tc.l2.handler.L2StateMessageHandler;
+import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
+import com.tc.l2.state.StateChangeListener;
+import com.tc.l2.state.StateManager;
+import com.tc.l2.state.StateManagerConfigImpl;
+import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
@@ -98,6 +111,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
@@ -673,19 +687,28 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
 
-    this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
-                                                                  this.groupCommManager, this.persistor
-                                                                      .getClusterStatePersistor(),
-                                                                      this.globalWeightGeneratorFactory,
+    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController()), 1, maxStageSize);
+    StateManager state = new StateManagerImpl(this.consoleLogger, this.groupCommManager, 
+        stateChange.getSink(),
+        new StateManagerConfigImpl(configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs()),
+        weightGeneratorFactory, 
+        this.persistor.getClusterStatePersistor());
+    
+    state.registerForStateChangeEvents(this.l2State);
+
+    this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
+                                                                  stageManager, state,
+                                                                  this.groupCommManager,
+                                                                  this.persistor.getClusterStatePersistor(),
+                                                                  this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
-                                                                  this.stripeIDStateManager,
-                                                                  configSetupManager.getActiveServerGroupForThisL2()
-                                                                      .getElectionTimeInSecs(), haConfig
-                                                                      .getNodesStore());
+                                                                  this.stripeIDStateManager);
+
+    connectServerStateToReplicatedState(state, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
     final Stage<ReplicationMessage> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, l2Coordinator.getStateManager(), replicationDriver.getSink());
     processor.setReplication(passives); 
     PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
 //  routing for passive to receive replication    
@@ -701,14 +724,23 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         }, 1, maxStageSize);
     Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
         psync.getEventHandler(), 1, maxStageSize);
+
+//  handle cluster state    
+    Sink<L2StateMessage> stateMessageSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, maxStageSize).getSink();
+    this.groupCommManager.routeMessages(L2StateMessage.class, stateMessageSink);
+//  handle passives    
+    GroupEventsDispatchHandler dispatchHandler = new GroupEventsDispatchHandler();
+    dispatchHandler.addListener(this.l2Coordinator);  
+    dispatchHandler.addListener(passives);
+    dispatchHandler.addListener(connectPassiveOperatorEvents(haConfig.getNodesStore()));
+    Stage<GroupEvent> groupEvents = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE, GroupEvent.class, dispatchHandler, 1, maxStageSize);
+    this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered
     this.groupCommManager.routeMessages(ReplicationMessage.class, new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink()));
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     this.groupCommManager.routeMessages(PassiveSyncMessage.class, passiveSyncStage.getSink());
     
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
     // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
     //  and passive.
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(processor);
@@ -736,14 +768,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        this.l1Listener.getChannelManager(), this
     );
     toInit.add(this.serverBuilder);
-//  exclude from startup specific stages that are controlled by the stage controller. 
-    stageManager.startAll(this.context, toInit, 
-        ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
-        ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
-        ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE
-      );
+
+    startStages(stageManager, toInit);
 
     final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
@@ -778,7 +804,73 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Coordinator.start();
     setLoggerOnExit();
   }
+  
+  private void startStages(StageManager stageManager, List<PostInit> toInit) {
+//  exclude from startup specific stages that are controlled by the stage controller. 
+    stageManager.startAll(this.context, toInit, 
+        ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
+        ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
+        ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
+        ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE
+    );
+  }
 
+  private StageController createStageController() {
+    StageController control = new StageController();
+//  PASSIVE-UNINITIALIZED handle replicate messages right away.  SYNC also needs to be handled
+    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE);
+    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC goes away
+    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
+//  active to start
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    return control;
+  }
+  
+  private GroupEventsListener connectPassiveOperatorEvents(NodesStore nodesStore) {
+    OperatorEventsPassiveServerConnectionListener delegate = new OperatorEventsPassiveServerConnectionListener(nodesStore);
+    return new GroupEventsListener() {
+
+      @Override
+      public void nodeJoined(NodeID nodeID) {
+        if (l2Coordinator.getStateManager().isActiveCoordinator()) {
+          delegate.passiveServerLeft((ServerID)nodeID);
+        }
+      }
+
+      @Override
+      public void nodeLeft(NodeID nodeID) {
+        if (l2Coordinator.getStateManager().isActiveCoordinator()) {
+          delegate.passiveServerLeft((ServerID)nodeID);
+        }
+      }
+    };
+  }
+  
+  private void connectServerStateToReplicatedState(StateManager mgr, ReplicatedClusterStateManager rcs) {
+    mgr.registerForStateChangeEvents(new StateChangeListener() {
+      @Override
+      public void l2StateChanged(StateChangedEvent sce) {
+        rcs.setCurrentState(sce.getCurrentState());
+        if (sce.movedToActive()) {
+          rcs.goActiveAndSyncState();
+          startActiveMode();
+          try {
+            startL1Listener();
+          } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+          }
+        }
+      }
+    });
+  }
+  
   public void startGroupManagers() {
     try {
 
@@ -1042,11 +1134,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   protected ClientHandshakeHandler createHandShakeHandler() {
-    if(!this.tcServerInfoMBean.isSecure()) {
-      return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName());
-    } else {
-      return new EnterpriseClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName());
-    }
+    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName());
   }
 
   // for tests only
