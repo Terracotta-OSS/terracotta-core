@@ -22,7 +22,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Stage;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,7 +39,8 @@ public class StageController {
   public synchronized void addStageToState(com.tc.util.State state, String stage) {
     Set<String> list = states.get(state);
     if (list == null) {
-      list = new HashSet<String>();
+// order is important here.  each stage should be started in the order added.
+      list = new LinkedHashSet<String>();
       states.put(state, list);
     }
     list.add(stage);
