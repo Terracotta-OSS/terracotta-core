@@ -427,6 +427,16 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassive = serverProcess;
+    
+    // Synchronize any entities we have.
+    for (Map.Entry<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>> entry : this.activeEntities.entrySet()) {
+      CreationData<ActiveServerEntity<?>> value = entry.getValue();
+      PassthroughMessage createMessage = PassthroughMessageCodec.createCreateMessage(value.entityClassName, value.entityName, value.version, value.configuration);
+      PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
+      this.downstreamPassive.sendMessageToServerFromActive(wrapper, createMessage.asSerializedBytes());
+      wrapper.waitForComplete();
+      // TODO:  Synchronize the entity content once the API and contract for that have stabilized.
+    }
   }
 
   private PassthroughServiceRegistry getNextServiceRegistry() {
