@@ -55,6 +55,7 @@ public class PassthroughServerProcess implements MessageHandler {
         runServerThread();
       }
     });
+    this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.messageQueue = new Vector<MessageContainer>();
     this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, ActiveServerEntity<?>>() : null);

@@ -61,6 +61,7 @@ public class PassthroughConnection implements Connection {
         runClientThread();
       }
     });
+    this.clientThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.messageQueue = new Vector<byte[]>();
     this.clientResponseWaitQueue = new Vector<Waiter>();
     
