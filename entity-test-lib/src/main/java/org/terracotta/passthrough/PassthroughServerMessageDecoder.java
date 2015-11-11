@@ -34,7 +34,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     // Now, before we can actually RUN the message, we need to make sure that we wait for its replicated copy to complete
     // on the passive.
     if (shouldReplicate && (null != this.downstreamPassive)) {
-      ServerSender wrapper = new ServerSender();
+      PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(this.sender);
       this.downstreamPassive.sendMessageToServerFromActive(wrapper, message);
       wrapper.waitForComplete();
     }
@@ -206,42 +206,6 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     PassthroughMessage complete = PassthroughMessageCodec.createCompleteMessage(response, error);
     complete.setTransactionID(transactionID);
     sender.sendComplete(complete);
-  }
-
-
-  /**
-   * In the case where we are an active sending a message to a downstream passive, we use this implementation to provide the
-   * basic interlock across the 2 threads.
-   */
-  private class ServerSender implements IMessageSenderWrapper {
-    private boolean isDone = false;
-    
-    public synchronized void waitForComplete() {
-      while (!this.isDone) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          Assert.unexpected(e);
-        }
-      }
-    }
-    @Override
-    public void sendAck(PassthroughMessage ack) {
-    }
-    @Override
-    public synchronized void sendComplete(PassthroughMessage complete) {
-      this.isDone = true;
-      notifyAll();
-    }
-    @Override
-    public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-      Assert.unreachable();
-      return null;
-    }
-    @Override
-    public PassthroughConnection getClientOrigin() {
-      return sender.getClientOrigin();
-    }
   }
 
 
