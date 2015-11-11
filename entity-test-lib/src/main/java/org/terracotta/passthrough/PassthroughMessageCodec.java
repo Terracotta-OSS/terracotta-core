@@ -63,12 +63,12 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createCreateMessage(final Class<?> entityClass, final String entityName, final long version, final byte[] serializedConfiguration) {
+  public static PassthroughMessage createCreateMessage(final String entityClassName, final String entityName, final long version, final byte[] serializedConfiguration) {
     boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.CREATE_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
         output.writeLong(version);
         output.writeInt(serializedConfiguration.length);
@@ -222,7 +222,8 @@ public class PassthroughMessageCodec {
     try {
       ObjectInputStream objectInput = new ObjectInputStream(byteInput);
       try {
-        exception = (EntityException) objectInput.readObject();
+        Object object = objectInput.readObject();
+        exception = (EntityException) object;
       } finally {
         objectInput.close();
       }

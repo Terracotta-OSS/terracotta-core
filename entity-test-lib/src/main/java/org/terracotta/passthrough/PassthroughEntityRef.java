@@ -70,7 +70,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
       getWriteLock();
       try {
         byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-        PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
+        PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
         PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
         try {
           received.get();
