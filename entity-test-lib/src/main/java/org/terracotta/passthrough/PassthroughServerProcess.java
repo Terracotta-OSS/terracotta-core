@@ -32,7 +32,7 @@ import org.terracotta.persistence.KeyValueStorage;
 public class PassthroughServerProcess implements MessageHandler {
   private boolean isRunning;
   private final List<ServerEntityService<?, ?>> entityServices;
-  private final Thread serverThread;
+  private Thread serverThread;
   private final List<MessageContainer> messageQueue;
   private final PassthroughLockManager lockManager;
   // Currently, for simplicity, we will resolve entities by name.
@@ -47,15 +47,7 @@ public class PassthroughServerProcess implements MessageHandler {
   private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
   
   public PassthroughServerProcess(boolean isActiveMode) {
-    this.isRunning = true;
     this.entityServices = new Vector<ServerEntityService<?, ?>>();
-    this.serverThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        runServerThread();
-      }
-    });
-    this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.messageQueue = new Vector<MessageContainer>();
     this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>>() : null);
@@ -97,6 +89,24 @@ public class PassthroughServerProcess implements MessageHandler {
       }
     }
     // And start the server thread.
+    startServerThreadRunning();
+  }
+
+  public void resumeMessageProcessing() {
+    startServerThreadRunning();
+  }
+
+  private void startServerThreadRunning() {
+    Assert.assertTrue(null == this.serverThread);
+    Assert.assertTrue(!this.isRunning);
+    this.serverThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        runServerThread();
+      }
+    });
+    this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
+    this.isRunning = true;
     this.serverThread.start();
   }
 
@@ -155,9 +165,13 @@ public class PassthroughServerProcess implements MessageHandler {
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
+    // We also want to clear the message queue, in case anything else is still sitting there.
+    this.messageQueue.clear();
+    this.serverThread = null;
   }
 
   public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {
+    Assert.assertTrue(this.isRunning);
     MessageContainer container = new MessageContainer();
     container.sender = new IMessageSenderWrapper() {
       @Override
