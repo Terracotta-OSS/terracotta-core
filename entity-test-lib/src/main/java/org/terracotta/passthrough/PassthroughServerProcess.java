@@ -439,6 +439,27 @@ public class PassthroughServerProcess implements MessageHandler {
     }
   }
 
+  public void promoteToActive() {
+    // Make sure that we are currently passive.
+    Assert.assertTrue(null != this.passiveEntities);
+    // Make us active and promote all passive entities.
+    this.downstreamPassive = null;
+    this.activeEntities = new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>>();
+    
+    // We need to create the entities as active but note that we would already have persisted this data so only create the
+    // actual instances, don't go through the full creation path.
+    for (Map.Entry<PassthroughEntityTuple, CreationData<PassiveServerEntity<?>>> entry : this.passiveEntities.entrySet()) {
+      CreationData<PassiveServerEntity<?>> data = entry.getValue();
+      ActiveServerEntity<?> entity = data.service.createActiveEntity(data.registry, data.configuration);
+      entity.loadExisting();
+      CreationData<ActiveServerEntity<?>> newData = new CreationData<ActiveServerEntity<?>>(data.entityClassName, data.entityName, data.version, data.configuration, data.registry, data.service, entity);
+      this.activeEntities.put(entry.getKey(), newData);
+    }
+    
+    // Clear our passives.
+    this.passiveEntities = null;
+  }
+
   private PassthroughServiceRegistry getNextServiceRegistry() {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
