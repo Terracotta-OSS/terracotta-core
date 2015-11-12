@@ -49,7 +49,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.ReplicableActiveServerEntity;
 import org.terracotta.exception.EntityUserException;
 
 
@@ -226,8 +225,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           public void synchronizeToPassive(byte[] payload) {
             ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(new PassiveSyncMessage(id, concurrency, payload));
           }};
-//  cast is ok here because theree is no way to get here without this entity being replicable
-        ((ReplicableActiveServerEntity)this.activeServerEntity).synchronizeKeyToPassive(syncChannel, concurrency);
+        this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrency);
         wrappedRequest.complete();
       }
     } else {
@@ -315,19 +313,16 @@ public class ManagedEntityImpl implements ManagedEntity {
     mgr.sendTo(passive, new PassiveSyncMessage(id, version, constructorInfo));
 // TODO:  This is a stub, the real implementation is to be designed
 // iterate through all the concurrency keys of an entity
-    if (activeServerEntity instanceof ReplicableActiveServerEntity) {
-      ReplicableActiveServerEntity replication = (ReplicableActiveServerEntity)activeServerEntity;
-      for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
-  // send the start message of a concurrency index and of an entity
-        mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
-        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
-        // We don't actually use the message in the direct strategy so this is safe.
-        EntityMessage message = null;
-        executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req, message);
-        req.waitFor();
-  // send the end message of a concurrency index and of an entity
-        mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
-      }
+    for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
+// send the start message of a concurrency index and of an entity
+      mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
+      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
+      // We don't actually use the message in the direct strategy so this is safe.
+      EntityMessage message = null;
+      executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req, message);
+      req.waitFor();
+// send the end message of a concurrency index and of an entity
+      mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
     }
 //  end passive sync for an entity
     mgr.sendTo(passive, new PassiveSyncMessage(id, version, null));
