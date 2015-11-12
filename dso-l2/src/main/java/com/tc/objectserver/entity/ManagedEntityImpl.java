@@ -29,6 +29,7 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.PassiveServerEntity;
+import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 
@@ -219,10 +220,13 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         int concurrency = PassiveSyncServerEntityRequest.getConcurrency(wrappedRequest.getPayload());
+        PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
+          @Override
+          public void synchronizeToPassive(byte[] payload) {
+            ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(new PassiveSyncMessage(id, concurrency, payload));
+          }};
 //  cast is ok here because theree is no way to get here without this entity being replicable
-        for (byte[] payload : ((ReplicableActiveServerEntity)this.activeServerEntity).sync(concurrency)) {
-          ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(new PassiveSyncMessage(id, concurrency, payload));
-        }
+        ((ReplicableActiveServerEntity)this.activeServerEntity).synchronizeKeyToPassive(syncChannel, concurrency);
         wrappedRequest.complete();
       }
     } else {
