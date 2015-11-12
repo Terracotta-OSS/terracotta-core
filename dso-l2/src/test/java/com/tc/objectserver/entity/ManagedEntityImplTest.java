@@ -38,6 +38,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -173,6 +174,11 @@ public class ManagedEntityImplTest {
       @Override
       public EntityMessage deserialize(byte[] payload) {
         return new EntityMessage() {};
+      }
+      @Override
+      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
+        Assert.fail("Synchronization not used in this test");
+        return null;
       }});
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(returnValue);
     ServerEntityRequest invokeRequest = mockInvokeRequest(payload);
