@@ -44,6 +44,7 @@ import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -316,7 +317,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 // iterate through all the concurrency keys of an entity
     if (activeServerEntity instanceof ReplicableActiveServerEntity) {
       ReplicableActiveServerEntity replication = (ReplicableActiveServerEntity)activeServerEntity;
-      for (Integer concurrency : replication.getConcurrencyStrategy()) {
+      for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
   // send the start message of a concurrency index and of an entity
         mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
         PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
@@ -366,6 +367,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     @Override
     public int concurrencyKey(EntityMessage payload) {
       return target;
+    }
+
+    @Override
+    public Set<Integer> getKeysForSynchronization() {
+      Assert.fail("Synchronization not applicable to directory concurrency strategy");
+      return null;
     }    
   }
 
