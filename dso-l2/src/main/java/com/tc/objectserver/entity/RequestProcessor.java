@@ -42,6 +42,10 @@ public class RequestProcessor implements StateChangeListener {
   public RequestProcessor(Sink<Runnable> requestExecution) {
     this.requestExecution = requestExecution;
   }
+
+  public Future<Void> scheduleSync(PassiveSyncMessage msg, NodeID passive) {
+    return passives.replicateSync(msg, Collections.singleton(passive));
+  }
   
   public void setReplication(PassiveReplicationBroker passives) {
     Assert.assertNull(this.passives);
@@ -57,7 +61,7 @@ public class RequestProcessor implements StateChangeListener {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Future<Void> token = (passives != null && request.requiresReplication())
         ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), index)
+            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), concurrencyKey)
         : NoReplicationBroker.NOOP_FUTURE;
     EntityRequest entityRequest =  new EntityRequest(impl, entity, request, concurrencyKey, token, message);
     requestExecution.addMultiThreaded(entityRequest);

@@ -190,7 +190,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       case RELEASE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
         break;
-      case SYNC_ENTITY:
+      case REQUEST_SYNC_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
         break;
       default:

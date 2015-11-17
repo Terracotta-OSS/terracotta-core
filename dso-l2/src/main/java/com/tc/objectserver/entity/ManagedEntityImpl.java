@@ -326,11 +326,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
           @Override
           public void synchronizeToPassive(byte[] payload) {
-            executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrency, payload), wrappedRequest.getNodeID());
+            executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), wrappedRequest.getNodeID());
           }};
 //  start is handled byt the sync request that triggered this action
-        this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrency);
-        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrency), wrappedRequest.getNodeID());
+        this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
+        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), wrappedRequest.getNodeID());
         wrappedRequest.complete();
       }
     } else {
@@ -454,8 +454,11 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
     
+    private final int concurrencyKey;
+    
     public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.SYNC_ENTITY, makePayload(concurrency), null, null, passive, false);
+      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, makePayload(concurrency), null, null, passive, false);
+      this.concurrencyKey = concurrency;
     }
 
     public static byte[] makePayload(int concurrency) {
