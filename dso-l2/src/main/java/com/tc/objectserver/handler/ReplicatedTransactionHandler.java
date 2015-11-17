@@ -24,10 +24,13 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -35,7 +38,11 @@ import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Optional;
+import java.util.Set;
 
 import org.terracotta.exception.EntityException;
 
@@ -46,15 +53,15 @@ public class ReplicatedTransactionHandler {
   private final EntityPersistor entityPersistor;
   private final GroupManager groupManager;
   private final TransactionOrderPersistor orderedTransactions;
-  private final PassiveSyncFilter filter;
-
-  public ReplicatedTransactionHandler(PassiveSyncFilter filter, TransactionOrderPersistor transactionOrderPersistor, 
+  private final StateManager stateManager;
+  
+  public ReplicatedTransactionHandler(StateManager state, TransactionOrderPersistor transactionOrderPersistor, 
       EntityManager manager, EntityPersistor entityPersistor, GroupManager groupManager) {
+    this.stateManager = state;
     this.entityManager = manager;
     this.entityPersistor = entityPersistor;
     this.groupManager = groupManager;
     this.orderedTransactions = transactionOrderPersistor;
-    this.filter = filter;
   }
 
   private final EventHandler<ReplicationMessage> eventHorizon = new AbstractEventHandler<ReplicationMessage>() {
@@ -75,46 +82,107 @@ public class ReplicatedTransactionHandler {
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
-      if (rep.getType() == ReplicationMessage.REPLICATE) {
-        if (!rep.getOldestTransactionOnClient().isNull()) {
-          orderedTransactions.updateWithNewMessage(rep.getSource(), rep.getTransactionID(), rep.getOldestTransactionOnClient());
-        } else {
-          orderedTransactions.removeTrackingForClient(rep.getSource());
+    if (rep.getType() == ReplicationMessage.REPLICATE) {
+      if (!rep.getOldestTransactionOnClient().isNull()) {
+        orderedTransactions.updateWithNewMessage(rep.getSource(), rep.getTransactionID(), rep.getOldestTransactionOnClient());
+      } else {
+        orderedTransactions.removeTrackingForClient(rep.getSource());
+      }
+      if (true) {
+        int action = rep.getAction();
+        if (action == ReplicationMessage.ReplicationType.CREATE_ENTITY.ordinal()) {
+          long consumerID = entityPersistor.getNextConsumerID();
+          entityManager.createEntity(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID);
+          this.entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
         }
-        if (!filter.filter(rep)) {
-          int action = rep.getAction();
-          if (action == ReplicationMessage.CREATE_ENTITY) {
-            long consumerID = entityPersistor.getNextConsumerID();
-            entityManager.createEntity(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID);
-            this.entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
-          }
-          Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
-          if (entity.isPresent()) {
-            ServerEntityRequest request = make(rep);
-            if (request != null) {
-              entity.get().addRequest(request);
-            }
-          }
-          if (ReplicationMessage.DESTROY_ENTITY == rep.getAction()) {
-            entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
+        Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
+        if (entity.isPresent()) {
+          ServerEntityRequest request = make(rep);
+          if (request != null) {
+            entity.get().addRequest(request);
           }
         }
+        if (ReplicationMessage.ReplicationType.DESTROY_ENTITY.ordinal() == rep.getAction()) {
+          entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
+        }
+      }
 //  when is the right time to send the ack?
-        try {
-          groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
-        } catch (GroupException ge) {
+      try {
+        groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+      } catch (GroupException ge) {
 //  Passive must have died.  Swallow the exception
-          LOGGER.info("passive died on ack", ge);
-        }
+        LOGGER.info("passive died on ack", ge);
+      }
+      return;
+    } else if (rep.getType() == ReplicationMessage.SYNC) {
+      messageReceived(rep);
       return;
     }
 
     throw new RuntimeException();
   }
   
+  private void messageReceived(ReplicationMessage sync) {
+    EntityID eid = sync.getEntityDescriptor().getEntityID();
+    switch (sync.getReplicationType()) {
+      case SYNC_END:
+        if (!stateManager.isActiveCoordinator()) {
+          stateManager.moveToPassiveStandbyState();
+        }
+        break;
+      case SYNC_BEGIN:
+        //  do something
+        break;
+      case SYNC_ENTITY_BEGIN:
+        try {
+          if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
+            long consumerID = entityPersistor.getNextConsumerID();
+            this.entityManager.createEntity(eid, sync.getVersion(), consumerID);
+            this.entityPersistor.entityCreated(eid, sync.getVersion(), consumerID, sync.getExtendedData());
+            Optional<ManagedEntity> entity = entityManager.getEntity(eid,sync.getVersion());
+            if (entity.isPresent()) {
+              ServerEntityRequest request = make(sync);
+              if (request != null) {
+                entity.get().addRequest(request);
+              }
+            }
+          }
+        } catch (EntityException state) {
+//  TODO: this needs to be controlled.  
+          LOGGER.warn("entity has already been created", state);
+        }
+        break;
+      case SYNC_ENTITY_END:
+        //  do something?
+        break;
+      case SYNC_ENTITY_CONCURRENCY_BEGIN:
+        break;
+      case SYNC_ENTITY_CONCURRENCY_END:
+        break;
+      case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
+        try {
+          Optional<ManagedEntity> entity = entityManager.getEntity(eid,sync.getVersion());
+          if (entity.isPresent()) {
+              ServerEntityRequest request = make(sync);
+              if (request != null) {
+                entity.get().addRequest(request);
+              }
+          }
+        } catch (EntityException ee) {
+          throw new RuntimeException(ee);
+        }
+        break;
+      default:
+        throw new AssertionError("not a sync message");
+    }
+  }
+  
   private ServerEntityRequest make(ReplicationMessage rep) {
     Type type = rep.getVoltronType();
     if (type == null) {
+      return null;
+    }
+    if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
       return null;
     }
     return new ServerEntityRequestImpl(rep.getEntityDescriptor(), ProcessTransactionHandler.decodeMessageType(rep.getVoltronType()),

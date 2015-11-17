@@ -172,7 +172,7 @@ public class RequestProcessorTest {
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.replicateMessage(Matchers.any(), Matchers.anyLong(), Matchers.any(), 
         Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
-        Matchers.any(TransactionID.class), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
+        Matchers.any(TransactionID.class), Matchers.any(), Matchers.anyInt())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     
@@ -180,7 +180,7 @@ public class RequestProcessorTest {
 //  assume args from mocked request are passed.  just testing execution
     verify(broker).replicateMessage(Matchers.eq(descriptor), Matchers.anyLong(), 
         Matchers.any(), Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
-        Matchers.any(TransactionID.class), Matchers.any());
+        Matchers.any(TransactionID.class), Matchers.any(), Matchers.anyInt());
 //    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
   }
   

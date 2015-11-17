@@ -21,10 +21,13 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.state.StateChangeListener;
+import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -47,16 +50,14 @@ public class RequestProcessor implements StateChangeListener {
 
   @Override
   public void l2StateChanged(StateChangedEvent sce) {
-    if (passives != null) {
-      this.passives.setActive(sce.movedToActive());
-    }
+//  do nothing
   }
   
   public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Future<Void> token = (passives != null && request.requiresReplication())
         ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload())
+            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), index)
         : NoReplicationBroker.NOOP_FUTURE;
     EntityRequest entityRequest =  new EntityRequest(impl, entity, request, concurrencyKey, token, message);
     requestExecution.addMultiThreaded(entityRequest);

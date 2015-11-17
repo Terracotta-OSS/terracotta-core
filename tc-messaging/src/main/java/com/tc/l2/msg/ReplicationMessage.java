@@ -36,26 +36,36 @@ import java.io.IOException;
 public class ReplicationMessage extends AbstractGroupMessage implements VoltronEntityMessage, OrderedEventContext {
 //  message types  
   public static final int REPLICATE               = 0; // Sent to replicate a request on the passive
-  public static final int RESPONSE                = 1; // response that the replicated action completed
-  
-  public static final int NOOP = 0;
-  public static final int CREATE_ENTITY = 1;
-  public static final int INVOKE_ACTION = 2;
-  public static final int GET_ENTITY = 3;
-  public static final int RELEASE_ENTITY = 4;
-  public static final int DESTROY_ENTITY = 5;
-  public static final int PROMOTE_ENTITY_TO_ACTIVE = 6;
+  public static final int SYNC               = 1; // Sent to replicate a request on the passive
+  public static final int RESPONSE                = 2; // response that the replicated action completed
+
+  public enum ReplicationType {
+    NOOP,
+    CREATE_ENTITY,
+    INVOKE_ACTION,
+    GET_ENTITY,
+    RELEASE_ENTITY,
+    DESTROY_ENTITY,
+    PROMOTE_ENTITY_TO_ACTIVE,
+    
+    SYNC_BEGIN,
+    SYNC_END,
+    SYNC_ENTITY_BEGIN,
+    SYNC_ENTITY_END,
+    SYNC_ENTITY_CONCURRENCY_BEGIN,
+    SYNC_ENTITY_CONCURRENCY_PAYLOAD,
+    SYNC_ENTITY_CONCURRENCY_END;
+  }
   
   EntityDescriptor descriptor;
-  long version;
     
   NodeID src;
-  Iterable<NodeID> destination;
   TransactionID tid;
   TransactionID oldest;
 
-  int action;
+  ReplicationType action;
   byte[] payload;
+  int concurrency;
   
   long rid;
   
@@ -63,22 +73,38 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     super(REPLICATE);
   }
   
+  public ReplicationMessage(int type) {
+    super(type);
+  }
+  
   public ReplicationMessage(MessageID mid) {
     super(RESPONSE, mid);
   }  
-  
-  public ReplicationMessage(EntityDescriptor descriptor, long version, NodeID src, 
-      Iterable<NodeID> dest, TransactionID tid, TransactionID oldest, 
-      int action, byte[] payload, long rid) {
+//  a true replicated message
+  public ReplicationMessage(EntityDescriptor descriptor, NodeID src, 
+      TransactionID tid, TransactionID oldest, 
+      ReplicationType action, byte[] payload, int concurrency) {
     super(REPLICATE);
+    initialize(descriptor, src, tid, oldest, action, payload, concurrency);
+  }
+  
+  protected final void initialize(EntityDescriptor descriptor, NodeID src, 
+      TransactionID tid, TransactionID oldest, 
+      ReplicationType action, byte[] payload, int concurrency) {
     this.descriptor = descriptor;
-    this.version = version;
     this.src = src;
-    this.destination = dest;
     this.tid = tid;
     this.oldest = oldest;
     this.action = action;
     this.payload = payload;
+    this.concurrency = concurrency;
+  }
+  
+  public ReplicationEnvelope target(NodeID node) {
+    return new ReplicationEnvelope(node, this);
+  }
+  
+  public void setReplicationID(long rid) {
     this.rid = rid;
   }
 
@@ -88,7 +114,11 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   }
   
   public long getVersion() {
-    return version;
+    return descriptor.getClientSideVersion();
+  }
+  
+  public final ReplicationType getReplicationType() {
+    return action;
   }
 
   @Override
@@ -97,7 +127,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   }
   
   public int getAction() {
-    return action;
+    return action.ordinal();
   }
   
   @Override
@@ -113,10 +143,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   @Override
   public TransactionID getOldestTransactionOnClient() {
     return oldest;
-  }
-  
-  public Iterable<NodeID> getDestinations() {
-    return destination;
   }
 
   @Override
@@ -134,22 +160,26 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     return decodeServerActionType(action);
   }
   
+  public int getConcurrency() {
+    return this.concurrency;
+  }
+  
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    if (getType() == REPLICATE) {
+    if (getType() == REPLICATE || getType() == SYNC) {
       this.rid = in.readLong();
       this.descriptor = EntityDescriptor.readFrom(in);
-      this.version = in.readLong();
       if (in.read() != NodeID.CLIENT_NODE_TYPE) {
         throw new AssertionError();
       }
       this.src = new ClientID().deserializeFrom(in);
       this.tid = new TransactionID(in.readLong());
       this.oldest = new TransactionID(in.readLong());
-      this.action = in.readInt();
+      this.action = ReplicationType.values()[in.readInt()];
       int length = in.readInt();
       this.payload = new byte[length];
       in.readFully(this.payload);
+      this.concurrency = in.readInt();
     } else {
       this.rid = in.readLong();
     }
@@ -163,18 +193,18 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     } else {
       out.writeLong(rid);
       this.descriptor.serializeTo(out);
-      out.writeLong(version);
       out.write(this.src.getNodeType());
       this.src.serializeTo(out);
       out.writeLong(tid.toLong());
       out.writeLong(oldest.toLong());
-      out.writeInt(this.action);
+      out.writeInt(this.action.ordinal());
       if (payload != null) {
         out.writeInt(payload.length);
         out.write(payload);
       } else {
         out.writeInt(0);
       }
+      out.writeInt(concurrency);
     }
   }
 
@@ -183,7 +213,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     return "ReplicationMessage{rid=" + rid + ", id=" + descriptor + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + '}';
   }
   
-  private VoltronEntityMessage.Type decodeServerActionType(int networkType) {
+  private VoltronEntityMessage.Type decodeServerActionType(ReplicationType networkType) {
     switch(networkType) {
       case NOOP:
         return null;
@@ -199,6 +229,8 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
         return VoltronEntityMessage.Type.DESTROY_ENTITY;
       case PROMOTE_ENTITY_TO_ACTIVE:
         return null;
+      case SYNC_ENTITY_BEGIN:
+        return VoltronEntityMessage.Type.CREATE_ENTITY;
       default:
         return null;
     }

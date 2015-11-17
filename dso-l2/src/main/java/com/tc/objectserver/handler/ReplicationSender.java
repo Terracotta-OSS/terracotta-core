@@ -21,19 +21,26 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_BEGIN;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  */
-public class ReplicationSender extends AbstractEventHandler<ReplicationMessage> {
-  
+public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope> {
+  //  this is all single threaded.  If there is any attempt to make this multi-threaded,
+  //  control structures must be fixed
   private final GroupManager group;
+  private final Map<NodeID, AtomicLong> ordering = new HashMap<NodeID, AtomicLong>();
   private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
 
   public ReplicationSender(GroupManager group) {
@@ -41,10 +48,25 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationMessage> 
   }
 
   @Override
-  public void handleEvent(ReplicationMessage context) throws EventHandlerException {
-    for (NodeID nodeid : context.getDestinations()) {
+  public void handleEvent(ReplicationEnvelope context) throws EventHandlerException {
+    NodeID nodeid = context.getDestination();
+    ReplicationMessage msg = context.getMessage();
+    if (msg == null) {
+// this is a flush of the replication channel.  shut it down and return;
+      ordering.remove(nodeid);
+    } else {
+      AtomicLong rOrder = ordering.get(nodeid);
+
+      if (rOrder == null) {
+        if (msg.getType() != ReplicationMessage.SYNC || msg.getReplicationType()!= SYNC_BEGIN) {
+          throw new AssertionError("bad message queue");
+        }
+        rOrder = new AtomicLong();
+        ordering.put(nodeid, rOrder);
+      }
+      msg.setReplicationID(rOrder.incrementAndGet());
       try {
-        group.sendTo(nodeid, context);//  i'm not sure that this is possible, make sure that the same message can be serialized to multiple passives
+        group.sendTo(nodeid, msg);
       }  catch (GroupException ge) {
         logger.info(ge);
       }

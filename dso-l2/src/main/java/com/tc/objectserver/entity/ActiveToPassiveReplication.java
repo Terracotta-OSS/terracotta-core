@@ -20,14 +20,13 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
-import com.tc.net.groups.GroupException;
-import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.object.EntityDescriptor;
@@ -48,7 +47,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -57,20 +55,17 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   
   private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
   private final EntityManagerImpl entities;
-  private final GroupManager groups;
   private final StateManager state;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<NodeID>();
   private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
-  private final Sink<ReplicationMessage> replicate;
-  private final AtomicLong rid = new AtomicLong();
+  private final Sink<ReplicationEnvelope> replicate;
   private boolean isActive;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
-  public ActiveToPassiveReplication(GroupManager group, EntityManagerImpl entities, StateManager state, Sink<ReplicationMessage> replicate) {
+  public ActiveToPassiveReplication(EntityManagerImpl entities, StateManager state, Sink<ReplicationEnvelope> replicate) {
     this.entities = entities;
     this.state = state;
     this.replicate = replicate;
-    this.groups = group;
   }
 
   @Override
@@ -83,36 +78,31 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     this.isActive = active;
   }
   
-  private void startPassiveSync(GroupManager groups, NodeID newNode) {
+  private void startPassiveSync(NodeID newNode) {
       passiveNodes.add(newNode);
-      executePassiveSync(groups, newNode);
+      executePassiveSync(newNode);
   }
   /**
    * Using an executor service here to sync multiple passives at once
    * @param groups
    * @param newNode 
    */
-  private void executePassiveSync(final GroupManager groups,final NodeID newNode) {
+  private void executePassiveSync(final NodeID newNode) {
     passiveSyncPool.execute(new Runnable() {
       @Override
       public void run() {
-        try {
         // start passive sync message
-            groups.sendTo(newNode, PassiveSyncMessage.createStartSyncMessage());
-            Collection<ManagedEntity> currentEntities = entities.getAll();
-            for (ManagedEntity entity : currentEntities) {
-        // TODO: this is a stub implementation and needs to be fully designed
-                entity.sync(newNode, groups);
-        //  create entity on passive
-        //  start passive sync for entity      
-            }
+          replicate.addSingleThreaded(new PassiveSyncMessage(true).target(newNode));
+          Collection<ManagedEntity> currentEntities = entities.getAll();
+          for (ManagedEntity entity : currentEntities) {
+      // TODO: this is a stub implementation and needs to be fully designed
+              entity.sync(newNode);
+      //  create entity on passive
+      //  start passive sync for entity      
+          }
       //  passive sync done message.  causes passive to go into passive standby mode
-            groups.sendTo(newNode, PassiveSyncMessage.createEndSyncMessage());
-        }  catch (GroupException ge) {
-          logger.info(ge);
-        }
-    }
-    
+          replicate.addSingleThreaded(new PassiveSyncMessage(false).target(newNode));
+      }
     });
   }
 
@@ -126,53 +116,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
     }
   }    
-
+  
   @Override
-  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src,
-      ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload) {
-    if (!isActive || passiveNodes.isEmpty()) {
-      return NoReplicationBroker.NOOP_FUTURE;
-    }
-    
-    Set<NodeID> all = new HashSet<NodeID>(passiveNodes);
-    int actionCode = -1;
-    switch (type) {
-      case CREATE_ENTITY:
-        actionCode = ReplicationMessage.CREATE_ENTITY;
-        break;
-      case DESTROY_ENTITY:
-        actionCode = ReplicationMessage.DESTROY_ENTITY;
-        break;
-      case FETCH_ENTITY:
-        //  TODO: probably shouldn't replicate this
-        actionCode = ReplicationMessage.GET_ENTITY;
-        break;
-      case INVOKE_ACTION:
-        actionCode = ReplicationMessage.INVOKE_ACTION;
-        break;
-      case NOOP:
-        //  TODO: probably shouldn't replicate this
-        actionCode = ReplicationMessage.NOOP;
-        break;
-      case PROMOTE_ENTITY_TO_ACTIVE:
-        //  TODO: probably shouldn't replicate this
-        actionCode = ReplicationMessage.PROMOTE_ENTITY_TO_ACTIVE;
-        break;
-      case RELEASE_ENTITY:
-        actionCode = ReplicationMessage.RELEASE_ENTITY;
-        break;
-      case REQUEST_SYNC_ENTITY:
-        // A request to sync the entity should never go through the replication path.
-        Assert.fail();
-        break;
-      default:
-        break;
-    }
-    final ReplicationMessage msg = new ReplicationMessage(id, version, src, all, tid, oldest, actionCode, payload, rid.incrementAndGet());
+  public Future<Void> replicateSync(ReplicationMessage msg, Set<NodeID> all) {
     
     if (!all.isEmpty()) {
       waiters.put(msg.getMessageID(), all);
-      replicate.addSingleThreaded(msg);
+      for (NodeID node : all) {
+        replicate.addSingleThreaded(msg.target(node));
+      }
     }
     
     return new Future<Void>() {
@@ -215,6 +167,50 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
     };
   }
+
+  @Override
+  public Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src,
+      ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
+    if (!state.isActiveCoordinator() || passiveNodes.isEmpty()) {
+      return NoReplicationBroker.NOOP_FUTURE;
+    }
+    
+    ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
+    switch (type) {
+      case CREATE_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
+        break;
+      case DESTROY_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
+        break;
+      case FETCH_ENTITY:
+        //  TODO: probably shouldn't replicate this
+        actionCode = ReplicationMessage.ReplicationType.GET_ENTITY;
+        break;
+      case INVOKE_ACTION:
+        actionCode = ReplicationMessage.ReplicationType.INVOKE_ACTION;
+        break;
+      case NOOP:
+        //  TODO: probably shouldn't replicate this
+//        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        break;
+      case PROMOTE_ENTITY_TO_ACTIVE:
+        //  TODO: probably shouldn't replicate this
+//        actionCode = ReplicationMessage.ReplicationType.PROMOTE_ENTITY_TO_ACTIVE;
+        break;
+      case RELEASE_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
+        break;
+      case SYNC_ENTITY:
+        //  TODO: probably shouldn't replicate this
+//        actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
+        break;
+      default:
+        break;
+    }
+    final ReplicationMessage msg = new ReplicationMessage(id, src, tid, oldest, actionCode, payload, concurrency);
+    return replicateSync(msg, new HashSet<NodeID>(passiveNodes));
+  }
   
   public void removePassive(NodeID nodeID) {
     for (Map.Entry<MessageID, Set<NodeID>> entry : waiters.entrySet()) {
@@ -226,12 +222,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         }
       }
     }
+//  this is a flush message (null).  Tell the sink there will be no more 
+//  messages targeted at this nodeid
+    replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null));
   }
   
   @Override
   public void nodeJoined(NodeID nodeID) {
     if (state.isActiveCoordinator()) {
-      startPassiveSync(groups, nodeID);
+      startPassiveSync(nodeID);
     }
   }
 
