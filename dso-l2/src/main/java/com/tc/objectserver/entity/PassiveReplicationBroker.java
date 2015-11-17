@@ -30,6 +30,4 @@ public interface PassiveReplicationBroker {
   Future<Void> replicateSync(ReplicationMessage msg, Set<NodeID> passives);
     Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, 
         ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload,int concurrency);
-    boolean isActive();
-    void setActive(boolean active);
 }

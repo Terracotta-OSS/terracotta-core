@@ -67,17 +67,7 @@ public class NoReplicationBroker implements PassiveReplicationBroker {
   }
 
   @Override
-  public boolean isActive() {
-    return false;
-  }
-  
-  @Override
   public Future<Void> replicateSync(ReplicationMessage msg, Set<NodeID> passives) {
     return NOOP_FUTURE;
-  }
-
-  @Override
-  public void setActive(boolean active) {
-    throw new IllegalStateException("this replication broker cannot go active");
   }
 }

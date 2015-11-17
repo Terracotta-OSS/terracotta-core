@@ -40,28 +40,4 @@ public class ReplicationEnvelope {
   public ReplicationMessage getMessage() {
     return msg;
   }
-/*  
-  @Override
-  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    switch (this.getType()) {
-      case ReplicationMessage.REPLICATE:
-        msg = new ReplicationMessage();
-        break;
-      case ReplicationMessage.RESPONSE:
-        msg = new ReplicationMessageAck();
-        break;
-      case ReplicationMessage.SYNC:
-        msg = new PassiveSyncMessage();
-        break;
-      default:
-        throw new AssertionError("bad message");
-    }
-    msg.deserializeFrom(in);
-  }
-
-  @Override
-  protected void basicSerializeTo(TCByteBufferOutput out) {
-    msg.serializeTo(out);
-  }
-*/
 }

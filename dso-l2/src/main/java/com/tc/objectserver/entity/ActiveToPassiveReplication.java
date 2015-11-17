@@ -59,23 +59,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<NodeID>();
   private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
-  private boolean isActive;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
   public ActiveToPassiveReplication(EntityManagerImpl entities, StateManager state, Sink<ReplicationEnvelope> replicate) {
     this.entities = entities;
     this.state = state;
     this.replicate = replicate;
-  }
-
-  @Override
-  public boolean isActive() {
-    return this.isActive;
-  }
-
-  @Override
-  public void setActive(boolean active) {
-    this.isActive = active;
   }
   
   private void startPassiveSync(NodeID newNode) {
