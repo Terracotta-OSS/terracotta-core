@@ -98,7 +98,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {
         try {
         // start passive sync message
-            groups.sendTo(newNode, new PassiveSyncMessage(true));
+            groups.sendTo(newNode, PassiveSyncMessage.createStartSyncMessage());
             Collection<ManagedEntity> currentEntities = entities.getAll();
             for (ManagedEntity entity : currentEntities) {
         // TODO: this is a stub implementation and needs to be fully designed
@@ -107,7 +107,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         //  start passive sync for entity      
             }
       //  passive sync done message.  causes passive to go into passive standby mode
-            groups.sendTo(newNode, new PassiveSyncMessage(false));
+            groups.sendTo(newNode, PassiveSyncMessage.createEndSyncMessage());
         }  catch (GroupException ge) {
           logger.info(ge);
         }

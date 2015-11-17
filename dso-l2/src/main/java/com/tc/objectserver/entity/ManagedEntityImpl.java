@@ -223,7 +223,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
           @Override
           public void synchronizeToPassive(byte[] payload) {
-            ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(new PassiveSyncMessage(id, concurrency, payload));
+            ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(PassiveSyncMessage.createPayloadMessage(id, version, concurrency, payload));
           }};
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrency);
         wrappedRequest.complete();
@@ -310,22 +310,22 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void sync(NodeID passive, GroupManager mgr) throws GroupException {
-    mgr.sendTo(passive, new PassiveSyncMessage(id, version, constructorInfo));
+    mgr.sendTo(passive, PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo));
 // TODO:  This is a stub, the real implementation is to be designed
 // iterate through all the concurrency keys of an entity
     for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
 // send the start message of a concurrency index and of an entity
-      mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, true));
+      mgr.sendTo(passive, PassiveSyncMessage.createStartEntityKeyMessage(id, version, concurrency));
       PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
       // We don't actually use the message in the direct strategy so this is safe.
       EntityMessage message = null;
       executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req, message);
       req.waitFor();
 // send the end message of a concurrency index and of an entity
-      mgr.sendTo(passive, new PassiveSyncMessage(id, concurrency, false));
+      mgr.sendTo(passive, PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrency));
     }
 //  end passive sync for an entity
-    mgr.sendTo(passive, new PassiveSyncMessage(id, version, null));
+    mgr.sendTo(passive, PassiveSyncMessage.createEndEntityMessage(id, version));
   }
 
   private void loadExisting(ServerEntityRequest loadEntityRequest) {

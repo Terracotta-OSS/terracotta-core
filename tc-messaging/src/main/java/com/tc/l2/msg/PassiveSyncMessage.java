@@ -22,12 +22,45 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.object.EntityID;
+import com.tc.util.Assert;
+
 import java.io.IOException;
 
-/**
- *
- */
+
 public class PassiveSyncMessage extends AbstractGroupMessage {
+  public static PassiveSyncMessage createStartSyncMessage() {
+    EntityID fakeID = new EntityID("", "");
+    long fakeVersion = 1;
+    return new PassiveSyncMessage(BEGIN, fakeID, fakeVersion, 0, null);
+  }
+  public static PassiveSyncMessage createEndSyncMessage() {
+    EntityID fakeID = new EntityID("", "");
+    long fakeVersion = 1;
+    return new PassiveSyncMessage(END, fakeID, fakeVersion, 0, null);
+  }
+  public static PassiveSyncMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload) {
+    return new PassiveSyncMessage(ENTITY_BEGIN, id, version, 0, configPayload);
+  }
+  public static PassiveSyncMessage createEndEntityMessage(EntityID id, long version) {
+    return new PassiveSyncMessage(ENTITY_END, id, version, 0, null);
+  }
+  public static PassiveSyncMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // TEMP
+    Assert.assertTrue(1 == concurrency);
+    return new PassiveSyncMessage(ENTITY_CONCURRENCY_BEGIN, id, version, concurrency, null);
+  }
+  public static PassiveSyncMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // TEMP
+    Assert.assertTrue(1 == concurrency);
+    return new PassiveSyncMessage(ENTITY_CONCURRENCY_END, id, version, concurrency, null);
+  }
+  public static PassiveSyncMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
+    // TEMP
+    Assert.assertTrue(1 == concurrency);
+    return new PassiveSyncMessage(ENTITY_CONCURRENCY_PAYLOAD, id, version, concurrency, payload);
+  }
+
+
 //  message types  
   public static final int BEGIN               = 0; // Sent to replicate a request on the passive
   public static final int END                = 1; // response that the replicated action completed
@@ -46,34 +79,20 @@ public class PassiveSyncMessage extends AbstractGroupMessage {
   byte[] payload;
 
   public PassiveSyncMessage() {
-    super(0);
-    id = new EntityID("", "");
-  }
-  
-  public PassiveSyncMessage(boolean start) {
-    super(start ? BEGIN : END);
-    id = new EntityID("", "");
-  }
-  
-  public PassiveSyncMessage(EntityID id, long version, byte[] configPayload) {
-    super(configPayload != null ? ENTITY_BEGIN : ENTITY_END);
-    this.id = id;
-    this.version = version;
-    this.payload = configPayload;
-  }
-  
-  public PassiveSyncMessage(EntityID id, int concurrency, boolean start) {
-    super(start ? ENTITY_CONCURRENCY_BEGIN : ENTITY_CONCURRENCY_END);
-    this.id = id;
-    this.concurrency = concurrency;
+    super(-1);
+    // Serialization support.
   }
 
-  public PassiveSyncMessage(EntityID id, int concurrency, byte[] payload) {
-    super(ENTITY_CONCURRENCY_PAYLOAD);
+  private PassiveSyncMessage(int messageType, EntityID id, long version, int concurrencyKey, byte[] payload) {
+    super(messageType);
+    Assert.assertNotNull(id);
     this.id = id;
-    this.concurrency = concurrency;
+    // We always need a valid version and those start at 1.
+    Assert.assertTrue(version > 0);
+    this.version = version;
+    this.concurrency = concurrencyKey;
     this.payload = payload;
-  }  
+  }
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
@@ -92,6 +111,9 @@ public class PassiveSyncMessage extends AbstractGroupMessage {
       out.writeLong(version);
       out.writeInt(concurrency);
       out.writeInt(payload == null ? 0 : payload.length);
+      if (null != payload) {
+        out.write(payload);
+      }
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     }
