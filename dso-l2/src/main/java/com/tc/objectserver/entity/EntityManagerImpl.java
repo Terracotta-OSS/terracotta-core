@@ -238,6 +238,12 @@ public class EntityManagerImpl implements EntityManager {
         }
       }
     }
+    
+    @Override
+    public int getConcurrencyKey() {
+      Assert.fail("No concurrency key on this message type");
+      return 0;
+    }
   }
 }
 

@@ -131,4 +131,7 @@ public class PassiveSyncMessage extends AbstractGroupMessage {
     return payload;
   }
   
+  public int getConcurrencyKey() {
+    return this.concurrency;
+  }
 }

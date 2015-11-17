@@ -422,11 +422,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     
     private final GroupManager group;
     private final NodeID passive;
+    private final int concurrencyKey;
 
     public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, GroupManager group, NodeID passive) {
       super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, makePayload(concurrency), null, null, null, false);
       this.group = group;
       this.passive = passive;
+      this.concurrencyKey = concurrency;
     }
 
     @Override
@@ -476,6 +478,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     public synchronized void complete() {
       this.notifyAll();
       super.complete();
+    }
+
+    @Override
+    public int getConcurrencyKey() {
+      return this.concurrencyKey;
     }
   }
 }

@@ -119,6 +119,6 @@ public class PassiveSyncHandler {
   
   private ServerEntityRequest make(PassiveSyncMessage rep) {
     return new ServerEntityRequestImpl(new EntityDescriptor(rep.getEntityID(), ClientInstanceID.NULL_ID, rep.getVersion()), ServerEntityAction.CREATE_ENTITY,
-        rep.getPayload(), TransactionID.NULL_ID, null, ClientID.NULL_ID, false, Optional.empty());
+        rep.getPayload(), TransactionID.NULL_ID, null, ClientID.NULL_ID, false, Optional.empty(), rep.getConcurrencyKey());
   }  
 }
