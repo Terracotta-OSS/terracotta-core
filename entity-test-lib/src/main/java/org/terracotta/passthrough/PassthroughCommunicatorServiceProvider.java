@@ -20,8 +20,8 @@ public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
-    // TODO Auto-generated method stub
-    return false;
+    // We always return true on initialize of this service (it has no state).
+    return true;
   }
 
   @Override

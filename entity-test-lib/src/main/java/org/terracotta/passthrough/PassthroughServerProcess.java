@@ -15,6 +15,7 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
@@ -418,7 +419,10 @@ public class PassthroughServerProcess implements MessageHandler {
     return foundService;
   }
 
-  public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider) {
+  public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    // We run the initializer right away.
+    boolean didInitialize = serviceProvider.initialize(providerConfiguration);
+    Assert.assertTrue(didInitialize);
     this.serviceProviderMap.put(clazz, serviceProvider);
   }
 
