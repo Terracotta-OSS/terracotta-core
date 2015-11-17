@@ -23,7 +23,6 @@ import com.tc.async.api.Sink;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.object.EntityDescriptor;
-import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import java.util.concurrent.ExecutionException;
@@ -31,8 +30,8 @@ import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 
+
 public class RequestProcessor implements StateChangeListener {
-  
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
 //  TODO: do some accounting for transaction de-dupping on failover
@@ -53,17 +52,14 @@ public class RequestProcessor implements StateChangeListener {
     }
   }
   
-  public int scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ConcurrencyStrategy<EntityMessage> strategy, ServerEntityRequest request, EntityMessage message) {
-    int concurrencyKey = (strategy == null || request.getAction() != ServerEntityAction.INVOKE_ACTION) ? 
-        ConcurrencyStrategy.MANAGEMENT_KEY : 
-        strategy.concurrencyKey(message);
+  public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey) {
+    // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Future<Void> token = (passives != null && request.requiresReplication())
         ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload())
         : NoReplicationBroker.NOOP_FUTURE;
     EntityRequest entityRequest =  new EntityRequest(impl, entity, request, concurrencyKey, token, message);
     requestExecution.addMultiThreaded(entityRequest);
-    return concurrencyKey;
   }
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {

@@ -45,7 +45,6 @@ import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -106,10 +105,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
     EntityMessage message = null;
     // We only decode messages for INVOKE requests.
+    // Similarly, we will extract the concurrency key out of the message, or default to management for other message types.
+    int concurrencyKey = ConcurrencyStrategy.MANAGEMENT_KEY;
     if (ServerEntityAction.INVOKE_ACTION == action) {
       message = (null != this.activeServerEntity) ? this.activeServerEntity.getMessageDeserializer().deserialize(request.getPayload()) : null;
+      concurrencyKey = concurrencyStrategy.concurrencyKey(message);
     }
-    executor.scheduleRequest(this, getEntityDescriptorForSource(client), concurrencyStrategy, request, message);
+    executor.scheduleRequest(this, getEntityDescriptorForSource(client), request, message, concurrencyKey);
   }
 
   private synchronized void waitForEntityCreation() {
@@ -366,7 +368,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
       // We don't actually use the message in the direct strategy so this is safe.
       EntityMessage message = null;
-      executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), new DirectConcurrencyStrategy(concurrency), req, message);
+      executor.scheduleRequest(this, getEntityDescriptorForSource(req.getSourceDescriptor()), req, message, concurrency);
       req.waitFor();
 // send the end message of a concurrency index and of an entity
       mgr.sendTo(passive, PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrency));
@@ -397,25 +399,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     loadEntityRequest.complete();
     entityToLoad.loadExisting();
-  }
-  
-  private static class DirectConcurrencyStrategy implements ConcurrencyStrategy<EntityMessage> {
-    private final int target;
-
-    public DirectConcurrencyStrategy(int target) {
-      this.target = target;
-    }
-    
-    @Override
-    public int concurrencyKey(EntityMessage payload) {
-      return target;
-    }
-
-    @Override
-    public Set<Integer> getKeysForSynchronization() {
-      Assert.fail("Synchronization not applicable to directory concurrency strategy");
-      return null;
-    }    
   }
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
