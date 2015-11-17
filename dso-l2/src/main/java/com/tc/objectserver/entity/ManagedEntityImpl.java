@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.google.common.base.Throwables;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
@@ -97,13 +98,29 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public void addRequest(ServerEntityRequest request) {
     ClientDescriptor client = request.getSourceDescriptor();
+    ServerEntityAction action = request.getAction();
+    if (ServerEntityAction.INVOKE_ACTION == action) {
+      // Invoke requests need to wait for the entity creation so that they can request the concurrency strategy.
+      waitForEntityCreation();
+    }
     ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
     EntityMessage message = null;
     // We only decode messages for INVOKE requests.
-    if (ServerEntityAction.INVOKE_ACTION == request.getAction()) {
+    if (ServerEntityAction.INVOKE_ACTION == action) {
       message = (null != this.activeServerEntity) ? this.activeServerEntity.getMessageDeserializer().deserialize(request.getPayload()) : null;
     }
     executor.scheduleRequest(this, getEntityDescriptorForSource(client), concurrencyStrategy, request, message);
+  }
+
+  private synchronized void waitForEntityCreation() {
+    while ((null == this.activeServerEntity) && (null == this.passiveServerEntity)) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        // We have no way of handling an interruption at this wait point.
+        Throwables.propagate(e);
+      }
+    }
   }
 
   @Override
@@ -216,14 +233,14 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " already exists.");
       } else {
-        this.activeServerEntity = factory.createActiveEntity(registry, constructorInfo);
+        createActiveEntityAndNotify();
         entityToCreate = this.activeServerEntity;
       }
     } else {
       if (null != this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " already exists.");
       } else {
-        this.passiveServerEntity = factory.createPassiveEntity(registry, constructorInfo);
+        createPassiveEntityAndNotify();
         // Store the configuration in case we promote.
         entityToCreate = this.passiveServerEntity;
       }
@@ -232,6 +249,16 @@ public class ManagedEntityImpl implements ManagedEntity {
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.createNew();
+  }
+
+  private synchronized void createPassiveEntityAndNotify() {
+    this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
+    notifyAll();
+  }
+
+  private synchronized void createActiveEntityAndNotify() {
+    this.activeServerEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
+    notifyAll();
   }
 
   //  TODO: stub implementation.  This is supposed to send the data to the passive server for sync
