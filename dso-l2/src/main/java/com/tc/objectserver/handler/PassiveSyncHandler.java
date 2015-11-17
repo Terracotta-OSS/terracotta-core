@@ -28,6 +28,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -48,7 +49,7 @@ public class PassiveSyncHandler {
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
 
-  public PassiveSyncHandler(StateManager stateManager, GroupManager groupManager, EntityManager entityManager, EntityPersistor entityPersistor) {
+  public PassiveSyncHandler(StateManager stateManager, GroupManager<AbstractGroupMessage> groupManager, EntityManager entityManager, EntityPersistor entityPersistor) {
     this.stateManager = stateManager;
     this.entityManager = entityManager;
     this.entityPersistor = entityPersistor;

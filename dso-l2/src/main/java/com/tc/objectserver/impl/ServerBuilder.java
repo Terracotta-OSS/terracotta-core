@@ -38,6 +38,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.tcm.ChannelManager;
@@ -61,7 +62,7 @@ import javax.management.MBeanServer;
 
 
 public interface ServerBuilder extends TCDumper, PostInit {
-  GroupManager createGroupCommManager(L2ConfigurationSetupManager configManager,
+  GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID,
                                       StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory);
 

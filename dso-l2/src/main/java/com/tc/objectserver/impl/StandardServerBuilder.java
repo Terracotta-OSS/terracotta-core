@@ -39,6 +39,7 @@ import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
@@ -85,7 +86,7 @@ public class StandardServerBuilder implements ServerBuilder {
   }
 
   @Override
-  public GroupManager createGroupCommManager(L2ConfigurationSetupManager configManager,
+  public GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
                                              StageManager stageManager, ServerID serverNodeID,
                                              StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory) {
     return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getNodesStore(), securityManager, weightGeneratorFactory);
