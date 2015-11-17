@@ -144,12 +144,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   
 
   /**
-   * Pull one request off the request sequencer and service it. 
+   * Runs on a concurrent thread from RequestProcessor (meaning that this could be invoked concurrently on the same entity)
+   * to handle one request.
    *  
-   * TODO: Should we return a boolean here for scheduling hints?  
-   * @param request
+   * @param request The request to process
+   * @param concurrencyKey The key this thread is processing by running this request
+   * @param message 
    */
-  public void invoke(ServerEntityRequest request) {
+  public void invoke(ServerEntityRequest request, int concurrencyKey, EntityMessage message) {
     Lock read = reconnectAccessLock.readLock();
       try {
         read.lock();
@@ -158,7 +160,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             createEntity(request);
             break;
           case INVOKE_ACTION:
-            performAction(request);
+            performAction(request, message);
             break;
           case FETCH_ENTITY:
             getEntity(request);
@@ -175,7 +177,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             break;
           case REQUEST_SYNC_ENTITY:
 //  use typing for this distinction since it is server generated?
-            performSync(request);
+            performSync(request, concurrencyKey);
             break;
           case LOAD_EXISTING_ENTITY:
             loadExisting(request);
@@ -262,18 +264,17 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   //  TODO: stub implementation.  This is supposed to send the data to the passive server for sync
-  private void performSync(ServerEntityRequest wrappedRequest) {
+  private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        int concurrency = PassiveSyncServerEntityRequest.getConcurrency(wrappedRequest.getPayload());
         PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
           @Override
           public void synchronizeToPassive(byte[] payload) {
-            ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(PassiveSyncMessage.createPayloadMessage(id, version, concurrency, payload));
+            ((PassiveSyncServerEntityRequest)wrappedRequest).sendToPassive(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload));
           }};
-        this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrency);
+        this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         wrappedRequest.complete();
       }
     } else {
@@ -285,19 +286,17 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
   
-  private void performAction(ServerEntityRequest wrappedRequest) {
+  private void performAction(ServerEntityRequest wrappedRequest, EntityMessage message) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        EntityMessage message = this.activeServerEntity.getMessageDeserializer().deserialize(wrappedRequest.getPayload());
         wrappedRequest.complete(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
       }
     } else {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        EntityMessage message = this.passiveServerEntity.getMessageDeserializer().deserialize(wrappedRequest.getPayload());
         this.passiveServerEntity.invoke(message);
         wrappedRequest.complete();
       }
@@ -437,10 +436,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     
     public static byte[] makePayload(int concurrency) {
       return ByteBuffer.allocate(Integer.BYTES).putInt(concurrency).array();
-    }
-    
-    public static int getConcurrency(byte[] payload) {
-      return ByteBuffer.wrap(payload).getInt();
     }
     
     @Override

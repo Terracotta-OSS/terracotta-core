@@ -54,16 +54,16 @@ public class RequestProcessor implements StateChangeListener {
   }
   
   public int scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ConcurrencyStrategy<EntityMessage> strategy, ServerEntityRequest request, EntityMessage message) {
-    int index = (strategy == null || request.getAction() != ServerEntityAction.INVOKE_ACTION) ? 
+    int concurrencyKey = (strategy == null || request.getAction() != ServerEntityAction.INVOKE_ACTION) ? 
         ConcurrencyStrategy.MANAGEMENT_KEY : 
         strategy.concurrencyKey(message);
     Future<Void> token = (passives != null && request.requiresReplication())
         ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload())
         : NoReplicationBroker.NOOP_FUTURE;
-    EntityRequest entityRequest =  new EntityRequest(impl, entity, request, index, token);
+    EntityRequest entityRequest =  new EntityRequest(impl, entity, request, concurrencyKey, token, message);
     requestExecution.addMultiThreaded(entityRequest);
-    return index;
+    return concurrencyKey;
   }
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {
@@ -72,13 +72,15 @@ public class RequestProcessor implements StateChangeListener {
     private final ServerEntityRequest request;
     private final Future<Void>  token;
     private final int key;
+    private final EntityMessage message;
 
-    public EntityRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, int concurrencyIndex, Future<Void>  token) {
+    public EntityRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, int concurrencyIndex, Future<Void>  token, EntityMessage message) {
       this.impl = impl;
       this.entity = entity;
       this.request = request;
       this.key = concurrencyIndex;
       this.token = token;
+      this.message = message;
     }
 
     @Override
@@ -98,7 +100,7 @@ public class RequestProcessor implements StateChangeListener {
     void invoke()  {
       try {
         token.get();
-        impl.invoke(request);
+        impl.invoke(request, this.key, this.message);
       } catch (InterruptedException interrupted) {
 //  shutdown logic?  uniterruptable?
         throw new RuntimeException(interrupted);
