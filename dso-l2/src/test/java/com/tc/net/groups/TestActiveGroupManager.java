@@ -70,12 +70,12 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public <M extends GroupMessage> void registerForMessages(Class<M> msgClass, GroupMessageListener<M> listener) {
+  public <M extends GroupMessage> void registerForMessages(Class<? extends M> msgClass, GroupMessageListener<M> listener) {
     messageListeners.put(msgClass.getName(), (GroupMessageListener<GroupMessage>)listener);
   }
 
   @Override
-  public <M extends GroupMessage> void routeMessages(Class<M> msgClass, Sink<M> sink) {
+  public <M extends GroupMessage> void routeMessages(Class<? extends M> msgClass, Sink<M> sink) {
     throw new UnsupportedOperationException();
   }
 

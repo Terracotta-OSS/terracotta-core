@@ -84,13 +84,13 @@ public class ActiveServerGroupManagerImpl implements GroupManager<AbstractGroupM
 
   @SuppressWarnings("unchecked")
   @Override
-  public <N extends AbstractGroupMessage> void registerForMessages(Class<N> msgClass, GroupMessageListener<N> listener) {
+  public <N extends AbstractGroupMessage> void registerForMessages(Class<? extends N> msgClass, GroupMessageListener<N> listener) {
     GroupMessageListener<? extends GroupMessage> prev = this.messageListeners.put(msgClass.getName(), listener);
     if (prev != null) {
       logger.warn("Previous listener removed : " + prev);
     }
     // TODO:  Find a correct way of rationalizing these types in the generic.
-    Class<N> castMessageClass = msgClass;
+    Class<? extends N> castMessageClass = msgClass;
     GroupMessageListener<N> castThis = (GroupMessageListener<N>)this;
     this.groupManager.registerForMessages(castMessageClass, castThis);
   }
@@ -122,7 +122,7 @@ public class ActiveServerGroupManagerImpl implements GroupManager<AbstractGroupM
   }
 
   @Override
-  public <N extends AbstractGroupMessage> void routeMessages(Class<N> msgClass, Sink<N> sink) {
+  public <N extends AbstractGroupMessage> void routeMessages(Class<? extends N> msgClass, Sink<N> sink) {
     registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
   }
 

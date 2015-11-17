@@ -416,12 +416,12 @@ public class StripeTCGroupManagerImpl implements GroupManager<AbstractGroupMessa
   }
 
   @Override
-  public <M extends AbstractGroupMessage> void registerForMessages(Class<M> msgClass, GroupMessageListener<M> listener) {
+  public <M extends AbstractGroupMessage> void registerForMessages(Class<? extends M> msgClass, GroupMessageListener<M> listener) {
     groupManager.registerForMessages(msgClass, new messageFilter(listener));
   }
 
   @Override
-  public <N extends AbstractGroupMessage> void routeMessages(Class<N> msgClass, Sink<N> sink) {
+  public <N extends AbstractGroupMessage> void routeMessages(Class<? extends N> msgClass, Sink<N> sink) {
     groupManager.routeMessages(msgClass, sink);
   }
 

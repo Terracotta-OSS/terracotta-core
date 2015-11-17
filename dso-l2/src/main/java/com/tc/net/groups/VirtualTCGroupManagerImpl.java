@@ -72,7 +72,7 @@ public class VirtualTCGroupManagerImpl<M extends GroupMessage> implements GroupM
   }
 
   @Override
-  public <N extends M> void registerForMessages(Class<N> msgClass, GroupMessageListener<N> listener) {
+  public <N extends M> void registerForMessages(Class<? extends N> msgClass, GroupMessageListener<N> listener) {
     Class<M> castClass = ((Class<M>)msgClass);
     GroupMessageListener<M> prev = messageListeners.put(castClass.getName(), (GroupMessageListener<M>)listener);
     if (prev != null) {
@@ -95,7 +95,7 @@ public class VirtualTCGroupManagerImpl<M extends GroupMessage> implements GroupM
   }
 
   @Override
-  public <N extends M> void routeMessages(Class<N> msgClass, Sink<N> sink) {
+  public <N extends M> void routeMessages(Class<? extends N> msgClass, Sink<N> sink) {
     registerForMessages(msgClass, new RouteGroupMessagesToSink<>(msgClass.getName(), sink));
   }
 

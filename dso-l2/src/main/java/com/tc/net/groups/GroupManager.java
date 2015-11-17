@@ -44,9 +44,9 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public M sendToAndWaitForResponse(NodeID nodeID, M msg) throws GroupException;
 
-  public <N extends M> void registerForMessages(Class<N> msgClass, GroupMessageListener<N> listener);
+  public <N extends M> void registerForMessages(Class<? extends N> msgClass, GroupMessageListener<N> listener);
 
-  public <N extends M> void routeMessages(Class<N> msgClass, Sink<N> sink);
+  public <N extends M> void routeMessages(Class<? extends N> msgClass, Sink<N> sink);
 
   public void registerForGroupEvents(GroupEventsListener listener);
 
