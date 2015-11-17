@@ -326,11 +326,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
           @Override
           public void synchronizeToPassive(byte[] payload) {
-            unwrappedRequest.sendToPassive(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload));
+            executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrency, payload), wrappedRequest.getNodeID());
           }};
 //  start is handled byt the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrency);
-        executor.scheduleSync(new PassiveSyncMessage(id, version, concurrency), wrappedRequest.getNodeID());
+        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrency), wrappedRequest.getNodeID());
         wrappedRequest.complete();
       }
     } else {
@@ -464,7 +464,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     
     @Override
     public boolean requiresReplication() {
-      return false;
+      return true;
     }
 
     @Override
