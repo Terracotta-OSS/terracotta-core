@@ -156,12 +156,33 @@ public class ManagedEntityImpl implements ManagedEntity {
           case PROMOTE_ENTITY_TO_ACTIVE:
             promoteEntity(request);
             break;
-          case SYNC_ENTITY:
+          case REQUEST_SYNC_ENTITY:
 //  use typing for this distinction since it is server generated?
             performSync(request);
+            break;
           case LOAD_EXISTING_ENTITY:
             loadExisting(request);
             break;
+          case RECEIVE_SYNC_ENTITY_START:
+            // TODO: implement.
+            break;
+          case RECEIVE_SYNC_ENTITY_END:
+            // TODO: implement.
+            break;
+          case RECEIVE_SYNC_ENTITY_KEY_START:
+            // TODO: implement.
+            break;
+          case RECEIVE_SYNC_ENTITY_KEY_END:
+            // TODO: implement.
+            break;
+          case RECEIVE_SYNC_PAYLOAD:
+            // TODO: implement.
+            break;
+  
+          case DOES_EXIST:
+          case NOOP:
+            // Never occur on this level.
+            throw new IllegalArgumentException("Unexpected request " + request);
           default:
             throw new IllegalArgumentException("Unknown request " + request);
         }
@@ -377,14 +398,14 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final NodeID passive;
 
     public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, GroupManager group, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.SYNC_ENTITY, makePayload(concurrency), null, null, null, false);
+      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, makePayload(concurrency), null, null, null, false);
       this.group = group;
       this.passive = passive;
     }
 
     @Override
     public ServerEntityAction getAction() {
-      return ServerEntityAction.SYNC_ENTITY;
+      return ServerEntityAction.REQUEST_SYNC_ENTITY;
     }
     
     public static byte[] makePayload(int concurrency) {

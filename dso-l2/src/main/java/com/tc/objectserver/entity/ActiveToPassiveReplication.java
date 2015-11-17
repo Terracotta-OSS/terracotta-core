@@ -161,7 +161,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       case RELEASE_ENTITY:
         actionCode = ReplicationMessage.RELEASE_ENTITY;
         break;
-      case SYNC_ENTITY:
+      case REQUEST_SYNC_ENTITY:
         // A request to sync the entity should never go through the replication path.
         Assert.fail();
         break;
