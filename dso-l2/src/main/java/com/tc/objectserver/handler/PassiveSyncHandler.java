@@ -40,6 +40,8 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.util.Assert;
+
 import java.util.Optional;
 
 
@@ -76,35 +78,70 @@ public class PassiveSyncHandler {
       case PassiveSyncMessage.BEGIN:
         //  do something
         break;
-      case PassiveSyncMessage.ENTITY_BEGIN:
-        try {
-          if (!this.entityManager.getEntity(sync.getEntityID(), sync.getVersion()).isPresent()) {
-            long consumerID = entityPersistor.getNextConsumerID();
-            this.entityManager.createEntity(sync.getEntityID(), sync.getVersion(), consumerID);
-            this.entityPersistor.entityCreated(sync.getEntityID(), sync.getVersion(), consumerID, sync.getPayload());
-            Optional<ManagedEntity> entity = entityManager.getEntity(sync.getEntityID(),sync.getVersion());
-            if (entity.isPresent()) {
-              entity.get().addRequest(make(sync));
-            }
+      case PassiveSyncMessage.ENTITY_BEGIN: {
+        // If we sync an entity which already exists, something is seriously wrong and we shouldn't proceed.
+        // XXX: THIS SHOULD BE AN ASSERTION BUT IT IS A CHECK AS A TEMPORARY STOP-GAP WHILE SYNC IS IMPLEMENTED!
+        if (!lookupEntityWrapper(sync).isPresent()) {
+          long consumerID = this.entityPersistor.getNextConsumerID();
+          EntityID entityID = sync.getEntityID();
+          long version = sync.getVersion();
+          try {
+            this.entityManager.createEntity(entityID, version, consumerID);
+          } catch (EntityException e) {
+            // We can't allow the passive to be missing part of the active data model.
+            logAndAssertFailure("Failed to create entity in passive synchronization", e);
           }
-        } catch (EntityException state) {
-//  TODO: this needs to be controlled.  
-          logger.warn("entity has already been created", state);
+          this.entityPersistor.entityCreated(entityID, version, consumerID, sync.getPayload());
+          Optional<ManagedEntity> entityWrapper = lookupEntityWrapper(sync);
+          // If we failed to create the entity, something is seriously wrong and we can't proceed.
+          Assert.assertTrue(entityWrapper.isPresent());
+          ManagedEntity entity = entityWrapper.get();
+          // We need to create the entity.
+          entity.addRequest(makeInternalRequest(sync, ServerEntityAction.CREATE_ENTITY));
+          // ...and then tell the entity that we are about to start synchronization.
+          entity.addRequest(makeInternalRequest(sync, ServerEntityAction.RECEIVE_SYNC_ENTITY_START));
         }
         break;
+      }
       case PassiveSyncMessage.ENTITY_END:
-        //  do something?
+        lookupEntityAndDispatch(sync, ServerEntityAction.RECEIVE_SYNC_ENTITY_END);
         break;
       case PassiveSyncMessage.ENTITY_CONCURRENCY_BEGIN:
-        // do something?
+        lookupEntityAndDispatch(sync, ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START);
         break;
       case PassiveSyncMessage.ENTITY_CONCURRENCY_END:
-        // do something?
+        lookupEntityAndDispatch(sync, ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         break;
       case PassiveSyncMessage.ENTITY_CONCURRENCY_PAYLOAD:
-        // do something
+        lookupEntityAndDispatch(sync, ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
         break;
     }
+  }
+
+  private void lookupEntityAndDispatch(PassiveSyncMessage sync, ServerEntityAction action) {
+    Optional<ManagedEntity> entityWrapper = lookupEntityWrapper(sync);
+    // If we failed to find the entity, something is seriously wrong and we can't proceed.
+    Assert.assertTrue(entityWrapper.isPresent());
+    ManagedEntity entity = entityWrapper.get();
+    // Tell the entity we are done.
+    entity.addRequest(makeInternalRequest(sync, action));
+  }
+
+  private void logAndAssertFailure(String message, EntityException e) {
+    logger.fatal(message, e);
+    Assert.failure(message, e);
+  }
+
+  private Optional<ManagedEntity> lookupEntityWrapper(PassiveSyncMessage sync) {
+    EntityID entityID = sync.getEntityID();
+    long version = sync.getVersion();
+    Optional<ManagedEntity> entityWrapper = null;
+    try {
+      entityWrapper = this.entityManager.getEntity(entityID, version);
+    } catch (EntityException e) {
+      logAndAssertFailure("Fatal exception during passive synchronization", e);
+    }
+    return entityWrapper;
   }
   
   public PassiveSyncFilter createFilter() {
@@ -117,8 +154,8 @@ public class PassiveSyncHandler {
     };
   }
   
-  private ServerEntityRequest make(PassiveSyncMessage rep) {
-    return new ServerEntityRequestImpl(new EntityDescriptor(rep.getEntityID(), ClientInstanceID.NULL_ID, rep.getVersion()), ServerEntityAction.CREATE_ENTITY,
+  private ServerEntityRequest makeInternalRequest(PassiveSyncMessage rep, ServerEntityAction actionType) {
+    return new ServerEntityRequestImpl(new EntityDescriptor(rep.getEntityID(), ClientInstanceID.NULL_ID, rep.getVersion()), actionType,
         rep.getPayload(), TransactionID.NULL_ID, null, ClientID.NULL_ID, false, Optional.empty(), rep.getConcurrencyKey());
   }  
 }
