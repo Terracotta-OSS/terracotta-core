@@ -55,11 +55,33 @@ public enum ServerEntityAction {
    */
   PROMOTE_ENTITY_TO_ACTIVE,
   /**
-   * Ask entity to sync a portion of its state.
+   * Ask an entity to synchronize itself to a passive.
    */
-  SYNC_ENTITY,
+  REQUEST_SYNC_ENTITY,
   /**
    * An internally-created action to communicate that an entity should be loaded from its existing disk state.
    */
-  LOAD_EXISTING_ENTITY;
+  LOAD_EXISTING_ENTITY,
+  
+  // ***** Messages specific to received passive synchronization data below this point *****
+  /**
+   * Messages related to the synchronization of a specific entity instance follow.
+   */
+  RECEIVE_SYNC_ENTITY_START,
+  /**
+   * Messages related to the synchronization of a specific entity instance are now done.
+   */
+  RECEIVE_SYNC_ENTITY_END,
+  /**
+   * Messages related to the synchronization of a specific entity concurrency key follow.
+   */
+  RECEIVE_SYNC_ENTITY_KEY_START,
+  /**
+   * Messages related to the synchronization of a specific entity concurrency key are now done.
+   */
+  RECEIVE_SYNC_ENTITY_KEY_END,
+  /**
+   * A synchronized state message on a specific concurrency key within a specific entity instance.
+   */
+  RECEIVE_SYNC_PAYLOAD,
 }

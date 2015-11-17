@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.terracotta.TestEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageDeserializer;
 import org.terracotta.entity.PassiveServerEntity;
@@ -100,10 +101,10 @@ public class ManagedEntityImplTest {
 
   @Test
   public void testCreateActive() throws Exception {
-    managedEntity.invoke(mockPromoteToActiveRequest());
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     String config = "foo";
     ServerEntityRequest request = mockCreateEntityRequest(config);
-    managedEntity.invoke(request);
+    managedEntity.invoke(request, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(serverEntityService).createActiveEntity(serviceRegistry, serialize(config));
     verify(request).complete();
   }
@@ -112,7 +113,7 @@ public class ManagedEntityImplTest {
   public void testCreatePassive() throws Exception {
     String config = "foo";
     ServerEntityRequest request = mockCreateEntityRequest(config);
-    managedEntity.invoke(request);
+    managedEntity.invoke(request, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(serverEntityService).createPassiveEntity(serviceRegistry, serialize(config));
     verify(request).complete();
   }
@@ -121,8 +122,8 @@ public class ManagedEntityImplTest {
   public void testDoubleCreate() throws Exception {
     ServerEntityRequest request = mockCreateEntityRequest("bar");
     managedEntity.addRequest(request);
-    managedEntity.invoke(mockCreateEntityRequest("foo"));
-    managedEntity.invoke(request);
+    managedEntity.invoke(mockCreateEntityRequest("foo"), ConcurrencyStrategy.UNIVERSAL_KEY, null);
+    managedEntity.invoke(request, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(request).failure(any(EntityAlreadyExistsException.class));
     verify(request, never()).complete();
   }
@@ -130,11 +131,11 @@ public class ManagedEntityImplTest {
   @Test
   public void testGetEntityMissing() throws Exception {
     // Get is only defined on active.
-    managedEntity.invoke(mockPromoteToActiveRequest());
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest request = mockGetRequest(requester);
-    managedEntity.invoke(request);
+    managedEntity.invoke(request, ConcurrencyStrategy.UNIVERSAL_KEY, null);
 
     verify(clientEntityStateManager, never()).addReference(requester, new EntityDescriptor(entityID, clientInstanceID, version));
     verify(request).complete();
@@ -145,12 +146,12 @@ public class ManagedEntityImplTest {
     byte[] config = new byte[0];
     when(activeServerEntity.getConfig()).thenReturn(config);
     
-    managedEntity.invoke(mockCreateEntityRequest("foo"));
-    managedEntity.invoke(mockPromoteToActiveRequest());
+    managedEntity.invoke(mockCreateEntityRequest("foo"), ConcurrencyStrategy.UNIVERSAL_KEY, null);
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest request = mockGetRequest(requester);
-    managedEntity.invoke(request);
+    managedEntity.invoke(request, ConcurrencyStrategy.UNIVERSAL_KEY, null);
 
     verify(clientEntityStateManager).addReference(requester, new EntityDescriptor(entityID, clientInstanceID, version));
     verify(request).complete(config);
@@ -159,14 +160,14 @@ public class ManagedEntityImplTest {
   @Test
   public void testPerformActionMissingEntity() throws Exception {
     ServerEntityRequest request = mockInvokeRequest(new byte[0]);
-    managedEntity.invoke(request);
+    managedEntity.invoke(request, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(request).failure(any(EntityNotFoundException.class));
   }
 
   @Test
   public void testPerformAction() throws Exception {
-    managedEntity.invoke(mockCreateEntityRequest(null));
-    managedEntity.invoke(mockPromoteToActiveRequest());
+    managedEntity.invoke(mockCreateEntityRequest(null), ConcurrencyStrategy.UNIVERSAL_KEY, null);
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
     byte[] payload = { 0 };
     byte[] returnValue = { 1 };
@@ -182,7 +183,7 @@ public class ManagedEntityImplTest {
       }});
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(returnValue);
     ServerEntityRequest invokeRequest = mockInvokeRequest(payload);
-    managedEntity.invoke(invokeRequest);
+    managedEntity.invoke(invokeRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
@@ -191,23 +192,23 @@ public class ManagedEntityImplTest {
   @Test
   public void testGetAndRelease() throws Exception {
     // Get and release are only relevant on the active.
-    managedEntity.invoke(mockPromoteToActiveRequest());
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
     // Create the entity.
     ServerEntityRequest createRequest = mockCreateEntityRequest(null);
-    managedEntity.invoke(createRequest);
+    managedEntity.invoke(createRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(createRequest).complete();
     
     // Run the GET and verify that connected() call was received by the entity.
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest getRequest = mockGetRequest(requester);
-    managedEntity.invoke(getRequest);
+    managedEntity.invoke(getRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(activeServerEntity).connected(clientDescriptor);
     verify(getRequest).complete(null);
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
     ServerEntityRequest releaseRequest = mockReleaseRequest(requester);
-    managedEntity.invoke(releaseRequest);
+    managedEntity.invoke(releaseRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(activeServerEntity).disconnected(clientDescriptor);
     verify(releaseRequest).complete();
   }
@@ -217,7 +218,7 @@ public class ManagedEntityImplTest {
   public void testCreatePassiveGetAndReleaseActive() throws Exception {
     // Create the entity.
     ServerEntityRequest createRequest = mockCreateEntityRequest(null);
-    managedEntity.invoke(createRequest);
+    managedEntity.invoke(createRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(createRequest).complete();
     
     // Verify that it was created as a passive.
@@ -225,35 +226,35 @@ public class ManagedEntityImplTest {
     verify(activeServerEntity, never()).createNew();
     
     // Now, switch modes to active.
-    managedEntity.invoke(mockPromoteToActiveRequest());
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(activeServerEntity).loadExisting();
     
     // Verify that we fail to create it again.
     ServerEntityRequest failedCreateRequest = mockCreateEntityRequest(null);
-    managedEntity.invoke(failedCreateRequest);
+    managedEntity.invoke(failedCreateRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(failedCreateRequest).failure(any(EntityAlreadyExistsException.class));
     verify(failedCreateRequest, never()).complete();
     
     // Verify that we can get and release, just like with any other active.
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest getRequest = mockGetRequest(requester);
-    managedEntity.invoke(getRequest);
+    managedEntity.invoke(getRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(activeServerEntity).connected(clientDescriptor);
     verify(getRequest).complete(null);
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
     ServerEntityRequest releaseRequest = mockReleaseRequest(requester);
-    managedEntity.invoke(releaseRequest);
+    managedEntity.invoke(releaseRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     verify(activeServerEntity).disconnected(clientDescriptor);
     verify(releaseRequest).complete();
   }
 
   @Test
   public void testDestroy() throws Exception {
-    managedEntity.invoke(mockPromoteToActiveRequest());
-    managedEntity.invoke(mockCreateEntityRequest(null));
+    managedEntity.invoke(mockPromoteToActiveRequest(), ConcurrencyStrategy.UNIVERSAL_KEY, null);
+    managedEntity.invoke(mockCreateEntityRequest(null), ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
-    managedEntity.invoke(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY));
+    managedEntity.invoke(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY), ConcurrencyStrategy.UNIVERSAL_KEY, null);
 
     verify(activeServerEntity).destroy();
   }

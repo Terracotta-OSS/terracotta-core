@@ -23,13 +23,14 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.util.Assert;
+
 import java.util.Optional;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
 
 /**
- * 
  * A replicated entity request will live on the passive.  This differs from ServerEntityRequests in that they do 
  * not directly communicate with clients so requestedAcks will not be acted upon.  If an entity is transitioned from 
  * passive to active mode, the client may connect to running replicated requests and will receive a new completed 
@@ -87,5 +88,11 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
         super.complete();
       }
     }
+  }
+
+  @Override
+  public int getConcurrencyKey() {
+    Assert.fail("No concurrency key on this message type");
+    return 0;
   }
 }

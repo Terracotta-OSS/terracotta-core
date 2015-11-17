@@ -111,6 +111,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
@@ -276,7 +277,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private ReconnectConfig                        l1ReconnectConfig;
 
-  private GroupManager                           groupCommManager;
+  private GroupManager<AbstractGroupMessage> groupCommManager;
   private Stage<HydrateContext>                                  hydrateStage;
   private StripeIDStateManagerImpl               stripeIDStateManager;
 

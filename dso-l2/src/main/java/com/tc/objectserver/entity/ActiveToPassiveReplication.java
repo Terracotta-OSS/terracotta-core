@@ -34,6 +34,8 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.util.Assert;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -96,7 +98,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {
         try {
         // start passive sync message
-            groups.sendTo(newNode, new PassiveSyncMessage(true));
+            groups.sendTo(newNode, PassiveSyncMessage.createStartSyncMessage());
             Collection<ManagedEntity> currentEntities = entities.getAll();
             for (ManagedEntity entity : currentEntities) {
         // TODO: this is a stub implementation and needs to be fully designed
@@ -105,7 +107,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         //  start passive sync for entity      
             }
       //  passive sync done message.  causes passive to go into passive standby mode
-            groups.sendTo(newNode, new PassiveSyncMessage(false));
+            groups.sendTo(newNode, PassiveSyncMessage.createEndSyncMessage());
         }  catch (GroupException ge) {
           logger.info(ge);
         }
@@ -159,8 +161,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       case RELEASE_ENTITY:
         actionCode = ReplicationMessage.RELEASE_ENTITY;
         break;
-      case SYNC_ENTITY:
-        actionCode = ReplicationMessage.SYNC_ENTITY;
+      case REQUEST_SYNC_ENTITY:
+        // A request to sync the entity should never go through the replication path.
+        Assert.fail();
         break;
       default:
         break;
