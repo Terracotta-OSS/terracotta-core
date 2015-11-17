@@ -34,6 +34,8 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.util.Assert;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -160,7 +162,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         actionCode = ReplicationMessage.RELEASE_ENTITY;
         break;
       case SYNC_ENTITY:
-        actionCode = ReplicationMessage.SYNC_ENTITY;
+        // A request to sync the entity should never go through the replication path.
+        Assert.fail();
         break;
       default:
         break;
