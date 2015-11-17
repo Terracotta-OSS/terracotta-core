@@ -93,10 +93,10 @@ public class PassiveSyncMessage extends ReplicationMessage {
         configPayload != null ? SYNC_ENTITY_BEGIN : SYNC_ENTITY_END, configPayload, 0);
   }
   
-  public PassiveSyncMessage(EntityID eid, long version, int concurrency, boolean start) {
+  public PassiveSyncMessage(EntityID eid, long version, int concurrency) {
     super(SYNC);
     initialize(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, 
-        TransactionID.NULL_ID, TransactionID.NULL_ID, start ? SYNC_ENTITY_CONCURRENCY_BEGIN : SYNC_ENTITY_CONCURRENCY_END, null, 0);
+        TransactionID.NULL_ID, TransactionID.NULL_ID, SYNC_ENTITY_CONCURRENCY_END, null, 0);
     this.concurrency = concurrency;
   }
 
