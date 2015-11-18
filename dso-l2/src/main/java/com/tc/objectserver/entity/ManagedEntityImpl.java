@@ -328,7 +328,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           public void synchronizeToPassive(byte[] payload) {
             executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), wrappedRequest.getNodeID());
           }};
-//  start is handled byt the sync request that triggered this action
+//  start is handled by the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), wrappedRequest.getNodeID());
         wrappedRequest.complete();

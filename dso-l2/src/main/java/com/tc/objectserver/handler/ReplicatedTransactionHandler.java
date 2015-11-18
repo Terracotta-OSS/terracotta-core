@@ -27,7 +27,6 @@ import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
@@ -38,11 +37,7 @@ import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Optional;
-import java.util.Set;
 
 import org.terracotta.exception.EntityException;
 
