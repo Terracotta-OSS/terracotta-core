@@ -32,11 +32,12 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 
-
+/**
+ * This is a convenience subclass of ReplicationMessage.
+ */
 public class PassiveSyncMessage extends ReplicationMessage {
   public static PassiveSyncMessage createStartSyncMessage() {
     return new PassiveSyncMessage(SYNC_BEGIN, EntityID.NULL_ID, NO_VERSION, 0, null);
@@ -63,17 +64,6 @@ public class PassiveSyncMessage extends ReplicationMessage {
     return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_PAYLOAD, id, version, concurrency, payload);
   }
 
-
-//  message types  
-  public static final int BEGIN               = 0; // Sent to replicate a request on the passive
-  public static final int END                = 1; // response that the replicated action completed
-
-  public static final int ENTITY_BEGIN       = 2;
-  public static final int ENTITY_END         = 3;
-  
-  public static final int ENTITY_CONCURRENCY_BEGIN = 4;
-  public static final int ENTITY_CONCURRENCY_END = 5;
-  
   public static final long NO_VERSION = 0;
   
   public PassiveSyncMessage() {

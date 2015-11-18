@@ -173,17 +173,11 @@ public class ReplicatedTransactionHandler {
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
       case INVOKE_ACTION:
-        return ServerEntityAction.INVOKE_ACTION;
-//      case GET_ENTITY:
-//  should not happen
-//        return ServerEntityAction.FETCH_ENTITY;
+        return ServerEntityAction.INVOKE_ACTION;        
       case RELEASE_ENTITY:
         return ServerEntityAction.RELEASE_ENTITY;
       case DESTROY_ENTITY:
         return ServerEntityAction.DESTROY_ENTITY;
-//      case PROMOTE_ENTITY_TO_ACTIVE:
-//  should not happen
-//        return ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE;
       case SYNC_ENTITY_BEGIN:
         return ServerEntityAction.RECEIVE_SYNC_ENTITY_START;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:

@@ -84,10 +84,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           replicate.addSingleThreaded(new PassiveSyncMessage(true).target(newNode));
           Collection<ManagedEntity> currentEntities = entities.getAll();
           for (ManagedEntity entity : currentEntities) {
-      // TODO: this is a stub implementation and needs to be fully designed
               entity.sync(newNode);
-      //  create entity on passive
-      //  start passive sync for entity      
           }
       //  passive sync done message.  causes passive to go into passive standby mode
           replicate.addSingleThreaded(new PassiveSyncMessage(false).target(newNode));
@@ -96,7 +93,6 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   public void acknowledge(GroupMessage msg) {
-//      assert that msg.getType() == REPLICATED_RESPONSE
     Set<NodeID> plist = waiters.get(msg.inResponseTo());
     synchronized(plist) {
       if (plist.remove(msg.messageFrom()) && plist.isEmpty()) {
@@ -173,19 +169,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
         break;
       case FETCH_ENTITY:
-        //  TODO: probably shouldn't replicate this
         actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case INVOKE_ACTION:
         actionCode = ReplicationMessage.ReplicationType.INVOKE_ACTION;
         break;
       case NOOP:
-        //  TODO: probably shouldn't replicate this
         actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case PROMOTE_ENTITY_TO_ACTIVE:
-        //  TODO: probably shouldn't replicate this
-//        actionCode = ReplicationMessage.ReplicationType.PROMOTE_ENTITY_TO_ACTIVE;
         actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case RELEASE_ENTITY:
@@ -199,6 +191,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       default:
         break;
     }
+//  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
+//  NOOP should be replicated.  For now, NOOPs hold ordering
     final ReplicationMessage msg = new ReplicationMessage(id, src, tid, oldest, actionCode, payload, concurrency);
     return replicateSync(msg, new HashSet<NodeID>(passiveNodes));
   }
