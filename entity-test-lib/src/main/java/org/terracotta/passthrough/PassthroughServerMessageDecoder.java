@@ -195,6 +195,86 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         sendCompleteResponse(sender, transactionID, response, error);
         break;
       }
+      case SYNC_ENTITY_START: {
+        // We just want to do the same thing that CREATE does.
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        long version = input.readLong();
+        byte[] serializedConfiguration = new byte[input.readInt()];
+        input.readFully(serializedConfiguration);
+        Exception error = null;
+        try {
+          this.messageHandler.create(entityClassName, entityName, version, serializedConfiguration);
+          this.messageHandler.syncEntityStart(sender, entityClassName, entityName);
+        } catch (Exception e) {
+          error = e;
+        }
+        // Note that there is no response for sync messages.
+        byte[] response = null;
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
+      case SYNC_ENTITY_END: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        Exception error = null;
+        try {
+          this.messageHandler.syncEntityEnd(sender, entityClassName, entityName);
+        } catch (Exception e) {
+          error = e;
+        }
+        // Note that there is no response for sync messages.
+        byte[] response = null;
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
+      case SYNC_ENTITY_KEY_START: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        int concurrencyKey = input.readInt();
+        Exception error = null;
+        try {
+          this.messageHandler.syncEntityKeyStart(sender, entityClassName, entityName, concurrencyKey);
+        } catch (Exception e) {
+          error = e;
+        }
+        // Note that there is no response for sync messages.
+        byte[] response = null;
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
+      case SYNC_ENTITY_KEY_END: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        int concurrencyKey = input.readInt();
+        Exception error = null;
+        try {
+          this.messageHandler.syncEntityKeyEnd(sender, entityClassName, entityName, concurrencyKey);
+        } catch (Exception e) {
+          error = e;
+        }
+        // Note that there is no response for sync messages.
+        byte[] response = null;
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
+      case SYNC_ENTITY_PAYLOAD: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        int concurrencyKey = input.readInt();
+        byte[] payload = new byte[input.readInt()];
+        input.readFully(payload);
+        Exception error = null;
+        try {
+          this.messageHandler.syncPayload(sender, entityClassName, entityName, concurrencyKey, payload);
+        } catch (Exception e) {
+          error = e;
+        }
+        // Note that there is no response for sync messages.
+        byte[] response = null;
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
       default:
         Assert.unreachable();
         break;
@@ -222,5 +302,10 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
     void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
     void reconnect(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] extendedData);
+    void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws Exception;
+    void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws Exception;
+    void syncEntityKeyStart(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws Exception;
+    void syncEntityKeyEnd(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws Exception;
+    void syncPayload(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey, byte[] payload) throws Exception;
   }
 }

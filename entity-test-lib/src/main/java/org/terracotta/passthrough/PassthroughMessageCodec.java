@@ -170,6 +170,69 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createSyncEntityStartMessage(final String entityClassName, final String entityName, final long version, final byte[] serializedConfiguration) {
+    // Replication is meaningless for sync.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.SYNC_ENTITY_START, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+        output.writeLong(version);
+        output.writeInt(serializedConfiguration.length);
+        output.write(serializedConfiguration);
+      }};
+  }
+
+  public static PassthroughMessage createSyncEntityEndMessage(final String entityClassName, final String entityName) {
+    // Replication is meaningless for sync.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.SYNC_ENTITY_END, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+      }};
+  }
+
+  public static PassthroughMessage createSyncEntityKeyStartMessage(final String entityClassName, final String entityName, final int concurrencyKey) {
+    // Replication is meaningless for sync.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.SYNC_ENTITY_KEY_START, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+        output.writeInt(concurrencyKey);
+      }};
+  }
+
+  public static PassthroughMessage createSyncEntityKeyEndMessage(final String entityClassName, final String entityName, final int concurrencyKey) {
+    // Replication is meaningless for sync.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.SYNC_ENTITY_KEY_END, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+        output.writeInt(concurrencyKey);
+      }};
+  }
+
+  public static PassthroughMessage createSyncPayloadMessage(final String entityClassName, final String entityName, final int concurrencyKey, final byte[] payload) {
+    // Replication is meaningless for sync.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.SYNC_ENTITY_PAYLOAD, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+        output.writeInt(concurrencyKey);
+        output.writeInt(payload.length);
+        output.write(payload);
+      }};
+  }
+
   public static <R> R decodeRawMessage(Decoder<R> decoder, byte[] rawMessage) {
     return runRawDecoder(decoder, rawMessage);
   }

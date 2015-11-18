@@ -12,6 +12,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.PassiveServerEntity;
+import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -265,6 +266,10 @@ public class PassthroughServerProcess implements MessageHandler {
     entity.invoke(entity.getMessageDeserializer().deserialize(payload));
   }
 
+  private <M extends EntityMessage> void sendPassiveSyncPayload(PassiveServerEntity<M> entity, int concurrencyKey, byte[] payload) {
+    entity.invoke(entity.getMessageDeserializer().deserializeForSync(concurrencyKey, payload));
+  }
+
   @Override
   public void fetch(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName, final long version, final IFetchResult onFetch) {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
@@ -407,6 +412,81 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(didRun[0]);
   }
 
+  @Override
+  public void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws Exception {
+    // Sync only makes sense on passive.
+    Assert.assertTrue(null != this.passiveEntities);
+    
+    final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    if (null != data) {
+      PassiveServerEntity<?> entity = data.entityInstance;
+      entity.startSyncEntity();
+    } else {
+      throw new Exception("Not fetched");
+    }
+  }
+
+  @Override
+  public void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws Exception {
+    // Sync only makes sense on passive.
+    Assert.assertTrue(null != this.passiveEntities);
+    
+    final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    if (null != data) {
+      PassiveServerEntity<?> entity = data.entityInstance;
+      entity.endSyncEntity();
+    } else {
+      throw new Exception("Not fetched");
+    }
+  }
+
+  @Override
+  public void syncEntityKeyStart(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws Exception {
+    // Sync only makes sense on passive.
+    Assert.assertTrue(null != this.passiveEntities);
+    
+    final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    if (null != data) {
+      PassiveServerEntity<?> entity = data.entityInstance;
+      entity.startSyncConcurrencyKey(concurrencyKey);
+    } else {
+      throw new Exception("Not fetched");
+    }
+  }
+
+  @Override
+  public void syncEntityKeyEnd(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws Exception {
+    // Sync only makes sense on passive.
+    Assert.assertTrue(null != this.passiveEntities);
+    
+    final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    if (null != data) {
+      PassiveServerEntity<?> entity = data.entityInstance;
+      entity.endSyncConcurrencyKey(concurrencyKey);
+    } else {
+      throw new Exception("Not fetched");
+    }
+  }
+
+  @Override
+  public void syncPayload(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey, byte[] payload) throws Exception {
+    // Sync only makes sense on passive.
+    Assert.assertTrue(null != this.passiveEntities);
+    
+    final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    if (null != data) {
+      PassiveServerEntity<?> entity = data.entityInstance;
+      sendPassiveSyncPayload(entity, concurrencyKey, payload);
+    } else {
+      throw new Exception("Not fetched");
+    }
+  }
+
 
   private ServerEntityService<?, ?> getEntityServiceForClassName(String entityClassName) {
     ServerEntityService<?, ?> foundService = null;
@@ -433,13 +513,46 @@ public class PassthroughServerProcess implements MessageHandler {
     this.downstreamPassive = serverProcess;
     
     // Synchronize any entities we have.
+    // NOTE:  This synchronization implementation is relatively simplistic and we may require a more substantial
+    // implementation, in the future, to support concurrent replication/synchronization ordering concerns, multiple
+    // concurrency queues/threads, and the ordering corner-cases which arise with those concerns.
     for (Map.Entry<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>> entry : this.activeEntities.entrySet()) {
       CreationData<ActiveServerEntity<?>> value = entry.getValue();
-      PassthroughMessage createMessage = PassthroughMessageCodec.createCreateMessage(value.entityClassName, value.entityName, value.version, value.configuration);
+      final String entityClassName = value.entityClassName;
+      final String entityName = value.entityName;
+      // State that we will start to synchronize the entity.
+      PassthroughMessage entityStart = PassthroughMessageCodec.createSyncEntityStartMessage(entityClassName, entityName, value.version, value.configuration);
       PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
-      this.downstreamPassive.sendMessageToServerFromActive(wrapper, createMessage.asSerializedBytes());
+      this.downstreamPassive.sendMessageToServerFromActive(wrapper, entityStart.asSerializedBytes());
       wrapper.waitForComplete();
-      // TODO:  Synchronize the entity content once the API and contract for that have stabilized.
+      // Walk all the concurrency keys for this entity.
+      for (final Integer oneKey : value.entityInstance.getConcurrencyStrategy().getKeysForSynchronization()) {
+        // State that we will start to synchronize the key.
+        PassthroughMessage keyStart = PassthroughMessageCodec.createSyncEntityKeyStartMessage(entityClassName, entityName, oneKey);
+        wrapper = new PassthroughInterserverInterlock(null);
+        this.downstreamPassive.sendMessageToServerFromActive(wrapper, keyStart.asSerializedBytes());
+        wrapper.waitForComplete();
+        // Send all the data.
+        value.entityInstance.synchronizeKeyToPassive(new PassiveSynchronizationChannel() {
+          @Override
+          public void synchronizeToPassive(byte[] payload) {
+            PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, oneKey, payload);
+            PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
+            PassthroughServerProcess.this.downstreamPassive.sendMessageToServerFromActive(wrapper, payloadMessage.asSerializedBytes());
+            wrapper.waitForComplete();
+          }
+        }, oneKey);
+        // State that we are done synchronizing the key.
+        PassthroughMessage keyEnd = PassthroughMessageCodec.createSyncEntityKeyEndMessage(entityClassName, entityName, oneKey);
+        wrapper = new PassthroughInterserverInterlock(null);
+        this.downstreamPassive.sendMessageToServerFromActive(wrapper, keyEnd.asSerializedBytes());
+        wrapper.waitForComplete();
+      }
+      // State that we are done synchronizing the entity.
+      PassthroughMessage entityEnd = PassthroughMessageCodec.createSyncEntityEndMessage(entityClassName, entityName);
+      wrapper = new PassthroughInterserverInterlock(null);
+      this.downstreamPassive.sendMessageToServerFromActive(wrapper, entityEnd.asSerializedBytes());
+      wrapper.waitForComplete();
     }
   }
 

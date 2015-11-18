@@ -23,6 +23,11 @@ public abstract class PassthroughMessage {
     LOCK_ACQUIRE,
     LOCK_RELEASE,
     RECONNECT,
+    SYNC_ENTITY_START,
+    SYNC_ENTITY_END,
+    SYNC_ENTITY_KEY_START,
+    SYNC_ENTITY_KEY_END,
+    SYNC_ENTITY_PAYLOAD,
   }
 
   public static Type getType(DataInputStream input) throws IOException {
