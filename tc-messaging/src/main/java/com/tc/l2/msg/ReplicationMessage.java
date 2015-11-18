@@ -19,7 +19,6 @@
 package com.tc.l2.msg;
 
 import com.tc.async.api.OrderedEventContext;
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
@@ -33,7 +32,7 @@ import java.io.IOException;
 /**
  *
  */
-public class ReplicationMessage extends AbstractGroupMessage implements VoltronEntityMessage, OrderedEventContext {
+public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
 //  message types  
   public static final int REPLICATE               = 0; // Sent to replicate a request on the passive
   public static final int SYNC               = 1; // Sent to replicate a request on the passive
@@ -43,10 +42,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     NOOP,
     CREATE_ENTITY,
     INVOKE_ACTION,
-    GET_ENTITY,
+//    GET_ENTITY,
     RELEASE_ENTITY,
     DESTROY_ENTITY,
-    PROMOTE_ENTITY_TO_ACTIVE,
+//    PROMOTE_ENTITY_TO_ACTIVE,
     
     SYNC_BEGIN,
     SYNC_END,
@@ -121,43 +120,24 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
     return action;
   }
 
-  @Override
   public byte[] getExtendedData() {
     return payload;
   }
   
-  public int getAction() {
-    return action.ordinal();
-  }
-  
-  @Override
   public NodeID getSource() {
     return src;
   }
   
-  @Override
   public TransactionID getTransactionID() {
     return tid;
   }
   
-  @Override
   public TransactionID getOldestTransactionOnClient() {
     return oldest;
   }
 
-  @Override
-  public boolean doesRequireReplication() {
-    return false;
-  }
-
-  @Override
   public EntityDescriptor getEntityDescriptor() {
     return descriptor;
-  }
-
-  @Override
-  public VoltronEntityMessage.Type getVoltronType() {
-    return decodeServerActionType(action);
   }
   
   public int getConcurrency() {
@@ -211,28 +191,5 @@ public class ReplicationMessage extends AbstractGroupMessage implements VoltronE
   @Override
   public String toString() {
     return "ReplicationMessage{rid=" + rid + ", id=" + descriptor + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + '}';
-  }
-  
-  private VoltronEntityMessage.Type decodeServerActionType(ReplicationType networkType) {
-    switch(networkType) {
-      case NOOP:
-        return null;
-      case CREATE_ENTITY:
-        return VoltronEntityMessage.Type.CREATE_ENTITY;
-      case INVOKE_ACTION:
-        return VoltronEntityMessage.Type.INVOKE_ACTION;
-      case GET_ENTITY:
-        return VoltronEntityMessage.Type.FETCH_ENTITY;
-      case RELEASE_ENTITY:
-        return VoltronEntityMessage.Type.RELEASE_ENTITY;
-      case DESTROY_ENTITY:
-        return VoltronEntityMessage.Type.DESTROY_ENTITY;
-      case PROMOTE_ENTITY_TO_ACTIVE:
-        return null;
-      case SYNC_ENTITY_BEGIN:
-        return VoltronEntityMessage.Type.CREATE_ENTITY;
-      default:
-        return null;
-    }
   }
 }

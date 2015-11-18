@@ -21,7 +21,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.state.StateManager;
@@ -32,6 +31,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -84,8 +84,7 @@ public class ReplicatedTransactionHandler {
         orderedTransactions.removeTrackingForClient(rep.getSource());
       }
       if (true) {
-        int action = rep.getAction();
-        if (action == ReplicationMessage.ReplicationType.CREATE_ENTITY.ordinal()) {
+        if (rep.getReplicationType() == ReplicationMessage.ReplicationType.CREATE_ENTITY) {
           long consumerID = entityPersistor.getNextConsumerID();
           entityManager.createEntity(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID);
           this.entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
@@ -97,7 +96,7 @@ public class ReplicatedTransactionHandler {
             entity.get().addRequest(request);
           }
         }
-        if (ReplicationMessage.ReplicationType.DESTROY_ENTITY.ordinal() == rep.getAction()) {
+        if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
           entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
         }
       }
@@ -110,15 +109,28 @@ public class ReplicatedTransactionHandler {
       }
       return;
     } else if (rep.getType() == ReplicationMessage.SYNC) {
-      messageReceived(rep);
+      syncMessageReceived(rep);
       return;
     }
 
     throw new RuntimeException();
   }
   
-  private void messageReceived(ReplicationMessage sync) {
+  private void syncMessageReceived(ReplicationMessage sync) {
     EntityID eid = sync.getEntityDescriptor().getEntityID();
+    if (!eid.equals(EntityID.NULL_ID)) {
+      try {
+        if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
+          long consumerID = entityPersistor.getNextConsumerID();
+          this.entityManager.createEntity(eid, sync.getVersion(), consumerID);
+          this.entityPersistor.entityCreated(eid, sync.getVersion(), consumerID, sync.getExtendedData());
+        }
+      } catch (EntityException state) {
+//  TODO: this needs to be controlled.  
+        LOGGER.warn("entity has already been created", state);
+      }
+    }
+
     switch (sync.getReplicationType()) {
       case SYNC_END:
         if (!stateManager.isActiveCoordinator()) {
@@ -126,34 +138,11 @@ public class ReplicatedTransactionHandler {
         }
         break;
       case SYNC_BEGIN:
-        //  do something
         break;
       case SYNC_ENTITY_BEGIN:
-        try {
-          if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
-            long consumerID = entityPersistor.getNextConsumerID();
-            this.entityManager.createEntity(eid, sync.getVersion(), consumerID);
-            this.entityPersistor.entityCreated(eid, sync.getVersion(), consumerID, sync.getExtendedData());
-            Optional<ManagedEntity> entity = entityManager.getEntity(eid,sync.getVersion());
-            if (entity.isPresent()) {
-              ServerEntityRequest request = make(sync);
-              if (request != null) {
-                entity.get().addRequest(request);
-              }
-            }
-          }
-        } catch (EntityException state) {
-//  TODO: this needs to be controlled.  
-          LOGGER.warn("entity has already been created", state);
-        }
-        break;
       case SYNC_ENTITY_END:
-        //  do something?
-        break;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
-        break;
       case SYNC_ENTITY_CONCURRENCY_END:
-        break;
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
         try {
           Optional<ManagedEntity> entity = entityManager.getEntity(eid,sync.getVersion());
@@ -171,16 +160,42 @@ public class ReplicatedTransactionHandler {
         throw new AssertionError("not a sync message");
     }
   }
-  
+    
   private ServerEntityRequest make(ReplicationMessage rep) {
-    Type type = rep.getVoltronType();
-    if (type == null) {
-      return null;
-    }
-    if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
-      return null;
-    }
-    return new ServerEntityRequestImpl(rep.getEntityDescriptor(), ProcessTransactionHandler.decodeMessageType(rep.getVoltronType()),
+    return new ServerEntityRequestImpl(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()),
         rep.getExtendedData(), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty());
   }
+
+  private static ServerEntityAction decodeReplicationType(ReplicationMessage.ReplicationType networkType) {
+    switch(networkType) {
+      case NOOP:
+        return ServerEntityAction.NOOP;
+      case CREATE_ENTITY:
+        return ServerEntityAction.CREATE_ENTITY;
+      case INVOKE_ACTION:
+        return ServerEntityAction.INVOKE_ACTION;
+//      case GET_ENTITY:
+//  should not happen
+//        return ServerEntityAction.FETCH_ENTITY;
+      case RELEASE_ENTITY:
+        return ServerEntityAction.RELEASE_ENTITY;
+      case DESTROY_ENTITY:
+        return ServerEntityAction.DESTROY_ENTITY;
+//      case PROMOTE_ENTITY_TO_ACTIVE:
+//  should not happen
+//        return ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE;
+      case SYNC_ENTITY_BEGIN:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_START;
+      case SYNC_ENTITY_CONCURRENCY_BEGIN:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START;
+      case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
+        return ServerEntityAction.RECEIVE_SYNC_PAYLOAD;
+      case SYNC_ENTITY_CONCURRENCY_END:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END;
+      case SYNC_ENTITY_END:
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_END;
+      default:
+        throw new AssertionError("bad replication type");
+    }
+  }  
 }

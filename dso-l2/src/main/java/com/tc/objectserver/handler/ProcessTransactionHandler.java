@@ -227,7 +227,7 @@ public class ProcessTransactionHandler {
     ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
-  public static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
+  private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
     // Decode the appropriate server-internal action from this request type.
     ServerEntityAction action = null;
     switch (type) {

@@ -174,23 +174,26 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         break;
       case FETCH_ENTITY:
         //  TODO: probably shouldn't replicate this
-        actionCode = ReplicationMessage.ReplicationType.GET_ENTITY;
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case INVOKE_ACTION:
         actionCode = ReplicationMessage.ReplicationType.INVOKE_ACTION;
         break;
       case NOOP:
         //  TODO: probably shouldn't replicate this
-//        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case PROMOTE_ENTITY_TO_ACTIVE:
         //  TODO: probably shouldn't replicate this
 //        actionCode = ReplicationMessage.ReplicationType.PROMOTE_ENTITY_TO_ACTIVE;
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case RELEASE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
         break;
       case REQUEST_SYNC_ENTITY:
+//  this marks the start of entity sync for a concurrency key.  practically, this means that
+//  all replicated messages for this key and entity must be forwarded to passives
         actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
         break;
       default:

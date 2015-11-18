@@ -236,7 +236,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void receiveSyncEntityStart(ServerEntityRequest request) {
-    // This only makes sense if we have a passive instance.
+    if (passiveServerEntity == null) {
+//  going to start by building the passive instance
+      createEntity(request);
+//  it better be a passive instance
+    }
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncEntity();
   }
