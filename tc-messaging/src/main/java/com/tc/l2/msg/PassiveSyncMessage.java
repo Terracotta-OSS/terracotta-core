@@ -45,18 +45,18 @@ public class PassiveSyncMessage extends AbstractGroupMessage {
     return new PassiveSyncMessage(ENTITY_END, id, version, 0, null);
   }
   public static PassiveSyncMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
-    // TEMP
-    Assert.assertTrue(1 == concurrency);
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
     return new PassiveSyncMessage(ENTITY_CONCURRENCY_BEGIN, id, version, concurrency, null);
   }
   public static PassiveSyncMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
-    // TEMP
-    Assert.assertTrue(1 == concurrency);
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
     return new PassiveSyncMessage(ENTITY_CONCURRENCY_END, id, version, concurrency, null);
   }
   public static PassiveSyncMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
-    // TEMP
-    Assert.assertTrue(1 == concurrency);
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
     return new PassiveSyncMessage(ENTITY_CONCURRENCY_PAYLOAD, id, version, concurrency, payload);
   }
 
