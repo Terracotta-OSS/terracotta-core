@@ -43,6 +43,8 @@ import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -317,19 +319,27 @@ public class ManagedEntityImpl implements ManagedEntity {
     notifyAll();
   }
 
-  //  TODO: stub implementation.  This is supposed to send the data to the passive server for sync
   private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        PassiveSyncServerEntityRequest unwrappedRequest = ((PassiveSyncServerEntityRequest)wrappedRequest);
-        long version = this.version;
         // Create the channel which will send the payloads over the wire.
         PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
           @Override
+//  TODO:  what should be done about exception handling?
           public void synchronizeToPassive(byte[] payload) {
-            executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), wrappedRequest.getNodeID());
+            Future<Void> wait = executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), wrappedRequest.getNodeID());
+            try {
+              wait.get();
+            } catch (ExecutionException ee) {
+            // TODO: do something reasoned here
+              throw new RuntimeException(ee);
+            } catch (InterruptedException ie) {
+            // TODO: do something reasoned here
+              Thread.currentThread().interrupt();
+              throw new RuntimeException(ie);
+            }
           }};
 //  start is handled by the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
@@ -460,14 +470,10 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final int concurrencyKey;
     
     public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, makePayload(concurrency), null, null, passive, false);
+      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, null, passive, false);
       this.concurrencyKey = concurrency;
     }
 
-    public static byte[] makePayload(int concurrency) {
-      return ByteBuffer.allocate(Integer.BYTES).putInt(concurrency).array();
-    }
-    
     @Override
     public boolean requiresReplication() {
       return true;
