@@ -59,6 +59,7 @@ public class StateManagerImpl implements StateManager {
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
   private volatile State               state               = START_STATE;
+  private State               startState               = null;
   private boolean                      electionInProgress  = false;
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
@@ -90,10 +91,10 @@ public class StateManagerImpl implements StateManager {
       electionInProgress = true;
     }
     try {
-      State initial = clusterStatePersistor.getInitialState();
+      startState = clusterStatePersistor.getInitialState();
       // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
       // the election and wait for a zap.
-      if (initial != null && !initial.equals(ACTIVE_COORDINATOR)) {
+      if (startState != null && !startState.equals(ACTIVE_COORDINATOR)) {
         info("Skipping election and waiting for the active to zap since this this L2 did not go down as active.");
       } else if (state == START_STATE || state == PASSIVE_STANDBY) {
         runElection();
@@ -113,7 +114,7 @@ public class StateManagerImpl implements StateManager {
     int count = 0;
     // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
     // concluded)
-    boolean isNew = state == START_STATE && clusterStatePersistor.getInitialState() == null;
+    boolean isNew = state == START_STATE && startState == null;
     while (getActiveNodeID().isNull()) {
       if (++count > 1) {
         logger.info("Rerunning election since node " + winner + " never declared itself as ACTIVE !");
@@ -299,9 +300,18 @@ public class StateManagerImpl implements StateManager {
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
       setActiveNodeID(winningEnrollment.getNodeID());
+      if (startState == null || startState == START_STATE) {
       moveToPassiveState(winningEnrollment);
       if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
         sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
+      }
+    } else {
+//  this server was started with persistent data.  don't start this server in passive state.
+        Assert.assertEquals(startState, StateManager.ACTIVE_COORDINATOR);
+// TODO: send a negative response so the active zaps this server.  This is a bad way to agree.  find a better way
+        if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
+          sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
+        }
       }
     } else {
       // This is done to solve DEV-1532. Node sent ELECTION_WON_ALREADY message but our ACTIVE is intact.
