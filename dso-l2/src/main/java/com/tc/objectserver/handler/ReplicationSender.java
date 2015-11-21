@@ -59,7 +59,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 
       if (rOrder == null) {
         if (msg.getType() != ReplicationMessage.SYNC || msg.getReplicationType()!= SYNC_BEGIN) {
-          throw new AssertionError("bad message queue");
+          throw new AssertionError("bad message queue " + msg);
         }
         rOrder = new AtomicLong();
         ordering.put(nodeid, rOrder);

@@ -65,6 +65,14 @@ public class Persistor implements PrettyPrintable {
     sequenceManager = new SequenceManager(persistentStorage);
     clientStatePersistor = new ClientStatePersistor(sequenceManager, persistentStorage);
 
+    if (!this.clusterStatePersistor.isDBClean()) {
+      this.clusterStatePersistor.clear();
+      this.entityPersistor.clear();
+      this.transactionOrderPersistor.clearAllRecords();
+      this.sequenceManager.clear();
+      this.clientStatePersistor.clear();
+    }
+    
     started = true;
   }
 
