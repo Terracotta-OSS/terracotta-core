@@ -99,12 +99,10 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
     return toReturn;
   }
 
-  public void reconnect(byte[] extendedData) {
+  public PassthroughMessage buildReconnectMessage(byte[] extendedData) {
     // Construct the reconnect message.
     // NOTE:  This currently only describes the entity we are referencing.
-    PassthroughMessage reconnectMessage = PassthroughMessageCodec.createReconnectMessage(this.entityClass, this.entityName, this.clientInstanceID, extendedData);
-    // We ignore the return value.
-    this.connection.sendInternalMessageAfterAcks(reconnectMessage);
+    return PassthroughMessageCodec.createReconnectMessage(this.entityClass, this.entityName, this.clientInstanceID, extendedData);
   }
 
   private void checkEndpointOpen() {

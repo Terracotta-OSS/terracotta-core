@@ -19,24 +19,25 @@ import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
+import com.google.common.base.Throwables;
+
 
 /**
  * The pass-through component which represents a client connected to the server.
  * Internally, this runs a single thread to handle incoming ACKs, completions, and messages.
  */
 public class PassthroughConnection implements Connection {
+  private final PassthroughConnectionState connectionState;
+  
   private final List<EntityClientService<?, ?>> entityClientServices;
-  private long nextTransactionID;
   private long nextClientEndpointID;
-  private final Map<Long, PassthroughWait> inFlight;
-  private PassthroughServerProcess serverProcess;
   private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
   private final Runnable onClose;
   
   // ivars related to message passing and client thread.
   private boolean isRunning;
   private Thread clientThread;
-  private final List<byte[]> messageQueue;
+  private final List<ServerToClientMessageRecord> messageQueue;
   // NOTE:  this queue exists to carry any Futures pushed in when the server-side injects a message to the client.
   // This approach is an ugly work-around for limitations imposed by running the server message processing and server
   // execution on a single thread.  Ideally, we would send another message to the server, in this case, to better emulate
@@ -46,11 +47,9 @@ public class PassthroughConnection implements Connection {
 
 
   public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices, Runnable onClose) {
+    this.connectionState = new PassthroughConnectionState(serverProcess);
     this.entityClientServices = entityClientServices;
-    this.nextTransactionID = 1;
     this.nextClientEndpointID = 1;
-    this.inFlight = new HashMap<Long, PassthroughWait>();
-    this.serverProcess = serverProcess;
     this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint>();
     this.onClose = onClose;
     
@@ -62,7 +61,7 @@ public class PassthroughConnection implements Connection {
       }
     });
     this.clientThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
-    this.messageQueue = new Vector<byte[]>();
+    this.messageQueue = new Vector<ServerToClientMessageRecord>();
     this.clientResponseWaitQueue = new Vector<Waiter>();
     
     // Note:  This should probably not be in the constructor.
@@ -89,19 +88,7 @@ public class PassthroughConnection implements Connection {
   }
 
   private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
-    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
-    synchronized(this) {
-      long transactionID = this.nextTransactionID;
-      this.nextTransactionID += 1;
-      message.setTransactionID(transactionID);
-      this.inFlight.put(transactionID, waiter);
-      if (shouldWaitForSent) {
-        waiter.sent();
-      }
-    }
-    byte[] raw = message.asSerializedBytes();
-    waiter.saveRawMessageForResend(raw);
-    this.serverProcess.sendMessageToServer(this, raw);
+    PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
     waiter.waitForAck();
     return waiter;
   }
@@ -110,7 +97,6 @@ public class PassthroughConnection implements Connection {
   public <T> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config) {
     EntityClientService<?, ?> service = getEntityClientService(cls);
     Runnable onClose = new Runnable() {
-
       @Override
       public void run() {
         localEndpoints.remove(clientInstanceID);
@@ -122,9 +108,10 @@ public class PassthroughConnection implements Connection {
   }
 
   public synchronized void sendMessageToClient(PassthroughServerProcess sender, byte[] payload) {
-    // The sender is used to determine if this is a message coming in from a stale connection.
-    if (sender == this.serverProcess) {
-      this.messageQueue.add(payload);
+    // The sender is used to determine if this is a message coming in from a stale connection - checked on dequeue to avoid race conditions.
+    if (this.connectionState.isConnected(sender)) {
+      ServerToClientMessageRecord record = new ServerToClientMessageRecord(sender, payload);
+      this.messageQueue.add(record);
       notifyAll();
     }
   }
@@ -133,8 +120,11 @@ public class PassthroughConnection implements Connection {
     Thread.currentThread().setName("Client thread");
     while (this.isRunning) {
       if (!this.messageQueue.isEmpty()) {
-        byte[] message = this.messageQueue.remove(0);
-        clientThreadHandleMessage(message);
+        ServerToClientMessageRecord message = this.messageQueue.remove(0);
+        // We will do a quick pre-check that this is from the sender we are currently using.
+        if (this.connectionState.isConnected(message.sender)) {
+          clientThreadHandleMessage(message.sender, message.payload);
+        }
       } else {
         try {
           this.wait();
@@ -145,13 +135,14 @@ public class PassthroughConnection implements Connection {
     }
   }
 
-  private void clientThreadHandleMessage(byte[] message) {
+  // Note that this method is called under the monitor.
+  private void clientThreadHandleMessage(final PassthroughServerProcess sender, byte[] message) {
     PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughMessageCodec.Decoder<Void>() {
       @Override
       public Void decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
         switch (type) {
           case ACK_FROM_SERVER:
-            handleAck(transactionID);
+            handleAck(sender, transactionID);
             break;
           case COMPLETE_FROM_SERVER: {
             // Complete has a flag for success/failure, followed by return value and exception.
@@ -171,7 +162,7 @@ public class PassthroughConnection implements Connection {
             } else {
               error = PassthroughMessageCodec.deserializeExceptionFromArray(bytes);
             }
-            handleComplete(transactionID, result, error);
+            handleComplete(sender, transactionID, result, error);
             break;
           }
           case INVOKE_ON_CLIENT: {
@@ -207,17 +198,20 @@ public class PassthroughConnection implements Connection {
     PassthroughMessageCodec.decodeRawMessage(decoder, message);
   }
 
-  private void handleAck(long transactionID) {
-    PassthroughWait waiter = this.inFlight.get(transactionID);
-    Assert.assertTrue(null != waiter);
-    waiter.handleAck();
+  private void handleAck(PassthroughServerProcess sender, long transactionID) {
+    PassthroughWait waiter = this.connectionState.getWaiterForTransaction(sender, transactionID);
+    // Note that we may fail because this server may be dead.
+    if (null != waiter) {
+      waiter.handleAck();
+    }
   }
 
-  private void handleComplete(long transactionID, byte[] result, EntityException error) {
-    PassthroughWait waiter = this.inFlight.get(transactionID);
-    Assert.assertTrue(null != waiter);
-    this.inFlight.remove(transactionID);
-    waiter.handleComplete(result, error);
+  private void handleComplete(PassthroughServerProcess sender, long transactionID, byte[] result, EntityException error) {
+    PassthroughWait waiter = this.connectionState.removeWaiterForTransaction(sender, transactionID);
+    // Note that we may fail because this server may be dead.
+    if (null != waiter) {
+      waiter.handleComplete(result, error);
+    }
   }
 
   private void handleInvokeOnClient(long clientInstanceID, byte[] result) {
@@ -308,27 +302,52 @@ public class PassthroughConnection implements Connection {
    * Called after the server restarts to reconnect us to the new instance.
    */
   public void reconnect(PassthroughServerProcess serverProcess) {
-    synchronized (this) {
-      Assert.assertTrue(null == this.serverProcess);
-      this.serverProcess = serverProcess;
-    }
+    Map<Long, PassthroughWait> waitersToResend = this.connectionState.enterReconnectState(serverProcess);
     
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
       byte[] extendedData = endpoint.getExtendedReconnectData();
-      endpoint.reconnect(extendedData);
+      PassthroughMessage message = endpoint.buildReconnectMessage(extendedData);
+      // Send the message directly to the new process, waiting for all acks.
+      boolean shouldWaitForSent = true;
+      boolean shouldWaitForReceived = true;
+      boolean shouldWaitForCompleted = true;
+      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+      waiter.waitForAck();
     }
     
     // Re-send the existing in-flight messages - note that we need to take a snapshot of these instead of walking the map since it will change as the responses come back.
-    Vector<PassthroughWait> waiters = new Vector<PassthroughWait>(this.inFlight.values());
-    for (PassthroughWait waiter : waiters) {
-      byte[] raw = waiter.resetAndGetMessageForResend();
-      this.serverProcess.sendMessageToServer(this, raw);
-      waiter.waitForAck();
+    for (Map.Entry<Long, PassthroughWait> entry : waitersToResend.entrySet()) {
+      long transactionID = entry.getKey();
+      PassthroughWait waiter = entry.getValue();
+      this.connectionState.sendAsResend(this, transactionID, waiter);
+      // This is a little heavy-handed but it gives us a clean state for leaving reconnect.
+      // We don't really care what the get does, just that it blocks until complete.
+      try {
+        waiter.get();
+      } catch (InterruptedException e) {
+        // Unexpected.
+        Throwables.propagate(e);
+      } catch (EntityException e) {
+        // We ignore this since someone will call the get(), later, in a more appropriate place.
+      }
     }
+    
+    // Now that we send the reconnect handshake and the re-sent transactions, we can install the new serverProcess and permit the new messages to go through.
+    this.connectionState.finishReconnectState();
   }
 
-  public synchronized void disconnect() {
-    this.serverProcess = null;
+  public void disconnect() {
+    this.connectionState.enterDisconnectedState();
+  }
+  
+  private static class ServerToClientMessageRecord {
+    public final PassthroughServerProcess sender;
+    public final byte[] payload;
+    
+    public ServerToClientMessageRecord(PassthroughServerProcess sender, byte[] payload) {
+      this.sender = sender;
+      this.payload = payload;
+    }
   }
 }

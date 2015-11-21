@@ -206,22 +206,31 @@ public class PassthroughServerProcess implements MessageHandler {
     this.notifyAll();
   }
 
-  private synchronized void runServerThread() {
+  private void runServerThread() {
     Thread.currentThread().setName("Server thread isActive: " + ((null != this.activeEntities) ? "active" : "passive"));
-    while (this.isRunning) {
-      if (!this.messageQueue.isEmpty()) {
-        MessageContainer container = this.messageQueue.remove(0);
-        IMessageSenderWrapper sender = container.sender;
-        byte[] message = container.message;
-        serverThreadHandleMessage(sender, message);
-      } else {
-        try {
-          this.wait();
-        } catch (InterruptedException e) {
-          Assert.unexpected(e);
-        }
+    MessageContainer toRun = getNextMessage();
+    while (null != toRun) {
+      IMessageSenderWrapper sender = toRun.sender;
+      byte[] message = toRun.message;
+      serverThreadHandleMessage(sender, message);
+      
+      toRun = getNextMessage();
+    }
+  }
+  
+  private synchronized MessageContainer getNextMessage() {
+    MessageContainer toRun = null;
+    while (this.isRunning && this.messageQueue.isEmpty()) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        Assert.unexpected(e);
       }
     }
+    if (!this.messageQueue.isEmpty()) {
+      toRun = this.messageQueue.remove(0);
+    }
+    return toRun;
   }
   
   private void serverThreadHandleMessage(IMessageSenderWrapper sender, byte[] message) {

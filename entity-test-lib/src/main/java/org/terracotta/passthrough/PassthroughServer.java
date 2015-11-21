@@ -106,7 +106,7 @@ public class PassthroughServer {
    * 
    * @return The new active server (typically this but could be a previous passive)
    */
-  public synchronized PassthroughServer restart() {
+  public PassthroughServer restart() {
     // Disconnect all connections before shutdown.
     for(PassthroughConnection connection : this.savedClientConnections.values()) {
       connection.disconnect();
