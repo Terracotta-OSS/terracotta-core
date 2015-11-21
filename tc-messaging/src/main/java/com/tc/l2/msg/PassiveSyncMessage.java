@@ -97,14 +97,14 @@ public class PassiveSyncMessage extends ReplicationMessage {
   public PassiveSyncMessage(EntityID eid, long version, int concurrency, byte[] payload) {
     super(SYNC);
     initialize(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), 
-        ClientID.NULL_ID, null, null, 
+        ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID,
         SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency);
   }  
-  
-  public PassiveSyncMessage(ReplicationMessage.ReplicationType type, EntityID id, long version, int concurrency, byte[] payload) {
+
+  private PassiveSyncMessage(ReplicationType type, EntityID id, long version, int concurrency, byte[] payload) {
     super(SYNC);
     initialize(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), 
-        ClientID.NULL_ID, null, null, 
+        ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID,
         type, payload, concurrency);
   }
 

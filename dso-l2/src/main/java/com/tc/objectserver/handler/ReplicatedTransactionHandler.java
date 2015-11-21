@@ -194,7 +194,7 @@ public class ReplicatedTransactionHandler {
     
   private ServerEntityRequest make(ReplicationMessage rep) {
     return new ServerEntityRequestImpl(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()),
-        rep.getExtendedData(), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty());
+        rep.getExtendedData(), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty(), rep.getConcurrency());
   }
 
   private static ServerEntityAction decodeReplicationType(ReplicationMessage.ReplicationType networkType) {

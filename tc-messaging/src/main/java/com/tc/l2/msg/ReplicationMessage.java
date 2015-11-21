@@ -23,10 +23,12 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 import java.io.IOException;
 
 /**
@@ -89,6 +91,9 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   protected final void initialize(EntityDescriptor descriptor, NodeID src, 
       TransactionID tid, TransactionID oldest, 
       ReplicationType action, byte[] payload, int concurrency) {
+    Assert.assertNotNull(tid);
+    Assert.assertNotNull(oldest);
+    Assert.assertNotNull(src);
     this.descriptor = descriptor;
     this.src = src;
     this.tid = tid;
@@ -150,10 +155,12 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     } else if (getType() == REPLICATE || getType() == SYNC) {
       this.rid = in.readLong();
       this.descriptor = EntityDescriptor.readFrom(in);
-      if (in.read() != NodeID.CLIENT_NODE_TYPE) {
-        throw new AssertionError();
+      int type = in.read();
+      if (type == NodeID.CLIENT_NODE_TYPE) {
+        this.src = new ClientID().deserializeFrom(in);
+      } else if (type == NodeID.SERVER_NODE_TYPE) {
+        this.src = new ServerID().deserializeFrom(in);
       }
-      this.src = new ClientID().deserializeFrom(in);
       this.tid = new TransactionID(in.readLong());
       this.oldest = new TransactionID(in.readLong());
       this.action = ReplicationType.values()[in.readInt()];
