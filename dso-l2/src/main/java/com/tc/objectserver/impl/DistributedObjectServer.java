@@ -709,7 +709,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 // setup replication    
     final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(entityManager, l2Coordinator.getStateManager(), replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler.getEntityList(), l2Coordinator.getStateManager(), replicationDriver.getSink());
     processor.setReplication(passives); 
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 

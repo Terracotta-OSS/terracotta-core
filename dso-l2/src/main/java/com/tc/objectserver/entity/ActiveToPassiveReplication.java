@@ -54,14 +54,14 @@ import java.util.concurrent.TimeoutException;
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
-  private final EntityManagerImpl entities;
+  private final Iterable<ManagedEntity> entities;
   private final StateManager state;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<NodeID>();
   private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
-  public ActiveToPassiveReplication(EntityManagerImpl entities, StateManager state, Sink<ReplicationEnvelope> replicate) {
+  public ActiveToPassiveReplication(Iterable<ManagedEntity> entities, StateManager state, Sink<ReplicationEnvelope> replicate) {
     this.entities = entities;
     this.state = state;
     this.replicate = replicate;
@@ -82,8 +82,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {
         // start passive sync message
           replicate.addSingleThreaded(new PassiveSyncMessage(true).target(newNode));
-          Collection<ManagedEntity> currentEntities = entities.getAll();
-          for (ManagedEntity entity : currentEntities) {
+        for (ManagedEntity entity : entities) {
               entity.sync(newNode);
           }
       //  passive sync done message.  causes passive to go into passive standby mode
@@ -94,12 +93,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   public void acknowledge(GroupMessage msg) {
     Set<NodeID> plist = waiters.get(msg.inResponseTo());
+    if (plist != null) {
     synchronized(plist) {
       if (plist.remove(msg.messageFrom()) && plist.isEmpty()) {
         waiters.remove(msg.inResponseTo());
         plist.notifyAll();
       }
     }
+  }    
   }    
   
   @Override

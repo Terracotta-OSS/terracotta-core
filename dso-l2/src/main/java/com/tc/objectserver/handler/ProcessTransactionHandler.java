@@ -40,6 +40,8 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import java.util.List;
 import java.util.Optional;
@@ -103,6 +105,17 @@ public class ProcessTransactionHandler {
     
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new Vector<>();
+  }
+  
+  public Iterable<ManagedEntity> getEntityList() {
+    return new Iterable<ManagedEntity>() {
+      @Override
+      public Iterator<ManagedEntity> iterator() {
+        synchronized (ProcessTransactionHandler.this) {
+          return new ArrayList<ManagedEntity>(entityManager.getAll()).iterator();
+        }
+      }
+    };
   }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
