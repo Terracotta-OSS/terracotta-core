@@ -68,7 +68,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       try {
         group.sendTo(nodeid, msg);
       }  catch (GroupException ge) {
-        logger.info(ge);
+        logger.info(msg, ge);
       }
     }
   }

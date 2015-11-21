@@ -102,14 +102,16 @@ public class ReplicatedTransactionHandler {
           entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
         }
         Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
+
+        if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
+          entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
+          entityPersistor.entityDeleted(rep.getEntityDescriptor().getEntityID());
+        }
         if (entity.isPresent()) {
           ServerEntityRequest request = make(rep);
           if (request != null) {
             entity.get().addRequest(request);
           }
-        }
-        if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
-          entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
         }
       }
 //  when is the right time to send the ack?
@@ -121,6 +123,14 @@ public class ReplicatedTransactionHandler {
       }
       return;
     } else if (rep.getType() == ReplicationMessage.SYNC) {
+//  when is the right time to send the ack?  send it early for passive sync to keep the messages flowing
+//  TODO:  need some kind of feedback mechanism to slow sync if needed
+      try {
+        groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+      } catch (GroupException ge) {
+//  Passive must have died.  Swallow the exception
+        LOGGER.info("passive died on ack", ge);
+      }
       syncMessageReceived(rep);
       return;
     }
