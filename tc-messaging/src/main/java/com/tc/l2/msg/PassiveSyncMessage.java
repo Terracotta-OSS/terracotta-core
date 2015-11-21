@@ -32,6 +32,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 
@@ -52,14 +53,17 @@ public class PassiveSyncMessage extends ReplicationMessage {
     return new PassiveSyncMessage(SYNC_ENTITY_END, id, version, 0, null);
   }
   public static PassiveSyncMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_BEGIN, id, version, concurrency, null);
   }
   public static PassiveSyncMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // We can only synchronize positive-number keys.    
     Assert.assertTrue(concurrency > 0);
     return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_END, id, version, concurrency, null);
   }
   public static PassiveSyncMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
+    // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_PAYLOAD, id, version, concurrency, payload);
   }
