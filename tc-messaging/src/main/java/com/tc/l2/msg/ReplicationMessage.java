@@ -37,15 +37,14 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public static final int REPLICATE               = 0; // Sent to replicate a request on the passive
   public static final int SYNC               = 1; // Sent to replicate a request on the passive
   public static final int RESPONSE                = 2; // response that the replicated action completed
+  public static final int START                = 3; // response that the replicated action completed
 
   public enum ReplicationType {
     NOOP,
     CREATE_ENTITY,
     INVOKE_ACTION,
-//    GET_ENTITY,
     RELEASE_ENTITY,
     DESTROY_ENTITY,
-//    PROMOTE_ENTITY_TO_ACTIVE,
     
     SYNC_BEGIN,
     SYNC_END,
@@ -146,7 +145,9 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    if (getType() == REPLICATE || getType() == SYNC) {
+    if (getType() == START) {
+// do nothing, just need the source
+    } else if (getType() == REPLICATE || getType() == SYNC) {
       this.rid = in.readLong();
       this.descriptor = EntityDescriptor.readFrom(in);
       if (in.read() != NodeID.CLIENT_NODE_TYPE) {
@@ -167,7 +168,9 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    if (getType() == RESPONSE) {
+    if (getType() == START) {
+// do nothing, just need the source
+    } else if (getType() == RESPONSE) {
 //  do nothing, just need the messageid
       out.writeLong(rid);
     } else {

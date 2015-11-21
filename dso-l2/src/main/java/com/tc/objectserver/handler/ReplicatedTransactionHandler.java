@@ -19,6 +19,7 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.l2.msg.ReplicationMessage;
@@ -26,6 +27,7 @@ import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
@@ -33,6 +35,7 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
@@ -70,6 +73,15 @@ public class ReplicatedTransactionHandler {
         Assert.failure("Unexpected exception executing replicated message", e);
       }
     }
+
+    @Override
+    protected void initialize(ConfigurationContext context) {
+      ServerConfigurationContext scxt = (ServerConfigurationContext)context;
+  //  when this spins up, send  request to active and ask for sync
+      requestPassiveSync();
+    }
+    
+    
   };
   
   public EventHandler<ReplicationMessage> getEventHandler() {
@@ -87,7 +99,7 @@ public class ReplicatedTransactionHandler {
         if (rep.getReplicationType() == ReplicationMessage.ReplicationType.CREATE_ENTITY) {
           long consumerID = entityPersistor.getNextConsumerID();
           entityManager.createEntity(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID);
-          this.entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
+          entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
         }
         Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
         if (entity.isPresent()) {
@@ -115,6 +127,15 @@ public class ReplicatedTransactionHandler {
 
     throw new RuntimeException();
   }
+  
+  private void requestPassiveSync() {
+    NodeID node = stateManager.getActiveNodeID();
+    try {
+      groupManager.sendTo(node, new ReplicationMessageAck(ReplicationMessage.START));
+    } catch (GroupException ge) {
+      LOGGER.warn("can't request passive sync", ge);
+    }
+  }  
   
   private void syncMessageReceived(ReplicationMessage sync) {
     EntityID eid = sync.getEntityDescriptor().getEntityID();

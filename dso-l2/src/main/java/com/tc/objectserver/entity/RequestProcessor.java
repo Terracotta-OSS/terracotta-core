@@ -22,12 +22,16 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -44,7 +48,7 @@ public class RequestProcessor implements StateChangeListener {
   }
 
   public Future<Void> scheduleSync(PassiveSyncMessage msg, NodeID passive) {
-    return passives.replicateSync(msg, Collections.singleton(passive));
+    return passives.replicateMessage(msg, Collections.singleton(passive));
   }
   
   public void setReplication(PassiveReplicationBroker passives) {
@@ -59,12 +63,51 @@ public class RequestProcessor implements StateChangeListener {
   
   public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-    Future<Void> token = (passives != null && request.requiresReplication())
-        ? passives.replicateMessage(entity, impl.getVersion(), request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), concurrencyKey)
+    Set<NodeID> replicateTo = (passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
+    Future<Void> token = (!replicateTo.isEmpty())
+        ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
+            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_FUTURE;
     EntityRequest entityRequest =  new EntityRequest(impl, entity, request, concurrencyKey, token, message);
     requestExecution.addMultiThreaded(entityRequest);
+  }
+  
+  private static ReplicationMessage createReplicationMessage(EntityDescriptor id, NodeID src,
+      ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
+    ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
+    switch (type) {
+      case CREATE_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
+        break;
+      case DESTROY_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
+        break;
+      case FETCH_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        break;
+      case INVOKE_ACTION:
+        actionCode = ReplicationMessage.ReplicationType.INVOKE_ACTION;
+        break;
+      case NOOP:
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        break;
+      case PROMOTE_ENTITY_TO_ACTIVE:
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        break;
+      case RELEASE_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
+        break;
+      case REQUEST_SYNC_ENTITY:
+//  this marks the start of entity sync for a concurrency key.  practically, this means that
+//  all replicated messages for this key and entity must be forwarded to passives
+        actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
+        break;
+      default:
+        break;
+    }
+//  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
+//  NOOP should be replicated.  For now, NOOPs hold ordering
+    return new ReplicationMessage(id, src, tid, oldest, actionCode, payload, concurrency);
   }
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {

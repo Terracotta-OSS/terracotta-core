@@ -465,7 +465,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
     persistor.start();
 
-
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new OperatorEventHistoryProviderImpl();
     this.serverBuilder
@@ -709,7 +708,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 // setup replication    
     final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler.getEntityList(), l2Coordinator.getStateManager(), replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler.getEntityList(), replicationDriver.getSink());
     processor.setReplication(passives); 
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
@@ -719,7 +718,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         new AbstractEventHandler<ReplicationMessageAck>() {
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
+            switch (context.getType()) {
+              case ReplicationMessage.RESPONSE:
             passives.acknowledge(context);
+                break;
+              case ReplicationMessage.START:
+                passives.startPassiveSync(context.messageFrom());
+                break;
+              default:
+                throw new AssertionError("bad message " + context);
+          }
           }
         }, 1, maxStageSize);
 

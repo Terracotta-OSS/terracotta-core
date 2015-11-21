@@ -30,6 +30,10 @@ public class ReplicationMessageAck extends ReplicationMessage {
 
   public ReplicationMessageAck() {
   }
+//  this type requests passive sync from the active  
+  public ReplicationMessageAck(int type) {
+    super(type);
+  }
   
   public ReplicationMessageAck(MessageID requestID) {
     super(requestID);

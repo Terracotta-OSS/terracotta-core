@@ -27,6 +27,7 @@ import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import java.util.Collections;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.After;
@@ -170,17 +171,14 @@ public class RequestProcessorTest {
     Sink dump = mock(Sink.class);
 
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
-    when(broker.replicateMessage(Matchers.any(), Matchers.anyLong(), Matchers.any(), 
-        Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
-        Matchers.any(TransactionID.class), Matchers.any(), Matchers.anyInt())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
+    when(broker.passives()).thenReturn(Collections.singleton(mock(NodeID.class)));
+    when(broker.replicateMessage(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     
     instance.scheduleRequest(entity, descriptor, request, new ByteArrayMessage(request.getPayload()), ConcurrencyStrategy.UNIVERSAL_KEY);
 //  assume args from mocked request are passed.  just testing execution
-    verify(broker).replicateMessage(Matchers.eq(descriptor), Matchers.anyLong(), 
-        Matchers.any(), Matchers.any(ServerEntityAction.class), Matchers.any(TransactionID.class), 
-        Matchers.any(TransactionID.class), Matchers.any(), Matchers.anyInt());
+    verify(broker).replicateMessage(Matchers.any(), Matchers.any());
 //    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
   }
   
