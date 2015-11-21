@@ -15,7 +15,7 @@ public class Assert {
   }
 
   public static void unreachable() {
-    throw new AssertionError("Could path should not be reachable");
+    throw new AssertionError("Path should not be reachable");
   }
 
   public static void assertTrue(boolean test) {
