@@ -29,6 +29,7 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.persistence.Persistor;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -73,12 +74,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       @Override
       public void run() {    
         // start passive sync message
-        replicate.addSingleThreaded(new PassiveSyncMessage(true).target(newNode));
+        replicate.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage().target(newNode));
         for (ManagedEntity entity : entities) {
             entity.sync(newNode);
         }
     //  passive sync done message.  causes passive to go into passive standby mode
-        replicate.addSingleThreaded(new PassiveSyncMessage(false).target(newNode));
+        replicate.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage().target(newNode));
       }
     });
   }

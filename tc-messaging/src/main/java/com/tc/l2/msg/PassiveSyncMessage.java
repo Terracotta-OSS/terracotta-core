@@ -72,34 +72,7 @@ public class PassiveSyncMessage extends ReplicationMessage {
   
   public PassiveSyncMessage() {
     super(SYNC);
-  }
-  
-  public PassiveSyncMessage(boolean start) {
-    super(SYNC);
-    initialize(new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, NO_VERSION), 
-        ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, start ? SYNC_BEGIN : SYNC_END, null, 0);
-  }
-  
-  public PassiveSyncMessage(EntityID eid, long version, byte[] configPayload) {
-    super(SYNC);
-    initialize(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), 
-        ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, 
-        configPayload != null ? SYNC_ENTITY_BEGIN : SYNC_ENTITY_END, configPayload, 0);
-  }
-  
-  public PassiveSyncMessage(EntityID eid, long version, int concurrency) {
-    super(SYNC);
-    initialize(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, 
-        TransactionID.NULL_ID, TransactionID.NULL_ID, SYNC_ENTITY_CONCURRENCY_END, null, 0);
-    this.concurrency = concurrency;
-  }
-
-  public PassiveSyncMessage(EntityID eid, long version, int concurrency, byte[] payload) {
-    super(SYNC);
-    initialize(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), 
-        ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID,
-        SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency);
-  }  
+  } 
 
   private PassiveSyncMessage(ReplicationType type, EntityID id, long version, int concurrency, byte[] payload) {
     super(SYNC);

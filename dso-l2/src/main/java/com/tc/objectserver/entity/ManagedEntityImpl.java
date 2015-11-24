@@ -426,8 +426,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void sync(NodeID passive) {
-    executor.scheduleSync(new PassiveSyncMessage(id, version, constructorInfo), passive);
-// TODO:  This is a stub, the real implementation is to be designed
+    executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
 // iterate through all the concurrency keys of an entity
     for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
       PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, passive);
@@ -438,7 +437,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       req.waitFor();
     }
 //  end passive sync for an entity
-    executor.scheduleSync(new PassiveSyncMessage(id, version, null), passive);
+    executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
   }
 
   private void loadExisting(ServerEntityRequest loadEntityRequest) {
