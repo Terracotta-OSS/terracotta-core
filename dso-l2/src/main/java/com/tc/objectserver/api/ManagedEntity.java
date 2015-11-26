@@ -21,8 +21,6 @@ package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
 import com.tc.net.NodeID;
-import com.tc.net.groups.GroupException;
-import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
 
 
@@ -52,8 +50,6 @@ public interface ManagedEntity {
    * Called to sync an entity.  Caller initiates sync of an entity through this method.  
    * 
    * @param passive target passive
-   * @param mgr message channel
-   * @throws GroupException 
    */
-  void sync(NodeID passive, GroupManager mgr) throws GroupException;
+  void sync(NodeID passive);
 }

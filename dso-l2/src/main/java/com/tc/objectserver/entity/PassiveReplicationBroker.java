@@ -18,15 +18,12 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.NodeID;
-import com.tc.object.EntityDescriptor;
-import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.ServerEntityAction;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 public interface PassiveReplicationBroker {
-    Future<Void> replicateMessage(EntityDescriptor id, long version, NodeID src, 
-        ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload);
-    boolean isActive();
-    void setActive(boolean active);
+  Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> passives);
+  Set<NodeID> passives();
 }

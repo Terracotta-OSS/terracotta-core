@@ -20,6 +20,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.object.EntityID;
+import java.util.Collection;
 
 import java.util.Optional;
 
@@ -71,4 +72,5 @@ public interface EntityManager {
    */
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException;
 
+  Collection<ManagedEntity> getAll();
 }

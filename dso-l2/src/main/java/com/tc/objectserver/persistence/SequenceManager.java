@@ -45,6 +45,11 @@ public class SequenceManager {
     this.uuidMap = storageManager.getKeyValueStorage(SEQUENCE_UUID_MAP, String.class, String.class);
   }
 
+  public void clear() {
+    sequenceMap.clear();
+    uuidMap.clear();
+  }
+
   public MutableSequence getSequence(String name, long initialValue) {
     Sequence sequence = createdSequences.get(name);
     if (sequence == null) {

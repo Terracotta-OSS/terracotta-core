@@ -20,9 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.google.common.base.Throwables;
 import com.tc.l2.msg.PassiveSyncMessage;
-import com.tc.net.groups.GroupException;
-import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.GroupMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 import org.terracotta.entity.ClientDescriptor;
@@ -46,6 +43,8 @@ import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -73,8 +72,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
-                    RequestProcessor process, 
-                    ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> factory,
+                    RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
@@ -240,7 +238,10 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void receiveSyncEntityStart(ServerEntityRequest request) {
-    // This only makes sense if we have a passive instance.
+    Assert.assertNull(this.passiveServerEntity);
+//  going to start by building the passive instance
+    createEntity(request);
+//  it better be a passive instance
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncEntity();
   }
@@ -318,23 +319,31 @@ public class ManagedEntityImpl implements ManagedEntity {
     notifyAll();
   }
 
-  //  TODO: stub implementation.  This is supposed to send the data to the passive server for sync
   private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        PassiveSyncServerEntityRequest unwrappedRequest = ((PassiveSyncServerEntityRequest)wrappedRequest);
-        long version = this.version;
         // Create the channel which will send the payloads over the wire.
         PassiveSynchronizationChannel syncChannel = new PassiveSynchronizationChannel() {
           @Override
+//  TODO:  what should be done about exception handling?
           public void synchronizeToPassive(byte[] payload) {
-            unwrappedRequest.sendToPassive(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload));
+            Future<Void> wait = executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), wrappedRequest.getNodeID());
+            try {
+              wait.get();
+            } catch (ExecutionException ee) {
+            // TODO: do something reasoned here
+              throw new RuntimeException(ee);
+            } catch (InterruptedException ie) {
+            // TODO: do something reasoned here
+              Thread.currentThread().interrupt();
+              throw new RuntimeException(ie);
+            }
           }};
-        // Ask the active to send off the payloads for this key.
+//  start is handled by the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
-        // The sync request for this key is now complete.
+        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), wrappedRequest.getNodeID());
         wrappedRequest.complete();
       }
     } else {
@@ -416,26 +425,19 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void sync(NodeID passive, GroupManager mgr) throws GroupException {
-    mgr.sendTo(passive, PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo));
-// TODO:  This is a stub, the real implementation is to be designed
+  public void sync(NodeID passive) {
+    executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
 // iterate through all the concurrency keys of an entity
     for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
-      // Send the message to start the key.
-      mgr.sendTo(passive, PassiveSyncMessage.createStartEntityKeyMessage(id, version, concurrency));
-
-      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, mgr, passive);
+      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, passive);
       // We don't actually use the message in the direct strategy so this is safe.
       EntityMessage message = null;
       EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
       executor.scheduleRequest(this, entityDescriptor, req, message, concurrency);
       req.waitFor();
-
-      // Send the message to end the key.
-      mgr.sendTo(passive, PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrency));
     }
 //  end passive sync for an entity
-    mgr.sendTo(passive, PassiveSyncMessage.createEndEntityMessage(id, version));
+    executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
   }
 
   private void loadExisting(ServerEntityRequest loadEntityRequest) {
@@ -464,37 +466,16 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
     
-    private final GroupManager group;
-    private final NodeID passive;
     private final int concurrencyKey;
-
-    public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, GroupManager group, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, makePayload(concurrency), null, null, null, false);
-      this.group = group;
-      this.passive = passive;
+    
+    public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, NodeID passive) {
+      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, null, passive, false);
       this.concurrencyKey = concurrency;
     }
 
     @Override
-    public ServerEntityAction getAction() {
-      return ServerEntityAction.REQUEST_SYNC_ENTITY;
-    }
-    
-    public static byte[] makePayload(int concurrency) {
-      return ByteBuffer.allocate(Integer.BYTES).putInt(concurrency).array();
-    }
-    
-    @Override
     public boolean requiresReplication() {
-      return false;
-    }
-    
-    public void sendToPassive(GroupMessage msg) {
-      try {
-        group.sendTo(passive, msg);
-      } catch (GroupException ge) {
-        throw new RuntimeException(ge);
-      }
+      return true;
     }
 
     @Override

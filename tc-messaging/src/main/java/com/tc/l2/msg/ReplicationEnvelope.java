@@ -18,34 +18,26 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.io.TCByteBufferInput;
-import com.tc.io.TCByteBufferOutput;
-import com.tc.net.groups.MessageID;
-import java.io.IOException;
+import com.tc.net.NodeID;
 
 /**
  *
  */
-public class ReplicationMessageAck extends ReplicationMessage {
+public class ReplicationEnvelope {
+  
+  private final NodeID dest;
+  private final ReplicationMessage msg;
 
-  public ReplicationMessageAck() {
-  }
-//  this type requests passive sync from the active  
-  public ReplicationMessageAck(int type) {
-    super(type);
+  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg) {
+    this.dest = dest;
+    this.msg = msg;
   }
   
-  public ReplicationMessageAck(MessageID requestID) {
-    super(requestID);
+  public NodeID getDestination() {
+    return dest;
   }
-
-  @Override
-  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-
-  }
-
-  @Override
-  protected void basicSerializeTo(TCByteBufferOutput out) {
-
+  
+  public ReplicationMessage getMessage() {
+    return msg;
   }
 }

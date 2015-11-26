@@ -43,6 +43,10 @@ public class ClientStatePersistor {
     this.clients = storageManager.getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class);
   }
 
+  public void clear() {
+    clients.clear();
+  }
+
   public MutableSequence getConnectionIDSequence() {
     return clientIDSequence;
   }

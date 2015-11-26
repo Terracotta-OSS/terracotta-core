@@ -40,6 +40,8 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import java.util.List;
 import java.util.Optional;
@@ -104,9 +106,20 @@ public class ProcessTransactionHandler {
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new Vector<>();
   }
+  
+  public Iterable<ManagedEntity> getEntityList() {
+    return new Iterable<ManagedEntity>() {
+      @Override
+      public Iterator<ManagedEntity> iterator() {
+        synchronized (ProcessTransactionHandler.this) {
+          return new ArrayList<ManagedEntity>(entityManager.getAll()).iterator();
+        }
+      }
+    };
+  }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
-  private void addMessage(NodeID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
+  private synchronized void addMessage(NodeID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
@@ -227,7 +240,7 @@ public class ProcessTransactionHandler {
     ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
-  public static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
+  private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
     // Decode the appropriate server-internal action from this request type.
     ServerEntityAction action = null;
     switch (type) {

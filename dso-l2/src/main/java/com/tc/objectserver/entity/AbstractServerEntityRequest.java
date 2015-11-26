@@ -58,6 +58,9 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
 
   @Override
   public TransactionID getTransaction() {
+    if (transaction == null) {
+      return TransactionID.NULL_ID;
+    }
     return transaction;
   }
   

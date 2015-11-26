@@ -72,6 +72,7 @@ import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
@@ -234,7 +235,6 @@ import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
-import com.tc.objectserver.handler.PassiveSyncHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 
@@ -464,7 +464,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     dumpHandler.registerForDump(new CallbackDumpAdapter(persistor));
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
     persistor.start();
-
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new OperatorEventHistoryProviderImpl();
@@ -707,24 +706,30 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     connectServerStateToReplicatedState(state, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Stage<ReplicationMessage> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationMessage.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
+    final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(groupCommManager, entityManager, l2Coordinator.getStateManager(), replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler.getEntityList(), replicationDriver.getSink());
     processor.setReplication(passives); 
-    PassiveSyncHandler psync = new PassiveSyncHandler(this.l2Coordinator.getStateManager(), this.groupCommManager, entityManager, this.persistor.getEntityPersistor());
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
-        new ReplicatedTransactionHandler(psync.createFilter(), this.persistor.getTransactionOrderPersistor(), entityManager, 
+        new ReplicatedTransactionHandler(this.l2Coordinator.getStateManager(), this.persistor.getTransactionOrderPersistor(), entityManager, 
             this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
         new AbstractEventHandler<ReplicationMessageAck>() {
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
+            switch (context.getType()) {
+              case ReplicationMessage.RESPONSE:
             passives.acknowledge(context);
+                break;
+              case ReplicationMessage.START:
+                passives.startPassiveSync(context.messageFrom());
+                break;
+              default:
+                throw new AssertionError("bad message " + context);
+          }
           }
         }, 1, maxStageSize);
-    Stage<PassiveSyncMessage> passiveSyncStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE, PassiveSyncMessage.class, 
-        psync.getEventHandler(), 1, maxStageSize);
 
 //  handle cluster state    
     Sink<L2StateMessage> stateMessageSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, maxStageSize).getSink();
@@ -738,9 +743,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered
-    this.groupCommManager.routeMessages(ReplicationMessage.class, new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink()));
+    Sink<ReplicationMessage> replication = new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink());
+    this.groupCommManager.routeMessages(ReplicationMessage.class, replication);
+    this.groupCommManager.routeMessages(PassiveSyncMessage.class, replication);
+
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
-    this.groupCommManager.routeMessages(PassiveSyncMessage.class, passiveSyncStage.getSink());
     
     // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
     //  and passive.
@@ -813,15 +820,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
-        ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
     );
   }
 
   private StageController createStageController() {
     StageController control = new StageController();
 //  PASSIVE-UNINITIALIZED handle replicate messages right away.  SYNC also needs to be handled
-    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_SYNCHRONIZATION_STAGE);
     control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC goes away
     control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);

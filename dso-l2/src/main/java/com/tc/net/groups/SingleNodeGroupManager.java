@@ -75,12 +75,12 @@ public class SingleNodeGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public <M extends GroupMessage> void registerForMessages(Class<M> msgClass, GroupMessageListener<M> listener) {
+  public <M extends GroupMessage> void registerForMessages(Class<? extends M> msgClass, GroupMessageListener<M> listener) {
     // NOP : Since this doesn't talk to the network, this should never get any message
   }
 
   @Override
-  public <M extends GroupMessage> void routeMessages(Class<M> msgClass, Sink<M> sink) {
+  public <M extends GroupMessage> void routeMessages(Class<? extends M> msgClass, Sink<M> sink) {
     // NOP : Since this doesn't talk to the network, this should never get any message
   }
 

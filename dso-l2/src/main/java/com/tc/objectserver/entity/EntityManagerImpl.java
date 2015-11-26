@@ -41,6 +41,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -128,7 +129,7 @@ public class EntityManagerImpl implements EntityManager {
   }
   
   public Collection<ManagedEntity> getAll() {
-    return entities.values();
+    return new ArrayList<>(entities.values());
   }
   
   private ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {

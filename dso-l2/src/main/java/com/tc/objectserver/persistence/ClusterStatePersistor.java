@@ -41,7 +41,7 @@ public class ClusterStatePersistor {
   private static final String VERSION_KEY = "version";
 
   private final Map<String, String> map;
-  private final State initialState;
+  private State initialState;
 
   public ClusterStatePersistor(IPersistentStorage storageManager) {
     try {
@@ -118,6 +118,11 @@ public class ClusterStatePersistor {
 
   public void setDBClean(boolean dbClean) {
     map.put(DB_CLEAN_KEY, String.valueOf(dbClean));
+  }
+
+  public void clear() {
+    map.clear();
+    initialState = null;
   }
 
   private static String groupStripeIdKey(GroupID groupID) {

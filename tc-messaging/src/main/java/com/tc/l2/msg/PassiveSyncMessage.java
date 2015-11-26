@@ -20,118 +20,78 @@ package com.tc.l2.msg;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.groups.AbstractGroupMessage;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_BEGIN;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_END;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_END;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_END;
+import com.tc.net.ClientID;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 
-
-public class PassiveSyncMessage extends AbstractGroupMessage {
+/**
+ * This is a convenience subclass of ReplicationMessage.
+ */
+public class PassiveSyncMessage extends ReplicationMessage {
   public static PassiveSyncMessage createStartSyncMessage() {
-    EntityID fakeID = new EntityID("", "");
-    long fakeVersion = 1;
-    return new PassiveSyncMessage(BEGIN, fakeID, fakeVersion, 0, null);
+    return new PassiveSyncMessage(SYNC_BEGIN, EntityID.NULL_ID, NO_VERSION, 0, null);
   }
   public static PassiveSyncMessage createEndSyncMessage() {
-    EntityID fakeID = new EntityID("", "");
-    long fakeVersion = 1;
-    return new PassiveSyncMessage(END, fakeID, fakeVersion, 0, null);
+    return new PassiveSyncMessage(SYNC_END, EntityID.NULL_ID, NO_VERSION, 0, null);
   }
   public static PassiveSyncMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload) {
-    return new PassiveSyncMessage(ENTITY_BEGIN, id, version, 0, configPayload);
+    return new PassiveSyncMessage(SYNC_ENTITY_BEGIN, id, version, 0, configPayload);
   }
   public static PassiveSyncMessage createEndEntityMessage(EntityID id, long version) {
-    return new PassiveSyncMessage(ENTITY_END, id, version, 0, null);
+    return new PassiveSyncMessage(SYNC_ENTITY_END, id, version, 0, null);
   }
   public static PassiveSyncMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
-    return new PassiveSyncMessage(ENTITY_CONCURRENCY_BEGIN, id, version, concurrency, null);
+    return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_BEGIN, id, version, concurrency, null);
   }
   public static PassiveSyncMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
-    // We can only synchronize positive-number keys.
+    // We can only synchronize positive-number keys.    
     Assert.assertTrue(concurrency > 0);
-    return new PassiveSyncMessage(ENTITY_CONCURRENCY_END, id, version, concurrency, null);
+    return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_END, id, version, concurrency, null);
   }
   public static PassiveSyncMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
-    return new PassiveSyncMessage(ENTITY_CONCURRENCY_PAYLOAD, id, version, concurrency, payload);
+    return new PassiveSyncMessage(SYNC_ENTITY_CONCURRENCY_PAYLOAD, id, version, concurrency, payload);
   }
 
-
-//  message types  
-  public static final int BEGIN               = 0; // Sent to replicate a request on the passive
-  public static final int END                = 1; // response that the replicated action completed
-
-  public static final int ENTITY_BEGIN       = 2;
-  public static final int ENTITY_END         = 3;
+  public static final long NO_VERSION = 0;
   
-  public static final int ENTITY_CONCURRENCY_BEGIN = 4;
-  public static final int ENTITY_CONCURRENCY_END = 5;
-  
-  public static final int ENTITY_CONCURRENCY_PAYLOAD = 6;
-  
-  EntityID id;
-  long version;
-  int concurrency;
-  byte[] payload;
-
   public PassiveSyncMessage() {
-    super(-1);
-    // Serialization support.
-  }
+    super(SYNC);
+  } 
 
-  private PassiveSyncMessage(int messageType, EntityID id, long version, int concurrencyKey, byte[] payload) {
-    super(messageType);
-    Assert.assertNotNull(id);
-    this.id = id;
-    // We always need a valid version and those start at 1.
-    Assert.assertTrue(version > 0);
-    this.version = version;
-    this.concurrency = concurrencyKey;
-    this.payload = payload;
+  private PassiveSyncMessage(ReplicationType type, EntityID id, long version, int concurrency, byte[] payload) {
+    super(SYNC);
+    initialize(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), 
+        ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID,
+        type, payload, concurrency);
   }
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    this.id = new EntityID(in.readUTF(), in.readUTF());
-    this.version = in.readLong();
-    this.concurrency = in.readInt();
-    this.payload = new byte[in.readInt()];
-    in.readFully(this.payload);
+    super.basicDeserializeFrom(in);
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    try {
-      out.writeUTF(id.getClassName());
-      out.writeUTF(id.getEntityName());
-      out.writeLong(version);
-      out.writeInt(concurrency);
-      out.writeInt(payload == null ? 0 : payload.length);
-      if (null != payload) {
-        out.write(payload);
-      }
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
-    }
+    super.basicSerializeTo(out);
   }
   
   public EntityID getEntityID() {
-    return id;
-  }
-  
-  public long getVersion() {
-    return version;
-  }
-  
-  public byte[] getPayload() {
-    return payload;
-  }
-  
-  public int getConcurrencyKey() {
-    return this.concurrency;
+    return getEntityDescriptor().getEntityID();
   }
 }

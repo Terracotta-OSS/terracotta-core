@@ -46,6 +46,14 @@ public class EntityPersistor {
     }
   }
 
+  public void clear() {
+    entities.clear();
+    counters.clear();
+    if (!this.counters.containsKey(COUNTERS_CONSUMER_ID)) {
+      this.counters.put(COUNTERS_CONSUMER_ID, new Long(1));
+    }
+  }
+
   public Collection<EntityData.Value> loadEntityData() {
     return this.entities.values();
   }

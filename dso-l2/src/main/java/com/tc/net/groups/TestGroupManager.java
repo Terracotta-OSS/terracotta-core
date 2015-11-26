@@ -56,12 +56,12 @@ public class TestGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public <M extends GroupMessage> void registerForMessages(Class<M> msgClass, GroupMessageListener<M> listener) {
+  public <M extends GroupMessage> void registerForMessages(Class<? extends M> msgClass, GroupMessageListener<M> listener) {
     // NOP
   }
 
   @Override
-  public <M extends GroupMessage> void routeMessages(Class<M> msgClass, Sink<M> sink) {
+  public <M extends GroupMessage> void routeMessages(Class<? extends M> msgClass, Sink<M> sink) {
     // NOP
   }
 

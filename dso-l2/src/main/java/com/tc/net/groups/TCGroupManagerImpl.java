@@ -738,7 +738,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public <N extends AbstractGroupMessage> void registerForMessages(Class<N> msgClass, GroupMessageListener<N> listener) {
+  public <N extends AbstractGroupMessage> void registerForMessages(Class<? extends N> msgClass, GroupMessageListener<N> listener) {
     validateExternalizableClass(msgClass);
     GroupMessageListener<?> prev = messageListeners.put(msgClass.getName(), listener);
     if (prev != null) {
@@ -747,7 +747,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public <N extends AbstractGroupMessage> void routeMessages(Class<N> msgClass, Sink<N> sink) {
+  public <N extends AbstractGroupMessage> void routeMessages(Class<? extends N> msgClass, Sink<N> sink) {
     registerForMessages(msgClass, new RouteGroupMessagesToSink<>(msgClass.getName(), sink));
   }
 
