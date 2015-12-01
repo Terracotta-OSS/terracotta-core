@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package org.terracotta.entity;
 
 import java.util.concurrent.TimeUnit;
@@ -25,6 +24,11 @@ import java.util.concurrent.TimeoutException;
 import org.terracotta.exception.EntityException;
 
 
+/**
+ * An implementation of InvokeFuture, used for testing, which returns the future, immediately.
+ * 
+ * @param <T> The underlying type wrapped by the instance
+ */
 public class ImmediateInvokeFuture<T> implements InvokeFuture<T> {
   final T result;
   final EntityException error;

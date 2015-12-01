@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
@@ -28,6 +27,9 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityUserException;
 
 
+/**
+ * Used for basic testing (not part of the in-process testing framework) of an entity, to act like the client end-point.
+ */
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity<?> entity;

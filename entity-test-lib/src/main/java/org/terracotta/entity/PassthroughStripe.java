@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package org.terracotta.entity;
 
 import java.util.HashMap;
@@ -172,6 +171,8 @@ public class PassthroughStripe implements ClientCommunicator {
   private class StripeInvocationBuilder implements InvocationBuilder {
     private final ClientDescriptor clientDescriptor;
     private final ActiveServerEntity<?> activeServerEntity;
+    // Note that the passiveServerEntity is not yet used in tests related to this class.
+    @SuppressWarnings("unused")
     private final PassiveServerEntity<?> passiveServerEntity;
     private byte[] payload = null;
 
