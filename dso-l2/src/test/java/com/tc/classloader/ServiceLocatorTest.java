@@ -16,9 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.classloader;
-
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,11 +37,12 @@ import java.util.Vector;
 import org.junit.Ignore;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageDeserializer;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
+
 
 public class ServiceLocatorTest {
 
@@ -206,7 +205,7 @@ public class ServiceLocatorTest {
 
   private <A extends EntityMessage> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A>, ?> es) {
     ActiveServerEntity<A> activeEntity = es.createActiveEntity(registry, null);
-    MessageDeserializer<A> deserializer = activeEntity.getMessageDeserializer();
+    MessageCodec<A> deserializer = activeEntity.getMessageCodec();
     //get class name of IClassLoader type
     String gpl = new String(activeEntity.invoke(null, deserializer.deserialize("gpl".getBytes())));
     //get class name of the entity loader

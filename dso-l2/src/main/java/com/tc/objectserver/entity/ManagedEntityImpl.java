@@ -26,7 +26,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageDeserializer;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
@@ -41,7 +41,6 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -110,7 +109,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       // We might get replicated invokes before the create has completed
       CommonServerEntity<EntityMessage> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
       Assert.assertNotNull(entity);
-      MessageDeserializer<EntityMessage> deserializer = entity.getMessageDeserializer();
+      MessageCodec<EntityMessage> deserializer = entity.getMessageCodec();
       Assert.assertNotNull(deserializer);
       byte[] payload = request.getPayload();
       Assert.assertNotNull(payload);

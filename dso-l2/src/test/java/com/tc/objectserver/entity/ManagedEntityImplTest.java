@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import org.junit.Before;
@@ -26,7 +25,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageDeserializer;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
@@ -171,7 +170,7 @@ public class ManagedEntityImplTest {
     
     byte[] payload = { 0 };
     byte[] returnValue = { 1 };
-    when(activeServerEntity.getMessageDeserializer()).thenReturn(new MessageDeserializer(){
+    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec(){
       @Override
       public EntityMessage deserialize(byte[] payload) {
         return new EntityMessage() {};
