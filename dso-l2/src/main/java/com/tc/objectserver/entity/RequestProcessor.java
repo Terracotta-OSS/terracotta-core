@@ -29,6 +29,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.entity.ManagedEntityImpl.ManagedEntityRequest;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
@@ -36,6 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodec;
 
 
 public class RequestProcessor implements StateChangeListener {
@@ -61,14 +63,15 @@ public class RequestProcessor implements StateChangeListener {
 //  do nothing
   }
   
-  public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey) {
+  public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey, MessageCodec<EntityMessage> codec) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_FUTURE;
-    EntityRequest entityRequest =  new EntityRequest(impl, entity, request, concurrencyKey, token, message);
+    ManagedEntityRequest managedRequest = new ManagedEntityRequest(request, codec);
+    EntityRequest entityRequest =  new EntityRequest(impl, entity, managedRequest, concurrencyKey, token, message);
     requestExecution.addMultiThreaded(entityRequest);
   }
   
@@ -113,15 +116,15 @@ public class RequestProcessor implements StateChangeListener {
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {
     private final ManagedEntityImpl impl;
     private final EntityDescriptor entity;
-    private final ServerEntityRequest request;
+    private final ManagedEntityRequest request;
     private final Future<Void>  token;
     private final int key;
     private final EntityMessage message;
 
-    public EntityRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, int concurrencyIndex, Future<Void>  token, EntityMessage message) {
+    public EntityRequest(ManagedEntityImpl impl, EntityDescriptor entity, ManagedEntityRequest managedRequest, int concurrencyIndex, Future<Void>  token, EntityMessage message) {
       this.impl = impl;
       this.entity = entity;
-      this.request = request;
+      this.request = managedRequest;
       this.key = concurrencyIndex;
       this.token = token;
       this.message = message;
