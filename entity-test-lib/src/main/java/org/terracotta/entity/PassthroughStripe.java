@@ -229,7 +229,7 @@ public class PassthroughStripe implements ClientCommunicator {
     private <M extends EntityMessage> byte[] sendInvocation(ActiveServerEntity<M> entity) throws EntityUserException {
       byte[] result = null;
       try {
-        result = entity.invoke(clientDescriptor, entity.getMessageDeserializer().deserialize(payload));
+        result = entity.invoke(clientDescriptor, entity.getMessageCodec().deserialize(payload));
       } catch (Exception e) {
         throw new EntityUserException(null, null, e);
       }

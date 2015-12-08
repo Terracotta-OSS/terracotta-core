@@ -286,15 +286,15 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   private <M extends EntityMessage> byte[] sendActiveInvocation(ClientDescriptor clientDescriptor, ActiveServerEntity<M> entity, byte[] payload) {
-    return entity.invoke(clientDescriptor, entity.getMessageDeserializer().deserialize(payload));
+    return entity.invoke(clientDescriptor, entity.getMessageCodec().deserialize(payload));
   }
 
   private <M extends EntityMessage> void sendPassiveInvocation(PassiveServerEntity<M> entity, byte[] payload) {
-    entity.invoke(entity.getMessageDeserializer().deserialize(payload));
+    entity.invoke(entity.getMessageCodec().deserialize(payload));
   }
 
   private <M extends EntityMessage> void sendPassiveSyncPayload(PassiveServerEntity<M> entity, int concurrencyKey, byte[] payload) {
-    entity.invoke(entity.getMessageDeserializer().deserializeForSync(concurrencyKey, payload));
+    entity.invoke(entity.getMessageCodec().deserializeForSync(concurrencyKey, payload));
   }
 
   @Override
