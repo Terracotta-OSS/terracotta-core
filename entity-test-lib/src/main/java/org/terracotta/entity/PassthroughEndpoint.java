@@ -32,7 +32,7 @@ import org.terracotta.exception.EntityUserException;
  */
 public class PassthroughEndpoint implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
-  private ActiveServerEntity<?> entity;
+  private ActiveServerEntity<?, ?> entity;
   private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
@@ -42,7 +42,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     this.isOpen = true;
   }
 
-  public void attach(ActiveServerEntity<?> entity) {
+  public void attach(ActiveServerEntity<?, ?> entity) {
     this.entity = entity;
     entity.connected(clientDescriptor);
   }
@@ -124,7 +124,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
       }
     }
     
-    private <M extends EntityMessage> byte[] sendInvocation(ActiveServerEntity<M> entity, byte[] payload) throws EntityUserException {
+    private <M extends EntityMessage, R extends EntityResponse> byte[] sendInvocation(ActiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
       byte[] result = null;
       try {
         result = entity.invoke(clientDescriptor, entity.getMessageCodec().deserialize(payload));

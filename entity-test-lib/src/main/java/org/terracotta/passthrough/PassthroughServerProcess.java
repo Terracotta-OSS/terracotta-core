@@ -29,6 +29,7 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
@@ -58,8 +59,8 @@ public class PassthroughServerProcess implements MessageHandler {
   // Currently, for simplicity, we will resolve entities by name.
   // Technically, these should be resolved by class+name.
   // Note that only ONE of the active or passive entities will be non-null.
-  private Map<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>> activeEntities;
-  private Map<PassthroughEntityTuple, CreationData<PassiveServerEntity<?>>> passiveEntities;
+  private Map<PassthroughEntityTuple, CreationData<ActiveServerEntity<?, ?>>> activeEntities;
+  private Map<PassthroughEntityTuple, CreationData<PassiveServerEntity<?, ?>>> passiveEntities;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
   private PassthroughServerProcess downstreamPassive;
   private long nextConsumerID;
@@ -70,8 +71,8 @@ public class PassthroughServerProcess implements MessageHandler {
     this.entityServices = new Vector<ServerEntityService<?, ?>>();
     this.messageQueue = new Vector<MessageContainer>();
     this.lockManager = new PassthroughLockManager();
-    this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>>() : null);
-    this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<PassiveServerEntity<?>>>());
+    this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?, ?>>>() : null);
+    this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<PassiveServerEntity<?, ?>>>());
     this.serviceProviderMap = new HashMap<Class<?>, ServiceProvider>();
     // Consumer IDs start at 0 since that is the one the platform gives itself.
     this.nextConsumerID = 0;
@@ -98,7 +99,7 @@ public class PassthroughServerProcess implements MessageHandler {
           Assert.unexpected(e);
         }
         PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
-        CommonServerEntity<?> newEntity = createAndStoreEntity(entityData.className, entityData.entityName, entityData.version, entityData.configuration, entityTuple, service, registry);
+        CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityData.className, entityData.entityName, entityData.version, entityData.configuration, entityTuple, service, registry);
         // Tell the entity to load itself from storage.
         newEntity.loadExisting();
         
@@ -263,9 +264,9 @@ public class PassthroughServerProcess implements MessageHandler {
     byte[] response = null;
     if (null != this.activeEntities) {
       // Invoke on active.
-      CreationData<ActiveServerEntity<?>> data = this.activeEntities.get(entityTuple);
+      CreationData<ActiveServerEntity<?, ?>> data = this.activeEntities.get(entityTuple);
       if (null != data) {
-        ActiveServerEntity<?> entity = data.entityInstance;
+        ActiveServerEntity<?, ?> entity = data.entityInstance;
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
         response = sendActiveInvocation(clientDescriptor, entity, payload);
       } else {
@@ -273,9 +274,9 @@ public class PassthroughServerProcess implements MessageHandler {
       }
     } else {
       // Invoke on passive.
-      CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+      CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
       if (null != data) {
-        PassiveServerEntity<?> entity = data.entityInstance;
+        PassiveServerEntity<?, ?> entity = data.entityInstance;
         // There is no return type in the passive case.
         sendPassiveInvocation(entity, payload);
       } else {
@@ -285,15 +286,15 @@ public class PassthroughServerProcess implements MessageHandler {
     return response;
   }
 
-  private <M extends EntityMessage> byte[] sendActiveInvocation(ClientDescriptor clientDescriptor, ActiveServerEntity<M> entity, byte[] payload) {
+  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(ClientDescriptor clientDescriptor, ActiveServerEntity<M, R> entity, byte[] payload) {
     return entity.invoke(clientDescriptor, entity.getMessageCodec().deserialize(payload));
   }
 
-  private <M extends EntityMessage> void sendPassiveInvocation(PassiveServerEntity<M> entity, byte[] payload) {
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(PassiveServerEntity<M, R> entity, byte[] payload) {
     entity.invoke(entity.getMessageCodec().deserialize(payload));
   }
 
-  private <M extends EntityMessage> void sendPassiveSyncPayload(PassiveServerEntity<M> entity, int concurrencyKey, byte[] payload) {
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(PassiveServerEntity<M, R> entity, int concurrencyKey, byte[] payload) {
     entity.invoke(entity.getMessageCodec().deserializeForSync(concurrencyKey, payload));
   }
 
@@ -311,9 +312,9 @@ public class PassthroughServerProcess implements MessageHandler {
         Exception error = null;
         // Fetch should never be replicated and only handled on the active.
         Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
-        CreationData<ActiveServerEntity<?>> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
+        CreationData<ActiveServerEntity<?, ?>> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
         if (null != entityData) {
-          ActiveServerEntity<?> entity = entityData.entityInstance;
+          ActiveServerEntity<?, ?> entity = entityData.entityInstance;
           ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
           long expectedVersion = service.getVersion();
           if (expectedVersion == version) {
@@ -343,9 +344,9 @@ public class PassthroughServerProcess implements MessageHandler {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     // Release should never be replicated and only handled on the active.
     Assert.assertTrue(null != this.activeEntities);
-    CreationData<ActiveServerEntity<?>> data = this.activeEntities.get(entityTuple);
+    CreationData<ActiveServerEntity<?, ?>> data = this.activeEntities.get(entityTuple);
     if (null != data) {
-      ActiveServerEntity<?> entity = data.entityInstance;
+      ActiveServerEntity<?, ?> entity = data.entityInstance;
       PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.disconnected(clientDescriptor);
       this.lockManager.releaseReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID);
@@ -365,7 +366,7 @@ public class PassthroughServerProcess implements MessageHandler {
     long consumerID = this.nextConsumerID;
     ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
     PassthroughServiceRegistry registry = getNextServiceRegistry();
-    CommonServerEntity<?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry);
+    CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry);
     // Tell the entity to create itself as something new.
     newEntity.createNew();
     // If we have a persistence layer, record this.
@@ -384,10 +385,10 @@ public class PassthroughServerProcess implements MessageHandler {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     boolean didDestroy = false;
     if (null != this.activeEntities) {
-      CreationData<ActiveServerEntity<?>> entityData = this.activeEntities.remove(entityTuple);
+      CreationData<ActiveServerEntity<?, ?>> entityData = this.activeEntities.remove(entityTuple);
       didDestroy = (null != entityData);
     } else {
-      CreationData<PassiveServerEntity<?>> entityData = this.passiveEntities.remove(entityTuple);
+      CreationData<PassiveServerEntity<?, ?>> entityData = this.passiveEntities.remove(entityTuple);
       didDestroy = (null != entityData);
     }
     if (!didDestroy) {
@@ -421,9 +422,9 @@ public class PassthroughServerProcess implements MessageHandler {
         // Fetch the entity now that we have the read lock on the name.
         // Fetch should never be replicated and only handled on the active.
         Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
-        CreationData<ActiveServerEntity<?>> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
+        CreationData<ActiveServerEntity<?, ?>> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
         if (null != entityData) {
-          ActiveServerEntity<?> entity = entityData.entityInstance;
+          ActiveServerEntity<?, ?> entity = entityData.entityInstance;
           PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
           entity.connected(clientDescriptor);
           entity.handleReconnect(clientDescriptor, extendedData);
@@ -445,9 +446,9 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.passiveEntities);
     
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
-      PassiveServerEntity<?> entity = data.entityInstance;
+      PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.startSyncEntity();
     } else {
       throw new Exception("Not fetched");
@@ -460,9 +461,9 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.passiveEntities);
     
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
-      PassiveServerEntity<?> entity = data.entityInstance;
+      PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.endSyncEntity();
     } else {
       throw new Exception("Not fetched");
@@ -475,9 +476,9 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.passiveEntities);
     
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
-      PassiveServerEntity<?> entity = data.entityInstance;
+      PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.startSyncConcurrencyKey(concurrencyKey);
     } else {
       throw new Exception("Not fetched");
@@ -490,9 +491,9 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.passiveEntities);
     
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
-      PassiveServerEntity<?> entity = data.entityInstance;
+      PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.endSyncConcurrencyKey(concurrencyKey);
     } else {
       throw new Exception("Not fetched");
@@ -505,9 +506,9 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.passiveEntities);
     
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    CreationData<PassiveServerEntity<?>> data = this.passiveEntities.get(entityTuple);
+    CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
-      PassiveServerEntity<?> entity = data.entityInstance;
+      PassiveServerEntity<?, ?> entity = data.entityInstance;
       sendPassiveSyncPayload(entity, concurrencyKey, payload);
     } else {
       throw new Exception("Not fetched");
@@ -543,8 +544,8 @@ public class PassthroughServerProcess implements MessageHandler {
     // NOTE:  This synchronization implementation is relatively simplistic and we may require a more substantial
     // implementation, in the future, to support concurrent replication/synchronization ordering concerns, multiple
     // concurrency queues/threads, and the ordering corner-cases which arise with those concerns.
-    for (Map.Entry<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>> entry : this.activeEntities.entrySet()) {
-      CreationData<ActiveServerEntity<?>> value = entry.getValue();
+    for (Map.Entry<PassthroughEntityTuple, CreationData<ActiveServerEntity<?, ?>>> entry : this.activeEntities.entrySet()) {
+      CreationData<ActiveServerEntity<?, ?>> value = entry.getValue();
       final String entityClassName = value.entityClassName;
       final String entityName = value.entityName;
       // State that we will start to synchronize the entity.
@@ -588,15 +589,15 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.passiveEntities);
     // Make us active and promote all passive entities.
     this.downstreamPassive = null;
-    this.activeEntities = new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?>>>();
+    this.activeEntities = new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?, ?>>>();
     
     // We need to create the entities as active but note that we would already have persisted this data so only create the
     // actual instances, don't go through the full creation path.
-    for (Map.Entry<PassthroughEntityTuple, CreationData<PassiveServerEntity<?>>> entry : this.passiveEntities.entrySet()) {
-      CreationData<PassiveServerEntity<?>> data = entry.getValue();
-      ActiveServerEntity<?> entity = data.service.createActiveEntity(data.registry, data.configuration);
+    for (Map.Entry<PassthroughEntityTuple, CreationData<PassiveServerEntity<?, ?>>> entry : this.passiveEntities.entrySet()) {
+      CreationData<PassiveServerEntity<?, ?>> data = entry.getValue();
+      ActiveServerEntity<?, ?> entity = data.service.createActiveEntity(data.registry, data.configuration);
       entity.loadExisting();
-      CreationData<ActiveServerEntity<?>> newData = new CreationData<ActiveServerEntity<?>>(data.entityClassName, data.entityName, data.version, data.configuration, data.registry, data.service, entity);
+      CreationData<ActiveServerEntity<?, ?>> newData = new CreationData<ActiveServerEntity<?, ?>>(data.entityClassName, data.entityName, data.version, data.configuration, data.registry, data.service, entity);
       this.activeEntities.put(entry.getKey(), newData);
     }
     
@@ -619,16 +620,16 @@ public class PassthroughServerProcess implements MessageHandler {
     return service;
   }
 
-  private CommonServerEntity<?> createAndStoreEntity(String entityClassName, String entityName, long version, byte[] serializedConfiguration, PassthroughEntityTuple entityTuple, ServerEntityService<?, ?> service, PassthroughServiceRegistry registry) {
-    CommonServerEntity<?> newEntity = null;
+  private CommonServerEntity<?, ?> createAndStoreEntity(String entityClassName, String entityName, long version, byte[] serializedConfiguration, PassthroughEntityTuple entityTuple, ServerEntityService<?, ?> service, PassthroughServiceRegistry registry) {
+    CommonServerEntity<?, ?> newEntity = null;
     if (null != this.activeEntities) {
-      ActiveServerEntity<?> entity = service.createActiveEntity(registry, serializedConfiguration);
-      CreationData<ActiveServerEntity<?>> data = new CreationData<ActiveServerEntity<?>>(entityClassName, entityName, version, serializedConfiguration, registry, service, entity);
+      ActiveServerEntity<?, ?> entity = service.createActiveEntity(registry, serializedConfiguration);
+      CreationData<ActiveServerEntity<?, ?>> data = new CreationData<ActiveServerEntity<?, ?>>(entityClassName, entityName, version, serializedConfiguration, registry, service, entity);
       this.activeEntities.put(entityTuple, data);
       newEntity = entity;
     } else {
-      PassiveServerEntity<?> entity = service.createPassiveEntity(registry, serializedConfiguration);
-      CreationData<PassiveServerEntity<?>> data = new CreationData<PassiveServerEntity<?>>(entityClassName, entityName, version, serializedConfiguration, registry, service, entity);
+      PassiveServerEntity<?, ?> entity = service.createPassiveEntity(registry, serializedConfiguration);
+      CreationData<PassiveServerEntity<?, ?>> data = new CreationData<PassiveServerEntity<?, ?>>(entityClassName, entityName, version, serializedConfiguration, registry, service, entity);
       this.passiveEntities.put(entityTuple, data);
       newEntity = entity;
     }
