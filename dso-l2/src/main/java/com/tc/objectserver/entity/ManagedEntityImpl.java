@@ -361,7 +361,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        wrappedRequest.completeRawResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
+        wrappedRequest.completeMessageResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
       }
     } else {
       if (null == this.passiveServerEntity) {
@@ -517,8 +517,6 @@ public class ManagedEntityImpl implements ManagedEntity {
    */
   public static class ManagedEntityRequest {
     private final ServerEntityRequest request;
-    @SuppressWarnings("unused")
-    // NOTE:  Use will be added in a forthcoming change - this is just here to avoid complicating later changes.
     private final MessageCodec<EntityMessage, EntityResponse> codec;
 
     public ManagedEntityRequest(ServerEntityRequest request, MessageCodec<EntityMessage, EntityResponse> codec) {
@@ -528,6 +526,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
 
     public void completeRawResponse(byte[] rawBytes) {
+      this.request.complete(rawBytes);
+    }
+
+    public void completeMessageResponse(EntityResponse invoke) {
+      Assert.assertNotNull(this.codec);
+      byte[] rawBytes = this.codec.serialize(invoke);
       this.request.complete(rawBytes);
     }
 

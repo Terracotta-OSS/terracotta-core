@@ -181,8 +181,12 @@ public class ManagedEntityImplTest {
       public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
         Assert.fail("Synchronization not used in this test");
         return null;
+      }
+      @Override
+      public byte[] serialize(EntityResponse response) {
+        return returnValue;
       }});
-    when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(returnValue);
+    when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse(){});
     ServerEntityRequest invokeRequest = mockInvokeRequest(payload);
     invokeNoCodec(invokeRequest, ConcurrencyStrategy.UNIVERSAL_KEY, null);
     
