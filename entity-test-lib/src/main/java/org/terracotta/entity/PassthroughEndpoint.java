@@ -127,7 +127,10 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     private <M extends EntityMessage, R extends EntityResponse> byte[] sendInvocation(ActiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
       byte[] result = null;
       try {
-        result = entity.invoke(clientDescriptor, entity.getMessageCodec().deserialize(payload));
+        MessageCodec<M, R> codec = entity.getMessageCodec();
+        M message = codec.deserialize(payload);
+        R response = entity.invoke(clientDescriptor, message);
+        result = codec.serialize(response);
       } catch (Exception e) {
         throw new EntityUserException(null, null, e);
       }

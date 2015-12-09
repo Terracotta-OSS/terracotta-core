@@ -30,6 +30,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
@@ -287,7 +288,8 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(ClientDescriptor clientDescriptor, ActiveServerEntity<M, R> entity, byte[] payload) {
-    return entity.invoke(clientDescriptor, entity.getMessageCodec().deserialize(payload));
+    MessageCodec<M, R> codec = entity.getMessageCodec();
+    return codec.serialize(entity.invoke(clientDescriptor, codec.deserialize(payload)));
   }
 
   private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(PassiveServerEntity<M, R> entity, byte[] payload) {
