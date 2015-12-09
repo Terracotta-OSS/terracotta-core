@@ -37,6 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 
 
@@ -63,7 +64,7 @@ public class RequestProcessor implements StateChangeListener {
 //  do nothing
   }
   
-  public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey, MessageCodec<EntityMessage> codec) {
+  public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey, MessageCodec<EntityMessage, EntityResponse> codec) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())

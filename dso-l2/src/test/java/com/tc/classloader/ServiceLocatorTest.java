@@ -37,6 +37,7 @@ import java.util.Vector;
 import org.junit.Ignore;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
@@ -203,9 +204,9 @@ public class ServiceLocatorTest {
     }
   }
 
-  private <A extends EntityMessage> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A>, ?> es) {
-    ActiveServerEntity<A> activeEntity = es.createActiveEntity(registry, null);
-    MessageCodec<A> deserializer = activeEntity.getMessageCodec();
+  private <A extends EntityMessage, R extends EntityResponse> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A, R>, ?> es) {
+    ActiveServerEntity<A, R> activeEntity = es.createActiveEntity(registry, null);
+    MessageCodec<A, R> deserializer = activeEntity.getMessageCodec();
     //get class name of IClassLoader type
     String gpl = new String(activeEntity.invoke(null, deserializer.deserialize("gpl".getBytes())));
     //get class name of the entity loader

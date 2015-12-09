@@ -25,6 +25,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
@@ -87,7 +88,7 @@ public class ManagedEntityImplTest {
 
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>>) serverEntityService, isInActiveState);
+    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>) serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
   }
 
@@ -171,7 +172,7 @@ public class ManagedEntityImplTest {
     
     byte[] payload = { 0 };
     byte[] returnValue = { 1 };
-    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage>(){
+    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
       public EntityMessage deserialize(byte[] payload) {
         return new EntityMessage() {};

@@ -26,6 +26,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
@@ -58,11 +59,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final long version;
   private final ServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
-  private final ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> factory;
+  private final ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
-  private volatile ActiveServerEntity<EntityMessage> activeServerEntity;
-  private volatile PassiveServerEntity<EntityMessage> passiveServerEntity;
+  private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
+  private volatile PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
   private final ReadWriteLock reconnectAccessLock = new ReentrantReadWriteLock();
   // NOTE:  This may be removed in the future if we change how we access the config from the ServerEntityService but
@@ -71,7 +72,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
-                    RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> factory,
+                    RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
@@ -102,13 +103,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       waitForEntityCreation();
     }
     ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
-    MessageCodec<EntityMessage> codec = null;
+    MessageCodec<EntityMessage, EntityResponse> codec = null;
     EntityMessage message = null;
     // We only decode messages for INVOKE and RECEIVE_SYNC_PAYLOAD requests.
     if ((ServerEntityAction.INVOKE_ACTION == action)
         || (ServerEntityAction.RECEIVE_SYNC_PAYLOAD == action)) {
       // We might get replicated invokes before the create has completed
-      CommonServerEntity<EntityMessage> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
+      CommonServerEntity<EntityMessage, EntityResponse> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
       Assert.assertNotNull(entity);
       codec = entity.getMessageCodec();
       Assert.assertNotNull(codec);
@@ -271,7 +272,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private void destroyEntity(ManagedEntityRequest request) {
-    CommonServerEntity<EntityMessage> commonServerEntity = this.isInActiveState
+    CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
         ? activeServerEntity
         : passiveServerEntity;
     if (null != commonServerEntity) {
@@ -285,7 +286,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void createEntity(ManagedEntityRequest request) {
     constructorInfo = request.getPayload();
-    CommonServerEntity<EntityMessage> entityToCreate = null;
+    CommonServerEntity<EntityMessage, EntityResponse> entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
@@ -442,7 +443,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void loadExisting(ManagedEntityRequest loadEntityRequest) {
     constructorInfo = loadEntityRequest.getPayload();
-    CommonServerEntity<EntityMessage> entityToLoad = null;
+    CommonServerEntity<EntityMessage, EntityResponse> entityToLoad = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
@@ -518,9 +519,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final ServerEntityRequest request;
     @SuppressWarnings("unused")
     // NOTE:  Use will be added in a forthcoming change - this is just here to avoid complicating later changes.
-    private final MessageCodec<EntityMessage> codec;
+    private final MessageCodec<EntityMessage, EntityResponse> codec;
 
-    public ManagedEntityRequest(ServerEntityRequest request, MessageCodec<EntityMessage> codec) {
+    public ManagedEntityRequest(ServerEntityRequest request, MessageCodec<EntityMessage, EntityResponse> codec) {
       Assert.assertNotNull(request);
       this.request = request;
       this.codec = codec;
