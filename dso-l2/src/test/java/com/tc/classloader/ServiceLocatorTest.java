@@ -16,9 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.classloader;
-
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,11 +37,13 @@ import java.util.Vector;
 import org.junit.Ignore;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageDeserializer;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
+
 
 public class ServiceLocatorTest {
 
@@ -204,15 +204,15 @@ public class ServiceLocatorTest {
     }
   }
 
-  private <A extends EntityMessage> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A>, ?> es) {
-    ActiveServerEntity<A> activeEntity = es.createActiveEntity(registry, null);
-    MessageDeserializer<A> deserializer = activeEntity.getMessageDeserializer();
+  private <A extends EntityMessage, R extends EntityResponse> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A, R>, ?> es) {
+    ActiveServerEntity<A, R> activeEntity = es.createActiveEntity(registry, null);
+    MessageCodec<A, R> deserializer = activeEntity.getMessageCodec();
     //get class name of IClassLoader type
-    String gpl = new String(activeEntity.invoke(null, deserializer.deserialize("gpl".getBytes())));
+    String gpl = new String(deserializer.serialize(activeEntity.invoke(null, deserializer.deserialize("gpl".getBytes()))));
     //get class name of the entity loader
-    String gel = new String(activeEntity.invoke(null, deserializer.deserialize("gel".getBytes())));
+    String gel = new String(deserializer.serialize(activeEntity.invoke(null, deserializer.deserialize("gel".getBytes()))));
     //get reference of the IClassloader loader
-    String plr = new String(activeEntity.invoke(null, deserializer.deserialize("plr".getBytes())));
+    String plr = new String(deserializer.serialize(activeEntity.invoke(null, deserializer.deserialize("plr".getBytes()))));
     Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
     //XXX works only because on same VM
     Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,

@@ -16,13 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>>> entityServices = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>> entityServices = new ConcurrentHashMap<>();
 
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
@@ -132,11 +132,11 @@ public class EntityManagerImpl implements EntityManager {
     return new ArrayList<>(entities.values());
   }
   
-  private ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {
+  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
-    ServerEntityService<? extends ActiveServerEntity<EntityMessage>, ? extends PassiveServerEntity<EntityMessage>> service = entityServices.get(typeName);
+    ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> service = entityServices.get(typeName);
     if (service == null) {
       service = ServerEntityFactory.getService(typeName, EntityManagerImpl.class.getClassLoader());
       // getService only fails to resolve by throwing.
