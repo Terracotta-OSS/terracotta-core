@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -35,6 +37,9 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   private byte[] rawMessageForResend;
   private final boolean shouldWaitForReceived;
   private final boolean shouldWaitForCompleted;
+  // Note that the point where we wait for acks isn't exposed outside the InvokeFuture interface so this set of waiting
+  // threads only applies to those threads waiting to get a response.
+  private final Set<Thread> waitingThreads;
   
   // The active state of the instance after the send.
   private boolean waitingForSent;
@@ -47,6 +52,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   public PassthroughWait(boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     this.shouldWaitForReceived = shouldWaitForReceived;
     this.shouldWaitForCompleted = shouldWaitForCompleted;
+    this.waitingThreads = new HashSet<Thread>();
     
     this.waitingForSent = shouldWaitForSent;
     this.waitingForReceive = shouldWaitForReceived;
@@ -72,8 +78,10 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public void interrupt() {
-    throw new IllegalStateException("Not supported");
+  public synchronized void interrupt() {
+    for (Thread waitingThread : this.waitingThreads) {
+      waitingThread.interrupt();
+    }
   }
 
   @Override
@@ -83,8 +91,17 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
 
   @Override
   public synchronized byte[] get() throws InterruptedException, EntityException {
-    while (!this.didComplete) {
-      this.wait();
+    Thread callingThread = Thread.currentThread();
+    boolean didAdd = this.waitingThreads.add(callingThread);
+    // We can't have already been waiting.
+    Assert.assertTrue(didAdd);
+    try {
+      while (!this.didComplete) {
+        this.wait();
+      }
+    } finally {
+      // We will hit this path on interrupt, for example.
+      this.waitingThreads.remove(callingThread);
     }
     if (null != this.error) {
       throw this.error;
