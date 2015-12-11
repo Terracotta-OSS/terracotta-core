@@ -57,12 +57,17 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   }
   
   public synchronized void waitForAck() {
+    boolean interrupted = false;
     while (this.waitingForSent || this.waitingForReceive || this.waitingForComplete) {
       try {
         wait();
       } catch (InterruptedException e) {
-        Assert.unexpected(e);
+        // Note that we can't be interrupted when waiting for acks 
+        interrupted = true;
       }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
     }
   }
 
