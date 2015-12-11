@@ -27,6 +27,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,6 +48,9 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
    * ACKs are removed from this pending set, as they arrive.
    */
   private final Set<VoltronEntityMessage.Acks> pendingAcks;
+  // Note that the point where we wait for acks isn't exposed outside the InvokeFuture interface so this set of waiting
+  // threads only applies to those threads waiting to get a response.
+  private final Set<Thread> waitingThreads;
 
   private boolean isSent;
   private EntityException exception;
@@ -57,6 +61,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     this.message = message;
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
+    this.waitingThreads = new HashSet<Thread>();
   }
 
   /**
@@ -107,8 +112,10 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public void interrupt() {
-    throw new UnsupportedOperationException("Implement me!");
+  public synchronized void interrupt() {
+    for (Thread waitingThread : this.waitingThreads) {
+      waitingThread.interrupt();
+    }
   }
 
   @Override
@@ -118,9 +125,21 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
 
   @Override
   public synchronized byte[] get() throws InterruptedException, EntityException {
-    while (!done) {
-      wait();
+    Thread callingThread = Thread.currentThread();
+    boolean didAdd = this.waitingThreads.add(callingThread);
+    // We can't have already been waiting.
+    Assert.assertTrue(didAdd);
+    
+    try {
+      while (!done) {
+        wait();
+      }
+    } finally {
+      // We will hit this path on interrupt, for example.
+      this.waitingThreads.remove(callingThread);
     }
+    
+    // If we didn't throw due to interruption, we fall through here.
     if (exception != null) {
       throw this.exception;
     } else {
@@ -130,14 +149,23 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
 
   @Override
   public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+    Thread callingThread = Thread.currentThread();
+    boolean didAdd = this.waitingThreads.add(callingThread);
+    // We can't have already been waiting.
+    Assert.assertTrue(didAdd);
+    
     long end = System.nanoTime() + unit.toNanos(timeout);
-    while (!done) {
-      long timing = end - System.nanoTime();
-      if (timing <= 0) {
-        throw new TimeoutException();
-      } else {
-        wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
+    try {
+      while (!done) {
+        long timing = end - System.nanoTime();
+        if (timing <= 0) {
+          throw new TimeoutException();
+        } else {
+          wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
+        }
       }
+    } finally {
+      this.waitingThreads.remove(callingThread);
     }
     if (exception != null) {
       throw this.exception;
