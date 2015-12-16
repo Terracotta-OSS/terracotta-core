@@ -22,10 +22,11 @@ package org.terracotta.passthrough;
 /**
  * Contains the data required to uniquely identify an entity ref (either an entity or where an entity can be created).
  * Contains the class name and entity name.
+ * The data members are public and final since this is meant to be used as an immutable struct.
  */
 public class PassthroughEntityTuple {
-  private final String entityClassName;
-  private final String entityName;
+  public final String entityClassName;
+  public final String entityName;
 
   public PassthroughEntityTuple(String entityClassName, String entityName) {
     this.entityClassName = entityClassName;

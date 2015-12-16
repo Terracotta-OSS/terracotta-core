@@ -40,6 +40,7 @@ public abstract class PassthroughMessage {
     INVOKE_ON_CLIENT,
     LOCK_ACQUIRE,
     LOCK_RELEASE,
+    LOCK_RESTORE,
     RECONNECT,
     SYNC_ENTITY_START,
     SYNC_ENTITY_END,

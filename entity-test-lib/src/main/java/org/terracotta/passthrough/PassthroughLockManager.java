@@ -65,6 +65,19 @@ public class PassthroughLockManager {
     findAndAwardNewOwners(state);
   }
 
+  public void restoreWriteLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, Runnable onAcquire) {
+    LockState state = getStateForName(entityTuple);
+    // Write-locks have no clientInstanceID.
+    long clientInstanceID = 0;
+    final Target target = new Target(sender, clientInstanceID, onAcquire);
+    state.writeWaits.add(target);
+    boolean wasAwarded = findAndAwardNewOwners(state);
+    // We expect that the lock was awarded.
+    Assert.assertTrue(wasAwarded);
+    // We expect that it was awarded to us.
+    Assert.assertTrue(target == state.writeOwner);
+  }
+
   public void acquireReadLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, long clientInstanceID, Runnable onAcquire) {
     LockState state = getStateForName(entityTuple);
     Target target = new Target(sender, clientInstanceID, onAcquire);
@@ -93,8 +106,11 @@ public class PassthroughLockManager {
    * Called whenever a lock state changes (either someone released or tried to acquire) to determine any ownership change.
    * 
    * @param state
+   * @return True if the lock (either write or read) was awarded to anyone (potentially multiple, if this was a read lock)
+   * within this call.
    */
-  private void findAndAwardNewOwners(LockState state) {
+  private boolean findAndAwardNewOwners(LockState state) {
+    boolean wasAwarded = false;
     // If the write lock is owned, we can't change anything.
     boolean isWriteOwned = (null != state.writeOwner);
     if (!isWriteOwned) {
@@ -104,14 +120,17 @@ public class PassthroughLockManager {
         Target newTarget = state.writeWaits.remove(0);
         state.writeOwner = newTarget;
         newTarget.onAcquire.run();
+        wasAwarded = true;
       } else if (!state.readWaits.isEmpty()) {
         while (!state.readWaits.isEmpty()) {
           Target newTarget = state.readWaits.remove(0);
           state.readOwners.add(newTarget);
           newTarget.onAcquire.run();
         }
+        wasAwarded = true;
       }
     }
+    return wasAwarded;
   }
 
 

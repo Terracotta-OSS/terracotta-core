@@ -21,8 +21,10 @@ package org.terracotta.passthrough;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -50,6 +52,7 @@ public class PassthroughConnection implements Connection {
   private final List<EntityClientService<?, ?>> entityClientServices;
   private long nextClientEndpointID;
   private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
+  private final Set<PassthroughEntityTuple> writeLockedEntities;
   private final Runnable onClose;
   
   // ivars related to message passing and client thread.
@@ -69,6 +72,7 @@ public class PassthroughConnection implements Connection {
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
     this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint>();
+    this.writeLockedEntities = new HashSet<PassthroughEntityTuple>();
     this.onClose = onClose;
     
     this.isRunning = true;
@@ -322,6 +326,17 @@ public class PassthroughConnection implements Connection {
   public void reconnect(PassthroughServerProcess serverProcess) {
     Map<Long, PassthroughWait> waitersToResend = this.connectionState.enterReconnectState(serverProcess);
     
+    // Tell the server about our exclusive lock states (since this isn't replicated or persisted).
+    for (PassthroughEntityTuple lockedEntity : this.writeLockedEntities) {
+      PassthroughMessage message = PassthroughMessageCodec.createWriteLockRestoreMessage(lockedEntity.entityClassName, lockedEntity.entityName);
+      // Send the message directly to the new process, waiting for all acks.
+      boolean shouldWaitForSent = true;
+      boolean shouldWaitForReceived = true;
+      boolean shouldWaitForCompleted = true;
+      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+      waiter.waitForAck();
+    }
+    
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
       byte[] extendedData = endpoint.getExtendedReconnectData();
@@ -358,7 +373,19 @@ public class PassthroughConnection implements Connection {
   public void disconnect() {
     this.connectionState.enterDisconnectedState();
   }
-  
+
+  public void didAcquireWriteLock(PassthroughEntityTuple entityTuple) {
+    boolean isNew = this.writeLockedEntities.add(entityTuple);
+    // We can't have duplicate entries.
+    Assert.assertTrue(isNew);
+  }
+
+  public void didReleaseWriteLock(PassthroughEntityTuple entityTuple) {
+    boolean wasRemoved = this.writeLockedEntities.remove(entityTuple);
+    // We can't fail to remove.
+    Assert.assertTrue(wasRemoved);
+  }
+
   private static class ServerToClientMessageRecord {
     public final PassthroughServerProcess sender;
     public final byte[] payload;

@@ -143,6 +143,9 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.clazz, this.name);
     try {
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
+      // Notify the connection that we have this write lock since it will need it if we reconnect.
+      PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(this.clazz.getCanonicalName(), this.name);
+      this.passthroughConnection.didAcquireWriteLock(entityTuple);
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     } catch (EntityException e) {
@@ -154,6 +157,9 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.clazz, this.name);
     try {
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
+      // Notify the connection that we released this write lock so it isn't requested on reconnect.
+      PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(this.clazz.getCanonicalName(), this.name);
+      this.passthroughConnection.didReleaseWriteLock(entityTuple);
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     } catch (EntityException e) {

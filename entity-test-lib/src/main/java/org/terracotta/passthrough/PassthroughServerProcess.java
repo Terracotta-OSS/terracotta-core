@@ -413,6 +413,12 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
+  public void restoreWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire) {
+    PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
+    this.lockManager.restoreWriteLock(entityTuple, sender.getClientOrigin(), onAcquire);
+  }
+
+  @Override
   public void reconnect(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName, final byte[] extendedData) {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     
