@@ -84,8 +84,12 @@ public class PassthroughServerProcess implements MessageHandler {
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry();
     // See if we have persistence support.
-    this.persistedEntitiesByConsumerID = setupEntityMap(shouldLoadStorage);
-    if (null != this.persistedEntitiesByConsumerID) {
+    IPersistentStorage persistentStorage = preparePersistentStorage(shouldLoadStorage);
+    if (null != persistentStorage) {
+      // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
+      // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
+      this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+      
       // Load the entities.
       for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
         // Create the registry for the entity.
@@ -109,6 +113,9 @@ public class PassthroughServerProcess implements MessageHandler {
           this.nextConsumerID = consumerID + 1;
         }
       }
+      
+      // Get the persisted transaction order in case of a reconnect
+      this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
     }
     // And start the server thread.
     startServerThreadRunning();
@@ -132,7 +139,7 @@ public class PassthroughServerProcess implements MessageHandler {
     this.serverThread.start();
   }
 
-  private KeyValueStorage<Long, EntityData> setupEntityMap(boolean shouldLoadStorage) {
+  private IPersistentStorage preparePersistentStorage(boolean shouldLoadStorage) {
     ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new ServiceConfiguration<IPersistentStorage>() {
       @Override
       public Class<IPersistentStorage> getServiceType() {
@@ -159,12 +166,7 @@ public class PassthroughServerProcess implements MessageHandler {
         }
       }
     }
-    KeyValueStorage<Long, EntityData> entityMap = null;
-    if (null != persistentStorage) {
-      // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference, within the passthrough system, and it would require the creation of an almost completely-redundant container class.
-      entityMap = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
-    }
-    return entityMap;
+    return persistentStorage;
   }
 
   /**
