@@ -71,7 +71,13 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
           // There is no response on successful create.
           this.messageHandler.create(entityClassName, entityName, version, serializedConfiguration);
         } catch (Exception e) {
-          error = e;
+          // We may want to ignore this failure on re-send.
+          if (sender.shouldTolerateCreateDestroyDuplication()) {
+            // Absorb the error.
+          } else {
+            // Real error.
+            error = e;
+          }
         }
         sendCompleteResponse(sender, transactionID, response, error);
         break;
@@ -85,7 +91,13 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
           // There is no response on successful delete.
           this.messageHandler.destroy(entityClassName, entityName);
         } catch (Exception e) {
-          error = e;
+          // We may want to ignore this failure on re-send.
+          if (sender.shouldTolerateCreateDestroyDuplication()) {
+            // Absorb the error.
+          } else {
+            // Real error.
+            error = e;
+          }
         }
         sendCompleteResponse(sender, transactionID, response, error);
         break;

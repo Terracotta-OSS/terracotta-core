@@ -194,7 +194,7 @@ public class PassthroughServerProcess implements MessageHandler {
     this.serverThread = null;
   }
 
-  public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {
+  public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message, final boolean isResend) {
     Assert.assertTrue(this.isRunning);
     MessageContainer container = new MessageContainer();
     container.sender = new IMessageSenderWrapper() {
@@ -213,6 +213,11 @@ public class PassthroughServerProcess implements MessageHandler {
       @Override
       public PassthroughConnection getClientOrigin() {
         return sender;
+      }
+      @Override
+      public boolean shouldTolerateCreateDestroyDuplication() {
+        // We will handle this if the message is re-sent.
+        return isResend;
       }
     };
     container.message = message;
