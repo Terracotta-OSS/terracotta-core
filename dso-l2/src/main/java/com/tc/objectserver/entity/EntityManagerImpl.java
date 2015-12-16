@@ -64,6 +64,12 @@ public class EntityManagerImpl implements EntityManager {
     this.processorPipeline = processor;
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
+    ManagedEntity platform = createPlatformEntity();
+    entities.put(platform.getID(), platform);
+  }
+
+  private ManagedEntity createPlatformEntity() {
+    return new PlatformEntity(processorPipeline);
   }
 
   @Override
@@ -117,13 +123,19 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
+    Assert.assertNotNull(id);
+    if (EntityID.NULL_ID.equals(id)) {
+//  short circuit for null entity, it's never here
+      return Optional.empty();
+    }
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    // Ask the service which provides this type of entity whether or not this is the version it supports.
     ManagedEntity entity = entities.get(id);
     if (entity != null) {
-    // Note that we ignore the return value, only interested in validating that the version is consistent.
-      getVersionCheckedService(id, version);
+      //  check the provided version against the version of the entity
+      if (entity.getVersion() != version) {
+        throw new EntityVersionMismatchException(id.getClassName(), id.getEntityName(), entity.getVersion(), version);
+      }
     }
     return Optional.ofNullable(entity);
   }

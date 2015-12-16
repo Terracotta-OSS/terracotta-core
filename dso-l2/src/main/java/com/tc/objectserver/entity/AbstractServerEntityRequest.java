@@ -94,6 +94,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       message.send();
     });
     done = true;
+    this.notifyAll();
   }
 
   @Override
@@ -124,6 +125,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       }
     });
     done = true;
+    this.notifyAll();
   }
   
   @Override
@@ -141,6 +143,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       }
     });
     done = true;
+    this.notifyAll();
   }  
   
   protected EntityDescriptor getEntityDescriptor() {
@@ -150,4 +153,18 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   protected boolean isDone() {
     return done;
   }  
+  
+  public synchronized void waitForDone() {
+    boolean interrupted = false;
+    while (!done) {
+      try {
+        wait();
+      } catch (InterruptedException ie) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
 }

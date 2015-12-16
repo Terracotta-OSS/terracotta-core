@@ -873,7 +873,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
         if (sce.movedToActive()) {
-          rcs.goActiveAndSyncState();
           startActiveMode();
           try {
             startL1Listener();
