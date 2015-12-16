@@ -154,7 +154,7 @@ public class ProcessTransactionHandler {
     }
     
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action,  extendedData, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
+    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     if (null != oldestTransactionOnClient) {
       // This client still needs transaction order persistence.
@@ -172,8 +172,10 @@ public class ProcessTransactionHandler {
         // We special-case the DOES_EXIST check to complete without interacting with the entity.
         if (ServerEntityAction.DOES_EXIST == action) {
           serverEntityRequest.complete();
+        } else if (ServerEntityAction.INVOKE_ACTION == action) {
+          entity.addInvokeRequest(serverEntityRequest, extendedData);
         } else {
-          entity.addRequest(serverEntityRequest);
+          entity.addLifecycleRequest(serverEntityRequest, extendedData);
         }
       } else {
         serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));

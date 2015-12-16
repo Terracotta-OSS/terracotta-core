@@ -20,14 +20,14 @@ package com.tc.objectserver.entity;
 
 import com.google.common.base.Throwables;
 import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
@@ -49,10 +49,16 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
+  private static final TCLogger logger   = TCLogging.getLogger(ManagedEntityImpl.class);
+
   private final RequestProcessor executor;
 
   private final EntityID id;
@@ -94,47 +100,47 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void addRequest(ServerEntityRequest request) {
+  public void addInvokeRequest(final ServerEntityRequest request, byte[] payload) {
     ClientDescriptor client = request.getSourceDescriptor();
-    ServerEntityAction action = request.getAction();
-    if ((ServerEntityAction.INVOKE_ACTION == action)
-        || (ServerEntityAction.RECEIVE_SYNC_PAYLOAD == action)) {
+    Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);
       // Invoke and payload requests need to wait for the entity creation so that they can request the concurrency strategy.
-      waitForEntityCreation();
+    if (this.activeServerEntity == null && this.passiveServerEntity == null) {
+      request.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
+      return;
     }
+
     ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
-    MessageCodec<EntityMessage, EntityResponse> codec = null;
-    EntityMessage message = null;
     // We only decode messages for INVOKE and RECEIVE_SYNC_PAYLOAD requests.
-    if ((ServerEntityAction.INVOKE_ACTION == action)
-        || (ServerEntityAction.RECEIVE_SYNC_PAYLOAD == action)) {
       // We might get replicated invokes before the create has completed
-      CommonServerEntity<EntityMessage, EntityResponse> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
+    CommonServerEntity<EntityMessage,EntityResponse> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
       Assert.assertNotNull(entity);
-      codec = entity.getMessageCodec();
-      Assert.assertNotNull(codec);
-      byte[] payload = request.getPayload();
+    MessageCodec<EntityMessage, EntityResponse> deserializer = entity.getMessageCodec();
+    Assert.assertNotNull(deserializer);
       Assert.assertNotNull(payload);
-      if (ServerEntityAction.INVOKE_ACTION == action) {
-        message = codec.deserialize(payload);
-      } else if (ServerEntityAction.RECEIVE_SYNC_PAYLOAD == action) {
-        message = codec.deserializeForSync(request.getConcurrencyKey(), payload);
-      }
-    }
+    final EntityMessage message = deserializer.deserialize(payload);
     // Since concurrency key is pulled out in different ways for these different message types, we will do that here.
-    int concurrencyKey = ConcurrencyStrategy.MANAGEMENT_KEY;
-    if ((null != concurrencyStrategy) && (ServerEntityAction.INVOKE_ACTION == action)) {
-      Assert.assertNotNull(concurrencyStrategy);
-      concurrencyKey = concurrencyStrategy.concurrencyKey(message);
+    final int concurrencyKey = ((null != concurrencyStrategy)) ?
+      concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
+    executor.scheduleRequest(getEntityDescriptorForSource(client), request, payload, ()->invoke(request, message, concurrencyKey), concurrencyKey);
     }
-    if ((ServerEntityAction.REQUEST_SYNC_ENTITY == action)
-        || (ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START == action)
-        || (ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END == action)
-        || (ServerEntityAction.RECEIVE_SYNC_PAYLOAD == action)) {
-      concurrencyKey = request.getConcurrencyKey();
+
+  @Override
+  public void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
+    if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START || 
+        sync.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_END) {
+      executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, payload), concurrencyKey);
+    } else if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD) {
+      MessageCodec<EntityMessage, EntityResponse> codec = this.passiveServerEntity.getMessageCodec();
+      executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, codec.deserializeForSync(concurrencyKey, payload), concurrencyKey), concurrencyKey);
+    } else {
+      executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, null, concurrencyKey), concurrencyKey);
     }
-    executor.scheduleRequest(this, getEntityDescriptorForSource(client), request, message, concurrencyKey, codec);
   }
+
+  @Override
+  public void addLifecycleRequest(ServerEntityRequest create, byte[] data) {
+    executor.scheduleRequest(getEntityDescriptorForSource(create.getSourceDescriptor()), create, data, ()->invoke(create, data), ConcurrencyStrategy.MANAGEMENT_KEY);
+  } 
 
   private synchronized void waitForEntityCreation() {
     while ((null == this.activeServerEntity) && (null == this.passiveServerEntity)) {
@@ -163,28 +169,15 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       write.unlock();
     }
-
   }
   
-
-  /**
-   * Runs on a concurrent thread from RequestProcessor (meaning that this could be invoked concurrently on the same entity)
-   * to handle one request.
-   *  
-   * @param request The request to process
-   * @param concurrencyKey The key this thread is processing by running this request
-   * @param message 
-   */
-  public void invoke(ManagedEntityRequest request, int concurrencyKey, EntityMessage message) {
+  private void invoke(ServerEntityRequest request, byte[] payload) {
     Lock read = reconnectAccessLock.readLock();
       try {
         read.lock();
         switch (request.getAction()) {
           case CREATE_ENTITY:
-            createEntity(request);
-            break;
-          case INVOKE_ACTION:
-            performAction(request, message);
+            createEntity(request, payload);
             break;
           case FETCH_ENTITY:
             getEntity(request);
@@ -199,18 +192,49 @@ public class ManagedEntityImpl implements ManagedEntity {
           case PROMOTE_ENTITY_TO_ACTIVE:
             promoteEntity(request);
             break;
-          case REQUEST_SYNC_ENTITY:
-//  use typing for this distinction since it is server generated?
-            performSync(request, concurrencyKey);
-            break;
-          case LOAD_EXISTING_ENTITY:
-            loadExisting(request);
-            break;
           case RECEIVE_SYNC_ENTITY_START:
-            receiveSyncEntityStart(request);
+            receiveSyncEntityStart(request, payload);
             break;
           case RECEIVE_SYNC_ENTITY_END:
             receiveSyncEntityEnd(request);
+            break;
+          case LOAD_EXISTING_ENTITY:
+            loadExisting(request, payload);
+            break;
+          default:
+            throw new IllegalArgumentException("Unknown request " + request);
+        }
+      } catch (Exception e) {
+        // Wrap this exception.
+        EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+        request.failure(wrapper);
+      } finally {
+        read.unlock();
+      }
+  }
+
+  /**
+   * Runs on a concurrent thread from RequestProcessor (meaning that this could be invoked concurrently on the same entity)
+   * to handle one request.
+   *  
+   * @param request The request to process
+   * @param concurrencyKey The key this thread is processing by running this request
+   * @param message 
+   */
+  private void invoke(ServerEntityRequest request, EntityMessage message, int concurrencyKey) {
+    Lock read = reconnectAccessLock.readLock();
+      try {
+        read.lock();
+        if (logger.isDebugEnabled()) {
+          logger.debug("Invoking " + request.getAction() + " on " + getID() + "/" + concurrencyKey);
+        }
+        switch (request.getAction()) {
+          case INVOKE_ACTION:
+            performAction(request, message);
+            break;
+          case REQUEST_SYNC_ENTITY:
+//  use typing for this distinction since it is server generated?
+            performSync(request, concurrencyKey);
             break;
           case RECEIVE_SYNC_ENTITY_KEY_START:
             receiveSyncEntityKeyStart(request, concurrencyKey);
@@ -221,7 +245,6 @@ public class ManagedEntityImpl implements ManagedEntity {
           case RECEIVE_SYNC_PAYLOAD:
             receiveSyncEntityPayload(request, message);
             break;
-  
           case DOES_EXIST:
           case NOOP:
             // Never occur on this level.
@@ -238,40 +261,47 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
   }
   
-  private void receiveSyncEntityStart(ManagedEntityRequest request) {
+  private void receiveSyncEntityStart(ServerEntityRequest request, byte[] constructor) {
+    if (this.passiveServerEntity != null) {
+      throw new AssertionError("not null " + this.getID());
+    }
     Assert.assertNull(this.passiveServerEntity);
 //  going to start by building the passive instance
-    createEntity(request);
+    createEntity(request, constructor);
 //  it better be a passive instance
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncEntity();
   }
 
-  private void receiveSyncEntityEnd(ManagedEntityRequest request) {
+  private void receiveSyncEntityEnd(ServerEntityRequest request) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.endSyncEntity();
+    request.complete();
   }
 
-  private void receiveSyncEntityKeyStart(ManagedEntityRequest request, int concurrencyKey) {
+  private void receiveSyncEntityKeyStart(ServerEntityRequest request, int concurrencyKey) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncConcurrencyKey(concurrencyKey);
+    request.complete();
   }
 
-  private void receiveSyncEntityKeyEnd(ManagedEntityRequest request, int concurrencyKey) {
+  private void receiveSyncEntityKeyEnd(ServerEntityRequest request, int concurrencyKey) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.endSyncConcurrencyKey(concurrencyKey);
+    request.complete();
   }
 
-  private void receiveSyncEntityPayload(ManagedEntityRequest request, EntityMessage message) {
+  private void receiveSyncEntityPayload(ServerEntityRequest request, EntityMessage message) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.invoke(message);
+    request.complete();
   }
 
-  private void destroyEntity(ManagedEntityRequest request) {
+  private void destroyEntity(ServerEntityRequest request) {
     CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
         ? activeServerEntity
         : passiveServerEntity;
@@ -281,11 +311,15 @@ public class ManagedEntityImpl implements ManagedEntity {
       clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
       commonServerEntity.destroy();
     }
-    request.completeNoResponse();
+    request.complete();
   }
 
-  private void createEntity(ManagedEntityRequest request) {
-    constructorInfo = request.getPayload();
+  private void createEntity(ServerEntityRequest createEntityRequest, byte[] constructorInfo) {
+    if (this.activeServerEntity != null || this.passiveServerEntity != null) {
+      createEntityRequest.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
+      return;
+    }
+    this.constructorInfo = constructorInfo;
     CommonServerEntity<EntityMessage, EntityResponse> entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
@@ -299,12 +333,15 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " already exists.");
       } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug("created passive entity " + this.getID() + " due to " + createEntityRequest.getAction());
+        }
         createPassiveEntityAndNotify();
         // Store the configuration in case we promote.
         entityToCreate = this.passiveServerEntity;
       }
     }
-    request.completeNoResponse();
+    createEntityRequest.complete();
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.createNew();
@@ -320,7 +357,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     notifyAll();
   }
 
-  private void performSync(ManagedEntityRequest wrappedRequest, int concurrencyKey) {
+  private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
@@ -345,7 +382,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  start is handled by the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), wrappedRequest.getNodeID());
-        wrappedRequest.completeNoResponse();
+        wrappedRequest.complete();
       }
     } else {
       if (null == this.passiveServerEntity) {
@@ -356,40 +393,42 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
   
-  private void performAction(ManagedEntityRequest wrappedRequest, EntityMessage message) {
+  private void performAction(ServerEntityRequest wrappedRequest, EntityMessage message) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        wrappedRequest.completeMessageResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
+        MessageCodec<EntityMessage, EntityResponse> codec = this.activeServerEntity.getMessageCodec();
+        byte[] er = codec.serialize(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
+        wrappedRequest.complete(er);
       }
     } else {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         this.passiveServerEntity.invoke(message);
-        wrappedRequest.completeNoResponse();
+        wrappedRequest.complete();
       }
     }
   }
 
-  private void getEntity(ManagedEntityRequest getEntityRequest) {
+  private void getEntity(ServerEntityRequest getEntityRequest) {
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
         ClientDescriptor sourceDescriptor = getEntityRequest.getSourceDescriptor();
         EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
         clientEntityStateManager.addReference(getEntityRequest.getNodeID(), entityDescriptor);
         this.activeServerEntity.connected(sourceDescriptor);
-        getEntityRequest.completeRawResponse(this.activeServerEntity.getConfig());
+        getEntityRequest.complete(this.activeServerEntity.getConfig());
       } else {
-        getEntityRequest.completeNoResponse();
+        getEntityRequest.complete();
       }
     } else {
       throw new IllegalStateException("GET called on passive entity.");
     }
   }
 
-  private void releaseEntity(ManagedEntityRequest request) {
+  private void releaseEntity(ServerEntityRequest request) {
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
         ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
@@ -397,7 +436,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
         this.activeServerEntity.disconnected(sourceDescriptor);
       }
-      request.completeNoResponse();
+      request.complete();
     } else {
       throw new IllegalStateException("RELEASE called on passive entity.");
     }
@@ -409,7 +448,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     return rawDescriptor.getEntityDescriptor();
   }
 
-  private void promoteEntity(ManagedEntityRequest request) {
+  private void promoteEntity(ServerEntityRequest request) {
     // Can't enter active state twice.
     Assert.assertFalse(this.isInActiveState);
     Assert.assertNull(this.activeServerEntity);
@@ -422,7 +461,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     } else {
       throw new IllegalStateException("no entity to promote");
     }
-    request.completeNoResponse();
+    request.complete();
   }
 
   @Override
@@ -430,19 +469,18 @@ public class ManagedEntityImpl implements ManagedEntity {
     executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
 // iterate through all the concurrency keys of an entity
     for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
-      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, concurrency, passive);
+      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, passive);
       // We don't actually use the message in the direct strategy so this is safe.
-      EntityMessage message = null;
       EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
-      executor.scheduleRequest(this, entityDescriptor, req, message, concurrency, this.activeServerEntity.getMessageCodec());
+      executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
       req.waitFor();
     }
 //  end passive sync for an entity
     executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
   }
 
-  private void loadExisting(ManagedEntityRequest loadEntityRequest) {
-    constructorInfo = loadEntityRequest.getPayload();
+  private void loadExisting(ServerEntityRequest loadEntityRequest, byte[] constructorInfo) {
+    this.constructorInfo = constructorInfo;
     CommonServerEntity<EntityMessage, EntityResponse> entityToLoad = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
@@ -461,17 +499,14 @@ public class ManagedEntityImpl implements ManagedEntity {
         entityToLoad = this.passiveServerEntity;
       }
     }
-    loadEntityRequest.completeNoResponse();
+    loadEntityRequest.complete();
     entityToLoad.loadExisting();
   }
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
     
-    private final int concurrencyKey;
-    
-    public PassiveSyncServerEntityRequest(EntityID eid, long version, int concurrency, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, null, passive, false);
-      this.concurrencyKey = concurrency;
+    public PassiveSyncServerEntityRequest(EntityID eid, long version, NodeID passive) {
+      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, passive, false);
     }
 
     @Override
@@ -505,58 +540,5 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.notifyAll();
       super.complete();
     }
-
-    @Override
-    public int getConcurrencyKey() {
-      return this.concurrencyKey;
     }
   }
-
-  /**
-   * The minimal interface required to interact with a managed entity.
-   */
-  public static class ManagedEntityRequest {
-    private final ServerEntityRequest request;
-    private final MessageCodec<EntityMessage, EntityResponse> codec;
-
-    public ManagedEntityRequest(ServerEntityRequest request, MessageCodec<EntityMessage, EntityResponse> codec) {
-      Assert.assertNotNull(request);
-      this.request = request;
-      this.codec = codec;
-    }
-
-    public void completeRawResponse(byte[] rawBytes) {
-      this.request.complete(rawBytes);
-    }
-
-    public void completeMessageResponse(EntityResponse invoke) {
-      Assert.assertNotNull(this.codec);
-      byte[] rawBytes = this.codec.serialize(invoke);
-      this.request.complete(rawBytes);
-    }
-
-    public byte[] getPayload() {
-      return this.request.getPayload();
-    }
-
-    public void completeNoResponse() {
-      this.request.complete();
-    }
-
-    public NodeID getNodeID() {
-      return this.request.getNodeID();
-    }
-
-    public ClientDescriptor getSourceDescriptor() {
-      return this.request.getSourceDescriptor();
-    }
-
-    public void failure(EntityUserException wrapper) {
-      this.request.failure(wrapper);
-    }
-
-    public ServerEntityAction getAction() {
-      return this.request.getAction();
-    }
-  }
-}

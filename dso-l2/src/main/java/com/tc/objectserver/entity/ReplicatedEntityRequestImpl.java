@@ -43,9 +43,9 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
   private byte[] returnValue = null;
   private EntityException failure = null;
 
-  public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, TransactionID oldest, NodeID nodes) {
+  public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, NodeID nodes) {
     // This replication argument (the "true") is redundant, in this case.
-    super(descriptor, action, payload, transaction, oldest, nodes, true);
+    super(descriptor, action, transaction, oldest, nodes, true);
   }
 
   @Override
@@ -89,10 +89,4 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
       }
     }
   }
-
-  @Override
-  public int getConcurrencyKey() {
-    Assert.fail("No concurrency key on this message type");
-    return 0;
-  }
-}
+ }

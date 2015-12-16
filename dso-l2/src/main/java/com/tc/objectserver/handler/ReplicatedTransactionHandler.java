@@ -110,7 +110,11 @@ public class ReplicatedTransactionHandler {
         if (entity.isPresent()) {
           ServerEntityRequest request = make(rep);
           if (request != null) {
-            entity.get().addRequest(request);
+              if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+                entity.get().addInvokeRequest(request, rep.getExtendedData());
+              } else {
+                entity.get().addLifecycleRequest(request, rep.getExtendedData());
+              }
           }
         }
       }
@@ -180,7 +184,7 @@ public class ReplicatedTransactionHandler {
           if (entity.isPresent()) {
               ServerEntityRequest request = make(sync);
               if (request != null) {
-                entity.get().addRequest(request);
+                entity.get().processSyncMessage(request, sync.getExtendedData(), sync.getConcurrency());
               }
           }
         } catch (EntityException ee) {
@@ -192,9 +196,12 @@ public class ReplicatedTransactionHandler {
     }
   }
     
-  private ServerEntityRequest make(ReplicationMessage rep) {
-    return new ServerEntityRequestImpl(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()),
-        rep.getExtendedData(), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty(), rep.getConcurrency());
+  private ServerEntityRequestImpl make(ReplicationMessage rep) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Making " + rep.getReplicationType() + " for " + 
+          rep.getEntityDescriptor().getEntityID() + "/" + rep.getConcurrency());
+  }
+    return new ServerEntityRequestImpl(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, Optional.empty());
   }
 
   private static ServerEntityAction decodeReplicationType(ReplicationMessage.ReplicationType networkType) {

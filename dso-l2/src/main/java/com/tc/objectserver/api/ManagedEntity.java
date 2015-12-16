@@ -22,6 +22,9 @@ package com.tc.objectserver.api;
 import org.terracotta.entity.ClientDescriptor;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
 
 
 /**
@@ -33,9 +36,17 @@ public interface ManagedEntity {
   public EntityID getID();
   
   public long getVersion();
+ /** 
+  * Schedules the request with the entity on the execution queue.
+  * 
+  * @param <M> payload of the request
+  * @param request translated request for execution on the server
+  */ 
+  void addInvokeRequest(ServerEntityRequest request, byte[] extendedData);
   
-  public void addRequest(ServerEntityRequest request);
+  void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
   
+  void addLifecycleRequest(ServerEntityRequest create, byte[] data);
   /**
    * Called to handle the reconnect for a specific client instance living on a specific node.
    * This is called after restart or fail-over to re-associate a formerly connected client with its server-side entities.

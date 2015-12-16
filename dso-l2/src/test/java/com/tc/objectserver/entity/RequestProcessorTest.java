@@ -37,6 +37,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -75,11 +76,10 @@ public class RequestProcessorTest {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     when(request.requiresReplication()).thenReturn(Boolean.FALSE);
-    when(request.getPayload()).thenReturn(new byte[0]);
     Sink<Runnable> dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
-    int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    instance.scheduleRequest(entity, mock(EntityDescriptor.class), request, new ByteArrayMessage(request.getPayload()), ConcurrencyStrategy.UNIVERSAL_KEY, mock(MessageCodec.class));
+
+    instance.scheduleRequest(mock(EntityDescriptor.class), request, new byte[0], ()->{}, ConcurrencyStrategy.UNIVERSAL_KEY);
     
     verify(dump).addMultiThreaded(Matchers.any());
   }
@@ -98,14 +98,13 @@ public class RequestProcessorTest {
     int key = Math.abs((int)(Math.random() * Integer.MAX_VALUE));
     when(request.requiresReplication()).thenReturn(Boolean.FALSE);
     byte[] payload = intToArray(key);
-    when(request.getPayload()).thenReturn(payload);
+
     Sink dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     int expResult = key;
-    ByteArrayMessage byteArrayMessage = new ByteArrayMessage(request.getPayload());
-    int concurrencyKey = byteArrayMessage.messageAsInt();
-    instance.scheduleRequest(entity, descriptor, request, byteArrayMessage, concurrencyKey, mock(MessageCodec.class));
+
+    instance.scheduleRequest(descriptor, request, payload, ()->{}, key);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
   }
@@ -126,7 +125,7 @@ public class RequestProcessorTest {
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    instance.scheduleRequest(entity, descriptor, request, new ByteArrayMessage(new byte[0]), ConcurrencyStrategy.UNIVERSAL_KEY, mock(MessageCodec.class));
+    instance.scheduleRequest(descriptor, request, new byte[0], ()->{}, ConcurrencyStrategy.UNIVERSAL_KEY);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
   }
@@ -146,7 +145,7 @@ public class RequestProcessorTest {
 
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
-    instance.scheduleRequest(entity, descriptor, request, new ByteArrayMessage(new byte[0]), ConcurrencyStrategy.MANAGEMENT_KEY, mock(MessageCodec.class));
+    instance.scheduleRequest(descriptor, request, new byte[0], ()->{}, ConcurrencyStrategy.MANAGEMENT_KEY);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, ConcurrencyStrategy.MANAGEMENT_KEY)));
   }
@@ -166,7 +165,6 @@ public class RequestProcessorTest {
     when(request.requiresReplication()).thenReturn(Boolean.TRUE);
     when(request.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(request.getTransaction()).thenReturn(TransactionID.NULL_ID);
-    when(request.getPayload()).thenReturn(new byte[0]);
     when(request.getNodeID()).thenReturn(mock(NodeID.class));
     
     Sink dump = mock(Sink.class);
@@ -176,8 +174,14 @@ public class RequestProcessorTest {
     when(broker.replicateMessage(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
+    
+    instance.scheduleRequest(descriptor, request, new byte[0], ()->{}, ConcurrencyStrategy.UNIVERSAL_KEY);
+    
+    verify(broker, times(0)).replicateMessage(Matchers.any(), Matchers.any());
+    
     instance.enterActiveState();
-    instance.scheduleRequest(entity, descriptor, request, new ByteArrayMessage(request.getPayload()), ConcurrencyStrategy.UNIVERSAL_KEY, mock(MessageCodec.class));
+    
+    instance.scheduleRequest(descriptor, request, new byte[0], ()->{}, ConcurrencyStrategy.UNIVERSAL_KEY);
 //  assume args from mocked request are passed.  just testing execution
     verify(broker).replicateMessage(Matchers.any(), Matchers.any());
 //    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());

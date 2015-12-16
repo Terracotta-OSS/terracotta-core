@@ -38,18 +38,16 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   private final TransactionID transaction;
   private final TransactionID oldest;
   private final NodeID  src;
-  private final byte[]  payload;
   private final EntityDescriptor descriptor;
   private final boolean requiresReplication;
   
   private boolean done = false;
 
-  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication) {
+  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication) {
     this.action = action;
     this.transaction = transaction;
     this.oldest = oldest;
     this.src = src;
-    this.payload = payload;
     this.descriptor = descriptor;
     this.requiresReplication = requiresReplication;
   }
@@ -80,11 +78,6 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   @Override
   public NodeID getNodeID() {
     return src;
-  }
-
-  @Override
-  public byte[] getPayload() {
-    return payload;
   }
 
   @Override
