@@ -44,10 +44,16 @@ import org.terracotta.entity.MessageCodec;
 public class RequestProcessor implements StateChangeListener {
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
+  private boolean isActive = false;
 //  TODO: do some accounting for transaction de-dupping on failover
 
   public RequestProcessor(Sink<Runnable> requestExecution) {
     this.requestExecution = requestExecution;
+  }
+
+  public void enterActiveState() {
+    passives.enterActiveState();
+    isActive = true;
   }
 
   public Future<Void> scheduleSync(PassiveSyncMessage msg, NodeID passive) {
@@ -66,7 +72,7 @@ public class RequestProcessor implements StateChangeListener {
   
   public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey, MessageCodec<EntityMessage, EntityResponse> codec) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-    Set<NodeID> replicateTo = (passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
+    Set<NodeID> replicateTo = (isActive && passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), concurrencyKey), replicateTo)

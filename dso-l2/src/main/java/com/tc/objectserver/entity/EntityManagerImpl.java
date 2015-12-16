@@ -73,7 +73,7 @@ public class EntityManagerImpl implements EntityManager {
     
     // Set the state of the manager.
     this.shouldCreateActiveEntities = true;
-    
+    processorPipeline.enterActiveState();
     // Walk all existing entities, recreating them as active.
     // NOTE:  While it would seem more direct (and not require adding new request types) to distinguish active/passive
     //  via ManagedEntity implementations, we would need to ensure that all pending requests for a ManagedEntity had

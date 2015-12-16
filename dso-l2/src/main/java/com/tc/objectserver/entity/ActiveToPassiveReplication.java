@@ -29,7 +29,11 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.ReplicationSender;
+import com.tc.util.Assert;
+import java.util.Collection;
+import java.util.Collections;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -44,20 +48,49 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
+ *  This class acts to connect {@link ProcessTransactionHandler} to the {@link ReplicationSender}
  *
+ *  This class lies idle until activated by setting the current passive nodes.  This should 
+ *  occur only when the server is transitioning from passive-standby to active
  */
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
   private final Iterable<ManagedEntity> entities;
-  private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<NodeID>();
+  private final Iterable<NodeID> passivesStandbys;
+  private boolean activated = false;
+  private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
+  private final Set<NodeID> standByNodes = new CopyOnWriteArraySet<>();
   private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
-  public ActiveToPassiveReplication(Iterable<ManagedEntity> entities, Sink<ReplicationEnvelope> replicate) {
+  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, Sink<ReplicationEnvelope> replicate) {
     this.entities = entities;
     this.replicate = replicate;
+    this.passivesStandbys = passives;
+  }
+  
+  @Override
+  public void enterActiveState() {
+    setPassiveStandbyServers(passivesStandbys);
+  }
+  
+  private void setPassiveStandbyServers(Iterable<NodeID> standbys) {
+    Assert.assertFalse(activated);
+    Assert.assertTrue(passiveNodes.isEmpty());
+    standbys.forEach(i -> {Assert.assertTrue(standByNodes.contains(i)); passiveNodes.add(i);});
+    passiveNodes.forEach(i -> sendReset(i));
+    activated = true;
+  }
+  
+  private void sendReset(NodeID node) {
+    ReplicationMessage resetOrderedSink = new ReplicationMessage();
+    try {
+      replicateMessage(resetOrderedSink, Collections.singleton(node)).get();
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   public void startPassiveSync(NodeID newNode) {
@@ -84,16 +117,20 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     });
   }
 
-  public void acknowledge(GroupMessage msg) {
-    Set<NodeID> plist = waiters.get(msg.inResponseTo());
+  private void acknowledge(MessageID mid, NodeID releaser) {
+    Set<NodeID> plist = waiters.get(mid);
     if (plist != null) {
       synchronized(plist) {
-        if (plist.remove(msg.messageFrom()) && plist.isEmpty()) {
-          waiters.remove(msg.inResponseTo());
+        if (plist.remove(releaser) && plist.isEmpty()) {
+          waiters.remove(mid);
           plist.notifyAll();
         }
       }
     }
+  }    
+
+  public void acknowledge(GroupMessage msg) {
+    acknowledge(msg.inResponseTo(), msg.messageFrom());
   }    
 
   @Override
@@ -105,12 +142,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   // with passive node removal.  this is only called by a single thread as is node disconnect
   @Override
   public synchronized Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
-    Set<NodeID> copy = new HashSet<NodeID>(all); 
+    Set<NodeID> copy = new HashSet<>(all); 
     copy.removeIf(node -> !passiveNodes.contains(node));
     if (!copy.isEmpty()) {
       waiters.put(msg.getMessageID(), copy);
       for (NodeID node : copy) {
-        replicate.addSingleThreaded(msg.target(node));
+        replicate.addSingleThreaded(msg.target(node, ()->acknowledge(msg.getMessageID(), node)));
       }
     }
     
@@ -170,16 +207,17 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     }
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
-    replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null));
+    replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, null));
   }
 
   @Override
   public void nodeJoined(NodeID nodeID) {
-
+    standByNodes.add(nodeID);
   }
 
   @Override
   public void nodeLeft(NodeID nodeID) {
     removePassive(nodeID);
+    standByNodes.remove(nodeID);
   }
 }

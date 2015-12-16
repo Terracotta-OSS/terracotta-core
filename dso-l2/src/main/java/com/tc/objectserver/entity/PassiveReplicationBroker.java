@@ -26,4 +26,5 @@ import java.util.concurrent.Future;
 public interface PassiveReplicationBroker {
   Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> passives);
   Set<NodeID> passives();
+  void enterActiveState();
 }

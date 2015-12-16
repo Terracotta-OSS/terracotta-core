@@ -26,7 +26,9 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import java.io.IOException;
@@ -67,10 +69,12 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   byte[] payload;
   int concurrency;
   
-  long rid;
+  long rid = 0;
   
   public ReplicationMessage() {
-    super(REPLICATE);
+    super(START);
+    descriptor = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, 0);
+    
   }
   
   public ReplicationMessage(int type) {
@@ -84,7 +88,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public ReplicationMessage(EntityDescriptor descriptor, NodeID src, 
       TransactionID tid, TransactionID oldest, 
       ReplicationType action, byte[] payload, int concurrency) {
-    super(REPLICATE);
+    super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
     initialize(descriptor, src, tid, oldest, action, payload, concurrency);
   }
   
@@ -104,7 +108,11 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   }
   
   public ReplicationEnvelope target(NodeID node) {
-    return new ReplicationEnvelope(node, this);
+    return new ReplicationEnvelope(node, this, null);
+  }
+  
+  public ReplicationEnvelope target(NodeID node, Runnable waitRelease) {
+    return new ReplicationEnvelope(node, this, waitRelease);
   }
   
   public void setReplicationID(long rid) {
@@ -142,6 +150,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 
   public EntityDescriptor getEntityDescriptor() {
     return descriptor;
+  }
+  
+  public EntityID getEntityID() {
+    return descriptor == null ? EntityID.NULL_ID : descriptor.getEntityID();
   }
   
   public int getConcurrency() {

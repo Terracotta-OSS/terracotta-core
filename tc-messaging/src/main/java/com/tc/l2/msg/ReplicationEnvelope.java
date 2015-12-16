@@ -27,10 +27,12 @@ public class ReplicationEnvelope {
   
   private final NodeID dest;
   private final ReplicationMessage msg;
+  private final Runnable waitRelease;
 
-  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg) {
+  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable waitRelease) {
     this.dest = dest;
     this.msg = msg;
+    this.waitRelease = waitRelease;
   }
   
   public NodeID getDestination() {
@@ -39,5 +41,13 @@ public class ReplicationEnvelope {
   
   public ReplicationMessage getMessage() {
     return msg;
+  }
+  
+  public void release() {
+    if (waitRelease != null) {
+      waitRelease.run();
+    } else {
+      throw new AssertionError("not waiting");
+    }
   }
 }

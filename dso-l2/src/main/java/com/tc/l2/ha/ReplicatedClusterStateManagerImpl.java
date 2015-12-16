@@ -40,6 +40,10 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
     ConnectionIDFactoryListener, PrettyPrintable {
@@ -52,6 +56,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final Sink<NodeStateEventContext>            channelLifeCycleSink;
 
   private boolean               isActive = false;
+
+  private final Collection<NodeID>    others = new HashSet<>();
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
                                            ClusterState clusterState, ConnectionIDFactory factory,
@@ -69,8 +75,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     state.generateStripeIDIfNeeded();
     state.syncActiveState();
 
+    others.clear();
     // Sync state to external passive servers
-    publishToAll(ClusterStateMessage.createClusterStateMessage(state));
+    others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
 
     isActive = true;
     notifyAll();
@@ -95,7 +102,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     }
   }
 
-  private void validateResponse(NodeID nodeID, ClusterStateMessage msg) {
+  private boolean validateResponse(NodeID nodeID, ClusterStateMessage msg) {
     if (msg == null || msg.getType() != ClusterStateMessage.OPERATION_SUCCESS) {
       logger.error("Recd wrong response from : " + nodeID + " : msg = " + msg
                    + " while publishing Cluster State: Killing the node");
@@ -105,7 +112,22 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
                        : L2HAZapNodeRequestProcessor.PROGRAM_ERROR),
                    "Recd wrong response from : " + nodeID + " while publishing Cluster State"
                        + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+      return false;
+    } else {
+      return true;
     }
+  }
+
+  @Override
+  public synchronized Iterable<NodeID> getPassives() {
+    return new Iterable<NodeID>() {
+      @Override
+      public Iterator<NodeID> iterator() {
+        synchronized(ReplicatedClusterStateManagerImpl.this) {
+          return new ArrayList<>(others).iterator();
+        }
+      }
+    };
   }
 
   @Override
@@ -122,13 +144,17 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
   }
 
-  private void publishToAll(AbstractGroupMessage message) {
+  private Collection<NodeID> publishToAll(AbstractGroupMessage message) {
     try {
       GroupResponse<AbstractGroupMessage> gr = groupManager.sendAllAndWaitForResponse(message);
+      HashSet<NodeID> success = new HashSet<>();
       for (AbstractGroupMessage resp : gr.getResponses()) {
         ClusterStateMessage msg = (ClusterStateMessage) resp;
-        validateResponse(msg.messageFrom(), msg);
+        if (validateResponse(msg.messageFrom(), msg)) {
+          success.add(msg.messageFrom());
       }
+      }
+      return success;
     } catch (GroupException e) {
       // TODO:: Is this extreme ?
       throw new AssertionError(e);

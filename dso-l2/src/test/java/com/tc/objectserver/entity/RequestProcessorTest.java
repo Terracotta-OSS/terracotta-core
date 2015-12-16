@@ -176,7 +176,7 @@ public class RequestProcessorTest {
     when(broker.replicateMessage(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
-    
+    instance.enterActiveState();
     instance.scheduleRequest(entity, descriptor, request, new ByteArrayMessage(request.getPayload()), ConcurrencyStrategy.UNIVERSAL_KEY, mock(MessageCodec.class));
 //  assume args from mocked request are passed.  just testing execution
     verify(broker).replicateMessage(Matchers.any(), Matchers.any());

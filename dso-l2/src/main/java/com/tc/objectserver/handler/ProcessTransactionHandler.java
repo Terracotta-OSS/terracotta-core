@@ -34,6 +34,7 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -80,6 +81,10 @@ public class ProcessTransactionHandler {
     @Override
     protected void initialize(ConfigurationContext context) {
       super.initialize(context); 
+      ServerConfigurationContext server = (ServerConfigurationContext)context;
+      
+      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentState());
+      server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       entityManager.enterActiveState();
     }

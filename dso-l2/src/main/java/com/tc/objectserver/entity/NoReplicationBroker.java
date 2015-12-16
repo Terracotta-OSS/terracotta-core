@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.NodeID;
+import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +31,8 @@ import java.util.concurrent.TimeoutException;
  * Stubbed implementation which provides no replication.
  */
 public class NoReplicationBroker implements PassiveReplicationBroker {
+  
+  private boolean isActive = false;
   
   public static final Future<Void> NOOP_FUTURE = new Future<Void>() {
       @Override
@@ -57,6 +60,13 @@ public class NoReplicationBroker implements PassiveReplicationBroker {
         return null;
       }
   };
+
+  @Override
+  public void enterActiveState() {
+// only happens once
+    Assert.assertFalse(isActive);
+    isActive = true;
+  }
 
   @Override
   public Set<NodeID> passives() {
