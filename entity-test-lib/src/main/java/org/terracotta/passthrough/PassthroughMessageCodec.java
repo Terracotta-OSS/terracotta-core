@@ -116,7 +116,7 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createCompleteMessage(final byte[] response, final Exception error) {
+  public static PassthroughMessage createCompleteMessage(final byte[] response, final EntityException error) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.COMPLETE_FROM_SERVER, shouldReplicateToPassives) {
@@ -132,7 +132,7 @@ public class PassthroughMessageCodec {
             output.writeInt(-1);
           }
         } else {
-          byte[] serializedException = PassthroughMessageCodec.serializeObjectToArray(error);
+          byte[] serializedException = PassthroughMessageCodec.serializeExceptionToArray(error);
           output.writeInt(serializedException.length);
           output.write(serializedException);
         }
@@ -291,7 +291,7 @@ public class PassthroughMessageCodec {
     return runRawDecoder(decoder, rawMessage);
   }
   
-  public static byte[] serializeObjectToArray(Exception exception) {
+  public static byte[] serializeExceptionToArray(EntityException exception) {
     // We need to manually serialize the exception using Java serialization.
     ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
     try {

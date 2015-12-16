@@ -38,6 +38,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
@@ -267,7 +268,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws Exception {
+  public byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws EntityException {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     byte[] response = null;
     if (null != this.activeEntities) {
@@ -278,7 +279,7 @@ public class PassthroughServerProcess implements MessageHandler {
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
         response = sendActiveInvocation(clientDescriptor, entity, payload);
       } else {
-        throw new Exception("Not fetched");
+        throw new EntityNotFoundException(entityClassName, entityName);
       }
     } else {
       // Invoke on passive.
@@ -288,7 +289,7 @@ public class PassthroughServerProcess implements MessageHandler {
         // There is no return type in the passive case.
         sendPassiveInvocation(entity, payload);
       } else {
-        throw new Exception("Not fetched");
+        throw new EntityNotFoundException(entityClassName, entityName);
       }
     }
     return response;
@@ -318,7 +319,7 @@ public class PassthroughServerProcess implements MessageHandler {
       public void run() {
         // Fetch the entity now that we have the read lock on the name.
         byte[] config = null;
-        Exception error = null;
+        EntityException error = null;
         // Fetch should never be replicated and only handled on the active.
         Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
         CreationData<ActiveServerEntity<?, ?>> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
@@ -349,7 +350,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws Exception {
+  public void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws EntityException {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     // Release should never be replicated and only handled on the active.
     Assert.assertTrue(null != this.activeEntities);
@@ -365,7 +366,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws Exception {
+  public void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     if (((null != this.activeEntities) && this.activeEntities.containsKey(entityTuple))
       || ((null != this.passiveEntities) && this.passiveEntities.containsKey(entityTuple))) {
@@ -390,7 +391,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public void destroy(String entityClassName, String entityName) throws Exception {
+  public void destroy(String entityClassName, String entityName) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     boolean didDestroy = false;
     if (null != this.activeEntities) {
@@ -456,7 +457,7 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
   @Override
-  public void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws Exception {
+  public void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
     
@@ -466,12 +467,12 @@ public class PassthroughServerProcess implements MessageHandler {
       PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.startSyncEntity();
     } else {
-      throw new Exception("Not fetched");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
   @Override
-  public void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws Exception {
+  public void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
     
@@ -481,12 +482,12 @@ public class PassthroughServerProcess implements MessageHandler {
       PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.endSyncEntity();
     } else {
-      throw new Exception("Not fetched");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
   @Override
-  public void syncEntityKeyStart(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws Exception {
+  public void syncEntityKeyStart(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
     
@@ -496,12 +497,12 @@ public class PassthroughServerProcess implements MessageHandler {
       PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.startSyncConcurrencyKey(concurrencyKey);
     } else {
-      throw new Exception("Not fetched");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
   @Override
-  public void syncEntityKeyEnd(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws Exception {
+  public void syncEntityKeyEnd(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
     
@@ -511,12 +512,12 @@ public class PassthroughServerProcess implements MessageHandler {
       PassiveServerEntity<?, ?> entity = data.entityInstance;
       entity.endSyncConcurrencyKey(concurrencyKey);
     } else {
-      throw new Exception("Not fetched");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
   @Override
-  public void syncPayload(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey, byte[] payload) throws Exception {
+  public void syncPayload(IMessageSenderWrapper sender, String entityClassName, String entityName, int concurrencyKey, byte[] payload) throws EntityException {
     // Sync only makes sense on passive.
     Assert.assertTrue(null != this.passiveEntities);
     
@@ -526,7 +527,7 @@ public class PassthroughServerProcess implements MessageHandler {
       PassiveServerEntity<?, ?> entity = data.entityInstance;
       sendPassiveSyncPayload(entity, concurrencyKey, payload);
     } else {
-      throw new Exception("Not fetched");
+      throw new EntityNotFoundException(entityClassName, entityName);
     }
   }
 
