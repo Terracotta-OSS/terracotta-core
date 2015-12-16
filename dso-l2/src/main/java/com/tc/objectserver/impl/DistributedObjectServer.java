@@ -175,6 +175,8 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.FlatFileStorageProviderConfiguration;
 import com.tc.objectserver.persistence.FlatFileStorageServiceProvider;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
+import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
 import com.tc.operatorevent.OperatorEventHistoryProviderImpl;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
@@ -446,15 +448,21 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     serviceRegistry.initialize(this.configSetupManager.getL2Identifier(), this.configSetupManager.commonl2Config().getBean());
 
-    // For now, we will register com.tc.objectserver.persistence.FlatFileStorageServiceProvider here.  We are currently
-    //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
-    //  services or be discarded, entirely.
-    FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
-    if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(null, restartable))) {
-      flatFileService.close();
-      throw new AssertionError("bad flat file initialization");
+    if(restartable) {
+      // For now, we will register com.tc.objectserver.persistence.FlatFileStorageServiceProvider here.  We are currently
+      //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
+      //  services or be discarded, entirely.
+      FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
+      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(null, restartable))) {
+        flatFileService.close();
+        throw new AssertionError("bad flat file initialization");
+      }
+      serviceRegistry.registerBuiltin(flatFileService);
+    } else {
+      NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
+      nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration());
+      serviceRegistry.registerBuiltin(nullPlatformStorageServiceProvider);
     }
-    serviceRegistry.registerBuiltin(flatFileService);
 
     // The platform gets the reserved consumerID 0.
     long platformConsumerID = 0;
