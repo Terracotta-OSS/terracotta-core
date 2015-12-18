@@ -60,7 +60,17 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   @Override
   public synchronized void addSingleThreaded(T oc) {
     long seq = oc.getSequenceID();
-    if (seq <= current) {
+    if (seq == 0) {
+      if (pending.isEmpty()) {
+        logger.warn("Sequence reset. Message with ID " + (current)
+            + " was last before reset");
+        current = 0;
+        sink.addSingleThreaded(oc);
+      } else {
+        throw new AssertionError(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
+            + " is missing still but reset was requested");
+      }
+    } else if (seq <= current) {
       throw new AssertionError("Received Event with a sequence less than the current sequence. Current = " + current
           + " Seq Id = " + seq + " Event = " + oc);
     } else if (seq == current + 1) {

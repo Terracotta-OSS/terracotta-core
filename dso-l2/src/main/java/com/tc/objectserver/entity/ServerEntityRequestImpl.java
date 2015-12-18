@@ -28,6 +28,9 @@ import com.tc.util.Assert;
 
 import java.util.Optional;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
 
 
@@ -37,26 +40,16 @@ import org.terracotta.exception.EntityException;
  */
 public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
   protected final Optional<MessageChannel> returnChannel;
-  private final int concurrencyKey;
   // TODO:  Using this flag is a bit of a hack but so is ServerEntityRequest.getConcurrencyKey so hopefully we can find a
   // less general way of asking about this so we won't need this flag to re-specialize it.
   private final boolean doesDeclareConcurrencyKey;
 
   // TODO:  Coalesce these constructors once we handle this doesDeclareConcurrencyKey in a better way.
-  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, 
+  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action,  
       TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
-    super(descriptor, action, payload, transaction, oldest, src, requiresReplication);
+    super(descriptor, action, transaction, oldest, src, requiresReplication);
     this.returnChannel = returnChannel;
-    this.concurrencyKey = 0;
     this.doesDeclareConcurrencyKey = false;
-  }
-
-  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, 
-      TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication, Optional<MessageChannel> returnChannel, int concurrencyKey) {
-    super(descriptor, action, payload, transaction, oldest, src, requiresReplication);
-    this.returnChannel = returnChannel;
-    this.concurrencyKey = concurrencyKey;
-    this.doesDeclareConcurrencyKey = true;
   }
 
   @Override
@@ -86,19 +79,5 @@ public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
   public ClientDescriptor getSourceDescriptor() {
     EntityDescriptor entityDescriptor = getEntityDescriptor();
     return new ClientDescriptorImpl(getNodeID(), entityDescriptor);
-  }
-
-  @Override
-  public int getConcurrencyKey() {
-    ServerEntityAction action = getAction();
-    Assert.assertTrue(this.doesDeclareConcurrencyKey);
-    // TODO:  Remove these assertions once we can determine a better way of communicating this information as this
-    // implementation knows too much about how it should be used (although only for the purposes of this validation).
-    Assert.assertTrue((ServerEntityAction.INVOKE_ACTION == action)
-        || (ServerEntityAction.REQUEST_SYNC_ENTITY == action)
-        || (ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START == action)
-        || (ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END == action)
-        || (ServerEntityAction.RECEIVE_SYNC_PAYLOAD == action));
-    return this.concurrencyKey;
   }
 }

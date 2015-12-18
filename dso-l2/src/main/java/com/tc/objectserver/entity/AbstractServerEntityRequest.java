@@ -38,18 +38,16 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   private final TransactionID transaction;
   private final TransactionID oldest;
   private final NodeID  src;
-  private final byte[]  payload;
   private final EntityDescriptor descriptor;
   private final boolean requiresReplication;
   
   private boolean done = false;
 
-  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, byte[] payload, TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication) {
+  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication) {
     this.action = action;
     this.transaction = transaction;
     this.oldest = oldest;
     this.src = src;
-    this.payload = payload;
     this.descriptor = descriptor;
     this.requiresReplication = requiresReplication;
   }
@@ -83,11 +81,6 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   }
 
   @Override
-  public byte[] getPayload() {
-    return payload;
-  }
-
-  @Override
   public ServerEntityAction getAction() {
     return action;
   }
@@ -101,6 +94,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       message.send();
     });
     done = true;
+    this.notifyAll();
   }
 
   @Override
@@ -131,6 +125,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       }
     });
     done = true;
+    this.notifyAll();
   }
   
   @Override
@@ -148,6 +143,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       }
     });
     done = true;
+    this.notifyAll();
   }  
   
   protected EntityDescriptor getEntityDescriptor() {
@@ -157,4 +153,18 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   protected boolean isDone() {
     return done;
   }  
+  
+  public synchronized void waitForDone() {
+    boolean interrupted = false;
+    while (!done) {
+      try {
+        wait();
+      } catch (InterruptedException ie) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
 }

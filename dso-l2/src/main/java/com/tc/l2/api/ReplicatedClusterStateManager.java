@@ -32,4 +32,6 @@ public interface ReplicatedClusterStateManager {
 
   public void setCurrentState(State currentState);
 
+  public Iterable<NodeID> getPassives();
+
 }

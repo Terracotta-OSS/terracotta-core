@@ -29,25 +29,27 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.entity.ManagedEntityImpl.ManagedEntityRequest;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodec;
 
 
 public class RequestProcessor implements StateChangeListener {
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
+  private boolean isActive = false;
 //  TODO: do some accounting for transaction de-dupping on failover
 
   public RequestProcessor(Sink<Runnable> requestExecution) {
     this.requestExecution = requestExecution;
+  }
+
+  public void enterActiveState() {
+    passives.enterActiveState();
+    isActive = true;
   }
 
   public Future<Void> scheduleSync(PassiveSyncMessage msg, NodeID passive) {
@@ -64,15 +66,14 @@ public class RequestProcessor implements StateChangeListener {
 //  do nothing
   }
   
-  public void scheduleRequest(ManagedEntityImpl impl, EntityDescriptor entity, ServerEntityRequest request, EntityMessage message, int concurrencyKey, MessageCodec<EntityMessage, EntityResponse> codec) {
+  public void scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-    Set<NodeID> replicateTo = (passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
+    Set<NodeID> replicateTo = (isActive && passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), request.getPayload(), concurrencyKey), replicateTo)
+            request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_FUTURE;
-    ManagedEntityRequest managedRequest = new ManagedEntityRequest(request, codec);
-    EntityRequest entityRequest =  new EntityRequest(impl, entity, managedRequest, concurrencyKey, token, message);
+    EntityRequest entityRequest =  new EntityRequest(entity, request, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);
   }
   
@@ -115,20 +116,18 @@ public class RequestProcessor implements StateChangeListener {
   }
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {
-    private final ManagedEntityImpl impl;
     private final EntityDescriptor entity;
-    private final ManagedEntityRequest request;
+    private final ServerEntityRequest request;
+    private final Runnable invoke;
     private final Future<Void>  token;
     private final int key;
-    private final EntityMessage message;
 
-    public EntityRequest(ManagedEntityImpl impl, EntityDescriptor entity, ManagedEntityRequest managedRequest, int concurrencyIndex, Future<Void>  token, EntityMessage message) {
-      this.impl = impl;
+    public EntityRequest(EntityDescriptor entity, ServerEntityRequest request, Runnable runnable, int key, Future<Void>  token) {
       this.entity = entity;
-      this.request = managedRequest;
-      this.key = concurrencyIndex;
+      this.request = request;
+      this.invoke = runnable;
       this.token = token;
-      this.message = message;
+      this.key = key;
     }
 
     @Override
@@ -148,7 +147,7 @@ public class RequestProcessor implements StateChangeListener {
     void invoke()  {
       try {
         token.get();
-        impl.invoke(request, this.key, this.message);
+        invoke.run();
       } catch (InterruptedException interrupted) {
 //  shutdown logic?  uniterruptable?
         throw new RuntimeException(interrupted);

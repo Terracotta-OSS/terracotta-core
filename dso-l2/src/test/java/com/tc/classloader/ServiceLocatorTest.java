@@ -206,13 +206,13 @@ public class ServiceLocatorTest {
 
   private <A extends EntityMessage, R extends EntityResponse> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A, R>, ?> es) {
     ActiveServerEntity<A, R> activeEntity = es.createActiveEntity(registry, null);
-    MessageCodec<A, R> deserializer = activeEntity.getMessageCodec();
+    MessageCodec<A, R> codec = activeEntity.getMessageCodec();
     //get class name of IClassLoader type
-    String gpl = new String(deserializer.serialize(activeEntity.invoke(null, deserializer.deserialize("gpl".getBytes()))));
+    R gpl = activeEntity.invoke(null, codec.deserialize("gpl".getBytes()));
     //get class name of the entity loader
-    String gel = new String(deserializer.serialize(activeEntity.invoke(null, deserializer.deserialize("gel".getBytes()))));
+    R gel = activeEntity.invoke(null, codec.deserialize("gel".getBytes()));
     //get reference of the IClassloader loader
-    String plr = new String(deserializer.serialize(activeEntity.invoke(null, deserializer.deserialize("plr".getBytes()))));
+    R plr = activeEntity.invoke(null, codec.deserialize("plr".getBytes()));
     Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
     //XXX works only because on same VM
     Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,

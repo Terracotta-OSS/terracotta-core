@@ -22,7 +22,6 @@ import com.tc.net.ClientID;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -46,6 +45,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.terracotta.entity.EntityResponse;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -64,6 +64,12 @@ public class EntityManagerImpl implements EntityManager {
     this.processorPipeline = processor;
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
+    ManagedEntity platform = createPlatformEntity();
+    entities.put(platform.getID(), platform);
+  }
+
+  private ManagedEntity createPlatformEntity() {
+    return new PlatformEntity(processorPipeline);
   }
 
   @Override
@@ -73,14 +79,14 @@ public class EntityManagerImpl implements EntityManager {
     
     // Set the state of the manager.
     this.shouldCreateActiveEntities = true;
-    
+    processorPipeline.enterActiveState();
     // Walk all existing entities, recreating them as active.
     // NOTE:  While it would seem more direct (and not require adding new request types) to distinguish active/passive
     //  via ManagedEntity implementations, we would need to ensure that all pending requests for a ManagedEntity had
     //  been processed.  Thus, we will use addRequest, unless we can prove state of the entity request queue, at this point.
     for(ManagedEntity entity : this.entities.values()) {
-      InternalRequest request = new InternalRequest(entity.getID(), entity.getVersion(), ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE, null);
-      entity.addRequest(request);
+      InternalRequest request = new InternalRequest(entity.getID(), entity.getVersion(), ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE);
+      entity.addLifecycleRequest(request, null);
       request.waitForCompletion();
     }
   }
@@ -104,8 +110,8 @@ public class EntityManagerImpl implements EntityManager {
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }
-    InternalRequest request = new InternalRequest(entityID, recordedVersion, ServerEntityAction.LOAD_EXISTING_ENTITY, configuration);
-    temp.addRequest(request);
+    InternalRequest request = new InternalRequest(entityID, recordedVersion, ServerEntityAction.LOAD_EXISTING_ENTITY);
+    temp.addLifecycleRequest(request, configuration);
   }
 
   @Override
@@ -117,13 +123,19 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
+    Assert.assertNotNull(id);
+    if (EntityID.NULL_ID.equals(id)) {
+//  short circuit for null entity, it's never here
+      return Optional.empty();
+    }
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    // Ask the service which provides this type of entity whether or not this is the version it supports.
     ManagedEntity entity = entities.get(id);
     if (entity != null) {
-    // Note that we ignore the return value, only interested in validating that the version is consistent.
-      getVersionCheckedService(id, version);
+      //  check the provided version against the version of the entity
+      if (entity.getVersion() != version) {
+        throw new EntityVersionMismatchException(id.getClassName(), id.getEntityName(), entity.getVersion(), version);
+      }
     }
     return Optional.ofNullable(entity);
   }
@@ -162,14 +174,12 @@ public class EntityManagerImpl implements EntityManager {
     private final EntityID entity;
     private final long version;
     private final ServerEntityAction action;
-    private final byte[] payload;
     private boolean complete = false;
 
-    public InternalRequest(EntityID id, long version, ServerEntityAction action, byte[] payload) {
+    public InternalRequest(EntityID id, long version, ServerEntityAction action) {
       this.entity = id;
       this.version = version;
       this.action = action;
-      this.payload = payload;
     }
     @Override
     public ServerEntityAction getAction() {
@@ -183,14 +193,11 @@ public class EntityManagerImpl implements EntityManager {
     public ClientDescriptor getSourceDescriptor() {
       return new ClientDescriptorImpl(ClientID.NULL_ID, new EntityDescriptor(entity, ClientInstanceID.NULL_ID, version));
     }
-    @Override
-    public byte[] getPayload() {
-      return this.payload;
-    }
+
     @Override
     public synchronized void complete() {
       complete = true;
-      notify();
+      notifyAll();
     }
     @Override
     public void complete(byte[] value) {
@@ -238,12 +245,6 @@ public class EntityManagerImpl implements EntityManager {
           Thread.currentThread().interrupt();
         }
       }
-    }
-    
-    @Override
-    public int getConcurrencyKey() {
-      Assert.fail("No concurrency key on this message type");
-      return 0;
     }
   }
 }

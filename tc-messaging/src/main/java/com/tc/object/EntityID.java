@@ -29,7 +29,7 @@ import java.io.IOException;
  * @author twu
  */
 public class EntityID implements TCSerializable<EntityID> {
-  public static final EntityID NULL_ID = new EntityID("UKNONWN", "UNKNOWN");
+  public static final EntityID NULL_ID = new EntityID("UNKNOWN", "UNKNOWN");
   
   private final String className;
   private final String entityName;

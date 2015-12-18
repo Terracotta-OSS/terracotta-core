@@ -39,8 +39,6 @@ public interface ServerEntityRequest {
    */
   ClientDescriptor getSourceDescriptor();
 
-  byte[] getPayload();
-
   void complete();
 
   void complete(byte[] value);
@@ -50,12 +48,4 @@ public interface ServerEntityRequest {
   void received();
 
   boolean requiresReplication();
-
-  /**
-   * NOTE:  This method is only used for one kind of sync message so we probably need to refactor this to avoid these 
-   * tendrils of specialization.
-   * 
-   * @return The concurrency key set on the request
-   */
-  int getConcurrencyKey();
 }
