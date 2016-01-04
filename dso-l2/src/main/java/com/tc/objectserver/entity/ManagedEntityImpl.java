@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.google.common.base.Throwables;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -141,17 +140,6 @@ public class ManagedEntityImpl implements ManagedEntity {
   public void addLifecycleRequest(ServerEntityRequest create, byte[] data) {
     executor.scheduleRequest(getEntityDescriptorForSource(create.getSourceDescriptor()), create, data, ()->invoke(create, data), ConcurrencyStrategy.MANAGEMENT_KEY);
   } 
-
-  private synchronized void waitForEntityCreation() {
-    while ((null == this.activeServerEntity) && (null == this.passiveServerEntity)) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        // We have no way of handling an interruption at this wait point.
-        Throwables.propagate(e);
-      }
-    }
-  }
 
   @Override
   public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
@@ -326,7 +314,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " already exists.");
       } else {
-        createActiveEntityAndNotify();
+        this.activeServerEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
         entityToCreate = this.activeServerEntity;
       }
     } else {
@@ -336,7 +324,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         if (logger.isDebugEnabled()) {
           logger.debug("created passive entity " + this.getID() + " due to " + createEntityRequest.getAction());
         }
-        createPassiveEntityAndNotify();
+        this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
         // Store the configuration in case we promote.
         entityToCreate = this.passiveServerEntity;
       }
@@ -345,16 +333,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.createNew();
-  }
-
-  private synchronized void createPassiveEntityAndNotify() {
-    this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
-    notifyAll();
-  }
-
-  private synchronized void createActiveEntityAndNotify() {
-    this.activeServerEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
-    notifyAll();
   }
 
   private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
