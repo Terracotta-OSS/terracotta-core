@@ -16,15 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodec;
 
 
 /**

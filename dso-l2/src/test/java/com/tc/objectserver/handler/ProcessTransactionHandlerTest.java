@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.handler;
 
 import static org.mockito.Mockito.mock;
@@ -35,7 +34,6 @@ import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponse;
-import com.tc.l2.context.StateChangedEvent;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
