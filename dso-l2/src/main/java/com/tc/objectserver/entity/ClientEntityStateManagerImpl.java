@@ -28,6 +28,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
@@ -39,13 +40,23 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   }
 
   @Override
-  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor) {
-    return clientStates.put(clientID, entityDescriptor);
+  public void addReference(ClientID clientID, EntityDescriptor entityDescriptor) {
+    boolean didAdd = clientStates.put(clientID, entityDescriptor);
+    // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
+    Assert.assertTrue(didAdd);
   }
 
   @Override
-  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
-    return clientStates.remove(clientID, entityDescriptor);
+  public void removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
+    boolean didRemove = clientStates.remove(clientID, entityDescriptor);
+    // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
+    Assert.assertTrue(didRemove);
+  }
+
+  @Override
+  public void verifyNoReferences(EntityDescriptor entityDescriptor) {
+    boolean doesContain = clientStates.containsValue(entityDescriptor);
+    Assert.assertFalse(doesContain);
   }
 
   @Override
@@ -55,17 +66,21 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
 
   @Override
   public void channelRemoved(MessageChannel channel) {
-    for (EntityDescriptor oneInstance : clientStates.removeAll(channel.getRemoteNodeID())) {
-      this.voltronSink.addSingleThreaded(new RemovalMessage(channel.getRemoteNodeID(), oneInstance));
+    NodeID node = channel.getRemoteNodeID();
+    // We know that this is a remote client so make the down-cast.
+    ClientID client = (ClientID) node;
+    // Note that we will clean these up when the removal request comes through so leave the clientStates unchanged, for now.
+    for (EntityDescriptor oneInstance : this.clientStates.get(client)) {
+      this.voltronSink.addSingleThreaded(new RemovalMessage(client, oneInstance));
     }
   }
 
   private static class RemovalMessage implements VoltronEntityMessage {
     private static final byte[] EMPTY_EXTENDED_DATA = new byte[0];
-    private final NodeID clientID;
+    private final ClientID clientID;
     private final EntityDescriptor entityDescriptor;
 
-    public RemovalMessage(NodeID clientID, EntityDescriptor entityDescriptor) {
+    public RemovalMessage(ClientID clientID, EntityDescriptor entityDescriptor) {
       this.clientID = clientID;
       this.entityDescriptor = entityDescriptor;
     }

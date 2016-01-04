@@ -22,12 +22,35 @@ import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.net.DSOChannelManagerEventListener;
 
+
 /**
- * @author twu
+ * This interface tracks the connections between clients and entities, created by a fetch and destroyed by a release.
+ * Note that the same client can refer to a specific entity multiple times, which each connection possessing a distinct
+ * life cycle.
  */
 public interface ClientEntityStateManager extends DSOChannelManagerEventListener {
+  /**
+   * Adds a reference from clientID to the entity described by entityDescriptor.
+   * 
+   * @param clientID The client.
+   * @param entityDescriptor The entity.
+   */
+  public void addReference(ClientID clientID, EntityDescriptor entityDescriptor);
 
-  boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  /**
+   * Removes a reference from clientID to the entity described by entityDescriptor.
+   * NOTE:  This will assert if an attempt is made to remove a reference which was never added.
+   * 
+   * @param clientID The client.
+   * @param entityDescriptor The entity.
+   */
+  public void removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
 
-  boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  /**
+   * Verifies that no clients have a reference to the entity described by entityDescriptor.
+   * NOTE:  This will assert if there are any remaining references.
+   * 
+   * @param entityDescriptor The entity.
+   */
+  public void verifyNoReferences(EntityDescriptor entityDescriptor);
 }

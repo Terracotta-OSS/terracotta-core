@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import org.hamcrest.BaseMatcher;
@@ -54,18 +53,18 @@ public class ClientEntityStateManagerImplTest {
 
   @Test
   public void testAddForNewClient() throws Exception {
-    assertTrue(clientEntityStateManager.addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
   }
 
   @Test
   public void testAddTwice() throws Exception {
-    assertTrue(clientEntityStateManager.addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
-    assertFalse(clientEntityStateManager.addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertFalse(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
   }
 
   @Test
   public void testRemoveUnknown() throws Exception {
-    assertFalse(clientEntityStateManager.removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertFalse(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
   }
 
   @Test
@@ -81,6 +80,56 @@ public class ClientEntityStateManagerImplTest {
     clientEntityStateManager.channelRemoved(messageChannel);
 
     verify(requestSink).addSingleThreaded(argThat(hasClientAndEntityIDs(clientID, entityID)));
+  }
+
+  @Test
+  public void testVerifyNoReferences() throws Exception {
+    // Verify that there are no references.
+    assertTrue(verifyNoReferences(new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    // Add a reference.
+    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    // Verify that there now are references.
+    assertFalse(verifyNoReferences(new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    // Remove the reference.
+    assertTrue(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    // Verify that there are no references.
+    assertTrue(verifyNoReferences(new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+  }
+
+  private boolean addReference(ClientID clientID, EntityDescriptor descriptor) {
+    // This only fails by asserting.
+    boolean didSucceed = false;
+    try {
+      clientEntityStateManager.addReference(clientID, descriptor);
+      didSucceed = true;
+    } catch (AssertionError e) {
+      didSucceed = false;
+    }
+    return didSucceed;
+  }
+
+  private boolean removeReference(ClientID clientID, EntityDescriptor descriptor) {
+    // This only fails by asserting.
+    boolean didSucceed = false;
+    try {
+      clientEntityStateManager.removeReference(clientID, descriptor);
+      didSucceed = true;
+    } catch (AssertionError e) {
+      didSucceed = false;
+    }
+    return didSucceed;
+  }
+
+  private boolean verifyNoReferences(EntityDescriptor descriptor) {
+    // This only fails by asserting.
+    boolean didSucceed = false;
+    try {
+      clientEntityStateManager.verifyNoReferences(descriptor);
+      didSucceed = true;
+    } catch (AssertionError e) {
+      didSucceed = false;
+    }
+    return didSucceed;
   }
 
   private Matcher<VoltronEntityMessage> hasClientAndEntityIDs(final ClientID clientID, final EntityID entityID) {

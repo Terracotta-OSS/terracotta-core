@@ -297,9 +297,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (null != commonServerEntity) {
       ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
       EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-      // The DESTROY can only come directly from a client so we can down-cast.
-      ClientID clientID = (ClientID) request.getNodeID();
-      clientEntityStateManager.removeReference(clientID, entityDescriptor);
+      // We want to ensure that nobody somehow has a reference to this entity.
+      clientEntityStateManager.verifyNoReferences(entityDescriptor);
       commonServerEntity.destroy();
     }
     request.complete();
