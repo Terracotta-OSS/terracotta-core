@@ -158,8 +158,8 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
@@ -623,7 +623,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(voltronMessageSink);
 
-    ITopologyEventCollector eventCollector = null;
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector();
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor);
     channelManager.addEventListener(clientEntityStateManager);
