@@ -77,7 +77,12 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
   private void nodeDisconnected(NodeID nodeID, ProductID productId) {
-    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, nodeID, productId);
+    // We want to track this if it is an L1 (ClientID) disconnecting.
+    if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
+      ClientID clientID = (ClientID) nodeID;
+      // Broadcast this message.
+      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
+    }
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
@@ -86,18 +91,23 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   }
 
   private void nodeConnected(NodeID nodeID, ProductID productId) {
-    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID, productId);
+    // We want to track this if it is an L1 (ClientID) connecting.
+    if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
+      ClientID clientID = (ClientID) nodeID;
+      // Broadcast this message.
+      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
+    }
   }
 
-  private void broadcastClusterMembershipMessage(int eventType, NodeID nodeID, ProductID productId) {
-    // only broadcast cluster membership messages for L1 nodes when the current server is the active coordinator
-    if (haConfig.isActiveCoordinatorGroup() && NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
+  private void broadcastClientClusterMembershipMessage(int eventType, ClientID clientID, ProductID productId) {
+    // Only broadcast when the current server is the active coordinator.
+    if (haConfig.isActiveCoordinatorGroup()) {
       MessageChannel[] channels = channelMgr.getActiveChannels();
       for (MessageChannel channel : channels) {
-        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(nodeID)) {
+        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(clientID)) {
           ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
               .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-          cmm.initialize(eventType, nodeID, productId);
+          cmm.initialize(eventType, clientID, productId);
           cmm.send();
         }
       }

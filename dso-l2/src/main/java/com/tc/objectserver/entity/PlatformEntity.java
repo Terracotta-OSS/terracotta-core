@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -27,9 +28,7 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 
-/**
- *
- */
+
 public class PlatformEntity implements ManagedEntity {
   public static EntityID PLATFORM_ID = new EntityID("platform", "root");
   public static long VERSION = 1L;
@@ -66,7 +65,7 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+  public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
   // never reconnect
   }
 

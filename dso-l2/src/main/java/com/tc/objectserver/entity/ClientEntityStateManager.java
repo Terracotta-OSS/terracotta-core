@@ -16,10 +16,9 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
-import com.tc.net.NodeID;
+import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.net.DSOChannelManagerEventListener;
 
@@ -28,7 +27,7 @@ import com.tc.object.net.DSOChannelManagerEventListener;
  */
 public interface ClientEntityStateManager extends DSOChannelManagerEventListener {
 
-  boolean addReference(NodeID nodeID, EntityDescriptor entityDescriptor);
+  boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor);
 
-  boolean removeReference(NodeID nodeID, EntityDescriptor entityDescriptor);
+  boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
 }

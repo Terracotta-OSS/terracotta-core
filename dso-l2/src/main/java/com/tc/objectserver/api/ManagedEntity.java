@@ -19,6 +19,8 @@
 package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
+
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 
@@ -48,11 +50,11 @@ public interface ManagedEntity {
    * This is called after restart or fail-over to re-associate a formerly connected client with its server-side entities.
    * Note that this call is made BEFORE any re-sent transactions are issued to the entity.
    * 
-   * @param nodeID The client node involved in the reconnect
+   * @param clientID The client node involved in the reconnect
    * @param clientDescriptor The specific instance on that client which is requesting to reconnect
    * @param extendedReconnectData Free-formed data sent by the client to help restore the in-memory state of the entity
    */
-  public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData);
+  public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData);
   /**
    * Called to sync an entity.  Caller initiates sync of an entity through this method.  
    * 

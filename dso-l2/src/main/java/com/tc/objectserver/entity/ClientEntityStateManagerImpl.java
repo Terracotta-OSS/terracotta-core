@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import com.google.common.collect.HashMultimap;
@@ -24,6 +23,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
@@ -31,7 +31,7 @@ import com.tc.object.tx.TransactionID;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
-  private final Multimap<NodeID, EntityDescriptor> clientStates = Multimaps.synchronizedMultimap(HashMultimap.create());
+  private final Multimap<ClientID, EntityDescriptor> clientStates = Multimaps.synchronizedMultimap(HashMultimap.create());
   private final Sink<VoltronEntityMessage> voltronSink;
 
   public ClientEntityStateManagerImpl(Sink<VoltronEntityMessage> voltronSink) {
@@ -39,13 +39,13 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   }
 
   @Override
-  public boolean addReference(NodeID nodeID, EntityDescriptor entityDescriptor) {
-    return clientStates.put(nodeID, entityDescriptor);
+  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor) {
+    return clientStates.put(clientID, entityDescriptor);
   }
 
   @Override
-  public boolean removeReference(NodeID nodeID, EntityDescriptor entityDescriptor) {
-    return clientStates.remove(nodeID, entityDescriptor);
+  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
+    return clientStates.remove(clientID, entityDescriptor);
   }
 
   @Override

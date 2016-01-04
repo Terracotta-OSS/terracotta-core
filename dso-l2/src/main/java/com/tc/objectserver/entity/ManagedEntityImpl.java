@@ -32,6 +32,7 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -142,9 +143,9 @@ public class ManagedEntityImpl implements ManagedEntity {
   } 
 
   @Override
-  public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+  public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
     EntityDescriptor entityDescriptor = getEntityDescriptorForSource(clientDescriptor);
-    clientEntityStateManager.addReference(nodeID, entityDescriptor);
+    clientEntityStateManager.addReference(clientID, entityDescriptor);
     if (!this.isInActiveState) {
       throw new IllegalStateException("server is not active");
     }
@@ -296,7 +297,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (null != commonServerEntity) {
       ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
       EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-      clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
+      // The DESTROY can only come directly from a client so we can down-cast.
+      ClientID clientID = (ClientID) request.getNodeID();
+      clientEntityStateManager.removeReference(clientID, entityDescriptor);
       commonServerEntity.destroy();
     }
     request.complete();
@@ -395,7 +398,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         ClientDescriptor sourceDescriptor = getEntityRequest.getSourceDescriptor();
         EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-        clientEntityStateManager.addReference(getEntityRequest.getNodeID(), entityDescriptor);
+        // The FETCH can only come directly from a client so we can down-cast.
+        ClientID clientID = (ClientID) getEntityRequest.getNodeID();
+        clientEntityStateManager.addReference(clientID, entityDescriptor);
         this.activeServerEntity.connected(sourceDescriptor);
         getEntityRequest.complete(this.activeServerEntity.getConfig());
       } else {
@@ -411,7 +416,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
         EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-        clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
+        // The RELEASE can only come directly from a client so we can down-cast.
+        ClientID clientID = (ClientID) request.getNodeID();
+        clientEntityStateManager.removeReference(clientID, entityDescriptor);
         this.activeServerEntity.disconnected(sourceDescriptor);
       }
       request.complete();
