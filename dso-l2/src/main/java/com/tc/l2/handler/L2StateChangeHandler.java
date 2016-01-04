@@ -23,16 +23,20 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManager;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+
 
 public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent> {
 
   private StateManager stateManager;
   private final StageController stageManager;
   private ConfigurationContext context;
+  private final ITopologyEventCollector eventCollector;
 
-  public L2StateChangeHandler(StageController stageManager) {
+  public L2StateChangeHandler(StageController stageManager, ITopologyEventCollector eventCollector) {
     this.stageManager = stageManager;
+    this.eventCollector = eventCollector;
   }
 
   @Override

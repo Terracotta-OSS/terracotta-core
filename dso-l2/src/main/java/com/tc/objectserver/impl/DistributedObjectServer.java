@@ -158,6 +158,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.entity.ActiveToPassiveReplication;
@@ -622,8 +623,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(voltronMessageSink);
 
+    ITopologyEventCollector eventCollector = null;
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, processor);
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
     
@@ -633,7 +635,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     final Stage<LockRequestMessage> requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE, LockRequestMessage.class, new RequestLockUnLockHandler(), 1, maxStageSize);
-    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, channelManager, this.haConfig);
+    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, channelManager, this.haConfig, eventCollector);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class, channelLifeCycleHandler, 1, maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
     channelManager.addEventListener(new ClientChannelOperatorEventlistener());
@@ -695,7 +697,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
 
-    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController()), 1, maxStageSize);
+    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
     StateManager state = new StateManagerImpl(this.consoleLogger, this.groupCommManager, 
         stateChange.getSink(),
         new StateManagerConfigImpl(configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs()),

@@ -36,7 +36,9 @@ import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.context.NodeStateEventContext;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+
 
 public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEventContext> implements DSOChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
@@ -47,12 +49,14 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   private Sink<NodeStateEventContext> channelSink;
   private Sink<HydrateContext> hydrateSink;
   private Sink<VoltronEntityMessage> processTransactionSink;
+  private final ITopologyEventCollector eventCollector;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager,
-                                 DSOChannelManager channelManager, HaConfig haConfig) {
+                                 DSOChannelManager channelManager, HaConfig haConfig, ITopologyEventCollector eventCollector) {
     this.commsManager = commsManager;
     this.channelMgr = channelManager;
     this.haConfig = haConfig;
+    this.eventCollector = eventCollector;
   }
 
   @Override

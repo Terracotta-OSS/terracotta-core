@@ -40,6 +40,7 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
 
 import java.util.Optional;
@@ -65,6 +66,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final long version;
   private final ServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
+  private final ITopologyEventCollector eventCollector;
   private final ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
@@ -77,13 +79,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
+  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
+    this.eventCollector = eventCollector;
     this.factory = factory;
     this.executor = process;
     this.isInActiveState = isInActiveState;

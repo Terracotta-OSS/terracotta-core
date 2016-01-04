@@ -41,6 +41,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
@@ -66,6 +67,7 @@ public class ProcessTransactionHandlerTest {
   private ForwardingSink loopbackSink;
   private RunnableSink requestProcessorSink;
   private ClientEntityStateManager clientEntityStateManager;
+  private ITopologyEventCollector eventCollector;
   
   
   @Before
@@ -87,8 +89,9 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink = new RunnableSink();
     
     this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
+    this.eventCollector = mock(ITopologyEventCollector.class);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, processor);
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
   }
