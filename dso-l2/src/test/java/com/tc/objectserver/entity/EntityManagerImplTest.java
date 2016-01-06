@@ -27,6 +27,7 @@ import org.terracotta.TestEntity;
 
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
 
 import static java.util.Optional.empty;
@@ -46,6 +47,7 @@ public class EntityManagerImplTest {
     entityManager = new EntityManagerImpl(
         mock(TerracottaServiceProviderRegistry.class),
         mock(ClientEntityStateManager.class),
+        mock(ITopologyEventCollector.class),
         mock(RequestProcessor.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");

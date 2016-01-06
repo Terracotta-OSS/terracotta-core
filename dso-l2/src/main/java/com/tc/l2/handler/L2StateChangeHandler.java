@@ -23,25 +23,34 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManager;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.util.State;
+
 
 public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent> {
 
   private StateManager stateManager;
   private final StageController stageManager;
   private ConfigurationContext context;
+  private final ITopologyEventCollector eventCollector;
 
-  public L2StateChangeHandler(StageController stageManager) {
+  public L2StateChangeHandler(StageController stageManager, ITopologyEventCollector eventCollector) {
     this.stageManager = stageManager;
+    this.eventCollector = eventCollector;
   }
 
   @Override
   public void handleEvent(StateChangedEvent sce) {
 // execute state transition before notifying any listeners.  Listener notification 
-// can happen in any order.  State transition happens in specfic order as dictated 
+// can happen in any order.  State transition happens in specific order as dictated 
 // by the stage controller.
-    stageManager.transition(context, sce.getOldState(), sce.getCurrentState());
+    State newState = sce.getCurrentState();
+    stageManager.transition(context, sce.getOldState(), newState);
     stateManager.fireStateChangedEvent(sce);
+    // Now that we have processed the event, the last thing we want to do is notify the collector that the server's state
+    // has changed.
+    eventCollector.serverDidEnterState(newState);
   }
 
   @Override

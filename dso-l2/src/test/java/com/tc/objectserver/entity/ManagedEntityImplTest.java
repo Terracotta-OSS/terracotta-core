@@ -36,6 +36,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -68,6 +69,7 @@ public class ManagedEntityImplTest {
   private PassiveServerEntity passiveServerEntity;
   private RequestProcessor requestMulti;
   private ClientEntityStateManager clientEntityStateManager;
+  private ITopologyEventCollector eventCollector;
   private NodeID nodeID;
   private ClientDescriptor clientDescriptor;
   private EntityDescriptor entityDescriptor;
@@ -86,10 +88,11 @@ public class ManagedEntityImplTest {
     passiveServerEntity = mock(PassiveServerEntity.class);
     serverEntityService = getServerEntityService(this.activeServerEntity, this.passiveServerEntity);
     clientEntityStateManager = mock(ClientEntityStateManager.class);
+    eventCollector = mock(ITopologyEventCollector.class);
 
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
+    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
     Mockito.doAnswer(new Answer() {
       @Override

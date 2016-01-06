@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.google.common.base.Throwables;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -33,6 +32,7 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -40,6 +40,7 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
 
 import java.util.Optional;
@@ -65,6 +66,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final long version;
   private final ServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
+  private final ITopologyEventCollector eventCollector;
   private final ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
@@ -77,13 +79,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager,
+  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
+    this.eventCollector = eventCollector;
     this.factory = factory;
     this.executor = process;
     this.isInActiveState = isInActiveState;
@@ -142,21 +145,10 @@ public class ManagedEntityImpl implements ManagedEntity {
     executor.scheduleRequest(getEntityDescriptorForSource(create.getSourceDescriptor()), create, data, ()->invoke(create, data), ConcurrencyStrategy.MANAGEMENT_KEY);
   } 
 
-  private synchronized void waitForEntityCreation() {
-    while ((null == this.activeServerEntity) && (null == this.passiveServerEntity)) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        // We have no way of handling an interruption at this wait point.
-        Throwables.propagate(e);
-      }
-    }
-  }
-
   @Override
-  public void reconnectClient(NodeID nodeID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+  public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
     EntityDescriptor entityDescriptor = getEntityDescriptorForSource(clientDescriptor);
-    clientEntityStateManager.addReference(nodeID, entityDescriptor);
+    clientEntityStateManager.addReference(clientID, entityDescriptor);
     if (!this.isInActiveState) {
       throw new IllegalStateException("server is not active");
     }
@@ -169,6 +161,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     } finally {
       write.unlock();
     }
+    // Fire the event that the client fetched the entity.
+    this.eventCollector.clientDidFetchEntity(clientID, this.getID());
   }
   
   private void invoke(ServerEntityRequest request, byte[] payload) {
@@ -308,10 +302,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (null != commonServerEntity) {
       ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
       EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-      clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
+      // We want to ensure that nobody somehow has a reference to this entity.
+      clientEntityStateManager.verifyNoReferences(entityDescriptor);
       commonServerEntity.destroy();
     }
     request.complete();
+    // Fire the event that the entity was destroyed.
+    this.eventCollector.entityWasDestroyed(this.getID());
   }
 
   private void createEntity(ServerEntityRequest createEntityRequest, byte[] constructorInfo) {
@@ -326,7 +323,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " already exists.");
       } else {
-        createActiveEntityAndNotify();
+        this.activeServerEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
         entityToCreate = this.activeServerEntity;
       }
     } else {
@@ -336,7 +333,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         if (logger.isDebugEnabled()) {
           logger.debug("created passive entity " + this.getID() + " due to " + createEntityRequest.getAction());
         }
-        createPassiveEntityAndNotify();
+        this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
         // Store the configuration in case we promote.
         entityToCreate = this.passiveServerEntity;
       }
@@ -345,16 +342,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.createNew();
-  }
-
-  private synchronized void createPassiveEntityAndNotify() {
-    this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
-    notifyAll();
-  }
-
-  private synchronized void createActiveEntityAndNotify() {
-    this.activeServerEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
-    notifyAll();
+    // Fire the event that the entity was created.
+    this.eventCollector.entityWasCreated(this.getID(), this.isInActiveState);
   }
 
   private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
@@ -417,9 +406,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         ClientDescriptor sourceDescriptor = getEntityRequest.getSourceDescriptor();
         EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-        clientEntityStateManager.addReference(getEntityRequest.getNodeID(), entityDescriptor);
+        // The FETCH can only come directly from a client so we can down-cast.
+        ClientID clientID = (ClientID) getEntityRequest.getNodeID();
+        clientEntityStateManager.addReference(clientID, entityDescriptor);
         this.activeServerEntity.connected(sourceDescriptor);
         getEntityRequest.complete(this.activeServerEntity.getConfig());
+        // Fire the event that the client fetched the entity.
+        this.eventCollector.clientDidFetchEntity(clientID, this.getID());
       } else {
         getEntityRequest.complete();
       }
@@ -433,8 +426,12 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null != this.activeServerEntity) {
         ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
         EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-        clientEntityStateManager.removeReference(request.getNodeID(), entityDescriptor);
+        // The RELEASE can only come directly from a client so we can down-cast.
+        ClientID clientID = (ClientID) request.getNodeID();
+        clientEntityStateManager.removeReference(clientID, entityDescriptor);
         this.activeServerEntity.disconnected(sourceDescriptor);
+        // Fire the event that the client released the entity.
+        this.eventCollector.clientDidReleaseEntity(clientID, this.getID());
       }
       request.complete();
     } else {
@@ -458,6 +455,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.activeServerEntity = factory.createActiveEntity(this.registry, constructorInfo);
       this.activeServerEntity.loadExisting();
       this.passiveServerEntity = null;
+      // Fire the event that the entity was reloaded.
+      this.eventCollector.entityWasReloaded(this.getID(), true);
     } else {
       throw new IllegalStateException("no entity to promote");
     }
@@ -501,6 +500,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     loadEntityRequest.complete();
     entityToLoad.loadExisting();
+    // Fire the event that the entity was reloaded.
+    this.eventCollector.entityWasReloaded(this.getID(), this.isInActiveState);
   }
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
