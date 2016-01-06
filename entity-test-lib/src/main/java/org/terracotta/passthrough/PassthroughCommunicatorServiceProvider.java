@@ -19,7 +19,11 @@
 package org.terracotta.passthrough;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -49,7 +53,10 @@ public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    // TODO Auto-generated method stub
-    return null;
+    // Using Collections.singleton here complains about trying to unify between different containers of different class
+    // bindings so doing it manually satisfies the compiler (seems to work in Java8 but not Java6).
+    Set<Class<?>> set = new HashSet<Class<?>>();
+    set.add(ClientCommunicator.class);
+    return set;
   }
 }
