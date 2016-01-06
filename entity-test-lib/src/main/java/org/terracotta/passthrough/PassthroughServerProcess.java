@@ -63,7 +63,7 @@ public class PassthroughServerProcess implements MessageHandler {
   // Note that only ONE of the active or passive entities will be non-null.
   private Map<PassthroughEntityTuple, CreationData<ActiveServerEntity<?, ?>>> activeEntities;
   private Map<PassthroughEntityTuple, CreationData<PassiveServerEntity<?, ?>>> passiveEntities;
-  private final Map<Class<?>, ServiceProvider> serviceProviderMap;
+  private final List<ServiceProvider> serviceProviders;
   private PassthroughServerProcess downstreamPassive;
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
@@ -75,7 +75,7 @@ public class PassthroughServerProcess implements MessageHandler {
     this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<ActiveServerEntity<?, ?>>>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<PassiveServerEntity<?, ?>>>());
-    this.serviceProviderMap = new HashMap<Class<?>, ServiceProvider>();
+    this.serviceProviders = new Vector<ServiceProvider>();
     // Consumer IDs start at 0 since that is the one the platform gives itself.
     this.nextConsumerID = 0;
   }
@@ -94,7 +94,7 @@ public class PassthroughServerProcess implements MessageHandler {
       // Load the entities.
       for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
         // Create the registry for the entity.
-        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviderMap);
+        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviders);
         // Construct the entity.
         EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
         ServerEntityService<?, ?> service = null;
@@ -543,11 +543,11 @@ public class PassthroughServerProcess implements MessageHandler {
     return foundService;
   }
 
-  public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+  public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     // We run the initializer right away.
     boolean didInitialize = serviceProvider.initialize(providerConfiguration);
     Assert.assertTrue(didInitialize);
-    this.serviceProviderMap.put(clazz, serviceProvider);
+    this.serviceProviders.add(serviceProvider);
   }
 
   public void setDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
@@ -624,7 +624,7 @@ public class PassthroughServerProcess implements MessageHandler {
   private PassthroughServiceRegistry getNextServiceRegistry() {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
-    return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviderMap);
+    return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviders);
   }
 
   private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException {

@@ -21,12 +21,10 @@ package org.terracotta.passthrough;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Vector;
 
 import org.junit.Assert;
 import org.terracotta.connection.Connection;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
@@ -47,8 +45,7 @@ public class PassthroughServer {
   
   // We also track various information for the restart case.
   private final List<ServerEntityService<?, ?>> savedServerEntityServices;
-  private final Map<Class<?>, ServiceProvider> savedServiceProviders;
-  private final Map<Class<?>, ServiceProviderConfiguration> savedServiceProviderConfigurations;
+  private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final Map<Long, PassthroughConnection> savedClientConnections;
   private PassthroughServer savedPassiveServer;
   
@@ -59,13 +56,12 @@ public class PassthroughServer {
     
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
     this.savedServerEntityServices = new Vector<ServerEntityService<?, ?>>();
-    this.savedServiceProviders = new HashMap<Class<?>, ServiceProvider>();
-    this.savedServiceProviderConfigurations = new HashMap<Class<?>, ServiceProviderConfiguration>();
+    this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
     
     // Register built-in services.
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
-    registerServiceProvider(ClientCommunicator.class, communicatorServiceProvider, null);
+    internalRegisterServiceProvider(communicatorServiceProvider, null);
   }
 
   public void registerServerEntityService(ServerEntityService<?, ?> service) {
@@ -107,8 +103,14 @@ public class PassthroughServer {
     this.serverProcess.shutdown();
   }
 
+  @Deprecated
+  // Deprecated in favor of registerServiceProvider (as clazz was unused).
   public <T> void registerServiceProviderForType(Class<T> clazz, ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
-    registerServiceProvider(clazz, serviceProvider, providerConfiguration);
+    internalRegisterServiceProvider(serviceProvider, providerConfiguration);
+  }
+
+  public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    internalRegisterServiceProvider(serviceProvider, providerConfiguration);
   }
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
@@ -144,10 +146,8 @@ public class PassthroughServer {
     for (ServerEntityService<?, ?> serverEntityService : this.savedServerEntityServices) {
       this.serverProcess.registerEntityService(serverEntityService);
     }
-    for (Entry<Class<?>, ServiceProvider> entry : this.savedServiceProviders.entrySet()) {
-      Class<?> key = entry.getKey();
-      ServiceProviderConfiguration configuration = this.savedServiceProviderConfigurations.get(key);
-      this.serverProcess.registerServiceProviderForType(key, entry.getValue(), configuration);
+    for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
+      this.serverProcess.registerServiceProvider(tuple.serviceProvider, tuple.providerConfiguration);
     }
     
     // Handle the difference between active restart and passive fail-over.
@@ -201,9 +201,18 @@ public class PassthroughServer {
     this.serverProcess.setDownstreamPassiveServerProcess(this.savedPassiveServer.serverProcess);
   }
 
-  private <T> void registerServiceProvider(Class<T> clazz, ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
-    this.savedServiceProviders.put(clazz, serviceProvider);
-    this.savedServiceProviderConfigurations.put(clazz, providerConfiguration);
-    this.serverProcess.registerServiceProviderForType(clazz, serviceProvider, providerConfiguration);
+  private void internalRegisterServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    this.savedServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
+    this.serverProcess.registerServiceProvider(serviceProvider, providerConfiguration);
+  }
+  
+  private static class ServiceProviderAndConfiguration {
+    public final ServiceProvider serviceProvider;
+    public final ServiceProviderConfiguration providerConfiguration;
+    
+    public ServiceProviderAndConfiguration(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+      this.serviceProvider = serviceProvider;
+      this.providerConfiguration = providerConfiguration;
+    }
   }
 }

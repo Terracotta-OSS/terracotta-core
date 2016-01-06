@@ -19,6 +19,7 @@
 package org.terracotta.passthrough;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.terracotta.entity.ServiceConfiguration;
@@ -35,11 +36,11 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
   
-  public PassthroughServiceRegistry(long consumerID, Map<Class<?>, ServiceProvider> serviceProviderMap) {
+  public PassthroughServiceRegistry(long consumerID, List<ServiceProvider> serviceProviders) {
     this.consumerID = consumerID;
     
     Map<Class<?>, ServiceProvider> temp = new HashMap<Class<?>, ServiceProvider>();
-    for(ServiceProvider provider : serviceProviderMap.values()) {
+    for(ServiceProvider provider : serviceProviders) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
         // We currently have no way of handling multiple providers.
         Assert.assertTrue(null == temp.get(serviceType));
