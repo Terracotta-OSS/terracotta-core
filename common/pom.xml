@@ -133,6 +133,9 @@ Apache Ivy version: 2.2.0 20100923230623
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
             <argLine>-Xmx2G -Djava.awt.headless=true</argLine>
+            <systemPropertyVariables>
+                <testClassesDir>${project.build.testOutputDirectory}</testClassesDir>
+            </systemPropertyVariables>
         </configuration>
       </plugin>
     </plugins>
