@@ -35,21 +35,29 @@ public class ComponentURLClassLoader extends URLClassLoader {
   }
   
   @Override
-  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    Class<?> clazz = findLoadedClass(name);
-    if (clazz == null) {
-      try {
-        clazz = findClass(name);
-        if (clazz.getAnnotation(CommonComponent.class) != null) {
-          throw new ClassNotFoundException("common api");
+  protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    Class<?> target = findLoadedClass(name);
+//  if it's already loaded in this loader, return it, decision has already been made about where 
+//  to load in previous iteration
+    if (target == null) {
+      target = super.loadClass(name, resolve);
+// if the class is not found, ClassNotFoundException will be thrown and that is fine, class is nowhere
+      if (target.getAnnotation(CommonComponent.class) == null) {
+//  not a common class as designated by annotation, see if the class is in this specific class loader for preference if it is
+        try {
+          target = findClass(name);
+        } catch (ClassNotFoundException notfound) {
+//  it's not here in this loader, revert back to the common (already set)
         }
-      } catch (ClassNotFoundException notfound) {
-        clazz = getParent().loadClass(name);
+      } else {
+  //  this is a designated common component, return it no matter where it came from 
+  //  (default implementation always uses the parent classloader if the class is available there)
       }
     }
-    if (clazz != null && resolve) {
-      this.resolveClass(clazz);
+    
+    if (resolve) {
+      this.resolveClass(target);
     }
-    return clazz;
+    return target;
   }
 }
