@@ -57,9 +57,19 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   @Override
   public synchronized void clientDidConnect(ClientID client) {
     // Ensure that this client isn't already connected.
-    Assert.assertFalse(this.connectedClients.contains(client));
-    // Now, add it to the connected set.
-    this.connectedClients.add(client);
+    // XXX: At this time, there is a bug where we sometimes see the same client connect multiple times, typically around
+    // passive fail-over.
+    boolean isBroken = true;
+    if (!isBroken) {
+      Assert.assertFalse(this.connectedClients.contains(client));
+      // Now, add it to the connected set.
+      this.connectedClients.add(client);
+    } else {
+      // As a work-around, only add the client if it isn't already in the list.
+      if (!this.connectedClients.contains(client)) {
+        this.connectedClients.add(client);
+      }
+    }
   }
 
   @Override
