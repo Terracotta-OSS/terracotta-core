@@ -51,7 +51,7 @@ public class ComponentURLClassLoaderTest {
   
   @Test
   public void testCommonComponent() throws Exception {
-    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, this.getClass().getClassLoader());
+    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, this.getClass().getClassLoader(), new AnnotationBasedCommonComponentChecker());
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
     assertEquals(commonClass.getClassLoader(), this.getClass().getClassLoader());
     Class<?> specificClass = loader.loadClass("com.tc.classloader.SpecificComponentClass");
@@ -61,7 +61,7 @@ public class ComponentURLClassLoaderTest {
   @Test 
   public void testClassCaching() throws Exception {
     ExposedClassLoader parent = Mockito.spy(new ExposedClassLoader(new URL[0], this.getClass().getClassLoader()));
-    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, parent);
+    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, parent, new AnnotationBasedCommonComponentChecker());
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
     assertTrue(commonClass == loader.loadClass("com.tc.classloader.CommonComponentClass"));
 //  should happen twice because the class is common

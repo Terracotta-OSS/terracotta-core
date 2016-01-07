@@ -28,6 +28,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
 import org.terracotta.entity.ServiceConfiguration;
@@ -42,19 +43,22 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public void initialize(String serverName, TcConfiguration configuration) {
-    for (ServiceProviderConfiguration config : configuration.getServiceConfigurations().get(serverName)) {
-      Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
-      try {
-        ServiceProvider provider = serviceClazz.newInstance();
-        if (provider.initialize(config)) {
-          registerNewServiceProvider(provider);
-        }
-      } catch (InstantiationException | IllegalAccessException ie) {
+    List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations().get(serverName);
+    if(serviceProviderConfigurationList != null) {
+      for (ServiceProviderConfiguration config : serviceProviderConfigurationList) {
+        Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
+        try {
+          ServiceProvider provider = serviceClazz.newInstance();
+          if (provider.initialize(config)) {
+            registerNewServiceProvider(provider);
+          }
+        } catch (InstantiationException | IllegalAccessException ie) {
 //  really shouldn't be doing this.  ServiceProvider configurations should provide appropriate classes
 //  to handle the config.
-        tryServiceLoader(config);
-      }
+          tryServiceLoader(config);
+        }
 
+      }
     }
   }
   

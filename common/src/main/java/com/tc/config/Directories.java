@@ -81,4 +81,12 @@ public class Directories {
     return new File(getInstallationRoot(), "server/lib");
   }
 
+  public static File getServerPluginsApiDir() throws FileNotFoundException {
+    return new File(getInstallationRoot(), "plugins/api");
+  }
+
+  public static File getServerPluginsLibDir() throws FileNotFoundException {
+    return new File(getInstallationRoot(), "plugins/lib");
+  }
+
 }

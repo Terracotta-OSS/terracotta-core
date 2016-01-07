@@ -19,18 +19,16 @@
 
 package com.tc.classloader;
 
+import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggingService;
 import com.tc.util.ServiceUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 
 /**
@@ -97,6 +95,7 @@ public class ServiceLocator {
       LOG.debug("Discovering " + interfaceName.getName() + " with parent classloader " + parent.getClass().getName());
     }
     Map<String, String> urls = discoverImplementations(parent, interfaceName.getName());
+    CommonComponentChecker commonComponentChecker = createCommonComponentChecker();
     ArrayList<T> implementations = new ArrayList<T>();
     if (null == urls || urls.isEmpty()) {
       if(LOG.isDebugEnabled()) {
@@ -106,7 +105,7 @@ public class ServiceLocator {
     }
     for (Map.Entry<String, String> entry : urls.entrySet()) {
       try {
-        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, parent);
+        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, parent, commonComponentChecker);
         implementations.add((T)
             Class.forName(entry.getKey(), false, loader).newInstance());
       } catch (Exception e) {
@@ -114,6 +113,46 @@ public class ServiceLocator {
       }
     }
     return implementations;
+  }
+
+  private static CommonComponentChecker createCommonComponentChecker() {
+
+    if(System.getProperty("using-terracotta-kit") != null) {
+      Set<String> commonClasses = new HashSet<String>();
+      File pluginApiDir;
+      try {
+        pluginApiDir = Directories.getServerPluginsApiDir();
+      } catch (FileNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+      String[] apiJars = pluginApiDir.list(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+          return name.endsWith(".jar");
+        }
+      });
+
+      if (apiJars != null) {
+        for (String jar : apiJars) {
+          try {
+            JarFile jarFile = new JarFile(pluginApiDir + File.separator + jar);
+            Enumeration<JarEntry> entryEnumeration = jarFile.entries();
+            while (entryEnumeration.hasMoreElements()) {
+              JarEntry entry = entryEnumeration.nextElement();
+              String entryName = entry.getName();
+              if (!entry.isDirectory() && entryName.endsWith(".class")) {
+                String className = entryName.replaceAll("/", ".").replace(".class", "");
+                commonClasses.add(className);
+              }
+            }
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+      return new BasicCommonComponentChecker(commonClasses);
+    } else {
+      return new AnnotationBasedCommonComponentChecker();
+    }
   }
 
 }
