@@ -43,7 +43,9 @@ import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.terracotta.entity.EntityResponse;
@@ -189,7 +191,7 @@ public class EntityManagerImpl implements EntityManager {
       return this.action;
     }
     @Override
-    public NodeID getNodeID() {
+    public ClientID getNodeID() {
       return ClientID.NULL_ID;
     }
     @Override
@@ -228,9 +230,9 @@ public class EntityManagerImpl implements EntityManager {
     }
 
     @Override
-    public boolean requiresReplication() {
+    public Set<NodeID> replicateTo(Set<NodeID> passives) {
       // These are internal requests so they are never replicated.
-      return false;
+      return Collections.emptySet();
     }
     
     public synchronized void waitForCompletion() {

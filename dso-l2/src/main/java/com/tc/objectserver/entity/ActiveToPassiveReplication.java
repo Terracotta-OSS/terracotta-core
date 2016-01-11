@@ -107,11 +107,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       @Override
       public void run() {    
         // start passive sync message
+        logger.debug("starting sync for " + newNode);
         replicate.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage().target(newNode));
         for (ManagedEntity entity : entities) {
-            entity.sync(newNode);
+          logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
+          entity.sync(newNode);
+          logger.debug("ending sync for entity " + newNode + "/" + entity.getID());
         }
     //  passive sync done message.  causes passive to go into passive standby mode
+        logger.debug("ending sync " + newNode);
         replicate.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage().target(newNode));
       }
     });

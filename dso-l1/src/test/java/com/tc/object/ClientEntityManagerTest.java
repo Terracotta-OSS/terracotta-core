@@ -461,7 +461,7 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
     @Override
-    public NodeID getSource() {
+    public ClientID getSource() {
       throw new UnsupportedOperationException();
     }
     @Override

@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -48,8 +49,7 @@ public class ServerEntityRequestImplTest {
   private VoltronEntityAppliedResponse responseMessage;
   private EntityDescriptor entityDescriptor;
   private TransactionID transactionID;
-  private NodeID nodeID;
-  private byte[] payload;
+  private ClientID nodeID;
 
   @Before
   public void setUp() throws Exception {
@@ -58,8 +58,7 @@ public class ServerEntityRequestImplTest {
     messageChannel = mockMessageChannel(requestAckMessage, responseMessage);
     entityDescriptor = new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1);
     transactionID = new TransactionID(1);
-    nodeID = mock(NodeID.class);
-    payload = new byte[0];
+    nodeID = mock(ClientID.class);
   }
 
   @Test

@@ -19,18 +19,16 @@
 
 package com.tc.objectserver.entity;
 
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.util.Assert;
 
 import java.util.Optional;
+import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
 
 
@@ -40,16 +38,11 @@ import org.terracotta.exception.EntityException;
  */
 public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
   protected final Optional<MessageChannel> returnChannel;
-  // TODO:  Using this flag is a bit of a hack but so is ServerEntityRequest.getConcurrencyKey so hopefully we can find a
-  // less general way of asking about this so we won't need this flag to re-specialize it.
-  private final boolean doesDeclareConcurrencyKey;
 
-  // TODO:  Coalesce these constructors once we handle this doesDeclareConcurrencyKey in a better way.
   public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
+      TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
     super(descriptor, action, transaction, oldest, src, requiresReplication);
     this.returnChannel = returnChannel;
-    this.doesDeclareConcurrencyKey = false;
   }
 
   @Override

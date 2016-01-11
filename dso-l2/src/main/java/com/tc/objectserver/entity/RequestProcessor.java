@@ -24,6 +24,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateChangeListener;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
@@ -51,6 +52,10 @@ public class RequestProcessor implements StateChangeListener {
     passives.enterActiveState();
     isActive = true;
   }
+  
+  public Set<NodeID> passives() {
+    return passives.passives();
+  }
 
   public Future<Void> scheduleSync(PassiveSyncMessage msg, NodeID passive) {
     return passives.replicateMessage(msg, Collections.singleton(passive));
@@ -68,7 +73,7 @@ public class RequestProcessor implements StateChangeListener {
   
   public void scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-    Set<NodeID> replicateTo = (isActive && passives != null && request.requiresReplication()) ? passives.passives() : Collections.emptySet();
+    Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
@@ -77,7 +82,7 @@ public class RequestProcessor implements StateChangeListener {
     requestExecution.addMultiThreaded(entityRequest);
   }
   
-  private static ReplicationMessage createReplicationMessage(EntityDescriptor id, NodeID src,
+  private static ReplicationMessage createReplicationMessage(EntityDescriptor id, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
     ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
     switch (type) {

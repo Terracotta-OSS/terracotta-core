@@ -42,8 +42,10 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
+import java.util.Collections;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
@@ -227,8 +229,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             performAction(request, message);
             break;
           case REQUEST_SYNC_ENTITY:
-//  use typing for this distinction since it is server generated?
-            performSync(request, concurrencyKey);
+            performSync(request, request.replicateTo(executor.passives()), concurrencyKey);
             break;
           case RECEIVE_SYNC_ENTITY_KEY_START:
             receiveSyncEntityKeyStart(request, concurrencyKey);
@@ -346,7 +347,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector.entityWasCreated(this.getID(), this.isInActiveState);
   }
 
-  private void performSync(ServerEntityRequest wrappedRequest, int concurrencyKey) {
+  private void performSync(ServerEntityRequest wrappedRequest, Set<NodeID> passives, int concurrencyKey) {
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
@@ -356,21 +357,25 @@ public class ManagedEntityImpl implements ManagedEntity {
           @Override
 //  TODO:  what should be done about exception handling?
           public void synchronizeToPassive(byte[] payload) {
-            Future<Void> wait = executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), wrappedRequest.getNodeID());
-            try {
-              wait.get();
-            } catch (ExecutionException ee) {
-            // TODO: do something reasoned here
-              throw new RuntimeException(ee);
-            } catch (InterruptedException ie) {
-            // TODO: do something reasoned here
-              Thread.currentThread().interrupt();
-              throw new RuntimeException(ie);
+            for (NodeID passive : passives) {
+              Future<Void> wait = executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, payload), passive);
+              try {
+                wait.get();
+              } catch (ExecutionException ee) {
+              // TODO: do something reasoned here
+                throw new RuntimeException(ee);
+              } catch (InterruptedException ie) {
+              // TODO: do something reasoned here
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(ie);
+              }
             }
           }};
 //  start is handled by the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
-        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), wrappedRequest.getNodeID());
+        for (NodeID passive : passives) {
+          executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive);
+        }
         wrappedRequest.complete();
       }
     } else {
@@ -467,16 +472,16 @@ public class ManagedEntityImpl implements ManagedEntity {
   public void sync(NodeID passive) {
     executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
 // iterate through all the concurrency keys of an entity
+    EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
     for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
       PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, passive);
       // We don't actually use the message in the direct strategy so this is safe.
-      EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
       executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
       req.waitFor();
     }
 //  end passive sync for an entity
     executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
-  }
+  }  
 
   private void loadExisting(ServerEntityRequest loadEntityRequest, byte[] constructorInfo) {
     this.constructorInfo = constructorInfo;
@@ -506,13 +511,21 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
     
+    private final NodeID passive;
+    
     public PassiveSyncServerEntityRequest(EntityID eid, long version, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, passive, false);
+      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, ClientID.NULL_ID, false);
+      this.passive = passive;
     }
 
     @Override
-    public boolean requiresReplication() {
-      return true;
+    public ClientID getNodeID() {
+      return super.getNodeID();
+    }
+
+    @Override
+    public Set<NodeID> replicateTo(Set<NodeID> passives) {
+      return Collections.singleton(passive);
     }
 
     @Override

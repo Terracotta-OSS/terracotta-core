@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -27,8 +28,10 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import java.util.Collections;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.terracotta.exception.EntityException;
 
@@ -37,13 +40,13 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   private final ServerEntityAction action;
   private final TransactionID transaction;
   private final TransactionID oldest;
-  private final NodeID  src;
+  private final ClientID  src;
   private final EntityDescriptor descriptor;
   private final boolean requiresReplication;
   
   private boolean done = false;
 
-  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, NodeID src, boolean requiresReplication) {
+  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
     this.action = action;
     this.transaction = transaction;
     this.oldest = oldest;
@@ -71,12 +74,12 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   }
 
   @Override
-  public boolean requiresReplication() {
-    return this.requiresReplication;
+  public Set<NodeID> replicateTo(Set<NodeID> current) {
+    return requiresReplication ? current : Collections.emptySet();
   }
 
   @Override
-  public NodeID getNodeID() {
+  public ClientID getNodeID() {
     return src;
   }
 

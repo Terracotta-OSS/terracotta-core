@@ -61,7 +61,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
   EntityDescriptor descriptor;
     
-  NodeID src;
+  ClientID src;
   TransactionID tid;
   TransactionID oldest;
 
@@ -85,14 +85,14 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     super(RESPONSE, mid);
   }  
 //  a true replicated message
-  public ReplicationMessage(EntityDescriptor descriptor, NodeID src, 
+  public ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
       ReplicationType action, byte[] payload, int concurrency) {
     super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
     initialize(descriptor, src, tid, oldest, action, payload, concurrency);
   }
   
-  protected final void initialize(EntityDescriptor descriptor, NodeID src, 
+  protected final void initialize(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
       ReplicationType action, byte[] payload, int concurrency) {
     Assert.assertNotNull(tid);
@@ -136,7 +136,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return payload;
   }
   
-  public NodeID getSource() {
+  public ClientID getSource() {
     return src;
   }
   
@@ -171,7 +171,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
       if (type == NodeID.CLIENT_NODE_TYPE) {
         this.src = new ClientID().deserializeFrom(in);
       } else if (type == NodeID.SERVER_NODE_TYPE) {
-        this.src = new ServerID().deserializeFrom(in);
+        throw new AssertionError("node type is incorrect");
       }
       this.tid = new TransactionID(in.readLong());
       this.oldest = new TransactionID(in.readLong());

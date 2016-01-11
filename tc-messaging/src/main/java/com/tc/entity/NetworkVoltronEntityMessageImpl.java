@@ -22,7 +22,6 @@ package com.tc.entity;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -46,7 +45,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private TransactionID oldestTransactionPending;
 
   @Override
-  public NodeID getSource() {
+  public ClientID getSource() {
     Assert.assertNotNull(this.clientID);
     return this.clientID;
   }
