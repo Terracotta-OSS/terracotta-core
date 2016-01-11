@@ -36,7 +36,7 @@
                         </goals>
                         <configuration>
                             <artifacts>
-                                <param>org.terracotta:terracotta:${project.version}</param>
+                                <param>org.terracotta.internal:terracotta:${project.version}</param>
                             </artifacts>
                             <resolveTransitively>true</resolveTransitively>
                             <outputDir>${project.build.directory}/server-lib</outputDir>
