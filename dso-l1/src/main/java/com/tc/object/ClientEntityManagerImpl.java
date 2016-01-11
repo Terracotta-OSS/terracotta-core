@@ -306,10 +306,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private void internalRelease(EntityDescriptor entityDescriptor) throws EntityException {
     stateManager.waitUntilRunning();
 
-    // We will immediately remove this from our map so that we don't try to service new calls _from_ the server while we
-    //  are trying to release.
-    this.objectStoreMap.remove(entityDescriptor);
-    
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
     // A "RELEASE" doesn't matter to the passive.
@@ -317,6 +313,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY);
     synchronousWaitForResponse(message, requestedAcks);
+
+    // Note that we remove the entity from the local object store only after this release call returns in order to avoid
+    // the case where a reconnect might happen before the message completes, thus causing a re-send.  If we don't include
+    // this reference in the reconnect handshake, the re-sent release will try to release a non-fetched entity.
+    this.objectStoreMap.remove(entityDescriptor);
   }
 
   /**
