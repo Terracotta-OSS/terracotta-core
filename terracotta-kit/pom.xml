@@ -16,7 +16,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.terracotta</groupId>
+            <groupId>org.terracotta.internal</groupId>
             <artifactId>terracotta</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -45,6 +45,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>

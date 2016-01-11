@@ -54,6 +54,7 @@
     <module>connection-impl</module>
     <module>management</module>
     <module>terracotta-kit</module>
+    <module>terracotta</module>
   </modules>
 
   <build>
