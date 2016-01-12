@@ -84,8 +84,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
-      // Record that the client disconnected.
-      this.eventCollector.clientDidDisconnect(clientID);
       // Broadcast this message.
       broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
     }
@@ -100,8 +98,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     // We want to track this if it is an L1 (ClientID) connecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
-      // Record that the client connected.
-      this.eventCollector.clientDidConnect(clientID);
       // Broadcast this message.
       broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
     }
@@ -136,6 +132,8 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   public void channelCreated(MessageChannel channel) {
     ClientID clientID = new ClientID(channel.getChannelID().toLong());
     channelSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, clientID, channel.getProductId()));
+    // Record that the client connected.
+    this.eventCollector.clientDidConnect(clientID);
   }
 
   @Override
@@ -149,5 +147,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
     InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context2);
+    // Record that the client disconnected.
+    this.eventCollector.clientDidDisconnect(clientID);
   }
 }
