@@ -140,14 +140,14 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
 
   @Override
   public void channelRemoved(MessageChannel channel) {
+    // Note that the remote node ID always refers to a client, in this path.
+    ClientID clientID = (ClientID) channel.getRemoteNodeID();
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
-    final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,
-                                                                            channel.getRemoteNodeID(), channel.getProductId());
+    final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE, clientID, channel.getProductId());
     NodeID inBandSchedulerKey = channel.getRemoteNodeID();
     InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
     InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context2);
   }
-
 }
