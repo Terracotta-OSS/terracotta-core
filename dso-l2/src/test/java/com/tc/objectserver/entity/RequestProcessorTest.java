@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -28,6 +29,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import java.util.Collections;
+import java.util.Set;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.After;
@@ -40,9 +42,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodec;
 
 
 public class RequestProcessorTest {
@@ -75,7 +78,7 @@ public class RequestProcessorTest {
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
-    when(request.requiresReplication()).thenReturn(Boolean.FALSE);
+    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
     Sink<Runnable> dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
 
@@ -96,7 +99,7 @@ public class RequestProcessorTest {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     int key = Math.abs((int)(Math.random() * Integer.MAX_VALUE));
-    when(request.requiresReplication()).thenReturn(Boolean.FALSE);
+    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
     byte[] payload = intToArray(key);
 
     Sink dump = mock(Sink.class);
@@ -119,7 +122,7 @@ public class RequestProcessorTest {
     when(entity.getID()).thenReturn(testid);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
-    when(request.requiresReplication()).thenReturn(Boolean.FALSE);
+    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
     Sink dump = mock(Sink.class);
 
     RequestProcessor instance = new RequestProcessor(dump);
@@ -139,7 +142,7 @@ public class RequestProcessorTest {
     ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     when(entity.getID()).thenReturn(testid);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
-    when(request.requiresReplication()).thenReturn(Boolean.FALSE);
+    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
     when(request.getAction()).thenReturn(ServerEntityAction.CREATE_ENTITY);
     Sink dump = mock(Sink.class);
 
@@ -162,10 +165,15 @@ public class RequestProcessorTest {
 
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
-    when(request.requiresReplication()).thenReturn(Boolean.TRUE);
+    when(request.replicateTo(Matchers.anySet())).thenAnswer(new Answer<Set<NodeID>>() {
+      @Override
+      public Set<NodeID> answer(InvocationOnMock invocation) throws Throwable {
+        return (Set<NodeID>)invocation.getArguments()[0];
+      }
+    });
     when(request.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(request.getTransaction()).thenReturn(TransactionID.NULL_ID);
-    when(request.getNodeID()).thenReturn(mock(NodeID.class));
+    when(request.getNodeID()).thenReturn(mock(ClientID.class));
     
     Sink dump = mock(Sink.class);
 

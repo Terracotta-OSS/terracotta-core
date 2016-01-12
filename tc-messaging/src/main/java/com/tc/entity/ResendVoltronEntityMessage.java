@@ -36,7 +36,7 @@ import java.io.IOException;
  * is required, but it is sent as part of a larger message, not as a stand-alone message.
  */
 public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSerializable<ResendVoltronEntityMessage> {
-  private NodeID source;
+  private ClientID source;
   private TransactionID transactionID;
   private EntityDescriptor entityDescriptor;
   private Type type;
@@ -48,7 +48,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     // to make TCSerializable happy
   }
 
-  public ResendVoltronEntityMessage(NodeID source, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
+  public ResendVoltronEntityMessage(ClientID source, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
     this.source = source;
     this.transactionID = transactionID;
     this.entityDescriptor = entityDescriptor;
@@ -59,7 +59,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
   }
 
   @Override
-  public NodeID getSource() {
+  public ClientID getSource() {
     Assert.assertNotNull(this.source);
     return this.source;
   }

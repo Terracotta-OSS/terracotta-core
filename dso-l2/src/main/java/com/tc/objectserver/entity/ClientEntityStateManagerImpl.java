@@ -86,7 +86,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
     }
 
     @Override
-    public NodeID getSource() {
+    public ClientID getSource() {
       return clientID;
     }
 

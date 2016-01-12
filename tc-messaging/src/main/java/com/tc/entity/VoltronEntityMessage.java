@@ -19,7 +19,7 @@
 
 package com.tc.entity;
 
-import com.tc.net.NodeID;
+import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 
@@ -71,7 +71,7 @@ public interface VoltronEntityMessage {
     APPLIED,
   }
   
-  NodeID getSource();
+  ClientID getSource();
   
   TransactionID getTransactionID();
   

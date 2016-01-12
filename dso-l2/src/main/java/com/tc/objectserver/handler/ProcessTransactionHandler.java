@@ -23,6 +23,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
@@ -67,7 +68,7 @@ public class ProcessTransactionHandler {
   private final AbstractEventHandler<VoltronEntityMessage> voltronHandler = new AbstractEventHandler<VoltronEntityMessage>() {
     @Override
     public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
-      NodeID sourceNodeID = message.getSource();
+      ClientID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
       byte[] extendedData = message.getExtendedData();
@@ -124,7 +125,7 @@ public class ProcessTransactionHandler {
   }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
-  private synchronized void addMessage(NodeID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
+  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
@@ -236,7 +237,7 @@ public class ProcessTransactionHandler {
   }
 
   private void executeResend(ResendVoltronEntityMessage message) {
-    NodeID sourceNodeID = message.getSource();
+    ClientID sourceNodeID = message.getSource();
     EntityDescriptor descriptor = message.getEntityDescriptor();
     ServerEntityAction action = decodeMessageType(message.getVoltronType());
     byte[] extendedData = message.getExtendedData();

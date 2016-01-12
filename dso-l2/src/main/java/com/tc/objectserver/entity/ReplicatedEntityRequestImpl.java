@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
@@ -43,9 +44,9 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
   private byte[] returnValue = null;
   private EntityException failure = null;
 
-  public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, NodeID nodes) {
+  public ReplicatedEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src) {
     // This replication argument (the "true") is redundant, in this case.
-    super(descriptor, action, transaction, oldest, nodes, true);
+    super(descriptor, action, transaction, oldest, src, false);
   }
 
   @Override
@@ -68,11 +69,6 @@ public class ReplicatedEntityRequestImpl extends AbstractServerEntityRequest {
   @Override
   public ClientDescriptor getSourceDescriptor() {
     return client;
-  }
-
-  @Override
-  public boolean requiresReplication() {
-    return false;
   }
 
 //  TODO:  fix implementation once we decide what we want

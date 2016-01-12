@@ -18,18 +18,23 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.net.ClientID;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
 import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
+import java.util.Set;
 
 
 public interface ServerEntityRequest {
 
   ServerEntityAction getAction();
-
-  NodeID getNodeID();
+/**
+ * the source of this request.  Always a client.
+ * @return origin of the request
+ */
+  ClientID getNodeID();
   
   TransactionID getTransaction();
   
@@ -46,6 +51,10 @@ public interface ServerEntityRequest {
   void failure(EntityException e);
 
   void received();
-
-  boolean requiresReplication();
+/**
+ * Provide the nodes which need to be replicated to for this request
+ * @param passives current set of passive nodes
+ * @return the passives that this request needs to be replicated to
+ */  
+  Set<NodeID> replicateTo(Set<NodeID> passives);
 }
