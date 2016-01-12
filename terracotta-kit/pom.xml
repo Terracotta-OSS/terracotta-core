@@ -25,8 +25,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.terracotta</groupId>
-                <artifactId>maven-forge-plugin</artifactId>
+                <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>prepare-server-lib</id>
@@ -35,11 +34,7 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <artifacts>
-                                <param>org.terracotta.internal:terracotta:${project.version}</param>
-                            </artifacts>
-                            <resolveTransitively>true</resolveTransitively>
-                            <outputDir>${project.build.directory}/server-lib</outputDir>
+                            <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
                         </configuration>
 
                     </execution>
