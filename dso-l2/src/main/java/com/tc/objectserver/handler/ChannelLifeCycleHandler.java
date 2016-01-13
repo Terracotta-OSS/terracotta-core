@@ -84,8 +84,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
-      // Record that the client disconnected.
-      this.eventCollector.clientDidDisconnect(clientID);
       // Broadcast this message.
       broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
     }
@@ -100,8 +98,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     // We want to track this if it is an L1 (ClientID) connecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
-      // Record that the client connected.
-      this.eventCollector.clientDidConnect(clientID);
       // Broadcast this message.
       broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
     }
@@ -136,18 +132,22 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   public void channelCreated(MessageChannel channel) {
     ClientID clientID = new ClientID(channel.getChannelID().toLong());
     channelSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, clientID, channel.getProductId()));
+    // Record that the client connected.
+    this.eventCollector.clientDidConnect(clientID);
   }
 
   @Override
   public void channelRemoved(MessageChannel channel) {
+    // Note that the remote node ID always refers to a client, in this path.
+    ClientID clientID = (ClientID) channel.getRemoteNodeID();
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
-    final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,
-                                                                            channel.getRemoteNodeID(), channel.getProductId());
+    final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE, clientID, channel.getProductId());
     NodeID inBandSchedulerKey = channel.getRemoteNodeID();
     InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
     InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context2);
+    // Record that the client disconnected.
+    this.eventCollector.clientDidDisconnect(clientID);
   }
-
 }
