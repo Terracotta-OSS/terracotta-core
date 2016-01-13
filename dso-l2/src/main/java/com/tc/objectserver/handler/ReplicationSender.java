@@ -30,7 +30,6 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
-import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.util.Assert;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,7 +75,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         }
       } else {
         if (msg.getReplicationType() == SYNC_BEGIN) {
-          syncing = new SyncState(nodeid);
+          syncing = new SyncState();
           filtering.put(nodeid, syncing);
         } else {
           syncing = filtering.get(nodeid);
