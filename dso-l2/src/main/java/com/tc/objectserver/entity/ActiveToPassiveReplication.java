@@ -57,7 +57,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   
   private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
   private final Iterable<ManagedEntity> entities;
-  private final Iterable<NodeID> passivesStandbys;
+  private final Iterable<NodeID> passives;
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
   private final Set<NodeID> standByNodes = new CopyOnWriteArraySet<>();
@@ -68,34 +68,39 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, Sink<ReplicationEnvelope> replicate) {
     this.entities = entities;
     this.replicate = replicate;
-    this.passivesStandbys = passives;
+    this.passives = passives;
   }
   
   @Override
   public void enterActiveState() {
-    setPassiveStandbyServers(passivesStandbys);
+    primePassives(passives);
   }
   
-  private void setPassiveStandbyServers(Iterable<NodeID> standbys) {
+  private void primePassives(Iterable<NodeID> standbys) {
     Assert.assertFalse(activated);
-    Assert.assertTrue(passiveNodes.isEmpty());
-    standbys.forEach(i -> {Assert.assertTrue(standByNodes.contains(i)); passiveNodes.add(i);});
-    passiveNodes.forEach(i -> sendReset(i));
+//    Assert.assertTrue(passiveNodes.isEmpty());
+    standbys.forEach(i -> {
+      if (passiveNodes.add(i)) {
+        logger.debug("sending reset to " + i);
+        prime(i);
+      }
+    });
     activated = true;
   }
   
-  private void sendReset(NodeID node) {
+  private Future<Void> prime(NodeID node) {
     ReplicationMessage resetOrderedSink = new ReplicationMessage();
-    try {
-      replicateMessage(resetOrderedSink, Collections.singleton(node)).get();
-    } catch (ExecutionException | InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    return replicateMessage(resetOrderedSink, Collections.singleton(node));
   }
   
   public void startPassiveSync(NodeID newNode) {
-      passiveNodes.add(newNode);
-      executePassiveSync(newNode);
+    Assert.assertTrue(activated);
+    if (passiveNodes.add(newNode)) {
+      logger.debug("sending reset to " + newNode);
+      prime(newNode);
+    }
+    logger.debug("starting sync to " + newNode);
+    executePassiveSync(newNode);
   }
   /**
    * Using an executor service here to sync multiple passives at once

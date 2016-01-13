@@ -37,7 +37,6 @@ import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -130,7 +129,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     final int concurrencyKey = ((null != concurrencyStrategy)) ?
       concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
     executor.scheduleRequest(getEntityDescriptorForSource(client), request, payload, ()->invoke(request, message, concurrencyKey), concurrencyKey);
-    }
+  }
 
   @Override
   public void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
@@ -473,14 +472,18 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public synchronized void sync(NodeID passive) {
+  public void sync(NodeID passive) {
     if (!this.isDestroyed) {
       executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
   // iterate through all the concurrency keys of an entity
       EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
   //  this is simply a barrier to make sure all actions are flushed before sync is started   
       PassiveSyncServerEntityRequest barrier = new PassiveSyncServerEntityRequest(id, version, null);
-      executor.scheduleRequest(entityDescriptor, barrier, new byte[0], ()-> assertNotNull(this.activeServerEntity.getConcurrencyStrategy()), ConcurrencyStrategy.MANAGEMENT_KEY);
+      executor.scheduleRequest(entityDescriptor, barrier, new byte[0], ()-> { 
+        assertNotNull(this.activeServerEntity);
+        assertNotNull(this.activeServerEntity.getConcurrencyStrategy());
+        barrier.complete(); 
+      }, ConcurrencyStrategy.MANAGEMENT_KEY);
       barrier.waitFor();
       for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
         PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, passive);
@@ -561,8 +564,8 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     @Override
     public synchronized void complete() {
-      this.notifyAll();
       super.complete();
+      this.notifyAll();
     }
     }
   }
