@@ -42,6 +42,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
+import static com.tc.util.Assert.assertNotNull;
 import java.util.Collections;
 
 import java.util.Optional;
@@ -72,6 +73,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
+  private volatile boolean isDestroyed;
   private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private volatile PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
@@ -127,7 +129,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     final int concurrencyKey = ((null != concurrencyStrategy)) ?
       concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
     executor.scheduleRequest(getEntityDescriptorForSource(client), request, payload, ()->invoke(request, message, concurrencyKey), concurrencyKey);
-    }
+  }
 
   @Override
   public void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
@@ -310,6 +312,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     request.complete();
     // Fire the event that the entity was destroyed.
     this.eventCollector.entityWasDestroyed(this.getID());
+    this.isDestroyed = true;
   }
 
   private void createEntity(ServerEntityRequest createEntityRequest, byte[] constructorInfo) {
@@ -470,17 +473,27 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void sync(NodeID passive) {
-    executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
-// iterate through all the concurrency keys of an entity
-    EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
-    for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
-      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, passive);
-      // We don't actually use the message in the direct strategy so this is safe.
-      executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
-      req.waitFor();
+    if (!this.isDestroyed) {
+      executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
+  // iterate through all the concurrency keys of an entity
+      EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
+  //  this is simply a barrier to make sure all actions are flushed before sync is started   
+      PassiveSyncServerEntityRequest barrier = new PassiveSyncServerEntityRequest(id, version, null);
+      executor.scheduleRequest(entityDescriptor, barrier, new byte[0], ()-> { 
+        assertNotNull(this.activeServerEntity);
+        assertNotNull(this.activeServerEntity.getConcurrencyStrategy());
+        barrier.complete(); 
+      }, ConcurrencyStrategy.MANAGEMENT_KEY);
+      barrier.waitFor();
+      for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
+        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, passive);
+        // We don't actually use the message in the direct strategy so this is safe.
+        executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
+        req.waitFor();
+      }
+  //  end passive sync for an entity
+      executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
     }
-//  end passive sync for an entity
-    executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
   }  
 
   private void loadExisting(ServerEntityRequest loadEntityRequest, byte[] constructorInfo) {
@@ -525,7 +538,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     @Override
     public Set<NodeID> replicateTo(Set<NodeID> passives) {
-      return Collections.singleton(passive);
+      return passive == null ? Collections.emptySet() : Collections.singleton(passive);
     }
 
     @Override
@@ -551,8 +564,8 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     @Override
     public synchronized void complete() {
-      this.notifyAll();
       super.complete();
+      this.notifyAll();
     }
     }
   }

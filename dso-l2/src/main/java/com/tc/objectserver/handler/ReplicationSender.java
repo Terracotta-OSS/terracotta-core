@@ -30,7 +30,6 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
-import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.util.Assert;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,16 +70,16 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         
         if (msg.getType() == ReplicationMessage.START) {
 //  do nothing, the server was in standby state when added          
-        } else if (msg.getReplicationType() == SYNC_BEGIN) {
-          filtering.put(nodeid, new SyncState());
         } else {
           throw new AssertionError("out of order message");
         }
       } else {
-        if (msg.getType() == ReplicationMessage.START || msg.getReplicationType() == SYNC_BEGIN) {
-          throw new AssertionError(msg.getEntityID() + "/" + msg.getConcurrency() + " " + rOrder.get());
+        if (msg.getReplicationType() == SYNC_BEGIN) {
+          syncing = new SyncState();
+          filtering.put(nodeid, syncing);
+        } else {
+          syncing = filtering.get(nodeid);
         }
-        syncing = filtering.get(nodeid);
       }
       if (syncing != null) {
 //  there is an active sync going on, need to filter out messages that should not be replicated
