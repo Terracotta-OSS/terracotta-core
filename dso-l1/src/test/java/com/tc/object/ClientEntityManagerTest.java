@@ -33,6 +33,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
@@ -49,8 +50,11 @@ import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
 import org.hamcrest.Matchers;
 import static org.junit.Assert.assertThat;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 
 public class ClientEntityManagerTest extends TestCase {
@@ -77,11 +81,14 @@ public class ClientEntityManagerTest extends TestCase {
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
     
     // Set the target for success.
-    byte[] resultObject = new byte[0];
-    EntityException resultException = null;
-    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    
+    final byte[] resultObject = new byte[0];
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });    
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
@@ -97,11 +104,14 @@ public class ClientEntityManagerTest extends TestCase {
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
     
     // Set the target for failure.
-    byte[] resultObject = null;
-    EntityException resultException = new EntityNotFoundException(null, null);
-    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    
+    final byte[] resultObject = null;
+    final EntityException resultException = new EntityNotFoundException(null, null);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });       
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
@@ -113,10 +123,13 @@ public class ClientEntityManagerTest extends TestCase {
 
   // Test pause will block progress but it the lookup will complete (failing to find the entity) after unpause.
   public void testLookupStalledByPause() throws Exception {
-    EntityException resultException = new EntityNotFoundException(null, null);
-    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, null, resultException, true);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    
+    final EntityException resultException = new EntityNotFoundException(null, null);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, null, resultException, true);
+      }
+    });    
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
     
@@ -143,11 +156,14 @@ public class ClientEntityManagerTest extends TestCase {
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
     
     // Set the target for success.
-    byte[] resultObject = new byte[0];
-    EntityException resultException = null;
-    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    
+    final byte[] resultObject = new byte[0];
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });       
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
@@ -166,11 +182,14 @@ public class ClientEntityManagerTest extends TestCase {
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
     
     // Set the target for failure.
-    byte[] resultObject = null;
-    EntityException resultException = new EntityNotFoundException(null, null);
-    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    
+    final byte[] resultObject = null;
+    final EntityException resultException = new EntityNotFoundException(null, null);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });       
     // Now we can start the lookup thread.
     fetcher.start();
     // Join on the thread.
@@ -225,10 +244,14 @@ public class ClientEntityManagerTest extends TestCase {
   // Test that concurrent lookups of the same non-existent entity both fail in the expected way, raising no exceptions.
   public void testObjectNotFoundConcurrentLookup() throws Exception {
     // Configure the test to return the failure for this.
-    byte[] resultObject = null;
-    EntityException resultException = new EntityNotFoundException(null, null);
-    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
+    final byte[] resultObject = null;
+    final EntityException resultException = new EntityNotFoundException(null, null);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });
     
     TestFetcher fetcher1 = new TestFetcher(this.manager, this.entityDescriptor);
     TestFetcher fetcher2 = new TestFetcher(this.manager, this.entityDescriptor);
@@ -426,8 +449,11 @@ public class ClientEntityManagerTest extends TestCase {
     public void dehydrate() {
       throw new UnsupportedOperationException();
     }
+    boolean sent = false;
     @Override
     public void send() {
+      assertFalse(sent);
+      sent = true;
       if (this.autoComplete) {
         if (null != this.resultObject) {
           this.clientEntityManager.complete(this.transactionID, this.resultObject);
