@@ -73,21 +73,26 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   
   @Override
   public void enterActiveState() {
-    primePassives(passives);
-  }
-  
-  private void primePassives(Iterable<NodeID> standbys) {
     Assert.assertFalse(activated);
-//    Assert.assertTrue(passiveNodes.isEmpty());
-    standbys.forEach(i -> {
+    primePassives();
+    activated = true;
+  }
+
+/**
+ * starts the stream of messages to each passive the server knows about.  This should only happen 
+ * when a server enters active state.
+ */
+  private void primePassives() {
+    passives.forEach(i -> {
       if (passiveNodes.add(i)) {
         logger.debug("sending reset to " + i);
         prime(i);
       }
     });
-    activated = true;
   }
-  
+/**
+ * prime the message channel to a node by setting the starting ordering id to zero.
+ */
   private Future<Void> prime(NodeID node) {
     ReplicationMessage resetOrderedSink = new ReplicationMessage();
     return replicateMessage(resetOrderedSink, Collections.singleton(node));
