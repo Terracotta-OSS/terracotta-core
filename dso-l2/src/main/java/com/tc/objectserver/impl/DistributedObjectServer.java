@@ -21,7 +21,9 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -175,6 +177,7 @@ import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.FlatFileStorageProviderConfiguration;
 import com.tc.objectserver.persistence.FlatFileStorageServiceProvider;
+import com.tc.objectserver.persistence.PersistentStorageServiceConfiguration;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
@@ -623,7 +626,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(voltronMessageSink);
 
-    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector();
+    // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
+    IMonitoringProducer serviceInterface = platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>(){
+      @Override
+      public Class<IMonitoringProducer> getServiceType() {
+        return IMonitoringProducer.class;
+      }});
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor);
     channelManager.addEventListener(clientEntityStateManager);
