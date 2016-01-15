@@ -34,7 +34,7 @@ public class ManagementTopologyEventCollectorTest {
 
   @Before
   public void setUp() throws Exception {
-    this.collector = new ManagementTopologyEventCollector();
+    this.collector = new ManagementTopologyEventCollector(null);
   }
 
   @Test

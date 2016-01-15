@@ -23,6 +23,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformMonitoringConstants;
+
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
@@ -36,16 +39,25 @@ import com.tc.util.State;
  * consistent state and symmetry of events.
  */
 public class ManagementTopologyEventCollector implements ITopologyEventCollector {
+  // Note that serviceInterface may be null if there isn't an IMonitoringProducer service registered.
+  private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
   private final Map<FetchTuple, Integer> fetchPairCounts;
   private boolean isActiveState;
 
-  public ManagementTopologyEventCollector() {
+  public ManagementTopologyEventCollector(IMonitoringProducer serviceInterface) {
+    this.serviceInterface = serviceInterface;
     this.connectedClients = new HashSet<ClientID>();
     this.entities = new HashSet<EntityID>();
     this.fetchPairCounts = new HashMap<FetchTuple, Integer>();
     this.isActiveState = false;
+    
+    // Do our initial configuration of the service.
+    if (null != this.serviceInterface) {
+      this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.CLIENTS_ROOT_NAME, null);
+    }
   }
 
   @Override
@@ -60,6 +72,13 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     Assert.assertFalse(this.connectedClients.contains(client));
     // Now, add it to the connected set.
     this.connectedClients.add(client);
+    
+    // Add it to the monitoring interface.
+    if (null != this.serviceInterface) {
+      // For now, we will only provide a string representation of the client, in order to enable testing while we flesh
+      // out the data type which would include more of the data we would actually want.
+      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + client.toLong(), client.toString());
+    }
   }
 
   @Override
@@ -68,6 +87,11 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     Assert.assertTrue(this.connectedClients.contains(client));
     // Now, remove it from the connected set.
     this.connectedClients.remove(client);
+    
+    // Remove it from the monitoring interface.
+    if (null != this.serviceInterface) {
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + client.toLong());
+    }
   }
 
   @Override
