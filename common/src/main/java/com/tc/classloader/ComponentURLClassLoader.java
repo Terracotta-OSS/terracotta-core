@@ -32,11 +32,7 @@ public class ComponentURLClassLoader extends URLClassLoader {
     super(urls, parent);
     this.commonComponentChecker = commonComponentChecker;
   }
-  
-  public ComponentURLClassLoader(URL urls, ClassLoader parent, CommonComponentChecker commonComponentChecker) {
-    this(new URL[] {urls} , parent, commonComponentChecker);
-  }
-  
+
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     Class<?> target = findLoadedClass(name);
