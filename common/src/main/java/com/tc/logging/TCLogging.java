@@ -18,8 +18,8 @@
  */
 package com.tc.logging;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import com.tc.util.io.FileUtils;
+import com.tc.util.io.IOUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;

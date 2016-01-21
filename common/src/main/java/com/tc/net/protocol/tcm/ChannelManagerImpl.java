@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.google.common.collect.Maps;
 import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -28,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -45,7 +45,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   private final List<ChannelManagerEventListener>      eventListeners      = new CopyOnWriteArrayList<ChannelManagerEventListener>();
 
   public ChannelManagerImpl(boolean transportDisconnectRemovesChannel, ServerMessageChannelFactory channelFactory) {
-    this.channels = Maps.newHashMap();
+    this.channels = new HashMap<ChannelID, MessageChannelInternal>();
     this.transportDisconnectRemovesChannel = transportDisconnectRemovesChannel;
     this.channelFactory = channelFactory;
   }

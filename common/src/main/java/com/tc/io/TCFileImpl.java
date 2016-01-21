@@ -18,7 +18,8 @@
  */
 package com.tc.io;
 
-import org.apache.commons.io.FileUtils;
+
+import com.tc.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;

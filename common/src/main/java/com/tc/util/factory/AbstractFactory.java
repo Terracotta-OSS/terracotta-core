@@ -18,7 +18,8 @@
  */
 package com.tc.util.factory;
 
-import org.apache.commons.io.IOUtils;
+
+import com.tc.util.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

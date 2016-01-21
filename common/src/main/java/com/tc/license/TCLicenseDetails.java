@@ -18,7 +18,7 @@
  */
 package com.tc.license;
 
-import org.apache.commons.io.IOUtils;
+import com.tc.util.io.IOUtils;
 import org.terracotta.license.AbstractLicenseResolverFactory;
 import org.terracotta.license.License;
 import org.terracotta.license.LicenseConstants;

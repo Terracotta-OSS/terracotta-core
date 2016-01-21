@@ -19,8 +19,6 @@
 
 package com.tc.util.concurrent;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.text.StringUtils;
@@ -203,7 +201,9 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
 
   @Override
   public Timer newTimer(String name) {
-    Preconditions.checkState(!isShutdown(), "Cannot create a timer - the parent task runner has been already shut down");
+    if(isShutdown()) {
+      throw new IllegalStateException("Cannot create a timer - the parent task runner has been already shut down");
+    }
     return new PooledTimer(name, this);
   }
 

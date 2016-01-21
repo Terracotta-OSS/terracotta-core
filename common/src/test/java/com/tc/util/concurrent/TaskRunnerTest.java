@@ -21,7 +21,6 @@ package com.tc.util.concurrent;
 
 import org.junit.Test;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;

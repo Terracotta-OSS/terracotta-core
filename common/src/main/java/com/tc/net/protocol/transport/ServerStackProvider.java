@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.TCConnection;
@@ -37,9 +35,11 @@ import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.util.Assert;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -48,7 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ServerStackProvider implements NetworkStackProvider, MessageTransportListener, ProtocolAdaptorFactory {
   private static final TCLogger logger = TCLogging.getLogger(ServerStackProvider.class);
 
-  private final Map<ConnectionID, NetworkStackHarness> harnesses          = Maps.newConcurrentMap();
+  private final Map<ConnectionID, NetworkStackHarness> harnesses          = new ConcurrentHashMap<ConnectionID, NetworkStackHarness>();
   private final NetworkStackHarnessFactory       harnessFactory;
   private final ServerMessageChannelFactory      channelFactory;
   private final TransportHandshakeMessageFactory handshakeMessageFactory;
@@ -58,7 +58,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final WireProtocolMessageSink          wireProtoMsgsink;
   private final TCSecurityManager                securityManager;
   private final MessageTransportFactory          messageTransportFactory;
-  private final List<MessageTransportListener>   transportListeners = Lists.newArrayList();
+  private final List<MessageTransportListener>   transportListeners = new ArrayList<MessageTransportListener>();
   private final ReentrantLock                    licenseLock;
   private final String                           commsMgrName;
 

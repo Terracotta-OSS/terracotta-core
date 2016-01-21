@@ -18,10 +18,10 @@
  */
 package com.tc.properties;
 
-import org.apache.commons.io.IOUtils;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.io.IOUtils;
 import com.tc.util.properties.TCPropertyStore;
 
 import java.io.File;

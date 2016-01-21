@@ -18,7 +18,6 @@
  */
 package com.tc.lang;
 
-import com.google.common.base.Throwables;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.exception.DatabaseException;
 import com.tc.exception.ExceptionHelper;
@@ -31,6 +30,7 @@ import com.tc.logging.TCLogger;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
+import com.tc.util.Throwables;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;

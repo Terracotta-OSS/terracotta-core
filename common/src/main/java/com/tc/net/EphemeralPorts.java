@@ -20,8 +20,8 @@ package com.tc.net;
 
 import com.tc.process.StreamCollector;
 import com.tc.util.FindbugsSuppressWarnings;
+import com.tc.util.io.IOUtils;
 import com.tc.util.runtime.Os;
-import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;

@@ -18,7 +18,6 @@
  */
 package com.tc.util.io;
 
-import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -80,23 +79,6 @@ public class TCFileUtils {
     }
     return true;
 
-  }
-
-  /**
-   * Given a resource path, returns the File object of that resource
-   */
-  public static File getResourceFile(String resource) { 
-    return org.apache.commons.io.FileUtils.toFile(TCFileUtils.class.getResource(resource));
-  }
-  
-  /**
-   * deletes all files with matching extension. Does not recurse into sub directories.
-   */
-  public static void forceDelete(File directory, String extension) throws IOException {
-    Collection<File> files = org.apache.commons.io.FileUtils.listFiles(directory, new String[] { extension }, false);
-    for (File file : files) {
-      org.apache.commons.io.FileUtils.forceDelete(file);
-    }
   }
 
   /**

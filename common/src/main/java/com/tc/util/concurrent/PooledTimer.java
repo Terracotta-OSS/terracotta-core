@@ -19,7 +19,6 @@
 
 package com.tc.util.concurrent;
 
-import com.google.common.base.Preconditions;
 import com.tc.text.StringUtils;
 
 import java.util.concurrent.ScheduledFuture;
@@ -45,7 +44,9 @@ class PooledTimer implements Timer {
   }
 
   public PooledTimer(String name, ScheduledNamedTaskRunner executor) {
-    Preconditions.checkNotNull(executor);
+    if(executor == null) {
+      throw new IllegalArgumentException("executor should not be null");
+    }
 
     this.name = name;
     this.executor = executor;
@@ -53,27 +54,35 @@ class PooledTimer implements Timer {
 
   @Override
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
-    Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
+    if(cancelled) {
+      throw new IllegalStateException(ALREADY_CANCELLED_MSG);
+    }
     return executor.schedule(wrap(command), delay, unit);
   }
 
   @Override
   public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay,
                                                 long period, TimeUnit unit) {
-    Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
+    if(cancelled) {
+      throw new IllegalStateException(ALREADY_CANCELLED_MSG);
+    }
     return executor.scheduleAtFixedRate(wrap(command), initialDelay, period, unit);
   }
 
   @Override
   public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay,
                                                    long delay, TimeUnit unit) {
-    Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
+    if(cancelled) {
+      throw new IllegalStateException(ALREADY_CANCELLED_MSG);
+    }
     return executor.scheduleWithFixedDelay(wrap(command), initialDelay, delay, unit);
   }
 
   @Override
   public void execute(Runnable command) {
-    Preconditions.checkState(!cancelled, ALREADY_CANCELLED_MSG);
+    if(cancelled) {
+      throw new IllegalStateException(ALREADY_CANCELLED_MSG);
+    }
     executor.execute(wrap(command));
   }
 

@@ -43,10 +43,6 @@
   </properties>
   
   <dependencies>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
     <!-- entity API needs to be loaded in app class loader layer as entities too fall into it -->
     <dependency>
       <groupId>org.terracotta</groupId>

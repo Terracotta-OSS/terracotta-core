@@ -18,11 +18,11 @@
  */
 package com.tc.object;
 
+import com.tc.util.Throwables;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 
-import com.google.common.base.Throwables;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
