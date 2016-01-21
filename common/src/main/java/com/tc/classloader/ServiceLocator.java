@@ -67,7 +67,9 @@ public class ServiceLocator {
           if(split.startsWith("#") || trim.isEmpty()) {
             continue;
           }
-          urls.put(trim, x.getFile().split("!")[0]);
+          String urlString = x.toExternalForm();
+          urlString = urlString.substring(0, urlString.indexOf(METAINFCONST));
+          urls.put(trim, urlString.split("!")[0]);
         }
         sb.setLength(0);
       }
@@ -81,6 +83,20 @@ public class ServiceLocator {
     return null;
   }
 
+  public static <T> List<T> getImplementations(Class<T> interfaceName, ClassLoader parent) {
+    final List<?> items = getImplementations(interfaceName.getName(), parent);
+    return new AbstractList<T>() {
+      @Override
+      public T get(int index) {
+        return (T)items.get(index);
+      }
+
+      @Override
+      public int size() {
+        return items.size();
+      }
+    };
+  }
 
   /**
    * Create list of instance of implementation given interface each with an individual implementation having its own isolated classloader.
@@ -90,28 +106,39 @@ public class ServiceLocator {
    * @param <T>           concrete type of service/entity
    * @return list of implementation
    */
-  public static <T> List<T> getImplementations(Class<T> interfaceName, ClassLoader parent) {
+  public static List<?> getImplementations(String interfaceName, ClassLoader parent) {
     if(LOG.isDebugEnabled()) {
-      LOG.debug("Discovering " + interfaceName.getName() + " with parent classloader " + parent.getClass().getName());
+      LOG.debug("Discovering " + interfaceName + " with parent classloader " + parent.getClass().getName());
     }
-    Map<String, String> urls = discoverImplementations(parent, interfaceName.getName());
-    ArrayList<T> implementations = new ArrayList<T>();
+    ClassLoader apiLoader = getApiClassLoader(parent);
+    Map<String, String> urls = discoverImplementations(apiLoader, interfaceName);
+    ArrayList<Object> implementations = new ArrayList<Object>();
     if (null == urls || urls.isEmpty()) {
       if(LOG.isDebugEnabled()) {
-        LOG.debug("No implementations found for " + interfaceName.getName());
+        LOG.debug("No implementations found for " + interfaceName);
       }
       return implementations;
     }
     for (Map.Entry<String, String> entry : urls.entrySet()) {
       try {
-        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, createApiClassLoader(parent), new AnnotationOrDirectoryStrategyChecker());
-        implementations.add((T)
-            Class.forName(entry.getKey(), false, loader).newInstance());
+        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, getApiClassLoader(parent), new AnnotationOrDirectoryStrategyChecker());
+        implementations.add(Class.forName(entry.getKey(), false, loader).newInstance());
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
     return implementations;
+  }
+  
+  private static final Map<ClassLoader, ApiClassLoader> API_LOADERS = new HashMap<ClassLoader, ApiClassLoader>();
+  
+  private static synchronized ApiClassLoader getApiClassLoader(ClassLoader parent) {
+    ApiClassLoader loader = API_LOADERS.get(parent);
+    if (loader == null) {
+      loader = createApiClassLoader(parent);
+      API_LOADERS.put(parent, loader);
+    }
+    return loader;
   }
 
   private static ApiClassLoader createApiClassLoader(ClassLoader parent) {
@@ -121,7 +148,7 @@ public class ServiceLocator {
     } catch (FileNotFoundException e) {
       throw new RuntimeException(e);
     }
-    String[] apiJars = pluginApiDir.list(new FilenameFilter() {
+    File[] apiJars = pluginApiDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {
         return name.endsWith(".jar");
       }
@@ -132,7 +159,7 @@ public class ServiceLocator {
       apiJarUrls = new URL[apiJars.length];
       for (int i = 0; i < apiJars.length; i++) {
         try {
-          apiJarUrls[i] = URI.create(apiJars[i]).toURL();
+          apiJarUrls[i] = apiJars[i].toURI().toURL();
         } catch (MalformedURLException e) {
           throw new RuntimeException(e);
         }
