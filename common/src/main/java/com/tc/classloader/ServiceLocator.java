@@ -19,18 +19,16 @@
 
 package com.tc.classloader;
 
+import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggingService;
 import com.tc.util.ServiceUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -106,7 +104,7 @@ public class ServiceLocator {
     }
     for (Map.Entry<String, String> entry : urls.entrySet()) {
       try {
-        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, parent);
+        ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, createApiClassLoader(parent), new AnnotationOrDirectoryStrategyChecker());
         implementations.add((T)
             Class.forName(entry.getKey(), false, loader).newInstance());
       } catch (Exception e) {
@@ -116,4 +114,31 @@ public class ServiceLocator {
     return implementations;
   }
 
+  private static ApiClassLoader createApiClassLoader(ClassLoader parent) {
+    File pluginApiDir;
+    try {
+      pluginApiDir = Directories.getServerPluginsApiDir();
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    String[] apiJars = pluginApiDir.list(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".jar");
+      }
+    });
+
+    URL[] apiJarUrls = new URL[0];
+    if(apiJars != null) {
+      apiJarUrls = new URL[apiJars.length];
+      for (int i = 0; i < apiJars.length; i++) {
+        try {
+          apiJarUrls[i] = URI.create(apiJars[i]).toURL();
+        } catch (MalformedURLException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+    }
+    return new ApiClassLoader(apiJarUrls, parent);
+  }
 }

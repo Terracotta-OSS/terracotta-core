@@ -26,14 +26,13 @@ import java.net.URLClassLoader;
  */
 public class ComponentURLClassLoader extends URLClassLoader {
 
-  public ComponentURLClassLoader(URL[] urls, ClassLoader parent) {
+  private final CommonComponentChecker commonComponentChecker;
+
+  public ComponentURLClassLoader(URL[] urls, ClassLoader parent, CommonComponentChecker commonComponentChecker) {
     super(urls, parent);
+    this.commonComponentChecker = commonComponentChecker;
   }
-  
-  public ComponentURLClassLoader(URL urls, ClassLoader parent) {
-    super(new URL[] {urls} , parent);
-  }
-  
+
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     Class<?> target = findLoadedClass(name);
@@ -42,7 +41,7 @@ public class ComponentURLClassLoader extends URLClassLoader {
     if (target == null) {
       target = super.loadClass(name, resolve);
 // if the class is not found, ClassNotFoundException will be thrown and that is fine, class is nowhere
-      if (target.getAnnotation(CommonComponent.class) == null) {
+      if (!commonComponentChecker.check(target)) {
 //  not a common class as designated by annotation, see if the class is in this specific class loader for preference if it is
         try {
           target = findClass(name);
