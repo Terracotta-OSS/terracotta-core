@@ -18,6 +18,7 @@
  */
 package com.tc.config;
 
+import com.tc.logging.TCLogging;
 import com.tc.text.StringUtils;
 
 import java.io.File;
@@ -61,6 +62,7 @@ public class Directories {
       if (StringUtils.isBlank(path)) {
         //if not set, use working dir
         path = System.getProperty("user.dir");
+        TCLogging.getLogger(Directories.class).info("System property \"tc.install-root\" is not set, using working dir (" + path + ") as default location ");
       }
 
       File rootPath = new File(path).getAbsoluteFile();
