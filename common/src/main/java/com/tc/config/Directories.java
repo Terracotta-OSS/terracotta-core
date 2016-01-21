@@ -59,11 +59,8 @@ public class Directories {
     } else {
       String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
       if (StringUtils.isBlank(path)) {
-        // formatting
-        throw new FileNotFoundException(
-                                        "The system property '"
-                                            + TC_INSTALL_ROOT_PROPERTY_NAME
-                                            + "' has not been set. As such, the Terracotta installation directory cannot be located.");
+        //if not set, use working dir
+        path = System.getProperty("user.dir");
       }
 
       File rootPath = new File(path).getAbsoluteFile();
