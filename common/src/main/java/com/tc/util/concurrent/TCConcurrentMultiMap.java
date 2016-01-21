@@ -18,7 +18,6 @@
  */
 package com.tc.util.concurrent;
 
-import com.google.common.collect.Iterators;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
@@ -30,7 +29,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A concurrent implementation of a MultiMap (one to many mapping) with configurable concurrency level. Basic methods
@@ -97,8 +95,12 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws NullPointerException if key or value is null
    */
   public boolean add(K key, V value) {
-    checkNotNull(key, "Key is null");
-    checkNotNull(value, "Value is null");
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
+    if(value == null) {
+      throw new NullPointerException("Value is null");
+    }
     return (Boolean) this.store.executeUnderWriteLock(key, value, this.addCallback);
   }
 
@@ -110,7 +112,9 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws NullPointerException if key or value is null
    */
   public boolean addAll(K key, Set<V> values) {
-    checkNotNull(key, "Key is null");
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     return (Boolean) this.store.executeUnderWriteLock(key, values, this.addAllCallback);
   }
 
@@ -121,8 +125,12 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws NullPointerException if key or value is null
    */
   public boolean remove(K key, V value) {
-    checkNotNull(key, "Key is null");
-    checkNotNull(value, "Value is null");
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
+    if(value == null) {
+      throw new NullPointerException("Value is null");
+    }
     return (Boolean)this.store.executeUnderWriteLock(key, value, this.removeCallback);
   }
 
@@ -134,7 +142,9 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws NullPointerException if key is null
    */
   public Set<V> removeAll(K key) {
-    checkNotNull(key, "Key is null");
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     final Set<V> set = this.store.remove(key);
     if (set == null) { return Collections.emptySet(); }
     return set;
@@ -150,7 +160,9 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws NullPointerException if key is null
    */
   public Set<V> get(K key) {
-    checkNotNull(key, "Key is null");
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     final Set<V> set = this.store.get(key);
     if (set == null) { return Collections.emptySet(); }
     return Collections.unmodifiableSet(set);
@@ -163,7 +175,9 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
    * @throws NullPointerException if key is null
    */
   public boolean containsKey(K key) {
-    checkNotNull(key, "Key is null");
+    if(key == null) {
+      throw new NullPointerException("Key is null");
+    }
     final Set<V> set = this.store.get(key);
     if (set == null) { return false; }
     return true;
@@ -265,7 +279,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
     @Override
     public Iterator<V> iterator() {
-      return Iterators.singletonIterator(value);
+      return Collections.singleton(value).iterator();
     }
 
     @Override

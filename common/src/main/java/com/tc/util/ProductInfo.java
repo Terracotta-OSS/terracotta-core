@@ -18,13 +18,7 @@
  */
 package com.tc.util;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.io.IOUtils;
+import com.tc.util.io.IOUtils;
 
 import com.tc.text.StringUtils;
 
@@ -365,44 +359,5 @@ public final class ProductInfo {
   @Override
   public String toString() {
     return toShortString();
-  }
-
-  private static void printHelp(Options options) {
-    new HelpFormatter().printHelp("java " + ProductInfo.class.getName(), options);
-  }
-
-  public static void main(String[] args) {
-    Options options = new Options();
-    options.addOption("v", "verbose", false, bundleHelper.getString("option.verbose"));
-    options.addOption("r", "raw", false, bundleHelper.getString("option.raw"));
-    options.addOption("h", "help", false, bundleHelper.getString("option.help"));
-
-    CommandLineParser parser = new GnuParser();
-    try {
-      CommandLine cli = parser.parse(options, args);
-
-      if (cli.hasOption("h")) {
-        printHelp(options);
-        System.exit(0);
-      }
-
-      if (cli.hasOption("v")) {
-        System.out.println(getInstance().toLongString());
-        if (getInstance().isPatched()) System.out.println(getInstance().toLongPatchString());
-        System.exit(0);
-      }
-
-      if (cli.hasOption("r")) {
-        printRawData();
-        System.exit(0);
-      }
-
-      System.out.println(getInstance().toShortString());
-    } catch (ParseException e) {
-      System.out.println(e.getMessage());
-      System.out.println();
-      printHelp(options);
-      System.exit(1);
-    }
   }
 }

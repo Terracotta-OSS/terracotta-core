@@ -129,6 +129,14 @@
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

@@ -18,7 +18,8 @@
  */
 package com.tc.util;
 
-import org.apache.commons.io.IOUtils;
+
+import com.tc.util.io.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

@@ -18,24 +18,43 @@
  */
 package com.tc.util.runtime;
 
-import com.google.common.collect.MapMaker;
 import com.tc.object.locks.ThreadID;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ThreadIDMapImpl implements ThreadIDMap {
-  private final Map<Long, ThreadID> id2ThreadIDMap = new MapMaker().weakValues().makeMap();
+  private final ReferenceQueue<ThreadID> referenceQueue = new ReferenceQueue<ThreadID>();
+  private final Map<Long, WeakReference<ThreadID>> id2ThreadIDMap = new ConcurrentHashMap<Long, WeakReference<ThreadID>>();
+  private Thread collectorThread;
 
   @Override
   public synchronized void addTCThreadID(ThreadID tcThreadID) {
-    id2ThreadIDMap.put(Long.valueOf(Thread.currentThread().getId()), tcThreadID);
+    cleanupReferenceQueue();
+    id2ThreadIDMap.put(Long.valueOf(Thread.currentThread().getId()), new WeakReference<ThreadID>(tcThreadID, referenceQueue));
   }
+
+
 
   @Override
   public synchronized ThreadID getTCThreadID(Long javaThreadId) {
-    return id2ThreadIDMap.get(javaThreadId);
+    cleanupReferenceQueue();
+    return id2ThreadIDMap.get(javaThreadId).get();
   }
 
+  private void cleanupReferenceQueue() {
+    Reference<? extends ThreadID> ref;
+    while ((ref = referenceQueue.poll()) != null) {
+      for (Map.Entry<Long, WeakReference<ThreadID>> entry : id2ThreadIDMap.entrySet()) {
+        if (entry.getValue().equals(ref)) {
+          id2ThreadIDMap.remove(entry.getKey());
+        }
+      }
+    }
+  }
   /** For testing only - not in interface */
   public synchronized int getSize() {
     return id2ThreadIDMap.size();

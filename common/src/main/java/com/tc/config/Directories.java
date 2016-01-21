@@ -18,6 +18,7 @@
  */
 package com.tc.config;
 
+import com.tc.logging.TCLogging;
 import com.tc.text.StringUtils;
 
 import java.io.File;
@@ -59,11 +60,9 @@ public class Directories {
     } else {
       String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
       if (StringUtils.isBlank(path)) {
-        // formatting
-        throw new FileNotFoundException(
-                                        "The system property '"
-                                            + TC_INSTALL_ROOT_PROPERTY_NAME
-                                            + "' has not been set. As such, the Terracotta installation directory cannot be located.");
+        //if not set, use working dir
+        path = System.getProperty("user.dir");
+        TCLogging.getLogger(Directories.class).info("System property \"tc.install-root\" is not set, using working dir (" + path + ") as default location ");
       }
 
       File rootPath = new File(path).getAbsoluteFile();

@@ -19,7 +19,6 @@
 
 package com.tc.util.concurrent;
 
-import com.google.common.base.Preconditions;
 import com.tc.properties.TCPropertiesImpl;
 
 import java.util.concurrent.Executors;
@@ -52,7 +51,9 @@ public final class Runners {
   }
 
   public static TaskRunner newScheduledTaskRunner(int poolSize, ThreadGroup threadGroup) {
-    Preconditions.checkArgument(poolSize > 0, "poolSize should be a positive integer");
+    if(poolSize <= 0) {
+      throw new IllegalArgumentException("poolSize should be a positive integer");
+    }
 
     return new ScheduledNamedTaskRunner(poolSize, threadGroup);
   }
