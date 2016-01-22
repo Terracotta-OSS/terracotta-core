@@ -12,9 +12,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
+import java.util.Map;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -87,22 +89,80 @@ public class ServiceLocatorTest {
      Assert.assertEquals(list.get(0).getClass().getInterfaces()[0].getName(), "com.tc.classloader.TestInterface");
    }
    
+   @Test
+   public void testURLsFromZip() throws Exception {
+     File base = folder.newFolder();
+     File test = new File(base, "test.jar");
+     ZipBuilder zip = new ZipBuilder(test, false);
+     zip.putEntry("META-INF/services/com.tc.classloader.TestInterface", "com.tc.classloader.TestInterfaceImpl".getBytes());
+     zip.putEntry("com/tc/classloader/TestInterfaceImpl.class", resourceToBytes("com/tc/classloader/TestInterfaceImpl.class"));
+//  put it in the zip so null parent loader can find it
+     zip.putEntry("com/tc/classloader/TestInterface.class", resourceToBytes("com/tc/classloader/TestInterface.class"));
+     zip.finish();
+     Map<String, String> map = ServiceLocator.discoverImplementations(new URLClassLoader(new URL[] {test.toURI().toURL()}), "com.tc.classloader.TestInterface");
+     Assert.assertTrue(map.size() == 1);
+     try {
+       ClassLoader loader = new URLClassLoader(new URL[] {new URL(map.get("com.tc.classloader.TestInterfaceImpl").toString())}, null);
+       Class<?> c = loader.loadClass("com.tc.classloader.TestInterfaceImpl");
+       Assert.assertNotNull(c);
+     } catch (MalformedURLException m) {
+//  not expected
+       throw m;
+     } catch (ClassNotFoundException c) {
+       throw c;
+     } 
+   }
+   
+   @Test
+   public void testURLsFromDir() throws Exception {
+     File base = folder.newFolder();
+     new File(base, "META-INF/services/").mkdirs();
+     FileOutputStream meta = new FileOutputStream(new File(base, "META-INF/services/com.tc.classloader.TestInterface"));
+     meta.write("com.tc.classloader.TestInterfaceImpl".getBytes());
+     meta.close();
+     new File(base, "com/tc/classloader/").mkdirs();
+     FileOutputStream clazz = new FileOutputStream(new File(base, "com/tc/classloader/TestInterfaceImpl.class"));
+     clazz.write(resourceToBytes("com/tc/classloader/TestInterfaceImpl.class"));
+     clazz.close();
+     
+     FileOutputStream impl = new FileOutputStream(new File(base, "com/tc/classloader/TestInterface.class"));
+     impl.write(resourceToBytes("com/tc/classloader/TestInterface.class"));
+     impl.close();
+     
+     Map<String, String> map = ServiceLocator.discoverImplementations(new URLClassLoader(new URL[] {base.toURI().toURL()}), "com.tc.classloader.TestInterface");
+     Assert.assertTrue(map.size() == 1);
+     try {
+       ClassLoader loader = new URLClassLoader(new URL[] {new URL(map.get("com.tc.classloader.TestInterfaceImpl").toString())}, null);
+       Class<?> c = loader.loadClass("com.tc.classloader.TestInterfaceImpl");
+       Assert.assertNotNull(c);
+     } catch (MalformedURLException m) {
+//  not expected
+       throw m;
+     } catch (ClassNotFoundException c) {
+       throw c;
+     } 
+   }
+   
    private File writeZip(File api, String...classes) throws IOException {
      ZipBuilder builder = new ZipBuilder(api, true);
      for (String className : classes) {
        className = className.replace('.', '/');
-       ByteArrayOutputStream fos = new ByteArrayOutputStream();
-       InputStream implb = getClass().getClassLoader().getResourceAsStream(className + ".class");
-       int check = implb.read();
-       while (check >= 0) {
-         fos.write(check);
-         check = implb.read();
-       }
-       fos.close();
-       builder.putEntry(className + ".class", fos.toByteArray());
+       builder.putEntry(className + ".class", resourceToBytes(className + ".class"));
      }
      builder.finish();
      return api;
+   }
+   
+   private byte[] resourceToBytes(String loc) throws IOException {
+     ByteArrayOutputStream fos = new ByteArrayOutputStream();
+     InputStream implb = getClass().getClassLoader().getResourceAsStream(loc);
+     int check = implb.read();
+     while (check >= 0) {
+       fos.write(check);
+       check = implb.read();
+     }
+     fos.close();
+     return fos.toByteArray();
    }
    
    private void writeClass(File base, String className)  throws IOException {
@@ -111,12 +171,7 @@ public class ServiceLocatorTest {
      File impld = new File(base, className.substring(0, psplit));
      impld.mkdirs();
      FileOutputStream fos = new FileOutputStream(new File(impld, className.substring(psplit + 1) + ".class"));
-     InputStream implb = getClass().getClassLoader().getResourceAsStream(className + ".class");
-     int check = implb.read();
-     while (check >= 0) {
-       fos.write(check);
-       check = implb.read();
-     }
+     fos.write(resourceToBytes(className + ".class"));
      fos.close();
    }
 }
