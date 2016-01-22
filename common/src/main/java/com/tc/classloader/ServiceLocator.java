@@ -26,7 +26,6 @@ import com.tc.util.ServiceUtil;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
@@ -68,8 +67,14 @@ public class ServiceLocator {
             continue;
           }
           String urlString = x.toExternalForm();
-          urlString = urlString.substring(0, urlString.indexOf(METAINFCONST));
-          urls.put(trim, urlString.split("!")[0]);
+          if (urlString.startsWith("jar:")) {
+      //  strip the jar file notation from the URL, start index of 4 is for 'jar:'
+            urlString = urlString.substring(4, urlString.indexOf("!"));
+          } else {
+      //  strip the meta file information from the path
+            urlString = urlString.substring(0, urlString.indexOf(METAINFCONST));
+          }
+          urls.put(trim, urlString);
         }
         sb.setLength(0);
       }
