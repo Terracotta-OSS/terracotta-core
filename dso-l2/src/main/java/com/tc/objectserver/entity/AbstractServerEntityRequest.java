@@ -24,7 +24,6 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -41,17 +40,15 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   private final TransactionID transaction;
   private final TransactionID oldest;
   private final ClientID  src;
-  private final EntityDescriptor descriptor;
   private final boolean requiresReplication;
   
   private boolean done = false;
 
-  public AbstractServerEntityRequest(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
+  public AbstractServerEntityRequest(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
     this.action = action;
     this.transaction = transaction;
     this.oldest = oldest;
     this.src = src;
-    this.descriptor = descriptor;
     this.requiresReplication = requiresReplication;
   }
   
@@ -147,10 +144,6 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
     });
     done = true;
     this.notifyAll();
-  }  
-  
-  protected EntityDescriptor getEntityDescriptor() {
-    return descriptor;
   }
   
   protected boolean isDone() {

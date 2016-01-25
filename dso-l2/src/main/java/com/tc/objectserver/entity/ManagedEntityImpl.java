@@ -477,8 +477,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
   // iterate through all the concurrency keys of an entity
       EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
-  //  this is simply a barrier to make sure all actions are flushed before sync is started   
-      PassiveSyncServerEntityRequest barrier = new PassiveSyncServerEntityRequest(id, version, null);
+  //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
+      PassiveSyncServerEntityRequest barrier = new PassiveSyncServerEntityRequest(null);
       executor.scheduleRequest(entityDescriptor, barrier, new byte[0], ()-> { 
         assertNotNull(this.activeServerEntity);
         assertNotNull(this.activeServerEntity.getConcurrencyStrategy());
@@ -486,7 +486,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }, ConcurrencyStrategy.MANAGEMENT_KEY);
       barrier.waitFor();
       for (Integer concurrency : this.activeServerEntity.getConcurrencyStrategy().getKeysForSynchronization()) {
-        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(id, version, passive);
+        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
         // We don't actually use the message in the direct strategy so this is safe.
         executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
         req.waitFor();
@@ -523,11 +523,10 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
-    
     private final NodeID passive;
     
-    public PassiveSyncServerEntityRequest(EntityID eid, long version, NodeID passive) {
-      super(new EntityDescriptor(eid,ClientInstanceID.NULL_ID,version), ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, ClientID.NULL_ID, false);
+    public PassiveSyncServerEntityRequest(NodeID passive) {
+      super(ServerEntityAction.REQUEST_SYNC_ENTITY, null, null, ClientID.NULL_ID, false);
       this.passive = passive;
     }
 
