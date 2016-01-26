@@ -16,18 +16,15 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 
 import java.util.Optional;
-import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
@@ -37,11 +34,13 @@ import org.terracotta.exception.EntityException;
  * and controls return of acks and completion to client.
  */
 public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
+  private final EntityDescriptor descriptor;
   protected final Optional<MessageChannel> returnChannel;
 
   public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action,  
       TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
-    super(descriptor, action, transaction, oldest, src, requiresReplication);
+    super(action, transaction, oldest, src, requiresReplication);
+    this.descriptor = descriptor;
     this.returnChannel = returnChannel;
   }
 
@@ -70,7 +69,6 @@ public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
 
   @Override
   public ClientDescriptor getSourceDescriptor() {
-    EntityDescriptor entityDescriptor = getEntityDescriptor();
-    return new ClientDescriptorImpl(getNodeID(), entityDescriptor);
+    return new ClientDescriptorImpl(getNodeID(), this.descriptor);
   }
 }
