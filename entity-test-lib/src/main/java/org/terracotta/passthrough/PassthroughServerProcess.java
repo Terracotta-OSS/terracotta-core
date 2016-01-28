@@ -20,6 +20,8 @@ package org.terracotta.passthrough;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,9 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformClientFetchedEntity;
+import org.terracotta.monitoring.PlatformConnectedClient;
+import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
@@ -161,6 +166,12 @@ public class PassthroughServerProcess implements MessageHandler {
     });
     this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.isRunning = true;
+    // Set our state.
+    if (null != this.serviceInterface) {
+      String stateValue = (null != this.activeEntities) ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_PASSIVE;
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, stateValue);
+    }
     this.serverThread.start();
   }
 
@@ -207,6 +218,11 @@ public class PassthroughServerProcess implements MessageHandler {
     // TODO:  Find a way to cut the connections of any current task so that they can't send a response to the client.
     synchronized(this) {
       this.isRunning = false;
+      // Set our state.
+      if (null != this.serviceInterface) {
+        this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
+        this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, PlatformMonitoringConstants.SERVER_STATE_STOPPED);
+      }
       this.notifyAll();
     }
     try {
@@ -355,6 +371,15 @@ public class PassthroughServerProcess implements MessageHandler {
             PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
             entity.connected(clientDescriptor);
             config = entity.getConfig();
+            
+            if (null != PassthroughServerProcess.this.serviceInterface) {
+              // Record that this entity has been fetched by this client.
+              String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
+              String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+              PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier);
+              String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
+              PassthroughServerProcess.this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
+            }
           } else {
             error = new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
           }
@@ -384,6 +409,14 @@ public class PassthroughServerProcess implements MessageHandler {
       PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.disconnected(clientDescriptor);
       this.lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
+      
+      if (null != PassthroughServerProcess.this.serviceInterface) {
+        // Record that this entity has been released by this client.
+        String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
+        String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+        String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
+        PassthroughServerProcess.this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
+      }
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
@@ -412,6 +445,14 @@ public class PassthroughServerProcess implements MessageHandler {
       data.configuration = serializedConfiguration;
       this.persistedEntitiesByConsumerID.put(consumerID, data);
     }
+    
+    if (null != this.serviceInterface) {
+      // Record this new entity.
+      boolean isActive = (null != this.activeEntities);
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, isActive);
+      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
+    }
   }
 
   @Override
@@ -427,6 +468,12 @@ public class PassthroughServerProcess implements MessageHandler {
     }
     if (!didDestroy) {
       throw new EntityNotFoundException(entityClassName, entityName);
+    }
+    
+    if (null != this.serviceInterface) {
+      // Record that we destroyed the entity.
+      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier);
     }
   }
 
@@ -556,6 +603,18 @@ public class PassthroughServerProcess implements MessageHandler {
   }
 
 
+  private String clientIdentifierForService(long connectionID) {
+    return "" + connectionID;
+  }
+
+  private String entityIdentifierForService(String entityClassName, String entityName) {
+    return entityClassName + entityName;
+  }
+
+  private String fetchIdentifierForService(String clientIdentifier, String entityIdentifier) {
+    return clientIdentifier + entityIdentifier;
+  }
+
   private ServerEntityService<?, ?> getEntityServiceForClassName(String entityClassName) {
     ServerEntityService<?, ?> foundService = null;
     for (ServerEntityService<?, ?> service : this.entityServices) {
@@ -653,7 +712,19 @@ public class PassthroughServerProcess implements MessageHandler {
    */
   public void connectConnection(PassthroughConnection connection, long connectionID) {
     if (null != this.serviceInterface) {
-      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + connectionID, connection.toString());
+      // We just fake up the network data.
+      InetAddress localHost = null;
+      try {
+        localHost = InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+        // We don't have handling for this.
+        Assert.unexpected(e);
+      }
+      int serverPort = 1;
+      int clientPort = 2;
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, serverPort, localHost, clientPort);
+      String nodeName = clientIdentifierForService(connectionID);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }
   }
 
@@ -665,7 +736,8 @@ public class PassthroughServerProcess implements MessageHandler {
    */
   public void disconnectConnection(PassthroughConnection connection, long connectionID) {
     if (null != this.serviceInterface) {
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + connectionID);
+      String nodeName = clientIdentifierForService(connectionID);
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
     }
   }
 
