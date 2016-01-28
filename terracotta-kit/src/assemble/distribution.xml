@@ -65,6 +65,13 @@ The Initial Developer of the Covered Software is
       <directory>src/assemble/server/bin</directory>
       <outputDirectory>/server/bin</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/server-lib</directory>
+      <outputDirectory>/client</outputDirectory>
+      <includes>
+        <include>client-runtime*</include>
+      </includes>
+    </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>
       <directory>${project.build.directory}/server-lib</directory>

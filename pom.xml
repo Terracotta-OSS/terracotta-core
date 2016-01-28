@@ -55,6 +55,7 @@
     <module>management</module>
     <module>terracotta-kit</module>
     <module>terracotta</module>
+    <module>client-runtime</module>
   </modules>
 
   <build>
