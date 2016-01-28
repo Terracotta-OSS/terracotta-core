@@ -251,13 +251,28 @@ public class PassthroughConnection implements Connection {
 
   @Override
   public void close() {
-    // First, call the runnable hook.
-    this.onClose.run();
-    // Second, walk any end-points still open and tell them they were disconnected.
-    for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
-      endpoint.didCloseUnexpectedly();
+    // Note that the caller may not know if we were already closed by another test trying to simulate unexpected disconnect situations so check this.
+    if (this.isRunning) {
+      // We are going to stop processing messages so set us not running and stop our thread.
+      synchronized (this) {
+        this.isRunning = false;
+        this.notifyAll();
+      }
+      try {
+        this.clientThread.join();
+      } catch (InterruptedException e) {
+        // This is not expected.
+        Assert.unexpected(e);
+      }
+      // Continue with the shutdown.
+      // First, call the runnable hook.
+      this.onClose.run();
+      // Second, walk any end-points still open and tell them they were disconnected.
+      for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
+        endpoint.didCloseUnexpectedly();
+      }
+      this.localEndpoints.clear();
     }
-    this.localEndpoints.clear();
   }
 
   @Override
