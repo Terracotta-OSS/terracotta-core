@@ -20,6 +20,11 @@
             <artifactId>terracotta</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.terracotta.internal</groupId>
+            <artifactId>client-runtime</artifactId>
+            <version>5.0.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
