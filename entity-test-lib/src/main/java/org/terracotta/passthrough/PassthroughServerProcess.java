@@ -41,6 +41,8 @@ import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
@@ -68,6 +70,9 @@ public class PassthroughServerProcess implements MessageHandler {
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
   private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
+  
+  // We need to hold onto any registered monitoring services to report client connection/disconnection events.
+  private IMonitoringProducer serviceInterface;
   
   public PassthroughServerProcess(boolean isActiveMode) {
     this.entityServices = new Vector<ServerEntityService<?, ?>>();
@@ -117,6 +122,19 @@ public class PassthroughServerProcess implements MessageHandler {
       
       // Get the persisted transaction order in case of a reconnect
       this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+    }
+    
+    // Look up the service interface the platform will use to publish events.
+    this.serviceInterface = this.platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>() {
+      @Override
+      public Class<IMonitoringProducer> getServiceType() {
+        return IMonitoringProducer.class;
+      }});
+    if (null != this.serviceInterface) {
+      // Create the root of the platform tree.
+      this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
+      // Create the root of the client subtree.
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.CLIENTS_ROOT_NAME, null);
     }
     // And start the server thread.
     startServerThreadRunning();
@@ -628,7 +646,9 @@ public class PassthroughServerProcess implements MessageHandler {
    * @param connectionID A unique ID for the connection.
    */
   public void connectConnection(PassthroughConnection connection, long connectionID) {
-    // Temporarily empty.
+    if (null != this.serviceInterface) {
+      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + connectionID, connection.toString());
+    }
   }
 
   /**
@@ -638,7 +658,9 @@ public class PassthroughServerProcess implements MessageHandler {
    * @param connectionID A unique ID for the connection.
    */
   public void disconnectConnection(PassthroughConnection connection, long connectionID) {
-    // Temporarily empty.
+    if (null != this.serviceInterface) {
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + connectionID);
+    }
   }
 
   private PassthroughServiceRegistry getNextServiceRegistry() {

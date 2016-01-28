@@ -27,11 +27,8 @@ import org.junit.Assert;
 import org.terracotta.connection.Connection;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.ServerEntityService;
-import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.monitoring.IMonitoringProducer;
-import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 
 /**
@@ -51,9 +48,6 @@ public class PassthroughServer {
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final Map<Long, PassthroughConnection> savedClientConnections;
   private PassthroughServer savedPassiveServer;
-  
-  // We need to hold onto any registered monitoring services to report client connection/disconnection events.
-  private IMonitoringProducer serviceInterface;
   
   public PassthroughServer(boolean isActiveMode) {
     this.serverProcess = new PassthroughServerProcess(isActiveMode);
@@ -93,19 +87,12 @@ public class PassthroughServer {
           PassthroughConnection closedConnection = PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
           Assert.assertNotNull(closedConnection);
           PassthroughServer.this.serverProcess.disconnectConnection(closedConnection, thisConnectionID);
-          
-          if (null != PassthroughServer.this.serviceInterface) {
-            PassthroughServer.this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + thisConnectionID);
-          }
         }
       }
     };
     PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
     this.serverProcess.connectConnection(connection, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
-    if (null != PassthroughServer.this.serviceInterface) {
-      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + thisConnectionID, connection.toString());
-    }
     return connection;
   }
 
@@ -115,16 +102,6 @@ public class PassthroughServer {
     List<ServiceProvider> providers = new Vector<ServiceProvider>();
     for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
       providers.add(tuple.serviceProvider);
-    }
-    
-    this.serviceInterface = (new PassthroughServiceRegistry(0, providers)).getService(new ServiceConfiguration<IMonitoringProducer>() {
-      @Override
-      public Class<IMonitoringProducer> getServiceType() {
-        return IMonitoringProducer.class;
-      }});
-    if (null != this.serviceInterface) {
-      this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.CLIENTS_ROOT_NAME, null);
     }
     
     this.hasStarted = true;
