@@ -24,10 +24,15 @@ import java.util.Map;
 import java.util.Set;
 
 import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformClientFetchedEntity;
+import org.terracotta.monitoring.PlatformConnectedClient;
+import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
+import com.tc.net.TCSocketAddress;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
@@ -55,8 +60,16 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     
     // Do our initial configuration of the service.
     if (null != this.serviceInterface) {
+      // Create the root of the platform tree.
       this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
+      // Create the root of the client subtree.
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.CLIENTS_ROOT_NAME, null);
+      // Create the root of the entity subtree.
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.ENTITIES_ROOT_NAME, null);
+      // Create the root of the client-entity fetch subtree.
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.FETCHED_ROOT_NAME, null);
+      // Create the initial server state.
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, PlatformMonitoringConstants.SERVER_STATE_STOPPED);
     }
   }
 
@@ -64,10 +77,17 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   public synchronized void serverDidEnterState(State state) {
     // We track whether or not we are in an active state to ensure that entities are created/loaded in the expected state.
     this.isActiveState = (StateManager.ACTIVE_COORDINATOR == state);
+    
+    // Set this in the monitoring interface.
+    if (null != this.serviceInterface) {
+      String stateValue = this.isActiveState ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_PASSIVE;
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, stateValue);
+    }
   }
 
   @Override
-  public synchronized void clientDidConnect(ClientID client) {
+  public synchronized void clientDidConnect(MessageChannel channel, ClientID client) {
     // Ensure that this client isn't already connected.
     Assert.assertFalse(this.connectedClients.contains(client));
     // Now, add it to the connected set.
@@ -75,14 +95,18 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
-      // For now, we will only provide a string representation of the client, in order to enable testing while we flesh
-      // out the data type which would include more of the data we would actually want.
-      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + client.toLong(), client.toString());
+      // Create the structure to describe this client.
+      TCSocketAddress localAddress = channel.getLocalAddress();
+      TCSocketAddress remoteAddress = channel.getRemoteAddress();
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort());
+      // We will use the ClientID long value as the node name.
+      String nodeName = clientIdentifierForService(client);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }
   }
 
   @Override
-  public synchronized void clientDidDisconnect(ClientID client) {
+  public synchronized void clientDidDisconnect(MessageChannel channel, ClientID client) {
     // Ensure that this client was already connected.
     Assert.assertTrue(this.connectedClients.contains(client));
     // Now, remove it from the connected set.
@@ -90,7 +114,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     
     // Remove it from the monitoring interface.
     if (null != this.serviceInterface) {
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + client.toLong());
+      String nodeName = clientIdentifierForService(client);
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
     }
   }
 
@@ -100,8 +125,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     Assert.assertTrue(isActive == this.isActiveState);
     // Ensure that this entity didn't already exist.
     Assert.assertFalse(this.entities.contains(id));
-    // Now, add it to the set.
-    this.entities.add(id);
+    addEntityToTracking(id, isActive);
   }
 
   @Override
@@ -109,7 +133,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     // Ensure that this entity already exists.
     Assert.assertTrue(this.entities.contains(id));
     // Now, remove it from the set.
-    this.entities.remove(id);
+    removeEntityFromTracking(id);
   }
 
   @Override
@@ -119,7 +143,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     // Note that this could happen due to promotion or reloading from restart so we can't know if it already is in our set.
     if (!this.entities.contains(id)) {
       // Seems to be new so add it to the set.
-      this.entities.add(id);
+      addEntityToTracking(id, isActive);
     }
   }
 
@@ -134,6 +158,15 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     }
     count += 1;
     this.fetchPairCounts.put(tuple, count);
+    
+    // Add it to the monitoring interface.
+    if (null != this.serviceInterface) {
+      String clientIdentifier = clientIdentifierForService(client);
+      String entityIdentifier = entityIdentifierForService(id);
+      PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier);
+      String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
+    }
   }
 
   @Override
@@ -145,6 +178,14 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     count -= 1;
     if (count > 0) {
       this.fetchPairCounts.put(tuple, count);
+    }
+    
+    // Remove it from the monitoring interface.
+    if (null != this.serviceInterface) {
+      String clientIdentifier = clientIdentifierForService(client);
+      String entityIdentifier = entityIdentifierForService(id);
+      String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
     }
   }
   
@@ -174,5 +215,41 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       }
       return isEqual;
     }
+  }
+
+
+  private void addEntityToTracking(EntityID id, boolean isActive) {
+    this.entities.add(id);
+    
+    // Add it to the monitoring interface.
+    if (null != this.serviceInterface) {
+      String entityClassName = id.getClassName();
+      String entityName = id.getEntityName();
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, isActive);
+      String entityIdentifier = entityIdentifierForService(id);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
+    }
+  }
+
+  private void removeEntityFromTracking(EntityID id) {
+    this.entities.remove(id);
+    
+    // Remove it to the monitoring interface.
+    if (null != this.serviceInterface) {
+      String entityIdentifier = entityIdentifierForService(id);
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier);
+    }
+  }
+
+  private String clientIdentifierForService(ClientID id) {
+    return "" + id.toLong();
+  }
+
+  private String entityIdentifierForService(EntityID id) {
+    return id.getClassName() + id.getEntityName();
+  }
+
+  private String fetchIdentifierForService(String clientIdentifier, String entityIdentifier) {
+    return clientIdentifier + entityIdentifier;
   }
 }

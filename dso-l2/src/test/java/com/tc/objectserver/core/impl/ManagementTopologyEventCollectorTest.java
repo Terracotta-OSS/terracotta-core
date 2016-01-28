@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 
 import static org.mockito.Mockito.mock;
@@ -39,15 +40,16 @@ public class ManagementTopologyEventCollectorTest {
 
   @Test
   public void testConnectDisconnect() throws Exception {
+    MessageChannel channel = mock(MessageChannel.class);
     ClientID client = mock(ClientID.class);
-    this.collector.clientDidConnect(client);
+    this.collector.clientDidConnect(channel, client);
     // We should fail to connect a second time.
     boolean didSucceed = false;
     // XXX:  Note that there is currently a bug where we need to permit this so this part of the test is disabled.
     boolean isConnectCheckBroken = true;
     if (!isConnectCheckBroken) {
       try {
-        this.collector.clientDidConnect(client);
+        this.collector.clientDidConnect(channel, client);
         didSucceed = true;
       } catch (AssertionError e) {
         // Expected.
@@ -55,14 +57,14 @@ public class ManagementTopologyEventCollectorTest {
       Assert.assertFalse(didSucceed);
     }
     // Now, disconnect.
-    this.collector.clientDidDisconnect(client);
+    this.collector.clientDidDisconnect(channel, client);
     // We should fail to disconnect a second time.
     // XXX:  Note that there is currently a bug where we need to permit this so this part of the test is disabled.
     boolean isDisconnectCheckBroken = true;
     if (!isDisconnectCheckBroken) {
       didSucceed = false;
       try {
-        this.collector.clientDidDisconnect(client);
+        this.collector.clientDidDisconnect(channel, client);
         didSucceed = true;
       } catch (AssertionError e) {
         // Expected.
@@ -123,6 +125,7 @@ public class ManagementTopologyEventCollectorTest {
   @Test
   public void testFetchReleaseActiveEntity() throws Exception {
     EntityID id = mock(EntityID.class);
+    MessageChannel channel = mock(MessageChannel.class);
     ClientID client = mock(ClientID.class);
     
     // Put us into the active state.
@@ -133,7 +136,7 @@ public class ManagementTopologyEventCollectorTest {
     this.collector.entityWasCreated(id, isActive);
     
     // Connect the client.
-    this.collector.clientDidConnect(client);
+    this.collector.clientDidConnect(channel, client);
     
     // Fetch the entity.
     this.collector.clientDidFetchEntity(client, id);
@@ -156,7 +159,7 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertFalse(didSucceed);
     
     // Disconnect the client.
-    this.collector.clientDidDisconnect(client);
+    this.collector.clientDidDisconnect(channel, client);
     
     // Destroy the entity.
     this.collector.entityWasDestroyed(id);
