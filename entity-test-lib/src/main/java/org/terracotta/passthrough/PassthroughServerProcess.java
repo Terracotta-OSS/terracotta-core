@@ -212,8 +212,8 @@ public class PassthroughServerProcess implements MessageHandler {
         return new PassthroughClientDescriptor(PassthroughServerProcess.this, sender, clientInstanceID);
       }
       @Override
-      public PassthroughConnection getClientOrigin() {
-        return sender;
+      public long getClientOriginID() {
+        return sender.getUniqueConnectionID();
       }
       @Override
       public boolean shouldTolerateCreateDestroyDuplication() {
@@ -339,14 +339,14 @@ public class PassthroughServerProcess implements MessageHandler {
         }
         // Release the lock if there was a failure.
         if (null != error) {
-          lockManager.releaseReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID);
+          lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
         }
         onFetch.onFetchComplete(config, error);
       }
       
     };
     // The onAcquire callback will fetch the entity asynchronously.
-    this.lockManager.acquireReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID, onAcquire);
+    this.lockManager.acquireReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID, onAcquire);
   }
 
   @Override
@@ -359,7 +359,7 @@ public class PassthroughServerProcess implements MessageHandler {
       ActiveServerEntity<?, ?> entity = data.entityInstance;
       PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.disconnected(clientDescriptor);
-      this.lockManager.releaseReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID);
+      this.lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
@@ -409,19 +409,19 @@ public class PassthroughServerProcess implements MessageHandler {
   @Override
   public void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire) {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    this.lockManager.acquireWriteLock(entityTuple, sender.getClientOrigin(), onAcquire);
+    this.lockManager.acquireWriteLock(entityTuple, sender.getClientOriginID(), onAcquire);
   }
 
   @Override
   public void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName) {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    this.lockManager.releaseWriteLock(entityTuple, sender.getClientOrigin());
+    this.lockManager.releaseWriteLock(entityTuple, sender.getClientOriginID());
   }
 
   @Override
   public void restoreWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire) {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    this.lockManager.restoreWriteLock(entityTuple, sender.getClientOrigin(), onAcquire);
+    this.lockManager.restoreWriteLock(entityTuple, sender.getClientOriginID(), onAcquire);
   }
 
   @Override
@@ -447,12 +447,12 @@ public class PassthroughServerProcess implements MessageHandler {
           didRun[0] = true;
         } else {
           Assert.unexpected(new Exception("Entity not found in reconnect"));
-          lockManager.releaseReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID);
+          lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
         }
       }
     };
     // The onAcquire callback will fetch the entity asynchronously.
-    this.lockManager.acquireReadLock(entityTuple, sender.getClientOrigin(), clientInstanceID, onAcquire);
+    this.lockManager.acquireReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID, onAcquire);
     Assert.assertTrue(didRun[0]);
   }
 

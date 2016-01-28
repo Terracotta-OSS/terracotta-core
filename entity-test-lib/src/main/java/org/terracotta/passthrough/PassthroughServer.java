@@ -98,7 +98,7 @@ public class PassthroughServer {
         }
       }
     };
-    PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose);
+    PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
     if (null != PassthroughServer.this.serviceInterface) {
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + thisConnectionID, connection.toString());

@@ -54,8 +54,8 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
     return null;
   }
   @Override
-  public PassthroughConnection getClientOrigin() {
-    return sender.getClientOrigin();
+  public long getClientOriginID() {
+    return sender.getClientOriginID();
   }
   @Override
   public boolean shouldTolerateCreateDestroyDuplication() {

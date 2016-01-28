@@ -54,6 +54,7 @@ public class PassthroughConnection implements Connection {
   private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
   private final Set<PassthroughEntityTuple> writeLockedEntities;
   private final Runnable onClose;
+  private final long uniqueConnectionID;
   
   // ivars related to message passing and client thread.
   private boolean isRunning;
@@ -67,13 +68,14 @@ public class PassthroughConnection implements Connection {
   private final List<Waiter> clientResponseWaitQueue;
 
 
-  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices, Runnable onClose) {
+  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
     this.connectionState = new PassthroughConnectionState(serverProcess);
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
     this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint>();
     this.writeLockedEntities = new HashSet<PassthroughEntityTuple>();
     this.onClose = onClose;
+    this.uniqueConnectionID = uniqueConnectionID;
     
     this.isRunning = true;
     this.clientThread = new Thread(new Runnable() {
@@ -88,6 +90,13 @@ public class PassthroughConnection implements Connection {
     
     // Note:  This should probably not be in the constructor.
     this.clientThread.start();
+  }
+
+  /**
+   * @return The unique connection ID of the receiver.
+   */
+  public long getUniqueConnectionID() {
+    return this.uniqueConnectionID;
   }
 
   /**

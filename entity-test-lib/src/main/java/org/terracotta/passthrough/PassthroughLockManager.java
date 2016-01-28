@@ -46,30 +46,30 @@ public class PassthroughLockManager {
     this.locks = new HashMap<PassthroughEntityTuple, LockState>();
   }
 
-  public void acquireWriteLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, Runnable onAcquire) {
+  public void acquireWriteLock(PassthroughEntityTuple entityTuple, long clientOriginID, Runnable onAcquire) {
     LockState state = getStateForName(entityTuple);
     // Write-locks have no clientInstanceID.
     long clientInstanceID = 0;
-    Target target = new Target(sender, clientInstanceID, onAcquire);
+    Target target = new Target(clientOriginID, clientInstanceID, onAcquire);
     state.writeWaits.add(target);
     findAndAwardNewOwners(state);
   }
 
-  public void releaseWriteLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender) {
+  public void releaseWriteLock(PassthroughEntityTuple entityTuple, long clientOriginID) {
     LockState state = getStateForName(entityTuple);
     // Write-locks have no clientInstanceID.
     long clientInstanceID = 0;
-    Target target = new Target(sender, clientInstanceID, null);
+    Target target = new Target(clientOriginID, clientInstanceID, null);
     Assert.assertTrue(state.writeOwner.equals(target));
     state.writeOwner = null;
     findAndAwardNewOwners(state);
   }
 
-  public void restoreWriteLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, Runnable onAcquire) {
+  public void restoreWriteLock(PassthroughEntityTuple entityTuple, long clientOriginID, Runnable onAcquire) {
     LockState state = getStateForName(entityTuple);
     // Write-locks have no clientInstanceID.
     long clientInstanceID = 0;
-    final Target target = new Target(sender, clientInstanceID, onAcquire);
+    final Target target = new Target(clientOriginID, clientInstanceID, onAcquire);
     state.writeWaits.add(target);
     boolean wasAwarded = findAndAwardNewOwners(state);
     // We expect that the lock was awarded.
@@ -78,16 +78,16 @@ public class PassthroughLockManager {
     Assert.assertTrue(target == state.writeOwner);
   }
 
-  public void acquireReadLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, long clientInstanceID, Runnable onAcquire) {
+  public void acquireReadLock(PassthroughEntityTuple entityTuple, long clientOriginID, long clientInstanceID, Runnable onAcquire) {
     LockState state = getStateForName(entityTuple);
-    Target target = new Target(sender, clientInstanceID, onAcquire);
+    Target target = new Target(clientOriginID, clientInstanceID, onAcquire);
     state.readWaits.add(target);
     findAndAwardNewOwners(state);
   }
 
-  public void releaseReadLock(PassthroughEntityTuple entityTuple, PassthroughConnection sender, long clientInstanceID) {
+  public void releaseReadLock(PassthroughEntityTuple entityTuple, long clientOriginID, long clientInstanceID) {
     LockState state = getStateForName(entityTuple);
-    Target target = new Target(sender, clientInstanceID, null);
+    Target target = new Target(clientOriginID, clientInstanceID, null);
     boolean didRemove = state.readOwners.remove(target);
     Assert.assertTrue(didRemove);
     findAndAwardNewOwners(state);
@@ -135,23 +135,23 @@ public class PassthroughLockManager {
 
 
   private static class Target {
-    public final PassthroughConnection sender;
+    public final long clientOriginID;
     public final long clientInstanceID;
     public final Runnable onAcquire;
-    public Target(PassthroughConnection sender, long clientInstanceID, Runnable onAcquire) {
-      this.sender = sender;
+    
+    public Target(long clientOriginID, long clientInstanceID, Runnable onAcquire) {
+      this.clientOriginID = clientOriginID;
       this.clientInstanceID = clientInstanceID;
       this.onAcquire = onAcquire;
     }
     @Override
     public int hashCode() {
-      return this.sender.hashCode() ^ (int)this.clientInstanceID;
+      return (int)this.clientOriginID ^ (int)this.clientInstanceID;
     }
     @Override
     public boolean equals(Object obj) {
       Target other = (Target)obj;
-      // We can instance-compare connections.
-      return (this.sender == other.sender) && (this.clientInstanceID == other.clientInstanceID);
+      return (this.clientOriginID == other.clientOriginID) && (this.clientInstanceID == other.clientInstanceID);
     }
   }
 

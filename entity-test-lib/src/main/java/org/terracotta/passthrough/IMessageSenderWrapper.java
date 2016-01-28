@@ -31,10 +31,11 @@ public interface IMessageSenderWrapper {
   void sendComplete(PassthroughMessage complete);
   PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID);
   /**
-   * Returns the underlying connection on the client.
-   * NOTE:  This can only be used for identity-matching purposes (could be replaced with a client-unique ID, later on).
+   * Used for identifying a PassthroughConnection or anything which wraps one as an IMessageSenderWrapper.  This allows for
+   * unique identification of something which represents a client.
+   * @return The client origin unique ID.
    */
-  PassthroughConnection getClientOrigin();
+  long getClientOriginID();
   /**
    * Note that this is a temporary work-around to test re-sent create/destroy messages which the server can't ignore as
    * duplicated.
