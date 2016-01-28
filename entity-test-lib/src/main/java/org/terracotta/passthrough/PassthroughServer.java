@@ -90,7 +90,9 @@ public class PassthroughServer {
       @Override
       public void run() {
         synchronized (PassthroughServer.this) {
-          PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
+          PassthroughConnection closedConnection = PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
+          Assert.assertNotNull(closedConnection);
+          PassthroughServer.this.serverProcess.disconnectConnection(closedConnection, thisConnectionID);
           
           if (null != PassthroughServer.this.serviceInterface) {
             PassthroughServer.this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + thisConnectionID);
@@ -99,6 +101,7 @@ public class PassthroughServer {
       }
     };
     PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
+    this.serverProcess.connectConnection(connection, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
     if (null != PassthroughServer.this.serviceInterface) {
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, "" + thisConnectionID, connection.toString());

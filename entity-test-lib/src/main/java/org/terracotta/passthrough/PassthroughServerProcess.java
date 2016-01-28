@@ -621,6 +621,26 @@ public class PassthroughServerProcess implements MessageHandler {
     this.passiveEntities = null;
   }
 
+  /**
+   * Called when a new connection has been established to this server.
+   * 
+   * @param connection The new connection object.
+   * @param connectionID A unique ID for the connection.
+   */
+  public void connectConnection(PassthroughConnection connection, long connectionID) {
+    // Temporarily empty.
+  }
+
+  /**
+   * Called when a connection to the server has closed.
+   * 
+   * @param connection The closed connection object.
+   * @param connectionID A unique ID for the connection.
+   */
+  public void disconnectConnection(PassthroughConnection connection, long connectionID) {
+    // Temporarily empty.
+  }
+
   private PassthroughServiceRegistry getNextServiceRegistry() {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
