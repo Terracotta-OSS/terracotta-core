@@ -18,7 +18,6 @@
  */
 package com.terracotta.connection;
 
-import com.google.common.collect.MapMaker;
 import com.tc.license.ProductID;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
@@ -26,21 +25,10 @@ import com.tc.object.DistributedObjectClientFactory;
 import com.tc.util.UUID;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 
 public class CreateClient implements Callable<ClientCreatorCallable> {
-
-  static {
-    /*
-     * Make sure the google-collections finalizer thread is not in the TC thread group otherwise we will pin the L1
-     * loader in memory since the TCThreadGroup will have been loaded by the L1Loader and hence will provide a strong
-     * ref from the finalizer thread to the loader.
-     */
-    Map<String, Object> dummy = new MapMaker().weakValues().makeMap();
-    dummy.put("dummy", new Object());
-  }
 
   private final TerracottaClientStripeConnectionConfig stripeConnectionConfig;
   private final String              productIdName;
