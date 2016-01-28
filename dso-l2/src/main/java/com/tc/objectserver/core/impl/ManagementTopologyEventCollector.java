@@ -28,6 +28,7 @@ import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.util.Assert;
@@ -67,7 +68,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void clientDidConnect(ClientID client) {
+  public synchronized void clientDidConnect(MessageChannel channel, ClientID client) {
     // Ensure that this client isn't already connected.
     Assert.assertFalse(this.connectedClients.contains(client));
     // Now, add it to the connected set.
@@ -82,7 +83,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void clientDidDisconnect(ClientID client) {
+  public synchronized void clientDidDisconnect(MessageChannel channel, ClientID client) {
     // Ensure that this client was already connected.
     Assert.assertTrue(this.connectedClients.contains(client));
     // Now, remove it from the connected set.

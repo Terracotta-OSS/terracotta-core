@@ -19,6 +19,7 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.util.State;
 
@@ -39,16 +40,18 @@ public interface ITopologyEventCollector {
    * Called when a client connects for the first time.  Note that this won't be called if the connection is deemed to be a
    * reconnection of a previously connected client.
    * 
+   * @param channel The channel used by the client.
    * @param client The client.
    */
-  public void clientDidConnect(ClientID client);
+  public void clientDidConnect(MessageChannel channel, ClientID client);
 
   /**
    * Called when a client explicitly and safely disconnects or when the reconnect window for an missing client closes.
    * 
+   * @param channel The now-closed channel used by the client.
    * @param client The client.
    */
-  public void clientDidDisconnect(ClientID client);
+  public void clientDidDisconnect(MessageChannel channel, ClientID client);
 
   /**
    * Called when an entity is explicitly created in response to a request from a client.

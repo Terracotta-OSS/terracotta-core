@@ -133,7 +133,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     ClientID clientID = new ClientID(channel.getChannelID().toLong());
     channelSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, clientID, channel.getProductId()));
     // Record that the client connected.
-    this.eventCollector.clientDidConnect(clientID);
+    this.eventCollector.clientDidConnect(channel, clientID);
   }
 
   @Override
@@ -148,6 +148,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context2);
     // Record that the client disconnected.
-    this.eventCollector.clientDidDisconnect(clientID);
+    this.eventCollector.clientDidDisconnect(channel, clientID);
   }
 }
