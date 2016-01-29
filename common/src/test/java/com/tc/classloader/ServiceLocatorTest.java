@@ -80,13 +80,13 @@ public class ServiceLocatorTest {
      Assert.assertEquals(interf.getClassLoader(), apiLoader);
      Assert.assertEquals(interi.getClassLoader(), component);
      
-     List<?> list = ServiceLocator.getImplementations("com.tc.classloader.TestInterface", testloader);
+     List<Class<?>> list = ServiceLocator.getImplementations("com.tc.classloader.TestInterface", testloader);
      Assert.assertEquals(list.size(), 1);
-     Assert.assertEquals(list.get(0).getClass().getName(), "com.tc.classloader.TestInterfaceImpl");
-     Assert.assertTrue(list.get(0).getClass().getClassLoader() instanceof ComponentURLClassLoader);
-     System.out.println(list.get(0).getClass().getInterfaces()[0].getClassLoader());
-     Assert.assertTrue(list.get(0).getClass().getInterfaces()[0].getClassLoader() instanceof ApiClassLoader);
-     Assert.assertEquals(list.get(0).getClass().getInterfaces()[0].getName(), "com.tc.classloader.TestInterface");
+     Assert.assertEquals(list.get(0).getName(), "com.tc.classloader.TestInterfaceImpl");
+     Assert.assertTrue(list.get(0).getClassLoader() instanceof ComponentURLClassLoader);
+     System.out.println(list.get(0).getInterfaces()[0].getClassLoader());
+     Assert.assertTrue(list.get(0).getInterfaces()[0].getClassLoader() instanceof ApiClassLoader);
+     Assert.assertEquals(list.get(0).getInterfaces()[0].getName(), "com.tc.classloader.TestInterface");
    }
    
    @Test

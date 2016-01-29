@@ -54,25 +54,25 @@ public class PortBindAddressTest extends TCTestCase {
                       + "\n</tc-config>";
       writeConfigFile(config);
       StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null, null);
-      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager("server1");
+      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager("server1", getClass().getClassLoader());
       Assert.assertEquals("127.8.9.0", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("127.8.9.2", configSetupMgr.dsoL2Config().tsaGroupPort().getBind());
       Assert.assertEquals(6510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(6530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server2");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server2", getClass().getClassLoader());
       Assert.assertEquals("0.0.0.0", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("0.0.0.0", configSetupMgr.dsoL2Config().tsaGroupPort().getBind());
       Assert.assertEquals(8510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(8530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server3");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server3", getClass().getClassLoader());
       Assert.assertEquals("127.8.9.0", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("127.8.9.2", configSetupMgr.dsoL2Config().tsaGroupPort().getBind());
       Assert.assertEquals(7510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(7530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server4");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server4", getClass().getClassLoader());
       Assert.assertEquals("1.2.3.4", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("1.2.3.4", configSetupMgr.dsoL2Config().tsaGroupPort().getBind());
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getValue());

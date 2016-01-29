@@ -44,7 +44,6 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 
 import java.util.List;
-import java.util.ServiceLoader;
 
 /**
  * @author twu
@@ -56,11 +55,17 @@ public class ServerEntityFactory {
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName, ClassLoader classLoader) {
-    List<ServerEntityService> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
-    for (ServerEntityService serverService : serviceLoader) {
-      if (serverService.handlesEntityType(typeName)) {
-        return (T) serverService;
+    List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
+    for (Class<? extends ServerEntityService> serverService : serviceLoader) {
+      try {
+        ServerEntityService instance = serverService.newInstance();
+        if (instance.handlesEntityType(typeName)) {
+          return (T)instance;
+        }
+      } catch (IllegalAccessException | InstantiationException i) {
+        throw new RuntimeException(i);
       }
+
     }
     throw new IllegalArgumentException("Can't handle entity type " + typeName);
   }

@@ -88,12 +88,12 @@ public class ServiceLocator {
     return null;
   }
 
-  public static <T> List<T> getImplementations(Class<T> interfaceName, ClassLoader parent) {
-    final List<?> items = getImplementations(interfaceName.getName(), parent);
-    return new AbstractList<T>() {
+  public static <T> List<Class<? extends T>> getImplementations(final Class<T> interfaceClass, ClassLoader parent) {
+    final List<Class<?>> items = (List<Class<?>>)getImplementations(interfaceClass.getName(), parent);
+    return new AbstractList<Class<? extends T>>() {
       @Override
-      public T get(int index) {
-        return (T)items.get(index);
+      public Class<? extends T> get(int index) {
+        return items.get(index).asSubclass(interfaceClass);
       }
 
       @Override
@@ -111,13 +111,13 @@ public class ServiceLocator {
    * @param <T>           concrete type of service/entity
    * @return list of implementation
    */
-  public static List<?> getImplementations(String interfaceName, ClassLoader parent) {
+  public static List<Class<?>> getImplementations(String interfaceName, ClassLoader parent) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("Discovering " + interfaceName + " with parent classloader " + parent.getClass().getName());
     }
     ClassLoader apiLoader = getApiClassLoader(parent);
     Map<String, String> urls = discoverImplementations(apiLoader, interfaceName);
-    ArrayList<Object> implementations = new ArrayList<Object>();
+    ArrayList<Class<?>> implementations = new ArrayList<Class<?>>();
     if (null == urls || urls.isEmpty()) {
       if(LOG.isDebugEnabled()) {
         LOG.debug("No implementations found for " + interfaceName);
@@ -127,9 +127,12 @@ public class ServiceLocator {
     for (Map.Entry<String, String> entry : urls.entrySet()) {
       try {
         ComponentURLClassLoader loader = new ComponentURLClassLoader(new URL[] {new URL(entry.getValue())}, getApiClassLoader(parent), new AnnotationOrDirectoryStrategyChecker());
-        implementations.add(Class.forName(entry.getKey(), false, loader).newInstance());
-      } catch (Exception e) {
-        e.printStackTrace();
+        implementations.add(Class.forName(entry.getKey(), false, loader));
+      } catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      } catch (ClassNotFoundException e) {
+// this should not happen.  discoverImplementations says it should be there
+        throw new RuntimeException(e);
       }
     }
     return implementations;

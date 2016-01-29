@@ -39,11 +39,11 @@ public class TerracottaDomainConfigurationDocumentBeanFactory implements ConfigB
   }
 
   @Override
-  public BeanWithErrors createBean(InputStream in, String sourceDescription, String source) throws IOException, SAXException {
+  public BeanWithErrors createBean(InputStream in, String sourceDescription, String source, ClassLoader loader) throws IOException, SAXException {
     Assert.assertNotBlank(sourceDescription);
 
     Collection<SAXParseException> errors = new ArrayList<>();
-    TcConfiguration document = TCConfigurationParser.parse(in, errors, source);
+    TcConfiguration document = TCConfigurationParser.parse(in, errors, source, loader);
     
     return new BeanWithErrors(document, errors.toArray(new SAXParseException[] {}));
   }

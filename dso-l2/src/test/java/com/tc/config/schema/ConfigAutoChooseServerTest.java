@@ -61,7 +61,7 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
       writeConfigFile(config);
       StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null, null);
 
-      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(null);
+      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(null, getClass().getClassLoader());
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 

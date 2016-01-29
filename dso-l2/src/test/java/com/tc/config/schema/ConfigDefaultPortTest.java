@@ -65,28 +65,28 @@ public class ConfigDefaultPortTest extends TCTestCase {
       L2ConfigurationSetupManager configSetupMgr = null;
 
       // case 1: all ports specified in the config
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server1");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server1", getClass().getClassLoader());
       Assert.assertEquals(19510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(19530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
       // case 2: just tsa-port specified in the config; other port numbers are calculated
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server2");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server2", getClass().getClassLoader());
       Assert.assertEquals(8510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(8510 + L2ConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT, configSetupMgr.dsoL2Config().tsaGroupPort()
           .getValue());
 
       // case 3: tsa-port and group-port specified; jmx-port, management-port calculated
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server3");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server3", getClass().getClassLoader());
       Assert.assertEquals(7510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(7555, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
       // case 4: all ports are default
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server4");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server4", getClass().getClassLoader());
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
       // case 5: ports range overflow
-      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server5");
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager("server5", getClass().getClassLoader());
       Assert.assertEquals(65534, configSetupMgr.dsoL2Config().tsaPort().getValue());
       Assert.assertEquals(((65534 + L2ConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT) % L2ConfigObject.MAX_PORTNUMBER)
                           + L2ConfigObject.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());

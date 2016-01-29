@@ -36,7 +36,7 @@ public interface ConfigurationSetupManagerFactory {
    *        starting more than one L2 in a single VM, it's hard or impossible to accurately set which L2 is being used
    *        that way.)
    */
-  L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
+  L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name, ClassLoader loader)
       throws ConfigurationSetupException;
 
 }

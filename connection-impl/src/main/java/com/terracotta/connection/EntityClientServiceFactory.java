@@ -55,11 +55,18 @@ public class EntityClientServiceFactory {
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public static <T extends Entity, C> EntityClientService<T, C> creationServiceForType(Class<T> cls, ClassLoader classLoader) {
     EntityClientService<T, C> foundService = null;
-    List<EntityClientService> implementations = ServiceLocator.getImplementations(EntityClientService.class,  classLoader);
-    for (EntityClientService<T, C> entityClientService : implementations) {
-      if (entityClientService.handlesEntityType(cls)) {
-        foundService = entityClientService;
-        break;
+    List<Class<? extends EntityClientService>> implementations = ServiceLocator.getImplementations(EntityClientService.class,  classLoader);
+    for (Class<? extends EntityClientService> entityClientService : implementations) {
+      try {
+        EntityClientService instance = entityClientService.newInstance();
+        if (instance.handlesEntityType(cls)) {
+          foundService = instance;
+          break;
+        }
+      } catch (IllegalAccessException i) {
+        throw new RuntimeException(i);
+      } catch (InstantiationException e) {
+        throw new RuntimeException(e);
       }
     }
     return foundService;

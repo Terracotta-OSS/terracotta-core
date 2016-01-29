@@ -18,6 +18,7 @@
  */
 package com.tc.server;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
@@ -25,6 +26,7 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
+import org.terracotta.config.service.ServiceConfigParser;
 
 public class TCServerMain {
   
@@ -39,7 +41,7 @@ public class TCServerMain {
 
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
                                                                                               StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
-      setup = factory.createL2TVSConfigurationSetupManager(null);
+      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, TCServerMain.class.getClassLoader())));
       server = ServerFactory.createServer(setup,threadGroup);
       server.start();
 

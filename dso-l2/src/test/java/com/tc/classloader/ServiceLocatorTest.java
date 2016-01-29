@@ -99,13 +99,13 @@ public class ServiceLocatorTest {
     final URLClassLoader parent = new URLClassLoader(listOfJars);
 
     //Check if right implementations are created with right loaders
-    List<ServiceProvider> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
+    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
 
     Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
 
     Set<ClassLoader> classLoaderSet = new HashSet<ClassLoader>();
-    for (ServiceProvider p : providers) {
-      ClassLoader loader = p.getClass().getClassLoader();
+    for (Class<? extends ServiceProvider> p : providers) {
+      ClassLoader loader = p.getClassLoader();
       //this is required so that we know that system class loader is used
       Assert.assertTrue("Check if right class loader is used", loader instanceof ComponentURLClassLoader);
       //Make sure that we are not loading both interface and implementation at same scope
@@ -130,11 +130,11 @@ public class ServiceLocatorTest {
     final URLClassLoader parent = new URLClassLoader(listOfJars);
 
     //Check if right implementations are created with right loaders
-    List<ServiceProvider> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
+    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
     Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
 
     //XXX introspective code to test hirearchy
-    for (ServiceProvider p : providers) {
+    for (Class<? extends ServiceProvider> p : providers) {
       ServiceConfiguration<Object> serviceConfiguration = new ServiceConfiguration<Object>() {
         @Override
         public Class<Object> getServiceType() {
@@ -146,7 +146,7 @@ public class ServiceLocatorTest {
           return null;
         }
       };
-      Object o = p.getService(1, serviceConfiguration);
+      Object o = p.newInstance().getService(1, serviceConfiguration);
       Class<?> aClass = o.getClass();
       Method gcl = aClass.getDeclaredMethod("getClassLoader");
       gcl.setAccessible(true);
@@ -161,19 +161,20 @@ public class ServiceLocatorTest {
   a better way to test this functionality
   */
   @Test @Ignore 
-  public void testEntityServiceLoadingHierarchical() {
+  public void testEntityServiceLoadingHierarchical() throws Exception {
     //limit the scope of search
     URL[] listOfJars = getListOfJars();
     Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
     final URLClassLoader parent = new URLClassLoader(listOfJars);
 
     //Check if right implementations are created with right loaders
-    final List<ServiceProvider> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
+    final List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
     Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
 
     final Map<Class<?>, List<ServiceProvider>> serviceProviderMap = new HashMap<Class<?>, List<ServiceProvider>>();
 
-    for (ServiceProvider p : providers) {
+    for (Class<? extends ServiceProvider> pclass : providers) {
+      ServiceProvider p = pclass.newInstance();
       for (Class<?> serviceType : p.getProvidedServiceTypes()) {
         List<ServiceProvider> listForType = serviceProviderMap.get(serviceType);
         if (null == listForType) {
@@ -198,9 +199,9 @@ public class ServiceLocatorTest {
 
     //discover entities & inject service!!
     @SuppressWarnings("rawtypes")
-    List<ServerEntityService> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
-    for (@SuppressWarnings("rawtypes") ServerEntityService es : entityServices) {
-      handleService(parent, registry, es);
+    List<Class<? extends ServerEntityService>> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
+    for (@SuppressWarnings("rawtypes") Class<? extends ServerEntityService> es : entityServices) {
+      handleService(parent, registry, es.newInstance());
     }
   }
 
@@ -227,7 +228,7 @@ public class ServiceLocatorTest {
     final URLClassLoader parent = new URLClassLoader(listOfJars);
 
     //Check if right implementations are created with right loaders
-    final List<Object> providers = (List<Object>) ServiceLocator.getImplementations(Class.forName("com.terracotta.sample.service.MyService",
+    final List<Class<?>> providers = (List<Class<?>>) ServiceLocator.getImplementations(Class.forName("com.terracotta.sample.service.MyService",
         true, parent), parent);
 
     //We use same service names in 2 jars, so we discover only 2 implementation, which is normal ServiceLoader in java

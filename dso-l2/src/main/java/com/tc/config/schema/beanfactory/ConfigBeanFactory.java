@@ -30,6 +30,6 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public interface ConfigBeanFactory {
 
-  BeanWithErrors createBean(InputStream in, String sourceDescription, String source) throws IOException, SAXException, ParserConfigurationException;
+  BeanWithErrors createBean(InputStream in, String sourceDescription, String source, ClassLoader loader) throws IOException, SAXException, ParserConfigurationException;
 
 }
