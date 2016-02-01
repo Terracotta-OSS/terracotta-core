@@ -107,7 +107,12 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     this.configurationSpec = configurationSpec;
     this.pwProvider = pwProvider;
   }
-
+  
+  @Override
+  public void createConfiguration() throws ConfigurationSetupException {
+    this.createConfiguration(ClassLoader.getSystemClassLoader());
+  }
+  
   @Override
   public void createConfiguration(ClassLoader loader) throws ConfigurationSetupException {
     loadConfigAndSetIntoRepositories(loader);

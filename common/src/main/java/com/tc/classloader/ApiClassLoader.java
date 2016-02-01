@@ -1,3 +1,21 @@
+/*
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
+ */
 package com.tc.classloader;
 
 import java.net.URL;
@@ -13,21 +31,21 @@ public class ApiClassLoader extends URLClassLoader {
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        Class<?> clazz = findLoadedClass(name);
-        if(clazz == null) {
-            // try to find the class using given jars first,
-            // if not found, try loading using parent classloader.
-            try {
-                clazz = findClass(name);
-            } catch (ClassNotFoundException ignore) {
-                clazz = getParent().loadClass(name);
-            }
-        }
+      Class<?> clazz = findLoadedClass(name);
+      if(clazz == null) {
+          // try to find the class using given jars first,
+          // if not found, try loading using parent classloader.
+          try {
+              clazz = findClass(name);
+          } catch (ClassNotFoundException ignore) {
+              clazz = super.loadClass(name, resolve);
+          }
+      }
 
-        if(clazz != null && resolve) {
-            resolveClass(clazz);
-        }
+      if(clazz != null && resolve) {
+          resolveClass(clazz);
+      }
 
-        return clazz;
+      return clazz;
     }
 }

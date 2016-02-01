@@ -93,7 +93,15 @@ public class ServiceLocator {
     return new AbstractList<Class<? extends T>>() {
       @Override
       public Class<? extends T> get(int index) {
-        return items.get(index).asSubclass(interfaceClass);
+        Class<?> got = items.get(index);
+        try {
+          return got.asSubclass(interfaceClass);
+        } catch (ClassCastException cast) {
+          ClassLoader loader = interfaceClass.getClassLoader();
+          ClassLoader sub = got.getClassLoader();
+          LOG.warn("There has been a class cast exception.  This is usually an indication that a service has been improperly packaged with system dependencies included.  Offending class is " + interfaceClass.getName());
+          throw cast;
+        }
       }
 
       @Override

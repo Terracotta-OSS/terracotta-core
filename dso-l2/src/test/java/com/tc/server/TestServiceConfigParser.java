@@ -18,36 +18,32 @@
  */
 package com.tc.server;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.net.URI;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
 import org.terracotta.config.service.ServiceConfigParser;
+import org.terracotta.entity.ServiceProviderConfiguration;
+import org.w3c.dom.Element;
 
 /**
  *
  */
-public class ServiceClassLoader extends ClassLoader {
-  
-  private final Map<String, Class<?>> cached;
-  
-  public ServiceClassLoader(List<Class<? extends ServiceConfigParser>> svcs) {
-    Map<String, Class<?>> set = new HashMap<>();
-    for (Class<?> svc : svcs) {
-      set.put(svc.getName(), svc);
-    }
-    cached = Collections.unmodifiableMap(set);
+public class TestServiceConfigParser implements ServiceConfigParser {
+
+  @Override
+  public Source getXmlSchema() throws IOException {
+    return new StreamSource(getClass().getResource("/test.xsd").openStream());
   }
 
   @Override
-  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    Class<?> get = cached.get(name);
-    if (get != null) {
-      return get;
-    }
-    return super.loadClass(name, resolve);
+  public URI getNamespace() {
+    return URI.create("http://www.terracotta.org/config/test");
   }
-  
-  
+
+  @Override
+  public ServiceProviderConfiguration parse(Element fragment, String source) {
+    return new TestServiceProviderConfiguration();
+  }
   
 }

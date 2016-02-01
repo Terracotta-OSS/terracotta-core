@@ -28,6 +28,8 @@ import java.io.File;
  */
 public interface ConfigurationCreator {
 
+  @Deprecated
+  void createConfiguration() throws ConfigurationSetupException;
   /**
    * Load up the configuration.
    */

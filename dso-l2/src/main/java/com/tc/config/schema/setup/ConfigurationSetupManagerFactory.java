@@ -38,5 +38,8 @@ public interface ConfigurationSetupManagerFactory {
    */
   L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name, ClassLoader loader)
       throws ConfigurationSetupException;
+  
+  @Deprecated
+  L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name) throws ConfigurationSetupException;
 
 }
