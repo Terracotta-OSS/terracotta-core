@@ -47,7 +47,4 @@ public class ServiceClassLoader extends ClassLoader {
     }
     return super.loadClass(name, resolve);
   }
-  
-  
-  
 }
