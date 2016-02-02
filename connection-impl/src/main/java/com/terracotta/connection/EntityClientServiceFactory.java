@@ -37,11 +37,11 @@
  */
 package com.terracotta.connection;
 
-import com.tc.classloader.ServiceLocator;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientService;
 
 import java.util.List;
+import java.util.ServiceLoader;
 
 
 public class EntityClientServiceFactory {
@@ -55,18 +55,11 @@ public class EntityClientServiceFactory {
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public static <T extends Entity, C> EntityClientService<T, C> creationServiceForType(Class<T> cls, ClassLoader classLoader) {
     EntityClientService<T, C> foundService = null;
-    List<Class<? extends EntityClientService>> implementations = ServiceLocator.getImplementations(EntityClientService.class,  classLoader);
-    for (Class<? extends EntityClientService> entityClientService : implementations) {
-      try {
-        EntityClientService instance = entityClientService.newInstance();
-        if (instance.handlesEntityType(cls)) {
-          foundService = instance;
-          break;
-        }
-      } catch (IllegalAccessException i) {
-        throw new RuntimeException(i);
-      } catch (InstantiationException e) {
-        throw new RuntimeException(e);
+    ServiceLoader<EntityClientService> implementations = ServiceLoader.load(EntityClientService.class,  classLoader);
+    for (EntityClientService instance : implementations) {
+      if (instance.handlesEntityType(cls)) {
+        foundService = instance;
+        break;
       }
     }
     return foundService;

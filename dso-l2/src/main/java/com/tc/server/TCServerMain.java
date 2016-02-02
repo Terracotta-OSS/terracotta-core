@@ -49,16 +49,13 @@ public class TCServerMain {
 
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
                                                                                               StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
-      URL[] purls = Arrays.stream(Directories.getServerPluginsLibDir().listFiles())
-          .filter(TCServerMain::fileFilter)
-          .map(TCServerMain::toURL)
-          .toArray(i->new URL[i]);
-
-      ClassLoader pluginLoader = new URLClassLoader(purls);
-//  set this as the context loader for creation of all the infrastructure at bootstrap time.
-      Thread.currentThread().setContextClassLoader(pluginLoader);
       
-      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, pluginLoader)));
+      ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
+      Thread.currentThread().setContextClassLoader(systemLoader);
+      
+//  set this as the context loader for creation of all the infrastructure at bootstrap time.
+      
+      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, systemLoader)));
       server = ServerFactory.createServer(setup,threadGroup);
       server.start();
 
@@ -66,19 +63,6 @@ public class TCServerMain {
 
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
-    }
-  }
-  
-  private static boolean fileFilter(File target) {
-    String name = target.getName().toLowerCase();
-    return name.endsWith(".jar") || name.endsWith(".zip");
-  }
-  
-  private static URL toURL(File uri) {
-    try {
-      return uri.toURL();
-    } catch (MalformedURLException mal) {
-      return null;
     }
   }
   

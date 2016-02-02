@@ -27,6 +27,7 @@ import com.tc.util.ServiceUtil;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 
@@ -87,6 +88,10 @@ public class ServiceLocator {
     }
     return null;
   }
+  
+  public static <T> List<Class<? extends T>> getImplementations(final Class<T> interfaceClass) {
+    return getImplementations(interfaceClass, Thread.currentThread().getContextClassLoader());
+  }
 
   public static <T> List<Class<? extends T>> getImplementations(final Class<T> interfaceClass, ClassLoader parent) {
     final List<Class<?>> items = (List<Class<?>>)getImplementations(interfaceClass.getName(), parent);
@@ -98,7 +103,7 @@ public class ServiceLocator {
           return got.asSubclass(interfaceClass);
         } catch (ClassCastException cast) {
           ClassLoader loader = interfaceClass.getClassLoader();
-          ClassLoader sub = got.getClassLoader();
+          ClassLoader sub = got.getInterfaces()[0].getClassLoader();
           LOG.warn("There has been a class cast exception.  This is usually an indication that a service has been improperly packaged with system dependencies included.  Offending class is " + interfaceClass.getName());
           throw cast;
         }
@@ -119,7 +124,7 @@ public class ServiceLocator {
    * @param <T>           concrete type of service/entity
    * @return list of implementation
    */
-  public static List<Class<?>> getImplementations(String interfaceName, ClassLoader parent) {
+  private static List<Class<?>> getImplementations(String interfaceName, ClassLoader parent) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("Discovering " + interfaceName + " with parent classloader " + parent.getClass().getName());
     }
@@ -149,39 +154,82 @@ public class ServiceLocator {
   private static final Map<ClassLoader, ApiClassLoader> API_LOADERS = new HashMap<ClassLoader, ApiClassLoader>();
   
   private static synchronized ApiClassLoader getApiClassLoader(ClassLoader parent) {
-    ApiClassLoader loader = API_LOADERS.get(parent);
+    ClassLoader chainCheck = parent;
+// first walk the chain to see if there are any ApiClassLoaders.  If so, Use that
+    while (chainCheck != null) {
+      if (chainCheck instanceof ApiClassLoader) {
+        return (ApiClassLoader)chainCheck;
+      } else {
+        chainCheck = chainCheck.getParent();
+      }
+    }
+//  remove a possible ComponentURLClassLoader
+    chainCheck = parent;
+    while (chainCheck instanceof ComponentURLClassLoader) {
+      chainCheck = chainCheck.getParent();
+    }
+    if (chainCheck == null) {
+      chainCheck = ClassLoader.getSystemClassLoader();
+    }
+// see if there is already a class
+    LOG.warn("storing a new API class loader for parent " + chainCheck);
+    ApiClassLoader loader = API_LOADERS.get(chainCheck);
     if (loader == null) {
-      loader = createApiClassLoader(parent);
-      API_LOADERS.put(parent, loader);
+      loader = createApiClassLoader(chainCheck);
+      API_LOADERS.put(chainCheck, loader);
     }
     return loader;
   }
+  
+  private static boolean fileFilter(File target) {
+    String name = target.getName().toLowerCase();
+    return name.endsWith(".jar") || name.endsWith(".zip");
+  }
+  
+  private static URL toURL(File uri) {
+    try {
+      return uri.toURI().toURL();
+    } catch (MalformedURLException mal) {
+      return null;
+    }
+  }
+      
+  private static URL[] createURLS(File plugins) throws FileNotFoundException {
+    if (plugins.exists()) {
+      return Arrays.stream(plugins.listFiles())
+        .filter(ServiceLocator::fileFilter)
+        .map(ServiceLocator::toURL)
+        .filter(u->u!=null)
+        .toArray(i->new URL[i]);
+    }
+    return new URL[0];
+  }
+  
+  public static URL[] findPluginURLS() throws FileNotFoundException {
+    return createURLS(Directories.getServerPluginsLibDir());
+  }
+  
+  public static ClassLoader PLATFORM_LOADER = createPlatformClassLoader();
+  
+  public static ClassLoader getPlatformLoader() {
+    return PLATFORM_LOADER;
+  }
+  
+  private static ClassLoader createPlatformClassLoader() {
+    try {
+      URLClassLoader purls = new URLClassLoader(findPluginURLS());
+      ApiClassLoader apis = createApiClassLoader(purls);
+      return apis;
+    } catch (FileNotFoundException file) {
+      return ClassLoader.getSystemClassLoader();
+    }
+  }
 
   private static ApiClassLoader createApiClassLoader(ClassLoader parent) {
-    File pluginApiDir;
     try {
-      pluginApiDir = Directories.getServerPluginsApiDir();
+      return new ApiClassLoader(createURLS(Directories.getServerPluginsApiDir()), parent);
     } catch (FileNotFoundException e) {
       throw new RuntimeException(e);
     }
-    File[] apiJars = pluginApiDir.listFiles(new FilenameFilter() {
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".jar");
-      }
-    });
-
-    URL[] apiJarUrls = new URL[0];
-    if(apiJars != null) {
-      apiJarUrls = new URL[apiJars.length];
-      for (int i = 0; i < apiJars.length; i++) {
-        try {
-          apiJarUrls[i] = apiJars[i].toURI().toURL();
-        } catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-    }
-    return new ApiClassLoader(apiJarUrls, parent);
   }
 }

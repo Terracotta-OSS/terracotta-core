@@ -115,6 +115,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
         case DESTROY_ENTITY:
         case RELEASE_ENTITY:
         case DOES_EXIST:
+        case FETCH_ENTITY:
           // In these cases, we just return an empty success to acknowledge that they completed.
           actionResponse.setSuccess(transaction, new byte[0]);
           actionResponse.send();

@@ -1,239 +1,179 @@
 /*
- *
- *  The contents of this file are subject to the Terracotta Public License Version
- *  2.0 (the "License"); You may not use this file except in compliance with the
- *  License. You may obtain a copy of the License at
- *
- *  http://terracotta.org/legal/terracotta-public-license.
- *
- *  Software distributed under the License is distributed on an "AS IS" basis,
- *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- *  the specific language governing rights and limitations under the License.
- *
- *  The Covered Software is Terracotta Core.
- *
- *  The Initial Developer of the Covered Software is
- *  Terracotta, Inc., a Software AG company
- *
+ * All content copyright (c) 2014 Terracotta, Inc., except as may otherwise
+ * be noted in a separate copyright notice. All rights reserved.
  */
 package com.tc.classloader;
 
-import org.junit.Assert;
-import org.junit.Test;
-
+import static com.tc.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
+import com.tc.util.Assert;
+import com.tc.util.ZipBuilder;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FilenameFilter;
-import java.lang.reflect.Method;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
-import org.junit.Ignore;
-import org.terracotta.entity.ActiveServerEntity;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.ServerEntityService;
-import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceRegistry;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
-
+/**
+ *
+ * @author mscott
+ */
 public class ServiceLocatorTest {
-
-  private static final URL rootDir = ServiceLocatorTest.class.getClassLoader().getResource("classloader-tests");
-
-  /*
-    * This method show cases how we should limit the scope of platform class loader, we can have an "ext" folder according
-    * java standards.
-   */
-  private URL[] getListOfJars() {
-    try {
-      File f = new File(rootDir.toURI());
-      String[] uris = f.list(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.endsWith(".jar");
-        }
-      });
-      URL[] toRet = new URL[uris.length];
-      for (int i = 0; i < uris.length; i++) {
-        toRet[i] = new URL(rootDir.toString() + File.separator + uris[i]);
-      }
-      return toRet;
-    } catch (URISyntaxException e) {
-      //ignore
-    } catch (MalformedURLException e) {
-      //ignore
-    }
-    return null;
+  
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
+  
+  public ServiceLocatorTest() {
+  }
+  
+  @BeforeClass
+  public static void setUpClass() {
+  }
+  
+  @AfterClass
+  public static void tearDownClass() {
+  }
+  
+  @Before
+  public void setUp() {
+  }
+  
+  @After
+  public void tearDown() {
   }
 
-  @Test
-  public void testServiceProviderDiscovery() {
-    //Limit scope of search
-    URL[] listOfJars = getListOfJars();
-    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
-    URLClassLoader parent = new URLClassLoader(listOfJars);
-
-    //Check right amount of files are discovered
-    Map<String, String> implJars = ServiceLocator.discoverImplementations(parent, ServiceProvider.class.getName());
-    Assert.assertNotNull("No implementation jars found!", implJars);
-    Assert.assertEquals("Two implementations have to be found!", 2, implJars.size());
-  }
-
-/* disabling this test for now.  refactoring makes the test jars invalid.  Need to find
-  a better way to test this functionality
-  */
-  @Test @Ignore 
-  public void testServiceProviderInstantiation() {
-    //limit the scope of search
-    URL[] listOfJars = getListOfJars();
-    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
-    final URLClassLoader parent = new URLClassLoader(listOfJars);
-
-    //Check if right implementations are created with right loaders
-    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
-
-    Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
-
-    Set<ClassLoader> classLoaderSet = new HashSet<ClassLoader>();
-    for (Class<? extends ServiceProvider> p : providers) {
-      ClassLoader loader = p.getClassLoader();
-      //this is required so that we know that system class loader is used
-      Assert.assertTrue("Check if right class loader is used", loader instanceof ComponentURLClassLoader);
-      //Make sure that we are not loading both interface and implementation at same scope
-      Assert.assertNotEquals(ServiceProvider.class.getClassLoader(), loader);
-      //add to set to check number of implementation to check uniques across implementations.
-      classLoaderSet.add(loader);
-    }
-
-    Assert.assertEquals("Unique class loader should be assigned to each of providers ",
-        classLoaderSet.size(), providers.size());
-
-  }
-
-/* disabling this test for now.  refactoring makes the test jars invalid.  Need to find
-  a better way to test this functionality
-  */
-  @Test @Ignore 
-  public void testHierarchicalServiceLoading() throws Exception {
-    //limit the scope of search
-    URL[] listOfJars = getListOfJars();
-    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
-    final URLClassLoader parent = new URLClassLoader(listOfJars);
-
-    //Check if right implementations are created with right loaders
-    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
-    Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
-
-    //XXX introspective code to test hirearchy
-    for (Class<? extends ServiceProvider> p : providers) {
-      ServiceConfiguration<Object> serviceConfiguration = new ServiceConfiguration<Object>() {
-        @Override
-        public Class<Object> getServiceType() {
-          try {
-            return (Class<Object>) Class.forName("com.terracotta.sample.service.IClassLoading", false, parent);
-          } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-          }
-          return null;
-        }
-      };
-      Object o = p.newInstance().getService(1, serviceConfiguration);
-      Class<?> aClass = o.getClass();
-      Method gcl = aClass.getDeclaredMethod("getClassLoader");
-      gcl.setAccessible(true);
-      Method gpl = aClass.getDeclaredMethod("getParentTypeLoader");
-      gpl.setAccessible(true);
-      //IClassloading defines two methods to return implementation classloader and type class loader
-      Assert.assertNotEquals("Concrete implementation and API should not be having same classloader", gcl.invoke(o), gpl.invoke(o));
-      Assert.assertEquals("Check the parent loader which we create for loading components are followed", gpl.invoke(o), parent);
-    }
-  }
-/* disabling this test for now.  refactoring makes the test jars invalid.  Need to find
-  a better way to test this functionality
-  */
-  @Test @Ignore 
-  public void testEntityServiceLoadingHierarchical() throws Exception {
-    //limit the scope of search
-    URL[] listOfJars = getListOfJars();
-    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
-    final URLClassLoader parent = new URLClassLoader(listOfJars);
-
-    //Check if right implementations are created with right loaders
-    final List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, parent);
-    Assert.assertEquals("Two implementations have to be found!", 2, providers.size());
-
-    final Map<Class<?>, List<ServiceProvider>> serviceProviderMap = new HashMap<Class<?>, List<ServiceProvider>>();
-
-    for (Class<? extends ServiceProvider> pclass : providers) {
-      ServiceProvider p = pclass.newInstance();
-      for (Class<?> serviceType : p.getProvidedServiceTypes()) {
-        List<ServiceProvider> listForType = serviceProviderMap.get(serviceType);
-        if (null == listForType) {
-          listForType = new Vector<ServiceProvider>();
-          serviceProviderMap.put(serviceType, listForType);
-        }
-        listForType.add(p);
-      }
-    }
-    ServiceRegistry registry = new ServiceRegistry() {
-      @Override
-      public <T> T getService(ServiceConfiguration<T> serviceConfiguration) {
-        List<ServiceProvider> providers1 = serviceProviderMap.get(serviceConfiguration.getServiceType());
-        if(providers1.isEmpty()) {
-          Assert.fail("Entity queried for something which does not exist, this should never happen!!!");
-        }
-        return providers1.get(0).getService(1, serviceConfiguration);
-      }
-    };
-
-    //We are not testing service to service hierarchy loading as it is tested in other test case
-
-    //discover entities & inject service!!
-    @SuppressWarnings("rawtypes")
-    List<Class<? extends ServerEntityService>> entityServices = ServiceLocator.getImplementations(ServerEntityService.class, parent);
-    for (@SuppressWarnings("rawtypes") Class<? extends ServerEntityService> es : entityServices) {
-      handleService(parent, registry, es.newInstance());
-    }
-  }
-
-  private <A extends EntityMessage, R extends EntityResponse> void handleService(URLClassLoader parent, ServiceRegistry registry, ServerEntityService<ActiveServerEntity<A, R>, ?> es) {
-    ActiveServerEntity<A, R> activeEntity = es.createActiveEntity(registry, null);
-    MessageCodec<A, R> codec = activeEntity.getMessageCodec();
-    //get class name of IClassLoader type
-    R gpl = activeEntity.invoke(null, codec.deserialize("gpl".getBytes()));
-    //get class name of the entity loader
-    R gel = activeEntity.invoke(null, codec.deserialize("gel".getBytes()));
-    //get reference of the IClassloader loader
-    R plr = activeEntity.invoke(null, codec.deserialize("plr".getBytes()));
-    Assert.assertNotEquals("Entity classloader and parent(IClassLoader) loader should not be same", gpl, gel);
-    //XXX works only because on same VM
-    Assert.assertEquals("Same parent loader reference is used to load (Iclassloader)", plr,
-        Integer.toString(System.identityHashCode(parent)));
-  }
-
-  @Test
-  public void testMultipleServiceImplInSameJar() throws Exception {
-    //limit the scope of search
-    URL[] listOfJars = getListOfJars();
-    Assert.assertNotNull("test jars not located at " + rootDir, listOfJars);
-    final URLClassLoader parent = new URLClassLoader(listOfJars);
-
-    //Check if right implementations are created with right loaders
-    final List<Class<?>> providers = (List<Class<?>>) ServiceLocator.getImplementations(Class.forName("com.terracotta.sample.service.MyService",
-        true, parent), parent);
-
-    //We use same service names in 2 jars, so we discover only 2 implementation, which is normal ServiceLoader in java
-    //behaviour.
-    Assert.assertEquals(2, providers.size());
-  }
-
+   @Test
+   public void test() throws Exception {
+     File f = folder.newFolder();
+     File impl = new File(f, "plugins/impl/");
+     File meta = new File(impl, "META-INF/services");
+     meta.mkdirs();
+     File api = new File(f, "plugins/api");
+     api.mkdirs();
+     writeClass(impl, "com.tc.classloader.TestInterfaceImpl");
+     writeClass(impl, "com.tc.classloader.TestInterfaceHandle");
+     File testApi = writeZip(new File(api, "test.jar"), "com.tc.classloader.TestInterface");
+     System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
+     
+     ClassLoader testloader = new URLClassLoader(new URL[] {impl.toURI().toURL()}, this.getClass().getClassLoader());
+     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, testloader);
+     
+     FileOutputStream services1 = new FileOutputStream(new File(meta, "com.tc.classloader.TestInterface"));
+     services1.write("com.tc.classloader.TestInterfaceImpl".getBytes());
+     services1.close();
+     FileOutputStream services2 = new FileOutputStream(new File(meta, "java.lang.Runnable"));
+     services2.write("com.tc.classloader.TestInterfaceHandle".getBytes());
+     services2.close();
+     ComponentURLClassLoader component = new ComponentURLClassLoader(new URL[] {impl.toURI().toURL()}, 
+         apiLoader, 
+         new AnnotationOrDirectoryStrategyChecker());
+     Class<?> interf = component.loadClass("com.tc.classloader.TestInterface");
+     Class<?> interi = component.loadClass("com.tc.classloader.TestInterfaceImpl");
+     Assert.assertTrue(interf.getClassLoader() instanceof ApiClassLoader);
+     Assert.assertEquals(interf.getClassLoader(), apiLoader);
+     Assert.assertEquals(interi.getClassLoader(), component);
+     
+     Thread.currentThread().setContextClassLoader(apiLoader);
+     List<Class<? extends Runnable>> list = ServiceLocator.getImplementations(Runnable.class);
+     for (Class<? extends Runnable> r : list) {
+       r.newInstance().run();
+     }
+   }
+   
+   @Test
+   public void testURLsFromZip() throws Exception {
+     File base = folder.newFolder();
+     File test = new File(base, "test.jar");
+     ZipBuilder zip = new ZipBuilder(test, false);
+     zip.putEntry("META-INF/services/com.tc.classloader.TestInterface", "com.tc.classloader.TestInterfaceImpl".getBytes());
+     zip.putEntry("com/tc/classloader/TestInterfaceImpl.class", resourceToBytes("com/tc/classloader/TestInterfaceImpl.class"));
+//  put it in the zip so null parent loader can find it
+     zip.putEntry("com/tc/classloader/TestInterface.class", resourceToBytes("com/tc/classloader/TestInterface.class"));
+     zip.finish();
+     Map<String, String> map = ServiceLocator.discoverImplementations(new URLClassLoader(new URL[] {test.toURI().toURL()}), "com.tc.classloader.TestInterface");
+     Assert.assertTrue(map.size() == 1);
+     try {
+       ClassLoader loader = new URLClassLoader(new URL[] {new URL(map.get("com.tc.classloader.TestInterfaceImpl").toString())}, null);
+       Class<?> c = loader.loadClass("com.tc.classloader.TestInterfaceImpl");
+       Assert.assertNotNull(c);
+     } catch (MalformedURLException m) {
+//  not expected
+       throw m;
+     } catch (ClassNotFoundException c) {
+       throw c;
+     } 
+   }
+   
+   @Test
+   public void testURLsFromDir() throws Exception {
+     File base = folder.newFolder();
+     new File(base, "META-INF/services/").mkdirs();
+     FileOutputStream meta = new FileOutputStream(new File(base, "META-INF/services/com.tc.classloader.TestInterface"));
+     meta.write("com.tc.classloader.TestInterfaceImpl".getBytes());
+     meta.close();
+     new File(base, "com/tc/classloader/").mkdirs();
+     FileOutputStream clazz = new FileOutputStream(new File(base, "com/tc/classloader/TestInterfaceImpl.class"));
+     clazz.write(resourceToBytes("com/tc/classloader/TestInterfaceImpl.class"));
+     clazz.close();
+     
+     FileOutputStream impl = new FileOutputStream(new File(base, "com/tc/classloader/TestInterface.class"));
+     impl.write(resourceToBytes("com/tc/classloader/TestInterface.class"));
+     impl.close();
+     
+     Map<String, String> map = ServiceLocator.discoverImplementations(new URLClassLoader(new URL[] {base.toURI().toURL()}), "com.tc.classloader.TestInterface");
+     Assert.assertTrue(map.size() == 1);
+     try {
+       ClassLoader loader = new URLClassLoader(new URL[] {new URL(map.get("com.tc.classloader.TestInterfaceImpl").toString())}, null);
+       Class<?> c = loader.loadClass("com.tc.classloader.TestInterfaceImpl");
+       Assert.assertNotNull(c);
+     } catch (MalformedURLException m) {
+//  not expected
+       throw m;
+     } catch (ClassNotFoundException c) {
+       throw c;
+     } 
+   }
+   
+   private File writeZip(File api, String...classes) throws IOException {
+     ZipBuilder builder = new ZipBuilder(api, true);
+     for (String className : classes) {
+       className = className.replace('.', '/');
+       builder.putEntry(className + ".class", resourceToBytes(className + ".class"));
+     }
+     builder.finish();
+     return api;
+   }
+   
+   private byte[] resourceToBytes(String loc) throws IOException {
+     ByteArrayOutputStream fos = new ByteArrayOutputStream();
+     InputStream implb = getClass().getClassLoader().getResourceAsStream(loc);
+     int check = implb.read();
+     while (check >= 0) {
+       fos.write(check);
+       check = implb.read();
+     }
+     fos.close();
+     return fos.toByteArray();
+   }
+   
+   private void writeClass(File base, String className)  throws IOException {
+     className = className.replace('.', '/');
+     int psplit = className.lastIndexOf('/');
+     File impld = new File(base, className.substring(0, psplit));
+     impld.mkdirs();
+     FileOutputStream fos = new FileOutputStream(new File(impld, className.substring(psplit + 1) + ".class"));
+     fos.write(resourceToBytes(className + ".class"));
+     fos.close();
+   }
 }

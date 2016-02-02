@@ -18,6 +18,7 @@
  */
 package com.tc.config.schema.setup;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;

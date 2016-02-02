@@ -18,11 +18,21 @@
  */
 package com.tc.classloader;
 
+import com.tc.util.Assert;
+import java.util.List;
+
 /**
  *
  * @author mscott
  */
-@CommonComponent
-public class CommonComponentClass {
-  
+public class TestInterfaceHandle implements Runnable {
+  public void run() {
+    List<Class<? extends TestInterface>> list = ServiceLocator.getImplementations(TestInterface.class);
+     Assert.assertEquals(list.size(), 1);
+     Assert.assertEquals(list.get(0).getName(), "com.tc.classloader.TestInterfaceImpl");
+     Assert.assertTrue(list.get(0).getClassLoader() instanceof ComponentURLClassLoader);
+     System.out.println(list.get(0).getInterfaces()[0].getClassLoader());
+     Assert.assertTrue(list.get(0).getInterfaces()[0].getClassLoader() instanceof ApiClassLoader);
+     Assert.assertEquals(list.get(0).getInterfaces()[0].getName(), "com.tc.classloader.TestInterface");
+  }
 }
