@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class ServerEntityFactory {
   public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) {
-    return getService(typeName, ServerEntityFactory.class.getClassLoader());
+    return getService(typeName, Thread.currentThread().getContextClassLoader());
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -19,6 +19,7 @@
 package com.tc.server;
 
 import com.tc.classloader.ServiceLocator;
+import com.tc.config.Directories;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
@@ -26,6 +27,13 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
 import org.terracotta.config.service.ServiceConfigParser;
 
 public class TCServerMain {
@@ -41,7 +49,16 @@ public class TCServerMain {
 
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
                                                                                               StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
-      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, TCServerMain.class.getClassLoader())));
+      URL[] purls = Arrays.stream(Directories.getServerPluginsLibDir().listFiles())
+          .filter(TCServerMain::fileFilter)
+          .map(TCServerMain::toURL)
+          .toArray(i->new URL[i]);
+
+      ClassLoader pluginLoader = new URLClassLoader(purls);
+//  set this as the context loader for creation of all the infrastructure at bootstrap time.
+      Thread.currentThread().setContextClassLoader(pluginLoader);
+      
+      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, pluginLoader)));
       server = ServerFactory.createServer(setup,threadGroup);
       server.start();
 
@@ -49,6 +66,19 @@ public class TCServerMain {
 
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
+    }
+  }
+  
+  private static boolean fileFilter(File target) {
+    String name = target.getName().toLowerCase();
+    return name.endsWith(".jar") || name.endsWith(".zip");
+  }
+  
+  private static URL toURL(File uri) {
+    try {
+      return uri.toURL();
+    } catch (MalformedURLException mal) {
+      return null;
     }
   }
   
