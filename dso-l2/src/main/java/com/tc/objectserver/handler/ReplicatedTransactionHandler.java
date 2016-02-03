@@ -250,7 +250,7 @@ public class ReplicatedTransactionHandler {
   private void acknowledge(ReplicationMessage rep) {
 //  when is the right time to send the ack?
     try {
-      if (rep.messageFrom().equals(ServerID.NULL_ID)) {
+      if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
         groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
       }
     } catch (GroupException ge) {
