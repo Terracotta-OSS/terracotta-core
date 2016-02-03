@@ -21,7 +21,7 @@ package com.tc.object;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.core.ClusterTopologyChangedListener;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;

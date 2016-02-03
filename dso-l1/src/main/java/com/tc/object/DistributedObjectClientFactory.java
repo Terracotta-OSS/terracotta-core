@@ -27,7 +27,7 @@ import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;

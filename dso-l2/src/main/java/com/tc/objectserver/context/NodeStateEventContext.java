@@ -19,7 +19,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.NodeID;
 
 public class NodeStateEventContext implements MultiThreadedEventContext {

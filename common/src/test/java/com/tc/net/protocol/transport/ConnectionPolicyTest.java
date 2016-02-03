@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.util.Assert;
 
 import junit.framework.TestCase;

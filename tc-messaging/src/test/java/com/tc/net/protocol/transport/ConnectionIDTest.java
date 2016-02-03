@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 
 import org.junit.Test;
 

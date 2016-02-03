@@ -24,7 +24,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.config.HaConfig;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;

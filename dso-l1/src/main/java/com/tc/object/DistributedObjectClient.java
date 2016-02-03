@@ -35,8 +35,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackDumpHandler;
 import com.tc.lang.TCThreadGroup;
-import com.tc.license.LicenseManager;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.ClientIDLogger;
@@ -515,7 +514,6 @@ public class DistributedObjectClient implements TCClient {
       } catch (final MaxConnectionsExceededException e) {
         DSO_LOGGER.fatal(e.getMessage());
         CONSOLE_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal(LicenseManager.ERROR_MESSAGE);
         throw new IllegalStateException(e.getMessage(), e);
       } catch (final CommStackMismatchException e) {
         DSO_LOGGER.fatal(e.getMessage());

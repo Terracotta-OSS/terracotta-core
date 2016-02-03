@@ -22,7 +22,7 @@ package com.tc.object.handler;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClusterMembershipMessage;

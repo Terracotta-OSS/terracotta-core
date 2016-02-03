@@ -43,11 +43,6 @@
       <artifactId>connection-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.license</groupId>
-      <artifactId>terracotta-license</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1</artifactId>
       <version>${project.version}</version>

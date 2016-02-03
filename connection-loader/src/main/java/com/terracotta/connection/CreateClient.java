@@ -18,7 +18,7 @@
  */
 package com.terracotta.connection;
 
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClientFactory;

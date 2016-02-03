@@ -16,16 +16,16 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.setup.sources;
+package com.tc.config.schema.setup;
 
-import org.terracotta.license.util.Base64;
-
+import com.tc.config.schema.setup.sources.ConfigurationSource;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Base64;
 
 public class Base64ConfigurationSource implements ConfigurationSource {
   private final String configString;
@@ -33,7 +33,7 @@ public class Base64ConfigurationSource implements ConfigurationSource {
   public Base64ConfigurationSource(String base64ConfigString) {
     Assert.assertNotBlank(base64ConfigString);
     try {
-      this.configString = new String(Base64.decode(base64ConfigString), "UTF-8");
+      this.configString = new String(Base64.getDecoder().decode(base64ConfigString), "UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }

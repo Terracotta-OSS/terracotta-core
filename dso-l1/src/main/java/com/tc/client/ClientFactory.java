@@ -19,7 +19,7 @@
 package com.tc.client;
 
 import com.tc.lang.TCThreadGroup;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.EnterpriseDistributedObjectClient;

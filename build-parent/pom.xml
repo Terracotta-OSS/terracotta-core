@@ -46,7 +46,6 @@
     <slf4j.version>1.7.7</slf4j.version>
     <management-core-version>2.0.8</management-core-version>
     <tc-messaging.version>2.0.0-SNAPSHOT</tc-messaging.version>
-    <terracotta-license.version>1.1.2</terracotta-license.version>
 
     <tcconfig.version>10.0-SNAPSHOT</tcconfig.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
@@ -163,11 +162,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>13.0.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta.license</groupId>
-        <artifactId>terracotta-license</artifactId>
-        <version>${terracotta-license.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
