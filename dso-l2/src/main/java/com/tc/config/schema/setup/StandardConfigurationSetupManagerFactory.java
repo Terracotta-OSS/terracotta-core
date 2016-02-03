@@ -166,14 +166,14 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
   }
 
   @Override
-  public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
+  public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name, ClassLoader loader)
       throws ConfigurationSetupException {
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory, this.pwProvider);
 
-    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name);
+    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, loader);
   }
 
   public String[] getArguments() {

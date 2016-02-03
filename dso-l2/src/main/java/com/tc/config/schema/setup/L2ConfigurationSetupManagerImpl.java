@@ -18,6 +18,7 @@
  */
 package com.tc.config.schema.setup;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
@@ -84,12 +85,12 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private Servers serversBean;
 
-  public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier)
+  public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier, ClassLoader loader)
       throws ConfigurationSetupException {
-    this(null, configurationCreator, thisL2Identifier);
+    this(null, configurationCreator, thisL2Identifier, loader);
   }
 
-  public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator, String thisL2Identifier)
+  public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator, String thisL2Identifier, ClassLoader loader)
       throws ConfigurationSetupException {
     super(args, configurationCreator);
 
@@ -98,7 +99,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     this.localInetAddresses = getAllLocalInetAddresses();
 
     // this sets the beans in each repository
-    runConfigurationCreator();
+    runConfigurationCreator(loader);
     this.configTCProperties = new ConfigTCPropertiesFromObject(tcPropertiesRepository());
     overwriteTcPropertiesFromConfig();
 

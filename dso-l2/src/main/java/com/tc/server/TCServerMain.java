@@ -18,6 +18,8 @@
  */
 package com.tc.server;
 
+import com.tc.classloader.ServiceLocator;
+import com.tc.config.Directories;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
@@ -25,6 +27,14 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
+import org.terracotta.config.service.ServiceConfigParser;
 
 public class TCServerMain {
   
@@ -39,7 +49,13 @@ public class TCServerMain {
 
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
                                                                                               StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
-      setup = factory.createL2TVSConfigurationSetupManager(null);
+      
+      ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
+      Thread.currentThread().setContextClassLoader(systemLoader);
+      
+//  set this as the context loader for creation of all the infrastructure at bootstrap time.
+      
+      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, systemLoader)));
       server = ServerFactory.createServer(setup,threadGroup);
       server.start();
 

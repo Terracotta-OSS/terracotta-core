@@ -223,7 +223,7 @@ public final class ArchiveUtil {
       createPathArchive();
       return;
     }
-    TcConfig configBeans = TCConfigurationParser.parse(tcConfig).getPlatformConfiguration();
+    TcConfig configBeans = TCConfigurationParser.parse(tcConfig, tcConfig.getClass().getClassLoader()).getPlatformConfiguration();
     File clientLogsDir = null;
     File[] serverLogsDir = null;
 

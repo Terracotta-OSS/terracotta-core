@@ -16,20 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.beanfactory;
-
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.xml.parsers.ParserConfigurationException;
+package com.tc.classloader;
 
 /**
- * Knows how to turn a stream containing XML into the appropriate XMLBean.
+ *
+ * @author mscott
  */
-public interface ConfigBeanFactory {
-
-  BeanWithErrors createBean(InputStream in, String sourceDescription, String source, ClassLoader loader) throws IOException, SAXException, ParserConfigurationException;
-
+public interface TestInterface {
+  
 }

@@ -358,7 +358,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
                                                                                         new TerracottaDomainConfigurationDocumentBeanFactory());
 
     BaseConfigurationSetupManager configSetupMgr = new BaseConfigurationSetupManager(configurationCreator);
-    configSetupMgr.runConfigurationCreator();
+    configSetupMgr.runConfigurationCreator(getClass().getClassLoader());
 
     return configSetupMgr;
   }

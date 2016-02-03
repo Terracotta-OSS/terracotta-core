@@ -28,10 +28,12 @@ import java.io.File;
  */
 public interface ConfigurationCreator {
 
+  @Deprecated
+  void createConfiguration() throws ConfigurationSetupException;
   /**
    * Load up the configuration.
    */
-  void createConfiguration() throws ConfigurationSetupException;
+  void createConfiguration(ClassLoader loader) throws ConfigurationSetupException;
 
   /**
    * @return the directory containing the configuration file from which config was loaded,
@@ -55,8 +57,7 @@ public interface ConfigurationCreator {
 
   String describeSources();
 
-  String reloadServersConfiguration(boolean shouldLogConfig,
-                                    boolean reportToConsole) throws ConfigurationSetupException;
+  String reloadServersConfiguration(boolean shouldLogConfig, boolean reportToConsole) throws ConfigurationSetupException;
 
 
   TcConfiguration getParsedConfiguration();

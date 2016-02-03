@@ -95,7 +95,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       } else if (e instanceof EntityVersionMismatchException) {
         throw (EntityVersionMismatchException)e;
       } else {
-        Assert.failure("Unsupported exception type returned to fetch", e);
+        throw Assert.failure("Unsupported exception type returned to fetch", e);
       }
     } catch (final Throwable t) {
       closeHook.run();
@@ -103,7 +103,9 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     }
     
     // Note that a failure to resolve the endpoint would have thrown so this can't be null.
-    Assert.assertNotNull(endpoint);
+    if (endpoint == null) {
+      Assert.assertNotNull(endpoint);
+    }
     return entityClientService.create(endpoint);
   }
 

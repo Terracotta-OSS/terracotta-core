@@ -55,6 +55,7 @@ public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>> entityServices = new ConcurrentHashMap<>();
 
+  private final ClassLoader creationLoader;
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
@@ -69,6 +70,7 @@ public class EntityManagerImpl implements EntityManager {
     this.processorPipeline = processor;
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
+    this.creationLoader = Thread.currentThread().getContextClassLoader();
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), platform);
   }
@@ -155,7 +157,7 @@ public class EntityManagerImpl implements EntityManager {
     String typeName = entityID.getClassName();
     ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> service = entityServices.get(typeName);
     if (service == null) {
-      service = ServerEntityFactory.getService(typeName, EntityManagerImpl.class.getClassLoader());
+      service = ServerEntityFactory.getService(typeName, this.creationLoader);
       // getService only fails to resolve by throwing.
       Assert.assertNotNull(service);
       Object oldService = entityServices.putIfAbsent(typeName, service);

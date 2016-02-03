@@ -41,6 +41,7 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
     Map<Class<?>, List<ServiceProvider>> temp = new HashMap<>();
     for(ServiceProvider provider : providers) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
+        ClassLoader loader = serviceType.getClassLoader();
         List<ServiceProvider> listForType = temp.get(serviceType);
         if (null == listForType) {
           listForType = new LinkedList<>();

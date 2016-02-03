@@ -63,9 +63,9 @@ public class BaseConfigurationSetupManager {
     return this.conf;
   }
 
-  protected final void runConfigurationCreator() throws ConfigurationSetupException {
+  protected final void runConfigurationCreator(ClassLoader loader) throws ConfigurationSetupException {
     try {
-      this.configurationCreator.createConfiguration();
+      this.configurationCreator.createConfiguration(loader);
     } catch (Throwable t) {
       throw new ConfigurationSetupException(t);
     }

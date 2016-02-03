@@ -87,6 +87,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private TcConfiguration tcConfigDocument;
   private TcConfiguration providedTcConfigDocument;
   private final PwProvider pwProvider;
+  
+  private ClassLoader loader;
 
   public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory) {
     this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, null);
@@ -105,22 +107,28 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     this.configurationSpec = configurationSpec;
     this.pwProvider = pwProvider;
   }
-
+  
   @Override
   public void createConfiguration() throws ConfigurationSetupException {
-    loadConfigAndSetIntoRepositories();
+    this.createConfiguration(ClassLoader.getSystemClassLoader());
+  }
+  
+  @Override
+  public void createConfiguration(ClassLoader loader) throws ConfigurationSetupException {
+    loadConfigAndSetIntoRepositories(loader);
     logCopyOfConfig();
   }
 
-  protected void loadConfigAndSetIntoRepositories() throws ConfigurationSetupException {
+  protected void loadConfigAndSetIntoRepositories(ClassLoader loader) throws ConfigurationSetupException {
+    this.loader = loader;
     ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
-    ConfigDataSourceStream baseConfigDataSourceStream = loadConfigDataFromSources(sources);
+    ConfigDataSourceStream baseConfigDataSourceStream = loadConfigDataFromSources(sources, loader);
     baseConfigLoadedFromTrustedSource = baseConfigDataSourceStream.isTrustedSource();
     baseConfigDescription = baseConfigDataSourceStream.getDescription();
 
     if (this.configurationSpec.shouldOverrideServerTopology()) {
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
-      ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, true, false);
+      ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, true, false, loader);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     }
@@ -133,11 +141,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     ConfigDataSourceStream serverOverrideConfigDataSourceStream;
     if (this.configurationSpec.shouldOverrideServerTopology()) {
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
-      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, reportToConsole, shouldLogTcConfig);
+      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, reportToConsole, shouldLogTcConfig, loader);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     } else {
-      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, reportToConsole, shouldLogTcConfig);
+      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, reportToConsole, shouldLogTcConfig, loader);
     }
 
     if (shouldLogTcConfig) {
@@ -226,24 +234,24 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     else return null;
   }
 
-  private ConfigDataSourceStream loadConfigDataFromSources(ConfigurationSource[] sources) throws ConfigurationSetupException {
+  private ConfigDataSourceStream loadConfigDataFromSources(ConfigurationSource[] sources, ClassLoader loader) throws ConfigurationSetupException {
     long startTime = System.currentTimeMillis();
     ConfigDataSourceStream configDataSourceStream = getConfigDataSourceStrean(sources, startTime, "base configuration");
     if (configDataSourceStream.getSourceInputStream() == null) configurationFetchFailed(sources, startTime);
     loadConfigurationData(configDataSourceStream.getSourceInputStream(), configDataSourceStream.isTrustedSource(),
-                          configDataSourceStream.getDescription());
+                          configDataSourceStream.getDescription(), loader);
     consoleLogger.info("Successfully loaded " + configDataSourceStream.getDescription() + ".");
     return configDataSourceStream;
   }
 
   private ConfigDataSourceStream loadServerConfigDataFromSources(ConfigurationSource[] sources,
-                                                                 boolean reportToConsole, boolean updateTcConfig)
+                                                                 boolean reportToConsole, boolean updateTcConfig, ClassLoader loader)
       throws ConfigurationSetupException {
     long startTime = System.currentTimeMillis();
     ConfigDataSourceStream configDataSourceStream = getConfigDataSourceStrean(sources, startTime, "server topology");
     if (configDataSourceStream.getSourceInputStream() == null) configurationFetchFailed(sources, startTime);
     loadServerConfigurationData(configDataSourceStream.getSourceInputStream(), configDataSourceStream.isTrustedSource(),
-                                configDataSourceStream.getDescription(), updateTcConfig);
+                                configDataSourceStream.getDescription(), updateTcConfig, loader);
     if (reportToConsole) {
       consoleLogger.info("Successfully overridden " + configDataSourceStream.getDescription() + ".");
     }
@@ -407,16 +415,16 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     logger.info(describeSources() + ":\n\n" + this.providedTcConfigDocument.toString());
   }
 
-  private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip) throws ConfigurationSetupException {
+  private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip, ClassLoader loader) throws ConfigurationSetupException {
     TcConfiguration configDocument = getConfigFromSourceStream(in, trustedSource, descrip, directoryConfigurationLoadedFrom()!= null ?
-        directoryConfigurationLoadedFrom().getAbsolutePath() : "");
+        directoryConfigurationLoadedFrom().getAbsolutePath() : "", loader);
     Assert.assertNotNull(configDocument);
     updateTcConfigFull(configDocument, descrip);
   }
 
   private void loadServerConfigurationData(InputStream in, boolean trustedSource, String descrip,
-                                           boolean updateTcConfig) throws ConfigurationSetupException {
-    TcConfiguration configDocument = getConfigFromSourceStream(in, trustedSource, descrip, directoryConfigurationLoadedFrom().getAbsolutePath());
+                                           boolean updateTcConfig, ClassLoader loader) throws ConfigurationSetupException {
+    TcConfiguration configDocument = getConfigFromSourceStream(in, trustedSource, descrip, directoryConfigurationLoadedFrom().getAbsolutePath(), loader);
     Assert.assertNotNull(configDocument);
     if (updateTcConfig) {
       updateTcConfigFull(configDocument, descrip);
@@ -424,7 +432,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
 
-  private TcConfiguration getConfigFromSourceStream(InputStream in, boolean trustedSource, String descrip, String source)
+  private TcConfiguration getConfigFromSourceStream(InputStream in, boolean trustedSource, String descrip, String source, ClassLoader loader)
       throws ConfigurationSetupException {
     TcConfiguration tcConfigDoc;
     try {
@@ -433,7 +441,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       in.close();
 
       InputStream copyIn = new ByteArrayInputStream(dataCopy.toByteArray());
-      BeanWithErrors beanWithErrors = beanFactory.createBean(copyIn, descrip, source);
+      BeanWithErrors beanWithErrors = beanFactory.createBean(copyIn, descrip, source, loader);
 
       if (beanWithErrors.errors() != null && beanWithErrors.errors().length > 0) {
         logger.debug("Configuration didn't parse; it had " + beanWithErrors.errors().length + " error(s).");
