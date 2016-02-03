@@ -25,6 +25,7 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.EntityLockID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
+import com.tc.util.Assert;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -89,6 +90,12 @@ public class MaintenanceModeService {
     }));
   }
 
+  public <T extends Entity> boolean tryEnterMaintenanceMode(final Class<T> c, final String name) {
+    TryLockRunnable runnable = new TryLockRunnable(c, name);
+    await(executorService.submit(runnable));
+    return runnable.didLock();
+  }
+
   public <T extends Entity> void exitMaintenanceMode(final Class<T> c, final String name) {
     await(executorService.submit(new Runnable() {
       @Override
@@ -103,7 +110,43 @@ public class MaintenanceModeService {
     this.clientLockManager.lock(id, level);
   }
 
+  private boolean tryLock(LockID id, LockLevel level) {
+    return this.clientLockManager.tryLock(id, level);
+  }
+
   private void unlock(LockID id, LockLevel level) {
     this.clientLockManager.unlock(id, level);
+  }
+
+
+  /**
+   * We create this explicit runnable for tryLock since we want to know whether the lock did happen.
+   */
+  private class TryLockRunnable implements Runnable {
+    private final Class<?> clazz;
+    private final String name;
+    private boolean didRun = false;
+    private boolean didLock = false;
+    
+    public TryLockRunnable(Class<?> clazz, String name) {
+      this.clazz = clazz;
+      this.name = name;
+    }
+
+    /**
+     * Checks if the lock was successful and also asserts that the attempt was at least made.
+     * @return True if the lock was successful
+     */
+    public boolean didLock() {
+      Assert.assertTrue(this.didRun);
+      return this.didLock;
+    }
+    
+    @Override
+    public void run() {
+      LockID lockID = new EntityLockID(clazz.getName(), name);
+      this.didLock = tryLock(lockID, LockLevel.WRITE);
+      this.didRun = true;
+    }
   }
 }
