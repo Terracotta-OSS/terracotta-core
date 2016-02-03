@@ -88,7 +88,7 @@ public class ProductInfoTest extends TestCase {
       fail(e.getMessage());
     }
   }
-
+/*
   public void testEnterpriseEditionWithPatch() {
     try {
       InputStream buildData = ProductInfo.getData("TestEnterpriseBuildData.txt");
@@ -105,7 +105,7 @@ public class ProductInfoTest extends TestCase {
       fail(e.getMessage());
     }
   }
-
+*/
   private void verifyOpenSourceBuildData(ProductInfo info) {
     assertEquals("thebranch", info.buildBranch());
     assertEquals("20080616-130651 (Revision 12345 from thebranch)", info.buildID());
@@ -118,17 +118,17 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("Enterprise", info.edition());
-    assertFalse(info.isOpenSource());
-    assertTrue(info.isEnterprise());
+    assertEquals("Opensource", info.edition());
+    assertTrue(info.isOpenSource());
+    assertFalse(info.isEnterprise());
     assertEquals("1.2.3", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
     System.out.println(info.toLongString());
-    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 from thebranch)",
+    assertEquals("Terracotta 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 from thebranch)",
         info.toLongString());
-    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT", info.toShortString());
+    assertEquals("Terracotta 1.2.3-SNAPSHOT", info.toShortString());
     assertEquals("1.2.3-SNAPSHOT", info.version());
   }
 
