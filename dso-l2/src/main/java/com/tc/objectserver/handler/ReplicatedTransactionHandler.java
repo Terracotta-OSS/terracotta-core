@@ -146,7 +146,7 @@ public class ReplicatedTransactionHandler {
         groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
       } catch (GroupException ge) {
 //  Passive must have died.  Swallow the exception
-        LOGGER.info("passive died on ack", ge);
+        LOGGER.info("active died on ack", ge);
       }
       syncMessageReceived(rep);
       return;
@@ -230,7 +230,6 @@ public class ReplicatedTransactionHandler {
     if (deferred != null) {
       while(!deferred.isEmpty()) {
         ReplicationMessage r = deferred.pop();
-        r.setMessageOrginator(ServerID.NULL_ID);
         try {
           processMessage(r);
         } catch (EntityException ee) {
@@ -251,10 +250,12 @@ public class ReplicatedTransactionHandler {
   private void acknowledge(ReplicationMessage rep) {
 //  when is the right time to send the ack?
     try {
-      groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+      if (rep.messageFrom().equals(ServerID.NULL_ID)) {
+        groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+      }
     } catch (GroupException ge) {
 //  Passive must have died.  Swallow the exception
-      LOGGER.info("passive died on ack", ge);
+      LOGGER.info("active died on ack", ge);
     }
   }
 
