@@ -162,6 +162,17 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createWriteLockTryAcquireMessage(final Class<?> entityClass, final String entityName) {
+    // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.LOCK_TRY_ACQUIRE, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityName);
+      }};
+  }
+
   public static PassthroughMessage createWriteLockReleaseMessage(final Class<?> entityClass, final String entityName) {
     // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
     boolean shouldReplicateToPassives = false;

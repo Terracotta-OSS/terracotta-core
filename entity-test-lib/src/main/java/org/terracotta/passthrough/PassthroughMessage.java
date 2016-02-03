@@ -39,6 +39,7 @@ public abstract class PassthroughMessage {
     COMPLETE_FROM_SERVER,
     INVOKE_ON_CLIENT,
     LOCK_ACQUIRE,
+    LOCK_TRY_ACQUIRE,
     LOCK_RELEASE,
     LOCK_RESTORE,
     RECONNECT,

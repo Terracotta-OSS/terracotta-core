@@ -206,6 +206,26 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         }
         break;
       }
+      case LOCK_TRY_ACQUIRE: {
+        // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
+        // "clientInstanceIDs" for maintenance mode refs).
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        try {
+          boolean didAcquire = this.messageHandler.tryAcquireWriteLock(sender, entityClassName, entityName);
+          // We send a single byte as the response:  0x1 means success, 0x0 means failure.
+          byte[] response = new byte[1];
+          response[0] = (byte)(didAcquire ? 0x1 : 0x0);
+          EntityException error = null;
+          sendCompleteResponse(sender, transactionID, response, error);
+        } catch (RuntimeException e) {
+          // Just wrap this as a user exception since it was unexpected.
+          EntityException error = new EntityUserException(entityClassName, entityName, e);
+          // An unexpected exception is the only case where we send the response at this level.
+          sendCompleteResponse(sender, transactionID, null, error);
+        }
+        break;
+      }
       case LOCK_RELEASE: {
         // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
         // "clientInstanceIDs" for maintenance mode refs).
@@ -392,6 +412,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws EntityException;
     byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws EntityException;
     void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
+    boolean tryAcquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
     void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
     void restoreWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
     void reconnect(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] extendedData);

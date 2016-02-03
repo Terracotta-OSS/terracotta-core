@@ -55,6 +55,24 @@ public class PassthroughLockManager {
     findAndAwardNewOwners(state);
   }
 
+  public boolean tryAcquireWriteLock(PassthroughEntityTuple entityTuple, long clientOriginID) {
+    LockState state = getStateForName(entityTuple);
+    // Before we do anything, determine if we get the lock, should we add a write wait.
+    boolean canLock = (null == state.writeOwner)
+        && (state.readOwners.isEmpty())
+        && (state.writeWaits.isEmpty());
+    if (canLock) {
+      // Write-locks have no clientInstanceID.
+      long clientInstanceID = 0;
+      CheckLock onAcquire = new CheckLock();
+      Target target = new Target(clientOriginID, clientInstanceID, onAcquire);
+      state.writeWaits.add(target);
+      findAndAwardNewOwners(state);
+      onAcquire.check();
+    }
+    return canLock;
+  }
+
   public void releaseWriteLock(PassthroughEntityTuple entityTuple, long clientOriginID) {
     LockState state = getStateForName(entityTuple);
     // Write-locks have no clientInstanceID.
@@ -160,5 +178,20 @@ public class PassthroughLockManager {
     public Set<Target> readOwners = new HashSet<Target>();
     public List<Target> writeWaits = new Vector<Target>();
     public List<Target> readWaits = new Vector<Target>();
+  }
+
+
+  /**
+   * This runnable exists to give a mechanism to ensure that the lock was successful.
+   */
+  private static class CheckLock implements Runnable {
+    private boolean didLock = false;
+    public void check() {
+      Assert.assertTrue(this.didLock);
+    }
+    @Override
+    public void run() {
+      this.didLock = true;
+    }
   }
 }
