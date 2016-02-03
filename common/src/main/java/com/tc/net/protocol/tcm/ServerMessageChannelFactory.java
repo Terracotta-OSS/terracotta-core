@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 
 public interface ServerMessageChannelFactory {
 

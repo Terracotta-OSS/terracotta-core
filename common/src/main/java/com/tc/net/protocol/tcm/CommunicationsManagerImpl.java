@@ -21,7 +21,7 @@ package com.tc.net.protocol.tcm;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.exception.TCRuntimeException;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;

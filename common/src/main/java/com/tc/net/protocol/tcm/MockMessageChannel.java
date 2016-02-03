@@ -21,7 +21,7 @@ package com.tc.net.protocol.tcm;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;

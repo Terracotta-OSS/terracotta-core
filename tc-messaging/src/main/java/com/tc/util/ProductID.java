@@ -17,7 +17,7 @@
  *
  */
 
-package com.tc.license;
+package com.tc.util;
 
 /**
  * @author tim

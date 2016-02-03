@@ -28,7 +28,6 @@ import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.repository.BeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.sources.Base64ConfigurationSource;
 import com.tc.config.schema.setup.sources.ConfigurationSource;
 import com.tc.config.schema.setup.sources.FileConfigurationSource;
 import com.tc.config.schema.setup.sources.ResourceConfigurationSource;

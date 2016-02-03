@@ -19,7 +19,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;

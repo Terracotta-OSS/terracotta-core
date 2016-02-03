@@ -28,7 +28,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.tc.license.ProductID;
+import com.tc.util.ProductID;
 import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.ClientID;

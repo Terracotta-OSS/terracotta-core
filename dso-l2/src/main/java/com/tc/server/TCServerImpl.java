@@ -35,7 +35,6 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -193,7 +192,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   @Override
   public String getDescriptionOfCapabilities() {
     if (ProductInfo.getInstance().isEnterprise()) {
-      return LicenseManager.licensedCapabilities();
+      return "Enterprise capabilities";
     } else {
       return "Open source capabilities";
     }
