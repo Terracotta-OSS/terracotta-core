@@ -25,20 +25,55 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.EntityLockID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
+import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
 import com.tc.util.Assert;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author twu
  */
 public class MaintenanceModeService {
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final ExecutorService executorService = new DirectExecutor();
   private final ClientLockManager clientLockManager;
+ 
+  private class DirectExecutor extends AbstractExecutorService {
+    
+    @Override
+    public void shutdown() {
+      throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public List<Runnable> shutdownNow() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return false;
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return false;
+    }
+
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public synchronized void execute(Runnable command) {
+      command.run();
+    }
+    
+  }
   public MaintenanceModeService(ClientLockManager clientLockManager) {
     this.clientLockManager = clientLockManager;
   }
