@@ -146,30 +146,47 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
 
   @Override
   public void destroy() throws EntityNotFoundException {
-    EntityID entityID = getEntityID();
     this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
     try {
-      InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version, Collections.<VoltronEntityMessage.Acks>emptySet());
-      boolean interrupted = false;
-      while (true) {
-        try {
-          future.get();
-          break;
-        } catch (EntityException e) {
-          // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
-          // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-          if (e instanceof EntityNotFoundException) {
-            throw (EntityNotFoundException)e;
-          } else {
-            Assert.failure("Unsupported exception type returned to destroy", e);
-          }
-        } catch (InterruptedException e) {
-          interrupted = true;
-        }
-      }
-      Util.selfInterruptIfNeeded(interrupted);
+      destroyLockedEntity();
     } finally {
       this.maintenanceModeService.exitMaintenanceMode(this.type, this.name);
     }
+  }
+
+  @Override
+  public boolean tryDestroy() throws EntityNotFoundException {
+    boolean didEnter = this.maintenanceModeService.tryEnterMaintenanceMode(this.type, this.name);
+    if (didEnter) {
+      try {
+        destroyLockedEntity();
+      } finally {
+        this.maintenanceModeService.exitMaintenanceMode(this.type, this.name);
+      }
+    }
+    return didEnter;
+  }
+
+  private void destroyLockedEntity() throws EntityNotFoundException {
+    EntityID entityID = getEntityID();
+    InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version, Collections.<VoltronEntityMessage.Acks>emptySet());
+    boolean interrupted = false;
+    while (true) {
+      try {
+        future.get();
+        break;
+      } catch (EntityException e) {
+        // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
+        // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
+        if (e instanceof EntityNotFoundException) {
+          throw (EntityNotFoundException)e;
+        } else {
+          Assert.failure("Unsupported exception type returned to destroy", e);
+        }
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    Util.selfInterruptIfNeeded(interrupted);
   }
 }
