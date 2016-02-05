@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
@@ -60,10 +62,12 @@ public class EntityManagerImpl implements EntityManager {
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
   
+  private final Sink<VoltronEntityMessage> loopback;
+  
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
 
-  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, RequestProcessor processor) {
+  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, RequestProcessor processor, Sink<VoltronEntityMessage> loopback) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -71,6 +75,7 @@ public class EntityManagerImpl implements EntityManager {
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
     this.creationLoader = Thread.currentThread().getContextClassLoader();
+    this.loopback = loopback;
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), platform);
   }
@@ -102,7 +107,7 @@ public class EntityManagerImpl implements EntityManager {
   public void createEntity(EntityID id, long version, long consumerID) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, version, serviceRegistry.subRegistry(consumerID),
+    ManagedEntity temp = new ManagedEntityImpl(id, version, loopback, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(id, temp) != null) {
       throw new EntityAlreadyExistsException(id.getClassName(), id.getEntityName());
@@ -113,7 +118,7 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, loopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }

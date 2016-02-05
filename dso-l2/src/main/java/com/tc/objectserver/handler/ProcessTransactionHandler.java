@@ -270,6 +270,9 @@ public class ProcessTransactionHandler {
       case INVOKE_ACTION:
         action = ServerEntityAction.INVOKE_ACTION;
         break;
+      case NOOP:
+        action = ServerEntityAction.NOOP;
+        break;
       default:
         // Unknown request type.
         Assert.fail();

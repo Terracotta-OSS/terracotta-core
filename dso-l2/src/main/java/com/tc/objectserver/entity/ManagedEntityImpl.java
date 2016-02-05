@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -42,14 +44,22 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import static com.tc.util.Assert.assertNotNull;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -72,10 +82,15 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
   private final ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory;
+  // PTH sink so things can be injected into the stream
+  private final Sink<VoltronEntityMessage> loopback;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
   private volatile boolean isDestroyed;
   private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
+
+  private final DefermentQueue defer = new DefermentQueue(TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_ENTITY_DEFERMENT_QUEUE_SIZE, 1024));
   private volatile PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
   private final ReadWriteLock reconnectAccessLock = new ReentrantReadWriteLock();
@@ -84,11 +99,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
+  ManagedEntityImpl(EntityID id, long version, Sink<VoltronEntityMessage> loopback, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
+    this.loopback = loopback;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -109,6 +125,26 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void addInvokeRequest(final ServerEntityRequest request, byte[] payload) {
+// this all makes sense because this is only called by the PTH single thread
+// deferCleared is cleared by one of the request queues
+    Assert.assertTrue(
+        Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE)
+        || Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE)
+        || Thread.currentThread().getName().contains(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE)
+    );
+ 
+    for (StoredMessage msg : defer) {
+      processInvokeRequest(msg.getRequest(), msg.getPayload());
+    }
+// a noop message's job is done.  no need to continue
+    if (request.getAction() != ServerEntityAction.NOOP) {
+      if (!defer.offer(request, payload)) {
+        processInvokeRequest(request, payload);
+      }
+    }
+  }
+  
+  private void processInvokeRequest(final ServerEntityRequest request, byte[] payload) {
     ClientDescriptor client = request.getSourceDescriptor();
     Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);
       // Invoke and payload requests need to wait for the entity creation so that they can request the concurrency strategy.
@@ -124,7 +160,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       MessageCodec<EntityMessage, EntityResponse> deserializer = entity.getMessageCodec();
       Assert.assertNotNull(deserializer);
       Assert.assertNotNull(payload);
-      
+    
       EntityMessage message = null;
       try {
         message = runWithHelper(()->deserializer.deserialize(payload));
@@ -137,6 +173,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         final int concurrencyKey = ((null != concurrencyStrategy)) ?
           concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
         final EntityMessage safeMessage = message;
+        if (concurrencyKey == ConcurrencyStrategy.MANAGEMENT_KEY) {
+          boolean last = defer.activate();
+          Assert.assertTrue(last);
+        }
         executor.scheduleRequest(getEntityDescriptorForSource(client), request, payload, ()->invoke(request, safeMessage, concurrencyKey), concurrencyKey);
       }
     }
@@ -281,8 +321,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           case RECEIVE_SYNC_PAYLOAD:
             receiveSyncEntityPayload(request, message);
             break;
-          case DOES_EXIST:
           case NOOP:
+            break;
+          case DOES_EXIST:
             // Never occur on this level.
             throw new IllegalArgumentException("Unexpected request " + request);
           default:
@@ -292,7 +333,14 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
         request.failure(wrapper);
+        throw new RuntimeException(e);
       } finally {
+        if (concurrencyKey == ConcurrencyStrategy.MANAGEMENT_KEY) {
+          boolean last = defer.clear();
+          Assert.assertFalse(last);
+//  insert a noop in the PTH to make sure deferred actions get flushed;
+          loopback.addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version)));
+        }
         read.unlock();
       }
   }
@@ -609,5 +657,103 @@ public class ManagedEntityImpl implements ManagedEntity {
       super.complete();
       this.notifyAll();
     }
+  }
+
+  private static class StoredMessage {
+    private final ServerEntityRequest request;
+    private final byte[] payload;
+
+    public StoredMessage(ServerEntityRequest request, byte[] payload) {
+      this.request = request;
+      this.payload = payload;
+    }
+
+    public ServerEntityRequest getRequest() {
+      return request;
+    }
+
+    public byte[] getPayload() {
+      return payload;
     }
   }
+  
+  private static class DefermentQueue implements Iterable<StoredMessage> {
+    private final LinkedList<StoredMessage> queue = new LinkedList<>();
+    private final int limit;
+    private volatile boolean deferCleared = true;
+
+    public DefermentQueue(int limit) {
+      this.limit = limit;
+    }
+
+    StoredMessage checkDeferred() {
+      if (deferCleared && !queue.isEmpty()) {
+        return queue.pop();
+      }
+      return null;
+    }
+    
+    synchronized boolean activate() {
+      logger.debug("activated from " + Thread.currentThread().getName());
+      try {
+        return deferCleared;
+      } finally {
+        deferCleared = false;
+      }
+    }
+    
+    synchronized boolean clear() {
+     logger.debug("cleared from " + Thread.currentThread().getName());
+     try {
+        notify();
+        return deferCleared;
+      } finally {
+        deferCleared = true;
+      }
+    }
+    
+    boolean offer(ServerEntityRequest req, byte[] payload) {
+      if (!deferCleared || !queue.isEmpty()) {
+        queue.add(new StoredMessage(req, payload));
+        if (queue.size() == limit) {
+          pause();
+        }
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public Iterator<StoredMessage> iterator() {
+      return new Iterator<StoredMessage>() {
+        StoredMessage msg;
+        
+        @Override
+        public boolean hasNext() {
+          msg = checkDeferred();
+          return msg != null;
+        }
+
+        @Override
+        public StoredMessage next() {
+          return msg;
+        }
+      };
+    }
+
+    private synchronized void pause() {
+      boolean interrupted = false;
+      while (!deferCleared) {
+        try {
+          this.wait();
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+}

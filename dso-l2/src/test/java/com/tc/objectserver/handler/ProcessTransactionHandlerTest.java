@@ -91,7 +91,7 @@ public class ProcessTransactionHandlerTest {
     this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
     this.eventCollector = mock(ITopologyEventCollector.class);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor);
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, loopbackSink);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
   }
