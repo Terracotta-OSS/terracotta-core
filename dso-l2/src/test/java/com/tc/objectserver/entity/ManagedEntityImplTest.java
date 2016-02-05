@@ -24,11 +24,13 @@ import org.terracotta.TestEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityUserException;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -64,9 +66,9 @@ public class ManagedEntityImplTest {
   private long version;
   private ManagedEntityImpl managedEntity;
   private ServiceRegistry serviceRegistry;
-  private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> serverEntityService;
-  private ActiveServerEntity activeServerEntity;
-  private PassiveServerEntity passiveServerEntity;
+  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> serverEntityService;
+  private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
+  private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   private RequestProcessor requestMulti;
   private ClientEntityStateManager clientEntityStateManager;
   private ITopologyEventCollector eventCollector;
@@ -74,6 +76,7 @@ public class ManagedEntityImplTest {
   private ClientDescriptor clientDescriptor;
   private EntityDescriptor entityDescriptor;
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     nodeID = mock(NodeID.class);
@@ -94,7 +97,7 @@ public class ManagedEntityImplTest {
     boolean isInActiveState = false;
     managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
-    Mockito.doAnswer(new Answer() {
+    Mockito.doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         ((Runnable)invocation.getArguments()[3]).run();
@@ -104,8 +107,8 @@ public class ManagedEntityImplTest {
   }
 
   @SuppressWarnings("unchecked")
-  private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> getServerEntityService(ActiveServerEntity activeServerEntity, PassiveServerEntity passiveServerEntity) {
-    ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> entityService = mock(ServerEntityService.class);
+  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
+    ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> entityService = mock(ServerEntityService.class);
     doReturn(activeServerEntity).when(entityService).createActiveEntity(any(ServiceRegistry.class), any(byte[].class));
     doReturn(passiveServerEntity).when(entityService).createPassiveEntity(any(ServiceRegistry.class), any(byte[].class));
     return entityService;
@@ -205,7 +208,39 @@ public class ManagedEntityImplTest {
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
   }
-  
+
+  @Test
+  public void testCodecException() throws Exception {
+    managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    
+    byte[] payload = { 0 };
+    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
+      @Override
+      public byte[] serialize(EntityResponse response) {
+        // We should never reach this - should fail before the invoke.
+        Assert.fail();
+        return null;
+      }
+      @Override
+      public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
+        // We want to simulate a failure.
+        throw new MessageCodecException("failure", null);
+      }
+      @Override
+      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
+        Assert.fail("Synchronization not used in this test");
+        return null;
+      }
+    });
+    ServerEntityRequest invokeRequest = mockInvokeRequest();
+    managedEntity.addInvokeRequest(invokeRequest, payload);
+    
+    verify(activeServerEntity, never()).invoke(any(ClientDescriptor.class), any(EntityMessage.class));
+    verify(invokeRequest, never()).complete(any(byte[].class));
+    verify(invokeRequest).failure(any(EntityUserException.class));
+  }
+
   @Test
   public void testGetAndRelease() throws Exception {
     // Get and release are only relevant on the active.
