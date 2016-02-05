@@ -33,6 +33,7 @@ import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
@@ -42,6 +43,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityUserException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
@@ -317,7 +319,7 @@ public class PassthroughServerProcess implements MessageHandler {
       if (null != data) {
         ActiveServerEntity<?, ?> entity = data.entityInstance;
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-        response = sendActiveInvocation(clientDescriptor, entity, payload);
+        response = sendActiveInvocation(entityClassName, entityName, clientDescriptor, entity, payload);
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
@@ -327,7 +329,7 @@ public class PassthroughServerProcess implements MessageHandler {
       if (null != data) {
         PassiveServerEntity<?, ?> entity = data.entityInstance;
         // There is no return type in the passive case.
-        sendPassiveInvocation(entity, payload);
+        sendPassiveInvocation(entityClassName, entityName, entity, payload);
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
@@ -335,17 +337,64 @@ public class PassthroughServerProcess implements MessageHandler {
     return response;
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(ClientDescriptor clientDescriptor, ActiveServerEntity<M, R> entity, byte[] payload) {
+  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(String className, String entityName, ClientDescriptor clientDescriptor, ActiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
     MessageCodec<M, R> codec = entity.getMessageCodec();
-    return codec.serialize(entity.invoke(clientDescriptor, codec.deserialize(payload)));
+    R response = entity.invoke(clientDescriptor, deserialize(className, entityName, codec, payload));
+    return serializeResponse(className, entityName, codec, response);
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(PassiveServerEntity<M, R> entity, byte[] payload) {
-    entity.invoke(entity.getMessageCodec().deserialize(payload));
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(String className, String entityName, PassiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
+    MessageCodec<M, R> codec = entity.getMessageCodec();
+    entity.invoke(deserialize(className, entityName, codec, payload));
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(PassiveServerEntity<M, R> entity, int concurrencyKey, byte[] payload) {
-    entity.invoke(entity.getMessageCodec().deserializeForSync(concurrencyKey, payload));
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, PassiveServerEntity<M, R> entity, int concurrencyKey, byte[] payload) throws EntityUserException {
+    MessageCodec<M, R> codec = entity.getMessageCodec();
+    entity.invoke(deserializeForSync(className, entityName, codec, concurrencyKey, payload));
+  }
+  
+  private <M extends EntityMessage, R extends EntityResponse> M deserialize(String className, String entityName, final MessageCodec<M, R> codec, final byte[] payload) throws EntityUserException {
+    return runWithHelper(className, entityName, new CodecHelper<M>() {
+      @Override
+      public M run() throws MessageCodecException {
+        return codec.deserialize(payload);
+      }
+    });
+  }
+  
+  private <M extends EntityMessage, R extends EntityResponse> M deserializeForSync(String className, String entityName, final MessageCodec<M, R> codec, final int concurrencyKey, final byte[] payload) throws EntityUserException {
+    return runWithHelper(className, entityName, new CodecHelper<M>() {
+      @Override
+      public M run() throws MessageCodecException {
+        return codec.deserializeForSync(concurrencyKey, payload);
+      }
+    });
+  }
+  
+  private <M extends EntityMessage, R extends EntityResponse> byte[] serializeResponse(String className, String entityName, final MessageCodec<M, R> codec, final R response) throws EntityUserException {
+    return runWithHelper(className, entityName, new CodecHelper<byte[]>() {
+      @Override
+      public byte[] run() throws MessageCodecException {
+        return codec.serialize(response);
+      }
+    });
+  }
+
+  private static interface CodecHelper<R> {
+    public R run() throws MessageCodecException;
+  }
+  private <R> R runWithHelper(String className, String entityName, CodecHelper<R> helper) throws EntityUserException {
+    R message = null;
+    try {
+      message = helper.run();
+    } catch (MessageCodecException deserializationException) {
+      throw new EntityUserException(className, entityName, deserializationException);
+    } catch (RuntimeException e) {
+      // We first want to wrap this in a codec exception to convey the meaning of where this happened.
+      MessageCodecException deserializationException = new MessageCodecException("Runtime exception in deserializer", e);
+      throw new EntityUserException(className, entityName, deserializationException);
+    }
+    return message;
   }
 
   @Override
@@ -602,7 +651,7 @@ public class PassthroughServerProcess implements MessageHandler {
     CreationData<PassiveServerEntity<?, ?>> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
       PassiveServerEntity<?, ?> entity = data.entityInstance;
-      sendPassiveSyncPayload(entity, concurrencyKey, payload);
+      sendPassiveSyncPayload(entityClassName, entityName, entity, concurrencyKey, payload);
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
