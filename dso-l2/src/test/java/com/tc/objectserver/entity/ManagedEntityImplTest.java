@@ -64,9 +64,9 @@ public class ManagedEntityImplTest {
   private long version;
   private ManagedEntityImpl managedEntity;
   private ServiceRegistry serviceRegistry;
-  private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> serverEntityService;
-  private ActiveServerEntity activeServerEntity;
-  private PassiveServerEntity passiveServerEntity;
+  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> serverEntityService;
+  private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
+  private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   private RequestProcessor requestMulti;
   private ClientEntityStateManager clientEntityStateManager;
   private ITopologyEventCollector eventCollector;
@@ -74,6 +74,7 @@ public class ManagedEntityImplTest {
   private ClientDescriptor clientDescriptor;
   private EntityDescriptor entityDescriptor;
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     nodeID = mock(NodeID.class);
@@ -94,7 +95,7 @@ public class ManagedEntityImplTest {
     boolean isInActiveState = false;
     managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
-    Mockito.doAnswer(new Answer() {
+    Mockito.doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         ((Runnable)invocation.getArguments()[3]).run();
@@ -104,8 +105,8 @@ public class ManagedEntityImplTest {
   }
 
   @SuppressWarnings("unchecked")
-  private ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> getServerEntityService(ActiveServerEntity activeServerEntity, PassiveServerEntity passiveServerEntity) {
-    ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity> entityService = mock(ServerEntityService.class);
+  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
+    ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> entityService = mock(ServerEntityService.class);
     doReturn(activeServerEntity).when(entityService).createActiveEntity(any(ServiceRegistry.class), any(byte[].class));
     doReturn(passiveServerEntity).when(entityService).createPassiveEntity(any(ServiceRegistry.class), any(byte[].class));
     return entityService;
@@ -205,7 +206,7 @@ public class ManagedEntityImplTest {
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
   }
-  
+
   @Test
   public void testGetAndRelease() throws Exception {
     // Get and release are only relevant on the active.
