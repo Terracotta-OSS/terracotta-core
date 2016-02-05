@@ -24,11 +24,13 @@ import org.terracotta.TestEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityUserException;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -205,6 +207,38 @@ public class ManagedEntityImplTest {
     
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
+  }
+
+  @Test
+  public void testCodecException() throws Exception {
+    managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    
+    byte[] payload = { 0 };
+    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
+      @Override
+      public byte[] serialize(EntityResponse response) {
+        // We should never reach this - should fail before the invoke.
+        Assert.fail();
+        return null;
+      }
+      @Override
+      public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
+        // We want to simulate a failure.
+        throw new MessageCodecException("failure", null);
+      }
+      @Override
+      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
+        Assert.fail("Synchronization not used in this test");
+        return null;
+      }
+    });
+    ServerEntityRequest invokeRequest = mockInvokeRequest();
+    managedEntity.addInvokeRequest(invokeRequest, payload);
+    
+    verify(activeServerEntity, never()).invoke(any(ClientDescriptor.class), any(EntityMessage.class));
+    verify(invokeRequest, never()).complete(any(byte[].class));
+    verify(invokeRequest).failure(any(EntityUserException.class));
   }
 
   @Test

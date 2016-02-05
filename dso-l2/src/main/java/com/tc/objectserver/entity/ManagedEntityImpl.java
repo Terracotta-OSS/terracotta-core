@@ -27,6 +27,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
@@ -111,24 +112,34 @@ public class ManagedEntityImpl implements ManagedEntity {
     ClientDescriptor client = request.getSourceDescriptor();
     Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);
       // Invoke and payload requests need to wait for the entity creation so that they can request the concurrency strategy.
-    if (this.activeServerEntity == null && this.passiveServerEntity == null) {
+    if ((this.activeServerEntity == null) && (this.passiveServerEntity == null)) {
       request.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
-      return;
-    }
-
-    ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
-    // We only decode messages for INVOKE and RECEIVE_SYNC_PAYLOAD requests.
-      // We might get replicated invokes before the create has completed
-    CommonServerEntity<EntityMessage,EntityResponse> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
+    } else {
+      // We have an entity instance so look up which one and get its concurrency strategy and deserializer.
+      ConcurrencyStrategy<EntityMessage> concurrencyStrategy = activeServerEntity != null ? activeServerEntity.getConcurrencyStrategy() : null;
+      // We only decode messages for INVOKE and RECEIVE_SYNC_PAYLOAD requests.
+        // We might get replicated invokes before the create has completed
+      CommonServerEntity<EntityMessage,EntityResponse> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
       Assert.assertNotNull(entity);
-    MessageCodec<EntityMessage, EntityResponse> deserializer = entity.getMessageCodec();
-    Assert.assertNotNull(deserializer);
+      MessageCodec<EntityMessage, EntityResponse> deserializer = entity.getMessageCodec();
+      Assert.assertNotNull(deserializer);
       Assert.assertNotNull(payload);
-    final EntityMessage message = deserializer.deserialize(payload);
-    // Since concurrency key is pulled out in different ways for these different message types, we will do that here.
-    final int concurrencyKey = ((null != concurrencyStrategy)) ?
-      concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
-    executor.scheduleRequest(getEntityDescriptorForSource(client), request, payload, ()->invoke(request, message, concurrencyKey), concurrencyKey);
+      
+      EntityMessage message = null;
+      try {
+        message = runWithHelper(()->deserializer.deserialize(payload));
+      } catch (EntityUserException e) {
+        request.failure(e);
+      }
+      // If we are still ok and managed to deserialize the message, continue.
+      if (null != message) {
+        // Since concurrency key is pulled out in different ways for these different message types, we will do that here.
+        final int concurrencyKey = ((null != concurrencyStrategy)) ?
+          concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
+        final EntityMessage safeMessage = message;
+        executor.scheduleRequest(getEntityDescriptorForSource(client), request, payload, ()->invoke(request, safeMessage, concurrencyKey), concurrencyKey);
+      }
+    }
   }
 
   @Override
@@ -138,10 +149,38 @@ public class ManagedEntityImpl implements ManagedEntity {
       executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, payload), concurrencyKey);
     } else if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD) {
       MessageCodec<EntityMessage, EntityResponse> codec = this.passiveServerEntity.getMessageCodec();
-      executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, codec.deserializeForSync(concurrencyKey, payload), concurrencyKey), concurrencyKey);
+      executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->{
+        EntityMessage message = null;
+        try {
+          message = runWithHelper(()->codec.deserializeForSync(concurrencyKey, payload));
+        } catch (EntityUserException e) {
+          sync.failure(e);
+        }
+        // If we are still ok and managed to deserialize the message, continue.
+        if (null != message) {
+          invoke(sync, message, concurrencyKey);
+        }
+      }, concurrencyKey);
     } else {
       executor.scheduleRequest(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, null, concurrencyKey), concurrencyKey);
     }
+  }
+
+  private static interface CodecHelper<R> {
+    public R run() throws MessageCodecException;
+  }
+  private <R> R runWithHelper(CodecHelper<R> helper) throws EntityUserException {
+    R message = null;
+    try {
+      message = helper.run();
+    } catch (MessageCodecException deserializationException) {
+      throw new EntityUserException(this.getID().getClassName(), this.getID().getEntityName(), deserializationException);
+    } catch (RuntimeException e) {
+      // We first want to wrap this in a codec exception to convey the meaning of where this happened.
+      MessageCodecException deserializationException = new MessageCodecException("Runtime exception in deserializer", e);
+      throw new EntityUserException(this.getID().getClassName(), this.getID().getEntityName(), deserializationException);
+    }
+    return message;
   }
 
   @Override
@@ -396,8 +435,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         MessageCodec<EntityMessage, EntityResponse> codec = this.activeServerEntity.getMessageCodec();
-        byte[] er = codec.serialize(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message));
-        wrappedRequest.complete(er);
+        try {
+          byte[] er = runWithHelper(()->codec.serialize(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
+          wrappedRequest.complete(er);
+        } catch (EntityUserException e) {
+          wrappedRequest.failure(e);
+        }
       }
     } else {
       if (null == this.passiveServerEntity) {
