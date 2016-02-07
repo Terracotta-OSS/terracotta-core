@@ -95,4 +95,8 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     }
     return service;
   }
+
+  public long getConsumerID() {
+    return consumerID;
+  }
 }

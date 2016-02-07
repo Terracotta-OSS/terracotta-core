@@ -113,6 +113,40 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
       throw new EntityNotProvidedException(this.clazz.getName(), this.name);
     }
   }
+  
+
+  @Override
+  public C reconfigure(C configuration) throws EntityException {
+    // Make sure that we have a service provider.
+    if (null != this.service) {
+      getWriteLock();
+      try {
+        byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
+        PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
+        PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(reconfig);
+        try {
+          return this.service.deserializeConfiguration(received.get());
+        } catch (EntityException e) {
+          // Check that this is the correct type.
+          if (e instanceof EntityNotProvidedException) {
+            throw (EntityNotProvidedException) e;
+          } else if (e instanceof EntityAlreadyExistsException) {
+            throw (EntityAlreadyExistsException) e;
+          } else if (e instanceof EntityVersionMismatchException) {
+            throw (EntityVersionMismatchException) e;
+          } else {
+            throw e;
+          }
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      } finally {
+        releaseWriteLock();
+      }
+    } else {
+      throw new EntityNotProvidedException(this.clazz.getName(), this.name);
+    }
+  }  
 
   @Override
   public void destroy() throws EntityNotProvidedException, EntityNotFoundException {

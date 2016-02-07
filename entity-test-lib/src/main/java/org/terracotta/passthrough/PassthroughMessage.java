@@ -33,6 +33,7 @@ public abstract class PassthroughMessage {
     RELEASE_ENTITY,
     DOES_ENTITY_EXIST,
     CREATE_ENTITY,
+    RECONFIGURE_ENTITY,
     DESTROY_ENTITY,
     INVOKE_ON_SERVER,
     ACK_FROM_SERVER,

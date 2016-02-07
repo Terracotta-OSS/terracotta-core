@@ -93,7 +93,20 @@ public class PassthroughMessageCodec {
         output.write(serializedConfiguration);
       }};
   }
-
+  
+  public static PassthroughMessage createReconfigureMessage(final String entityClassName, final String entityName, final long version, final byte[] serializedConfiguration) {
+    boolean shouldReplicateToPassives = true;
+    return new PassthroughMessage(Type.RECONFIGURE_ENTITY, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+        output.writeLong(version);
+        output.writeInt(serializedConfiguration.length);
+        output.write(serializedConfiguration);
+      }};
+  }
+  
   public static PassthroughMessage createInvokeMessage(final Class<?> clazz, final String entityName, final long clientInstanceID, final byte[] payload, final boolean shouldReplicateToPassives) {
     return new PassthroughMessage(Type.INVOKE_ON_SERVER, shouldReplicateToPassives) {
       @Override

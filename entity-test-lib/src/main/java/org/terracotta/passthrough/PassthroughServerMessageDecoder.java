@@ -87,6 +87,32 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         sendCompleteResponse(sender, transactionID, response, error);
         break;
       }
+      case RECONFIGURE_ENTITY: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        long version = input.readLong();
+        byte[] serializedConfiguration = new byte[input.readInt()];
+        input.readFully(serializedConfiguration);
+        byte[] response = null;
+        EntityException error = null;
+        try {
+          // There is no response on successful create.
+          response = this.messageHandler.reconfigure(entityClassName, entityName, version, serializedConfiguration);
+        } catch (EntityException e) {
+          // We may want to ignore this failure on re-send.
+          if (sender.shouldTolerateCreateDestroyDuplication()) {
+            // Absorb the error.
+          } else {
+            // Real error.
+            error = e;
+          }
+        } catch (RuntimeException e) {
+          // Just wrap this as a user exception since it was unexpected.
+          error = new EntityUserException(entityClassName, entityName, e);
+        }
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }      
       case DESTROY_ENTITY: {
         String entityClassName = input.readUTF();
         String entityName = input.readUTF();
@@ -407,6 +433,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
    */
   public static interface MessageHandler {
     void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException;
+    byte[] reconfigure(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException;
     void destroy(String entityClassName, String entityName) throws EntityException;
     void fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version, IFetchResult onFetch);
     void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws EntityException;
