@@ -52,24 +52,10 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
             registerNewServiceProvider(provider);
           }
         } catch (InstantiationException | IllegalAccessException ie) {
-//  really shouldn't be doing this.  ServiceProvider configurations should provide appropriate classes
-//  to handle the config.
-          tryServiceLoader(config);
+          logger.error("caught exception while initializing service " + serviceClazz, ie);
+          throw new RuntimeException(ie);
         }
 
-      }
-    }
-  }
-  
-  private void tryServiceLoader(ServiceProviderConfiguration config) {
-    boolean initialized = false;
-    for (ServiceProvider service : ServiceLoader.load(config.getServiceProviderType())) {
-      if (service.initialize(config)) {
-        if (initialized) {
-          throw new AssertionError("double initialization");
-        }
-        registerNewServiceProvider(service);
-        initialized = true;
       }
     }
   }
