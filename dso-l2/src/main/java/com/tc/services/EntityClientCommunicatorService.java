@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.services;
 
 import com.google.common.util.concurrent.Futures;
@@ -25,10 +24,10 @@ import com.tc.object.EntityDescriptor;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ServiceConfiguration;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
+
 
 public class EntityClientCommunicatorService implements ClientCommunicator {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts;
