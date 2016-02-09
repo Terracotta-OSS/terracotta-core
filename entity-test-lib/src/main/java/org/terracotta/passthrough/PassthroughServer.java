@@ -60,8 +60,7 @@ public class PassthroughServer {
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
     
     // Register built-in services.
-    PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
-    internalRegisterServiceProvider(communicatorServiceProvider, null);
+    registerBuiltInServices();
   }
 
   public void registerServerEntityService(ServerEntityService<?, ?> service) {
@@ -156,6 +155,9 @@ public class PassthroughServer {
     for (ServerEntityService<?, ?> serverEntityService : this.savedServerEntityServices) {
       this.serverProcess.registerEntityService(serverEntityService);
     }
+    // Install the built-in services.
+    registerBuiltInServices();
+    // Install the user-created services.
     for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
       this.serverProcess.registerServiceProvider(tuple.serviceProvider, tuple.providerConfiguration);
     }
@@ -224,5 +226,10 @@ public class PassthroughServer {
       this.serviceProvider = serviceProvider;
       this.providerConfiguration = providerConfiguration;
     }
+  }
+
+  private void registerBuiltInServices() {
+    PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
+    this.serverProcess.registerBuiltInServiceProvider(communicatorServiceProvider, null);
   }
 }

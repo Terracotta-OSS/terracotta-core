@@ -35,23 +35,53 @@ import com.google.common.collect.ImmutableMap;
 public class PassthroughServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
+  private final Map<Class<?>, PassthroughBuiltInServiceProvider> builtInServiceProviderMap;
   
-  public PassthroughServiceRegistry(long consumerID, List<ServiceProvider> serviceProviders) {
+  public PassthroughServiceRegistry(long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughBuiltInServiceProvider> builtInServiceProviders) {
     this.consumerID = consumerID;
     
-    Map<Class<?>, ServiceProvider> temp = new HashMap<Class<?>, ServiceProvider>();
+    Map<Class<?>, ServiceProvider> tempProviders = new HashMap<Class<?>, ServiceProvider>();
     for(ServiceProvider provider : serviceProviders) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
         // We currently have no way of handling multiple providers.
-        Assert.assertTrue(null == temp.get(serviceType));
-        temp.put(serviceType, provider);
+        Assert.assertTrue(null == tempProviders.get(serviceType));
+        tempProviders.put(serviceType, provider);
       }
     }
-    this.serviceProviderMap = ImmutableMap.copyOf(temp);
+    this.serviceProviderMap = ImmutableMap.copyOf(tempProviders);
+    
+    Map<Class<?>, PassthroughBuiltInServiceProvider> tempBuiltIn = new HashMap<Class<?>, PassthroughBuiltInServiceProvider>();
+    for(PassthroughBuiltInServiceProvider provider : builtInServiceProviders) {
+      for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
+        // We currently have no way of handling multiple providers.
+        Assert.assertTrue(null == tempBuiltIn.get(serviceType));
+        tempBuiltIn.put(serviceType, provider);
+      }
+    }
+    this.builtInServiceProviderMap = ImmutableMap.copyOf(tempBuiltIn);
   }
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
+    T builtInService = getBuiltIn(configuration);
+    T externalService = getExternal(configuration);
+    // We need at most one match.
+    Assert.assertTrue((null == builtInService) || (null == externalService));
+    return (null != builtInService)
+        ? builtInService
+        : externalService;
+  }
+
+  private <T> T getBuiltIn(ServiceConfiguration<T> configuration) {
+    PassthroughBuiltInServiceProvider provider = this.builtInServiceProviderMap.get(configuration.getServiceType());
+    T service = null;
+    if (null != provider) {
+      service = provider.getService(this.consumerID, configuration);
+    }
+    return service;
+  }
+
+  private <T> T getExternal(ServiceConfiguration<T> configuration) {
     ServiceProvider provider = this.serviceProviderMap.get(configuration.getServiceType());
     T service = null;
     if (null != provider) {

@@ -19,31 +19,22 @@
 package org.terracotta.passthrough;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderConfiguration;
 
 
 /**
  * The provider of PassthroughCommunicatorService, to server-side entities.  It has no meaningful implementation beyond
  * providing that.
  */
-public class PassthroughCommunicatorServiceProvider implements ServiceProvider {
+public class PassthroughCommunicatorServiceProvider implements PassthroughBuiltInServiceProvider {
   @Override
   public void close() {
     // TODO Auto-generated method stub
     
-  }
-
-  @Override
-  public boolean initialize(ServiceProviderConfiguration configuration) {
-    // We always return true on initialize of this service (it has no state).
-    return true;
   }
 
   @Override
