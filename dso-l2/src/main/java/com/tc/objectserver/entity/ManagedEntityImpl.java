@@ -124,7 +124,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(final ServerEntityRequest request, byte[] payload) {
+  public void addInvokeRequest(final ServerEntityRequest request, byte[] payload, int defaultKey) {
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
     Assert.assertTrue(
@@ -134,17 +134,17 @@ public class ManagedEntityImpl implements ManagedEntity {
     );
  
     for (StoredMessage msg : defer) {
-      processInvokeRequest(msg.getRequest(), msg.getPayload());
+      processInvokeRequest(msg.getRequest(), msg.getPayload(), defaultKey);
     }
 // a noop message's job is done.  no need to continue
     if (request.getAction() != ServerEntityAction.NOOP) {
-      if (!defer.offer(request, payload)) {
-        processInvokeRequest(request, payload);
+      if (!defer.offer(request, payload, defaultKey)) {
+        processInvokeRequest(request, payload, defaultKey);
       }
     }
   }
   
-  private void processInvokeRequest(final ServerEntityRequest request, byte[] payload) {
+  private void processInvokeRequest(final ServerEntityRequest request, byte[] payload, int defaultKey) {
     ClientDescriptor client = request.getSourceDescriptor();
     Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);
       // Invoke and payload requests need to wait for the entity creation so that they can request the concurrency strategy.
@@ -170,8 +170,11 @@ public class ManagedEntityImpl implements ManagedEntity {
       // If we are still ok and managed to deserialize the message, continue.
       if (null != message) {
         // Since concurrency key is pulled out in different ways for these different message types, we will do that here.
+        // on actives, the concurrency strategy is available on actives and null on passives.
+        // see concurrencyStrategy assignment further up this method.  No concurrency strategy means use the default
+        // key which on passives is the key used to run the action on the active.
         final int concurrencyKey = ((null != concurrencyStrategy)) ?
-          concurrencyStrategy.concurrencyKey(message) : ConcurrencyStrategy.MANAGEMENT_KEY;
+          concurrencyStrategy.concurrencyKey(message) : defaultKey;
         final EntityMessage safeMessage = message;
         if (concurrencyKey == ConcurrencyStrategy.MANAGEMENT_KEY) {
           boolean last = defer.activate();
@@ -662,10 +665,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   private static class StoredMessage {
     private final ServerEntityRequest request;
     private final byte[] payload;
+    private final int defaultKey;
 
-    public StoredMessage(ServerEntityRequest request, byte[] payload) {
+    public StoredMessage(ServerEntityRequest request, byte[] payload, int defaultKey) {
       this.request = request;
       this.payload = payload;
+      this.defaultKey = defaultKey;
     }
 
     public ServerEntityRequest getRequest() {
@@ -675,6 +680,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     public byte[] getPayload() {
       return payload;
     }
+
+    public int getDefaultKey() {
+      return defaultKey;
+    }
+    
+    
   }
   
   private static class DefermentQueue implements Iterable<StoredMessage> {
@@ -712,9 +723,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     
-    boolean offer(ServerEntityRequest req, byte[] payload) {
+    boolean offer(ServerEntityRequest req, byte[] payload, int defaultKey) {
       if (!deferCleared || !queue.isEmpty()) {
-        queue.add(new StoredMessage(req, payload));
+        queue.add(new StoredMessage(req, payload, defaultKey));
         if (queue.size() == limit) {
           pause();
         }

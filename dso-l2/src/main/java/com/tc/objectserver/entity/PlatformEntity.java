@@ -50,7 +50,7 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(ServerEntityRequest request, byte[] payload) {
+  public void addInvokeRequest(ServerEntityRequest request, byte[] payload, int defaultKey) {
     processor.scheduleRequest(descriptor, request, payload, ()-> {request.complete();}, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
 
