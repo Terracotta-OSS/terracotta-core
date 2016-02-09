@@ -16,13 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.services;
 
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -40,6 +38,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   // We need to hold on to the configuration when we are initialized so we can give it to services registered later as
   //  built-ins.
   private final Set<ServiceProvider> serviceProviders = new HashSet<>();
+  private final Set<BuiltInServiceProvider> builtInServiceProviders = new HashSet<>();
 
   @Override
   public void initialize(String serverName, TcConfiguration configuration) {
@@ -76,13 +75,19 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
 
   @Override
-  public  void registerBuiltin(ServiceProvider service) {
+  public  void registerExternal(ServiceProvider service) {
     registerNewServiceProvider(service);
   }
 
   @Override
-  public ServiceRegistry subRegistry(long consumerID) {
-    return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]));
+  public  void registerBuiltin(BuiltInServiceProvider service) {
+    logger.info("Registering built-in service " + service);
+    builtInServiceProviders.add(service);
+  }
+
+  @Override
+  public DelegatingServiceRegistry subRegistry(long consumerID) {
+    return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), builtInServiceProviders.toArray(new BuiltInServiceProvider[builtInServiceProviders.size()]));
   }
 
   @Override

@@ -16,9 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.services;
-
 
 import com.google.common.collect.ImmutableMap;
 import com.tc.util.Assert;
@@ -32,30 +30,70 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+
 public class DelegatingServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
+  private final Map<Class<?>, List<BuiltInServiceProvider>> builtInServiceProviderMap;
 
-  public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers) {
+  public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers, BuiltInServiceProvider[] builtInProviders) {
     this.consumerID = consumerID;
-    Map<Class<?>, List<ServiceProvider>> temp = new HashMap<>();
+    
+    Map<Class<?>, List<ServiceProvider>> tempProviders = new HashMap<>();
     for(ServiceProvider provider : providers) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
-        ClassLoader loader = serviceType.getClassLoader();
-        List<ServiceProvider> listForType = temp.get(serviceType);
+        List<ServiceProvider> listForType = tempProviders.get(serviceType);
         if (null == listForType) {
           listForType = new LinkedList<>();
-          temp.put(serviceType, listForType);
+          tempProviders.put(serviceType, listForType);
         }
         listForType.add(provider);
       }
     }
-    serviceProviderMap = ImmutableMap.copyOf(temp);
+    serviceProviderMap = ImmutableMap.copyOf(tempProviders);
+    
+    Map<Class<?>, List<BuiltInServiceProvider>> tempBuiltInProviders = new HashMap<>();
+    for(BuiltInServiceProvider provider : builtInProviders) {
+      for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
+        List<BuiltInServiceProvider> listForType = tempBuiltInProviders.get(serviceType);
+        if (null == listForType) {
+          listForType = new LinkedList<>();
+          tempBuiltInProviders.put(serviceType, listForType);
+        }
+        listForType.add(provider);
+      }
+    }
+    builtInServiceProviderMap = ImmutableMap.copyOf(tempBuiltInProviders);
   }
-
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
+    T builtInService = getBuiltInService(configuration);
+    T externalService = getExternalService(configuration);
+    // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
+    Assert.assertFalse((null != builtInService) && (null != externalService));
+    return (null != builtInService)
+        ? builtInService
+        : externalService;
+  }
+
+  private <T> T getBuiltInService(ServiceConfiguration<T> configuration) {
+    List<BuiltInServiceProvider> serviceProviders = builtInServiceProviderMap.get(configuration.getServiceType());
+    T service = null;
+    if (null != serviceProviders) {
+      for (BuiltInServiceProvider provider : serviceProviders) {
+        T oneService = provider.getService(this.consumerID, configuration);
+        if (null != oneService) {
+          // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
+          Assert.assertNull(service);
+          service = oneService;
+        }
+      }
+    }
+    return service;
+  }
+
+  private <T> T getExternalService(ServiceConfiguration<T> configuration) {
     List<ServiceProvider> serviceProviders = serviceProviderMap.get(configuration.getServiceType());
     if (serviceProviders == null) {
      return null;

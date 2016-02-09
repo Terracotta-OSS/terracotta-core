@@ -177,7 +177,6 @@ import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.FlatFileStorageProviderConfiguration;
 import com.tc.objectserver.persistence.FlatFileStorageServiceProvider;
-import com.tc.objectserver.persistence.PersistentStorageServiceConfiguration;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
@@ -461,11 +460,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         flatFileService.close();
         throw new AssertionError("bad flat file initialization");
       }
-      serviceRegistry.registerBuiltin(flatFileService);
+      serviceRegistry.registerExternal(flatFileService);
     } else {
       NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
       nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration());
-      serviceRegistry.registerBuiltin(nullPlatformStorageServiceProvider);
+      serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
 
     // The platform gets the reserved consumerID 0.
