@@ -16,14 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.services;
 
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 
-import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProvider;
 
 /**
  * Platform level service provider registry which has instances of all the service provider at the platform level.
@@ -41,12 +40,21 @@ public interface TerracottaServiceProviderRegistry {
   void initialize(String serverName, TcConfiguration configuration);
 
   /**
-   * Method to register platform level service provider which don't have life-cycle using SPI interface.
+   * Method to register platform level service provider which don't have life-cycle using SPI interface but otherwise act
+   * like user-provided services.
    * Note that this serviceProvider will also be initialized with the same configuration used to initialize the registry.
    *
    * @param serviceProvider platform service provider
    */
-  void registerBuiltin(ServiceProvider serviceProvider);
+  void registerExternal(ServiceProvider serviceProvider);
+
+  /**
+   * Method to register platform level service provider which don't have life-cycle using SPI interface and know about the
+   * internal details of the implementation.
+   *
+   * @param serviceProvider platform service provider
+   */
+  void registerBuiltin(BuiltInServiceProvider serviceProvider);
 
   /**
    * Creates a entity level service registry which has list of service instances managed by the service providers

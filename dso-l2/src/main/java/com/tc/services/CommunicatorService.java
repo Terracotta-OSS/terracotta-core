@@ -16,15 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.services;
 
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-
-import org.terracotta.entity.ServiceProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProviderConfiguration;
 
 
 class ResponseWaiter implements Future<Void> {
@@ -84,7 +80,7 @@ class ResponseWaiter implements Future<Void> {
   }
 }
 
-public class CommunicatorService implements ServiceProvider, DSOChannelManagerEventListener {
+public class CommunicatorService implements BuiltInServiceProvider, DSOChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
 
   public CommunicatorService(DSOChannelManager dsoChannelManager) {
@@ -113,15 +109,9 @@ public class CommunicatorService implements ServiceProvider, DSOChannelManagerEv
 
 
   @Override
-  public boolean initialize(ServiceProviderConfiguration configuration) {
-    ///Nothing here
-    return true;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return configuration.getServiceType().cast(new EntityClientCommunicatorService(clientAccounts));
+    EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts);
+    return configuration.getServiceType().cast(service);
   }
 
   @Override
@@ -134,6 +124,4 @@ public class CommunicatorService implements ServiceProvider, DSOChannelManagerEv
     clientAccounts.values().stream().forEach(a->a.close());
     clientAccounts.clear();
   }
-  
-  
 }
