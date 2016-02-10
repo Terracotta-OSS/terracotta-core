@@ -32,6 +32,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 
 import java.util.concurrent.Future;
@@ -61,6 +62,7 @@ public class CommunicatorServiceTest {
   private ClientInstanceID clientInstanceID;
   private long version;
   private long consumerID;
+  private ManagedEntity owningEntity;
   private ClientDescriptor clientDescriptor;
   private EntityDescriptor entityDescriptor;
 
@@ -78,6 +80,8 @@ public class CommunicatorServiceTest {
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
     consumerID = 1;
+    owningEntity = mock(ManagedEntity.class);
+    
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
 
@@ -87,7 +91,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSimpleSendNoResponse() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     clientCommunicator.sendNoResponse(clientDescriptor, payload);
 
     verify(serverEntityMessage).setMessage(entityDescriptor, payload);
@@ -96,7 +100,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSendWaitForResponse() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(clientDescriptor, payload);
 
     verify(serverEntityMessage).setMessage(entityDescriptor, payload, 0L);
@@ -115,7 +119,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testClientLeavesWhileResponseOutstanding() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(clientDescriptor, payload);
 
     communicatorService.channelRemoved(messageChannel);
@@ -124,7 +128,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSendToDisconnectedClient() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(new ClientDescriptorImpl(new ClientID(2), entityDescriptor), payload);
     future.get();
 
@@ -133,7 +137,7 @@ public class CommunicatorServiceTest {
 
   @Test
   public void testSendNoResponseToDisconnectedClient() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     clientCommunicator.sendNoResponse(new ClientDescriptorImpl(new ClientID(2), entityDescriptor), payload);
 
     verify(serverEntityMessage, never()).send();
@@ -153,7 +157,7 @@ public class CommunicatorServiceTest {
     ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
     ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
     
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     
     // Send the message to client one and ensure that the correct payload went through to the correct entity.
     when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage1);
@@ -184,7 +188,7 @@ public class CommunicatorServiceTest {
     ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
     ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
     
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, new CommunicatorServiceConfiguration());
+    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     
     // Send the message to client one and ensure that the correct payload went through to the correct entity.
     when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage1);

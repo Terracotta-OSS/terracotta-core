@@ -21,7 +21,9 @@ package com.tc.services;
 import com.google.common.util.concurrent.Futures;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
+
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 
@@ -31,9 +33,14 @@ import java.util.concurrent.Future;
 
 public class EntityClientCommunicatorService implements ClientCommunicator {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts;
+  @SuppressWarnings("unused")
+  // Currently unused by will be accessed in a forthcoming change.
+  private final ManagedEntity owningEntity;
+  
 
-  public EntityClientCommunicatorService(ConcurrentMap<NodeID, ClientAccount> clientAccounts) {
+  public EntityClientCommunicatorService(ConcurrentMap<NodeID, ClientAccount> clientAccounts, ManagedEntity owningEntity) {
     this.clientAccounts = clientAccounts;
+    this.owningEntity = owningEntity;
   }
 
   @Override

@@ -92,7 +92,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
     T service = null;
     if (null != serviceProviders) {
       for (BuiltInServiceProvider provider : serviceProviders) {
-        T oneService = provider.getService(this.consumerID, configuration);
+        T oneService = provider.getService(this.consumerID, this.owningEntity, configuration);
         if (null != oneService) {
           // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
           Assert.assertNull(service);

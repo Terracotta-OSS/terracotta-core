@@ -23,6 +23,8 @@ import java.util.Collection;
 
 import org.terracotta.entity.ServiceConfiguration;
 
+import com.tc.objectserver.api.ManagedEntity;
+
 
 /**
  * This service provider implementation differs from the one used by user-provided services and is used exclusively by those
@@ -40,10 +42,11 @@ public interface BuiltInServiceProvider extends Closeable {
    * Get an instance of service from the provider.
    *
    * @param consumerID The unique ID used to name-space the returned service
+   * @param owningEntity The concrete entity which will own the server instance (may be null)
    * @param configuration Service configuration which is to be used
    * @return service instance
    */
-  <T> T getService(long consumerID, ServiceConfiguration<T> configuration);
+  <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration);
 
   /**
    * Since a service provider can know how to build more than one type of service, this method allows the platform to query
