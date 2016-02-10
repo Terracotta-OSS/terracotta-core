@@ -25,6 +25,7 @@ import java.util.Map;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -36,8 +37,9 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
   private final Map<Class<?>, PassthroughBuiltInServiceProvider> builtInServiceProviderMap;
+  private final DeferredEntityContainer owningEntityContainer;
   
-  public PassthroughServiceRegistry(long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughBuiltInServiceProvider> builtInServiceProviders) {
+  public PassthroughServiceRegistry(long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughBuiltInServiceProvider> builtInServiceProviders, DeferredEntityContainer container) {
     this.consumerID = consumerID;
     
     Map<Class<?>, ServiceProvider> tempProviders = new HashMap<Class<?>, ServiceProvider>();
@@ -59,11 +61,15 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
       }
     }
     this.builtInServiceProviderMap = ImmutableMap.copyOf(tempBuiltIn);
+    
+    this.owningEntityContainer = container;
   }
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
-    T builtInService = getBuiltIn(configuration);
+    // It is possible that there is no owning entity (if this is a synthetic consumer) but that means no access to
+    // built-in services.
+    T builtInService = (null != this.owningEntityContainer) ? getBuiltIn(configuration) : null;
     T externalService = getExternal(configuration);
     // We need at most one match.
     Assert.assertTrue((null == builtInService) || (null == externalService));
@@ -76,7 +82,7 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     PassthroughBuiltInServiceProvider provider = this.builtInServiceProviderMap.get(configuration.getServiceType());
     T service = null;
     if (null != provider) {
-      service = provider.getService(this.consumerID, configuration);
+      service = provider.getService(this.consumerID, this.owningEntityContainer, configuration);
     }
     return service;
   }

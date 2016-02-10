@@ -38,8 +38,8 @@ public class PassthroughCommunicatorServiceProvider implements PassthroughBuiltI
   }
 
   @Override
-  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return configuration.getServiceType().cast(new PassthroughCommunicatorService());
+  public <T> T getService(long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
+    return configuration.getServiceType().cast(new PassthroughCommunicatorService(container));
   }
 
   @Override

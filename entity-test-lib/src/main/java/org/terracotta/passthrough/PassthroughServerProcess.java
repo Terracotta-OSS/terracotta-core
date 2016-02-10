@@ -50,6 +50,7 @@ import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
+import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
@@ -97,7 +98,7 @@ public class PassthroughServerProcess implements MessageHandler {
   @SuppressWarnings("deprecation")
   public void start(boolean shouldLoadStorage) {
     // We can now get the service registry for the platform.
-    this.platformServiceRegistry = getNextServiceRegistry();
+    this.platformServiceRegistry = getNextServiceRegistry(null);
     // See if we have persistence support.
     IPersistentStorage persistentStorage = preparePersistentStorage(shouldLoadStorage);
     if (null != persistentStorage) {
@@ -107,8 +108,10 @@ public class PassthroughServerProcess implements MessageHandler {
       
       // Load the entities.
       for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
+        // This is an entity consumer so we use the deferred container.
+        DeferredEntityContainer container = new DeferredEntityContainer();
         // Create the registry for the entity.
-        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviders, this.builtInServiceProviders);
+        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviders, this.builtInServiceProviders, container);
         // Construct the entity.
         EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
         ServerEntityService<?, ?> service = null;
@@ -120,6 +123,8 @@ public class PassthroughServerProcess implements MessageHandler {
         }
         PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
         CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityData.className, entityData.entityName, entityData.version, entityData.configuration, entityTuple, service, registry);
+        // We can now store the entity into the deferred container.
+        container.entity = newEntity;
         // Tell the entity to load itself from storage.
         newEntity.loadExisting();
         
@@ -483,8 +488,11 @@ public class PassthroughServerProcess implements MessageHandler {
     // Capture which consumerID we will use for this entity.
     long consumerID = this.nextConsumerID;
     ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
-    PassthroughServiceRegistry registry = getNextServiceRegistry();
+    // This is an entity consumer so we use the deferred container.
+    DeferredEntityContainer container = new DeferredEntityContainer();
+    PassthroughServiceRegistry registry = getNextServiceRegistry(container);
     CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry);
+    container.entity = newEntity;
     // Tell the entity to create itself as something new.
     newEntity.createNew();
     // If we have a persistence layer, record this.
@@ -802,10 +810,10 @@ public class PassthroughServerProcess implements MessageHandler {
     }
   }
 
-  private PassthroughServiceRegistry getNextServiceRegistry() {
+  private PassthroughServiceRegistry getNextServiceRegistry(DeferredEntityContainer container) {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
-    return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviders, this.builtInServiceProviders);
+    return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviders, this.builtInServiceProviders, container);
   }
 
   private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException {

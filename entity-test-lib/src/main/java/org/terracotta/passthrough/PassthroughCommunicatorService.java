@@ -22,6 +22,7 @@ import java.util.concurrent.Future;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
 
 
 /**
@@ -30,6 +31,16 @@ import org.terracotta.entity.ClientDescriptor;
  * TODO:  we currently need to determine how to handle the synchronous send.
  */
 public class PassthroughCommunicatorService implements ClientCommunicator {
+  @SuppressWarnings("unused")
+  // Currently unused but in place for a later change.
+  private final DeferredEntityContainer container;
+
+  public PassthroughCommunicatorService(DeferredEntityContainer container) {
+    // Nobody should be able to request the communicator if they are a non-entity consumer (null container).
+    Assert.assertTrue(null != container);
+    this.container = container;
+  }
+
   @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
     prepareAndSendMessage(clientDescriptor, payload);
