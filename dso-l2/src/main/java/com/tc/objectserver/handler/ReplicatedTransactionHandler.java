@@ -128,7 +128,7 @@ public class ReplicatedTransactionHandler {
             ServerEntityRequest request = make(rep);
             if (request != null) {
               if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-                entity.get().addInvokeRequest(request, rep.getExtendedData());
+                entity.get().addInvokeRequest(request, rep.getExtendedData(), rep.getConcurrency());
               } else {
                 entity.get().addLifecycleRequest(request, rep.getExtendedData());
               }

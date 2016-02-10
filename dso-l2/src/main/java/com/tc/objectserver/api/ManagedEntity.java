@@ -37,10 +37,11 @@ public interface ManagedEntity {
  /** 
   * Schedules the request with the entity on the execution queue.
   * 
-  * @param <M> payload of the request
   * @param request translated request for execution on the server
+   * @param extendedData payload of the invoke
+   * @param defaultKey default concurrency key if no concurrency strategy is installed
   */ 
-  void addInvokeRequest(ServerEntityRequest request, byte[] extendedData);
+  void addInvokeRequest(ServerEntityRequest request, byte[] extendedData, int defaultKey);
   
   void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
   

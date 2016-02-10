@@ -633,7 +633,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }});
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor);
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, processTransactionStage_voltron.getSink());
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
     

@@ -128,7 +128,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return descriptor.getClientSideVersion();
   }
   
-  public final ReplicationType getReplicationType() {
+  public ReplicationType getReplicationType() {
     return action;
   }
 

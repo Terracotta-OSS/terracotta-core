@@ -19,6 +19,7 @@
 
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -48,7 +49,8 @@ public class EntityManagerImplTest {
         mock(TerracottaServiceProviderRegistry.class),
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
-        mock(RequestProcessor.class)
+        mock(RequestProcessor.class),
+        mock(Sink.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");
     version = 1;

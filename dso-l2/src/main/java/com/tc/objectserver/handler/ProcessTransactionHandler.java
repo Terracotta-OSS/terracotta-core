@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
+import org.terracotta.entity.ConcurrencyStrategy;
 
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -174,7 +175,9 @@ public class ProcessTransactionHandler {
         if (ServerEntityAction.DOES_EXIST == action) {
           serverEntityRequest.complete();
         } else if (ServerEntityAction.INVOKE_ACTION == action) {
-          entity.addInvokeRequest(serverEntityRequest, extendedData);
+          entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+        } else if (ServerEntityAction.NOOP == action) {
+          entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
         } else {
           entity.addLifecycleRequest(serverEntityRequest, extendedData);
         }
@@ -269,6 +272,9 @@ public class ProcessTransactionHandler {
         break;
       case INVOKE_ACTION:
         action = ServerEntityAction.INVOKE_ACTION;
+        break;
+      case NOOP:
+        action = ServerEntityAction.NOOP;
         break;
       default:
         // Unknown request type.

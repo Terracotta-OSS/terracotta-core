@@ -280,7 +280,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L2_STARTUPLOCK_RETRIES_ENABLED                                 = "l2.startuplock.retries.enabled";
   public static final String L2_ENABLE_LEGACY_PRODUCTION_MODE                               = "l2.enable.legacy.production.mode";
-
+  public static final String L2_ENTITY_DEFERMENT_QUEUE_SIZE                                 = "l2.entity.deferment.queue.size";
   /*********************************************************************************************************************
    * <code>
    * Section : L1 Server Array Properties

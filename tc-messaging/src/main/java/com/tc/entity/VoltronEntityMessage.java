@@ -50,6 +50,10 @@ public interface VoltronEntityMessage {
      * Used when invoking a method on an existing entity.
      */
     INVOKE_ACTION,
+    /**
+     * noop for pipeline flushes
+     */
+    NOOP
   }
   
   enum Acks {

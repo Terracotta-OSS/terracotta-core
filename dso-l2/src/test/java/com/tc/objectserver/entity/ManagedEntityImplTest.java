@@ -18,6 +18,9 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.ClientID;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.TestEntity;
@@ -39,12 +42,17 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Set;
+import org.mockito.Matchers;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -52,10 +60,12 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 
@@ -65,6 +75,7 @@ public class ManagedEntityImplTest {
   private ClientInstanceID clientInstanceID;
   private long version;
   private ManagedEntityImpl managedEntity;
+  private Sink<VoltronEntityMessage> loopback;
   private ServiceRegistry serviceRegistry;
   private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> serverEntityService;
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
@@ -85,6 +96,8 @@ public class ManagedEntityImplTest {
     version = 1;
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     serviceRegistry = mock(ServiceRegistry.class);
+    
+    loopback = mock(Sink.class);
 
     requestMulti = mock(RequestProcessor.class);
     activeServerEntity = mock(ActiveServerEntity.class);
@@ -95,7 +108,7 @@ public class ManagedEntityImplTest {
 
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
+    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
     Mockito.doAnswer(new Answer<Object>() {
       @Override
@@ -104,6 +117,7 @@ public class ManagedEntityImplTest {
         return null;
       }
     }).when(requestMulti).scheduleRequest(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyInt());
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
 
   @SuppressWarnings("unchecked")
@@ -174,7 +188,7 @@ public class ManagedEntityImplTest {
   @Test
   public void testPerformActionMissingEntity() throws Exception {
     ServerEntityRequest request = mockInvokeRequest();
-    managedEntity.addInvokeRequest(request, new byte[0]);
+    managedEntity.addInvokeRequest(request, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
     verify(request).failure(any(EntityNotFoundException.class));
   }
 
@@ -203,10 +217,103 @@ public class ManagedEntityImplTest {
     });
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
-    managedEntity.addInvokeRequest(invokeRequest, payload);
+    managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
+    verify(loopback).addSingleThreaded(Matchers.any(NoopEntityMessage.class));
+  }
+  
+  @Test
+  public void testExclusiveExecution() throws Exception {
+    MessageCodec codec = new MessageCodec() {
+      @Override
+      public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
+        return new EntityMessage() {
+          @Override
+          public String toString() {
+            return new String(payload);
+          }
+        };
+      }
+
+      @Override
+      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public byte[] serialize(EntityResponse response) throws MessageCodecException {
+        return new byte[0];
+      }
+    };
+    ConcurrencyStrategy basic = new ConcurrencyStrategy() {
+      @Override
+      public int concurrencyKey(EntityMessage message) {
+        String key = message.toString();
+        return Integer.parseInt(key);
+      }
+
+      @Override
+      public Set getKeysForSynchronization() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+    };
+    when(activeServerEntity.getConcurrencyStrategy()).thenReturn(basic);
+    when(activeServerEntity.getMessageCodec()).thenReturn(codec);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
+    managedEntity.addLifecycleRequest(mockCreateEntityRequest(), new byte[0]);
+
+    Deque<Integer> queued = new LinkedList<>();
+    Deque<Runnable> blockers = new LinkedList<>();
+    Mockito.doAnswer(new Answer<Object>() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        int key = (Integer)invocation.getArguments()[4];
+        if (key == ConcurrencyStrategy.MANAGEMENT_KEY) {
+          blockers.add((Runnable)invocation.getArguments()[3]);
+        } else {
+          queued.add(key);
+        }
+        return null;
+      }
+    }).when(requestMulti).scheduleRequest(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyInt());
+    Mockito.doAnswer(new Answer<Object>() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        managedEntity.addInvokeRequest(mockNoopRequest(), null, ConcurrencyStrategy.UNIVERSAL_KEY);
+        return null;
+      }
+    }).when(loopback).addSingleThreaded(Matchers.any());
+
+    managedEntity.addInvokeRequest(mockInvokeRequest(), Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), ConcurrencyStrategy.MANAGEMENT_KEY);
+    for (int x=1;x<=24;x++) {
+      int key = (x == 12) ? ConcurrencyStrategy.MANAGEMENT_KEY : x;
+      managedEntity.addInvokeRequest(mockInvokeRequest(), Integer.toString(key).getBytes(), ConcurrencyStrategy.MANAGEMENT_KEY);
+    }
+//  only thing in the queue should be the MGMT action    
+    Assert.assertTrue(queued.isEmpty());
+    Runnable r = blockers.pop();
+    Assert.assertNotNull(r);
+// run the mgmt action so defer is cleared    
+    r.run();
+    Assert.assertTrue(queued.size() == 11);
+    int index = 1;
+    while (!queued.isEmpty()) {
+      int check = index++;
+      Assert.assertEquals(Integer.toString(check), queued.pop().toString());
+    }
+    r = blockers.pop();
+    Assert.assertNotNull(r);
+    r.run();
+    index = 13; //  12 was skipped
+     while (!queued.isEmpty()) {
+      int check = index++;
+      Assert.assertEquals(Integer.toString(check), queued.pop().toString());
+    }
+    Assert.assertEquals(index, 25);
+    verify(loopback, times(2)).addSingleThreaded(Matchers.any(NoopEntityMessage.class));
+    
   }
 
   @Test
@@ -234,7 +341,7 @@ public class ManagedEntityImplTest {
       }
     });
     ServerEntityRequest invokeRequest = mockInvokeRequest();
-    managedEntity.addInvokeRequest(invokeRequest, payload);
+    managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
     verify(activeServerEntity, never()).invoke(any(ClientDescriptor.class), any(EntityMessage.class));
     verify(invokeRequest, never()).complete(any(byte[].class));
@@ -334,6 +441,13 @@ public class ManagedEntityImplTest {
   private ServerEntityRequest mockReleaseRequest(com.tc.net.ClientID requester) {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RELEASE_ENTITY);
     when(request.getNodeID()).thenReturn(requester);
+    return request;
+  }
+    
+  private ServerEntityRequest mockNoopRequest() {
+    ServerEntityRequest request = mock(ServerEntityRequest.class);
+    when(request.getSourceDescriptor()).thenReturn(new ClientDescriptorImpl(ClientID.NULL_ID, entityDescriptor));
+    when(request.getAction()).thenReturn(ServerEntityAction.NOOP);
     return request;
   }
   
