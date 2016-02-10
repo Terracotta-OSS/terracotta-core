@@ -30,9 +30,9 @@ import org.terracotta.exception.EntityUserException;
 /**
  * Used for basic testing (not part of the in-process testing framework) of an entity, to act like the client end-point.
  */
-public class PassthroughEndpoint implements EntityClientEndpoint {
+public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
-  private ActiveServerEntity<?, ?> entity;
+  private ActiveServerEntity<M, R> entity;
   private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
@@ -42,7 +42,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
     this.isOpen = true;
   }
 
-  public void attach(ActiveServerEntity<?, ?> entity) {
+  public void attach(ActiveServerEntity<M, R> entity) {
     this.entity = entity;
     entity.connected(clientDescriptor);
   }
@@ -124,7 +124,7 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
       }
     }
     
-    private <M extends EntityMessage, R extends EntityResponse> byte[] sendInvocation(ActiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
+    private byte[] sendInvocation(ActiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
       byte[] result = null;
       try {
         MessageCodec<M, R> codec = entity.getMessageCodec();
@@ -144,17 +144,24 @@ public class PassthroughEndpoint implements EntityClientEndpoint {
 
   private class TestClientCommunicator implements ClientCommunicator {
     @Override
-    public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
+    public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
       if (clientDescriptor == PassthroughEndpoint.this.clientDescriptor) {
         if (null != PassthroughEndpoint.this.delegate) {
-          PassthroughEndpoint.this.delegate.handleMessage(payload);
+          try {
+            @SuppressWarnings("unchecked")
+            byte[] payload = PassthroughEndpoint.this.entity.getMessageCodec().serialize((R)message);
+            PassthroughEndpoint.this.delegate.handleMessage(payload);
+          } catch (MessageCodecException e) {
+            // Unexpected in this test.
+            Assert.fail();
+          }
         }
       }
     }
 
     @Override
-    public Future<Void> send(ClientDescriptor clientDescriptor, byte[] payload) {
-      sendNoResponse(clientDescriptor, payload);
+    public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
+      sendNoResponse(clientDescriptor, message);
       return Futures.immediateFuture(null);
     }
   }

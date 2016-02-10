@@ -22,6 +22,10 @@ import java.util.concurrent.Future;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.CommonServerEntity;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
 
 
@@ -31,8 +35,6 @@ import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEnti
  * TODO:  we currently need to determine how to handle the synchronous send.
  */
 public class PassthroughCommunicatorService implements ClientCommunicator {
-  @SuppressWarnings("unused")
-  // Currently unused but in place for a later change.
   private final DeferredEntityContainer container;
 
   public PassthroughCommunicatorService(DeferredEntityContainer container) {
@@ -42,22 +44,33 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
   }
 
   @Override
-  public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
-    prepareAndSendMessage(clientDescriptor, payload);
+  public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
+    prepareAndSendMessage(clientDescriptor, message);
   }
 
   @Override
-  public Future<Void> send(ClientDescriptor clientDescriptor, byte[] payload) {
-    return prepareAndSendMessage(clientDescriptor, payload);
+  public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
+    return prepareAndSendMessage(clientDescriptor, message);
   }
 
-  private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, byte[] payload) {
+  private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, EntityResponse entityMessage) throws MessageCodecException {
     PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;
     PassthroughConnection connection = rawDescriptor.sender;
     long clientInstanceID = rawDescriptor.clientInstanceID;
     Future<Void> waiter = connection.createClientResponseFuture();
+    
+    // We know that the entity better exist, by this point, to use the service.
+    CommonServerEntity<?, ?> entity = this.container.entity;
+    Assert.assertTrue(null != entity);
+    byte[] payload = serialize(entity.getMessageCodec(), entityMessage);
     PassthroughMessage message = PassthroughMessageCodec.createMessageToClient(clientInstanceID, payload);
     connection.sendMessageToClient(rawDescriptor.server, message.asSerializedBytes());
     return waiter;
+  }
+
+  @SuppressWarnings("unchecked")
+  private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse message) throws MessageCodecException {
+    // Cast should be safe as message and codec are from the same implementation.
+    return codec.serialize((R)message);
   }
 }

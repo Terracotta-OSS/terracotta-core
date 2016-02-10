@@ -40,7 +40,7 @@ public class PassthroughStripe implements ClientCommunicator {
   private final Map<String, PassiveServerEntity<?, ?>> passiveMap = new HashMap<String, PassiveServerEntity<?, ?>>();
   private final Map<String, byte[]> configMap = new HashMap<String, byte[]>();
   private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
-  private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
+  private final Map<ClientDescriptor, FakeEndpoint<?>> endpoints = new HashMap<ClientDescriptor, FakeEndpoint<?>>();
   
   private int nextClientID = 1;
 
@@ -69,10 +69,11 @@ public class PassthroughStripe implements ClientCommunicator {
   }
   
   public EntityClientEndpoint connectNewClientToEntity(String name) {
-    FakeEndpoint endpoint = null;
+    FakeEndpoint<?> endpoint = null;
     if (activeMap.containsKey(name)) {
       ClientDescriptor descriptor = new FakeClientDescriptor(nextClientID);
-      endpoint = new FakeEndpoint(name, descriptor);
+      MessageCodec<?, ?> codec = activeMap.get(name).getMessageCodec();
+      endpoint = getEndpoint(name, descriptor, codec);
       endpoints.put(descriptor, endpoint);
       nextClientID += 1;
       // Update the connect count.
@@ -81,13 +82,22 @@ public class PassthroughStripe implements ClientCommunicator {
     return endpoint;
   }
 
+  private <R extends EntityResponse> FakeEndpoint<R> getEndpoint(String name, ClientDescriptor descriptor, MessageCodec<?, R> codec) {
+    return new FakeEndpoint<R>(name, descriptor, codec);
+  }
+  
+
   @Override
-  public void sendNoResponse(ClientDescriptor clientDescriptor, byte[] payload) {
-    endpoints.get(clientDescriptor).sendNoResponse(payload);
+  public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
+    FakeEndpoint<?> endpoint = endpoints.get(clientDescriptor);
+    byte[] payload = endpoint.serializeResponse(message);
+    endpoint.sendNoResponse(payload);
   }
 
   @Override
-  public Future<Void> send(ClientDescriptor clientDescriptor, byte[] payload) {
+  public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
+    FakeEndpoint<?> endpoint = endpoints.get(clientDescriptor);
+    byte[] payload = endpoint.serializeResponse(message);
     endpoints.get(clientDescriptor).sendNoResponse(payload);
     return Futures.immediateFuture(null);
   }
@@ -99,14 +109,29 @@ public class PassthroughStripe implements ClientCommunicator {
     }
   }
   
-  private class FakeEndpoint implements EntityClientEndpoint {
+  private class FakeEndpoint<R extends EntityResponse> implements EntityClientEndpoint {
     private EndpointDelegate delegate;
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
+    private final MessageCodec<?, R> codec;
     
-    public FakeEndpoint(String name, ClientDescriptor clientDescriptor) {
+    public FakeEndpoint(String name, ClientDescriptor clientDescriptor, MessageCodec<?, R> codec) {
       this.entityName = name;
       this.clientDescriptor = clientDescriptor;
+      this.codec = codec;
+    }
+
+    @SuppressWarnings("unchecked")
+    public byte[] serializeResponse(EntityResponse r) {
+      byte[] raw = null;
+      try {
+        // The cast should be safe as r and this.codec are from the same implementation.
+        raw = this.codec.serialize((R)r);
+      } catch (MessageCodecException e) {
+        // Not expected in these tests.
+        Assert.fail();
+      }
+      return raw;
     }
 
     public void sendNoResponse(byte[] payload) {
