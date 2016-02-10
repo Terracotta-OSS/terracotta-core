@@ -227,7 +227,7 @@ public class ManagedEntityImplTest {
   
   @Test
   public void testExclusiveExecution() throws Exception {
-    MessageCodec codec = new MessageCodec() {
+    MessageCodec<EntityMessage, EntityResponse> codec = new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
       public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
         return new EntityMessage() {
@@ -248,7 +248,7 @@ public class ManagedEntityImplTest {
         return new byte[0];
       }
     };
-    ConcurrencyStrategy basic = new ConcurrencyStrategy() {
+    ConcurrencyStrategy<EntityMessage> basic = new ConcurrencyStrategy<EntityMessage>() {
       @Override
       public int concurrencyKey(EntityMessage message) {
         String key = message.toString();
@@ -256,7 +256,7 @@ public class ManagedEntityImplTest {
       }
 
       @Override
-      public Set getKeysForSynchronization() {
+      public Set<Integer> getKeysForSynchronization() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
     };
