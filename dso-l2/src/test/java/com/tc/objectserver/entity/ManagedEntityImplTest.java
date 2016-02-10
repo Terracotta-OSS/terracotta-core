@@ -43,6 +43,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -76,7 +77,7 @@ public class ManagedEntityImplTest {
   private long version;
   private ManagedEntityImpl managedEntity;
   private Sink<VoltronEntityMessage> loopback;
-  private ServiceRegistry serviceRegistry;
+  private InternalServiceRegistry serviceRegistry;
   private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> serverEntityService;
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
@@ -95,7 +96,7 @@ public class ManagedEntityImplTest {
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
-    serviceRegistry = mock(ServiceRegistry.class);
+    serviceRegistry = mock(InternalServiceRegistry.class);
     
     loopback = mock(Sink.class);
 

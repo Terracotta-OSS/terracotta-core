@@ -21,7 +21,6 @@ package com.tc.services;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceRegistry;
 
 
 /**
@@ -62,7 +61,7 @@ public interface TerracottaServiceProviderRegistry {
    * @param consumerID The unique ID which will be used to name-space services created by this sub-registry
    * @return Service registry which will be used by entities.
    */
-  ServiceRegistry subRegistry(long consumerID);
+  InternalServiceRegistry subRegistry(long consumerID);
 
   /**
    * Returns an instance of service provider given an a class. This method is not to be used by entities but by platform
