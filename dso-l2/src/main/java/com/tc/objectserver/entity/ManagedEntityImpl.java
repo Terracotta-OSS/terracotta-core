@@ -134,7 +134,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     );
  
     for (StoredMessage msg : defer) {
-      processInvokeRequest(msg.getRequest(), msg.getPayload(), defaultKey);
+      processInvokeRequest(msg.getRequest(), msg.getPayload(), msg.getDefaultKey());
     }
 // a noop message's job is done.  no need to continue
     if (request.getAction() != ServerEntityAction.NOOP) {
