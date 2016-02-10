@@ -25,8 +25,11 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.util.Assert;
+
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.MessageCodec;
 
 
 public class PlatformEntity implements ManagedEntity {
@@ -72,5 +75,12 @@ public class PlatformEntity implements ManagedEntity {
   @Override
   public void sync(NodeID passive) {
   //  never sync
+  }
+
+  @Override
+  public MessageCodec<?, ?> getCodec() {
+    // The platform entity has no codec so calling this means there is an error elsewhere.
+    Assert.fail();
+    return null;
   }
 }

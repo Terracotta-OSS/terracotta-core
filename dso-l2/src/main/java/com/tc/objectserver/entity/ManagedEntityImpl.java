@@ -616,6 +616,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector.entityWasReloaded(this.getID(), this.isInActiveState);
   }
 
+  @Override
+  public MessageCodec<?, ?> getCodec() {
+    return (null != this.activeServerEntity)
+        ? this.activeServerEntity.getMessageCodec()
+        : this.passiveServerEntity.getMessageCodec();
+  }
+
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {
     private final NodeID passive;
     
