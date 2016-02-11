@@ -32,19 +32,20 @@ import org.terracotta.exception.EntityUserException;
  * Similar to the PassthroughEndpoint although designed to handle the broader cases of active/passive distinction,
  *  creation/destruction of entities, and multiple clients connected to one entity.
  */
-public class PassthroughStripe implements ClientCommunicator {
+public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse> implements ClientCommunicator {
 
-  private final ServerEntityService<? extends ActiveServerEntity<?, ?>, ? extends PassiveServerEntity<?, ?>> service;
+  private final ServerEntityService<M, R> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
   private final Map<String, ActiveServerEntity<?, ?>> activeMap = new HashMap<String, ActiveServerEntity<?, ?>>();
   private final Map<String, PassiveServerEntity<?, ?>> passiveMap = new HashMap<String, PassiveServerEntity<?, ?>>();
+  private final Map<String, MessageCodec<?, ?>> codecs = new HashMap<String, MessageCodec<?, ?>>();
   private final Map<String, byte[]> configMap = new HashMap<String, byte[]>();
   private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
   private final Map<ClientDescriptor, FakeEndpoint<?>> endpoints = new HashMap<ClientDescriptor, FakeEndpoint<?>>();
   
   private int nextClientID = 1;
 
-  public PassthroughStripe(ServerEntityService<? extends ActiveServerEntity<?, ?>, ? extends PassiveServerEntity<?, ?>> service, Class<?> clazz) {
+  public PassthroughStripe(ServerEntityService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
     this.service = service;
   }
@@ -53,14 +54,16 @@ public class PassthroughStripe implements ClientCommunicator {
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
       // Create the instances.
-      ActiveServerEntity<?, ?> active = service.createActiveEntity(serviceRegistry, configuration);
-      PassiveServerEntity<?, ?> passive = service.createPassiveEntity(serviceRegistry, configuration);
+      MessageCodec<M, R> codec = service.getMessageCodec();
+      ActiveServerEntity<M, R> active = service.createActiveEntity(serviceRegistry, configuration);
+      PassiveServerEntity<M, R> passive = service.createPassiveEntity(serviceRegistry, configuration);
       // Set them as new instances.
       active.createNew();
       passive.createNew();
       // Store them for later lookup.
       activeMap.put(name, active);
       passiveMap.put(name, passive);
+      codecs.put(name, codec);
       configMap.put(name, configuration);
       connectCountMap.put(name, 0);
       didCreate = true;
@@ -72,7 +75,7 @@ public class PassthroughStripe implements ClientCommunicator {
     FakeEndpoint<?> endpoint = null;
     if (activeMap.containsKey(name)) {
       ClientDescriptor descriptor = new FakeClientDescriptor(nextClientID);
-      MessageCodec<?, ?> codec = activeMap.get(name).getMessageCodec();
+      MessageCodec<?, ?> codec = codecs.get(name);
       endpoint = getEndpoint(name, descriptor, codec);
       endpoints.put(descriptor, endpoint);
       nextClientID += 1;
@@ -156,7 +159,9 @@ public class PassthroughStripe implements ClientCommunicator {
       return new StripeInvocationBuilder(
           this.clientDescriptor,
           PassthroughStripe.this.activeMap.get(this.entityName),
-          PassthroughStripe.this.passiveMap.get(this.entityName));
+          PassthroughStripe.this.passiveMap.get(this.entityName),
+          PassthroughStripe.this.codecs.get(this.entityName)
+      );
     }
 
     @Override
@@ -193,20 +198,24 @@ public class PassthroughStripe implements ClientCommunicator {
     }
   }
 
-  private class StripeInvocationBuilder implements InvocationBuilder {
+  private class StripeInvocationBuilder<M extends EntityMessage, R extends EntityResponse> implements InvocationBuilder {
     private final ClientDescriptor clientDescriptor;
-    private final ActiveServerEntity<?, ?> activeServerEntity;
+    private final ActiveServerEntity<M, R> activeServerEntity;
+    private final MessageCodec<M, R> codec;
     // Note that the passiveServerEntity is not yet used in tests related to this class.
     @SuppressWarnings("unused")
-    private final PassiveServerEntity<?, ?> passiveServerEntity;
+    private final PassiveServerEntity<M, R> passiveServerEntity;
     private byte[] payload = null;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
-        ActiveServerEntity<?, ?> activeServerEntity,
-        PassiveServerEntity<?, ?> passiveServerEntity) {
+        ActiveServerEntity<M, R> activeServerEntity,
+        PassiveServerEntity<M, R> passiveServerEntity,
+        MessageCodec<M, R> codec
+        ) {
       this.clientDescriptor = clientDescriptor;
       this.activeServerEntity = activeServerEntity;
       this.passiveServerEntity = passiveServerEntity;
+      this.codec = codec;
     }
 
     @Override
@@ -244,17 +253,16 @@ public class PassthroughStripe implements ClientCommunicator {
       byte[] result = null;
       EntityException error = null;
       try {
-        result = sendInvocation(activeServerEntity);
+        result = sendInvocation(activeServerEntity, codec);
       } catch (EntityUserException e) {
         error = e;
       }
       return new ImmediateInvokeFuture<byte[]>(result, error);
     }
     
-    private <M extends EntityMessage, R extends EntityResponse> byte[] sendInvocation(ActiveServerEntity<M, R> entity) throws EntityUserException {
+    private <M extends EntityMessage, R extends EntityResponse> byte[] sendInvocation(ActiveServerEntity<M, R> entity, MessageCodec<M, R> codec) throws EntityUserException {
       byte[] result = null;
       try {
-        MessageCodec<M, R> codec = entity.getMessageCodec();
         M message = codec.deserialize(payload);
         R response = entity.invoke(clientDescriptor, message);
         result = codec.serialize(response);

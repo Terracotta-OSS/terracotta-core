@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.util.Collection;
 
 import org.terracotta.entity.CommonServerEntity;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceConfiguration;
 
 
@@ -55,5 +56,6 @@ public interface PassthroughBuiltInServiceProvider extends Closeable {
    */
   public static class DeferredEntityContainer {
     public CommonServerEntity<?, ?> entity;
+    public MessageCodec<?, ?> codec;
   }
 }

@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
@@ -62,7 +63,7 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
     // We know that the entity better exist, by this point, to use the service.
     CommonServerEntity<?, ?> entity = this.container.entity;
     Assert.assertTrue(null != entity);
-    byte[] payload = serialize(entity.getMessageCodec(), entityMessage);
+    byte[] payload = serialize(this.container.codec, entityMessage);
     PassthroughMessage message = PassthroughMessageCodec.createMessageToClient(clientInstanceID, payload);
     connection.sendMessageToClient(rawDescriptor.server, message.asSerializedBytes());
     return waiter;

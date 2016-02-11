@@ -33,6 +33,8 @@ import org.terracotta.exception.EntityUserException;
 public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity<M, R> entity;
+  private MessageCodec<M, R> codec;
+  private byte[] configuration;
   private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
@@ -42,8 +44,10 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     this.isOpen = true;
   }
 
-  public void attach(ActiveServerEntity<M, R> entity) {
+  public void attach(ActiveServerEntity<M, R> entity, MessageCodec<M, R> codec, byte[] config) {
     this.entity = entity;
+    this.codec = codec;
+    this.configuration = config;
     entity.connected(clientDescriptor);
   }
 
@@ -51,7 +55,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   public byte[] getEntityConfiguration() {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();
-    return entity.getConfig();
+    return configuration;
   }
 
   @Override
@@ -116,7 +120,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         byte[] result = null;
         EntityException error = null;
         try {
-          result = sendInvocation(entity, payload);
+          result = sendInvocation(payload);
         } catch (EntityUserException e) {
           error = e;
         }
@@ -124,10 +128,9 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       }
     }
     
-    private byte[] sendInvocation(ActiveServerEntity<M, R> entity, byte[] payload) throws EntityUserException {
+    private byte[] sendInvocation(byte[] payload) throws EntityUserException {
       byte[] result = null;
       try {
-        MessageCodec<M, R> codec = entity.getMessageCodec();
         M message = codec.deserialize(payload);
         R response = entity.invoke(clientDescriptor, message);
         result = codec.serialize(response);
@@ -149,7 +152,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         if (null != PassthroughEndpoint.this.delegate) {
           try {
             @SuppressWarnings("unchecked")
-            byte[] payload = PassthroughEndpoint.this.entity.getMessageCodec().serialize((R)message);
+            byte[] payload = PassthroughEndpoint.this.codec.serialize((R)message);
             PassthroughEndpoint.this.delegate.handleMessage(payload);
           } catch (MessageCodecException e) {
             // Unexpected in this test.
