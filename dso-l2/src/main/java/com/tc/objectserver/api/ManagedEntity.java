@@ -19,6 +19,7 @@
 package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.MessageCodec;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -62,4 +63,12 @@ public interface ManagedEntity {
    * @param passive target passive
    */
   void sync(NodeID passive);
+
+  /**
+   * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this
+   * entity's dialect.
+   * 
+   * @return The codec which can translate to/from this entity's message dialect.
+   */
+  MessageCodec<?, ?> getCodec();
 }

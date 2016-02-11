@@ -43,6 +43,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -76,7 +77,7 @@ public class ManagedEntityImplTest {
   private long version;
   private ManagedEntityImpl managedEntity;
   private Sink<VoltronEntityMessage> loopback;
-  private ServiceRegistry serviceRegistry;
+  private InternalServiceRegistry serviceRegistry;
   private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> serverEntityService;
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
@@ -95,7 +96,7 @@ public class ManagedEntityImplTest {
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
-    serviceRegistry = mock(ServiceRegistry.class);
+    serviceRegistry = mock(InternalServiceRegistry.class);
     
     loopback = mock(Sink.class);
 
@@ -226,7 +227,7 @@ public class ManagedEntityImplTest {
   
   @Test
   public void testExclusiveExecution() throws Exception {
-    MessageCodec codec = new MessageCodec() {
+    MessageCodec<EntityMessage, EntityResponse> codec = new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
       public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
         return new EntityMessage() {
@@ -247,7 +248,7 @@ public class ManagedEntityImplTest {
         return new byte[0];
       }
     };
-    ConcurrencyStrategy basic = new ConcurrencyStrategy() {
+    ConcurrencyStrategy<EntityMessage> basic = new ConcurrencyStrategy<EntityMessage>() {
       @Override
       public int concurrencyKey(EntityMessage message) {
         String key = message.toString();
@@ -255,7 +256,7 @@ public class ManagedEntityImplTest {
       }
 
       @Override
-      public Set getKeysForSynchronization() {
+      public Set<Integer> getKeysForSynchronization() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
     };

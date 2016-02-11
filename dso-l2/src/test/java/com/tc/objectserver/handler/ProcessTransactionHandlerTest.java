@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.handler;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +50,7 @@ import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
@@ -73,6 +75,7 @@ public class ProcessTransactionHandlerTest {
   @Before
   public void setUp() throws Exception {
     this.terracottaServiceProviderRegistry = mock(TerracottaServiceProviderRegistry.class);
+    when(this.terracottaServiceProviderRegistry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
     this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor);

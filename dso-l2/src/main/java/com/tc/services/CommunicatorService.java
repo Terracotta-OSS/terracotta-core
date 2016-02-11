@@ -22,6 +22,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.objectserver.api.ManagedEntity;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -109,8 +110,8 @@ public class CommunicatorService implements BuiltInServiceProvider, DSOChannelMa
 
 
   @Override
-  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts);
+  public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
+    EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts, owningEntity);
     return configuration.getServiceType().cast(service);
   }
 

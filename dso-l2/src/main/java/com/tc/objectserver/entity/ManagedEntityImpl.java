@@ -33,7 +33,6 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
-import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -47,6 +46,7 @@ import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
 import static com.tc.util.Assert.assertNotNull;
 import java.util.Collections;
@@ -78,7 +78,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private final EntityID id;
   private final long version;
-  private final ServiceRegistry registry;
+  private final InternalServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
   private final ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory;
@@ -99,7 +99,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, Sink<VoltronEntityMessage> loopback, ServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
+  ManagedEntityImpl(EntityID id, long version, Sink<VoltronEntityMessage> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> factory,
                     boolean isInActiveState) {
     this.id = id;
@@ -111,6 +111,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.factory = factory;
     this.executor = process;
     this.isInActiveState = isInActiveState;
+    registry.setOwningEntity(this);
   }
 
   @Override
@@ -614,6 +615,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     entityToLoad.loadExisting();
     // Fire the event that the entity was reloaded.
     this.eventCollector.entityWasReloaded(this.getID(), this.isInActiveState);
+  }
+
+  @Override
+  public MessageCodec<?, ?> getCodec() {
+    return (null != this.activeServerEntity)
+        ? this.activeServerEntity.getMessageCodec()
+        : this.passiveServerEntity.getMessageCodec();
   }
 
   private static class PassiveSyncServerEntityRequest extends AbstractServerEntityRequest {

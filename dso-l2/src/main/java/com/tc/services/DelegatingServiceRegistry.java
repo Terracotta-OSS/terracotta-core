@@ -19,11 +19,11 @@
 package com.tc.services;
 
 import com.google.common.collect.ImmutableMap;
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
 
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceRegistry;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,10 +31,12 @@ import java.util.List;
 import java.util.Map;
 
 
-public class DelegatingServiceRegistry implements ServiceRegistry {
+public class DelegatingServiceRegistry implements InternalServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
   private final Map<Class<?>, List<BuiltInServiceProvider>> builtInServiceProviderMap;
+  // Both the registry and the entity refer to each other so this is late-bound.
+  private ManagedEntity owningEntity;
 
   public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers, BuiltInServiceProvider[] builtInProviders) {
     this.consumerID = consumerID;
@@ -68,7 +70,9 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
-    T builtInService = getBuiltInService(configuration);
+    // It is possible that there is no owning entity (if this is a synthetic consumer) but that means no access to
+    // built-in services.
+    T builtInService = (null != this.owningEntity) ? getBuiltInService(configuration) : null;
     T externalService = getExternalService(configuration);
     // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
     Assert.assertFalse((null != builtInService) && (null != externalService));
@@ -77,12 +81,18 @@ public class DelegatingServiceRegistry implements ServiceRegistry {
         : externalService;
   }
 
+  public void setOwningEntity(ManagedEntity entity) {
+    Assert.assertNull(this.owningEntity);
+    Assert.assertNotNull(entity);
+    this.owningEntity = entity;
+  }
+
   private <T> T getBuiltInService(ServiceConfiguration<T> configuration) {
     List<BuiltInServiceProvider> serviceProviders = builtInServiceProviderMap.get(configuration.getServiceType());
     T service = null;
     if (null != serviceProviders) {
       for (BuiltInServiceProvider provider : serviceProviders) {
-        T oneService = provider.getService(this.consumerID, configuration);
+        T oneService = provider.getService(this.consumerID, this.owningEntity, configuration);
         if (null != oneService) {
           // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
           Assert.assertNull(service);
