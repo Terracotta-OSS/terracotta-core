@@ -294,6 +294,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       } catch (Exception e) {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+        logger.error("caught exception during invoke ", wrapper);
         request.failure(wrapper);
       } finally {
         read.unlock();
@@ -342,6 +343,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       } catch (Exception e) {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+        logger.error("caught exception during invoke ", wrapper);
         request.failure(wrapper);
         throw new RuntimeException(e);
       } finally {
