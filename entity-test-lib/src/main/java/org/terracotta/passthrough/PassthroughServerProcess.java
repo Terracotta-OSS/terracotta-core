@@ -867,7 +867,7 @@ public class PassthroughServerProcess implements MessageHandler {
       this.service = service;
       this.codec = service.getMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
-      this.concurrency = (isActive) ? ((ActiveServerEntity)service).getConcurrencyStrategy() : null;
+      this.concurrency = (isActive) ? service.getConcurrencyStrategy(configuration) : null;
       this.isActive = isActive;
     }
       
