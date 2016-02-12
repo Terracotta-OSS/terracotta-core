@@ -147,7 +147,12 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
     InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context2);
-    // Record that the client disconnected.
-    this.eventCollector.clientDidDisconnect(channel, clientID);
+    // Note that sometimes a removed event is called when a reconnect window closes but there was no actual "connection" so
+    // we don't want to report this to the event collector.
+    // These cases are detected by checking the local address of the channel:  only real connections have that.
+    if (null != channel.getLocalAddress()) {
+      // Record that the client disconnected.
+      this.eventCollector.clientDidDisconnect(channel, clientID);
+    }
   }
 }
