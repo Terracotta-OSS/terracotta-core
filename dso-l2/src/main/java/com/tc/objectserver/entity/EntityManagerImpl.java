@@ -55,7 +55,7 @@ import org.terracotta.entity.EntityResponse;
 
 public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>> entityServices = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, ServerEntityService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
   private final ClassLoader creationLoader;
   private final TerracottaServiceProviderRegistry serviceRegistry;
@@ -156,11 +156,11 @@ public class EntityManagerImpl implements EntityManager {
     return new ArrayList<>(entities.values());
   }
   
-  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {
+  private ServerEntityService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
-    ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> service = entityServices.get(typeName);
+    ServerEntityService<EntityMessage, EntityResponse> service = entityServices.get(typeName);
     if (service == null) {
       service = ServerEntityFactory.getService(typeName, this.creationLoader);
       // getService only fails to resolve by throwing.

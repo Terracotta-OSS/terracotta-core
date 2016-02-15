@@ -78,7 +78,7 @@ public class ManagedEntityImplTest {
   private ManagedEntityImpl managedEntity;
   private Sink<VoltronEntityMessage> loopback;
   private InternalServiceRegistry serviceRegistry;
-  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> serverEntityService;
+  private ServerEntityService<EntityMessage, EntityResponse> serverEntityService;
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   private RequestProcessor requestMulti;
@@ -109,7 +109,7 @@ public class ManagedEntityImplTest {
 
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, (ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>>)serverEntityService, isInActiveState);
+    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
     Mockito.doAnswer(new Answer<Object>() {
       @Override
@@ -122,8 +122,8 @@ public class ManagedEntityImplTest {
   }
 
   @SuppressWarnings("unchecked")
-  private ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
-    ServerEntityService<? extends ActiveServerEntity<EntityMessage, EntityResponse>, ? extends PassiveServerEntity<EntityMessage, EntityResponse>> entityService = mock(ServerEntityService.class);
+  private ServerEntityService<EntityMessage, EntityResponse> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
+    ServerEntityService<EntityMessage, EntityResponse> entityService = mock(ServerEntityService.class);
     doReturn(activeServerEntity).when(entityService).createActiveEntity(any(ServiceRegistry.class), any(byte[].class));
     doReturn(passiveServerEntity).when(entityService).createPassiveEntity(any(ServiceRegistry.class), any(byte[].class));
     return entityService;
@@ -134,8 +134,9 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     String config = "foo";
     ServerEntityRequest request = mockCreateEntityRequest();
-    managedEntity.addLifecycleRequest(request, mockCreatePayload(config));
-    verify(serverEntityService).createActiveEntity(serviceRegistry, serialize(config));
+    byte[] arg = mockCreatePayload(config);
+    managedEntity.addLifecycleRequest(request, arg);
+    verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
     verify(request).complete();
   }
 
@@ -143,8 +144,9 @@ public class ManagedEntityImplTest {
   public void testCreatePassive() throws Exception {
     String config = "foo";
     ServerEntityRequest request = mockCreateEntityRequest();
-    managedEntity.addLifecycleRequest(request, mockCreatePayload(config));
-    verify(serverEntityService).createPassiveEntity(serviceRegistry, serialize(config));
+    byte[] arg = mockCreatePayload(config);
+    managedEntity.addLifecycleRequest(request, arg);
+    verify(serverEntityService).createPassiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
     verify(request).complete();
   }
 
@@ -171,11 +173,9 @@ public class ManagedEntityImplTest {
   }
 
   @Test
-  public void testGetEntityExists() throws Exception {
-    byte[] config = new byte[0];
-    when(activeServerEntity.getConfig()).thenReturn(config);
-    
-    managedEntity.addLifecycleRequest(mockCreateEntityRequest(),  mockCreatePayload("foo"));
+  public void testGetEntityExists() throws Exception {    
+    byte[] config = mockCreatePayload("foo");
+    managedEntity.addLifecycleRequest(mockCreateEntityRequest(),  config);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
@@ -183,7 +183,7 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(request, null);
 
     verify(clientEntityStateManager).addReference(requester, new EntityDescriptor(entityID, clientInstanceID, version));
-    verify(request).complete(config);
+    verify(request).complete(Matchers.eq(config));
   }
 
   @Test
@@ -194,13 +194,10 @@ public class ManagedEntityImplTest {
   }
 
   @Test
-  public void testPerformAction() throws Exception {
-    managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
-    
+  public void testPerformAction() throws Exception {    
     byte[] payload = { 0 };
     byte[] returnValue = { 1 };
-    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
+    when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
       public byte[] serialize(EntityResponse response) {
         return returnValue;
@@ -215,7 +212,17 @@ public class ManagedEntityImplTest {
         Assert.fail("Synchronization not used in this test");
         return null;
       }
+
+      @Override
+      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+      
     });
+    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
+    managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
     managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
@@ -244,6 +251,11 @@ public class ManagedEntityImplTest {
       }
 
       @Override
+      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
       public byte[] serialize(EntityResponse response) throws MessageCodecException {
         return new byte[0];
       }
@@ -261,7 +273,8 @@ public class ManagedEntityImplTest {
       }
     };
     when(activeServerEntity.getConcurrencyStrategy()).thenReturn(basic);
-    when(activeServerEntity.getMessageCodec()).thenReturn(codec);
+    when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
+    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), new byte[0]);
 
@@ -323,7 +336,7 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     
     byte[] payload = { 0 };
-    when(activeServerEntity.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
+    when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
       public byte[] serialize(EntityResponse response) {
         // We should never reach this - should fail before the invoke.
@@ -340,6 +353,12 @@ public class ManagedEntityImplTest {
         Assert.fail("Synchronization not used in this test");
         return null;
       }
+
+      @Override
+      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+      
     });
     ServerEntityRequest invokeRequest = mockInvokeRequest();
     managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
