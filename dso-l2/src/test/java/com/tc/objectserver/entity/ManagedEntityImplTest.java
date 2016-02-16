@@ -272,7 +272,7 @@ public class ManagedEntityImplTest {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
     };
-    when(activeServerEntity.getConcurrencyStrategy()).thenReturn(basic);
+    when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
