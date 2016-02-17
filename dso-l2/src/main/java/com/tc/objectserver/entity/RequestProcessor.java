@@ -89,6 +89,9 @@ public class RequestProcessor implements StateChangeListener {
       case CREATE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
         break;
+      case RECONFIGURE_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY;
+        break;
       case DESTROY_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
         break;

@@ -145,6 +145,19 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
 
   @Override
+  public C reconfigure(C configuration) throws EntityException {
+    EntityID entityID = getEntityID();
+    try {
+      return entityClientService.deserializeConfiguration(
+          this.entityManager.reconfigureEntity(entityID, this.version, Collections.singleton(VoltronEntityMessage.Acks.APPLIED), entityClientService.serializeConfiguration(configuration)).get()
+      );
+    } catch (InterruptedException e) {
+      // We don't expect an interruption here.
+      throw new RuntimeException(e);
+    }
+  }
+  
+  @Override
   public void destroy() throws EntityNotFoundException {
     this.maintenanceModeService.enterMaintenanceMode(this.type, this.name);
     try {

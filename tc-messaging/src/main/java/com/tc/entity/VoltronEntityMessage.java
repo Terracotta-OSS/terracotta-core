@@ -47,6 +47,10 @@ public interface VoltronEntityMessage {
      */
     DESTROY_ENTITY,
     /**
+     * Called to recreate an active entity with a new configuration
+     */
+    RECONFIGURE_ENTITY,
+    /**
      * Used when invoking a method on an existing entity.
      */
     INVOKE_ACTION,

@@ -261,6 +261,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           case RELEASE_ENTITY:
             releaseEntity(request);
             break;
+          case RECONFIGURE_ENTITY:
+            reconfigureEntity(request, payload);
+            break;
           case DESTROY_ENTITY:
 //  all request queues are flushed because this action is on the MGMT_KEY
             destroyEntity(request);
@@ -401,6 +404,44 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.isDestroyed = true;
   }
 
+  private void reconfigureEntity(ServerEntityRequest reconfigureEntityRequest, byte[] constructorInfo) {
+    byte[] oldconfig = this.constructorInfo;
+    if (this.activeServerEntity == null && this.passiveServerEntity == null) {
+      reconfigureEntityRequest.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
+      return;
+    }
+    this.constructorInfo = constructorInfo;
+    CommonServerEntity<EntityMessage, EntityResponse> entityToCreate = null;
+    // Create the appropriate kind of entity, based on our active/passive state.
+    if (this.isInActiveState) {
+      if (null == this.activeServerEntity) {
+        throw new IllegalStateException("Active entity " + id + " does not exists.");
+      } else {
+        this.activeServerEntity = this.factory.createActiveEntity(this.registry, constructorInfo);
+        this.concurrencyStrategy = this.factory.getConcurrencyStrategy(constructorInfo);
+        entityToCreate = this.activeServerEntity;
+      }
+    } else {
+      if (null == this.passiveServerEntity) {
+        throw new IllegalStateException("Passive entity " + id + " does not exists.");
+      } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug("reconfigure passive entity " + this.getID() + " due to " + reconfigureEntityRequest.getAction());
+        }
+        this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
+        Assert.assertNull(this.concurrencyStrategy);
+        // Store the configuration in case we promote.
+        entityToCreate = this.passiveServerEntity;
+      }
+    }
+    reconfigureEntityRequest.complete(oldconfig);
+    // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
+    //  instance so make that call.
+    entityToCreate.loadExisting();
+    // Fire the event that the entity was created.
+    this.eventCollector.entityWasReloaded(this.getID(), this.isInActiveState);
+  }
+  
   private void createEntity(ServerEntityRequest createEntityRequest, byte[] constructorInfo) {
     if (this.activeServerEntity != null || this.passiveServerEntity != null) {
       createEntityRequest.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));

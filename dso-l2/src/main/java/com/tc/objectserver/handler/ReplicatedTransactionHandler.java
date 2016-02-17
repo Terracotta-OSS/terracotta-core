@@ -47,6 +47,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ReplicatedTransactionHandler {
@@ -119,7 +120,13 @@ public class ReplicatedTransactionHandler {
             entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
           }
           Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
-
+          if (rep.getReplicationType() == ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY) {
+            if (entity.isPresent()) {
+              this.entityPersistor.reconfigureEntity(rep.getEntityID(), rep.getVersion(), rep.getExtendedData());
+            } else {
+              throw new EntityNotFoundException(rep.getEntityID().getClassName(), rep.getEntityID().getEntityName());
+            }
+          }
           if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
             entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
             entityPersistor.entityDeleted(rep.getEntityDescriptor().getEntityID());
@@ -267,6 +274,8 @@ public class ReplicatedTransactionHandler {
         return ServerEntityAction.NOOP;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
+      case RECONFIGURE_ENTITY:
+        return ServerEntityAction.RECONFIGURE_ENTITY;
       case INVOKE_ACTION:
         return ServerEntityAction.INVOKE_ACTION;        
       case RELEASE_ENTITY:

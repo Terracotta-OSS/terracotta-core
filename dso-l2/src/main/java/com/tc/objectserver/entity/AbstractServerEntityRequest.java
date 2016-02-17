@@ -135,6 +135,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
       switch (action) {
         case INVOKE_ACTION:
         case FETCH_ENTITY:
+        case RECONFIGURE_ENTITY:
           VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
           actionResponse.setSuccess(transaction, value);
           actionResponse.send();

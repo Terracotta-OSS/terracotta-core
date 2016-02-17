@@ -141,6 +141,13 @@ public class ProcessTransactionHandler {
         this.entityPersistor.entityCreated(entityID, clientSideVersion, consumerID, extendedData);
       }
       Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
+      if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
+        if (optionalEntity.isPresent()) {
+          this.entityPersistor.reconfigureEntity(entityID, descriptor.getClientSideVersion(), extendedData);
+        } else {
+          throw new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
+        }
+      }
       if (optionalEntity.isPresent()) {
         entity = optionalEntity.get();
       }
@@ -266,6 +273,9 @@ public class ProcessTransactionHandler {
         break;
       case CREATE_ENTITY:
         action = ServerEntityAction.CREATE_ENTITY;
+        break;
+      case RECONFIGURE_ENTITY:
+        action = ServerEntityAction.RECONFIGURE_ENTITY;
         break;
       case DESTROY_ENTITY:
         action = ServerEntityAction.DESTROY_ENTITY;

@@ -62,7 +62,10 @@ public enum ServerEntityAction {
    * An internally-created action to communicate that an entity should be loaded from its existing disk state.
    */
   LOAD_EXISTING_ENTITY,
-  
+  /**
+   * Reload the active entity with the new supplied configuration.
+   */
+  RECONFIGURE_ENTITY,  
   // ***** Messages specific to received passive synchronization data below this point *****
   /**
    * Messages related to the synchronization of a specific entity instance follow.

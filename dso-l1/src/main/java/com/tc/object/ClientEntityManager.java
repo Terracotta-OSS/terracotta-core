@@ -75,6 +75,8 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
   InvokeFuture<byte[]> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
   
   InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks);
+
+  InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
   
   /**
    * Called to retrieve the entityDescriptor, returning its instance configuration, if found.  Note that this call will have

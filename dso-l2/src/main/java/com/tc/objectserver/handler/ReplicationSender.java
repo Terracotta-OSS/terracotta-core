@@ -171,6 +171,14 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               syncd.add(eid);
               return true;
             }
+          case RECONFIGURE_ENTITY:
+            if (syncd.contains(eid) || eid.equals(syncingID)) {
+//  this entity is being or has been replicated, send the reconfigure through
+              return true;
+            } else {
+//  this entity has not been on the passive yet, reconfigure will go with replication
+              return false;
+            }
           case DESTROY_ENTITY:
             if (syncd.contains(eid)) {
               return true;
