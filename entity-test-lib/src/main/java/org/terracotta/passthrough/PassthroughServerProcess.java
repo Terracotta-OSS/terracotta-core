@@ -43,6 +43,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityUserException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -816,8 +817,11 @@ public class PassthroughServerProcess implements MessageHandler {
     return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviders, this.builtInServiceProviders, container);
   }
 
-  private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException {
+  private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
     ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
+    if(service == null) {
+      throw new EntityNotProvidedException(entityClassName, entityName);
+    }
     long expectedVersion = service.getVersion();
     if (expectedVersion != version) {
       throw new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
