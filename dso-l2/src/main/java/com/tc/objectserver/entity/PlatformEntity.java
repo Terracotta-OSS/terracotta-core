@@ -58,7 +58,7 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
+  public void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
     processor.scheduleRequest(descriptor, sync, payload, ()-> {sync.complete();}, ConcurrencyStrategy.MANAGEMENT_KEY);
   }
 
@@ -78,9 +78,19 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
+  public void loadEntity(byte[] configuration) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
   public MessageCodec<?, ?> getCodec() {
     // The platform entity has no codec so calling this means there is an error elsewhere.
     Assert.fail();
     return null;
+  }
+
+  @Override
+  public void promoteEntity() {
+
   }
 }

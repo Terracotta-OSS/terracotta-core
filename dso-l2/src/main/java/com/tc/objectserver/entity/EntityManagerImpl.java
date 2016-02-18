@@ -18,38 +18,25 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
-import com.tc.entity.VoltronEntityMessage;
-import com.tc.net.ClientID;
-import org.terracotta.entity.ActiveServerEntity;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
-import com.tc.net.NodeID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
 
 
@@ -62,12 +49,14 @@ public class EntityManagerImpl implements EntityManager {
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
   
-  private final Sink<VoltronEntityMessage> loopback;
+  private final BiConsumer<EntityID, Long> noopLoopback;
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
 
-  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, RequestProcessor processor, Sink<VoltronEntityMessage> loopback) {
+  public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
+      ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
+      RequestProcessor processor, BiConsumer<EntityID, Long> noopLoopback) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -75,7 +64,7 @@ public class EntityManagerImpl implements EntityManager {
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
     this.creationLoader = Thread.currentThread().getContextClassLoader();
-    this.loopback = loopback;
+    this.noopLoopback = noopLoopback;
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), platform);
   }
@@ -92,14 +81,10 @@ public class EntityManagerImpl implements EntityManager {
     // Set the state of the manager.
     this.shouldCreateActiveEntities = true;
     processorPipeline.enterActiveState();
-    // Walk all existing entities, recreating them as active.
-    // NOTE:  While it would seem more direct (and not require adding new request types) to distinguish active/passive
-    //  via ManagedEntity implementations, we would need to ensure that all pending requests for a ManagedEntity had
-    //  been processed.  Thus, we will use addRequest, unless we can prove state of the entity request queue, at this point.
-    for(ManagedEntity entity : this.entities.values()) {
-      InternalRequest request = new InternalRequest(entity.getID(), entity.getVersion(), ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE);
-      entity.addLifecycleRequest(request, null);
-      request.waitForCompletion();
+    // We can promote directly because this method is only called from PTH initialize 
+    //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
+    for (ManagedEntity entity : this.entities.values()) {
+      entity.promoteEntity();
     }
   }
 
@@ -107,7 +92,7 @@ public class EntityManagerImpl implements EntityManager {
   public void createEntity(EntityID id, long version, long consumerID) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, version, loopback, serviceRegistry.subRegistry(consumerID),
+    ManagedEntity temp = new ManagedEntityImpl(id, version, noopLoopback, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(id, temp) != null) {
       throw new EntityAlreadyExistsException(id.getClassName(), id.getEntityName());
@@ -118,12 +103,11 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, loopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
-    }
-    InternalRequest request = new InternalRequest(entityID, recordedVersion, ServerEntityAction.LOAD_EXISTING_ENTITY);
-    temp.addLifecycleRequest(request, configuration);
+    }    
+    temp.loadEntity(configuration);
   }
 
   @Override
@@ -177,87 +161,6 @@ public class EntityManagerImpl implements EntityManager {
       throw new EntityVersionMismatchException(typeName, entityID.getEntityName(), serviceVersion, version);
     }
     return service;
-  }
-  
-  /**
-   * This implementation does nothing beyond providing the desired action type.
-   */
-  private static class InternalRequest implements ServerEntityRequest {
-    private final EntityID entity;
-    private final long version;
-    private final ServerEntityAction action;
-    private boolean complete = false;
-
-    public InternalRequest(EntityID id, long version, ServerEntityAction action) {
-      this.entity = id;
-      this.version = version;
-      this.action = action;
-    }
-    @Override
-    public ServerEntityAction getAction() {
-      return this.action;
-    }
-    @Override
-    public ClientID getNodeID() {
-      return ClientID.NULL_ID;
-    }
-    @Override
-    public ClientDescriptor getSourceDescriptor() {
-      return new ClientDescriptorImpl(ClientID.NULL_ID, new EntityDescriptor(entity, ClientInstanceID.NULL_ID, version));
-    }
-
-    @Override
-    public synchronized void complete() {
-      complete = true;
-      notifyAll();
-    }
-    @Override
-    public void complete(byte[] value) {
-      // This call is not expected in the InternalRequest use-case.
-      throw new UnsupportedOperationException("Complete does not support a value");
-    }
-    @Override
-    public void failure(EntityException e) {
-      throw new UnsupportedOperationException("Failure not expected for InternalRequest handling", e);
-    }
-    @Override
-    public void received() {
-      // Not expected.
-      throw new UnsupportedOperationException("Received is not expected");
-    }
-
-    @Override
-    public TransactionID getTransaction() {
-      return TransactionID.NULL_ID;
-    }
-
-    @Override
-    public TransactionID getOldestTransactionOnClient() {
-      return TransactionID.NULL_ID;
-    }
-
-    @Override
-    public Set<NodeID> replicateTo(Set<NodeID> passives) {
-      // These are internal requests so they are never replicated.
-      return Collections.emptySet();
-    }
-    
-    public synchronized void waitForCompletion() {
-      boolean interrupted = false;
-      try {
-        while(!complete) {
-          try {
-            wait();
-          } catch (InterruptedException ie) {
-            interrupted = true;
-          }
-        }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
   }
 }
 

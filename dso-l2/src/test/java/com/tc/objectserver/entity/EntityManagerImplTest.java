@@ -19,7 +19,6 @@
 
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -33,6 +32,7 @@ import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 
 import static java.util.Optional.empty;
+import java.util.function.BiConsumer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.any;
@@ -55,7 +55,7 @@ public class EntityManagerImplTest {
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
         mock(RequestProcessor.class),
-        mock(Sink.class)
+        mock(BiConsumer.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");
     version = 1;
