@@ -27,12 +27,14 @@ import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -107,40 +109,51 @@ public class ReplicatedTransactionHandler {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Received replicated " + rep.getReplicationType() + " on " + rep.getEntityID() + "/" + rep.getConcurrency());
     }
-    if (rep.getType() == ReplicationMessage.REPLICATE) {
+    int messageType = rep.getType();
+    if (ReplicationMessage.REPLICATE == messageType) {
       if (!state.defer(rep)) {
-        if (!rep.getOldestTransactionOnClient().isNull()) {
-          orderedTransactions.updateWithNewMessage(rep.getSource(), rep.getTransactionID(), rep.getOldestTransactionOnClient());
+        ClientID sourceNodeID = rep.getSource();
+        TransactionID transactionID = rep.getTransactionID();
+        TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
+        
+        if (!oldestTransactionOnClient.isNull()) {
+          orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
         } else {
-          orderedTransactions.removeTrackingForClient(rep.getSource());
+          orderedTransactions.removeTrackingForClient(sourceNodeID);
         }
         if (true) {
-          if (rep.getReplicationType() == ReplicationMessage.ReplicationType.CREATE_ENTITY) {
+          long version = rep.getVersion();
+          EntityID entityID = rep.getEntityDescriptor().getEntityID();
+          byte[] extendedData = rep.getExtendedData();
+          ReplicationMessage.ReplicationType replicationType = rep.getReplicationType();
+          
+          if (ReplicationMessage.ReplicationType.CREATE_ENTITY == replicationType) {
             long consumerID = entityPersistor.getNextConsumerID();
-            entityManager.createEntity(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID);
-            entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
+            entityManager.createEntity(entityID, version, consumerID);
+            entityPersistor.entityCreated(entityID, version, consumerID, extendedData);
           }
-          Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
-          if (rep.getReplicationType() == ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY) {
+          Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
+          if (ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY == replicationType) {
             if (entity.isPresent()) {
-              this.entityPersistor.reconfigureEntity(rep.getEntityID(), rep.getVersion(), rep.getExtendedData());
+              this.entityPersistor.reconfigureEntity(entityID, version, extendedData);
             } else {
-              throw new EntityNotFoundException(rep.getEntityID().getClassName(), rep.getEntityID().getEntityName());
+              throw new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
             }
           }
-          if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
-            entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
-            entityPersistor.entityDeleted(rep.getEntityDescriptor().getEntityID());
+          if (ReplicationMessage.ReplicationType.DESTROY_ENTITY == replicationType) {
+            entityManager.destroyEntity(entityID);
+            entityPersistor.entityDeleted(entityID);
           }
           if (entity.isPresent()) {
             ServerEntityRequest request = make(rep);
             if (request != null) {
+              ManagedEntity entityInstance = entity.get();
               if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-                entity.get().addInvokeRequest(request, rep.getExtendedData(), rep.getConcurrency());
+                entity.get().addInvokeRequest(request, extendedData, rep.getConcurrency());
               } else if (request.getAction() == ServerEntityAction.NOOP) {
-                entity.get().addInvokeRequest(request, rep.getExtendedData(), rep.getConcurrency());
+                entity.get().addInvokeRequest(request, extendedData, rep.getConcurrency());
               } else {
-                entity.get().addLifecycleRequest(request, rep.getExtendedData());
+                entityInstance.addLifecycleRequest(request, extendedData);
               }
             }
           }
@@ -148,8 +161,7 @@ public class ReplicatedTransactionHandler {
 //  when is the right time to send the ack?
         acknowledge(rep);
       }
-      return;
-    } else if (rep.getType() == ReplicationMessage.SYNC) {
+    } else if (ReplicationMessage.SYNC == messageType) {
 //  when is the right time to send the ack?  send it early for passive sync to keep the messages flowing
 //  TODO:  need some kind of feedback mechanism to slow sync if needed
       try {
@@ -159,13 +171,12 @@ public class ReplicatedTransactionHandler {
         LOGGER.info("active died on ack", ge);
       }
       syncMessageReceived(rep);
-      return;
-    } else if (rep.getType() == ReplicationMessage.START) {
+    } else if (ReplicationMessage.START == messageType) {
       acknowledge(rep);
-      return;
+    } else {
+      // This is an unexpected replicated message type.
+      throw new RuntimeException();
     }
-
-    throw new RuntimeException();
   }
   
   private void requestPassiveSync() {
