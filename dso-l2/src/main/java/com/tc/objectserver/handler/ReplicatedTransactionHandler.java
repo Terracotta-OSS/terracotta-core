@@ -138,16 +138,21 @@ public class ReplicatedTransactionHandler {
           if (ReplicationMessage.ReplicationType.DESTROY_ENTITY == replicationType) {
             EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, entityID);
           }
-          if (entity.isPresent()) {
-            ServerEntityRequest request = make(rep);
-            if (request != null) {
-              ManagedEntity entityInstance = entity.get();
-              if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-                entity.get().addInvokeRequest(request, extendedData, rep.getConcurrency());
-              } else if (request.getAction() == ServerEntityAction.NOOP) {
-                entity.get().addInvokeRequest(request, extendedData, rep.getConcurrency());
-              } else {
-                entityInstance.addLifecycleRequest(request, extendedData);
+          // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
+          if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
+            // This implementation doesn't currently use this.
+          } else {
+            if (entity.isPresent()) {
+              ServerEntityRequest request = make(rep);
+              if (request != null) {
+                ManagedEntity entityInstance = entity.get();
+                if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+                  entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
+                } else if (request.getAction() == ServerEntityAction.NOOP) {
+                  entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
+                } else {
+                  entityInstance.addLifecycleRequest(request, extendedData);
+                }
               }
             }
           }
@@ -285,12 +290,14 @@ public class ReplicatedTransactionHandler {
       case SYNC_END:
       case NOOP:
         return ServerEntityAction.NOOP;
+      case DOES_EXIST:
+        return ServerEntityAction.DOES_EXIST;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
       case RECONFIGURE_ENTITY:
         return ServerEntityAction.RECONFIGURE_ENTITY;
       case INVOKE_ACTION:
-        return ServerEntityAction.INVOKE_ACTION;        
+        return ServerEntityAction.INVOKE_ACTION;
       case RELEASE_ENTITY:
         return ServerEntityAction.RELEASE_ENTITY;
       case DESTROY_ENTITY:

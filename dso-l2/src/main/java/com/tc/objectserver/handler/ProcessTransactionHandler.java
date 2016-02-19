@@ -172,20 +172,28 @@ public class ProcessTransactionHandler {
     if (null == uncaughtException) {
       // If no exception has been fired, do any special handling required by the message type.
       boolean entityFound = (null != entity);
-      // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-      if (entityFound) {
-        // We special-case the DOES_EXIST check to complete without interacting with the entity.
-        if (ServerEntityAction.DOES_EXIST == action) {
+      // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
+      if (ServerEntityAction.DOES_EXIST == action) {
+        if (entityFound) {
+          // Even though it may not currently exist, if this is a re-send, we will give whatever answer we gave, the first time.
           serverEntityRequest.complete();
-        } else if (ServerEntityAction.INVOKE_ACTION == action) {
-          entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
-        } else if (ServerEntityAction.NOOP == action) {
-          entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
         } else {
-          entity.addLifecycleRequest(serverEntityRequest, extendedData);
+          // Even though the entity may currently exist, we will mimic the response we gave, initially.
+          serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
         }
       } else {
-        serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+        // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
+        if (entityFound) {
+          if (ServerEntityAction.INVOKE_ACTION == action) {
+            entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+          } else if (ServerEntityAction.NOOP == action) {
+            entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
+          } else {
+            entity.addLifecycleRequest(serverEntityRequest, extendedData);
+          }
+        } else {
+          serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+        }
       }
     } else {
       // If there was an exception of any sort, just pass it back as a failure.

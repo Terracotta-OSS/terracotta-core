@@ -86,6 +86,9 @@ public class RequestProcessor implements StateChangeListener {
       ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
     ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
     switch (type) {
+      case DOES_EXIST:
+        actionCode = ReplicationMessage.ReplicationType.DOES_EXIST;
+        break;
       case CREATE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
         break;
