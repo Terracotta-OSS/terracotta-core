@@ -29,6 +29,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
@@ -54,7 +55,7 @@ public class ReplicatedTransactionHandler {
   private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
-  private final GroupManager groupManager;
+  private final GroupManager<AbstractGroupMessage> groupManager;
   private final TransactionOrderPersistor orderedTransactions;
   private final StateManager stateManager;
   private final ManagedEntity platform;
@@ -62,7 +63,7 @@ public class ReplicatedTransactionHandler {
   private final SyncState state = new SyncState();
   
   public ReplicatedTransactionHandler(StateManager state, TransactionOrderPersistor transactionOrderPersistor, 
-      EntityManager manager, EntityPersistor entityPersistor, GroupManager groupManager) {
+      EntityManager manager, EntityPersistor entityPersistor, GroupManager<AbstractGroupMessage> groupManager) {
     this.stateManager = state;
     this.entityManager = manager;
     this.entityPersistor = entityPersistor;
