@@ -116,6 +116,8 @@ public class RequestProcessor implements StateChangeListener {
         actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
         break;
       default:
+        // Unknown message type.
+        Assert.fail();
         break;
     }
 //  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
