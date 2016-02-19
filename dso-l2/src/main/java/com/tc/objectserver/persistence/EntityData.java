@@ -26,9 +26,14 @@ import java.io.Serializable;
  * simple lookup in a key-value mapping.
  */
 public class EntityData {
+  /**
+   * Empty constructor required due to the inner classes being Serializable.
+   */
   private EntityData() {}
-  
+
   public static class Key implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     public String className;
     public String entityName;
     
@@ -46,8 +51,10 @@ public class EntityData {
       return isEqual;
     }
   }
-  
+
   public static class Value implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     public String className;
     public long version;
     public long consumerID;
