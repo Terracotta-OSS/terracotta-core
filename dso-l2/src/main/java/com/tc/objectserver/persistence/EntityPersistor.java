@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
 
 import com.tc.object.EntityID;
@@ -25,6 +24,7 @@ import com.tc.util.Assert;
 import java.util.Collection;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
+
 
 /**
  * Stores the information relating to the entities currently alive on the platform into persistent storage.
@@ -54,6 +54,7 @@ public class EntityPersistor {
     }
   }
 
+  @SuppressWarnings("deprecation")
   public Collection<EntityData.Value> loadEntityData() {
     return this.entities.values();
   }
