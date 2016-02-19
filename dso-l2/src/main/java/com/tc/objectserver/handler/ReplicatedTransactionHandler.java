@@ -50,7 +50,6 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ReplicatedTransactionHandler {
@@ -129,20 +128,15 @@ public class ReplicatedTransactionHandler {
           
           if (ReplicationMessage.ReplicationType.CREATE_ENTITY == replicationType) {
             long consumerID = entityPersistor.getNextConsumerID();
-            entityManager.createEntity(entityID, version, consumerID);
-            entityPersistor.entityCreated(entityID, version, consumerID, extendedData);
+            EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, entityID, version, consumerID, extendedData);
           }
-          Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
           if (ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY == replicationType) {
-            if (entity.isPresent()) {
-              this.entityPersistor.reconfigureEntity(entityID, version, extendedData);
-            } else {
-              throw new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
-            }
+            EntityExistenceHelpers.reconfigureEntity(this.entityPersistor, this.entityManager, entityID, version, extendedData);
           }
+          // At this point, we can now look up the managed entity (used later).
+          Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
           if (ReplicationMessage.ReplicationType.DESTROY_ENTITY == replicationType) {
-            entityManager.destroyEntity(entityID);
-            entityPersistor.entityDeleted(entityID);
+            EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, entityID);
           }
           if (entity.isPresent()) {
             ServerEntityRequest request = make(rep);

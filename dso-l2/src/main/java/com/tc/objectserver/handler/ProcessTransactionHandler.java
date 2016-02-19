@@ -137,23 +137,19 @@ public class ProcessTransactionHandler {
       if (ServerEntityAction.CREATE_ENTITY == action) {
         long clientSideVersion = descriptor.getClientSideVersion();
         long consumerID = this.entityPersistor.getNextConsumerID();
-        entityManager.createEntity(entityID, clientSideVersion, consumerID);
-        this.entityPersistor.entityCreated(entityID, clientSideVersion, consumerID, extendedData);
+        EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, entityID, clientSideVersion, consumerID, extendedData);
       }
-      Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
       if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
-        if (optionalEntity.isPresent()) {
-          this.entityPersistor.reconfigureEntity(entityID, descriptor.getClientSideVersion(), extendedData);
-        } else {
-          throw new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
-        }
+        long clientSideVersion = descriptor.getClientSideVersion();
+        EntityExistenceHelpers.reconfigureEntity(this.entityPersistor, this.entityManager, entityID, clientSideVersion, extendedData);
       }
+      // At this point, we can now look up the actual managed entity.
+      Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
       if (optionalEntity.isPresent()) {
         entity = optionalEntity.get();
       }
       if (ServerEntityAction.DESTROY_ENTITY == action) {
-        entityManager.destroyEntity(entityID);
-        this.entityPersistor.entityDeleted(entityID);
+        EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, entityID);
       }
     } catch (EntityException e) {
       uncaughtException = e;
