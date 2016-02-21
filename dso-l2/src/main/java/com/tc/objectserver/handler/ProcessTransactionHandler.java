@@ -137,11 +137,12 @@ public class ProcessTransactionHandler {
       if (ServerEntityAction.CREATE_ENTITY == action) {
         long clientSideVersion = descriptor.getClientSideVersion();
         long consumerID = this.entityPersistor.getNextConsumerID();
-        EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, entityID, clientSideVersion, consumerID, extendedData);
+        // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
+        EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, consumerID, extendedData);
       }
       if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
         long clientSideVersion = descriptor.getClientSideVersion();
-        EntityExistenceHelpers.reconfigureEntity(this.entityPersistor, this.entityManager, entityID, clientSideVersion, extendedData);
+        EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, extendedData);
       }
       // At this point, we can now look up the actual managed entity.
       Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
@@ -149,7 +150,8 @@ public class ProcessTransactionHandler {
         entity = optionalEntity.get();
       }
       if (ServerEntityAction.DESTROY_ENTITY == action) {
-        EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, entityID);
+        // Call the common helper to either destroy the entity on our behalf or succeed/fail, as last time, if this is a re-send.
+        EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
       }
     } catch (EntityException e) {
       uncaughtException = e;
@@ -167,14 +169,17 @@ public class ProcessTransactionHandler {
     } else {
       // This is probably a disconnect: we can discard transaction order persistence for this client.
       this.transactionOrderPersistor.removeTrackingForClient(sourceNodeID);
+      // And the entity journal persistence.
+      this.entityPersistor.removeTrackingForClient(sourceNodeID);
     }
     serverEntityRequest.received();
     if (null == uncaughtException) {
       // If no exception has been fired, do any special handling required by the message type.
-      boolean entityFound = (null != entity);
       // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
       if (ServerEntityAction.DOES_EXIST == action) {
-        if (entityFound) {
+        // Call the common helper to check the current state of what entities exist or which ones did exist, the first time, if this is a re-send.
+        boolean doesExist = EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
+        if (doesExist) {
           // Even though it may not currently exist, if this is a re-send, we will give whatever answer we gave, the first time.
           serverEntityRequest.complete();
         } else {
@@ -183,7 +188,7 @@ public class ProcessTransactionHandler {
         }
       } else {
         // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-        if (entityFound) {
+        if (null != entity) {
           if (ServerEntityAction.INVOKE_ACTION == action) {
             entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
           } else if (ServerEntityAction.NOOP == action) {

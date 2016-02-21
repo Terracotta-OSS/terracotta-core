@@ -20,10 +20,13 @@ package com.tc.objectserver.handler;
 
 import java.util.Optional;
 
+import com.tc.net.ClientID;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.util.Assert;
 
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -34,22 +37,88 @@ import org.terracotta.exception.EntityNotFoundException;
  * ReplicatedTransactionHandler.
  */
 public class EntityExistenceHelpers {
-  public static void createEntity(EntityPersistor entityPersistor, EntityManager entityManager, EntityID entityID, long version, long consumerID, byte[] configuration) throws EntityException {
-    entityManager.createEntity(entityID, version, consumerID);
-    entityPersistor.entityCreated(entityID, version, consumerID, configuration);
-  }
-
-  public static void destroyEntity(EntityPersistor entityPersistor, EntityManager entityManager, EntityID entityID) throws EntityException {
-    entityManager.destroyEntity(entityID);
-    entityPersistor.entityDeleted(entityID);
-  }
-
-  public static void reconfigureEntity(EntityPersistor entityPersistor, EntityManager entityManager, EntityID entityID, long version, byte[] configuration) throws EntityException {
-    Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, version);
-    if (optionalEntity.isPresent()) {
-      entityPersistor.reconfigureEntity(entityID, version, configuration);
+  public static void createEntity(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration) throws EntityException {
+    // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
+    Assert.assertNotNull(clientID);
+    Assert.assertNotNull(transactionIDObject);
+    Assert.assertNotNull(oldestTransactionOnClientObject);
+    long transactionID = transactionIDObject.toLong();
+    
+    if (entityPersistor.wasEntityCreatedInJournal(clientID, transactionID)) {
+      // We either threw or did succeed in the journal, so just carry on as though we created it.
     } else {
-      throw new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
+      // There is no record of this, so give it a try.
+      long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
+      try {
+        entityManager.createEntity(entityID, version, consumerID);
+        // Record the success.
+        entityPersistor.entityCreated(clientID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, configuration);
+      } catch (EntityException e) {
+        // Record the failure and re-throw.
+        entityPersistor.entityCreateFailed(clientID, transactionID, oldestTransactionOnClient, e);
+        throw e;
+      }
     }
+  }
+
+  public static void destroyEntity(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID) throws EntityException {
+    // We can't have a null client, transaction, or oldest transaction when an entity is destroyed - even synthetic clients shouldn't do this as they will disrupt clients.
+    Assert.assertNotNull(clientID);
+    Assert.assertNotNull(transactionIDObject);
+    Assert.assertNotNull(oldestTransactionOnClientObject);
+    long transactionID = transactionIDObject.toLong();
+    
+    if (entityPersistor.wasEntityDestroyedInJournal(clientID, transactionID)) {
+      // This either threw or is already destroyed in the journal, so carry on, as though we destroyed it.
+    } else {
+      // There is no record of this, so give it a try.
+      long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
+      try {
+        entityManager.destroyEntity(entityID);
+        // Record the success.
+        entityPersistor.entityDestroyed(clientID, transactionID, oldestTransactionOnClient, entityID);
+      } catch (EntityException e) {
+        // Record the failure and re-throw.
+        entityPersistor.entityDestroyFailed(clientID, transactionID, oldestTransactionOnClient, e);
+        throw e;
+      }
+    }
+  }
+
+  public static boolean doesExist(EntityPersistor entityPersistor, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID) {
+    // We can't have a null client, transaction, or oldest transaction when an entity is checked - even synthetic clients shouldn't do this as they will disrupt clients.
+    Assert.assertNotNull(clientID);
+    Assert.assertNotNull(transactionIDObject);
+    Assert.assertNotNull(oldestTransactionOnClientObject);
+    long transactionID = transactionIDObject.toLong();
+    long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
+    
+    return entityPersistor.containsEntity(clientID, transactionID, oldestTransactionOnClient, entityID);
+  }
+
+  // This is similar to the other cases except that it returns the cached result, if there is one, instead of just "true".
+  public static byte[] reconfigureEntityReturnCachedResult(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, byte[] configuration) throws EntityException {
+    // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
+    Assert.assertNotNull(clientID);
+    Assert.assertNotNull(transactionIDObject);
+    Assert.assertNotNull(oldestTransactionOnClientObject);
+    long transactionID = transactionIDObject.toLong();
+    long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
+    
+    byte[] cachedResult = entityPersistor.reconfiguredResultInJournal(clientID, transactionID);
+    if (null != cachedResult) {
+      // This means that this reconfigure was already completed and we can just return this cached result so that the caller doesn't notify the entity that it needs to do anything.
+    } else {
+      // There is no recorded attempt to perform this reconfigure so we need to do it, here.
+      Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, version);
+      if (optionalEntity.isPresent()) {
+        entityPersistor.entityReconfigureSucceeded(clientID, transactionID, oldestTransactionOnClient, entityID, version, configuration);
+      } else {
+        EntityNotFoundException error = new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
+        entityPersistor.entityReconfigureFailed(clientID, transactionID, oldestTransactionOnClient, error);
+      }
+    }
+    // Note that this will be null if this is the first time we did the reconfigure, meaning that the caller still needs to run the reconfigure on the entity.
+    return cachedResult;
   }
 }

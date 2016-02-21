@@ -116,9 +116,11 @@ public class ReplicatedTransactionHandler {
         TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
         
         if (!oldestTransactionOnClient.isNull()) {
-          orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+          this.orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
         } else {
-          orderedTransactions.removeTrackingForClient(sourceNodeID);
+          // This corresponds to a disconnect.
+          this.orderedTransactions.removeTrackingForClient(sourceNodeID);
+          this.entityPersistor.removeTrackingForClient(sourceNodeID);
         }
         if (true) {
           long version = rep.getVersion();
@@ -128,19 +130,23 @@ public class ReplicatedTransactionHandler {
           
           if (ReplicationMessage.ReplicationType.CREATE_ENTITY == replicationType) {
             long consumerID = entityPersistor.getNextConsumerID();
-            EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, entityID, version, consumerID, extendedData);
+            // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
+            EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, extendedData);
           }
           if (ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY == replicationType) {
-            EntityExistenceHelpers.reconfigureEntity(this.entityPersistor, this.entityManager, entityID, version, extendedData);
+            EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, extendedData);
           }
           // At this point, we can now look up the managed entity (used later).
           Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
           if (ReplicationMessage.ReplicationType.DESTROY_ENTITY == replicationType) {
-            EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, entityID);
+            // Call the common helper to either destroy the entity on our behalf or succeed/fail, as last time, if this is a re-send.
+            EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
           }
+          
           // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
           if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
-            // This implementation doesn't currently use this.
+            // We don't actually care about the response.  We just need the question and answer to be recorded, at this point in time.
+            EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
           } else {
             if (entity.isPresent()) {
               ServerEntityRequest request = make(rep);
@@ -198,7 +204,8 @@ public class ReplicatedTransactionHandler {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
           this.entityManager.createEntity(eid, sync.getVersion(), consumerID);
-          this.entityPersistor.entityCreated(eid, version, consumerID, sync.getExtendedData());
+          // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
+          this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, sync.getExtendedData());
         }
       } catch (EntityException state) {
 //  TODO: this needs to be controlled.  

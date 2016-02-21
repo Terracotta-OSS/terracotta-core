@@ -18,10 +18,13 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
 
 import java.util.Collection;
+
+import org.terracotta.exception.EntityException;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -59,30 +62,68 @@ public class EntityPersistor {
     return this.entities.values();
   }
 
-  public boolean containsEntity(EntityID id) {
+  public boolean containsEntity(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
     EntityData.Key key = new EntityData.Key();
     key.className = id.getClassName();
     key.entityName = id.getEntityName();
     return this.entities.containsKey(key);
   }
 
-  public void entityCreated(EntityID id, long version, long consumerID, byte[] configuration) {
-    String className = id.getClassName();
-    String entityName = id.getEntityName();
-    
-    EntityData.Key key = new EntityData.Key();
-    EntityData.Value value = new EntityData.Value();
-    key.className = className;
-    key.entityName = entityName;
-    value.className = className;
-    value.version = version;
-    value.consumerID = consumerID;
-    value.entityName = entityName;
-    value.configuration = configuration;
-    this.entities.put(key, value);
+  /**
+   * Consults the journal to see if there already was an entity created with this transactionID from the referenced clientID.
+   * If an attempt was made, true is returned (on success) or EntityException is thrown (if it was a failure).
+   * False is returned if this clientID and transactionID seem new.
+   */
+  public boolean wasEntityCreatedInJournal(ClientID clientID, long transactionID) throws EntityException {
+    // Currently returns false - this is just a placeholder to get the API in place.
+    return false;
   }
-  
-  public void reconfigureEntity(EntityID id, long version, byte[] configuration) {
+
+  public void entityCreateFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+    // Currently does nothing - this is just a placeholder to get the API in place.
+  }
+
+  public void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, byte[] configuration) {
+    addNewEntityToMap(id, version, consumerID, configuration);
+  }
+
+  public void entityCreatedNoJournal(EntityID id, long version, long consumerID, byte[] configuration) {
+    addNewEntityToMap(id, version, consumerID, configuration);
+    // (Note that we don't store this into the journal - this is used for passive sync).
+  }
+
+  /**
+   * Consults the journal to see if there already was an entity destroyed with this transactionID from the referenced clientID.
+   * If an attempt was made, true is returned (on success) or EntityAlreadyExistsException is thrown.
+   * False is returned if this clientID and transactionID seem new.
+   */
+  public boolean wasEntityDestroyedInJournal(ClientID clientID, long transactionID) throws EntityException {
+    // Currently returns false - this is just a placeholder to get the API in place.
+    return false;
+  }
+
+  public void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+    // Currently does nothing - this is just a placeholder to get the API in place.
+  }
+
+  public void entityDestroyed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
+    EntityData.Key key = new EntityData.Key();
+    key.className = id.getClassName();
+    key.entityName = id.getEntityName();
+    Assert.assertTrue(this.entities.containsKey(key));
+    this.entities.remove(key);
+  }
+
+  public byte[] reconfiguredResultInJournal(ClientID clientID, long transactionID) {
+    // Currently returns null - this is just a placeholder to get the API in place.
+    return null;
+  }
+
+  public void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+    // Currently does nothing - this is just a placeholder to get the API in place.
+  }
+
+  public void entityReconfigureSucceeded(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, byte[] configuration) {
     String className = id.getClassName();
     String entityName = id.getEntityName();
 
@@ -96,18 +137,31 @@ public class EntityPersistor {
     
     this.entities.put(key, val);
   }
-  
-  public void entityDeleted(EntityID id) {
-    EntityData.Key key = new EntityData.Key();
-    key.className = id.getClassName();
-    key.entityName = id.getEntityName();
-    Assert.assertTrue(this.entities.containsKey(key));
-    this.entities.remove(key);
-  }
 
   public long getNextConsumerID() {
     long consumerID = this.counters.get(COUNTERS_CONSUMER_ID);
     this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
     return consumerID;
+  }
+
+  public void removeTrackingForClient(ClientID sourceNodeID) {
+    // Currently does nothing - this is just a placeholder to get the API in place.
+  }
+
+
+  private void addNewEntityToMap(EntityID id, long version, long consumerID, byte[] configuration) {
+    String className = id.getClassName();
+    String entityName = id.getEntityName();
+    
+    EntityData.Key key = new EntityData.Key();
+    EntityData.Value value = new EntityData.Value();
+    key.className = className;
+    key.entityName = entityName;
+    value.className = className;
+    value.version = version;
+    value.consumerID = consumerID;
+    value.entityName = entityName;
+    value.configuration = configuration;
+    this.entities.put(key, value);
   }
 }

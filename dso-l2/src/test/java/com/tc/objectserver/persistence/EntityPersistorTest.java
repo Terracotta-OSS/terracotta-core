@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.test.TCTestCase;
 
@@ -31,6 +32,7 @@ public class EntityPersistorTest extends TCTestCase {
   private static final String TEMP_FILE = "temp_file";
   private FlatFilePersistentStorage persistentStorage;
   private EntityPersistor entityPersistor;
+  private ClientID client;
 
   @Override
   public void setUp() {
@@ -41,6 +43,7 @@ public class EntityPersistorTest extends TCTestCase {
       fail(e);
     }
     this.entityPersistor = new EntityPersistor(this.persistentStorage);
+    this.client = new ClientID(1);
   }
 
   /**
@@ -53,9 +56,20 @@ public class EntityPersistorTest extends TCTestCase {
     // We expect to get an empty collection.
     Assert.assertTrue(0 == this.entityPersistor.loadEntityData().size());
     
-    // The entity shouldn't be found.
+    // The entity shouldn't be found (note that this call will write an entry to the journal).
     EntityID id = new EntityID("class name", "entity name");
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    long doesExistTransactionID = 4;
+    long oldestTransactionOnClient = 2;
+    Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExistTransactionID, oldestTransactionOnClient, id));
+    
+    // Journal queries should also be safe, when empty.
+    long createdTransactionID = 5;
+    Assert.assertFalse(this.entityPersistor.wasEntityCreatedInJournal(this.client, createdTransactionID));
+    long destroyedTransactionID = 6;
+    Assert.assertFalse(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroyedTransactionID));
+    
+    // We should also be able to remove tracking for this client.
+    this.entityPersistor.removeTrackingForClient(this.client);
   }
 
   /**
@@ -63,23 +77,61 @@ public class EntityPersistorTest extends TCTestCase {
    */
   public void testSimpleCreateDestroy() throws EntityException {
     EntityID id = new EntityID("class name", "entity name");
-       
+    long oldestTransactionOnClient = 1;
+    
     // Query that it doesn't exist.
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    long doesExistTransactionID = 2;
+    Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExistTransactionID, oldestTransactionOnClient, id));
     
     // Create the entity.
+    long createTransactionID = 3;
     long version = 1;
     long consumerID = 1;
     byte[] configuration = new byte[0];
-    this.entityPersistor.entityCreated(id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, createTransactionID, oldestTransactionOnClient, id, version, consumerID, configuration);
     
     // Query that it exists.
-    Assert.assertTrue(this.entityPersistor.containsEntity(id));
+    long doesExist2TransactionID = 4;
+    Assert.assertTrue(this.entityPersistor.containsEntity(this.client, doesExist2TransactionID, oldestTransactionOnClient, id));
     
     // Destroy the entity.
-    this.entityPersistor.entityDeleted(id);
+    long destroyTransactionID = 5;
+    this.entityPersistor.entityDestroyed(this.client, destroyTransactionID, oldestTransactionOnClient, id);
     
     // Query that it doesn't exist.
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    long doesExist3TransactionID = 6;
+    Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExist3TransactionID, oldestTransactionOnClient, id));
+  }
+
+  /**
+   * Test that a basic create, reconfigure, destroy sequence works.
+   */
+  public void testSimpleCreateReconfigureDestroy() throws EntityException {
+    EntityID id = new EntityID("class name", "entity name");
+    long oldestTransactionOnClient = 1;
+       
+    // Query that it doesn't exist.
+    long doesExistTransactionID = 2;
+    Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExistTransactionID, oldestTransactionOnClient, id));
+    
+    // Create the entity.
+    long createTransactionID = 3;
+    long version = 1;
+    long consumerID = 1;
+    byte[] configuration = new byte[0];
+    this.entityPersistor.entityCreated(this.client, createTransactionID, oldestTransactionOnClient, id, version, consumerID, configuration);
+    
+    // Reconfigure.
+    long reconfigureTransactionID = 4;
+    byte[] newConfiguration = new byte[1];
+    this.entityPersistor.entityReconfigureSucceeded(this.client, reconfigureTransactionID, oldestTransactionOnClient, id, version, newConfiguration);
+    
+    // Destroy the entity.
+    long destroyTransactionID = 5;
+    this.entityPersistor.entityDestroyed(this.client, destroyTransactionID, oldestTransactionOnClient, id);
+    
+    // Query that it doesn't exist.
+    long doesExist3TransactionID = 6;
+    Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExist3TransactionID, oldestTransactionOnClient, id));
   }
 }
