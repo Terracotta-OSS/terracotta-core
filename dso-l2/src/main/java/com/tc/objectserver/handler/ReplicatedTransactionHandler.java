@@ -47,6 +47,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ReplicatedTransactionHandler {
@@ -119,7 +120,13 @@ public class ReplicatedTransactionHandler {
             entityPersistor.entityCreated(rep.getEntityDescriptor().getEntityID(), rep.getVersion(), consumerID, rep.getExtendedData());
           }
           Optional<ManagedEntity> entity = entityManager.getEntity(rep.getEntityDescriptor().getEntityID(),rep.getVersion());
-
+          if (rep.getReplicationType() == ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY) {
+            if (entity.isPresent()) {
+              this.entityPersistor.reconfigureEntity(rep.getEntityID(), rep.getVersion(), rep.getExtendedData());
+            } else {
+              throw new EntityNotFoundException(rep.getEntityID().getClassName(), rep.getEntityID().getEntityName());
+            }
+          }
           if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
             entityManager.destroyEntity(rep.getEntityDescriptor().getEntityID());
             entityPersistor.entityDeleted(rep.getEntityDescriptor().getEntityID());
@@ -128,6 +135,8 @@ public class ReplicatedTransactionHandler {
             ServerEntityRequest request = make(rep);
             if (request != null) {
               if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+                entity.get().addInvokeRequest(request, rep.getExtendedData(), rep.getConcurrency());
+              } else if (request.getAction() == ServerEntityAction.NOOP) {
                 entity.get().addInvokeRequest(request, rep.getExtendedData(), rep.getConcurrency());
               } else {
                 entity.get().addLifecycleRequest(request, rep.getExtendedData());
@@ -178,7 +187,7 @@ public class ReplicatedTransactionHandler {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
           this.entityManager.createEntity(eid, sync.getVersion(), consumerID);
-          this.entityPersistor.entityCreated(eid, sync.getVersion(), consumerID, sync.getExtendedData());
+          this.entityPersistor.entityCreated(eid, version, consumerID, sync.getExtendedData());
         }
       } catch (EntityException state) {
 //  TODO: this needs to be controlled.  
@@ -192,9 +201,13 @@ public class ReplicatedTransactionHandler {
     try {
       Optional<ManagedEntity> entity = entityManager.getEntity(eid, version);
       if (entity.isPresent()) {
-        entity.get().processSyncMessage(request, sync.getExtendedData(), sync.getConcurrency());
+        entity.get().addSyncRequest(request, sync.getExtendedData(), sync.getConcurrency());
       } else {
-        platform.processSyncMessage(request, sync.getExtendedData(), sync.getConcurrency());
+        if (!eid.equals(EntityID.NULL_ID)) {
+          throw new AssertionError();
+        } else {
+          platform.addSyncRequest(request, sync.getExtendedData(), sync.getConcurrency());
+        }
       }
     } catch (EntityException ee) {
       throw new RuntimeException(ee);
@@ -221,6 +234,7 @@ public class ReplicatedTransactionHandler {
       case SYNC_ENTITY_BEGIN:
       case SYNC_ENTITY_END:
         request.waitForDone();
+        break;
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
         break;
       default:
@@ -267,6 +281,8 @@ public class ReplicatedTransactionHandler {
         return ServerEntityAction.NOOP;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
+      case RECONFIGURE_ENTITY:
+        return ServerEntityAction.RECONFIGURE_ENTITY;
       case INVOKE_ACTION:
         return ServerEntityAction.INVOKE_ACTION;        
       case RELEASE_ENTITY:

@@ -109,6 +109,7 @@ import com.tc.management.remote.protocol.terracotta.L1ConnectionMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunneledDomainsChanged;
 import com.tc.net.AddressChecker;
+import com.tc.net.ClientID;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -141,6 +142,9 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.utils.L2Utils;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -158,6 +162,7 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -238,6 +243,7 @@ import javax.management.remote.JMXConnectorServer;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
+import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
@@ -633,7 +639,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }});
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, processTransactionStage_voltron.getSink());
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
     
@@ -840,6 +846,23 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
     );
+  }
+  
+  private void sendNoop(EntityID eid, long version) {
+    if (!this.l2State.isActiveCoordinator()) {
+      try {
+        this.seda.getStageManager()
+            .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
+            .getSink().addSingleThreaded(new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0));
+        return;
+      } catch (IllegalStateException state) {
+//  ignore, could have transitioned to active before message got added
+      }
+    }
+//  must be active, noop the ProcessTransactionHandler
+    this.seda.getStageManager()
+        .getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class)
+        .getSink().addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
   }
 
   private StageController createStageController() {

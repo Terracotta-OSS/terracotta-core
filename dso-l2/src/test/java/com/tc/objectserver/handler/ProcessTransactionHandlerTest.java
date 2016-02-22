@@ -38,14 +38,19 @@ import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
+import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.PassiveReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -58,6 +63,7 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
+import org.mockito.Matchers;
 
 
 public class ProcessTransactionHandlerTest {
@@ -87,6 +93,7 @@ public class ProcessTransactionHandlerTest {
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
+    when(channelManager.getActiveChannel(Matchers.eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
     
     this.loopbackSink = new ForwardingSink(this.processTransactionHandler.getVoltronMessageHandler());
     this.requestProcessorSink = new RunnableSink();
@@ -94,9 +101,18 @@ public class ProcessTransactionHandlerTest {
     this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
     this.eventCollector = mock(ITopologyEventCollector.class);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, loopbackSink);
+    PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
+    when(broker.passives()).thenReturn(Collections.emptySet());
+    processor.setReplication(broker);
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
+    entityManager.enterActiveState();
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+  }
+  
+  private void sendNoop(EntityID eid, long version) {
+    loopbackSink.addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
   }
   
   @After

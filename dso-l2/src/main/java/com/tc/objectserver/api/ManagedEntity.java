@@ -44,7 +44,7 @@ public interface ManagedEntity {
   */ 
   void addInvokeRequest(ServerEntityRequest request, byte[] extendedData, int defaultKey);
   
-  void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
+  void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
   
   void addLifecycleRequest(ServerEntityRequest create, byte[] data);
   /**
@@ -63,6 +63,10 @@ public interface ManagedEntity {
    * @param passive target passive
    */
   void sync(NodeID passive);
+  
+  void loadEntity(byte[] configuration);
+  
+  void promoteEntity();
 
   /**
    * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this

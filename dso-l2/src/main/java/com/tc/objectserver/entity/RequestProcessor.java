@@ -89,6 +89,9 @@ public class RequestProcessor implements StateChangeListener {
       case CREATE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
         break;
+      case RECONFIGURE_ENTITY:
+        actionCode = ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY;
+        break;
       case DESTROY_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
         break;
@@ -151,6 +154,10 @@ public class RequestProcessor implements StateChangeListener {
     
     void invoke()  {
       try {
+//  if this lockstep of waiting for passives before executing on actives is changed, make sure exclusive mode
+//  in ManagedEntityImpl is accounted for.  For exclusive mode, ManagedEntityImpl
+//  in passive mode relies on this control flow in the active so that no new messages are 
+//  received on the passive entity before exclusive mode is completed
         token.get();
         invoke.run();
       } catch (InterruptedException interrupted) {

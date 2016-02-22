@@ -44,6 +44,8 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 
 import java.util.List;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 
 /**
  * @author twu
@@ -54,7 +56,7 @@ public class ServerEntityFactory {
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName, ClassLoader classLoader) {
+  public static <T extends ServerEntityService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) {
     List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
     for (Class<? extends ServerEntityService> serverService : serviceLoader) {
       try {

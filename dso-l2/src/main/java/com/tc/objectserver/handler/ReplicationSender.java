@@ -21,6 +21,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_BEGIN;
@@ -71,7 +72,13 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         if (msg.getType() == ReplicationMessage.START) {
 //  do nothing, the server was in standby state when added          
         } else {
-          throw new AssertionError("out of order message");
+          if (msg instanceof PassiveSyncMessage) {
+//  passive must have died during passive sync, ignore this message
+            return;
+          } else {
+            logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
+            return;
+          }
         }
       } else {
         if (msg.getReplicationType() == SYNC_BEGIN) {
@@ -170,6 +177,14 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 //  add this to the list of entities already syncd
               syncd.add(eid);
               return true;
+            }
+          case RECONFIGURE_ENTITY:
+            if (syncd.contains(eid) || eid.equals(syncingID)) {
+//  this entity is being or has been replicated, send the reconfigure through
+              return true;
+            } else {
+//  this entity has not been on the passive yet, reconfigure will go with replication
+              return false;
             }
           case DESTROY_ENTITY:
             if (syncd.contains(eid)) {

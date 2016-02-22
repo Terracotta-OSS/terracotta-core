@@ -81,6 +81,21 @@ public class EntityPersistor {
     this.entities.put(key, value);
   }
   
+  public void reconfigureEntity(EntityID id, long version, byte[] configuration) {
+    String className = id.getClassName();
+    String entityName = id.getEntityName();
+
+    EntityData.Key key = new EntityData.Key();
+    key.className = className;
+    key.entityName = entityName;
+    
+    EntityData.Value val = this.entities.get(key);
+    val.configuration = configuration;
+    Assert.assertEquals(version, val.version);
+    
+    this.entities.put(key, val);
+  }
+  
   public void entityDeleted(EntityID id) {
     EntityData.Key key = new EntityData.Key();
     key.className = id.getClassName();

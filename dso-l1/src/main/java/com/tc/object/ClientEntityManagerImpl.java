@@ -138,6 +138,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
+  public InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config) {
+    // A create needs to be replicated.
+    boolean requiresReplication = true;
+    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.RECONFIGURE_ENTITY);
+    return createInFlightMessageAfterAcks(message, requestedAcks);
+  }
+  
+  @Override
   public InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks) {
     // A destroy needs to be replicated.
     boolean requiresReplication = true;
