@@ -397,7 +397,7 @@ public class ManagedEntityImplTest {
     
   }
 
-  @Test
+  @Test (expected = RuntimeException.class)
   public void testCodecException() throws Exception {
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);

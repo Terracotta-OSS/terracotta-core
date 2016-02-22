@@ -157,6 +157,8 @@ public class ManagedEntityImpl implements ManagedEntity {
           concurrencyStrategy.concurrencyKey(message) : defaultKey;
         final EntityMessage safeMessage = message;
         processInvokeRequest(request, payload, safeMessage, concurrencyKey);
+      } else {
+        throw new RuntimeException("entity deserializer returned null while processing invoke request");
       }
     }
   }
@@ -206,6 +208,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         // If we are still ok and managed to deserialize the message, continue.
         if (null != message) {
           invoke(sync, message, concurrencyKey);
+        } else {
+          throw new RuntimeException("entity deserializer returned null while processing sync message");
         }
       }, concurrencyKey);
     } else {
