@@ -136,9 +136,6 @@ public class PassthroughServerProcess implements MessageHandler {
           this.nextConsumerID = consumerID + 1;
         }
       }
-      
-      // Get the persisted transaction order in case of a reconnect
-      this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
     }
     
     // Look up the service interface the platform will use to publish events.
