@@ -36,12 +36,4 @@ public interface IMessageSenderWrapper {
    * @return The client origin unique ID.
    */
   long getClientOriginID();
-  /**
-   * Note that this is a temporary work-around to test re-sent create/destroy messages which the server can't ignore as
-   * duplicated.
-   * XXX: This should be replaced with precise transaction order persistence with special tracking for these internal
-   * messages which must be ignored as duplicated.
-   * @return True if create or destroy messages which may to be duplicated should be treated as successes.
-   */
-  boolean shouldTolerateCreateDestroyDuplication();
 }

@@ -53,6 +53,7 @@ import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
+import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
@@ -81,6 +82,7 @@ public class PassthroughServerProcess implements MessageHandler {
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
   private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
+  private LifeCycleMessageHandler lifeCycleMessageHandler;
   
   // We need to hold onto any registered monitoring services to report client connection/disconnection events.
   private IMonitoringProducer serviceInterface;
@@ -137,6 +139,9 @@ public class PassthroughServerProcess implements MessageHandler {
         }
       }
     }
+    
+    // We want to create the tracking for life-cycle transactions, so that we correctly handle duplicated re-sends.
+    this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(persistentStorage, "lifecycle");
     
     // Look up the service interface the platform will use to publish events.
     this.serviceInterface = this.platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>() {
@@ -244,7 +249,7 @@ public class PassthroughServerProcess implements MessageHandler {
     this.serverThread = null;
   }
 
-  public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message, final boolean isResend) {
+  public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {
     Assert.assertTrue(this.isRunning);
     MessageContainer container = new MessageContainer();
     container.sender = new IMessageSenderWrapper() {
@@ -263,11 +268,6 @@ public class PassthroughServerProcess implements MessageHandler {
       @Override
       public long getClientOriginID() {
         return sender.getUniqueConnectionID();
-      }
-      @Override
-      public boolean shouldTolerateCreateDestroyDuplication() {
-        // We will handle this if the message is re-sent.
-        return isResend;
       }
     };
     container.message = message;
@@ -312,7 +312,7 @@ public class PassthroughServerProcess implements MessageHandler {
   
   private void serverThreadHandleMessage(IMessageSenderWrapper sender, byte[] message) {
     // Called on the server thread to handle a message.
-    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this.downstreamPassive, sender, message);
+    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this.lifeCycleMessageHandler, this.downstreamPassive, sender, message);
     PassthroughMessageCodec.decodeRawMessage(decoder, message);
   }
 

@@ -76,8 +76,7 @@ public class PassthroughConnectionState {
     }
     byte[] raw = message.asSerializedBytes();
     waiter.saveRawMessageForResend(raw);
-    boolean isResend = false;
-    target.sendMessageToServer(sender, raw, isResend);
+    target.sendMessageToServer(sender, raw);
     return waiter;
   }
 
@@ -111,8 +110,7 @@ public class PassthroughConnectionState {
     Assert.assertTrue(null != this.reconnectingServerProcess);
     byte[] raw = waiter.resetAndGetMessageForResend();
     this.reconnectingInFlightMessages.put(transactionID, waiter);
-    boolean isResend = true;
-    this.reconnectingServerProcess.sendMessageToServer(sender, raw, isResend);
+    this.reconnectingServerProcess.sendMessageToServer(sender, raw);
   }
 
   public synchronized PassthroughWait getWaiterForTransaction(PassthroughServerProcess sender, long transactionID) {
