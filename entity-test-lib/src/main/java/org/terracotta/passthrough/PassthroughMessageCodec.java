@@ -294,7 +294,7 @@ public class PassthroughMessageCodec {
     Decoder<Long> decoder = new Decoder<Long>() {
 
       @Override
-      public Long decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+      public Long decode(Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException {
         return transactionID;
       }
     };
@@ -305,7 +305,7 @@ public class PassthroughMessageCodec {
     Decoder<Type> decoder = new Decoder<Type>() {
 
       @Override
-      public Type decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+      public Type decode(Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException {
         // The type is an int ordinal after the transactionID.
         input.readLong();
         int ordinal = input.readInt();
@@ -363,7 +363,8 @@ public class PassthroughMessageCodec {
       Type type = Type.values()[ordinal];
       boolean shouldReplicate = input.readBoolean();
       long transactionID = input.readLong();
-      result = decoder.decode(type, shouldReplicate, transactionID, input);
+      long oldestTransactionID = input.readLong();
+      result = decoder.decode(type, shouldReplicate, transactionID, oldestTransactionID, input);
     } catch (IOException e) {
       // Can't happen with a byte array.
       Assert.unexpected(e);
@@ -372,6 +373,6 @@ public class PassthroughMessageCodec {
   }
 
   public interface Decoder<R> {
-    public R decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException;
+    public R decode(Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException;
   }
 }

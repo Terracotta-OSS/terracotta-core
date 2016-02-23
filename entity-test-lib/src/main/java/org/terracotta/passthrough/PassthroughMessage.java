@@ -59,14 +59,16 @@ public abstract class PassthroughMessage {
   public final Type type;
   public final boolean shouldReplicateToPassives;
   public long transactionID;
+  public long oldestTransactionID;
   
   public PassthroughMessage(Type type, boolean shouldReplicateToPassives) {
     this.shouldReplicateToPassives = shouldReplicateToPassives;
     this.type = type;
   }
 
-  public void setTransactionID(long transactionID) {
+  public void setTransactionTracking(long transactionID, long oldestTransactionID) {
     this.transactionID = transactionID;
+    this.oldestTransactionID = oldestTransactionID;
   }
 
   public byte[] asSerializedBytes() {
@@ -76,6 +78,7 @@ public abstract class PassthroughMessage {
       output.writeInt(this.type.ordinal());
       output.writeBoolean(this.shouldReplicateToPassives);
       output.writeLong(this.transactionID);
+      output.writeLong(this.oldestTransactionID);
       this.populateStream(output);
       output.close();
     } catch (IOException e) { 

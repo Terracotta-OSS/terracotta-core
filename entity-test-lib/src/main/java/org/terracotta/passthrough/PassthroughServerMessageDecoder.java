@@ -45,10 +45,12 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     this.message = message;
   }
   @Override
-  public Void decode(Type type, boolean shouldReplicate, final long transactionID, DataInputStream input) throws IOException {
+  public Void decode(Type type, boolean shouldReplicate, final long transactionID, final long oldestTransactionID, DataInputStream input) throws IOException {
     // First step, send the ack.
     PassthroughMessage ack = PassthroughMessageCodec.createAckMessage();
-    ack.setTransactionID(transactionID);
+    // The oldestTransactionID isn't relevant when sent back.
+    long oldestTransactionIDToReturn = -1;
+    ack.setTransactionTracking(transactionID, oldestTransactionIDToReturn);
     sender.sendAck(ack);
     
     // Now, before we can actually RUN the message, we need to make sure that we wait for its replicated copy to complete
@@ -422,7 +424,9 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
 
   private void sendCompleteResponse(IMessageSenderWrapper sender, long transactionID, byte[] response, EntityException error) {
     PassthroughMessage complete = PassthroughMessageCodec.createCompleteMessage(response, error);
-    complete.setTransactionID(transactionID);
+    // The oldestTransactionID isn't relevant when sent back.
+    long oldestTransactionID = -1;
+    complete.setTransactionTracking(transactionID, oldestTransactionID);
     sender.sendComplete(complete);
   }
 

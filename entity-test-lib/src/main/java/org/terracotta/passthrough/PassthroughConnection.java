@@ -170,7 +170,7 @@ public class PassthroughConnection implements Connection {
   private void clientThreadHandleMessage(final PassthroughServerProcess sender, byte[] message) {
     PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughMessageCodec.Decoder<Void>() {
       @Override
-      public Void decode(Type type, boolean shouldReplicate, long transactionID, DataInputStream input) throws IOException {
+      public Void decode(Type type, boolean shouldReplicate, long transactionID, long oldestTransactionID, DataInputStream input) throws IOException {
         switch (type) {
           case ACK_FROM_SERVER:
             handleAck(sender, transactionID);
