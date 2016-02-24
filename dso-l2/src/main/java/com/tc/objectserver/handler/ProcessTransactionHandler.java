@@ -131,6 +131,8 @@ public class ProcessTransactionHandler {
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
     ManagedEntity entity = null;
+    boolean didAlreadyHandle = false;
+    byte[] cachedAlreadyHandledResult = null;
     EntityException uncaughtException = null;
     try {
       // The create/destroy cases are passed to the entityManager.
@@ -138,11 +140,14 @@ public class ProcessTransactionHandler {
         long clientSideVersion = descriptor.getClientSideVersion();
         long consumerID = this.entityPersistor.getNextConsumerID();
         // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-        EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, consumerID, extendedData);
+        didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, consumerID, extendedData);
       }
       if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
         long clientSideVersion = descriptor.getClientSideVersion();
-        EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, extendedData);
+        cachedAlreadyHandledResult = EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, extendedData);
+        if (null != cachedAlreadyHandledResult) {
+          didAlreadyHandle = true;
+        }
       }
       // At this point, we can now look up the actual managed entity.
       Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
@@ -151,7 +156,7 @@ public class ProcessTransactionHandler {
       }
       if (ServerEntityAction.DESTROY_ENTITY == action) {
         // Call the common helper to either destroy the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-        EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
+        didAlreadyHandle = EntityExistenceHelpers.destroyEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
       }
     } catch (EntityException e) {
       uncaughtException = e;
@@ -173,7 +178,19 @@ public class ProcessTransactionHandler {
       this.entityPersistor.removeTrackingForClient(sourceNodeID);
     }
     serverEntityRequest.received();
-    if (null == uncaughtException) {
+    if (didAlreadyHandle) {
+      // First, handle the case where we want to short-circuit a success which was satisfied as a known re-send.
+      if (null == cachedAlreadyHandledResult) {
+        // This means the result has no return value;
+        serverEntityRequest.complete();
+      } else {
+        // Pass back the cached result.
+        serverEntityRequest.complete(cachedAlreadyHandledResult);
+      }
+    } else if (null != uncaughtException) {
+      // Either this was an error found in the record of a re-send or a fail-fast scenario.
+      serverEntityRequest.failure(uncaughtException);
+    } else {
       // If no exception has been fired, do any special handling required by the message type.
       // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
       if (ServerEntityAction.DOES_EXIST == action) {
@@ -200,9 +217,6 @@ public class ProcessTransactionHandler {
           serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
         }
       }
-    } else {
-      // If there was an exception of any sort, just pass it back as a failure.
-      serverEntityRequest.failure(uncaughtException);
     }
   }
 

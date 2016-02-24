@@ -111,6 +111,9 @@ public class ReplicatedTransactionHandler {
     int messageType = rep.getType();
     if (ReplicationMessage.REPLICATE == messageType) {
       if (!state.defer(rep)) {
+//      when is the right time to send the ack?
+        acknowledge(rep);
+        
         ClientID sourceNodeID = rep.getSource();
         TransactionID transactionID = rep.getTransactionID();
         TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
@@ -127,44 +130,51 @@ public class ReplicatedTransactionHandler {
           EntityID entityID = rep.getEntityDescriptor().getEntityID();
           byte[] extendedData = rep.getExtendedData();
           ReplicationMessage.ReplicationType replicationType = rep.getReplicationType();
+          boolean didAlreadyHandle = false;
           
           if (ReplicationMessage.ReplicationType.CREATE_ENTITY == replicationType) {
             long consumerID = entityPersistor.getNextConsumerID();
             // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-            EntityExistenceHelpers.createEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, extendedData);
+            didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, extendedData);
           }
           if (ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY == replicationType) {
-            EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, extendedData);
+            byte[] cachedResult = EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, extendedData);
+            didAlreadyHandle = (null != cachedResult);
           }
           // At this point, we can now look up the managed entity (used later).
           Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
           if (ReplicationMessage.ReplicationType.DESTROY_ENTITY == replicationType) {
             // Call the common helper to either destroy the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-            EntityExistenceHelpers.destroyEntity(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
+            didAlreadyHandle = EntityExistenceHelpers.destroyEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
           }
           
-          // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
-          if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
-            // We don't actually care about the response.  We just need the question and answer to be recorded, at this point in time.
-            EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
+          // Create the request, since it is how we will generically return complete.
+          ServerEntityRequest request = make(rep);
+          // If we satisfied this as a known re-send, don't add the request to the entity.
+          if (didAlreadyHandle) {
+            request.complete();
           } else {
-            if (entity.isPresent()) {
-              ServerEntityRequest request = make(rep);
-              if (request != null) {
-                ManagedEntity entityInstance = entity.get();
-                if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-                  entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
-                } else if (request.getAction() == ServerEntityAction.NOOP) {
-                  entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
-                } else {
-                  entityInstance.addLifecycleRequest(request, extendedData);
+            // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
+            if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
+              // We don't actually care about the response.  We just need the question and answer to be recorded, at this point in time.
+              EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
+              request.complete();
+            } else {
+              if (entity.isPresent()) {
+                if (request != null) {
+                  ManagedEntity entityInstance = entity.get();
+                  if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+                    entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
+                  } else if (request.getAction() == ServerEntityAction.NOOP) {
+                    entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
+                  } else {
+                    entityInstance.addLifecycleRequest(request, extendedData);
+                  }
                 }
               }
             }
           }
         }
-//  when is the right time to send the ack?
-        acknowledge(rep);
       }
     } else if (ReplicationMessage.SYNC == messageType) {
 //  when is the right time to send the ack?  send it early for passive sync to keep the messages flowing

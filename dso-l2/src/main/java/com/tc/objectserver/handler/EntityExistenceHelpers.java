@@ -37,7 +37,8 @@ import org.terracotta.exception.EntityNotFoundException;
  * ReplicatedTransactionHandler.
  */
 public class EntityExistenceHelpers {
-  public static void createEntity(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration) throws EntityException {
+  public static boolean createEntityReturnWasCached(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration) throws EntityException {
+    boolean resultWasCached = false;
     // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
     Assert.assertNotNull(transactionIDObject);
@@ -46,6 +47,7 @@ public class EntityExistenceHelpers {
     
     if (entityPersistor.wasEntityCreatedInJournal(clientID, transactionID)) {
       // We either threw or did succeed in the journal, so just carry on as though we created it.
+      resultWasCached = true;
     } else {
       // There is no record of this, so give it a try.
       long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
@@ -59,9 +61,11 @@ public class EntityExistenceHelpers {
         throw e;
       }
     }
+    return resultWasCached;
   }
 
-  public static void destroyEntity(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID) throws EntityException {
+  public static boolean destroyEntityReturnWasCached(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID) throws EntityException {
+    boolean resultWasCached = false;
     // We can't have a null client, transaction, or oldest transaction when an entity is destroyed - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
     Assert.assertNotNull(transactionIDObject);
@@ -70,6 +74,7 @@ public class EntityExistenceHelpers {
     
     if (entityPersistor.wasEntityDestroyedInJournal(clientID, transactionID)) {
       // This either threw or is already destroyed in the journal, so carry on, as though we destroyed it.
+      resultWasCached = true;
     } else {
       // There is no record of this, so give it a try.
       long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
@@ -83,8 +88,13 @@ public class EntityExistenceHelpers {
         throw e;
       }
     }
+    return resultWasCached;
   }
 
+  /**
+   * Note that this is the one case which doesn't expose the details of whether it satisfied the request from the cached result in the journal or checked, for the first time.
+   * This is because the caller doesn't expose the difference to the entity but we may want to change that, in the future.
+   */
   public static boolean doesExist(EntityPersistor entityPersistor, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID) {
     // We can't have a null client, transaction, or oldest transaction when an entity is checked - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
