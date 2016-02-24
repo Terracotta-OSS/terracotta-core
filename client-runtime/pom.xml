@@ -32,6 +32,11 @@
             <artifactId>connection-impl</artifactId>
             <version>5.0.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>1.7.7</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -48,6 +53,12 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.slf4j:slf4j-log4j12</exclude>
+                                    <exclude>log4j:log4j</exclude>
+                                </excludes>
+                            </artifactSet>
                         </configuration>
                     </execution>
                 </executions>
