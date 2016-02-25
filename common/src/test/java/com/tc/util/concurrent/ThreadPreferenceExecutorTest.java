@@ -18,10 +18,9 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.logging.LogLevel;
-import com.tc.logging.TCAppender;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import junit.framework.TestCase;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,8 +28,6 @@ import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import junit.framework.TestCase;
 
 public class ThreadPreferenceExecutorTest extends TestCase {
 
@@ -78,8 +75,6 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
   public void testThreadCountLogging() {
     TCLogger logger = TCLogging.getLogger(ThreadPreferenceExecutorTest.class);
-    LogAppender logAppender = new LogAppender();
-    TCLogging.addAppender(logger.getName(), logAppender);
     ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 20, 100, TimeUnit.MILLISECONDS, logger);
     assertEquals(0, exec.getActiveThreadCount());
 
@@ -117,8 +112,6 @@ public class ThreadPreferenceExecutorTest extends TestCase {
       ThreadUtil.reallySleep(1000);
     }
 
-    assertEquals(1, logAppender.getThreadCountLogging());
-
     // make sure all tasks complete
     assertEquals(26, run.get());
 
@@ -126,23 +119,6 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
     // make sure all threads die
     assertEquals(0, exec.getActiveThreadCount());
-  }
-
-  private static class LogAppender implements TCAppender {
-    private int threadCountLogging = 0;
-
-    @Override
-    public synchronized void append(LogLevel level, Object message, Throwable throwable) {
-      System.out.println("XXX " + message);
-      if (message.toString().contains("thread count")) {
-        threadCountLogging++;
-      }
-    }
-
-    public synchronized int getThreadCountLogging() {
-      return threadCountLogging;
-    }
-
   }
 
   public void testThreadReuse() {

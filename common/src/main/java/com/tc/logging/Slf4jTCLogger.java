@@ -18,64 +18,89 @@
  */
 package com.tc.logging;
 
-public class ConnectionIdLogger implements TCLogger {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  private final ConnectionIDProvider cidp;
-  private final TCLogger             logger;
+/**
+ * @author Mathoeu Carbou
+ */
+class Slf4jTCLogger implements TCLogger {
 
-  public ConnectionIdLogger(ConnectionIDProvider connectionIDProvider, TCLogger logger) {
-    this.cidp = connectionIDProvider;
-    this.logger = logger;
+  private final Logger logger;
+
+  Slf4jTCLogger(String name) {
+    if (name == null) { throw new IllegalArgumentException("Logger name cannot be null"); }
+    logger = LoggerFactory.getLogger(name);
+  }
+
+  Logger getLogger() {
+    return logger;
   }
 
   @Override
   public void debug(Object message) {
-    logger.debug(msg(message));
+    if (message instanceof Throwable) {
+      debug("Exception thrown", (Throwable) message);
+    } else {
+      logger.debug(String.valueOf(message));
+    }
   }
 
   @Override
   public void debug(Object message, Throwable t) {
-    logger.debug(msg(message), t);
+    logger.debug(String.valueOf(message), t);
   }
 
   @Override
   public void error(Object message) {
-    logger.error(msg(message));
+    if (message instanceof Throwable) {
+      error("Exception thrown", (Throwable) message);
+    } else {
+      logger.error(String.valueOf(message));
+    }
   }
 
   @Override
   public void error(Object message, Throwable t) {
-    logger.error(msg(message), t);
+    logger.error(String.valueOf(message), t);
   }
 
   @Override
   public void fatal(Object message) {
-    logger.fatal(msg(message));
+    error(message);
   }
 
   @Override
   public void fatal(Object message, Throwable t) {
-    logger.fatal(msg(message), t);
+    error(message, t);
   }
 
   @Override
   public void info(Object message) {
-    logger.info(msg(message));
+    if (message instanceof Throwable) {
+      info("Exception thrown", (Throwable) message);
+    } else {
+      logger.info(String.valueOf(message));
+    }
   }
 
   @Override
   public void info(Object message, Throwable t) {
-    logger.info(msg(message), t);
+    logger.info(String.valueOf(message), t);
   }
 
   @Override
   public void warn(Object message) {
-    logger.warn(msg(message));
+    if (message instanceof Throwable) {
+      warn("Exception thrown", (Throwable) message);
+    } else {
+      logger.warn(String.valueOf(message));
+    }
   }
 
   @Override
   public void warn(Object message, Throwable t) {
-    logger.warn(msg(message), t);
+    logger.warn(String.valueOf(message), t);
   }
 
   @Override
@@ -90,16 +115,16 @@ public class ConnectionIdLogger implements TCLogger {
 
   @Override
   public LogLevel getLevel() {
-    return logger.getLevel();
-  }
-
-  private Object msg(Object msg) {
-    return cidp.getConnectionId() + ": " + msg;
+    if(logger.isTraceEnabled()) return LogLevelImpl.DEBUG;
+    if(logger.isDebugEnabled()) return LogLevelImpl.DEBUG;
+    if(logger.isInfoEnabled()) return LogLevelImpl.INFO;
+    if(logger.isWarnEnabled()) return LogLevelImpl.WARN;
+    if(logger.isErrorEnabled()) return LogLevelImpl.ERROR;
+    return LogLevelImpl.OFF;
   }
 
   @Override
   public String getName() {
     return logger.getName();
   }
-
 }

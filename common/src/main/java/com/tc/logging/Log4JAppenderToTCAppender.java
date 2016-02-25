@@ -34,7 +34,7 @@ public class Log4JAppenderToTCAppender extends AppenderSkeleton {
   protected void append(LoggingEvent event) {
     ThrowableInformation throwableInformation = event.getThrowableInformation();
     Throwable t = (throwableInformation == null) ? null : throwableInformation.getThrowable();
-    appender.append(LogLevelImpl.fromLog4JLevel(event.getLevel()), event.getMessage(), t);
+    appender.append(LogLevelImpl.fromLog4JLevel(event.getLevel().toInt()), event.getMessage(), t);
   }
 
   @Override

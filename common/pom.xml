@@ -55,12 +55,14 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <scope>compile</scope>
+      <!-- provided to not force an implementation on client-side -->
+      <!-- still required at compile time because of some Log4j classes provided (appender, etc) -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <scope>compile</scope>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

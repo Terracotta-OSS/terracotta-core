@@ -123,13 +123,8 @@ class TCLoggerImpl implements TCLogger {
   }
 
   @Override
-  public void setLevel(LogLevel level) {
-    logger.setLevel(LogLevelImpl.toLog4JLevel(level));
-  }
-
-  @Override
   public LogLevel getLevel() {
-    return LogLevelImpl.fromLog4JLevel(logger.getLevel());
+    return LogLevelImpl.fromLog4JLevel(logger.getLevel().toInt());
   }
 
   @Override

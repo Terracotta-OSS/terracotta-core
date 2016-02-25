@@ -21,8 +21,6 @@ package com.tc.management;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import com.sun.jmx.remote.generic.DefaultConfig;
 import com.sun.jmx.remote.generic.ServerSynchroMessageConnection;
@@ -32,9 +30,7 @@ import com.sun.jmx.remote.generic.SynchroMessageConnectionServerImpl;
 import com.sun.jmx.remote.socket.SocketConnectionServer;
 import com.tc.async.api.Sink;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.JMXLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
@@ -67,6 +63,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -292,7 +290,6 @@ public class L2Management extends TerracottaManagement {
   protected void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
-    mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 

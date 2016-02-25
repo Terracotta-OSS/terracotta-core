@@ -152,11 +152,6 @@ public class LossyTCLogger implements TCLogger {
   }
 
   @Override
-  public void setLevel(LogLevel level) {
-    this.logger.setLevel(level);
-  }
-
-  @Override
   public LogLevel getLevel() {
     return this.logger.getLevel();
   }

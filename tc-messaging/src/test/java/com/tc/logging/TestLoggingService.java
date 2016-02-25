@@ -100,11 +100,6 @@ public class TestLoggingService implements TCLoggingService {
       }
 
       @Override
-      public void setLevel(LogLevel level) {
-        //no-op
-      }
-
-      @Override
       public LogLevel getLevel() {
         return null;
       }

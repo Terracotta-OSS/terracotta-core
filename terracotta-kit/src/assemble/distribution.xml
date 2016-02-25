@@ -73,6 +73,14 @@ The Initial Developer of the Covered Software is
         <include>client-runtime*</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/server-lib</directory>
+      <outputDirectory>/client/lib</outputDirectory>
+      <includes>
+        <include>slf4j-log4j12*</include>
+        <include>log4j*</include>
+      </includes>
+    </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>
       <directory>${project.build.directory}/server-lib</directory>

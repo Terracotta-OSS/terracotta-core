@@ -85,11 +85,6 @@ public class NullTCLogger implements TCLogger {
   }
 
   @Override
-  public void setLevel(LogLevel level) {
-    //
-  }
-
-  @Override
   public LogLevel getLevel() {
     throw new AssertionError();
   }

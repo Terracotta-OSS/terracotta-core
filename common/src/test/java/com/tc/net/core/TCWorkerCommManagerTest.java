@@ -18,7 +18,6 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
@@ -106,7 +105,6 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    logger.setLevel(LogLevelImpl.DEBUG);
     super.setUp();
   }
 
