@@ -20,15 +20,23 @@ package com.tc.objectserver.persistence;
 
 import java.io.Serializable;
 
+import org.terracotta.exception.EntityException;
+
+
 /**
  * The data required to persist an entity in persistent storage.  It is broken down into key and value components to allow
  * for bulk retrieval of all entity data (this is why key data may be redundantly stored in the value) as well as quick
  * simple lookup in a key-value mapping.
  */
 public class EntityData {
+  /**
+   * Empty constructor required due to the inner classes being Serializable.
+   */
   private EntityData() {}
-  
+
   public static class Key implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     public String className;
     public String entityName;
     
@@ -46,12 +54,35 @@ public class EntityData {
       return isEqual;
     }
   }
-  
+
   public static class Value implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     public String className;
     public long version;
     public long consumerID;
     public String entityName;
     public byte[] configuration;
+  }
+
+  public static enum Operation implements Serializable {
+    CREATE,
+    DESTROY,
+    RECONFIGURE,
+    DOES_EXIST,
+  }
+
+  public static class JournalEntry implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
+    // This data is meant to be written into a transaction journal so we need to record everything related to the activity.
+    public Operation operation;
+    public long transactionID;
+    // reconfigureResponse is only used to store the result of RECONFIGURE.
+    public byte[] reconfigureResponse;
+    // didFind is only used to store the result of DOES_EXIST.
+    public boolean didFind;
+    // The exception in CREATE/DESTROY is saved here, null on success.
+    public EntityException failure;
   }
 }

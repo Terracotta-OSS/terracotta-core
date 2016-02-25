@@ -78,7 +78,7 @@ public class RequestProcessor implements StateChangeListener {
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_FUTURE;
-    EntityRequest entityRequest =  new EntityRequest(entity, request, call, concurrencyKey, token);
+    EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);
   }
   
@@ -86,6 +86,9 @@ public class RequestProcessor implements StateChangeListener {
       ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
     ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
     switch (type) {
+      case DOES_EXIST:
+        actionCode = ReplicationMessage.ReplicationType.DOES_EXIST;
+        break;
       case CREATE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
         break;
@@ -116,6 +119,8 @@ public class RequestProcessor implements StateChangeListener {
         actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
         break;
       default:
+        // Unknown message type.
+        Assert.fail();
         break;
     }
 //  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
@@ -125,14 +130,12 @@ public class RequestProcessor implements StateChangeListener {
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {
     private final EntityDescriptor entity;
-    private final ServerEntityRequest request;
     private final Runnable invoke;
     private final Future<Void>  token;
     private final int key;
 
-    public EntityRequest(EntityDescriptor entity, ServerEntityRequest request, Runnable runnable, int key, Future<Void>  token) {
+    public EntityRequest(EntityDescriptor entity, Runnable runnable, int key, Future<Void>  token) {
       this.entity = entity;
-      this.request = request;
       this.invoke = runnable;
       this.token = token;
       this.key = key;
@@ -176,5 +179,4 @@ public class RequestProcessor implements StateChangeListener {
       return (key == ConcurrencyStrategy.MANAGEMENT_KEY);
     }
   }
-  
 }
