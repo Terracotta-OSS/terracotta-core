@@ -151,18 +151,4 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   protected boolean isDone() {
     return done;
   }  
-  
-  public synchronized void waitForDone() {
-    boolean interrupted = false;
-    while (!done) {
-      try {
-        wait();
-      } catch (InterruptedException ie) {
-        interrupted = true;
-      }
-    }
-    if (interrupted) {
-      Thread.currentThread().interrupt();
-    }
-  }
 }

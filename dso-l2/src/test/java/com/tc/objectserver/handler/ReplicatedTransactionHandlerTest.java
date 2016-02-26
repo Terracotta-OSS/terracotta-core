@@ -46,6 +46,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
@@ -61,6 +62,7 @@ import java.util.Queue;
 import java.util.Random;
 import org.junit.Test;
 import org.mockito.Matchers;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.verify;
 
 
@@ -121,6 +123,10 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.getEntityDescriptor()).thenReturn(descriptor);
     when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    Mockito.doAnswer(invocation->{
+      ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
+      return null;
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(msg);
     verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
     verify(groupManager).sendTo(Matchers.eq(sid), Matchers.any());

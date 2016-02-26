@@ -651,7 +651,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
         // We don't actually use the message in the direct strategy so this is safe.
         executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
-        req.waitFor();
       }
   //  end passive sync for an entity
       executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
@@ -711,23 +710,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     @Override
     public ClientDescriptor getSourceDescriptor() {
       return null;
-    }
-    
-    public synchronized void waitFor() {
-      try {
-        while (!isDone()) {
-          this.wait();
-        }
-      } catch (InterruptedException ie) {
-        //  TODO
-        throw new RuntimeException(ie);
-      }
-    }
-
-    @Override
-    public synchronized void complete() {
-      super.complete();
-      this.notifyAll();
     }
   }
   

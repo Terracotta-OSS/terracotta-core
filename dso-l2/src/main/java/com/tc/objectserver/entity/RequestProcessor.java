@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
@@ -71,7 +73,7 @@ public class RequestProcessor implements StateChangeListener {
 //  do nothing
   }
   
-  public void scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
+  public Future<Void> scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())
@@ -80,6 +82,34 @@ public class RequestProcessor implements StateChangeListener {
         : NoReplicationBroker.NOOP_FUTURE;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);
+    return new Future() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        return false;
+      }
+
+      @Override
+      public boolean isCancelled() {
+        return false;
+      }
+
+      @Override
+      public boolean isDone() {
+        return entityRequest.isDone();
+      }
+
+      @Override
+      public Object get() throws InterruptedException, ExecutionException {
+        entityRequest.waitForCompletion(0, TimeUnit.MILLISECONDS);
+        return null;
+      }
+
+      @Override
+      public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        entityRequest.waitForCompletion(timeout, unit);
+        return null;
+      }
+    };
   }
   
   private static ReplicationMessage createReplicationMessage(EntityDescriptor id, ClientID src,
@@ -133,6 +163,7 @@ public class RequestProcessor implements StateChangeListener {
     private final Runnable invoke;
     private final Future<Void>  token;
     private final int key;
+    private boolean done = false;
 
     public EntityRequest(EntityDescriptor entity, Runnable runnable, int key, Future<Void>  token) {
       this.entity = entity;
@@ -163,6 +194,7 @@ public class RequestProcessor implements StateChangeListener {
 //  received on the passive entity before exclusive mode is completed
         token.get();
         invoke.run();
+        finish();
       } catch (InterruptedException interrupted) {
 //  shutdown logic?  uniterruptable?
         throw new RuntimeException(interrupted);
@@ -177,6 +209,29 @@ public class RequestProcessor implements StateChangeListener {
 // anything on the management key needs a complete flush of all the queues
 // the hydrate stage does not need to be flushed as each client 
       return (key == ConcurrencyStrategy.MANAGEMENT_KEY);
+    }
+    
+    private synchronized void finish() {
+      done = true;
+      this.notifyAll();
+    }
+    
+    synchronized boolean isDone() {
+      return done;
+    }
+    
+    public synchronized void waitForCompletion(long timeout, TimeUnit units) {
+      boolean interrupted = false;
+      while (!done) {
+        try {
+          this.wait(units.toMillis(timeout));
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 }
