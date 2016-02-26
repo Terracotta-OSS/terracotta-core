@@ -194,7 +194,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void processSyncMessage(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
     if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START || 
         sync.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_END) {
-      scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, payload), ConcurrencyStrategy.MANAGEMENT_KEY);
+      scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()-> invokeLifecycleOperation(sync, payload), ConcurrencyStrategy.MANAGEMENT_KEY);
     } else if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD) {
       scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->{
         EntityMessage message = null;
@@ -232,7 +232,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void addLifecycleRequest(ServerEntityRequest create, byte[] data) {
-    scheduleInOrder(getEntityDescriptorForSource(create.getSourceDescriptor()), create, data, ()->invoke(create, data), ConcurrencyStrategy.MANAGEMENT_KEY);
+    scheduleInOrder(getEntityDescriptorForSource(create.getSourceDescriptor()), create, data, ()-> invokeLifecycleOperation(create, data), ConcurrencyStrategy.MANAGEMENT_KEY);
   } 
 
   @Override
@@ -255,7 +255,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector.clientDidFetchEntity(clientID, this.getID());
   }
   
-  private void invoke(ServerEntityRequest request, byte[] payload) {
+  private void invokeLifecycleOperation(ServerEntityRequest request, byte[] payload) {
     Lock read = reconnectAccessLock.readLock();
       if (logger.isDebugEnabled()) {
         logger.debug("Invoking lifecycle " + request.getAction() + " on " + getID());
@@ -294,7 +294,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       } catch (Exception e) {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+        logger.error("caught exception during invoke ", wrapper);
         request.failure(wrapper);
+        throw new RuntimeException(wrapper);
       } finally {
         read.unlock();
       }
@@ -342,8 +344,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       } catch (Exception e) {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+        logger.error("caught exception during invoke ", wrapper);
         request.failure(wrapper);
-        throw new RuntimeException(e);
+        throw new RuntimeException(wrapper);
       } finally {
         read.unlock();
       }
@@ -535,6 +538,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           wrappedRequest.complete(er);
         } catch (EntityUserException e) {
           wrappedRequest.failure(e);
+          throw new RuntimeException(e);
         }
       }
     } else {

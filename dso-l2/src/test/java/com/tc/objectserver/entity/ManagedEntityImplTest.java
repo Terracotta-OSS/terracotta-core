@@ -133,11 +133,12 @@ public class ManagedEntityImplTest {
 
   @Test
   public void testCreateActive() throws Exception {
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
-    String config = "foo";
+    // first create a passive entity and then promote
     ServerEntityRequest request = mockCreateEntityRequest();
+    String config = "foo";
     byte[] arg = mockCreatePayload(config);
     managedEntity.addLifecycleRequest(request, arg);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
     verify(request).complete();
   }
@@ -163,8 +164,8 @@ public class ManagedEntityImplTest {
 
   @Test
   public void testGetEntityMissing() throws Exception {
-    // Get is only defined on active.
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(),  null);
+    // create a ManagedEntity which is in active state
+    ManagedEntityImpl managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true);
     
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest request = mockGetRequest(requester);
@@ -340,8 +341,8 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), new byte[0]);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
 
     Deque<Integer> queued = new LinkedList<>();
     Deque<Runnable> blockers = new LinkedList<>();
@@ -437,13 +438,14 @@ public class ManagedEntityImplTest {
 
   @Test
   public void testGetAndRelease() throws Exception {
-    // Get and release are only relevant on the active.
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     
     // Create the entity.
     ServerEntityRequest createRequest = mockCreateEntityRequest();
     managedEntity.addLifecycleRequest(createRequest,  null);
     verify(createRequest).complete();
+
+    // Get and release are only relevant on the active.
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     
     // Run the GET and verify that connected() call was received by the entity.
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
@@ -497,8 +499,8 @@ public class ManagedEntityImplTest {
 
   @Test
   public void testDestroy() throws Exception {
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
+    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     
     managedEntity.addLifecycleRequest(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY), null);
 

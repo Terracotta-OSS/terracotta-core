@@ -23,6 +23,8 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -56,6 +58,7 @@ import org.terracotta.exception.EntityUserException;
 
 
 public class ProcessTransactionHandler {
+  private final static TCLogger logger = TCLogging.getLogger(ProcessTransactionHandler.class);
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
   
@@ -134,6 +137,7 @@ public class ProcessTransactionHandler {
     boolean didAlreadyHandle = false;
     byte[] cachedAlreadyHandledResult = null;
     EntityException uncaughtException = null;
+    EntityUserException entityUserException = null;
     try {
       // The create/destroy cases are passed to the entityManager.
       if (ServerEntityAction.CREATE_ENTITY == action) {
@@ -162,7 +166,8 @@ public class ProcessTransactionHandler {
       uncaughtException = e;
     } catch (Exception e) {
       // Wrap the exception.
-      uncaughtException = new EntityUserException(entityID.getClassName(), entityID.getEntityName(), e);
+      entityUserException = new EntityUserException(entityID.getClassName(), entityID.getEntityName(), e);
+      uncaughtException = entityUserException;
     }
     
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
@@ -189,7 +194,11 @@ public class ProcessTransactionHandler {
       }
     } else if (null != uncaughtException) {
       // Either this was an error found in the record of a re-send or a fail-fast scenario.
+      logger.error("caught exception while handling the request ", uncaughtException);
       serverEntityRequest.failure(uncaughtException);
+      if(entityUserException != null) {
+        throw new RuntimeException(entityUserException);
+      }
     } else {
       // If no exception has been fired, do any special handling required by the message type.
       // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
