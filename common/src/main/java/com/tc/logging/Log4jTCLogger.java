@@ -29,11 +29,11 @@ import org.apache.log4j.Logger;
  * 
  * @author teck
  */
-class TCLoggerImpl implements TCLogger {
+class Log4jTCLogger implements TCLogger {
 
   private final Logger logger;
 
-  TCLoggerImpl(String name) {
+  Log4jTCLogger(String name) {
     if (name == null) { throw new IllegalArgumentException("Logger name cannot be null"); }
     logger = Logger.getLogger(name);
   }

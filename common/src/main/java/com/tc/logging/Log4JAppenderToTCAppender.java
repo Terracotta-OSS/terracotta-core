@@ -22,7 +22,7 @@ import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
 
-public class Log4JAppenderToTCAppender extends AppenderSkeleton {
+class Log4JAppenderToTCAppender extends AppenderSkeleton {
 
   private final TCAppender appender;
 

@@ -29,12 +29,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 
-public class TCRollingFileAppender extends RollingFileAppender {
+class Log4jTCRollingFileAppender extends RollingFileAppender {
   private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
 
   private String                     fileNamePrefix       = "";
   private String                     fileNameSuffix       = "";
-  public TCRollingFileAppender(Layout layout, String logPath, boolean append) throws IOException {
+  public Log4jTCRollingFileAppender(Layout layout, String logPath, boolean append) throws IOException {
     super(layout, logPath, append);
     int index = logPath.lastIndexOf('.');
     if (index != -1) {

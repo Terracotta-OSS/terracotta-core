@@ -87,7 +87,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
 
   @Override
   public TCLogger newLogger(String name) {
-    return new TCLoggerImpl(name);
+    return new Log4jTCLogger(name);
   }
 
   @Override
@@ -142,8 +142,8 @@ class Log4jTCLogging implements DelegatingTCLogger  {
     private static final Appender consoleAppender;
     private static final Logger[] allLoggers;
 
-    private static DelegatingAppender delegateFileAppender;
-    private static DelegatingAppender delegateBufferingAppender;
+    private static Log4jDelegatingAppender delegateFileAppender;
+    private static Log4jDelegatingAppender delegateBufferingAppender;
     private static boolean buffering;
     private static File currentLoggingDirectory = null;
     private static FileLock currentLoggingDirectoryFileLock = null;
@@ -174,7 +174,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
             + Arrays.asList(INTERNAL_LOGGER_NAMESPACES));
       }
 
-      return new TCLoggerImpl(name);
+      return new Log4jTCLogger(name);
     }
 
     /**
@@ -182,7 +182,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
      */
     public static TCLogger getTestingLogger(String name) {
       if (name == null) { throw new IllegalArgumentException("Name cannot be null"); }
-      return new TCLoggerImpl(name);
+      return new Log4jTCLogger(name);
     }
 
     /**
@@ -201,7 +201,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
 
       if (CONSOLE_LOGGER_NAME.equals(name)) { throw new IllegalArgumentException("Illegal name: " + name); }
 
-      return new TCLoggerImpl(name);
+      return new Log4jTCLogger(name);
     }
 
     // this method not public on purpose, use CustomerLogging.getConsoleLogger() instead
@@ -359,7 +359,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
         Logger.getRootLogger().addAppender(consoleAppender);
 
         if (buffering) {
-          BufferingAppender realBufferingAppender = (BufferingAppender) delegateBufferingAppender
+          Log4jBufferingAppender realBufferingAppender = (Log4jBufferingAppender) delegateBufferingAppender
               .setDelegate(new NullAppender());
           realBufferingAppender.stopAndSendContentsTo(consoleAppender);
           realBufferingAppender.close();
@@ -450,7 +450,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
       synchronized (TCLogging.class) {
         try {
           TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(LOGGING_PROPERTIES_SECTION);
-          newFileAppender = new TCRollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
+          newFileAppender = new Log4jTCRollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
           newFileAppender.setName("file appender");
           int maxLogFileSize = props.getInt(MAX_LOG_FILE_SIZE_PROPERTY, DEFAULT_MAX_LOG_FILE_SIZE);
           newFileAppender.setMaxFileSize(maxLogFileSize + "MB");
@@ -468,7 +468,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
           }
 
           if (buffering) {
-            BufferingAppender realBufferingAppender = (BufferingAppender) delegateBufferingAppender
+            Log4jBufferingAppender realBufferingAppender = (Log4jBufferingAppender) delegateBufferingAppender
                 .setDelegate(new NullAppender());
             realBufferingAppender.stopAndSendContentsTo(delegateFileAppender);
             realBufferingAppender.close();
@@ -489,7 +489,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
     }
 
     public static TCLogger getDumpLogger() {
-      return new TCLoggerImpl(DUMP_LOGGER_NAME);
+      return new Log4jTCLogger(DUMP_LOGGER_NAME);
     }
 
     static {
@@ -501,9 +501,9 @@ class Log4jTCLogging implements DelegatingTCLogger  {
       Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
       Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
 
-      console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
-      consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
-      operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
+      console = new Log4jTCLogger(CONSOLE_LOGGER_NAME);
+      consoleAppender = new Log4jTCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
+      operatorEventLogger = new Log4jTCLogger(OPERATOR_EVENT_LOGGER_NAME);
 
       List<Logger> internalLoggers = new ArrayList<Logger>();
       for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
@@ -537,13 +537,13 @@ class Log4jTCLogging implements DelegatingTCLogger  {
           }
         }
 
-        delegateFileAppender = new DelegatingAppender(new NullAppender());
+        delegateFileAppender = new Log4jDelegatingAppender(new NullAppender());
         addToAllLoggers(delegateFileAppender);
 
-        BufferingAppender realBufferingAppender;
-        realBufferingAppender = new BufferingAppender(MAX_BUFFERED_LOG_MESSAGES);
+        Log4jBufferingAppender realBufferingAppender;
+        realBufferingAppender = new Log4jBufferingAppender(MAX_BUFFERED_LOG_MESSAGES);
         realBufferingAppender.setName("buffering appender");
-        delegateBufferingAppender = new DelegatingAppender(realBufferingAppender);
+        delegateBufferingAppender = new Log4jDelegatingAppender(realBufferingAppender);
         addToAllLoggers(delegateBufferingAppender);
         buffering = true;
 
@@ -564,7 +564,7 @@ class Log4jTCLogging implements DelegatingTCLogger  {
     // for test use only!
     public static Log4JAppenderToTCAppender addAppender(String loggerName, TCAppender appender) {
       Log4JAppenderToTCAppender wrappedAppender = new Log4JAppenderToTCAppender(appender);
-      new TCLoggerImpl(loggerName).getLogger().addAppender(wrappedAppender);
+      new Log4jTCLogger(loggerName).getLogger().addAppender(wrappedAppender);
       return wrappedAppender;
     }
 

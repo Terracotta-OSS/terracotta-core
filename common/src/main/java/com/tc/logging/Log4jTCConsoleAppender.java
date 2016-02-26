@@ -23,10 +23,10 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggingEvent;
 
-public class TCConsoleAppender extends ConsoleAppender {
+class Log4jTCConsoleAppender extends ConsoleAppender {
   private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
 
-  public TCConsoleAppender(PatternLayout layout, String systemErr) {
+  public Log4jTCConsoleAppender(PatternLayout layout, String systemErr) {
     super(layout, systemErr);
   }
 

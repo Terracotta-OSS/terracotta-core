@@ -27,11 +27,11 @@ import org.apache.log4j.spi.LoggingEvent;
 
 import com.tc.util.Assert;
 
-public class DelegatingAppender implements Appender {
+class Log4jDelegatingAppender implements Appender {
 
   private Appender delegate;
 
-  public DelegatingAppender(Appender delegate) {
+  public Log4jDelegatingAppender(Appender delegate) {
     Assert.assertNotNull(delegate);
     this.delegate = delegate;
   }

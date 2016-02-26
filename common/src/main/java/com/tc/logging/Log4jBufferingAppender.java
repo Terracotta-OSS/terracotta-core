@@ -30,12 +30,12 @@ import java.util.concurrent.BlockingQueue;
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender extends AppenderSkeleton {
+class Log4jBufferingAppender extends AppenderSkeleton {
 
   private final BlockingQueue<LoggingEvent> buffer;
   private boolean             on;
 
-  public BufferingAppender(int maxCapacity) {
+  public Log4jBufferingAppender(int maxCapacity) {
     this.buffer = new ArrayBlockingQueue<LoggingEvent>(maxCapacity);
     this.on = true;
   }
