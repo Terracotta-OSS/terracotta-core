@@ -119,7 +119,6 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   public C reconfigure(C configuration) throws EntityException {
     // Make sure that we have a service provider.
     if (null != this.service) {
-      getWriteLock();
       try {
         byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
         PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
@@ -141,7 +140,6 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
           throw new RuntimeException(e);
         }
       } finally {
-        releaseWriteLock();
       }
     } else {
       throw new EntityNotProvidedException(this.clazz.getName(), this.name);

@@ -240,7 +240,10 @@ public class PassthroughServerProcess implements MessageHandler {
       this.notifyAll();
     }
     try {
-      this.serverThread.join();
+// multiple paths to shutdown.  This can happen multiple times without a new thread being created
+      if (this.serverThread != null) {
+        this.serverThread.join();
+      }
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }

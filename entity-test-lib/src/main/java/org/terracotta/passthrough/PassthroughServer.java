@@ -84,8 +84,10 @@ public class PassthroughServer {
       public void run() {
         synchronized (PassthroughServer.this) {
           PassthroughConnection closedConnection = PassthroughServer.this.savedClientConnections.remove(thisConnectionID);
-          Assert.assertNotNull(closedConnection);
-          PassthroughServer.this.serverProcess.disconnectConnection(closedConnection, thisConnectionID);
+// connection may have already been closed by a failover
+          if (closedConnection != null) {
+            PassthroughServer.this.serverProcess.disconnectConnection(closedConnection, thisConnectionID);
+          }
         }
       }
     };
@@ -159,7 +161,13 @@ public class PassthroughServer {
     registerBuiltInServices();
     // Install the user-created services.
     for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
-      this.serverProcess.registerServiceProvider(tuple.serviceProvider, tuple.providerConfiguration);
+      try {
+        this.serverProcess.registerServiceProvider(tuple.serviceProvider.getClass().newInstance(), tuple.providerConfiguration);
+      } catch (IllegalAccessException a) {
+        throw new RuntimeException(a);
+      } catch (InstantiationException i) {
+        throw new RuntimeException(i);
+      }
     }
     
     // Handle the difference between active restart and passive fail-over.
