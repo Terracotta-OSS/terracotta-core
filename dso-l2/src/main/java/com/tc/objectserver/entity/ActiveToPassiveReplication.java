@@ -32,7 +32,6 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.util.Assert;
-import java.util.Collection;
 import java.util.Collections;
 
 import java.util.HashSet;
@@ -60,7 +59,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Iterable<NodeID> passives;
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
-  private final Set<NodeID> standByNodes = new CopyOnWriteArraySet<>();
+  private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
@@ -152,12 +151,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     return passiveNodes;
   }
 
-  //  this method is synchronized to protect the passiveNodes list.  It will compete
-  // with passive node removal.  this is only called by a single thread as is node disconnect
   @Override
-  public synchronized Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
+  public Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
     Set<NodeID> copy = new HashSet<>(all); 
-    copy.removeIf(node -> !passiveNodes.contains(node));
     if (!copy.isEmpty()) {
       waiters.put(msg.getMessageID(), copy);
       for (NodeID node : copy) {
@@ -187,6 +183,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       @Override
       public Void get() throws InterruptedException, ExecutionException {
         synchronized (copy) {
+          copy.retainAll(passiveNodes);
           while (!copy.isEmpty()) {
             copy.wait();
           }
@@ -197,6 +194,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       @Override
       public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         synchronized (copy) {
+          copy.retainAll(passiveNodes);
           while (!copy.isEmpty()) {
             copy.wait(unit.toMillis(timeout));
           }
@@ -205,9 +203,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
     };
   }
-  //  this method is synchronized to protect the passiveNodes list.  It will compete
-  // with passive node replicate
-  public synchronized void removePassive(NodeID nodeID) {
+
+  public void removePassive(NodeID nodeID) {
     passiveNodes.remove(nodeID);
     
     for (Map.Entry<MessageID, Set<NodeID>> entry : waiters.entrySet()) {
@@ -226,12 +223,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public void nodeJoined(NodeID nodeID) {
-    standByNodes.add(nodeID);
+//  standby nodes for tracking only.  no practical use
+    synchronized(standByNodes) {
+      standByNodes.add(nodeID);
+    }
   }
 
   @Override
   public void nodeLeft(NodeID nodeID) {
     removePassive(nodeID);
-    standByNodes.remove(nodeID);
+//  standby nodes for tracking only.  no practical use
+    synchronized(standByNodes) {
+      standByNodes.remove(nodeID);
+    }
   }
 }
