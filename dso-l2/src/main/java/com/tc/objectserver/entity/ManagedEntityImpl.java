@@ -128,7 +128,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public void addInvokeRequest(final ServerEntityRequest request, byte[] payload, int defaultKey) {
     if (request.getAction() == ServerEntityAction.NOOP) {
-      scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, ()->{logger.debug(runnables.queue.size());}, ConcurrencyStrategy.UNIVERSAL_KEY);
+      scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, request::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
       return;
     }
     Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);
@@ -501,8 +501,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             for (NodeID passive : passives) {
               try {
                 byte[] message = runWithHelper(()->codec.serializeForSync(concurrencyKey, payload));
-                Future<Void> wait = executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, message), passive);
-                wait.get();
+                executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).get();
               } catch (EntityUserException eu) {
               // TODO: do something reasoned here
                 throw new RuntimeException(eu);
@@ -519,7 +518,11 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  start is handled by the sync request that triggered this action
         this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         for (NodeID passive : passives) {
-          executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive);
+          try {
+            executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive).get();
+          } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+          }
         }
         wrappedRequest.complete();
       }
@@ -636,25 +639,31 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public void sync(NodeID passive) {
     if (!this.isDestroyed) {
-      executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive);
-  // iterate through all the concurrency keys of an entity
-      EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
-  //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
-      PassiveSyncServerEntityRequest barrier = new PassiveSyncServerEntityRequest(null);
-      executor.scheduleRequest(entityDescriptor, barrier, new byte[0], ()-> { 
-        assertNotNull(this.activeServerEntity);
-        assertNotNull(concurrencyStrategy);
-        barrier.complete(); 
-      }, ConcurrencyStrategy.MANAGEMENT_KEY);
-      barrier.waitFor();
-      for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {
-        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
-        // We don't actually use the message in the direct strategy so this is safe.
-        executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency);
-        req.waitFor();
+      try {
+    // wait for future is ok, occuring on sync executor thread
+        executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive).get();
+    // iterate through all the concurrency keys of an entity
+        EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
+    //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
+        PassiveSyncServerEntityRequest barrier = new PassiveSyncServerEntityRequest(null);
+    // wait for future is ok, occuring on sync executor thread
+        executor.scheduleRequest(entityDescriptor, barrier, new byte[0], ()-> { 
+          assertNotNull(this.activeServerEntity);
+          assertNotNull(concurrencyStrategy);
+          barrier.complete(); 
+        }, ConcurrencyStrategy.MANAGEMENT_KEY).get();
+
+        for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {
+          PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
+          // We don't actually use the message in the direct strategy so this is safe.
+          executor.scheduleRequest(entityDescriptor, req, null, () -> invoke(req, null, concurrency), concurrency).get();
+        }
+    //  end passive sync for an entity
+    // wait for future is ok, occuring on sync executor thread
+        executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive).get();
+      } catch (ExecutionException | InterruptedException e) {
+        logger.warn("sync failed", e);
       }
-  //  end passive sync for an entity
-      executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive);
     }
   }  
 
@@ -711,23 +720,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     @Override
     public ClientDescriptor getSourceDescriptor() {
       return null;
-    }
-    
-    public synchronized void waitFor() {
-      try {
-        while (!isDone()) {
-          this.wait();
-        }
-      } catch (InterruptedException ie) {
-        //  TODO
-        throw new RuntimeException(ie);
-      }
-    }
-
-    @Override
-    public synchronized void complete() {
-      super.complete();
-      this.notifyAll();
     }
   }
   
