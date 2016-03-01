@@ -146,6 +146,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         message = runWithHelper(()->codec.deserialize(payload));
       } catch (EntityUserException e) {
         request.failure(e);
+//  nothing more to do here, no message can be processed
+        return;
       }
       // If we are still ok and managed to deserialize the message, continue.
       if (null != message) {
@@ -158,7 +160,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         final EntityMessage safeMessage = message;
         processInvokeRequest(request, payload, safeMessage, concurrencyKey);
       } else {
-        throw new RuntimeException("entity deserializer returned null while processing invoke request");
+        throw new RuntimeException("entity " + id + " deserializer returned null while processing invoke request");
       }
     }
   }
