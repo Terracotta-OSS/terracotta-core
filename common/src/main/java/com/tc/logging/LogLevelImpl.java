@@ -18,11 +18,6 @@
  */
 package com.tc.logging;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Priority;
-
-import com.tc.util.Assert;
-
 /**
  * Defines constants for various logging levels
  * 
@@ -50,6 +45,14 @@ public class LogLevelImpl implements LogLevel {
   public static final String   FATAL_NAME  = "FATAL";
   public static final String   OFF_NAME    = "OFF";
 
+  private final static int LOG4J_OFF_INT = Integer.MAX_VALUE;
+  private final static int LOG4J_FATAL_INT = 50000;
+  private final static int LOG4J_ERROR_INT = 40000;
+  private final static int LOG4J_WARN_INT = 30000;
+  private final static int LOG4J_INFO_INT = 20000;
+  private final static int LOG4J_DEBUG_INT = 10000;
+  private final static int LOG4J_ALL_INT = Integer.MIN_VALUE;
+
   private final int            level;
 
   private LogLevelImpl(int level) {
@@ -66,45 +69,14 @@ public class LogLevelImpl implements LogLevel {
     return level == LEVEL_INFO;
   }
 
-  static Level toLog4JLevel(LogLevel level) {
-    if (level == null) return null;
-
-    switch (level.getLevel()) {
-      case LEVEL_DEBUG:
-        return Level.DEBUG;
-      case LEVEL_INFO:
-        return Level.INFO;
-      case LEVEL_WARN:
-        return Level.WARN;
-      case LEVEL_ERROR:
-        return Level.ERROR;
-      case LEVEL_FATAL:
-        return Level.FATAL;
-      case LEVEL_OFF:
-        return Level.OFF;
-      default:
-        throw Assert.failure("Logic Error: Invalid Level: " + level);
-    }
-  }
-
-  static LogLevel fromLog4JLevel(Level level) {
-    if (level == null) return null;
-    switch (level.toInt()) {
-      case Priority.DEBUG_INT:
-        return DEBUG;
-      case Priority.INFO_INT:
-        return INFO;
-      case Priority.WARN_INT:
-        return WARN;
-      case Priority.ERROR_INT:
-        return ERROR;
-      case Priority.FATAL_INT:
-        return FATAL;
-      case Priority.OFF_INT:
-        return OFF;
-      default:
-        throw Assert.failure("Unsupported Level" + level);
-    }
+  static LogLevel fromLog4JLevel(int level) {
+    if(level >= LOG4J_OFF_INT) return OFF;
+    if(level >= LOG4J_FATAL_INT) return FATAL;
+    if(level >= LOG4J_ERROR_INT) return ERROR;
+    if(level >= LOG4J_WARN_INT) return WARN;
+    if(level >= LOG4J_INFO_INT) return INFO;
+    if(level >= LOG4J_DEBUG_INT) return DEBUG;
+    return DEBUG; // >= LOG4J_ALL_INT
   }
 
   @Override

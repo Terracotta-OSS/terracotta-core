@@ -18,24 +18,19 @@
  */
 package com.tc.logging;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * An implementation of TCLogger that just delegates to a log4j Logger instance NOTE: This implementation differs from
- * log4j in at least one detail....When calling the various log methods (info, warn, etc..) that take a single
- * <code>Object</code> parameter (eg. <code>debug(Object message)</code>), if an instance of <code>Throwable</code> is
- * passed as the message paramater, the call will be translated to the <code>xxx(Object Message, Throwable t)</code>
- * signature
- * 
- * @author teck
+ * @author Mathoeu Carbou
  */
-class TCLoggerImpl implements TCLogger {
+class Slf4jTCLogger implements TCLogger {
 
   private final Logger logger;
 
-  TCLoggerImpl(String name) {
+  Slf4jTCLogger(String name) {
     if (name == null) { throw new IllegalArgumentException("Logger name cannot be null"); }
-    logger = Logger.getLogger(name);
+    logger = LoggerFactory.getLogger(name);
   }
 
   Logger getLogger() {
@@ -47,13 +42,13 @@ class TCLoggerImpl implements TCLogger {
     if (message instanceof Throwable) {
       debug("Exception thrown", (Throwable) message);
     } else {
-      logger.debug(message);
+      logger.debug(String.valueOf(message));
     }
   }
 
   @Override
   public void debug(Object message, Throwable t) {
-    logger.debug(message, t);
+    logger.debug(String.valueOf(message), t);
   }
 
   @Override
@@ -61,27 +56,23 @@ class TCLoggerImpl implements TCLogger {
     if (message instanceof Throwable) {
       error("Exception thrown", (Throwable) message);
     } else {
-      logger.error(message);
+      logger.error(String.valueOf(message));
     }
   }
 
   @Override
   public void error(Object message, Throwable t) {
-    logger.error(message, t);
+    logger.error(String.valueOf(message), t);
   }
 
   @Override
   public void fatal(Object message) {
-    if (message instanceof Throwable) {
-      fatal("Exception thrown", (Throwable) message);
-    } else {
-      logger.fatal(message);
-    }
+    error(message);
   }
 
   @Override
   public void fatal(Object message, Throwable t) {
-    logger.fatal(message, t);
+    error(message, t);
   }
 
   @Override
@@ -89,13 +80,13 @@ class TCLoggerImpl implements TCLogger {
     if (message instanceof Throwable) {
       info("Exception thrown", (Throwable) message);
     } else {
-      logger.info(message);
+      logger.info(String.valueOf(message));
     }
   }
 
   @Override
   public void info(Object message, Throwable t) {
-    logger.info(message, t);
+    logger.info(String.valueOf(message), t);
   }
 
   @Override
@@ -103,13 +94,13 @@ class TCLoggerImpl implements TCLogger {
     if (message instanceof Throwable) {
       warn("Exception thrown", (Throwable) message);
     } else {
-      logger.warn(message);
+      logger.warn(String.valueOf(message));
     }
   }
 
   @Override
   public void warn(Object message, Throwable t) {
-    logger.warn(message, t);
+    logger.warn(String.valueOf(message), t);
   }
 
   @Override
@@ -123,13 +114,13 @@ class TCLoggerImpl implements TCLogger {
   }
 
   @Override
-  public void setLevel(LogLevel level) {
-    logger.setLevel(LogLevelImpl.toLog4JLevel(level));
-  }
-
-  @Override
   public LogLevel getLevel() {
-    return LogLevelImpl.fromLog4JLevel(logger.getLevel());
+    if(logger.isTraceEnabled()) return LogLevelImpl.DEBUG;
+    if(logger.isDebugEnabled()) return LogLevelImpl.DEBUG;
+    if(logger.isInfoEnabled()) return LogLevelImpl.INFO;
+    if(logger.isWarnEnabled()) return LogLevelImpl.WARN;
+    if(logger.isErrorEnabled()) return LogLevelImpl.ERROR;
+    return LogLevelImpl.OFF;
   }
 
   @Override

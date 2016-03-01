@@ -89,11 +89,6 @@ public class ConnectionIdLogger implements TCLogger {
   }
 
   @Override
-  public void setLevel(LogLevel level) {
-    logger.setLevel(level);
-  }
-
-  @Override
   public LogLevel getLevel() {
     return logger.getLevel();
   }

@@ -21,7 +21,7 @@ package com.tc.logging;
 import org.apache.log4j.Logger;
 import org.apache.log4j.varia.NullAppender;
 
-public class Log4jSafeInit {
+class Log4jSafeInit {
 
   private static boolean initialized = false;
 

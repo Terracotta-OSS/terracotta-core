@@ -37,13 +37,11 @@ import com.tc.l2.state.StateManagerConfig;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.net.groups.HaConfigForGroupNameTests;
@@ -90,10 +88,7 @@ public class ActiveServerIDStateManagerTest extends TCTestCase {
 
   @Override
   public void setUp() {
-    logger.setLevel(LogLevelImpl.DEBUG);
     threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(logger), "TCGroupManagerNodeJoinedTest");
-    TCLogging.getLogger(TCConnection.class).setLevel(LogLevelImpl.DEBUG);
-    TCLogging.getLogger("com.tc.net.core.CoreNIOServices").setLevel(LogLevelImpl.DEBUG);
   }
 
   public void testStateManager4Servers2Groups() throws Exception {

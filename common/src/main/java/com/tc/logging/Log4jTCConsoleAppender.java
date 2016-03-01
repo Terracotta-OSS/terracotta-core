@@ -18,21 +18,28 @@
  */
 package com.tc.logging;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Layout;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.spi.LoggingEvent;
 
-public class JMXLogging {
+class Log4jTCConsoleAppender extends ConsoleAppender {
+  private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
 
-  private static JMXAppender        jmxAppender;
-
-  static { 
-    // all logging goes to JMX based appender
-    jmxAppender = new JMXAppender();
-    jmxAppender.setLayout(new PatternLayout(TCLogging.FILE_AND_JMX_PATTERN));
-    jmxAppender.setName("JMX appender");
-    TCLogging.addToAllLoggers(jmxAppender);
+  public Log4jTCConsoleAppender(PatternLayout layout, String systemErr) {
+    super(layout, systemErr);
   }
-  
-  public static JMXAppender getJMXAppender() {
-    return jmxAppender;
+
+  @Override
+  public void subAppend(LoggingEvent event) {
+    Layout prevLayout = this.getLayout();
+    try {
+      if (event.getLoggerName().equals(TCLogging.DUMP_LOGGER_NAME)) {
+        this.setLayout(DUMP_PATTERN_LAYOUT);
+      }
+      super.subAppend(event);
+    } finally {
+      this.setLayout(prevLayout);
+    }
   }
 }

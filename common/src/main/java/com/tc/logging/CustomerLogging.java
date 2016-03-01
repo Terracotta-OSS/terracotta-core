@@ -24,7 +24,7 @@ package com.tc.logging;
 public class CustomerLogging {
 
   // Logger names. You'll want to keep these unique unless you really want to cross streams
-  private static final String GENERIC_CUSTOMER_LOGGER             = "general";
+  static final String GENERIC_CUSTOMER_LOGGER             = "general";
 
   private static final String DSO_CUSTOMER_GENERIC_LOGGER = "tsa";
 

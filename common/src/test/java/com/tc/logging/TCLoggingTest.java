@@ -44,7 +44,7 @@ public class TCLoggingTest extends TCTestCase {
   public static class LogWorker {
     public static void main(String[] args) {
       System.out.println("did logging");
-      TCLogging.setLogDirectory(new File(args[0]), TCLogging.PROCESS_TYPE_GENERIC);
+      Log4jTCLogging.LazyLoad.setLogDirectory(new File(args[0]), TCLogging.PROCESS_TYPE_GENERIC);
       TCLogger logger = TCLogging.getTestingLogger(LogWorker.class);
       logger.info("Data for Logs");
     }
@@ -97,17 +97,17 @@ public class TCLoggingTest extends TCTestCase {
     userhome.store(homebytes, null);
     userdir.store(dirbytes, null);
     
-    Assert.assertEquals(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+    Assert.assertEquals(Log4jTCLogging.LazyLoad.layerDevelopmentConfiguration(Arrays.asList(
         new ByteArrayInputStream(classbytes.toByteArray()),
         new ByteArrayInputStream(homebytes.toByteArray()),
         new ByteArrayInputStream(dirbytes.toByteArray()))).getProperty("whoami"), "userdir");
 // make sure empty streams return a valid props file
-    Assert.assertNotNull(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+    Assert.assertNotNull(Log4jTCLogging.LazyLoad.layerDevelopmentConfiguration(Arrays.asList(
         new ByteArrayInputStream(new byte[0]),
         new ByteArrayInputStream(new byte[0]),
         new ByteArrayInputStream(new byte[0]))));    
 // make sure an empty list returns null
-    Assert.assertNull(TCLogging.layerDevelopmentConfiguration(Collections.<InputStream>emptyList()));
+    Assert.assertNull(Log4jTCLogging.LazyLoad.layerDevelopmentConfiguration(Collections.<InputStream>emptyList()));
   }
 
   private void createLogs(String logDir) throws Exception {

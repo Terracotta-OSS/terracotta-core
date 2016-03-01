@@ -48,8 +48,6 @@ public interface TCLogger {
 
   boolean isInfoEnabled();
 
-  void setLevel(LogLevel level);
-
   LogLevel getLevel();
 
   String getName();
