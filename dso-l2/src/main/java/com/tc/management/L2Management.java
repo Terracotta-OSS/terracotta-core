@@ -34,7 +34,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.JMXLogging;
+import com.tc.l2.logging.JMXLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;

@@ -18,21 +18,27 @@
  */
 package com.tc.logging;
 
-import org.apache.log4j.PatternLayout;
+/**
+ *
+ */
+public enum LogLevels implements LogLevel {  
+  DEBUG(5),
+  INFO(4);
+  
+  private final int level;
 
-public class JMXLogging {
-
-  private static JMXAppender        jmxAppender;
-
-  static { 
-    // all logging goes to JMX based appender
-    jmxAppender = new JMXAppender();
-    jmxAppender.setLayout(new PatternLayout(TCLogging.FILE_AND_JMX_PATTERN));
-    jmxAppender.setName("JMX appender");
-    TCLogging.addToAllLoggers(jmxAppender);
+  private LogLevels(int level) {
+    this.level = level;
   }
   
-  public static JMXAppender getJMXAppender() {
-    return jmxAppender;
+  @Override
+  public int getLevel() {
+    return level;
   }
+
+  @Override
+  public boolean isInfo() {
+    return level == INFO.level;
+  }
+  
 }

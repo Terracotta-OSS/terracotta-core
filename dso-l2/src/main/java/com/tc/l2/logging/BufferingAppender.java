@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
+package com.tc.l2.logging;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.AppenderSkeleton;

@@ -758,13 +758,6 @@ public class DistributedObjectClient implements TCClient {
       }
     }
 
-    try {
-      TCLogging.closeFileAppender();
-      TCLogging.disableLocking();
-    } catch (final Throwable t) {
-      Logger.getAnonymousLogger().log(Level.WARNING, "Error shutting down TC logging system", t);
-    }
-
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L1_SHUTDOWN_FORCE_FINALIZATION)) System
         .runFinalization();
   }

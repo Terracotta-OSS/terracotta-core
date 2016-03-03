@@ -16,35 +16,30 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
+package com.tc.l2.logging;
 
-import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Layout;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.spi.ThrowableInformation;
 
-public class Log4JAppenderToTCAppender extends AppenderSkeleton {
+public class TCConsoleAppender extends ConsoleAppender {
+  private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLoggingLog4J.DUMP_PATTERN);
 
-  private final TCAppender appender;
-
-  public Log4JAppenderToTCAppender(TCAppender appender) {
-    this.appender = appender;
+  public TCConsoleAppender(PatternLayout layout, String systemErr) {
+    super(layout, systemErr);
   }
 
   @Override
-  protected void append(LoggingEvent event) {
-    ThrowableInformation throwableInformation = event.getThrowableInformation();
-    Throwable t = (throwableInformation == null) ? null : throwableInformation.getThrowable();
-    appender.append(LogLevelImpl.fromLog4JLevel(event.getLevel()), event.getMessage(), t);
+  public void subAppend(LoggingEvent event) {
+    Layout prevLayout = this.getLayout();
+    try {
+      if (event.getLoggerName().equals(TCLoggingLog4J.DUMP_LOGGER_NAME)) {
+        this.setLayout(DUMP_PATTERN_LAYOUT);
+      }
+      super.subAppend(event);
+    } finally {
+      this.setLayout(prevLayout);
+    }
   }
-
-  @Override
-  public void close() {
-    //
-  }
-
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
 }

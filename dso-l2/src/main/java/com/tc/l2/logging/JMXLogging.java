@@ -16,30 +16,29 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
+package com.tc.l2.logging;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Layout;
+import com.tc.logging.TCLogging;
+import com.tc.logging.TCLoggingService;
 import org.apache.log4j.PatternLayout;
-import org.apache.log4j.spi.LoggingEvent;
 
-public class TCConsoleAppender extends ConsoleAppender {
-  private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
+public class JMXLogging {
 
-  public TCConsoleAppender(PatternLayout layout, String systemErr) {
-    super(layout, systemErr);
-  }
+  private static JMXAppender        jmxAppender;
 
-  @Override
-  public void subAppend(LoggingEvent event) {
-    Layout prevLayout = this.getLayout();
-    try {
-      if (event.getLoggerName().equals(TCLogging.DUMP_LOGGER_NAME)) {
-        this.setLayout(DUMP_PATTERN_LAYOUT);
-      }
-      super.subAppend(event);
-    } finally {
-      this.setLayout(prevLayout);
+  static { 
+//  hack to get the underlying service for logging implementation
+    TCLoggingService service = TCLogging.getLoggingService();
+    // all logging goes to JMX based appender
+    if (service instanceof TCLoggingLog4J) {
+      jmxAppender = new JMXAppender();
+      jmxAppender.setLayout(new PatternLayout(TCLoggingLog4J.FILE_AND_JMX_PATTERN));
+      jmxAppender.setName("JMX appender");
+      ((TCLoggingLog4J)service).addToAllLoggers(jmxAppender);
     }
+  }
+  
+  public static JMXAppender getJMXAppender() {
+    return jmxAppender;
   }
 }

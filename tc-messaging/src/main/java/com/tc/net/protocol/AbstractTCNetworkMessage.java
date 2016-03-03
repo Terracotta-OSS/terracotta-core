@@ -21,10 +21,9 @@ package com.tc.net.protocol;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCInternalError;
 import com.tc.logging.TCLogger;
-import com.tc.logging.TCLoggingService;
+import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
-import com.tc.util.ServiceUtil;
 import com.tc.util.StringUtil;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -34,8 +33,7 @@ import com.tc.util.concurrent.SetOnceFlag;
  * @author teck
  */
 public class AbstractTCNetworkMessage implements TCNetworkMessage {
-  protected static final TCLogger logger                = ServiceUtil.loadService(TCLoggingService.class)
-                                                            .getLogger(TCNetworkMessage.class);
+  protected static final TCLogger logger                = TCLogging.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
   protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {

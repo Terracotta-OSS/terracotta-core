@@ -52,21 +52,6 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <scope>compile</scope>
-    </dependency>
     <!-- tests dependencies -->
     <dependency>
       <groupId>junit</groupId>
@@ -87,12 +72,6 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-      <version>1.0.8</version>
       <scope>test</scope>
     </dependency>
     <!-- XXX should we even do this -->

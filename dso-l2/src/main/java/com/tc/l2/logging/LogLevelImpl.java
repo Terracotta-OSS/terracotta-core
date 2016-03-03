@@ -16,8 +16,10 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
+package com.tc.l2.logging;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Priority;
 

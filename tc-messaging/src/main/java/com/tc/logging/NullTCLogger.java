@@ -18,6 +18,9 @@
  */
 package com.tc.logging;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.TCLogger;
+
 
 /**
  * @author steve
