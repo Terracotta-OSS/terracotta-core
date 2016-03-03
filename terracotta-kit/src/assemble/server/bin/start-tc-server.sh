@@ -63,6 +63,12 @@ function setPluginClasspath {
             do
                 PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${jarFile}
             done
+#  Adding SLF4j libraries to the classpath of the server to 
+#  support services that may use SLF4j for logging
+            for jarFile in ${TC_INSTALL_DIR}/server/lib//slf4j*.jar
+            do
+                PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${jarFile}
+            done
         fi
     done
 

@@ -71,6 +71,8 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/client</outputDirectory>
       <includes>
         <include>client-runtime*</include>
+        <include>client-logging*</include>
+        <include>slf4j*</include>
       </includes>
     </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
@@ -79,6 +81,8 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/server/lib</outputDirectory>
       <excludes>
         <exclude>terracotta-${project.version}.jar</exclude>
+        <exclude>client**</exclude>
+        <exclude>entity-client**</exclude>
       </excludes>      
     </fileSet>
   </fileSets>
