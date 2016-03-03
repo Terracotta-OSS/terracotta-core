@@ -56,6 +56,7 @@
     <module>terracotta-kit</module>
     <module>terracotta</module>
     <module>client-runtime</module>
+    <module>client-logging</module>
   </modules>
 
   <build>
