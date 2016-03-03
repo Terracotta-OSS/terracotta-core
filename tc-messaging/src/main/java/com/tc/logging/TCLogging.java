@@ -18,9 +18,6 @@
  */
 package com.tc.logging;
 
-import com.tc.logging.NullTCLoggingService;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLoggingService;
 import java.util.ServiceLoader;
 
 /**

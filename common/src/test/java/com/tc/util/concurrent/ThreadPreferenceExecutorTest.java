@@ -18,9 +18,6 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.logging.LogLevel;
-import com.tc.logging.TCAppender;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
 import java.util.Collections;
