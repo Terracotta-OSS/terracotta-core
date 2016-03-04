@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.LogLevelImpl;
+import com.tc.logging.LogLevels;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -73,7 +73,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
     NetworkStackHarnessFactory networkStackHarnessFactory;
 
-    logger.setLevel(LogLevelImpl.DEBUG);
+    logger.setLevel(LogLevels.DEBUG);
 
     serverMessageRouter = new TCMessageRouterImpl();
     clientMessageRouter = new TCMessageRouterImpl();
@@ -307,7 +307,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   @Override
   public void tearDown() throws Exception {
     super.tearDown();
-    logger.setLevel(LogLevelImpl.INFO);
+    logger.setLevel(LogLevels.INFO);
     closeCommsMgr();
   }
 }

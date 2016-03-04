@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
+package com.tc.l2.logging;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.PatternLayout;
@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 
 public class TCRollingFileAppender extends RollingFileAppender {
-  private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
+  private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLoggingLog4J.DUMP_PATTERN);
 
   private String                     fileNamePrefix       = "";
   private String                     fileNameSuffix       = "";
@@ -47,7 +47,7 @@ public class TCRollingFileAppender extends RollingFileAppender {
   public void subAppend(LoggingEvent event) {
     Layout prevLayout = this.getLayout();
     try {
-      if (event.getLoggerName().equals(TCLogging.DUMP_LOGGER_NAME)) {
+      if (event.getLoggerName().equals(TCLoggingLog4J.DUMP_LOGGER_NAME)) {
         this.setLayout(DUMP_PATTERN_LAYOUT);
       }
       super.subAppend(event);

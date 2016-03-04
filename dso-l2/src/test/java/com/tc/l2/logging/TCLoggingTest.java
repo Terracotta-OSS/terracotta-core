@@ -16,11 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
-
-import org.apache.commons.io.FileUtils;
+package com.tc.l2.logging;
 
 import com.tc.lcp.LinkedJavaProcess;
+import org.apache.commons.io.FileUtils;
+
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.test.TCTestCase;
@@ -44,7 +46,7 @@ public class TCLoggingTest extends TCTestCase {
   public static class LogWorker {
     public static void main(String[] args) {
       System.out.println("did logging");
-      TCLogging.setLogDirectory(new File(args[0]), TCLogging.PROCESS_TYPE_GENERIC);
+      TCLogging.setLogLocationAndType(new File(args[0]).toURI(), TCLogging.ProcessType.GENERIC);
       TCLogger logger = TCLogging.getTestingLogger(LogWorker.class);
       logger.info("Data for Logs");
     }
@@ -97,17 +99,17 @@ public class TCLoggingTest extends TCTestCase {
     userhome.store(homebytes, null);
     userdir.store(dirbytes, null);
     
-    Assert.assertEquals(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+    Assert.assertEquals(((TCLoggingLog4J)TCLogging.getLoggingService()).layerDevelopmentConfiguration(Arrays.asList(
         new ByteArrayInputStream(classbytes.toByteArray()),
         new ByteArrayInputStream(homebytes.toByteArray()),
         new ByteArrayInputStream(dirbytes.toByteArray()))).getProperty("whoami"), "userdir");
 // make sure empty streams return a valid props file
-    Assert.assertNotNull(TCLogging.layerDevelopmentConfiguration(Arrays.asList(
+    Assert.assertNotNull(((TCLoggingLog4J)TCLogging.getLoggingService()).layerDevelopmentConfiguration(Arrays.asList(
         new ByteArrayInputStream(new byte[0]),
         new ByteArrayInputStream(new byte[0]),
         new ByteArrayInputStream(new byte[0]))));    
 // make sure an empty list returns null
-    Assert.assertNull(TCLogging.layerDevelopmentConfiguration(Collections.<InputStream>emptyList()));
+    Assert.assertNull(((TCLoggingLog4J)TCLogging.getLoggingService()).layerDevelopmentConfiguration(Collections.<InputStream>emptyList()));
   }
 
   private void createLogs(String logDir) throws Exception {

@@ -20,20 +20,18 @@ package com.tc.object;
 
 import com.tc.io.TCDataInput;
 import com.tc.logging.TCLogger;
-import com.tc.logging.TCLoggingService;
+import com.tc.logging.TCLogging;
 import com.tc.object.compression.CompressedData;
 import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.impl.BaseDNAEncodingImpl;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.util.ServiceUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   
-  private static final TCLogger    logger = ServiceUtil.loadService(TCLoggingService.class)
-                                              .getLogger(ApplicatorDNAEncodingImpl.class);
+  private static final TCLogger    logger = TCLogging.getLogger(ApplicatorDNAEncodingImpl.class);
 
   /**
    * Used in the Applicators. The policy is set to APPLICATOR.

@@ -16,87 +16,96 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.logging;
+package com.tc.client.logging;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevels;
+import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
 
 /**
- * @author steve
+ *
  */
-public class NullTCLogger implements TCLogger {
+public class TCLoggerClientSLF4J implements TCLogger {
+  
+  private final Logger base;
+
+  public TCLoggerClientSLF4J(Logger base) {
+    this.base = base;
+  }
 
   @Override
   public void debug(Object message) {
-    //
+    base.debug(message.toString());
   }
 
   @Override
   public void debug(Object message, Throwable t) {
-    //
+    base.debug(message.toString(), t);
   }
 
   @Override
   public void error(Object message) {
-    //
+    base.error(message.toString());
   }
 
   @Override
   public void error(Object message, Throwable t) {
-    //
+    base.error(message.toString(), t);
   }
 
   @Override
   public void fatal(Object message) {
-    //
+    base.error(message.toString());
   }
 
   @Override
   public void fatal(Object message, Throwable t) {
-    //
+    base.error(message.toString(), t);
   }
 
   @Override
   public void info(Object message) {
-    //
+    base.info(message.toString());
   }
 
   @Override
   public void info(Object message, Throwable t) {
-    //
+    base.info(message.toString(), t);
   }
 
   @Override
   public void warn(Object message) {
-    //
+    base.warn(message.toString());
   }
 
   @Override
   public void warn(Object message, Throwable t) {
-    //
+    base.warn(message.toString(), t);
   }
 
   @Override
   public boolean isDebugEnabled() {
-    return false;
+    return base.isDebugEnabled();
   }
 
   @Override
   public boolean isInfoEnabled() {
-    return false;
+    return base.isInfoEnabled();
   }
 
   @Override
   public void setLevel(LogLevel level) {
-    //
+
   }
 
   @Override
   public LogLevel getLevel() {
-    throw new AssertionError();
+    return LogLevels.INFO;
   }
 
   @Override
   public String getName() {
-    return "";
+    return base.getName();
   }
-
 }

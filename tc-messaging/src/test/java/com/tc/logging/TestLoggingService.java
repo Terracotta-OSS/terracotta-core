@@ -25,6 +25,8 @@
 
 package com.tc.logging;
 
+import java.net.URI;
+
 /**
  *
  * @author cdennis
@@ -119,5 +121,35 @@ public class TestLoggingService implements TCLoggingService {
   @Override
   public TCLogger getLogger(Class<?> c) {
     return getLogger(c.getName());
+  }
+
+  @Override
+  public TCLogger getTestingLogger(String name) {
+    return getLogger(name);
+  }
+
+  @Override
+  public TCLogger getConsoleLogger() {
+    return getLogger("console.logger");
+  }
+
+  @Override
+  public TCLogger getOperatorEventLogger() {
+    return getLogger("operator.event");
+  }
+  
+  @Override
+  public TCLogger getDumpLogger() {
+    return getLogger("dump.logger");
+  }
+
+  @Override
+  public TCLogger getCustomerLogger(String name) {
+    return getLogger("customer.logger." + name);
+  }
+
+  @Override
+  public void setLogLocationAndType(URI location, int processType) {
+    
   }
 }

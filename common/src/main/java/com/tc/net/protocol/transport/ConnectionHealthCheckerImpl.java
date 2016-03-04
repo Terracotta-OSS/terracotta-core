@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.LogLevelImpl;
+import com.tc.logging.LogLevels;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -53,7 +53,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
     logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                  + healthCheckerConfig.getHealthCheckerName());
-    logger.setLevel(LogLevelImpl.DEBUG);
+    logger.setLevel(LogLevels.DEBUG);
     monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
     monitorThread = new Thread(monitorThreadEngine, "HealthChecker");
     monitorThread.setDaemon(true);

@@ -89,6 +89,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TCLoggingService;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
@@ -389,7 +390,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // perform the DSO network config verification
     final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
 
-    TCLogging.setLogDirectory(configSetupManager.commonl2Config().logsPath(), TCLogging.PROCESS_TYPE_L2);
+    TCLogging.setLogLocationAndType(configSetupManager.commonl2Config().logsPath().toURI(), TCLogging.ProcessType.SERVER);
     
     // verify user input host name, DEV-2293
     final String host = l2DSOConfig.host();

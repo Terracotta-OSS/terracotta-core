@@ -37,7 +37,7 @@ import com.tc.l2.state.StateManagerConfig;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.LogLevelImpl;
+import com.tc.l2.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;

@@ -54,14 +54,10 @@
       <artifactId>tcconfig-schema</artifactId>
       <scope>compile</scope>
     </dependency>
-    <!-- exception helper look to remove -->
-      <!--
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-util</artifactId>
-      <version>9.2.1.v20140609</version>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
     </dependency>
-    -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
@@ -113,6 +109,12 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>linked-child-process</artifactId>
+      <version>1.0.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>

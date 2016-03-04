@@ -18,9 +18,6 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.logging.LogLevel;
-import com.tc.logging.TCAppender;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
 import java.util.Collections;
@@ -74,75 +71,6 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
     // make sure all threads die
     assertEquals(0, exec.getActiveThreadCount());
-  }
-
-  public void testThreadCountLogging() {
-    TCLogger logger = TCLogging.getLogger(ThreadPreferenceExecutorTest.class);
-    LogAppender logAppender = new LogAppender();
-    TCLogging.addAppender(logger.getName(), logAppender);
-    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 20, 100, TimeUnit.MILLISECONDS, logger);
-    assertEquals(0, exec.getActiveThreadCount());
-
-    final AtomicInteger run = new AtomicInteger();
-
-    Runnable longClient = new Runnable() {
-      @Override
-      public void run() {
-        ThreadUtil.reallySleep(10000);
-        run.incrementAndGet();
-      }
-    };
-
-    Runnable shortClient = new Runnable() {
-      @Override
-      public void run() {
-        run.incrementAndGet();
-      }
-    };
-
-    for (int i = 0; i < 16; i++) {
-      exec.execute(longClient);
-      assertEquals(i + 1, exec.getActiveThreadCount());
-    }
-
-    while (exec.getActiveThreadCount() != 0) {
-      ThreadUtil.reallySleep(1000);
-    }
-
-    for (int i = 0; i < 10; i++) {
-      exec.execute(shortClient);
-    }
-
-    while (exec.getActiveThreadCount() != 0) {
-      ThreadUtil.reallySleep(1000);
-    }
-
-    assertEquals(1, logAppender.getThreadCountLogging());
-
-    // make sure all tasks complete
-    assertEquals(26, run.get());
-
-    ThreadUtil.reallySleep(10000);
-
-    // make sure all threads die
-    assertEquals(0, exec.getActiveThreadCount());
-  }
-
-  private static class LogAppender implements TCAppender {
-    private int threadCountLogging = 0;
-
-    @Override
-    public synchronized void append(LogLevel level, Object message, Throwable throwable) {
-      System.out.println("XXX " + message);
-      if (message.toString().contains("thread count")) {
-        threadCountLogging++;
-      }
-    }
-
-    public synchronized int getThreadCountLogging() {
-      return threadCountLogging;
-    }
-
   }
 
   public void testThreadReuse() {
