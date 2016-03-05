@@ -18,15 +18,11 @@
  */
 package com.terracotta.connection;
 
-import java.util.Set;
-
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
 
 
 public interface ClientHandle {
-
-  void activateTunnelledMBeanDomains(Set<String> tunnelledMBeanDomains);
 
   void shutdown();
 

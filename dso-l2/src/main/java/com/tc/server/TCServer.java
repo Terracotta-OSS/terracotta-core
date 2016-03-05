@@ -21,11 +21,13 @@ package com.tc.server;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.l2.state.StateChangeListener;
+import com.tc.util.State;
 
 import java.io.IOException;
 import java.util.Map;
 
-public interface TCServer {
+public interface TCServer extends StateChangeListener {
   String[] processArguments();
 
   void start() throws Exception;
@@ -37,6 +39,14 @@ public interface TCServer {
   boolean isActive();
 
   boolean isStopped();
+  
+  boolean isPassiveUnitialized();
+  
+  boolean isPassiveStandby();
+  
+  boolean isRecovering();
+  
+  State getState();
 
   long getStartTime();
 

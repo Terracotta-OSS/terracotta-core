@@ -45,12 +45,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String HYDRATE_MESSAGE_SINK                               = "hydrate_message_stage";
   public static final String REQUEST_BATCH_GLOBAL_TRANSACTION_ID_SEQUENCE_STAGE = "request_batch_global_transaction_id_sequence_stage";
   public static final String COMMIT_CHANGES_STAGE                               = "commit_changes_stage";
-  public static final String JMXREMOTE_TUNNEL_STAGE_READY                             = "jmxremote_tunnel_stage_ready";
-  public static final String JMXREMOTE_TUNNEL_STAGE_TUNNEL                             = "jmxremote_tunnel_stage_tunnel";
-  public static final String JMXREMOTE_TUNNEL_STAGE_REMOTE                             = "jmxremote_tunnel_stage_remote";
-  public static final String JMXREMOTE_CONNECT_STAGE                            = "jmxremote_connect_stage";
-  public static final String JMXREMOTE_DISCONNECT_STAGE                         = "jmxremote_disconnect_stage";
-  public static final String JMXREMOTE_TUNNELED_DOMAINS_CHANGED_STAGE                         = "jmxremote_tunneled_domains_changed_stage";
   public static final String RECALL_OBJECTS_STAGE                               = "recall_objects_stage";
   public static final String L2_STATE_CHANGE_STAGE                              = "l2_state_change_stage";
   public static final String OBJECTS_SYNC_REQUEST_STAGE                         = "object_sync_request_stage";

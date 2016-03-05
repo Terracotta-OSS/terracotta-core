@@ -20,13 +20,11 @@ package com.terracotta.connection.client;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 
 
 public class TerracottaClientConfigParams {
   private final List<String> stripeMembers;
-  private Set<String> tunnelledMBeanDomains;
   private boolean     rejoin;
   private boolean     nonStop;
   private String      productId;
@@ -42,19 +40,6 @@ public class TerracottaClientConfigParams {
 
   public TerracottaClientConfigParams addStripeMemberUri(String stripeMember) {
     this.stripeMembers.add(stripeMember);
-    return this;
-  }
-
-  public Set<String> getTunnelledMBeanDomains() {
-    return tunnelledMBeanDomains;
-  }
-
-  public void setTunnelledMBeanDomains(Set<String> tunnelledMBeanDomains) {
-    this.tunnelledMBeanDomains = tunnelledMBeanDomains;
-  }
-
-  public TerracottaClientConfigParams tunnelledMBeanDomains(Set<String> tunnelledMBeanDomainsParams) {
-    this.tunnelledMBeanDomains = tunnelledMBeanDomainsParams;
     return this;
   }
 

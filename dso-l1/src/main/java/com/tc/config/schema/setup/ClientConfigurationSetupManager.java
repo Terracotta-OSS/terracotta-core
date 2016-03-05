@@ -106,12 +106,4 @@ public class ClientConfigurationSetupManager implements L1ConfigurationSetupMana
   public SecurityInfo getSecurityInfo() {
     return securityInfo;
   }
-
-  @Override
-  public void setupLogging() {
-  }
-
-  @Override
-  public void reloadServersConfiguration() throws ConfigurationSetupException {
-  }
 }

@@ -26,13 +26,10 @@ import com.tc.net.protocol.tcm.ChannelID;
 import javax.management.ObjectName;
 
 public interface ClientMBean extends TerracottaMBean {
-  public static final String TUNNELED_BEANS_REGISTERED = "tunneled.beans.registered";
 
   long getClientID();
 
   String getNodeID();
-
-  boolean isTunneledBeansRegistered();
 
   ObjectName getL1InfoBeanName();
 

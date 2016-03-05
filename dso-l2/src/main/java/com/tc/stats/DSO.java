@@ -273,9 +273,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       } finally {
         clientObjectNames.remove(clientName);
         Client client = clientMap.remove(clientName);
-        if (client != null) {
-          client.stopListeningForTunneledBeans();
-        }
       }
     }
   }

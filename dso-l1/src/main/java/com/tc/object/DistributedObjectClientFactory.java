@@ -65,7 +65,6 @@ public class DistributedObjectClientFactory {
     ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris, securityManager);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager(securityInfo);
-    config.setupLogging();
 
     final PreparedComponentsFromL2Connection connectionComponents;
     try {

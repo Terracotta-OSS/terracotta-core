@@ -43,12 +43,12 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
       stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
     }
-    return createClient(stripeConnectionConfig, config.getTunnelledMBeanDomains(), config.getProductId());
+    return createClient(stripeConnectionConfig, config.getProductId());
   }
 
 
-  private TerracottaInternalClient createClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Set<String> tunneledMBeanDomains, String productId) {
-    TerracottaInternalClient client = new TerracottaInternalClientImpl(stripeConnectionConfig, tunneledMBeanDomains, productId);
+  private TerracottaInternalClient createClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId) {
+    TerracottaInternalClient client = new TerracottaInternalClientImpl(stripeConnectionConfig, productId);
     return client;
   }
 

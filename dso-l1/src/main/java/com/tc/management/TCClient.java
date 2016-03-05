@@ -18,16 +18,10 @@
  */
 package com.tc.management;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.management.beans.TCDumper;
-import com.tc.net.core.ClusterTopologyChangedListener;
 
 public interface TCClient extends TCDumper, LockInfoDumpHandler {
-
-  public void reloadConfiguration() throws ConfigurationSetupException;
-
-  public void addServerConfigurationChangedListeners(ClusterTopologyChangedListener listener);
 
   public String[] processArguments();
 

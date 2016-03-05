@@ -39,8 +39,4 @@ public interface L1ConfigurationSetupManager {
   L2ConfigForL1 l2Config();
 
   SecurityInfo getSecurityInfo();
-
-  void setupLogging();
-
-  void reloadServersConfiguration() throws ConfigurationSetupException;
 }

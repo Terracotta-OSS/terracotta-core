@@ -22,10 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
-import com.tc.management.L1Management;
 import com.tc.management.TCClient;
-import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
-import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.security.TCSecurityManager;
@@ -42,7 +39,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -58,7 +54,6 @@ import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.util.UUID;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tcclient.cluster.ClusterInternalEventsGun;
@@ -98,17 +93,6 @@ public class StandardClientBuilder implements ClientBuilder {
   }
 
   @Override
-  public TunnelingEventHandler createTunnelingEventHandler(ClientMessageChannel ch, DSOMBeanConfig config, UUID uuid) {
-    return new TunnelingEventHandler(ch, config, uuid);
-  }
-
-  @Override
-  public TunneledDomainManager createTunneledDomainManager(ClientMessageChannel ch, DSOMBeanConfig config,
-                                                           TunnelingEventHandler teh) {
-    return new TunneledDomainManager(ch, config, teh);
-  }
-
-  @Override
   public ClientLockManager createLockManager(ClientMessageChannel channel, ClientIDLogger clientIDLogger,
                                              SessionManager sessionManager,
                                              LockRequestMessageFactory lockRequestMessageFactory,
@@ -128,17 +112,6 @@ public class StandardClientBuilder implements ClientBuilder {
                                                              ClusterInternalEventsGun clusterEventsGun, String clientVersion,
                                                              Collection<ClientHandshakeCallback> callbacks) {
     return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, clientVersion, callbacks);
-  }
-
-  @Override
-  public L1Management createL1Management(TunnelingEventHandler teh, String rawConfigText,
-                                         DistributedObjectClient distributedObjectClient) {
-    return new L1Management(teh, rawConfigText, distributedObjectClient);
-  }
-
-  @Override
-  public void registerForOperatorEvents(L1Management management) {
-    // NOP
   }
 
   @Override

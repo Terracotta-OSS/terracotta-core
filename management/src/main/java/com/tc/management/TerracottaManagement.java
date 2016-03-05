@@ -209,15 +209,10 @@ public abstract class TerracottaManagement {
     return null;
   }
 
-  public static final QueryExp matchAllTerracottaMBeans(UUID id, String[] tunneledDomains) {
+  public static final QueryExp matchAllTerracottaMBeans(UUID id) {
     try {
       QueryExp query = Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
                                 new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id));
-      if (tunneledDomains != null) {
-        for (String tunneledDomain : tunneledDomains) {
-          query = Query.or(query, new ObjectName(tunneledDomain + ":*,node=" + id));
-        }
-      }
       return query;
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);

@@ -118,13 +118,6 @@ public class ServerClientHandshakeManager {
         // This is a client reconnecting after a restart.
         
         this.channelManager.makeChannelActiveNoAck(handshake.getChannel());
-
-        // NOTE:  Sequence validation temporarily removed since reconnect handshake isn't yet fully implemented for 5.0.
-        this.logger.warn("TODO:  validate transaction sequence IDs");
-//        this.sequenceValidator.initSequence(clientID, handshake.getTransactionSequenceIDs());
-
-        // TODO: Link up the loaded entities from a client to this
-
         this.lockManager.reestablishState(clientID, lockContexts);
         
         // Find any client-entity references and ensure that we account for them.

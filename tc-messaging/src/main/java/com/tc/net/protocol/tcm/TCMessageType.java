@@ -57,7 +57,6 @@ public final class TCMessageType {
   public static final int           TYPE_LOCK_RECALL_MESSAGE                          = 33;
   // public static final int TYPE_JMX_MESSAGE = 34;
   public static final int           TYPE_LOCK_QUERY_RESPONSE_MESSAGE                  = 35;
-  public static final int           TYPE_JMXREMOTE_MESSAGE_CONNECTION_MESSAGE         = 36;
   // public static final int TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE = 37;
   // public static final int TYPE_MEMORY_DATA_STORE_RESPONSE_MESSAGE = 38;
   public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 39;
@@ -77,7 +76,6 @@ public final class TCMessageType {
   // public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE              = 53;
   // public static final int TYPE_STRIPE_ID_MAP_MESSAGE = 54;
 //  public static final int           TYPE_SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE      = 55;
-  public static final int           TYPE_TUNNELED_DOMAINS_CHANGED_MESSAGE             = 60;
   // public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
   // public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
 //  public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
@@ -104,12 +102,10 @@ public final class TCMessageType {
   public static final TCMessageType CLIENT_HANDSHAKE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
-  public static final TCMessageType JMXREMOTE_MESSAGE_CONNECTION_MESSAGE              = new TCMessageType();
   public static final TCMessageType CLUSTER_MEMBERSHIP_EVENT_MESSAGE                  = new TCMessageType();
   public static final TCMessageType CLIENT_JMX_READY_MESSAGE                          = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                             = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();
-  public static final TCMessageType TUNNELED_DOMAINS_CHANGED_MESSAGE                  = new TCMessageType();
   public static final TCMessageType LIST_REGISTERED_SERVICES_MESSAGE                  = new TCMessageType();
   public static final TCMessageType LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE         = new TCMessageType();
   public static final TCMessageType INVOKE_REGISTERED_SERVICE_MESSAGE                 = new TCMessageType();

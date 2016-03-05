@@ -21,7 +21,6 @@ package com.tc.objectserver.impl;
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
@@ -33,9 +32,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.L2Management;
-import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
@@ -54,20 +50,12 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.PersistentStorageServiceConfiguration;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.operatorevent.TerracottaOperatorEventCallbackLogger;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.operatorevent.TerracottaOperatorEventLogger;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
 import com.tc.util.runtime.ThreadDumpUtil;
 
-import java.net.InetAddress;
-
-import javax.management.MBeanServer;
 import org.terracotta.persistence.IPersistentStorage;
 
 
@@ -137,26 +125,6 @@ public class StandardServerBuilder implements ServerBuilder {
         groupCommsManager, clusterStatePersistor,
         weightGeneratorFactory, configurationSetupManager,
         haConfig.getThisGroupID(), stripeStateManager);
-  }
-
-  @Override
-  public L2Management createL2Management(boolean listenerEnabled, TCServerInfoMBean tcServerInfoMBean,
-                                         L2ConfigurationSetupManager configSetupManager,
-                                         DistributedObjectServer distributedObjectServer, InetAddress bind,
-                                         int jmxPort, Sink remoteEventsSink,
-                                         ServerConnectionValidator serverConnectionValidator,
-                                         ServerDBBackupMBean serverDBBackupMBean, TCSecurityManager securityManager) throws Exception {
-    return new L2Management(tcServerInfoMBean, configSetupManager, distributedObjectServer, listenerEnabled, bind,
-                            jmxPort, remoteEventsSink, securityManager);
-  }
-
-  @Override
-  public void registerForOperatorEvents(L2Management l2Management,
-                                        TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
-                                        MBeanServer l2MbeanServer) {
-    // register logger for OSS version
-    TerracottaOperatorEventLogger tcEventLogger = TerracottaOperatorEventLogging.getEventLogger();
-    tcEventLogger.registerEventCallback(new TerracottaOperatorEventCallbackLogger());
   }
 
   @Override
