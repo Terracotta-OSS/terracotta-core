@@ -42,7 +42,14 @@ public class ThreadIDMapImpl implements ThreadIDMap {
   @Override
   public synchronized ThreadID getTCThreadID(Long javaThreadId) {
     cleanupReferenceQueue();
-    return id2ThreadIDMap.get(javaThreadId).get();
+    WeakReference<ThreadID> tid = id2ThreadIDMap.get(javaThreadId);
+    if (tid != null) {
+      ThreadID direct = tid.get();
+      if (direct != null) {
+        return direct;
+      }
+    }
+    return ThreadID.NULL_ID;
   }
 
   private void cleanupReferenceQueue() {
