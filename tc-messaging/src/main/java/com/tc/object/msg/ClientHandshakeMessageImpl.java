@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.Comparator;
 
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
@@ -48,7 +50,12 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private boolean             enterpriseClient         = false;
   private String              clientVersion            = "UNKNOW";
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
-  private final Set<ResendVoltronEntityMessage> resendMessages = new HashSet<ResendVoltronEntityMessage>();
+  private final Set<ResendVoltronEntityMessage> resendMessages = new TreeSet<ResendVoltronEntityMessage>(new Comparator<ResendVoltronEntityMessage>() {
+    @Override
+    public int compare(ResendVoltronEntityMessage first, ResendVoltronEntityMessage second) {
+      return first.getTransactionID().compareTo(second.getTransactionID());
+    }
+  });
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                     MessageChannel channel, TCMessageType messageType) {
