@@ -63,6 +63,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private final ClientEntityStateManager stateManager;
   private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint> objectStoreMap;
+  
+  private volatile boolean isAlive = true;
 
   
   public ClientEntityManagerImpl(ClientMessageChannel channel) {
@@ -75,7 +77,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         sendLoop();
       }
     });
-    this.sender.setDaemon(true);
     this.inFlightMessages = new ConcurrentHashMap<TransactionID, InFlightMessage>();
     this.outbound = new LinkedBlockingQueue<InFlightMessage>(MAX_QUEUED_REQUESTS);
     this.requestTickets = new Semaphore(MAX_PENDING_REQUESTS);
@@ -251,6 +252,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     // And then drop them.
     this.objectStoreMap.clear();
+    isAlive = false;
+    sender.interrupt();
   }
 
   @Override
@@ -359,7 +362,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private void sendLoop() {
     boolean interrupted = false;
-    while (!interrupted) {
+    while (!interrupted && isAlive) {
       try {
         InFlightMessage first = outbound.take();
         synchronized (this) {
