@@ -24,7 +24,6 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.cluster.Cluster;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.ServerEntityMessageImpl;
 import com.tc.entity.ServerEntityResponseMessageImpl;
@@ -43,20 +42,10 @@ import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.ThreadDumpHandler;
-import com.tc.management.L1Management;
-import com.tc.management.ManagementServicesManager;
-import com.tc.management.ManagementServicesManagerImpl;
 import com.tc.management.TCClient;
-import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
-import com.tc.management.remote.protocol.terracotta.L1JmxReady;
-import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
-import com.tc.management.remote.protocol.terracotta.TunneledDomainsChanged;
-import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ClusterTopologyChangedListener;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -67,7 +56,6 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessage;
@@ -82,7 +70,6 @@ import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handler.ClientCoordinationHandler;
-import com.tc.object.handler.ClientManagementHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMembershipEventsHandler;
 import com.tc.object.handler.LockResponseHandler;
@@ -92,6 +79,10 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfigImpl;
 import com.tc.object.locks.ClientServerExchangeLockContext;
+import static com.tc.object.locks.ServerLockContext.Type.GREEDY_HOLDER;
+import static com.tc.object.locks.ServerLockContext.Type.HOLDER;
+import static com.tc.object.locks.ServerLockContext.Type.PENDING;
+import static com.tc.object.locks.ServerLockContext.Type.TRY_PENDING;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
@@ -145,8 +136,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 /**
@@ -175,15 +164,12 @@ public class DistributedObjectClient implements TCClient {
   private ClientLockManager                          lockManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
-  private L1Management                               l1Management;
   private TCProperties                               l1Properties;
   private boolean                                    createDedicatedMBeanServer          = false;
   private CounterManager                             counterManager;
   private ThreadIDManager                            threadIDManager;
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
-  private TunneledDomainManager                      tunneledDomainManager;
   private TCMemoryManagerImpl                        tcMemManager;
-  private ManagementServicesManager                  managementServicesManager;
 
   private Stage<ClusterInternalEventsContext> clusterEventsStage;
 
@@ -337,7 +323,6 @@ public class DistributedObjectClient implements TCClient {
       }
     });
 
-    this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackOnExitHandler() {
       @Override
       public void callbackOnExit(CallbackOnExitState state) {
@@ -416,17 +401,6 @@ public class DistributedObjectClient implements TCClient {
     this.tcMemManager.checkGarbageCollectors();
 
     this.threadIDManager = new ThreadIDManagerImpl(this.threadIDMap);
-
-    // Set up the JMX management stuff
-    final TunnelingEventHandler teh = this.clientBuilder.createTunnelingEventHandler(this.channel, this.config, uuid);
-    this.tunneledDomainManager = this.clientBuilder.createTunneledDomainManager(this.channel, this.config, teh);
-
-    this.l1Management = this.clientBuilder.createL1Management(teh, this.config.rawConfigText(), this);
-    this.l1Management.start(createDedicatedMBeanServer);
-
-    // register the terracotta operator event logger
-    this.clientBuilder.registerForOperatorEvents(this.l1Management);
-
     // Setup the lock manager
     this.lockManager = this.clientBuilder
         .createLockManager(this.channel,
@@ -451,18 +425,8 @@ public class DistributedObjectClient implements TCClient {
     final Sink<PauseContext> pauseSink = pauseStage.getSink();
 
     final Stage<Void> clusterMembershipEventStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE, Void.class, new ClusterMembershipEventsHandler<Void>(cluster), 1, maxSize);
-
-    final Stage<JmxRemoteTunnelMessage> jmxRemoteTunnelStage = this.communicationStageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, JmxRemoteTunnelMessage.class, teh, 1, maxSize);
-
-    this.managementServicesManager = new ManagementServicesManagerImpl(Collections.<MessageChannel> singleton(channel), channel);
-
-    final Stage<Void> managementStage = this.communicationStageManager.createStage(ClientConfigurationContext.MANAGEMENT_STAGE, Void.class, new ClientManagementHandler<Void>(managementServicesManager), 1, maxSize);
-
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
-    clientHandshakeCallbacks.add(teh);
-    // ClientEntityManager should be the last one so that isRejoinInProgress flag of TCObjectSelfStoreImpl has been reset
-    // in RemoteServerMapManager.initializeHandshake()
     clientHandshakeCallbacks.add(this.clientEntityManager);
     final ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = this.clientBuilder
@@ -478,12 +442,11 @@ public class DistributedObjectClient implements TCClient {
 
     final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager, this.lockManager,
                                                                          this.clientEntityManager,
-                                                                         this.clientHandshakeManager,
-                                                                         this.managementServicesManager);
+                                                                         this.clientHandshakeManager);
     // DO NOT create any stages after this call
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList());
 
-    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), lockResponse.getSink(), pauseSink, jmxRemoteTunnelStage.getSink(), managementStage.getSink(), clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), serverMessageStage.getSink());
+    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), lockResponse.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), serverMessageStage.getSink());
 
     openChannel(serverHost, serverPort);
     waitForHandshake();
@@ -547,10 +510,7 @@ public class DistributedObjectClient implements TCClient {
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
         .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
-    messageTypeClassMapping.put(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
-    messageTypeClassMapping.put(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
     messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);
     messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE,
                                 ListRegisteredServicesResponseMessage.class);
@@ -566,16 +526,13 @@ public class DistributedObjectClient implements TCClient {
   }
 
   private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<HydrateContext> hydrateSink, Sink<Void> lockResponseSink,
-                                        Sink<PauseContext> pauseSink, Sink<JmxRemoteTunnelMessage> jmxRemoteTunnelSink, Sink<Void> managementSink,
+                                        Sink<PauseContext> pauseSink,
                                         Sink<Void> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<Void> serverEntityMessageSink) {
     messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_RECALL_MESSAGE, lockResponseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, managementSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE, managementSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterMembershipEventSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, responseSink, hydrateSink);
@@ -612,27 +569,9 @@ public class DistributedObjectClient implements TCClient {
     return this.clientHandshakeManager;
   }
 
-  public L1Management getL1Management() {
-    return this.l1Management;
-  }
-
-  public TunneledDomainManager getTunneledDomainManager() {
-    return this.tunneledDomainManager;
-  }
-
   @Override
   public void dump() {
     this.dumpHandler.dump();
-  }
-
-  @Override
-  public void reloadConfiguration() throws ConfigurationSetupException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addServerConfigurationChangedListeners(ClusterTopologyChangedListener listener) {
-    throw new UnsupportedOperationException();
   }
 
   protected ClientConfig getClientConfigHelper() {
@@ -653,16 +592,6 @@ public class DistributedObjectClient implements TCClient {
         logger.error("error shutting down counter manager", t);
       } finally {
         this.counterManager = null;
-      }
-    }
-
-    if (this.l1Management != null) {
-      try {
-        this.l1Management.stop();
-      } catch (final Throwable t) {
-        logger.error("error shutting down JMX connector", t);
-      } finally {
-        this.l1Management = null;
       }
     }
 
@@ -857,9 +786,5 @@ public class DistributedObjectClient implements TCClient {
       DSO_LOGGER.info("Running L1 VM shutdown hook");
       shutdown(true, false);
     }
-  }
-
-  public void addTunneledMBeanDomain(String mbeanDomain) {
-    this.config.addTunneledMBeanDomain(mbeanDomain);
   }
 }

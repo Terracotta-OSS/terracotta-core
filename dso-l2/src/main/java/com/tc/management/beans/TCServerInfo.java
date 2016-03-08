@@ -68,19 +68,16 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   private final TCServer                       server;
   private final ProductInfo                    productInfo;
   private final String                         buildID;
-  private final L2State                        l2State;
 
   private final StateChangeNotificationInfo    stateChangeNotificationInfo;
   private long                                 nextSequenceNumber;
 
   private final JVMMemoryManager               manager;
 
-  public TCServerInfo(TCServer server, L2State l2State)
+  public TCServerInfo(TCServer server)
       throws NotCompliantMBeanException {
     super(TCServerInfoMBean.class, true);
     this.server = server;
-    this.l2State = l2State;
-    this.l2State.registerStateChangeListener(this);
     this.productInfo = ProductInfo.getInstance();
     this.buildID = productInfo.buildID();
     this.nextSequenceNumber = 1;
@@ -100,27 +97,27 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   @Override
   public boolean isStarted() {
-    return l2State.isStartState();
+    return server.isStarted();
   }
 
   @Override
   public boolean isActive() {
-    return l2State.isActiveCoordinator();
+    return server.isActive();
   }
 
   @Override
   public boolean isPassiveUninitialized() {
-    return l2State.isPassiveUninitialized();
+    return server.isPassiveUnitialized();
   }
 
   @Override
   public boolean isPassiveStandby() {
-    return l2State.isPassiveStandby();
+    return server.isPassiveStandby();
   }
 
   @Override
   public boolean isRecovering() {
-    return l2State.isRecovering();
+    return server.isRecovering();
   }
 
   @Override
@@ -184,7 +181,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   @Override
   public String getState() {
-    return l2State.toString();
+    return server.getState().getName();
   }
 
   @Override

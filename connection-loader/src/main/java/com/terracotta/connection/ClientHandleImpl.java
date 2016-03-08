@@ -34,20 +34,6 @@ public class ClientHandleImpl implements ClientHandle {
   }
 
   @Override
-  public void activateTunnelledMBeanDomains(Set<String> tunnelledMBeanDomains) {
-    boolean sendCurrentTunnelledDomains = false;
-    if (tunnelledMBeanDomains != null) {
-      for (String mbeanDomain : tunnelledMBeanDomains) {
-        client.addTunneledMBeanDomain(mbeanDomain);
-        sendCurrentTunnelledDomains = true;
-      }
-    }
-    if (sendCurrentTunnelledDomains) {
-      client.getTunneledDomainManager().sendCurrentTunneledDomains();
-    }
-  }
-
-  @Override
   public void shutdown() {
     client.shutdown();
   }

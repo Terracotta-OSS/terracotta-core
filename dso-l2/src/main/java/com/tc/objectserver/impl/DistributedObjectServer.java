@@ -89,26 +89,16 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.TCLoggingService;
 import com.tc.logging.ThreadDumpHandler;
-import com.tc.management.L2Management;
-import com.tc.management.RemoteJMXProcessor;
 import com.tc.management.RemoteManagement;
 import com.tc.management.RemoteManagementImpl;
 import com.tc.management.TSAManagementEventPayload;
+import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
-import com.tc.management.remote.connect.ClientConnectEventHandler;
-import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
-import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
-import com.tc.management.remote.protocol.terracotta.L1ConnectionMessage;
-import com.tc.management.remote.protocol.terracotta.L1JmxReady;
-import com.tc.management.remote.protocol.terracotta.TunneledDomainsChanged;
 import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
 import com.tc.net.NIOWorkarounds;
@@ -171,12 +161,10 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
-import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
-import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
@@ -187,8 +175,6 @@ import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
 import com.tc.operatorevent.OperatorEventHistoryProviderImpl;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.L1ReconnectConfigImpl;
@@ -214,7 +200,6 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
-import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
 import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
@@ -238,9 +223,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 
-import javax.management.MBeanServer;
-import javax.management.remote.JMXConnectorServer;
-
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
@@ -249,6 +231,10 @@ import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
+import com.tc.objectserver.handler.ServerManagementHandler;
+import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEventCallback;
+import java.lang.management.ManagementFactory;
 
 
 /**
@@ -257,8 +243,7 @@ import com.tc.objectserver.handler.ReplicationSender;
 public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, ServerConnectionValidator,
     DumpHandlerStore {
   private final ConnectionPolicy                 connectionPolicy;
-  private final TCServerInfoMBean                tcServerInfoMBean;
-  private final L2State                          l2State;
+  private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
   protected final L2ConfigurationSetupManager    configSetupManager;
   protected final HaConfigImpl                   haConfig;
@@ -277,7 +262,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private StartupLock                            startupLock;
   private Persistor                              persistor;
 
-  private L2Management                           l2Management;
   private L2Coordinator                          l2Coordinator;
 
   private TCProperties                           tcProperties;
@@ -304,15 +288,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
-    this(configSetupManager, threadGroup, connectionPolicy, tcServerInfoMBean,
-         new L2State(), new SEDA(threadGroup), null, null);
+    this(configSetupManager, threadGroup, connectionPolicy, new SEDA(threadGroup), null, null);
 
   }
 
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy,
-                                 TCServerInfoMBean tcServerInfoMBean,
-                                 L2State l2State, SEDA seda,
+                                 SEDA seda,
                                  TCServer server, TCSecurityManager securityManager) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
@@ -328,10 +310,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.configSetupManager = configSetupManager;
     this.haConfig = new HaConfigImpl(this.configSetupManager);
     this.connectionPolicy = connectionPolicy;
-    this.tcServerInfoMBean = tcServerInfoMBean;
-    this.l2State = l2State;
     this.threadGroup = threadGroup;
     this.seda = seda;
+    this.server = server;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
     this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
@@ -419,19 +400,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     final boolean restartable = l2DSOConfig.getRestartable();
 
-    // start the JMX server
-    try {
-      //Enabling the JMX server for tests
-      startJMXServer(true, jmxBind, this.configSetupManager.commonl2Config().tsaPort().getValue() + 10,
-                     new RemoteJMXProcessor(), null);
-    } catch (final Exception e) {
-      final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
-      System.exit(-1);
-    }
-
-
     final TCFile location = new TCFileImpl(new TCFileImpl(this.configSetupManager.commonl2Config().dataPath()), this.configSetupManager.dsoL2Config().serverName());
     boolean retries = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
     this.startupLock = this.serverBuilder.createStartupLock(location, retries);
@@ -485,8 +453,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new OperatorEventHistoryProviderImpl();
-    this.serverBuilder
-        .registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider, getMBeanServer());
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
@@ -547,7 +513,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                 new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
 
-    final ClientTunnelingEventHandler clientTunnelingEventHandler = new ClientTunnelingEventHandler();
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.haConfig, this.persistor.getClusterStatePersistor());
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
@@ -556,7 +521,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(),
                                                                        this.communicationsManager
                                                                            .getConnectionManager(), pInfo.version());
-    channelManager.addEventListener(clientTunnelingEventHandler);
     channelManager.addEventListener(this.connectionIdFactory);
 
     final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
@@ -653,34 +617,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, channelManager, this.haConfig, eventCollector);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class, channelLifeCycleHandler, 1, maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
-    channelManager.addEventListener(new ClientChannelOperatorEventlistener());
 
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
-
-    ClientConnectEventHandler clientConnectEventHandler = new ClientConnectEventHandler();
-    final Stage<L1ConnectionMessage.Connecting> jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE, L1ConnectionMessage.Connecting.class, clientConnectEventHandler.getJxmConnectHandler(), 1, maxStageSize);
-    final Stage<L1ConnectionMessage.Disconnecting> jmxRemoteDisconnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE, L1ConnectionMessage.Disconnecting.class, clientConnectEventHandler.getJxmDisconnectHandler(), 1, maxStageSize);
-    final Stage<TunneledDomainsChanged> jmxRemoteTunneledDomainsChangedStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNELED_DOMAINS_CHANGED_STAGE, TunneledDomainsChanged.class, clientConnectEventHandler.getJxmTunneledHandler(), 1, maxStageSize);
-
-    clientTunnelingEventHandler.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink(), jmxRemoteTunneledDomainsChangedStage.getSink());
-    final Stage<L1JmxReady> jmxRemoteTunnelStage_ready = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE_READY, L1JmxReady.class, clientTunnelingEventHandler.getReadyHandler(), 1, maxStageSize);
-    final Stage<JmxRemoteTunnelMessage> jmxRemoteTunnelStage_remote = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE_REMOTE, JmxRemoteTunnelMessage.class, clientTunnelingEventHandler.getRemoteHandler(), 1, maxStageSize);
-    final Stage<TunneledDomainsChanged> jmxRemoteTunnelStage_tunnel = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE_TUNNEL, TunneledDomainsChanged.class, clientTunnelingEventHandler.getTunnelHandler(), 1, maxStageSize);
-
-    ServerManagementHandler serverManagementHandler = new ServerManagementHandler();
-    final Stage<ListRegisteredServicesResponseMessage> managementStage_list = stageManager.createStage(ServerConfigurationContext.MANAGEMENT_STAGE_LIST_RESPONSE, ListRegisteredServicesResponseMessage.class, serverManagementHandler.getListHandler(), 1, maxStageSize);
-    final Stage<InvokeRegisteredServiceResponseMessage> managementStage_invoke = stageManager.createStage(ServerConfigurationContext.MANAGEMENT_STAGE_INVOKE_RESPONSE, InvokeRegisteredServiceResponseMessage.class, serverManagementHandler.getInvokeHandler(), 1, maxStageSize);
-
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage_remote.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage_ready.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, jmxRemoteTunnelStage_tunnel.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE, managementStage_list.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE, managementStage_invoke.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, voltronMessageSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
 
@@ -719,7 +662,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         weightGeneratorFactory, 
         this.persistor.getClusterStatePersistor());
     
-    state.registerForStateChangeEvents(this.l2State);
+    state.registerForStateChangeEvents(this.server);
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
                                                                   stageManager, state,
@@ -803,6 +746,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     toInit.add(this.serverBuilder);
 
     startStages(stageManager, toInit);
+    
+    ServerManagementHandler serverManagementHandler = new ServerManagementHandler();
 
     final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
@@ -850,7 +795,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
   
   private void sendNoop(EntityID eid, long version) {
-    if (!this.l2State.isActiveCoordinator()) {
+    if (!this.l2Coordinator.getStateManager().isActiveCoordinator()) {
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
@@ -945,10 +890,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
         .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
-    messageTypeClassMapping.put(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
-    messageTypeClassMapping.put(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
 
     messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);
     messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE, ListRegisteredServicesResponseMessage.class);
@@ -1094,14 +1036,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private void basicStop() {
-    try {
-      stopJMXServer();
-    } catch (final Throwable t) {
-      logger.error("Error shutting down jmx server", t);
-    }
-
-    TerracottaRemoteManagement.setRemoteManagementInstance(null);
-
     if (this.startupLock != null) {
       this.startupLock.release();
     }
@@ -1118,42 +1052,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public ServerManagementContext getManagementContext() {
     return this.managementContext;
   }
-
-  public MBeanServer getMBeanServer() {
-    return this.l2Management.getMBeanServer();
-  }
-
-  public JMXConnectorServer getJMXConnServer() {
-    return this.l2Management.getJMXConnServer();
-  }
-
+  
   public TerracottaOperatorEventHistoryProvider getOperatorEventsHistoryProvider() {
     return this.operatorEventHistoryProvider;
-  }
-
-  private void startJMXServer(boolean listenerEnabled, InetAddress bind, int jmxPort,
-                              Sink remoteEventsSink,
-                              ServerDBBackupMBean serverDBBackupMBean) throws Exception {
-    if (jmxPort == 0) {
-      jmxPort = new PortChooser().chooseRandomPort();
-    }
-
-    this.l2Management = this.serverBuilder.createL2Management(listenerEnabled, this.tcServerInfoMBean,
-                                                              this.configSetupManager, this,
-                                                              bind, jmxPort, remoteEventsSink, this,
-                                                              serverDBBackupMBean, tcSecurityManager);
-
-    this.l2Management.start();
-  }
-
-  private void stopJMXServer() throws Exception {
-    try {
-      if (this.l2Management != null) {
-        this.l2Management.stop();
-      }
-    } finally {
-      this.l2Management = null;
-    }
   }
 
   @Override
@@ -1191,7 +1092,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public void dumpClusterState() {
     try {
-      L2DumperMBean mbean = (L2DumperMBean) l2Management.findMBean(L2MBeanNames.DUMPER, L2DumperMBean.class);
+      L2DumperMBean mbean = (L2DumperMBean) TerracottaManagement.findMBean(L2MBeanNames.DUMPER, L2DumperMBean.class, ManagementFactory.getPlatformMBeanServer());
       mbean.dumpClusterState();
     } catch (Exception e) {
       logger.warn("Could not take Cluster dump, hence taking server dump only");

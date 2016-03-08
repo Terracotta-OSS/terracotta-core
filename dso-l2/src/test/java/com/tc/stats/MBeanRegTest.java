@@ -47,8 +47,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.storage.api.OffheapStats;
-import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounter;
@@ -59,6 +57,7 @@ import javax.management.MBeanServer;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import org.junit.Ignore;
 
 public class MBeanRegTest {
 
@@ -128,7 +127,7 @@ public class MBeanRegTest {
 
   }
 
-  @Test
+  @Test @Ignore // client tunneling is no longer valid
   public void testRemoveListenerOnDisconnect() throws Exception {
     channelMgrMbean.makeChannelActive(clientId, false);
     channelMgrMbean.closeAll(Collections.singletonList(clientId));

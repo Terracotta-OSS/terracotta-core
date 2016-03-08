@@ -32,7 +32,6 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
-import com.tc.management.L2Management;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
@@ -85,16 +84,6 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,
                                       StripeIDStateManager stripeStateManager);
-
-  L2Management createL2Management(boolean listenerEnabled, TCServerInfoMBean tcServerInfoMBean,
-                                  L2ConfigurationSetupManager configSetupManager,
-                                  DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
-                                  Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator,
-                                  ServerDBBackupMBean serverDBBackupMBean, TCSecurityManager manager) throws Exception;
-
-  void registerForOperatorEvents(L2Management l2Management,
-                                 TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
-                                 MBeanServer l2MbeanServer);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
 

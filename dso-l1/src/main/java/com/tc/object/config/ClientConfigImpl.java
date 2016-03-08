@@ -38,19 +38,13 @@ import com.tc.util.version.VersionCompatibility;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 public class ClientConfigImpl implements ClientConfig {
 
   private static final TCLogger                                  logger                      = CustomerLogging
                                                                                                  .getDSOGenericLogger();
   private final L1ConfigurationSetupManager                      configSetupManager;
-
-  private final Set<String>                                      tunneledMBeanDomains        = Collections
-                                                                                                 .synchronizedSet(new HashSet<String>());
-  private ReconnectConfig                                        l1ReconnectConfig           = null;
+  private final ReconnectConfig                                        l1ReconnectConfig           = null;
   private static final long                                      CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
                                                                                                  .getProperties()
                                                                                                  .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
@@ -76,11 +70,6 @@ public class ClientConfigImpl implements ClientConfig {
   @Override
   public SecurityInfo getSecurityInfo() {
     return configSetupManager.getSecurityInfo();
-  }
-
-  @Override
-  public boolean addTunneledMBeanDomain(String tunneledMBeanDomain) {
-    return this.tunneledMBeanDomains.add(tunneledMBeanDomain);
   }
 
   @Override
@@ -200,20 +189,4 @@ public class ClientConfigImpl implements ClientConfig {
     }
     return l1ReconnectConfig;
   }
-
-  @Override
-  public String[] getTunneledDomains() {
-    synchronized (tunneledMBeanDomains) {
-      String[] result = new String[tunneledMBeanDomains.size()];
-      tunneledMBeanDomains.toArray(result);
-      return result;
-    }
-  }
-
-  @Override
-  public L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException {
-    configSetupManager.reloadServersConfiguration();
-    return configSetupManager;
-  }
-
 }

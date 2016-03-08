@@ -19,5 +19,4 @@
 package com.tc.object.config;
 
 public interface DSOMBeanConfig {
-  String[] getTunneledDomains();
 }

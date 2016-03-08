@@ -94,7 +94,10 @@ public class ClientShutdownManager {
 
     boolean immediate = forceImmediate || isImmediate();
 
-    // TODO: hook up to ClientRequestManager?
+    ClientEntityManager entityMgr = this.client.getEntityManager();
+    if (entityMgr != null) {
+      entityMgr.shutdown(fromShutdownHook);
+    }
   }
 
   private boolean isImmediate() {

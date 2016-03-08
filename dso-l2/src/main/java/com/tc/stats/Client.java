@@ -22,8 +22,6 @@ package com.tc.stats;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.beans.L1MBeanNames;
-import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.net.ClientID;
@@ -37,9 +35,7 @@ import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
@@ -51,17 +47,14 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import javax.management.relation.MBeanServerNotificationFilter;
 
 public class Client extends AbstractTerracottaMBean implements ClientMBean, NotificationListener {
 
   private static final TCLogger                logger                  = TCLogging.getLogger(Client.class);
 
   private final MBeanServer                    mbeanServer;
-  private boolean                              isListeningForTunneledBeans;
   private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
-  private final ObjectName                     l1DumperBeanName;
   private ObjectName                           l1OperatorEventsBeanName;
   private TerracottaOperatorEventsMBean        l1OperatorEventsBean;
   private final MessageChannel                 channel;
@@ -76,10 +69,8 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
-  private final MBeanRegistrationFilter        registrationFilter;
-
   static {
-    final String[] notifTypes = new String[] { TUNNELED_BEANS_REGISTERED };
+    final String[] notifTypes = new String[] { };
     final String name = Notification.class.getName();
     final String description = "DSOClient event";
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
@@ -96,115 +87,11 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     this.writeRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.WRITE_RATE);
     this.readRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.READ_RATE);
     this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
-
-    this.l1InfoBeanName = getTunneledBeanName(L1MBeanNames.L1INFO_PUBLIC);
-    this.l1OperatorEventsBeanName = getTunneledBeanName(MBeanNames.OPERATOR_EVENTS_PUBLIC);
-    this.enterpriseMBeanName = getTunneledBeanName(L1MBeanNames.ENTERPRISE_TC_CLIENT);
-    this.l1DumperBeanName = getTunneledBeanName(MBeanNames.L1DUMPER_INTERNAL);
-
-    try {
-      this.registrationFilter = new MBeanRegistrationFilter(getTunneledBeanName(new ObjectName("*:*")));
-    } catch (MalformedObjectNameException mone) {
-      throw new RuntimeException(mone);
-    }
-
-    testSetupTunneledBeans();
-  }
-
-  /**
-   * The tunneled client bean names must be queried-for using a wildcard pattern since they can have attributes
-   * (tc.node-name, others may come later) in addition to those expected. Each of the prototype names created match a
-   * single tunneled bean, uniquely identified by its node attribute. The initial tunneled bean names are not patterns.
-   */
-  private ObjectName queryClientBean(ObjectName o) {
-    try {
-      ObjectName pattern = new ObjectName(o.getCanonicalName() + ",*");
-      Set<ObjectName> result = mbeanServer.queryNames(pattern, null);
-      Iterator<ObjectName> iter = result.iterator();
-      return iter.hasNext() ? iter.next() : null;
-    } catch (MalformedObjectNameException moe) {
-      throw new RuntimeException(moe);
-    }
-  }
-
-  private void testSetupTunneledBeans() {
-    startListeningForTunneledBeans();
-
-    ObjectName beanName;
-
-    if ((beanName = queryClientBean(l1InfoBeanName)) != null) {
-      l1InfoBeanName = beanName;
-      setupL1InfoBean();
-    }
-
-    if ((beanName = queryClientBean(this.l1OperatorEventsBeanName)) != null) {
-      this.l1OperatorEventsBeanName = beanName;
-      setupL1OperatorEventsBean();
-    }
-
-    if (haveAllTunneledBeans()) {
-      stopListeningForTunneledBeans();
-    }
-  }
-
-  private static class MBeanRegistrationFilter extends MBeanServerNotificationFilter {
-    static final long        serialVersionUID = 42L;
-
-    private final ObjectName pattern;
-
-    private MBeanRegistrationFilter(ObjectName pattern) {
-      this.pattern = pattern;
-    }
-
-    @Override
-    public synchronized boolean isNotificationEnabled(Notification notif) {
-      if (notif instanceof MBeanServerNotification) {
-        MBeanServerNotification mbsn = (MBeanServerNotification) notif;
-        return pattern.apply(mbsn.getMBeanName());
-      }
-      return false;
-    }
-  }
-
-  private void startListeningForTunneledBeans() {
-    if (isListeningForTunneledBeans) return;
-    try {
-      mbeanServer.addNotificationListener(new ObjectName("JMImplementation:type=MBeanServerDelegate"), this,
-                                          registrationFilter, null);
-    } catch (Exception e) {
-      throw new RuntimeException("Adding listener to MBeanServerDelegate", e);
-    }
-    isListeningForTunneledBeans = true;
-  }
-
-  void stopListeningForTunneledBeans() {
-    if (!isListeningForTunneledBeans) return;
-    try {
-      mbeanServer.removeNotificationListener(new ObjectName("JMImplementation:type=MBeanServerDelegate"), this,
-                                             registrationFilter, null);
-    } catch (Exception e) {
-      throw new RuntimeException("Removing listener to MBeanServerDelegate", e);
-    }
-    isListeningForTunneledBeans = false;
-  }
-
-  @Override
-  public boolean isTunneledBeansRegistered() {
-    return !isListeningForTunneledBeans;
   }
 
   @Override
   public void reset() {
     // nothing to reset
-  }
-
-  public ObjectName getTunneledBeanName(ObjectName on) {
-    try {
-      String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '_');
-      return new ObjectName(name);
-    } catch (MalformedObjectNameException mone) {
-      throw new RuntimeException("Creating ObjectName", mone);
-    }
   }
 
   @Override
@@ -232,7 +119,7 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
 
   @Override
   public ObjectName getL1DumperBeanName() {
-    return this.l1DumperBeanName;
+    return ObjectName.WILDCARD;
   }
 
   @Override
@@ -305,16 +192,6 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName, L1InfoMBean.class, false);
   }
 
-  private void setupL1OperatorEventsBean() {
-    this.l1OperatorEventsBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1OperatorEventsBeanName,
-                                                                              TerracottaOperatorEventsMBean.class,
-                                                                              false);
-  }
-
-  private boolean haveAllTunneledBeans() {
-    return l1InfoBean != null;
-  }
-
   /**
    * Since ObjectNames can have arbitrary attribute pairs, we need to match against a wildcard pattern that we expect.
    * Each tunneled client bean is uniquely identified by its node attribute, which is constructed from the remote host
@@ -330,17 +207,7 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   }
 
   private void beanRegistered(ObjectName beanName) {
-    if (!haveAllTunneledBeans()) {
-      if (l1InfoBean == null && matchesClientBeanName(l1InfoBeanName, beanName)) {
-        l1InfoBeanName = beanName;
-        setupL1InfoBean();
-      }
 
-      if (haveAllTunneledBeans()) {
-        stopListeningForTunneledBeans();
-        sendNotification(new Notification(TUNNELED_BEANS_REGISTERED, this, sequenceNumber.incrementAndGet()));
-      }
-    }
   }
 
   @Override

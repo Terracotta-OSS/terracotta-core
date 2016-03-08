@@ -22,7 +22,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.util.ProductID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.EnterpriseDistributedObjectClient;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.util.UUID;
@@ -37,13 +36,8 @@ public class ClientFactory {
                                                      ClusterInternal cluster,
                                                      TCSecurityManager securityManager,
                                                      UUID uuid, ProductID productId) {
-    //TODO add license check
-    if(securityManager == null) {
-      return new DistributedObjectClient(config, threadGroup, connectionComponents,
-          cluster, null,
-          uuid, productId);
-    } else {
-      return new EnterpriseDistributedObjectClient(config, threadGroup, connectionComponents, cluster, securityManager, uuid, productId);
-    }
+    return new DistributedObjectClient(config, threadGroup, connectionComponents,
+        cluster, null,
+        uuid, productId);
   }
 }
