@@ -90,14 +90,27 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public synchronized byte[] get() throws InterruptedException, EntityException {
+  public byte[] get() throws InterruptedException, EntityException {
+    try {
+      return waitForCompletion(0, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException te) {
+      Assert.unexpected(te);
+      return null;
+    }
+  }
+  
+  private synchronized byte[] waitForCompletion(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
     Assert.assertTrue(didAdd);
+    long end = (timeout > 0) ? System.currentTimeMillis() + unit.toMillis(timeout) : Long.MAX_VALUE;
     try {
-      while (!this.didComplete) {
-        this.wait();
+      while (!this.didComplete && System.currentTimeMillis() < end) {
+        this.wait(unit.toMillis(timeout));
+      }
+      if (!this.didComplete) {
+        throw new TimeoutException();
       }
     } finally {
       // We will hit this path on interrupt, for example.
@@ -111,7 +124,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
 
   @Override
   public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
-    throw new IllegalStateException("Not supported");
+    return waitForCompletion(timeout, unit);
   }
 
   public synchronized void sent() {
