@@ -22,6 +22,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.state.StateManager;
@@ -64,6 +65,8 @@ public class ReplicatedTransactionHandler {
   private final StateManager stateManager;
   private final ManagedEntity platform;
   
+  private Sink<ReplicationMessage> loopback;
+  
   private final SyncState state = new SyncState();
   
   public ReplicatedTransactionHandler(StateManager state, TransactionOrderPersistor transactionOrderPersistor, 
@@ -97,11 +100,16 @@ public class ReplicatedTransactionHandler {
       ServerConfigurationContext scxt = (ServerConfigurationContext)context;
   //  when this spins up, send  request to active and ask for sync
       scxt.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(scxt.getL2Coordinator().getStateManager().getCurrentState());
+      setLoopback(scxt.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class).getSink());
       requestPassiveSync();
     }
     
     
   };
+  
+  private void setLoopback(Sink<ReplicationMessage> loop) {
+    this.loopback = loop;
+  }
   
   public EventHandler<ReplicationMessage> getEventHandler() {
     return eventHorizon;
@@ -249,11 +257,7 @@ public class ReplicatedTransactionHandler {
     if (deferred != null) {
       while(!deferred.isEmpty()) {
         ReplicationMessage r = deferred.pop();
-        try {
-          processMessage(r);
-        } catch (EntityException ee) {
-          throw new RuntimeException(ee);
-        }
+        loopback.addSingleThreaded(r);
       }
     }
   }

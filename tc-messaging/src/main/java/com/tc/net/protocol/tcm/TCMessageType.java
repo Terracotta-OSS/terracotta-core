@@ -60,7 +60,7 @@ public final class TCMessageType {
   // public static final int TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE = 37;
   // public static final int TYPE_MEMORY_DATA_STORE_RESPONSE_MESSAGE = 38;
   public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 39;
-  public static final int           TYPE_CLIENT_JMX_READY_MESSAGE                     = 40;
+//  public static final int           TYPE_CLIENT_JMX_READY_MESSAGE                     = 40;
 //  public static final int           TYPE_OBJECTS_NOT_FOUND_RESPONSE_MESSAGE           = 41;
   // public static final int TYPE_BENCH_MESSAGE = 42;
   // public static final int TYPE_LOCK_STAT_MESSAGE = 43;
@@ -103,7 +103,6 @@ public final class TCMessageType {
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
   public static final TCMessageType CLUSTER_MEMBERSHIP_EVENT_MESSAGE                  = new TCMessageType();
-  public static final TCMessageType CLIENT_JMX_READY_MESSAGE                          = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                             = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();
   public static final TCMessageType LIST_REGISTERED_SERVICES_MESSAGE                  = new TCMessageType();
