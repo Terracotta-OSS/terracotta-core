@@ -27,6 +27,17 @@ case "$1" in
     ;;
 esac
 
+# Install the signal handler so that SIGTERM (15) is relayed to the underlying JVM.
+PID=0
+function cleanup_TERM {
+    kill -TERM $PID
+}
+trap cleanup_TERM SIGTERM
+# Same thing for SIGINT (2).
+function cleanup_INT {
+    kill -INT $PID
+}
+trap cleanup_INT SIGINT
 
 
 THIS_DIR=`dirname $0`
@@ -89,8 +100,10 @@ ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/server/lib/tc.jar:${PLUGIN_CLASSPATH}" \
-   com.tc.server.TCServerMain "$@"
- exitValue=$?
+   com.tc.server.TCServerMain "$@" &
+PID=$!
+wait $PID
+exitValue=$?
  start=false;
 
  if test "$exitValue" = "11"; then
