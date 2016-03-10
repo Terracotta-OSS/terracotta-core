@@ -32,6 +32,7 @@ import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
@@ -46,6 +47,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
@@ -55,6 +57,7 @@ import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
+import java.nio.ByteBuffer;
 
 import java.util.LinkedList;
 import java.util.Optional;
@@ -73,13 +76,13 @@ public class ReplicatedTransactionHandlerTest {
   private ReplicatedTransactionHandler rth;
   private ClientID source;
   private ForwardingSink loopbackSink;
-  private RunnableSink requestProcessorSink;
   private ClientEntityStateManager clientEntityStateManager;
   private ITopologyEventCollector eventCollector;
   private StateManager stateManager;
   private EntityManager entityManager;
   private GroupManager groupManager;
   
+  private long rid = 0;
   
   @Before
   public void setUp() throws Exception {
@@ -101,7 +104,6 @@ public class ReplicatedTransactionHandlerTest {
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
     
     this.loopbackSink = new ForwardingSink(this.rth.getEventHandler());
-    this.requestProcessorSink = new RunnableSink();
     
     this.eventCollector = mock(ITopologyEventCollector.class);
     channelManager.addEventListener(clientEntityStateManager);
@@ -132,13 +134,127 @@ public class ReplicatedTransactionHandlerTest {
     verify(groupManager).sendTo(Matchers.eq(sid), Matchers.any());
   }
   
+  @Test
+  public void testTestDefermentDuringSync() throws Exception {
+    EntityID eid = new EntityID("foo", "bar");
+    long VERSION = 1;
+    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
+    ServerID sid = new ServerID("test", "test".getBytes());
+    ManagedEntity entity = mock(ManagedEntity.class);
+    when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.of(entity));
+    Mockito.doAnswer(invocation->{
+      ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
+      req.complete(new byte[0]);
+      verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
+      return null;
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());
+    Mockito.doAnswer(invocation->{
+      ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
+      req.complete(new byte[0]);
+      verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
+      return null;
+    }).when(entity).addSyncRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());
+    mockPassiveSync(rth);
+  }
+  
+  private ServerEntityRequest last;
+  private int lastSid = 0;
+  private int concurrency = 0;
+  private boolean invoked = false;
+  
+  private void verifySequence(ServerEntityRequest req, byte[] payload, int c) {
+    switch(req.getAction()) {
+      case RECEIVE_SYNC_ENTITY_START:
+        Assert.assertNull(last);
+        last = req;
+        Assert.assertEquals(0, concurrency);
+        break;
+      case RECEIVE_SYNC_ENTITY_KEY_START:
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        last = req;
+        Assert.assertEquals(0, concurrency);
+        concurrency = c;
+        break;
+      case RECEIVE_SYNC_PAYLOAD:
+        Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START);
+        last = req;
+        Assert.assertEquals(concurrency, c);
+  //  make sure no invokes deferred to the end of a concurrency key
+        Assert.assertFalse(invoked);
+        break;
+      case RECEIVE_SYNC_ENTITY_KEY_END:
+        Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
+        last = req;
+        Assert.assertEquals(concurrency, c);
+        concurrency = 0;
+        break;
+      case RECEIVE_SYNC_ENTITY_END:
+        Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        last = req;
+        invoked = false;
+        break;
+      case INVOKE_ACTION:
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
+        int sid = ByteBuffer.wrap(payload).getInt();
+        Assert.assertEquals(lastSid + 1, sid);
+        Assert.assertEquals(concurrency, c);
+        lastSid = sid;
+  //  make sure no invokes deferred to the end
+        invoked = true;
+  //  don't sert last
+        break;
+      default:
+        break;
+    }
+  }
+  
+  private void mockPassiveSync(ReplicatedTransactionHandler rth) throws EventHandlerException {
+//  start passive sync
+    EntityID eid = new EntityID("foo", "bar");
+    long VERSION = 1;
+    byte[] config = new byte[0];
+    send(PassiveSyncMessage.createStartSyncMessage());
+    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config));
+    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 1));
+    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 1, config));
+    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 1));
+    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 2));
+    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 2, config));
+    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 2));  
+    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 3));
+    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 3, config));
+    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 3));  
+    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 4));
+//  defer a few replicated messages with sequence as payload
+    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(1).array(), 4));
+    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(2).array(), 4));
+    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(3).array(), 4));
+    send(PassiveSyncMessage.createPayloadMessage(eid, 1, 4, config));
+//  defer a few replicated messages with sequence as payload
+    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(4).array(), 4));
+    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(5).array(), 4));
+    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(6).array(), 4));
+    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, 4)); 
+    send(PassiveSyncMessage.createEndEntityMessage(eid, VERSION));
+    send(PassiveSyncMessage.createEndSyncMessage());
+  }
+
+  private long send(ReplicationMessage msg) throws EventHandlerException {
+    msg.setReplicationID(rid++);
+    if (!msg.getEntityID().equals(EntityID.NULL_ID)) {
+      loopbackSink.addSingleThreaded(msg);
+    }
+    return rid;
+  }
   @After
   public void tearDown() throws Exception {
     this.rth.getEventHandler().destroy();
   }
   
-
-
+  private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
+    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
+        source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency);
+  }
 
   /**
    * This is pulled out as its own helper since the mocked EntityIDs aren't .equals() each other so using the same

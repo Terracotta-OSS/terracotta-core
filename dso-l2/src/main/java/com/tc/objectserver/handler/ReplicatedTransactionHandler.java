@@ -123,7 +123,8 @@ public class ReplicatedTransactionHandler {
       case ReplicationMessage.REPLICATE:
         if (!state.defer(rep)) {
           replicatedMessageReceived(rep);
-        } break;
+        } 
+        break;
       case ReplicationMessage.SYNC:
         syncMessageReceived(rep);
         break;
@@ -257,7 +258,12 @@ public class ReplicatedTransactionHandler {
     if (deferred != null) {
       while(!deferred.isEmpty()) {
         ReplicationMessage r = deferred.pop();
-        loopback.addSingleThreaded(r);
+        try {
+          Assert.assertTrue(r.getType() == ReplicationMessage.REPLICATE);
+          replicatedMessageReceived(r);
+        } catch (EntityException ee) {
+          throw new RuntimeException(ee);
+        }
       }
     }
   }
@@ -287,8 +293,9 @@ public class ReplicatedTransactionHandler {
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{start(eid, rep.getConcurrency());acknowledge(rep);});
       case SYNC_ENTITY_CONCURRENCY_END:
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{scheduleDeferred(state.end(eid, rep.getConcurrency()));acknowledge(rep);});
+          scheduleDeferred(state.end(eid, rep.getConcurrency()));
+          return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
+          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{acknowledge(rep);});
       default:
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
