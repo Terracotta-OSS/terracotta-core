@@ -19,6 +19,7 @@
 package com.tc.object;
 
 import com.tc.async.api.Sink;
+import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -85,6 +86,6 @@ public interface ClientBuilder {
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 
-  ClientEntityManager createClientEntityManager(ClientMessageChannel channel);
+  ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);
 
 }
