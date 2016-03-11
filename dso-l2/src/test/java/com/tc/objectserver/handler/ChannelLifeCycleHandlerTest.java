@@ -52,7 +52,7 @@ public class ChannelLifeCycleHandlerTest {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     HaConfig haConfig = mock(HaConfig.class);
     this.eventCollector = mock(ITopologyEventCollector.class);
-    this.handler = new ChannelLifeCycleHandler(commsManager, channelManager, haConfig, this.eventCollector);
+    this.handler = new ChannelLifeCycleHandler(commsManager, channelManager, haConfig);
     ServerConfigurationContext context = mock(ServerConfigurationContext.class);
     Stage<HydrateContext> stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));
@@ -76,6 +76,7 @@ public class ChannelLifeCycleHandlerTest {
     when(fakeChannel.getLocalAddress()).thenReturn(null);
     this.handler.channelRemoved(fakeChannel);
     // We expect NOT to receive the disconnect event in the event collector.
+    //  this test is no longer relevant but leave it as harmless
     verify(this.eventCollector, never()).clientDidDisconnect(any(MessageChannel.class), any(ClientID.class));
   }
 }

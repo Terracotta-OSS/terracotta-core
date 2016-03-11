@@ -375,7 +375,7 @@ public class DistributedObjectClient implements TCClient {
 
     DSO_LOGGER.debug("Created channel.");
 
-    this.clientEntityManager = this.clientBuilder.createClientEntityManager(this.channel);
+    this.clientEntityManager = this.clientBuilder.createClientEntityManager(this.channel, this.communicationStageManager);
     RequestReceiveHandler receivingHandler = new RequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityResponse> entityResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class, receivingHandler, 1, maxSize);
 

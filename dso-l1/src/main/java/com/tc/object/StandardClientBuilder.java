@@ -19,6 +19,7 @@
 package com.tc.object;
 
 import com.tc.async.api.Sink;
+import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -120,8 +121,8 @@ public class StandardClientBuilder implements ClientBuilder {
   }
 
   @Override
-  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel) {
-    return new ClientEntityManagerImpl(channel);
+  public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
+    return new ClientEntityManagerImpl(channel, stages);
   }
 
 }

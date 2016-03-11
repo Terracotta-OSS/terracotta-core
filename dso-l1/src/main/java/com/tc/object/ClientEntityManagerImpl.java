@@ -18,6 +18,8 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
@@ -26,18 +28,25 @@ import org.terracotta.exception.EntityException;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
+import java.io.IOException;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -65,9 +74,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint> objectStoreMap;
   
   private volatile boolean isAlive = true;
-
   
-  public ClientEntityManagerImpl(ClientMessageChannel channel) {
+  private final StageManager stages;
+  
+  public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
     this.logger = new ClientIDLogger(channel, TCLogging.getLogger(ClientEntityManager.class));
     
     this.channel = channel;
@@ -83,12 +93,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint>(10240, 0.75f, 128);
+    this.stages = mgr;
     
     // TODO:  This constructor should not be starting a thread so we probably want some external methods to manage the
     //  life-cycle of this internal thread.
     this.sender.start();
   }
-
+  
   @Override
   public synchronized boolean doesEntityExist(EntityID entityID, long version) {
     // We will synthesize a descriptor for this lookup.
@@ -233,6 +244,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
       handshakeMessage.addReconnectReference(context);
     }
+    
+    Stage<VoltronEntityResponse> responder = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class);
+    logger.debug("size of request acks at resend " + responder.getSink().size());
+    FlushResponse flush = new FlushResponse();
+    responder.getSink().addSingleThreaded(flush);
+    flush.waitForAccess();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       NetworkVoltronEntityMessage message = inFlight.getMessage();
@@ -248,7 +265,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     stateManager.stop();
     // We also want to notify any end-points that they have been disconnected.
     for(EntityClientEndpoint endpoint : this.objectStoreMap.values()) {
-      endpoint.didCloseUnexpectedly();
+      try {
+        endpoint.didCloseUnexpectedly();
+      } catch (Throwable t) {
+//  something happened in cleanup.  log and continue
+        logger.error("error in shutfdown", t);
+      }
     }
     // And then drop them.
     this.objectStoreMap.clear();
@@ -417,5 +439,81 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
     message.setContents(clientID, transactionID, entityDescriptor, type, requiresReplication, config, oldestTransactionPending);
     return message;
+  }
+  
+  private static class FlushResponse implements VoltronEntityResponse {
+    private boolean accessed = false;
+    
+    @Override
+    public synchronized TransactionID getTransactionID() {
+      notifyAll();
+      accessed = true;
+      return TransactionID.NULL_ID;
+    }
+
+    @Override
+    public VoltronEntityMessage.Acks getAckType() {
+      return VoltronEntityMessage.Acks.RECEIVED;
+    }
+
+    @Override
+    public TCMessageType getMessageType() {
+      return TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE;
+    }
+
+    @Override
+    public void hydrate() throws IOException, UnknownNameException {
+
+    }
+
+    @Override
+    public void dehydrate() {
+
+    }
+
+    @Override
+    public void send() {
+
+    }
+
+    @Override
+    public MessageChannel getChannel() {
+      return null;
+    }
+
+    @Override
+    public NodeID getSourceNodeID() {
+      return ServerID.NULL_ID;
+    }
+
+    @Override
+    public NodeID getDestinationNodeID() {
+      return ClientID.NULL_ID;
+    }
+
+    @Override
+    public SessionID getLocalSessionID() {
+      return SessionID.NULL_ID;
+    }
+
+    @Override
+    public int getTotalLength() {
+      return 0;
+    }
+    
+    public synchronized void waitForAccess() {
+      boolean interrupted = false;
+      while (!accessed) {
+        try {
+          this.wait();
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+    
   }
 }

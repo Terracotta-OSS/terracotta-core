@@ -88,10 +88,10 @@ public class ReplicatedTransactionHandler {
     public void handleEvent(ReplicationMessage message) throws EventHandlerException {
       try {
         processMessage(message);
-      } catch (EntityException e) {
+      } catch (Throwable t) {
         // We don't expect to see an exception executing a replicated message.
         // TODO:  Find a better way to handle this error.
-        throw Assert.failure("Unexpected exception executing replicated message", e);
+        throw Assert.failure("Unexpected exception executing replicated message", t);
       }
     }
 
@@ -205,6 +205,7 @@ public class ReplicatedTransactionHandler {
   private void requestPassiveSync() {
     NodeID node = stateManager.getActiveNodeID();
     try {
+      LOGGER.info("Requesting Passive Sync from " + node);
       groupManager.sendTo(node, new ReplicationMessageAck(ReplicationMessage.START));
     } catch (GroupException ge) {
       LOGGER.warn("can't request passive sync", ge);

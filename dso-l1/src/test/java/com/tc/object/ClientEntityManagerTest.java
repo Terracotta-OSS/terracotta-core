@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.StageManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -60,6 +61,7 @@ import org.mockito.stubbing.Answer;
 public class ClientEntityManagerTest extends TestCase {
   private ClientMessageChannel channel;
   private ClientEntityManager manager;
+  private StageManager stageMgr;
   
   private EntityID entityID;
   private EntityDescriptor entityDescriptor;
@@ -67,12 +69,17 @@ public class ClientEntityManagerTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
-    this.manager = new ClientEntityManagerImpl(this.channel);
+    this.stageMgr = mock(StageManager.class);
+    this.manager = new ClientEntityManagerImpl(this.channel, stageMgr);
     
     String entityClassName = "Class Name";
     String entityInstanceName = "Instance Name";
     this.entityID = new EntityID(entityClassName, entityInstanceName);
     this.entityDescriptor = new EntityDescriptor(this.entityID, new ClientInstanceID(1), 1);
+  }
+  
+  public void testResponseSinkFlush() throws Exception {
+    
   }
 
   // Test that a simple lookup will succeed.
