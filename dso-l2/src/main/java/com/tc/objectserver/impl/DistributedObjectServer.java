@@ -116,10 +116,12 @@ import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
@@ -603,6 +605,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         return IMonitoringProducer.class;
       }});
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
+    this.l1Listener.getChannelManager().addEventListener(new ChannelManagerEventListener() {
+      @Override
+      public void channelCreated(MessageChannel channel) {
+        eventCollector.clientDidConnect(channel, new ClientID(channel.getChannelID().toLong()));
+      }
+
+      @Override
+      public void channelRemoved(MessageChannel channel) {
+        eventCollector.clientDidDisconnect(channel, new ClientID(channel.getChannelID().toLong()));
+      }
+    });
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
@@ -614,7 +627,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     final Stage<LockRequestMessage> requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE, LockRequestMessage.class, new RequestLockUnLockHandler(), 1, maxStageSize);
-    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, channelManager, this.haConfig, eventCollector);
+    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, channelManager, this.haConfig);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class, channelLifeCycleHandler, 1, maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
 

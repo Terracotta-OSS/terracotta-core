@@ -36,7 +36,6 @@ import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.context.NodeStateEventContext;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 
@@ -49,14 +48,12 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   private Sink<NodeStateEventContext> channelSink;
   private Sink<HydrateContext> hydrateSink;
   private Sink<VoltronEntityMessage> processTransactionSink;
-  private final ITopologyEventCollector eventCollector;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager,
-                                 DSOChannelManager channelManager, HaConfig haConfig, ITopologyEventCollector eventCollector) {
+                                 DSOChannelManager channelManager, HaConfig haConfig) {
     this.commsManager = commsManager;
     this.channelMgr = channelManager;
     this.haConfig = haConfig;
-    this.eventCollector = eventCollector;
   }
 
   @Override
@@ -132,8 +129,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   public void channelCreated(MessageChannel channel) {
     ClientID clientID = new ClientID(channel.getChannelID().toLong());
     channelSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, clientID, channel.getProductId()));
-    // Record that the client connected.
-    this.eventCollector.clientDidConnect(channel, clientID);
   }
 
   @Override
@@ -147,12 +142,5 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
     InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context2);
-    // Note that sometimes a removed event is called when a reconnect window closes but there was no actual "connection" so
-    // we don't want to report this to the event collector.
-    // These cases are detected by checking the local address of the channel:  only real connections have that.
-    if (null != channel.getLocalAddress()) {
-      // Record that the client disconnected.
-      this.eventCollector.clientDidDisconnect(channel, clientID);
-    }
   }
 }
