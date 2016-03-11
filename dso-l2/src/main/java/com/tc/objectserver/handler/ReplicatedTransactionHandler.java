@@ -197,6 +197,10 @@ public class ReplicatedTransactionHandler {
                 break;
             }
           }
+        } else {
+// must be syncing and this entity has not been sync'd yet.  just complete like 
+// we weren't here
+          request.complete();
         }
       }
     }
@@ -218,7 +222,7 @@ public class ReplicatedTransactionHandler {
       LOGGER.debug("Sync Message " + sync.getReplicationType() + " for " + eid + "/" + sync.getConcurrency());
     }
     long version = sync.getVersion();
-    if (!eid.equals(EntityID.NULL_ID)) {
+    if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN && !eid.equals(EntityID.NULL_ID)) {
       try {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
@@ -291,12 +295,13 @@ public class ReplicatedTransactionHandler {
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{moveToPassiveStandBy();acknowledge(rep);});
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
+        start(eid, rep.getConcurrency());
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{start(eid, rep.getConcurrency());acknowledge(rep);});
+          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
       case SYNC_ENTITY_CONCURRENCY_END:
           scheduleDeferred(state.end(eid, rep.getConcurrency()));
           return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{acknowledge(rep);});
+          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
       default:
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
@@ -401,6 +406,12 @@ public class ReplicatedTransactionHandler {
               LOGGER.debug("Destroying " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency());
             }
             destroyed = true;
+          } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+//  NOOP requests cannot be deferred
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Not deferred " + rep.getReplicationType());
+            }
+            return false;
           } else if (currentKey == rep.getConcurrency()) {
             if (LOGGER.isDebugEnabled()) {
               LOGGER.debug("Deferring " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency());
@@ -409,6 +420,9 @@ public class ReplicatedTransactionHandler {
             return true;
           }
         }
+      }
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Not deferred " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency());
       }
       return false;
     }

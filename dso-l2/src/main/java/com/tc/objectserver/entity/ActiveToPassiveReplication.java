@@ -83,24 +83,34 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  */
   private void primePassives() {
     passives.forEach(i -> {
-      if (passiveNodes.add(i)) {
-        prime(i);
+      if (prime(i)) {
+        passiveNodes.add(i);
       }
     });
   }
 /**
  * prime the message channel to a node by setting the starting ordering id to zero.
  */
-  private Future<Void> prime(NodeID node) {
-    logger.info("Starting message sequence on " + node);
-    ReplicationMessage resetOrderedSink = new ReplicationMessage();
-    return replicateMessage(resetOrderedSink, Collections.singleton(node));
+  private boolean prime(NodeID node) {
+    if (!passiveNodes.contains(node)) {
+      logger.info("Starting message sequence on " + node);
+      ReplicationMessage resetOrderedSink = new ReplicationMessage();
+      try {
+        replicateMessage(resetOrderedSink, Collections.singleton(node)).get();
+      } catch (InterruptedException | ExecutionException e) {
+        logger.warn("error during passive prime", e);
+        return false;
+      }
+      return true;
+    } else {
+      return false;
+    }
   }
   
   public void startPassiveSync(NodeID newNode) {
     Assert.assertTrue(activated);
-    if (passiveNodes.add(newNode)) {
-      prime(newNode);
+    if (prime(newNode)) {
+      passiveNodes.add(newNode);
     }
     logger.info("Starting sync to " + newNode);
     executePassiveSync(newNode);
