@@ -62,7 +62,7 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
     long seq = oc.getSequenceID();
     if (seq == 0) {
       if (pending.isEmpty()) {
-        logger.warn("Sequence reset. Message with ID " + (current)
+        logger.debug("Sequence reset. Message with ID " + (current)
             + " was last before reset");
         current = 0;
         sink.addSingleThreaded(oc);
