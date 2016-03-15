@@ -77,7 +77,7 @@ public class TestClusterStatePersistor extends ClusterStatePersistor {
       public <K, V> KeyValueStorage<K, V> destroyKeyValueStorage(String alias) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
-      
+
     });
   }
 

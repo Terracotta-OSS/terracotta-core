@@ -20,6 +20,7 @@ package com.tc.services;
 
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.logging.TCLogger;
@@ -27,7 +28,6 @@ import com.tc.logging.TCLogging;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.Set;
 import org.terracotta.entity.ServiceConfiguration;
 
@@ -85,6 +85,25 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         }
     }
     return null;
+  }
+
+  @Override
+  public void clearServiceProvidersState() {
+    for(ServiceProvider serviceProvider : serviceProviders) {
+      try {
+        serviceProvider.clear();
+      } catch (ServiceProviderCleanupException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    for(BuiltInServiceProvider builtInServiceProvider : builtInServiceProviders) {
+      try {
+        builtInServiceProvider.clear();
+      } catch (ServiceProviderCleanupException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   private void registerNewServiceProvider(ServiceProvider service) {

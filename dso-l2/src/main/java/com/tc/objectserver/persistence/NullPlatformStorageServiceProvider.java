@@ -3,6 +3,7 @@ package com.tc.objectserver.persistence;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.persistence.IPersistentStorage;
 
 import java.io.IOException;
@@ -36,6 +37,11 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider {
 
     @Override
     public void close() throws IOException {
+        providers.clear();
+    }
+
+    @Override
+    public void clear() throws ServiceProviderCleanupException {
         providers.clear();
     }
 }

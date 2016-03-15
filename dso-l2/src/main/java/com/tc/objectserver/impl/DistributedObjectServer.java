@@ -22,6 +22,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 
@@ -449,9 +450,19 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
     
     persistor = serverBuilder.createPersistor(platformServiceRegistry);
+    persistor.start();
+
+    if(!persistor.wasDBClean()) {
+      // make sure peristor is not using any storage service
+      persistor.close();
+      serviceRegistry.clearServiceProvidersState();
+      // create the persistor once again as underlying storage service might have cleared its internal state
+      persistor = serverBuilder.createPersistor(platformServiceRegistry);
+      persistor.start();
+    }
+
     dumpHandler.registerForDump(new CallbackDumpAdapter(persistor));
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
-    persistor.start();
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new OperatorEventHistoryProviderImpl();

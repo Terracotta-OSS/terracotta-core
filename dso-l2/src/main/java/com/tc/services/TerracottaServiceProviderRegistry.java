@@ -21,6 +21,7 @@ package com.tc.services;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProviderCleanupException;
 
 
 /**
@@ -73,4 +74,6 @@ public interface TerracottaServiceProviderRegistry {
    * @return instance of service
    */
   <T> T getService(long consumerId, ServiceConfiguration<T> config);
+
+  void clearServiceProvidersState();
 }

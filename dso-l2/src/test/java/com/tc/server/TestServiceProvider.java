@@ -24,6 +24,7 @@ import java.util.Collection;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.ServiceProviderCleanupException;
 
 /**
  *
@@ -49,6 +50,11 @@ public class TestServiceProvider implements ServiceProvider {
   @Override
   public void close() throws IOException {
 
+  }
+
+  @Override
+  public void clear() throws ServiceProviderCleanupException {
+    // nothing to do
   }
   
 }
