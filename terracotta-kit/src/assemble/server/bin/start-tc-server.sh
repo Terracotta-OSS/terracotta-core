@@ -34,8 +34,11 @@ function cleanup_TERM {
 }
 trap cleanup_TERM SIGTERM
 # Same thing for SIGINT (2).
+# NOTE:  The shell sets SIGINT of the inferior process to SIG_IGN (ignored) when starting
+# the process in the background (&) so we will actually commute the signal to SIGTERM
+# (since that is our intention, anyway).
 function cleanup_INT {
-    kill -INT $PID
+    kill -TERM $PID
 }
 trap cleanup_INT SIGINT
 
@@ -101,9 +104,23 @@ ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/server/lib/tc.jar:${PLUGIN_CLASSPATH}" \
    com.tc.server.TCServerMain "$@" &
-PID=$!
-wait $PID
-exitValue=$?
+ PID=$!
+ # NOTE:  Wait may return prematurely if the shell runs its signal handler but we know that it
+ # returns 127 if the call fails so we will loop on calling it until that happens (we want to see
+ # it fail due to the child process exiting and no longer being a child of this shell).  The last
+ # wait call, prior to this failing call, will contain the correct return value.
+ exitValue=128
+ keepWaiting=true
+ while [ "$keepWaiting" == true ]; do
+  # Redirect error so we don't see the message about not being a child shell.
+  wait $PID >& /dev/null
+  returnValue=$?
+  if [ $returnValue -ne 127 ]; then
+   exitValue=$returnValue
+  else
+   keepWaiting=false
+  fi
+ done
  start=false;
 
  if test "$exitValue" = "11"; then
