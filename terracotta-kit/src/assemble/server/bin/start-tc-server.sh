@@ -34,8 +34,11 @@ function cleanup_TERM {
 }
 trap cleanup_TERM SIGTERM
 # Same thing for SIGINT (2).
+# NOTE:  The shell sets SIGINT of the inferior process to SIG_IGN (ignored) when starting
+# the process in the background (&) so we will actually commute the signal to SIGTERM
+# (since that is our intention, anyway).
 function cleanup_INT {
-    kill -INT $PID
+    kill -TERM $PID
 }
 trap cleanup_INT SIGINT
 
