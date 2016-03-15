@@ -21,7 +21,7 @@ package com.terracotta.connection;
 import com.terracotta.connection.client.TerracottaClientConfigParams;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
-import java.util.Set;
+import java.util.Properties;
 
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
@@ -43,12 +43,12 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
       stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
     }
-    return createClient(stripeConnectionConfig, config.getProductId());
+    return createClient(stripeConnectionConfig, config.getProductId(), config.getGenericProperties());
   }
 
 
-  private TerracottaInternalClient createClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId) {
-    TerracottaInternalClient client = new TerracottaInternalClientImpl(stripeConnectionConfig, productId);
+  private TerracottaInternalClient createClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId, Properties props) {
+    TerracottaInternalClient client = new TerracottaInternalClientImpl(stripeConnectionConfig, productId, props);
     return client;
   }
 

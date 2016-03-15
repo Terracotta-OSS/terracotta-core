@@ -19,6 +19,7 @@
 
 package com.terracotta.connection.api;
 
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionService;
@@ -32,6 +33,7 @@ import com.terracotta.connection.client.TerracottaClientConfigParams;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
+import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -78,18 +80,24 @@ public class TerracottaConnectionService implements ConnectionService {
       String stripeUri = ((null != userInfo) ? (userInfo + "@") : "") + oneHost.getHost() + ":" + oneHost.getPort();
       clientConfig.addStripeMemberUri(stripeUri);
     }
+    
+    clientConfig.addGenericProperties(properties);
     final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
-    client.init();
     try {
-      
-      return new TerracottaConnection(client.getClientEntityManager(), client.getClientLockManager(), new Runnable() {
+      client.init();
+    } catch (TimeoutException exp) {
+      throw new ConnectionException(exp);
+    } catch (ConfigurationSetupException config) {
+      throw new ConnectionException(config);
+    } catch (InterruptedException ie) {
+      throw new ConnectionException(ie);
+    }
+
+    return new TerracottaConnection(client.getClientEntityManager(), client.getClientLockManager(), new Runnable() {
         public void run() {
           client.shutdown();
           }
         }
       );
-    } catch (Exception e) {
-      throw new ConnectionException(e);
-    }
   }
 }

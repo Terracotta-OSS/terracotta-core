@@ -30,7 +30,6 @@ import com.tc.object.locks.ClientLockManager;
 import com.terracotta.connection.entity.MaintenanceModeService;
 import com.terracotta.connection.entity.TerracottaEntityRef;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,7 +44,7 @@ public class TerracottaConnection implements Connection {
 
   private boolean isShutdown = false;
 
-  public TerracottaConnection(ClientEntityManager entityManager, ClientLockManager clientLockManager, Runnable shutdown) throws IOException {
+  public TerracottaConnection(ClientEntityManager entityManager, ClientLockManager clientLockManager, Runnable shutdown) {
     this.entityManager = entityManager;
     this.maintenanceModeService = new MaintenanceModeService(clientLockManager);
     this.shutdown = shutdown;
