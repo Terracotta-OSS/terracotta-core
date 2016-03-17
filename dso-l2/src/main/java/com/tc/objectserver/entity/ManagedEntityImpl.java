@@ -145,7 +145,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       try {
         message = runWithHelper(()->codec.deserialize(payload));
       } catch (EntityUserException e) {
-        request.failure(e);
+        throw new RuntimeException(e);
       }
       // If we are still ok and managed to deserialize the message, continue.
       if (null != message) {
@@ -203,7 +203,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           message = runWithHelper(()->codec.deserializeForSync(concurrencyKey, payload));
         } catch (EntityUserException e) {
-          sync.failure(e);
+          throw new RuntimeException(e);
         }
         // If we are still ok and managed to deserialize the message, continue.
         if (null != message) {
@@ -299,7 +299,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
         logger.error("caught exception during invoke ", wrapper);
-        request.failure(wrapper);
         throw new RuntimeException(wrapper);
       } finally {
         read.unlock();
@@ -349,7 +348,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Wrap this exception.
         EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
         logger.error("caught exception during invoke ", wrapper);
-        request.failure(wrapper);
         throw new RuntimeException(wrapper);
       } finally {
         read.unlock();
