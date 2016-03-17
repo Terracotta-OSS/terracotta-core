@@ -30,7 +30,7 @@ import org.terracotta.exception.EntityUserException;
 /**
  * Used for basic testing (not part of the in-process testing framework) of an entity, to act like the client end-point.
  */
-public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint {
+public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity<M, R> entity;
   private MessageCodec<M, R> codec;
@@ -76,8 +76,8 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   private class FakeClientDescriptor implements ClientDescriptor {
   }
 
-  private class InvocationBuilderImpl implements InvocationBuilder {
-    private byte[] payload = null;
+  private class InvocationBuilderImpl implements InvocationBuilder<M, R> {
+    private M request = null;
 
     @Override
     public InvocationBuilder ackSent() {
@@ -104,13 +104,13 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     }
 
     @Override
-    public InvocationBuilder payload(byte[] payload) {
-      this.payload = payload;
+    public InvocationBuilder message(M message) {
+      this.request = message;
       return this;
     }
 
     @Override
-    public InvokeFuture<byte[]> invoke() {
+    public InvokeFuture<R> invoke() throws MessageCodecException {
       // Note that the passthrough end-point wants to preserve the semantics of a single-threaded server, no matter how
       // complicated the caller is (since multiple threads often are used to simulate multiple clients or multiple threads
       // using one client).
@@ -120,20 +120,20 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         byte[] result = null;
         EntityException error = null;
         try {
-          result = sendInvocation(payload);
+          result = sendInvocation(codec.encodeMessage(request));
         } catch (EntityUserException e) {
           error = e;
         }
-        return new ImmediateInvokeFuture<byte[]>(result, error);
+        return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
       }
     }
     
     private byte[] sendInvocation(byte[] payload) throws EntityUserException {
       byte[] result = null;
       try {
-        M message = codec.deserialize(payload);
+        M message = codec.decodeMessage(payload);
         R response = entity.invoke(clientDescriptor, message);
-        result = codec.serialize(response);
+        result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityUserException(null, null, e);
       }
@@ -152,7 +152,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         if (null != PassthroughEndpoint.this.delegate) {
           try {
             @SuppressWarnings("unchecked")
-            byte[] payload = PassthroughEndpoint.this.codec.serialize((R)message);
+            byte[] payload = PassthroughEndpoint.this.codec.encodeResponse((R)message);
             PassthroughEndpoint.this.delegate.handleMessage(payload);
           } catch (MessageCodecException e) {
             // Unexpected in this test.

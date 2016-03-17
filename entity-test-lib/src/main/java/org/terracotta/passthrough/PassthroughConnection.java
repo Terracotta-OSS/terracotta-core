@@ -35,6 +35,8 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
@@ -49,7 +51,7 @@ import com.google.common.base.Throwables;
 public class PassthroughConnection implements Connection {
   private final PassthroughConnectionState connectionState;
   
-  private final List<EntityClientService<?, ?>> entityClientServices;
+  private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
   private long nextClientEndpointID;
   private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
   private final Set<PassthroughEntityTuple> writeLockedEntities;
@@ -68,7 +70,7 @@ public class PassthroughConnection implements Connection {
   private final List<Waiter> clientResponseWaitQueue;
 
 
-  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
+  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
     this.connectionState = new PassthroughConnectionState(serverProcess);
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
@@ -126,14 +128,14 @@ public class PassthroughConnection implements Connection {
 
   @SuppressWarnings({ "unchecked" })
   public <T> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config) {
-    EntityClientService<?, ?> service = getEntityClientService(cls);
+    EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service = getEntityClientService(cls);
     Runnable onClose = new Runnable() {
       @Override
       public void run() {
         localEndpoints.remove(clientInstanceID);
       }
     };
-    PassthroughEntityClientEndpoint endpoint = new PassthroughEntityClientEndpoint(this, cls, name, clientInstanceID, config, onClose);
+    PassthroughEntityClientEndpoint endpoint = new PassthroughEntityClientEndpoint(this, cls, name, clientInstanceID, config, service.getMessageCodec(), onClose);
     this.localEndpoints.put(clientInstanceID, endpoint);
     return (T) service.create(endpoint);
   }
@@ -278,14 +280,14 @@ public class PassthroughConnection implements Connection {
   @Override
   public <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
     @SuppressWarnings("unchecked")
-    EntityClientService<T, C> service = (EntityClientService<T, C>) getEntityClientService(cls);
+    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> service = (EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse>) getEntityClientService(cls);
     return new PassthroughEntityRef<T, C>(this, service, cls, version, name);
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private EntityClientService<?, ?> getEntityClientService(Class rawClass) {
-    EntityClientService<?, ?> selected = null;
-    for (EntityClientService<?, ?> service : this.entityClientServices) {
+  private EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> getEntityClientService(Class rawClass) {
+    EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> selected = null;
+    for (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service : this.entityClientServices) {
       if (service.handlesEntityType(rawClass)) {
         Assert.assertTrue(null == selected);
         selected = service;

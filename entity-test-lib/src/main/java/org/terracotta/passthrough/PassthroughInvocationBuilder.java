@@ -20,6 +20,15 @@ package org.terracotta.passthrough;
 
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityUserException;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -27,23 +36,25 @@ import org.terracotta.entity.InvokeFuture;
  * Note that this isn't where the invocation ack is tracked, just the object which builds that message and ack tracking
  * mechanism (by requesting it in the underlying PassthroughConnection).
  */
-public class PassthroughInvocationBuilder implements InvocationBuilder {
+public class PassthroughInvocationBuilder<M extends EntityMessage, R extends EntityResponse> implements InvocationBuilder<M, R> {
   private final PassthroughConnection connection;
   private final Class<?> entityClass;
   private final String entityName;
   private final long clientInstanceID;
+  private final MessageCodec<M, R> messageCodec;
   
   private boolean shouldWaitForSent;
   private boolean shouldWaitForReceived;
   private boolean shouldWaitForCompleted;
   private boolean shouldReplicate;
-  private byte[] payload;
+  private M request;
   
-  public PassthroughInvocationBuilder(PassthroughConnection connection, Class<?> entityClass, String entityName, long clientInstanceID) {
+  public PassthroughInvocationBuilder(PassthroughConnection connection, Class<?> entityClass, String entityName, long clientInstanceID, MessageCodec<M, R> messageCodec) {
     this.connection = connection;
     this.entityClass = entityClass;
     this.entityName = entityName;
     this.clientInstanceID = clientInstanceID;
+    this.messageCodec = messageCodec;
   }
 
   @Override
@@ -71,15 +82,44 @@ public class PassthroughInvocationBuilder implements InvocationBuilder {
   }
 
   @Override
-  public InvocationBuilder payload(byte[] payload) {
-    this.payload = payload;
+  public InvocationBuilder message(M message) {
+    this.request = message;
     return this;
   }
 
   @Override
-  public InvokeFuture<byte[]> invoke() {
-    PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, this.clientInstanceID, this.payload, this.shouldReplicate);
-    return this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted);
+  public InvokeFuture<R> invoke() throws MessageCodecException {
+    final PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), this.shouldReplicate);
+    final InvokeFuture<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted);
+    return new InvokeFuture<R>() {
+      @Override
+      public boolean isDone() {
+        return invokeFuture.isDone();
+      }
+
+      @Override
+      public R get() throws InterruptedException, EntityException {
+        try {
+          return messageCodec.decodeResponse(invokeFuture.get());
+        } catch (MessageCodecException e) {
+          throw new EntityUserException(null, null, e);
+        }
+      }
+
+      @Override
+      public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+        try {
+          return messageCodec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
+        } catch (MessageCodecException e) {
+          throw new EntityUserException(null, null, e);
+        }
+      }
+
+      @Override
+      public void interrupt() {
+        invokeFuture.interrupt();
+      }
+    };
   }
 
 }

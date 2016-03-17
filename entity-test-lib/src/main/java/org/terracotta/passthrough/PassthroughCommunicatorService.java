@@ -72,6 +72,6 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
   @SuppressWarnings("unchecked")
   private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse message) throws MessageCodecException {
     // Cast should be safe as message and codec are from the same implementation.
-    return codec.serialize((R)message);
+    return codec.encodeResponse((R)message);
   }
 }

@@ -29,6 +29,8 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 
 
 /**
@@ -39,7 +41,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 public class PassthroughServer {
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
-  private final List<EntityClientService<?, ?>> entityClientServices;
+  private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
   // Note that we don't currently use the connection ID outside of this class but it is convenient and may be exposed outside, later.
   private long nextConnectionID;
   
@@ -51,7 +53,7 @@ public class PassthroughServer {
   
   public PassthroughServer(boolean isActiveMode) {
     this.serverProcess = new PassthroughServerProcess(isActiveMode);
-    this.entityClientServices = new Vector<EntityClientService<?, ?>>();
+    this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
     this.nextConnectionID = 1;
     
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
@@ -69,7 +71,7 @@ public class PassthroughServer {
     this.serverProcess.registerEntityService(service);
   }
 
-  public void registerClientEntityService(EntityClientService<?, ?> service) {
+  public void registerClientEntityService(EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service) {
     Assert.assertFalse(this.hasStarted);
     this.entityClientServices.add(service);
   }

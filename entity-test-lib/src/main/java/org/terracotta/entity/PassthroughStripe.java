@@ -129,7 +129,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       byte[] raw = null;
       try {
         // The cast should be safe as r and this.codec are from the same implementation.
-        raw = this.codec.serialize((R)r);
+        raw = this.codec.encodeResponse((R)r);
       } catch (MessageCodecException e) {
         // Not expected in these tests.
         Assert.fail();
@@ -198,14 +198,14 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
   }
 
-  private class StripeInvocationBuilder<M extends EntityMessage, R extends EntityResponse> implements InvocationBuilder {
+  private class StripeInvocationBuilder<M extends EntityMessage, R extends EntityResponse> implements InvocationBuilder<M, R> {
     private final ClientDescriptor clientDescriptor;
     private final ActiveServerEntity<M, R> activeServerEntity;
     private final MessageCodec<M, R> codec;
     // Note that the passiveServerEntity is not yet used in tests related to this class.
     @SuppressWarnings("unused")
     private final PassiveServerEntity<M, R> passiveServerEntity;
-    private byte[] payload = null;
+    private M request = null;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
         ActiveServerEntity<M, R> activeServerEntity,
@@ -243,13 +243,13 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public InvocationBuilder payload(byte[] payload) {
-      this.payload = payload;
+    public InvocationBuilder message(M message) {
+      this.request = message;
       return this;
     }
 
     @Override
-    public InvokeFuture<byte[]> invoke() {
+    public InvokeFuture<R> invoke() throws MessageCodecException {
       byte[] result = null;
       EntityException error = null;
       try {
@@ -257,15 +257,14 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       } catch (EntityUserException e) {
         error = e;
       }
-      return new ImmediateInvokeFuture<byte[]>(result, error);
+      return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
     }
     
-    private <M extends EntityMessage, R extends EntityResponse> byte[] sendInvocation(ActiveServerEntity<M, R> entity, MessageCodec<M, R> codec) throws EntityUserException {
+    private byte[] sendInvocation(ActiveServerEntity<M, R> entity, MessageCodec<M, R> codec) throws EntityUserException {
       byte[] result = null;
       try {
-        M message = codec.deserialize(payload);
-        R response = entity.invoke(clientDescriptor, message);
-        result = codec.serialize(response);
+        R response = entity.invoke(clientDescriptor, request);
+        result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityUserException(null, null, e);
       }

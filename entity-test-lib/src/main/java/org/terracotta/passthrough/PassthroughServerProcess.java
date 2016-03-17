@@ -41,6 +41,7 @@ import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -329,7 +330,7 @@ public class PassthroughServerProcess implements MessageHandler {
       if (null != data) {
         ActiveServerEntity entity = data.getActive();
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-        response = sendActiveInvocation(entityClassName, entityName, clientDescriptor, entity, data.codec, payload);
+        response = sendActiveInvocation(entityClassName, entityName, clientDescriptor, entity, data.messageCodec, payload);
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
@@ -339,7 +340,7 @@ public class PassthroughServerProcess implements MessageHandler {
       if (null != data) {
         PassiveServerEntity entity = data.getPassive();
         // There is no return type in the passive case.
-        sendPassiveInvocation(entityClassName, entityName, entity, data.codec, payload);
+        sendPassiveInvocation(entityClassName, entityName, entity, data.messageCodec, payload);
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
@@ -356,7 +357,7 @@ public class PassthroughServerProcess implements MessageHandler {
     entity.invoke(deserialize(className, entityName, codec, payload));
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, PassiveServerEntity<M, R> entity, MessageCodec<M, R> codec, int concurrencyKey, byte[] payload) throws EntityUserException {
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, PassiveServerEntity<M, R> entity, SyncMessageCodec<M, R> codec, int concurrencyKey, byte[] payload) throws EntityUserException {
     entity.invoke(deserializeForSync(className, entityName, codec, concurrencyKey, payload));
   }
   
@@ -364,16 +365,16 @@ public class PassthroughServerProcess implements MessageHandler {
     return runWithHelper(className, entityName, new CodecHelper<M>() {
       @Override
       public M run() throws MessageCodecException {
-        return codec.deserialize(payload);
+        return codec.decodeMessage(payload);
       }
     });
   }
   
-  private <M extends EntityMessage, R extends EntityResponse> M deserializeForSync(String className, String entityName, final MessageCodec<M, R> codec, final int concurrencyKey, final byte[] payload) throws EntityUserException {
+  private <M extends EntityMessage, R extends EntityResponse> M deserializeForSync(String className, String entityName, final SyncMessageCodec<M, R> codec, final int concurrencyKey, final byte[] payload) throws EntityUserException {
     return runWithHelper(className, entityName, new CodecHelper<M>() {
       @Override
       public M run() throws MessageCodecException {
-        return codec.deserializeForSync(concurrencyKey, payload);
+        return codec.decode(concurrencyKey, payload);
       }
     });
   }
@@ -382,7 +383,7 @@ public class PassthroughServerProcess implements MessageHandler {
     return runWithHelper(className, entityName, new CodecHelper<byte[]>() {
       @Override
       public byte[] run() throws MessageCodecException {
-        return codec.serialize(response);
+        return codec.encodeResponse(response);
       }
     });
   }
@@ -667,7 +668,7 @@ public class PassthroughServerProcess implements MessageHandler {
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
       PassiveServerEntity entity = data.getPassive();
-      sendPassiveSyncPayload(entityClassName, entityName, entity, data.codec, concurrencyKey, payload);
+      sendPassiveSyncPayload(entityClassName, entityName, entity, data.syncMessageCodec, concurrencyKey, payload);
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
@@ -861,7 +862,8 @@ public class PassthroughServerProcess implements MessageHandler {
     public final PassthroughServiceRegistry registry;
     public final ServerEntityService<M, R> service;
     public CommonServerEntity<M, R> entityInstance;
-    public final MessageCodec<M, R> codec;
+    public final MessageCodec<M, R> messageCodec;
+    public final SyncMessageCodec<M, R> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
     public boolean isActive;
     
@@ -872,7 +874,8 @@ public class PassthroughServerProcess implements MessageHandler {
       this.configuration = configuration;
       this.registry = registry;
       this.service = service;
-      this.codec = service.getMessageCodec();
+      this.messageCodec = service.getMessageCodec();
+      this.syncMessageCodec = service.getSyncMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
       this.concurrency = (isActive) ? service.getConcurrencyStrategy(configuration) : null;
       this.isActive = isActive;
@@ -891,7 +894,7 @@ public class PassthroughServerProcess implements MessageHandler {
 
     M deserialize(byte[] data) {
       try {
-        return this.codec.deserialize(data);
+        return this.messageCodec.decodeMessage(data);
       } catch (MessageCodecException ce) {
         throw new RuntimeException(ce);
       }
@@ -928,7 +931,7 @@ public class PassthroughServerProcess implements MessageHandler {
     
     private byte[] serialize(int key, R response) {
       try {
-        return codec.serializeForSync(key, response);
+        return syncMessageCodec.encode(key, response);
       } catch (MessageCodecException me) {
         throw new RuntimeException(me);
       }

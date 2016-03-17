@@ -23,6 +23,9 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
 
 
 /**
@@ -30,22 +33,24 @@ import org.terracotta.exception.EntityException;
  * through the InvocationBuilder into the server, from here.  Additionally, messages from the server to the entity are routed
  * through here.
  */
-public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
+public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
   private final PassthroughConnection connection;
   private final Class<?> entityClass;
   private final String entityName;
   private final long clientInstanceID;
   private final byte[] config;
+  private final MessageCodec<M, R> messageCodec;
   private final Runnable onClose;
   private EndpointDelegate delegate;
   private boolean isOpen;
   
-  public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, Runnable onClose) {
+  public PassthroughEntityClientEndpoint(PassthroughConnection passthroughConnection, Class<?> entityClass, String entityName, long clientInstanceID, byte[] config, MessageCodec<M, R> messageCodec, Runnable onClose) {
     this.connection = passthroughConnection;
     this.entityClass = entityClass;
     this.entityName = entityName;
     this.clientInstanceID = clientInstanceID;
     this.config = config;
+    this.messageCodec = messageCodec;
     this.onClose = onClose;
     // We start in the open state.
     this.isOpen = true;
@@ -70,7 +75,7 @@ public class PassthroughEntityClientEndpoint implements EntityClientEndpoint {
   public InvocationBuilder beginInvoke() {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new PassthroughInvocationBuilder(this.connection, this.entityClass, this.entityName, this.clientInstanceID);
+    return new PassthroughInvocationBuilder(this.connection, this.entityClass, this.entityName, this.clientInstanceID, messageCodec);
   }
 
   @Override

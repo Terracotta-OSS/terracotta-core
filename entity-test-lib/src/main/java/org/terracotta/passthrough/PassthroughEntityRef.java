@@ -21,6 +21,8 @@ package org.terracotta.passthrough;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -39,12 +41,12 @@ import org.terracotta.exception.EntityVersionMismatchException;
  */
 public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C> {
   private final PassthroughConnection passthroughConnection;
-  private final EntityClientService<T, C> service;
+  private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> service;
   private final Class<T> clazz;
   private final long version;
   private final String name;
   
-  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C> service, Class<T> clazz, long version, String name) {
+  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> service, Class<T> clazz, long version, String name) {
     this.passthroughConnection = passthroughConnection;
     this.service = service;
     this.clazz = clazz;
