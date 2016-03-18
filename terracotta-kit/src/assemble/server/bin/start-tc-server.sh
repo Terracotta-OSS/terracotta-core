@@ -45,8 +45,8 @@ trap cleanup_INT SIGINT
 
 THIS_DIR=`dirname $0`
 TC_INSTALL_DIR=`cd $THIS_DIR;pwd`/../..
-PLUGIN_LIB_DIR="$TC_INSTALL_DIR/plugins/lib"
-PLUGIN_API_DIR="$TC_INSTALL_DIR/plugins/api"
+PLUGIN_LIB_DIR="$TC_INSTALL_DIR/server/plugins/lib"
+PLUGIN_API_DIR="$TC_INSTALL_DIR/server/plugins/api"
 
 if test \! -d "${JAVA_HOME}"; then
   echo "$0: the JAVA_HOME environment variable is not defined correctly"
