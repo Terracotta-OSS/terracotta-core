@@ -31,6 +31,7 @@ import org.terracotta.persistence.IPersistentStorage;
  */
 public class Persistor implements PrettyPrintable {
   private final IPersistentStorage persistentStorage;
+  private boolean wasDBClean;
 
   private volatile boolean started = false;
 
@@ -64,15 +65,7 @@ public class Persistor implements PrettyPrintable {
   public void start() {
     sequenceManager = new SequenceManager(persistentStorage);
     clientStatePersistor = new ClientStatePersistor(sequenceManager, persistentStorage);
-
-    if (!this.clusterStatePersistor.isDBClean()) {
-      this.clusterStatePersistor.clear();
-      this.entityPersistor.clear();
-      this.transactionOrderPersistor.clearAllRecords();
-      this.sequenceManager.clear();
-      this.clientStatePersistor.clear();
-    }
-    
+    wasDBClean = this.clusterStatePersistor.isDBClean();
     started = true;
   }
 
@@ -106,6 +99,10 @@ public class Persistor implements PrettyPrintable {
     if (!started) {
       throw new IllegalStateException("Persistor is not yet started.");
     }
+  }
+
+  public boolean wasDBClean() {
+    return wasDBClean;
   }
 
   @Override

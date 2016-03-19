@@ -24,6 +24,7 @@ import java.util.Collection;
 import org.terracotta.entity.ServiceConfiguration;
 
 import com.tc.objectserver.api.ManagedEntity;
+import org.terracotta.entity.ServiceProviderCleanupException;
 
 
 /**
@@ -55,4 +56,16 @@ public interface BuiltInServiceProvider extends Closeable {
    * @return A collection of the types of services which can be returned by the receiver.
    */
   Collection<Class<?>> getProvidedServiceTypes();
+
+  /**
+   * Clears up state for this ServiceProvider including any persisted state
+   *
+   * Generally platform calls this method during platform initialization so there won't be any entities using
+   * underlying services
+   *
+   * If there are any failures when clearing state, this method should inform Platform by throwing {@link ServiceProviderCleanupException}
+   *
+   * @throws ServiceProviderCleanupException if there are any failures
+   */
+  void clear() throws ServiceProviderCleanupException;
 }

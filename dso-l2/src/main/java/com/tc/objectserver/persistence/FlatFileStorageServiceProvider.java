@@ -21,6 +21,7 @@ package com.tc.objectserver.persistence;
 
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.persistence.IPersistentStorage;
 
 import com.tc.logging.TCLogger;
@@ -32,6 +33,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
+import java.util.HashSet;
+
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 
@@ -45,6 +49,7 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   private static final TCLogger logger = TCLogging.getLogger(FlatFileStorageServiceProvider.class);
   private boolean shouldPersistAcrossRestarts;
   private Path directory;
+  private final Set<Long> consumers = new HashSet<>();
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
@@ -65,14 +70,17 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+    consumers.add(consumerID);
     String filename = "consumer_" + consumerID + ".dat";
     File file = this.directory.resolve(filename).toFile();
     // If this is being configured as non-restartable, we want to delete the file before anyone tries to use it.
     // However, this means that a given instance can be closed and re-opened, within the same run, without issue.
+    // TODO: fix this - if this method called more than once by same entity, will end up removing the data
     if (!this.shouldPersistAcrossRestarts) {
       file.delete();
     }
-    return configuration.getServiceType().cast(new FlatFilePersistentStorage(file));
+    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(file);
+    return configuration.getServiceType().cast(storage);
   }
 
   @Override
@@ -83,6 +91,21 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   @Override
   public void close() {
     
+  }
+
+  @Override
+  public void clear() throws ServiceProviderCleanupException {
+    // check that either there are no consumers or platform is the only consumer
+    Assert.assertTrue((consumers.size() == 0) || (consumers.size() == 1 && consumers.iterator().next() == 0));
+
+    final String CONSUMER_FILE_PAT = "consumer_[0-9]+.dat";
+
+    // remove data files
+    for(File file : directory.toFile().listFiles()) {
+      if(file.getName().matches(CONSUMER_FILE_PAT) && !file.delete()) {
+        throw new ServiceProviderCleanupException("FlatFileStorageServiceProvider clear failed - can't delete " + file.getAbsolutePath());
+      }
+    }
   }
   
 }

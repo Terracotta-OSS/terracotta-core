@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProviderCleanupException;
 
 
 class ResponseWaiter implements Future<Void> {
@@ -124,5 +125,10 @@ public class CommunicatorService implements BuiltInServiceProvider, DSOChannelMa
   public void close() {
     clientAccounts.values().stream().forEach(a->a.close());
     clientAccounts.clear();
+  }
+
+  @Override
+  public void clear() throws ServiceProviderCleanupException {
+    // nothing to do
   }
 }
