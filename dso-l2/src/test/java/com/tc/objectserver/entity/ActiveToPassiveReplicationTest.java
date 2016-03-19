@@ -34,8 +34,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Matchers;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -63,6 +66,13 @@ public class ActiveToPassiveReplicationTest {
     passive = mock(ServerID.class);
     Iterable<ManagedEntity> entities = mock(Iterable.class);
     Sink<ReplicationEnvelope> replicate = mock(Sink.class);
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        ((ReplicationEnvelope)invocation.getArguments()[0]).release();
+        return null;
+      }
+    }).when(replicate).addSingleThreaded(Matchers.any());
     replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, replicate);
   }
   
@@ -88,7 +98,7 @@ public class ActiveToPassiveReplicationTest {
     });
     it.start();
     try {
-      ack.get(1, TimeUnit.SECONDS);
+      ack.get();
     } catch (InterruptedException ie) {
       Assert.fail("test failed");
     }

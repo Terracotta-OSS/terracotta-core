@@ -66,6 +66,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 
@@ -129,6 +130,8 @@ public class ReplicatedTransactionHandlerTest {
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
       return null;
     }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
     this.loopbackSink.addSingleThreaded(msg);
     verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
     verify(groupManager).sendTo(Matchers.eq(sid), Matchers.any());

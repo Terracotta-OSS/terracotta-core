@@ -23,7 +23,6 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
@@ -214,6 +213,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + '}';
+    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor.getEntityID() + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + ", concurrency=" + concurrency +'}';
   }
 }

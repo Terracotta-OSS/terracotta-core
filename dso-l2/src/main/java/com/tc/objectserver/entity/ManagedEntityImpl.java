@@ -660,7 +660,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     // wait for future is ok, occuring on sync executor thread
         executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive).get();
       } catch (ExecutionException | InterruptedException e) {
-        logger.warn("sync failed", e);
+        throw new AssertionError("sync failed", e);
       }
     }
   }  

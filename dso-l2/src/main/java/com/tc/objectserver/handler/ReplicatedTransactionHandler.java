@@ -49,8 +49,10 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 import org.terracotta.exception.EntityException;
@@ -116,9 +118,6 @@ public class ReplicatedTransactionHandler {
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Received replicated " + rep.getReplicationType() + " on " + rep.getEntityID() + "/" + rep.getConcurrency());
-    }
     switch (rep.getType()) {
       case ReplicationMessage.REPLICATE:
         if (!state.defer(rep)) {
@@ -129,8 +128,8 @@ public class ReplicatedTransactionHandler {
         syncMessageReceived(rep);
         break;
       case ReplicationMessage.START:
-        acknowledge(rep);
-        break;
+      case ReplicationMessage.RESPONSE:
+        throw new AssertionError("unexpected message type " + rep);
       default:
         // This is an unexpected replicated message type.
         throw new RuntimeException();
@@ -218,9 +217,6 @@ public class ReplicatedTransactionHandler {
   
   private void syncMessageReceived(ReplicationMessage sync) {
     EntityID eid = sync.getEntityDescriptor().getEntityID();
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Sync Message " + sync.getReplicationType() + " for " + eid + "/" + sync.getConcurrency());
-    }
     long version = sync.getVersion();
     if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN && !eid.equals(EntityID.NULL_ID)) {
       try {
@@ -255,8 +251,28 @@ public class ReplicatedTransactionHandler {
     }
   }
   
+  private void start() {
+    state.start();
+  }
+  
+  private void start(EntityID eid) {
+    state.startEntity(eid);
+  }
+  
   private void start(EntityID eid, int concurrency) {
-    state.start(eid, concurrency);
+    state.startConcurrency(eid, concurrency);
+  }
+  
+  private void finish() {
+    state.finish();
+  }
+  
+  private void finish(EntityID eid) {
+    state.endEntity(eid);
+  }
+  
+  private void finish(EntityID eid, int concurrency) {
+    scheduleDeferred(state.endConcurrency(eid, concurrency));
   }
   
   private void scheduleDeferred(Deque<ReplicationMessage> deferred) {
@@ -285,22 +301,34 @@ public class ReplicatedTransactionHandler {
       
   private ServerEntityRequestImpl make(ReplicationMessage rep) {
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Making " + rep.getReplicationType() + " for " + 
-          rep.getEntityDescriptor().getEntityID() + "/" + rep.getConcurrency());
+      LOGGER.debug("Making " + rep);
     }
     EntityID eid = rep.getEntityDescriptor().getEntityID();
     
     switch (rep.getReplicationType()) {
+      case SYNC_BEGIN:
+        start();
+        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
+          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
       case SYNC_END:
+        finish();
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{moveToPassiveStandBy();acknowledge(rep);});
+      case SYNC_ENTITY_BEGIN:
+        start(eid);
+        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
+          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));      
+      case SYNC_ENTITY_END:
+        finish(eid);
+        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
+          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));      
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
         start(eid, rep.getConcurrency());
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
       case SYNC_ENTITY_CONCURRENCY_END:
-          scheduleDeferred(state.end(eid, rep.getConcurrency()));
-          return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
+        finish(eid, rep.getConcurrency());
+        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
       default:
         return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
@@ -356,28 +384,50 @@ public class ReplicatedTransactionHandler {
  private class SyncState {
     private LinkedList<ReplicationMessage> defer = new LinkedList<>();
     
+    private final Set<EntityID> syncdEntities = new HashSet<>();
+    private final Set<Integer> syncdKeys = new HashSet<>();
     private EntityID syncing;
     private int currentKey = -1;
     private boolean destroyed = false;
+    private boolean finished = false;
+    private boolean started = false;
     
+    private void start() {
+      started = true;
+    }
     
-    public void start(EntityID eid, int concurrency) {
+    private void startEntity(EntityID eid) {
+      Assert.assertNull(syncing);
+      syncing = eid;
+    }
+    
+    private void endEntity(EntityID eid) {
+      Assert.assertEquals(syncing, eid);
+      syncdEntities.add(eid);
+      syncdKeys.clear();
+      syncing = null;
+    }
+    
+    private void startConcurrency(EntityID eid, int concurrency) {
       if (destroyed && !syncing.equals(eid)) {
         destroyed = false;
       }
-      syncing = eid;
+      Assert.assertEquals(syncing, eid);
       currentKey = concurrency;
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Starting " + eid + "/" + currentKey);
       }
     }
     
-    public Deque<ReplicationMessage> end(EntityID eid, int concurrency) {
+    private Deque<ReplicationMessage> endConcurrency(EntityID eid, int concurrency) {
       try {
         if (!eid.equals(syncing) || concurrency != currentKey) {
           throw new AssertionError();
         }
-        syncing = null;
+        Assert.assertEquals(syncing, eid);
+        Assert.assertEquals(currentKey, concurrency);
+        syncdKeys.add(concurrency);
+        currentKey = -1;
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("Ending " + eid + "/" + currentKey);
         }
@@ -387,44 +437,71 @@ public class ReplicatedTransactionHandler {
       }
     }
     
+    private void finish() {
+      syncdEntities.clear();
+      finished = true;
+    }
+
     private boolean defer(ReplicationMessage rep) {
+      if (finished) {
+//  done with sync, need to apply everything now
+        return false;
+      }
+      if (!started) {
+//  no state, this message can be safely ignored
+        acknowledge(rep);
+        return true;
+      }
+//  everything else, check
       EntityID eid = rep.getEntityDescriptor().getEntityID();
+      if (syncdEntities.contains(eid)) {
+        return false;
+      } 
+      
       if (syncing != null) {
         if (eid.equals(syncing)) {
-          if (destroyed) {
+          if (syncdKeys.contains(rep.getConcurrency())) {
+            return false;
+          } else if (destroyed) {
 //  blackhole this request.  The entity has been destroyed. 
-            acknowledge(rep);
             if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Dropping " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency() + " due to destroy");
+              LOGGER.debug("Dropping " + rep + " due to destroy");
             }
+            acknowledge(rep);
             return true;
           } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
-            defer.forEach(q->acknowledge(q));
             defer.clear();
             defer.add(rep);
             if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Destroying " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency());
+              LOGGER.debug("Destroying " + rep);
             }
             destroyed = true;
+            return true;
           } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
 //  NOOP requests cannot be deferred
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Not deferred " + rep.getReplicationType());
-            }
             return false;
           } else if (currentKey == rep.getConcurrency()) {
             if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Deferring " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency());
+              LOGGER.debug("Deferring " + rep);
             }
             defer.add(rep);
+            return true;
+          } else {
+//  ignore, haven't gotten to this key yet
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Ignoring " + rep);
+            }
+            acknowledge(rep);
             return true;
           }
         }
       }
+  //  Ignore anything here, entity not sync'd, key not sync'd, not syncing entity
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Not deferred " + rep.getReplicationType() + " for " + eid + "/" + rep.getConcurrency());
+        LOGGER.debug("Ignoring " + rep);
       }
-      return false;
+      acknowledge(rep);
+      return true;
     }
   }  
   

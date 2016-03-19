@@ -35,7 +35,6 @@ import com.tc.util.Assert;
 import java.util.Collections;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -43,6 +42,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -95,12 +95,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
       ReplicationMessage resetOrderedSink = new ReplicationMessage();
-      try {
-        replicateMessage(resetOrderedSink, Collections.singleton(node)).get();
-      } catch (InterruptedException | ExecutionException e) {
-        logger.warn("error during passive prime", e);
-        return false;
-      }
+      Semaphore block = new Semaphore(0);
+      replicate.addSingleThreaded(resetOrderedSink.target(node,()->block.release()));
+      waitOnSemaphore(block);
       return true;
     } else {
       return false;
@@ -111,6 +108,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     Assert.assertTrue(activated);
     if (prime(newNode)) {
       passiveNodes.add(newNode);
+    } else {
+      Assert.assertTrue("passive node unable to prime and not in the list of passives", passiveNodes.contains(newNode));
     }
     logger.info("Starting sync to " + newNode);
     executePassiveSync(newNode);
@@ -126,15 +125,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {    
         // start passive sync message
         logger.debug("starting sync for " + newNode);
-        replicate.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage().target(newNode));
-        for (ManagedEntity entity : entities) {
-          logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
-          entity.sync(newNode);
-          logger.debug("ending sync for entity " + newNode + "/" + entity.getID());
+        try {
+          replicateMessage(PassiveSyncMessage.createStartSyncMessage(), Collections.singleton(newNode)).get();
+          for (ManagedEntity entity : entities) {
+            logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
+            entity.sync(newNode);
+            logger.debug("ending sync for entity " + newNode + "/" + entity.getID());
+          }
+      //  passive sync done message.  causes passive to go into passive standby mode
+          logger.debug("ending sync " + newNode);
+          replicateMessage(PassiveSyncMessage.createEndSyncMessage(), Collections.singleton(newNode)).get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new AssertionError("error during passive sync", e);
         }
-    //  passive sync done message.  causes passive to go into passive standby mode
-        logger.debug("ending sync " + newNode);
-        replicate.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage().target(newNode));
       }
     });
   }
@@ -143,9 +146,13 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     Set<NodeID> plist = waiters.get(mid);
     if (plist != null) {
       synchronized(plist) {
-        if (plist.remove(releaser) && plist.isEmpty()) {
-          waiters.remove(mid);
-          plist.notifyAll();
+        if (plist.remove(releaser)) {
+          if (plist.isEmpty()) {
+            if (!waiters.remove(mid, plist)) {
+              throwAssertionError();
+            }
+            plist.notifyAll();
+          }
         }
       }
     }
@@ -163,6 +170,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   @Override
   public Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
     Set<NodeID> copy = new HashSet<>(all); 
+// don't replicate to a passive that is no longer there
+    copy.retainAll(passives());
     if (!copy.isEmpty()) {
       waiters.put(msg.getMessageID(), copy);
       for (NodeID node : copy) {
@@ -202,32 +211,36 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
       @Override
       public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        synchronized (copy) {
-          copy.retainAll(passiveNodes);
-          while (!copy.isEmpty()) {
-            copy.wait(unit.toMillis(timeout));
-          }
-        }
-        return null;
+        throw new UnsupportedOperationException("not implemented");
       }
     };
   }
 
   public void removePassive(NodeID nodeID) {
+// first remove it from the list of passive nodes so that anything sending new messages 
+// will have to remove it from the list of nodes to send to
     passiveNodes.remove(nodeID);
-    
-    for (Map.Entry<MessageID, Set<NodeID>> entry : waiters.entrySet()) {
-      Set<NodeID> all = entry.getValue();
-      synchronized (all) {
-        if (all.remove(nodeID) && all.isEmpty()) {
-          waiters.remove(entry.getKey());
-          all.notifyAll();
-        }
-      }
-    }
+//  acknowledge all the messages for this node because it is gone, this may result in 
+//  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
+    waiters.forEach((key, value)->acknowledge(key, nodeID));
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
-    replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, null));
+    Semaphore block = new Semaphore(0);
+    replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, ()->block.release()));
+    waitOnSemaphore(block);
+  }
+  
+  private void waitOnSemaphore(Semaphore block) {
+    try {
+      block.acquire();
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  private void throwAssertionError() {
+    throw new AssertionError("an error in the implementation has occurred standby nodes:" 
+        + standByNodes + " passivesNodes:" + passiveNodes);
   }
 
   @Override
