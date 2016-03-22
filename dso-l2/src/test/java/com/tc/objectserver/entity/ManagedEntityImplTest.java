@@ -31,6 +31,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
@@ -202,25 +203,36 @@ public class ManagedEntityImplTest {
     byte[] returnValue = { 1 };
     when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
-      public byte[] serialize(EntityResponse response) {
+      public byte[] encodeResponse(EntityResponse response) {
         return returnValue;
       }
       
       @Override
-      public EntityMessage deserialize(byte[] payload) {
+      public EntityMessage decodeMessage(byte[] payload) {
         return new EntityMessage() {};
-      }
-      @Override
-      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
-        Assert.fail("Synchronization not used in this test");
-        return null;
       }
 
       @Override
-      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+        return new byte[0];
       }
-      
+
+      @Override
+      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+        return new EntityResponse() {};
+      }
+    });
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
+
+      @Override
+      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
+      }
+
+      @Override
+      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
+      }
     });
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
@@ -240,25 +252,36 @@ public class ManagedEntityImplTest {
     byte[] returnValue = { 1 };
     when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
-      public byte[] serialize(EntityResponse response) {
+      public byte[] encodeResponse(EntityResponse response) {
         return returnValue;
-      }
-      
-      @Override
-      public EntityMessage deserialize(byte[] payload) {
-        return new EntityMessage() {};
-      }
-      @Override
-      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
-        Assert.fail("Synchronization not used in this test");
-        return null;
       }
 
       @Override
-      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      public EntityMessage decodeMessage(byte[] payload) {
+        return new EntityMessage() {};
       }
-      
+
+      @Override
+      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+        return new byte[0];
+      }
+
+      @Override
+      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+        return new EntityResponse() {};
+      }
+    });
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
+
+      @Override
+      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
+      }
+
+      @Override
+      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
+      }
     });
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
@@ -302,7 +325,12 @@ public class ManagedEntityImplTest {
   public void testExclusiveExecution() throws Exception {
     MessageCodec<EntityMessage, EntityResponse> codec = new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
-      public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
+      public byte[] encodeResponse(EntityResponse response) {
+        return new byte[0];
+      }
+
+      @Override
+      public EntityMessage decodeMessage(byte[] payload) {
         return new EntityMessage() {
           @Override
           public String toString() {
@@ -312,20 +340,28 @@ public class ManagedEntityImplTest {
       }
 
       @Override
-      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) throws MessageCodecException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public byte[] serialize(EntityResponse response) throws MessageCodecException {
+      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
         return new byte[0];
       }
+
+      @Override
+      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+        return new EntityResponse() {
+        };
+      }
     };
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
+
+      @Override
+      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
+      }
+
+      @Override
+      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
+      }
+    });
     ConcurrencyStrategy<EntityMessage> basic = new ConcurrencyStrategy<EntityMessage>() {
       @Override
       public int concurrencyKey(EntityMessage message) {
@@ -406,27 +442,39 @@ public class ManagedEntityImplTest {
     byte[] payload = { 0 };
     when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
-      public byte[] serialize(EntityResponse response) {
-        // We should never reach this - should fail before the invoke.
+      public byte[] encodeResponse(EntityResponse response) {
         Assert.fail();
         return null;
       }
+
       @Override
-      public EntityMessage deserialize(byte[] payload) throws MessageCodecException {
+      public EntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
         // We want to simulate a failure.
         throw new MessageCodecException("failure", null);
       }
+
       @Override
-      public EntityMessage deserializeForSync(int concurrencyKey, byte[] payload) {
+      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+        return new byte[0];
+      }
+
+      @Override
+      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+        return new EntityResponse() {};
+      }
+    });
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
+
+      @Override
+      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
         Assert.fail("Synchronization not used in this test");
         return null;
       }
 
       @Override
-      public byte[] serializeForSync(int concurrencyKey, EntityResponse payload) throws MessageCodecException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+        throw new UnsupportedOperationException("not supported!");
       }
-      
     });
     ServerEntityRequest invokeRequest = mockInvokeRequest();
     managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);

@@ -23,6 +23,8 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
@@ -51,14 +53,14 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   private final Class<T> type;
   private final long version;
   private final String name;
-  private final EntityClientService<T, C> entityClientService;
+  private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> entityClientService;
 
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
   private final AtomicLong nextClientInstanceID;
 
   public TerracottaEntityRef(ClientEntityManager entityManager, MaintenanceModeService maintenanceModeService,
-                             Class<T> type, long version, String name, EntityClientService<T, C> entityClientService, 
-                            AtomicLong clientIds) {
+                             Class<T> type, long version, String name, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> entityClientService,
+                             AtomicLong clientIds) {
     this.entityManager = entityManager;
     this.maintenanceModeService = maintenanceModeService;
     this.type = type;
@@ -84,7 +86,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     try {
       ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
       EntityDescriptor entityDescriptor = new EntityDescriptor(getEntityID(), clientInstanceID, this.version);
-      endpoint = this.entityManager.fetchEntity(entityDescriptor, closeHook);
+      endpoint = this.entityManager.fetchEntity(entityDescriptor, entityClientService.getMessageCodec(), closeHook);
     } catch (EntityException e) {
       // In this case, we want to close the endpoint but still throw back the exception.
       closeHook.run();

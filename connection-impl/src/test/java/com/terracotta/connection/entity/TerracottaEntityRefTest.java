@@ -31,6 +31,9 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
 
 import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientInstanceID;
@@ -52,11 +55,11 @@ public class TerracottaEntityRefTest {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
     MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
-    EntityClientService<Entity, Void> mockEntityClientService = mock(EntityClientService.class);
+    EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     Entity testEntity = mock(Entity.class);
     when(mockEntityClientService.create(any(EntityClientEndpoint.class))).thenReturn(testEntity);
     EntityClientEndpoint mockTestEntityClientEndpoint = mock(EntityClientEndpoint.class);
-    when(mockClientEntityManager.fetchEntity(any(EntityDescriptor.class), any(Runnable.class))).thenReturn(mockTestEntityClientEndpoint);
+    when(mockClientEntityManager.fetchEntity(any(EntityDescriptor.class), any(MessageCodec.class), any(Runnable.class))).thenReturn(mockTestEntityClientEndpoint);
     
     // Now, run the test.
     long version = 1;
@@ -64,7 +67,7 @@ public class TerracottaEntityRefTest {
     TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     Entity entity1 = testRef.fetchEntity();
     verify(mockMaintenanceModeService).readLockEntity(Entity.class, "TEST");
-    verify(mockClientEntityManager).fetchEntity(eq(new EntityDescriptor(new EntityID(Entity.class.getName(), "TEST"), new ClientInstanceID(1), version)), any(Runnable.class));
+    verify(mockClientEntityManager).fetchEntity(eq(new EntityDescriptor(new EntityID(Entity.class.getName(), "TEST"), new ClientInstanceID(1), version)), any(MessageCodec.class), any(Runnable.class));
     Assert.assertNotNull(entity1);
     Assert.assertEquals(testEntity, entity1);
     entity1.close();
@@ -82,7 +85,7 @@ public class TerracottaEntityRefTest {
     when(mockClientEntityManager.destroyEntity(any(EntityID.class), any(Long.class), any(Set.class))).thenReturn(mock(InvokeFuture.class));
     MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
     when(mockMaintenanceModeService.tryEnterMaintenanceMode(any(Class.class), any(String.class))).thenReturn(true);
-    EntityClientService<Entity, Void> mockEntityClientService = mock(EntityClientService.class);
+    EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.
     long version = 1;
@@ -105,7 +108,7 @@ public class TerracottaEntityRefTest {
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
     MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
     when(mockMaintenanceModeService.tryEnterMaintenanceMode(any(Class.class), any(String.class))).thenReturn(false);
-    EntityClientService<Entity, Void> mockEntityClientService = mock(EntityClientService.class);
+    EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.
     long version = 1;
