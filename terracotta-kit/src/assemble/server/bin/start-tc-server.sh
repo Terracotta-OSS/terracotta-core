@@ -105,6 +105,9 @@ ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
    -cp "${TC_INSTALL_DIR}/server/lib/tc.jar:${PLUGIN_CLASSPATH}" \
    com.tc.server.TCServerMain "$@" &
  PID=$!
+ # We want to output the PID of the underlying process to STDOUT.
+ echo "Server started as $PID"
+ 
  # NOTE:  Wait may return prematurely if the shell runs its signal handler but we know that it
  # returns 127 if the call fails so we will loop on calling it until that happens (we want to see
  # it fail due to the child process exiting and no longer being a child of this shell).  The last
