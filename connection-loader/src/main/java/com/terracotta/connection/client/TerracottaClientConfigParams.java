@@ -20,6 +20,7 @@ package com.terracotta.connection.client;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 
 
@@ -29,6 +30,7 @@ public class TerracottaClientConfigParams {
   private boolean     nonStop;
   private String      productId;
   private ClassLoader clasLoader;
+  private final Properties properties = new Properties();
 
   public TerracottaClientConfigParams() {
     this.stripeMembers = new Vector<String>();
@@ -89,6 +91,14 @@ public class TerracottaClientConfigParams {
 
   public void setClassLoader(ClassLoader loader) {
     this.clasLoader = loader;
+  }
+  
+  public void addGenericProperties(Properties props) {
+    this.properties.putAll(props);
+  }
+  
+  public Properties getGenericProperties() {
+    return this.properties;
   }
 
 }

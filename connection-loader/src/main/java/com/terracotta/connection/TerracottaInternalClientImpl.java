@@ -18,13 +18,18 @@
  */
 package com.terracotta.connection;
 
+import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.net.core.SecurityInfo;
 import com.tc.object.ClientEntityManager;
+import com.tc.object.DistributedObjectClient;
+import com.tc.object.DistributedObjectClientFactory;
 import com.tc.object.locks.ClientLockManager;
+import com.tc.util.ProductID;
+import com.tc.util.UUID;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.Properties;
+import java.util.concurrent.TimeoutException;
 
 
 public class TerracottaInternalClientImpl implements TerracottaInternalClient {
@@ -32,39 +37,46 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     private static final long serialVersionUID = 1L;
   }
 
-  private final ClientCreatorCallable clientCreator;
+  private final UUID                  clientUUID;
+  private final DistributedObjectClientFactory clientCreator;
   private volatile ClientHandle       clientHandle;
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
 
-  TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId) {
+  TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId, Properties props) {
     try {
-      Callable<ClientCreatorCallable> boot = new CreateClient(stripeConnectionConfig, productId);
-      this.clientCreator = boot.call();
+      this.clientUUID = UUID.getUUID();
+      this.clientCreator = buildClientCreator(stripeConnectionConfig, productId, props);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
+  
+  private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productIdName, Properties props) {
+    ProductID productId = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
+    return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
+         null,  // no security features
+         new SecurityInfo(false, null),  // no security info
+         productId,
+         clientUUID, props);
+  }
 
   @Override
-  public synchronized void init() {
+  public synchronized void init() throws TimeoutException, InterruptedException, ConfigurationSetupException {
     if (isInitialized) { return; }
 
-    try {
-      clientHandle = new ClientHandleImpl(clientCreator.call());
-
+    DistributedObjectClient client = clientCreator.create();
+    if (client != null) {
+      clientHandle = new ClientHandleImpl(client);
       isInitialized = true;
-    } catch (InvocationTargetException e) {
-      throw new RuntimeException(e.getCause());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    } else {
+      throw new TimeoutException();
     }
-
   }
 
   @Override
   public String getUuid() {
-    return clientCreator.getUuid();
+    return this.clientUUID.toString();
   }
 
   @Override

@@ -24,8 +24,6 @@ import com.tc.config.schema.setup.ClientConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.L1ThrowableHandler;
-import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogging;
@@ -38,7 +36,10 @@ import com.tc.util.UUID;
 import com.tcclient.cluster.ClusterInternal;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DistributedObjectClientFactory {
@@ -47,19 +48,21 @@ public class DistributedObjectClientFactory {
   private final SecurityInfo      securityInfo;
   private final ProductID         productId;
   private final UUID                      uuid;
+  private final Properties        properties;
 
   public DistributedObjectClientFactory(List<String> stripeMemberUris, TCSecurityManager securityManager,
                                         SecurityInfo securityInfo, 
                                         ProductID productId,
-                                        UUID uuid) {
+                                        UUID uuid, Properties properties) {
     this.stripeMemberUris = stripeMemberUris;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
     this.productId = productId;
     this.uuid = uuid;
+    this.properties = properties;
   }
 
-  public DistributedObjectClient create() throws ConfigurationSetupException {
+  public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
     final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<DistributedObjectClient>();
 
     ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris, securityManager);
@@ -89,25 +92,35 @@ public class DistributedObjectClientFactory {
     final TCThreadGroup group = new TCThreadGroup(throwableHandler);
 
     final ClusterInternal cluster = new ClusterImpl();
+    
+    DistributedObjectClient client = ClientFactory.createClient(configHelper, group, connectionComponents, cluster, securityManager,
+        uuid,
+        productId);
 
-    final StartupAction action = new StartupHelper.StartupAction() {
-      @Override
-      public void execute() throws Throwable {
-        DistributedObjectClient client = ClientFactory.createClient(configHelper, group, connectionComponents, cluster, securityManager,
-            uuid,
-            productId);
-
-        client.start();
-
-        cluster.init(client.getClusterEventsStage());
-        clientRef.set(client);
+    try {
+      client.start();
+      String timeout = properties.getProperty("connection.timeout", "0");
+      if (!client.waitForConnection(Integer.parseInt(timeout), TimeUnit.MILLISECONDS)) {
+//  timed out, shutdown the extra threads and return null;
+        client.shutdown();
+        return null;
       }
-    };
+    } catch (InterruptedException ie) {
+// wait got interrupted, shutdown extra threads and return nothing
+      client.shutdown();
+      return null;
+    } catch (RuntimeException exp) {
+//  something serious happened, try to shutdown extran threads and throw
+      client.shutdown();
+      throw exp;
+    } catch (Error e) {
+//  something serious happened, try to shutdown extran threads and throw
+      client.shutdown();
+      throw e;
+    }
+    cluster.init(client.getClusterEventsStage());
 
-    final StartupHelper startupHelper = new StartupHelper(group, action);
-    startupHelper.startUp();
-
-    return clientRef.get();
+    return client;
   }
 
   private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1ConfigurationSetupManager config) {

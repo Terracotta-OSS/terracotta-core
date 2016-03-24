@@ -162,5 +162,10 @@ public class EntityManagerImpl implements EntityManager {
     }
     return service;
   }
+
+  @Override
+  public String toString() {
+    return "EntityManagerImpl{" + "entities=" + entities.keySet() + '}';
+  }
 }
 

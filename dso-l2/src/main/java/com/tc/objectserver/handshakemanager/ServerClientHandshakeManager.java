@@ -134,7 +134,7 @@ public class ServerClientHandshakeManager {
           }
           // If we fail to find this, something is seriously wrong since either the restart/failover was incorrect or this message is invalid.
           // TODO:  Determine if we have a meaningful way to handle this error.
-          Assert.assertTrue(entity.isPresent());
+          Assert.assertTrue("entity:" + entityID + " version:" + version + " entities:" + entityManager, entity.isPresent());
           EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
           ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
           byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();

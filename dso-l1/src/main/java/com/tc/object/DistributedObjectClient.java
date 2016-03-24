@@ -117,7 +117,6 @@ import com.tc.util.UUID;
 import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.TaskRunner;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockState;
 import com.tc.util.runtime.ThreadIDManager;
@@ -136,6 +135,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -184,6 +184,7 @@ public class DistributedObjectClient implements TCClient {
   private final Thread                               shutdownAction;
 
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
+  private final SetOnceFlag                          connectionMade                       = new SetOnceFlag();
   private ClientEntityManager clientEntityManager;
   private final StageManager communicationStageManager;
 
@@ -447,15 +448,41 @@ public class DistributedObjectClient implements TCClient {
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList());
 
     initChannelMessageRouter(messageRouter, hydrateStage.getSink(), lockResponse.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), serverMessageStage.getSink());
-
-    openChannel(serverHost, serverPort);
-    waitForHandshake();
-
-    //setLoggerOnExit();
+    new Thread(threadGroup, new Runnable() {
+        public void run() {
+          boolean interrupted = false;
+          while (!clientStopped.isSet()) {
+            try {
+              openChannel(serverHost, serverPort);
+              waitForHandshake();
+              connectionMade();
+              break;
+            } catch (InterruptedException ie) {
+              interrupted = true;
+            }
+          }
+          //  don't reset interrupted, thread is done
+        }
+      }, "Connection Establisher - " + uuid).start();    
+  }
+  
+  private synchronized void connectionMade() {
+    connectionMade.attemptSet();
+    notifyAll();
+  }
+  
+  public synchronized boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
+    long left = timeout > 0 ? units.toMillis(timeout) : Long.MAX_VALUE;
+    while (!connectionMade.isSet() && left > 0) {
+      long start = System.currentTimeMillis();
+      this.wait(units.toMillis(timeout));
+      left -= (System.currentTimeMillis() - start);
+    }
+    return connectionMade.isSet();
   }
 
-  private void openChannel(String serverHost, int serverPort) {
-    while (true) {
+  private synchronized void openChannel(String serverHost, int serverPort) throws InterruptedException {
+    while (!clientStopped.isSet()) {
       try {
         DSO_LOGGER.debug("Trying to open channel....");
         final char[] pw;
@@ -470,10 +497,10 @@ public class DistributedObjectClient implements TCClient {
         break;
       } catch (final TCTimeoutException tcte) {
         CONSOLE_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
-        ThreadUtil.reallySleep(5000);
+        this.wait(5000);
       } catch (final ConnectException e) {
         CONSOLE_LOGGER.warn("Connection refused from server: " + e);
-        ThreadUtil.reallySleep(5000);
+        this.wait(5000);
       } catch (final MaxConnectionsExceededException e) {
         DSO_LOGGER.fatal(e.getMessage());
         CONSOLE_LOGGER.fatal(e.getMessage());
@@ -485,18 +512,20 @@ public class DistributedObjectClient implements TCClient {
       } catch (final IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
                             + ioe.getMessage());
-        ThreadUtil.reallySleep(5000);
+        this.wait(5000);
       }
     }
 
   }
 
-  private void waitForHandshake() {
+  private synchronized void waitForHandshake() {
     this.clientHandshakeManager.waitForHandshake();
-    final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
-    final String infoMsg = "Connection successfully established to server at " + remoteAddress;
-    CONSOLE_LOGGER.info(infoMsg);
-    DSO_LOGGER.info(infoMsg);
+    if (this.channel != null) {
+      final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
+      final String infoMsg = "Connection successfully established to server at " + remoteAddress;
+      CONSOLE_LOGGER.info(infoMsg);
+      DSO_LOGGER.info(infoMsg);
+    }
   }
 
   private Map<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMapping() {
@@ -579,7 +608,7 @@ public class DistributedObjectClient implements TCClient {
   }
 
   public void shutdown() {
-    shutdownClient(false, false);
+    shutdown(false, false);
   }
 
   void shutdownResources() {
@@ -777,6 +806,10 @@ public class DistributedObjectClient implements TCClient {
       shutdownClient(fromShutdownHook, forceImmediate);
     } else {
       DSO_LOGGER.info("Client already shutdown.");
+    }
+    synchronized (this) {
+//  notify in case the connection establisher is waiting for something
+      notifyAll();
     }
   }
 

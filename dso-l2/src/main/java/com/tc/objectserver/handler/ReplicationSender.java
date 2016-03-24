@@ -25,6 +25,12 @@ import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_BEGIN;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_END;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_END;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD;
+import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_END;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -32,6 +38,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,8 +52,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager group;
-  private final Map<NodeID, AtomicLong> ordering = new HashMap<NodeID, AtomicLong>();
-  private final Map<NodeID, SyncState> filtering = new HashMap<NodeID, SyncState>();
+  private final Map<NodeID, AtomicLong> ordering = new HashMap<>();
+  private final Map<NodeID, SyncState> filtering = new HashMap<>();
   private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
 
   public ReplicationSender(GroupManager group) {
@@ -61,6 +68,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 // this is a flush of the replication channel.  shut it down and return;
       ordering.remove(nodeid);
       filtering.remove(nodeid);
+      context.release();
     } else {
       AtomicLong rOrder = ordering.get(nodeid);
       SyncState syncing = null;
@@ -70,13 +78,22 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         ordering.put(nodeid, rOrder);
         
         if (msg.getType() == ReplicationMessage.START) {
-//  do nothing, the server was in standby state when added          
+//  release the message so sync can continue
+          context.release();
+//  this is a priming event.  The passive does not need to receive this
+          return;
         } else {
+//  make sure node is not connected
+          Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
           if (msg instanceof PassiveSyncMessage) {
+
+//  release the msg like it went through so things can progress
+            context.release();
 //  passive must have died during passive sync, ignore this message
             return;
           } else {
             logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
+            context.release();
             return;
           }
         }
@@ -88,24 +105,33 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
           syncing = filtering.get(nodeid);
         }
       }
+      if (msg.getType() == ReplicationMessage.START ||
+          msg.getType() == ReplicationMessage.RESPONSE) {
+//  these types of messages are incoming types or internal server use, not outgoing
+        throw new AssertionError("unexpected message type " + msg);
+      }
       if (syncing != null) {
 //  there is an active sync going on, need to filter out messages that should not be replicated
         if (!syncing.filter(msg)) {
           if (logger.isDebugEnabled()) {
-            logger.debug(nodeid + ":Filtering " + msg.getReplicationType() + " for " + msg.getEntityDescriptor().getEntityID() + "/" + msg.getConcurrency());
+            logger.debug(nodeid + ":Filtering " + msg + " for " + msg.getEntityDescriptor().getEntityID());
           }
-          if (msg.getType() == ReplicationMessage.REPLICATE) {
-            context.release();
-          }
+          context.release();
           return;
-        } else if (msg.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_END) {
-          filtering.remove(nodeid);
+        } else {
+          syncing.validateSending(msg);
+          if (syncing.isComplete()) {
+            filtering.remove(nodeid);
+          }
         }
+      } else {
+//  sending message on to passive, either it will be ignored because passive sync has not started yet or this was a peer passive at one time
+//  and is up-to-date
       }
       try {
         msg.setReplicationID(rOrder.getAndIncrement());
         if (logger.isDebugEnabled()) {
-          logger.debug(nodeid + ":Sending " + msg.getReplicationType() + " for " + msg.getEntityID() + "/" + msg.getConcurrency() + "-" + msg.getSequenceID());
+          logger.debug(nodeid + ":Sending " + msg + " for " + msg.getEntityID() + "/" + msg.getConcurrency() + "-" + msg.getSequenceID());
         }
         group.sendTo(nodeid, msg);
       }  catch (GroupException ge) {
@@ -120,14 +146,16 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   }
   
   private static class SyncState {
-    private final Set<EntityID> syncd = new HashSet<EntityID>();
+    private final Set<EntityID> syncd = new HashSet<>();
     private EntityID syncingID = EntityID.NULL_ID;
-    private final Set<Integer> syncdID = new HashSet<Integer>();
+    private final Set<Integer> syncdID = new HashSet<>();
     private int syncingConcurrency = -1;
+    private ReplicationMessage.ReplicationType lastSeen;
+    private ReplicationMessage.ReplicationType lastSent;
     
     public boolean filter(ReplicationMessage msg) {
       final EntityID eid = msg.getEntityDescriptor().getEntityID();
-        switch (msg.getReplicationType()) {
+        switch (validateInput(msg)) {
           case SYNC_BEGIN:
             return true;
           case SYNC_ENTITY_BEGIN:
@@ -138,6 +166,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 //  set syncid to null so all messages until end get filtered out.  this should not be alot, it just got created
             if (syncd.contains(syncingID)) {
               syncingID = EntityID.NULL_ID;
+              logger.debug("Drop: entity " + syncingID + " was created no sync required");
               return false;
             }
             return true;
@@ -163,6 +192,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             syncingConcurrency = 0;
             return true;
           case SYNC_ENTITY_END:
+            if (syncingID == EntityID.NULL_ID) {
+              return false;
+            }
             Assert.assertEquals(syncingID, eid);
             syncd.add(syncingID);
             syncingID = EntityID.NULL_ID;
@@ -216,6 +248,53 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
           default:
             throw new AssertionError("unknown replication message:" + msg);
         }
+    }
+
+    public ReplicationMessage.ReplicationType validateInput(ReplicationMessage msg) {
+      ReplicationMessage.ReplicationType type = msg.getReplicationType();
+      if (msg.getType() == ReplicationMessage.SYNC) {
+        lastSeen = validate(msg.getReplicationType(), lastSeen);
+      }
+      return type;
+    }
+    
+    public void validateSending(ReplicationMessage msg) {
+      if (msg.getType() == ReplicationMessage.SYNC) {
+        lastSent = validate(msg.getReplicationType(), lastSent);
+      }
+    }
+    
+    public boolean isComplete() {
+      return lastSent == ReplicationMessage.ReplicationType.SYNC_END;
+    }
+    
+    private ReplicationMessage.ReplicationType validate(ReplicationMessage.ReplicationType type,ReplicationMessage.ReplicationType compare) {
+      switch (type) {
+        case SYNC_BEGIN:
+          Assert.assertNull(compare);
+          break;
+        case SYNC_ENTITY_BEGIN:
+          Assert.assertTrue(EnumSet.of(SYNC_BEGIN, SYNC_ENTITY_END).contains(compare));
+          break;
+        case SYNC_ENTITY_CONCURRENCY_BEGIN:
+          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_BEGIN, SYNC_ENTITY_CONCURRENCY_END).contains(compare));
+          break;
+        case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
+          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_CONCURRENCY_BEGIN, SYNC_ENTITY_CONCURRENCY_PAYLOAD).contains(compare));
+          break;
+        case SYNC_ENTITY_CONCURRENCY_END:
+          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_CONCURRENCY_BEGIN, SYNC_ENTITY_CONCURRENCY_PAYLOAD).contains(compare));
+          break;
+        case SYNC_ENTITY_END:
+          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_BEGIN, SYNC_ENTITY_CONCURRENCY_END).contains(compare));
+          break;
+        case SYNC_END:
+          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_END, SYNC_BEGIN).contains(compare));
+          break;
+        default:
+          throw new AssertionError("unexpected message type");
+      }
+      return type;
     }
   }
   

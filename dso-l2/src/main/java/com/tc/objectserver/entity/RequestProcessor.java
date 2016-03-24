@@ -72,8 +72,9 @@ public class RequestProcessor implements StateChangeListener {
   public void l2StateChanged(StateChangedEvent sce) {
 //  do nothing
   }
-  
-  public Future<Void> scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
+//  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
+//  to happen in the same order.  synchronizing this method enforces that
+  public synchronized Future<Void> scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     Future<Void> token = (!replicateTo.isEmpty())

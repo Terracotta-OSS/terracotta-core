@@ -152,6 +152,7 @@ import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
@@ -616,17 +617,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         return IMonitoringProducer.class;
       }});
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
-    this.l1Listener.getChannelManager().addEventListener(new ChannelManagerEventListener() {
-      @Override
-      public void channelCreated(MessageChannel channel) {
-        eventCollector.clientDidConnect(channel, new ClientID(channel.getChannelID().toLong()));
-      }
 
-      @Override
-      public void channelRemoved(MessageChannel channel) {
-        eventCollector.clientDidDisconnect(channel, new ClientID(channel.getChannelID().toLong()));
-      }
-    });
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
@@ -672,7 +663,22 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  reconnectTimeout,
                                                                                                  restartable,
                                                                                                  consoleLogger);
+    channelManager.addEventListener(new DSOChannelManagerEventListener() {
+      @Override
+      public void channelCreated(MessageChannel channel) {
+        if (l2Coordinator.getStateManager().isActiveCoordinator()) {
+          eventCollector.clientDidConnect(channel, new ClientID(channel.getChannelID().toLong()));
+        }
+      }
 
+      @Override
+      public void channelRemoved(MessageChannel channel) {
+        if (l2Coordinator.getStateManager().isActiveCoordinator() && clientHandshakeManager.isStarted()) {
+          eventCollector.clientDidDisconnect(channel, new ClientID(channel.getChannelID().toLong()));
+        }
+      }
+    });
+    
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory);
@@ -843,8 +849,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE);
     return control;

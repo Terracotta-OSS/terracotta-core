@@ -73,8 +73,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public void shutdown(boolean fromShutdownHook) {
+  public synchronized void shutdown(boolean fromShutdownHook) {
     isShutdown = true;
+    notifyAll();
     shutdownCallbacks(fromShutdownHook);
   }
 
@@ -217,7 +218,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public synchronized void waitForHandshake() {
     boolean isInterrupted = false;
     try {
-      while (this.disconnected) {
+      while (this.disconnected && !this.isShutdown()) {
         try {
           wait();
         } catch (InterruptedException e) {
