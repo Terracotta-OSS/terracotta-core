@@ -125,7 +125,11 @@ public class ReplicatedTransactionHandler {
         } 
         break;
       case ReplicationMessage.SYNC:
-        syncMessageReceived(rep);
+        if (!state.destroyed(rep.getEntityID())) {
+          syncMessageReceived(rep);
+        } else {
+          acknowledge(rep);
+        }
         break;
       case ReplicationMessage.START:
       case ReplicationMessage.RESPONSE:
@@ -401,6 +405,10 @@ public class ReplicatedTransactionHandler {
       syncing = eid;
     }
     
+    private boolean destroyed(EntityID eid) {
+      return eid.equals(syncing) && destroyed;
+    }
+    
     private void endEntity(EntityID eid) {
       Assert.assertEquals(syncing, eid);
       syncdEntities.add(eid);
@@ -476,7 +484,7 @@ public class ReplicatedTransactionHandler {
               LOGGER.debug("Destroying " + rep);
             }
             destroyed = true;
-            return true;
+            return false;
           } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
 //  NOOP requests cannot be deferred
             return false;
