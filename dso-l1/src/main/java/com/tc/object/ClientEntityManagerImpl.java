@@ -49,6 +49,7 @@ import com.tc.util.Util;
 import java.io.IOException;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -235,29 +236,38 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     stateManager.start();
-    // Walk the objectStoreMap and add reconnect references for any objects found there.
-    for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
-      EntityID entityID = descriptor.getEntityID();
-      long entityVersion = descriptor.getClientSideVersion();
-      ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
-      byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
-      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
-      handshakeMessage.addReconnectReference(context);
-    }
     
     Stage<VoltronEntityResponse> responder = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class);
     logger.debug("size of request acks at resend " + responder.getSink().size());
     FlushResponse flush = new FlushResponse();
     responder.getSink().addSingleThreaded(flush);
     flush.waitForAccess();
+    Set<EntityID> destroyed = new HashSet<EntityID>();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       NetworkVoltronEntityMessage message = inFlight.getMessage();
+      if (message.getVoltronType() == VoltronEntityMessage.Type.DESTROY_ENTITY) {
+        destroyed.add(message.getEntityDescriptor().getEntityID());
+      }
       ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
           message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData(), 
           message.getOldestTransactionOnClient());
       handshakeMessage.addResendMessage(packaged);
     }
+
+    // Walk the objectStoreMap and add reconnect references for any objects found there.
+    for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
+      EntityID entityID = descriptor.getEntityID();
+// this entity is about to be destroyed by a resend or has been destroyed by the original send, skip reconnect data
+      if (!destroyed.contains(entityID)) {
+        long entityVersion = descriptor.getClientSideVersion();
+        ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
+        byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
+        ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
+        handshakeMessage.addReconnectReference(context);
+      }
+    }
+
   }
 
   @Override
