@@ -46,8 +46,6 @@ public class ReplicationEnvelope {
   public void release() {
     if (waitRelease != null) {
       waitRelease.run();
-    } else {
-      throw new AssertionError("not waiting");
     }
   }
 }

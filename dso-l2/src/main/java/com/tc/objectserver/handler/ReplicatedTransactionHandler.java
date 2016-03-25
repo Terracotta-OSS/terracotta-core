@@ -120,12 +120,22 @@ public class ReplicatedTransactionHandler {
   private void processMessage(ReplicationMessage rep) throws EntityException {
     switch (rep.getType()) {
       case ReplicationMessage.REPLICATE:
-        if (!state.defer(rep)) {
+        if (state.ignore(rep)) {
+          LOGGER.debug("Ignoring:" + rep);
+          acknowledge(rep);
+        } else if (!state.defer(rep)) {
+          LOGGER.debug("Applying:" + rep);
           replicatedMessageReceived(rep);
-        } 
+        } else {
+          LOGGER.debug("Deferring:" + rep);
+        }
         break;
       case ReplicationMessage.SYNC:
-        syncMessageReceived(rep);
+        if (!state.destroyed(rep.getEntityID())) {
+          syncMessageReceived(rep);
+        } else {
+          acknowledge(rep);
+        }
         break;
       case ReplicationMessage.START:
       case ReplicationMessage.RESPONSE:
@@ -339,6 +349,9 @@ public class ReplicatedTransactionHandler {
   private void acknowledge(ReplicationMessage rep) {
 //  when is the right time to send the ack?
     try {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("acking " + rep);
+      }
       if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
         groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
       }
@@ -401,6 +414,10 @@ public class ReplicatedTransactionHandler {
       syncing = eid;
     }
     
+    private boolean destroyed(EntityID eid) {
+      return (eid.equals(syncing) && destroyed) || syncdEntities.contains(eid);
+    }
+    
     private void endEntity(EntityID eid) {
       Assert.assertEquals(syncing, eid);
       syncdEntities.add(eid);
@@ -441,16 +458,39 @@ public class ReplicatedTransactionHandler {
       syncdEntities.clear();
       finished = true;
     }
+    
+    private boolean ignore(ReplicationMessage rep) {
+      if (finished) {
+//  done with sync, need to apply everything now
+        return false;
+      }
+      if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+        return false;
+      }
+      EntityID eid = rep.getEntityDescriptor().getEntityID();
+//  everything else, check
+      if (eid.equals(syncing)) {
+        if (destroyed) {
+//  blackhole this request.  The entity has been destroyed. 
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Dropping " + rep + " due to destroy");
+          }
+          return true;
+        } else if (!syncdKeys.contains(rep.getConcurrency())) {
+//  ignore, haven't gotten to this key yet
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Ignoring " + rep);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
 
     private boolean defer(ReplicationMessage rep) {
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
-      }
-      if (!started) {
-//  no state, this message can be safely ignored
-        acknowledge(rep);
-        return true;
       }
 //  everything else, check
       EntityID eid = rep.getEntityDescriptor().getEntityID();
@@ -458,50 +498,35 @@ public class ReplicatedTransactionHandler {
         return false;
       } 
       
-      if (syncing != null) {
-        if (eid.equals(syncing)) {
-          if (syncdKeys.contains(rep.getConcurrency())) {
-            return false;
-          } else if (destroyed) {
-//  blackhole this request.  The entity has been destroyed. 
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Dropping " + rep + " due to destroy");
-            }
-            acknowledge(rep);
-            return true;
-          } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
-            defer.clear();
-            defer.add(rep);
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Destroying " + rep);
-            }
-            destroyed = true;
-            return true;
-          } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+      if (rep.getReplicationType() == ReplicationMessage.ReplicationType.CREATE_ENTITY) {
+        syncdEntities.add(eid);
+        destroyed = false;
+        return false;
+      }
+      
+      if (eid.equals(syncing)) {
+        if (syncdKeys.contains(rep.getConcurrency())) {
+          return false;
+        } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
 //  NOOP requests cannot be deferred
-            return false;
-          } else if (currentKey == rep.getConcurrency()) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Deferring " + rep);
-            }
-            defer.add(rep);
-            return true;
-          } else {
-//  ignore, haven't gotten to this key yet
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Ignoring " + rep);
-            }
-            acknowledge(rep);
-            return true;
+          return false;
+        } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
+          defer.clear();
+          defer.add(rep);
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Destroying " + rep);
           }
+          destroyed = true;
+          return false;
+        } else if (currentKey == rep.getConcurrency()) {
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Deferring " + rep);
+          }
+          defer.add(rep);
+          return true;
         }
       }
-  //  Ignore anything here, entity not sync'd, key not sync'd, not syncing entity
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Ignoring " + rep);
-      }
-      acknowledge(rep);
-      return true;
+      return false;
     }
   }  
   
