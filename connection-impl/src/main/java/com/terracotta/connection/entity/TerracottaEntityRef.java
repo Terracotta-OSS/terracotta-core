@@ -79,7 +79,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
         maintenanceModeService.readUnlockEntity(type, name);
       }
     };
-    
+        
     EntityClientEndpoint endpoint = null;
     try {
       ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());

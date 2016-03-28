@@ -75,5 +75,5 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    * Called to retrieve the entityDescriptor, returning its instance configuration, if found.  Note that this call will have
    * the side-effect of adding a reference to this server-side entity, from this client.
    */
-  byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException;
+//  byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException;
 }

@@ -39,6 +39,11 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.EntityLockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockContext;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
@@ -46,10 +51,10 @@ import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
+import com.tc.util.runtime.LockState;
 import java.io.IOException;
 
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -242,12 +247,29 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     FlushResponse flush = new FlushResponse();
     responder.getSink().addSingleThreaded(flush);
     flush.waitForAccess();
-    Set<EntityID> destroyed = new HashSet<EntityID>();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       NetworkVoltronEntityMessage message = inFlight.getMessage();
-      if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY) {
-        destroyed.add(message.getEntityDescriptor().getEntityID());
+      if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY ||
+          message.getVoltronType() == VoltronEntityMessage.Type.DESTROY_ENTITY) {
+        logger.debug("Resending " + message.getVoltronType() + " on " + message.getEntityDescriptor().getEntityID());
+        boolean validated = false;
+        for (ClientServerExchangeLockContext cxt : handshakeMessage.getLockContexts()) {
+          if (cxt.getLockID().getLockType() == LockID.LockIDType.ENTITY) {
+            EntityID eid = message.getEntityDescriptor().getEntityID();
+            EntityLockID elock = (EntityLockID)cxt.getLockID();
+            if (elock.equals(new EntityLockID(eid.getClassName(), eid.getEntityName()))) {
+              if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY) {
+                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState(), ServerLockLevel.READ);
+              } else {
+                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState().getLockLevel(), ServerLockLevel.WRITE);
+              }
+              validated = true;
+              break;
+            }
+          }
+        }
+        Assert.assertTrue(validated);
       }
       ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
           message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData(), 
@@ -259,15 +281,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
       EntityID entityID = descriptor.getEntityID();
 // this entity is about to be destroyed by a resend or has been destroyed by the original send, skip reconnect data
-      if (!destroyed.contains(entityID)) {
-        long entityVersion = descriptor.getClientSideVersion();
-        ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
-        byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
-        ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
-        handshakeMessage.addReconnectReference(context);
-      }
+      long entityVersion = descriptor.getClientSideVersion();
+      ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
+      byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
+      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
+      handshakeMessage.addReconnectReference(context);
     }
-
   }
 
   @Override
@@ -286,11 +305,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.objectStoreMap.clear();
     isAlive = false;
     sender.interrupt();
-  }
-
-  @Override
-  public byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException {
-    return internalRetrieve(entityDescriptor);
   }
 
   private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) throws EntityException {

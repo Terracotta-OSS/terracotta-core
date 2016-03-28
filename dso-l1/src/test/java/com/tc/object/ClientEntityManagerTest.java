@@ -178,9 +178,6 @@ public class ClientEntityManagerTest extends TestCase {
     
     // We expect that we found the entity.
     assertTrue(didFindEndpoint(fetcher));
-    
-    // Now, release it.
-    fetcher.close();
   }
 
   // Test fetch+release on failure.
