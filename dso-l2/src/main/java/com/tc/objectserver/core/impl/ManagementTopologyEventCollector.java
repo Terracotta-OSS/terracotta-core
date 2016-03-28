@@ -95,7 +95,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.servers.put(node, server);
     LOGGER.debug("adding NODE:" + Arrays.toString(makeServerPath(node)) + " NAME:" + PlatformMonitoringConstants.INSTANCE_NODE_NAME + " VALUE:" + server);
     if (null != this.serviceInterface) {
-      this.serviceInterface.addNode(PlatformMonitoringConstants.GROUP_PATH, node.toString(), null);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.GROUP_PATH, node.toString(), server);
       this.serviceInterface.addNode(makeServerPath(node), PlatformMonitoringConstants.INSTANCE_NODE_NAME, server);
     }
   }
@@ -120,6 +120,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     LOGGER.debug("state NODE:" + node + " entering state " + stateValue);
     // Set this in the monitoring interface.
     if (null != this.serviceInterface) {
+      this.serviceInterface.addNode(PlatformMonitoringConstants.GROUP_PATH, node.toString(), null);
       this.serviceInterface.removeNode(makeServerPath(node), PlatformMonitoringConstants.STATE_NODE_NAME);
       this.serviceInterface.addNode(makeServerPath(node), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, activateTime));
     }

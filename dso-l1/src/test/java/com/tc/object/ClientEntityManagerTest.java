@@ -180,7 +180,7 @@ public class ClientEntityManagerTest extends TestCase {
     assertTrue(didFindEndpoint(fetcher));
     
     // Now, release it.
-    this.manager.releaseEntity(entityDescriptor);
+    fetcher.close();
   }
 
   // Test fetch+release on failure.
@@ -208,9 +208,9 @@ public class ClientEntityManagerTest extends TestCase {
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
     boolean didRelease = false;
     try {
-      this.manager.releaseEntity(entityDescriptor);
+      fetcher.close();
       didRelease = true;
-    } catch (EntityException e) {
+    } catch (RuntimeException e) {
       // Expected.
       didRelease = false;
     }
@@ -411,6 +411,10 @@ public class ClientEntityManagerTest extends TestCase {
         throw this.exception;
       }
       return this.result;
+    }
+    
+    public void close() {
+      result.close();
     }
   }
   

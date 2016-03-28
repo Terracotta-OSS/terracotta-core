@@ -57,13 +57,6 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
   public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException;
 
   /**
-   * Release the client's reference to the given entityID.
-   * 
-   * @param entityDescriptor the entity to release and the instance making the request.
-   */
-  void releaseEntity(EntityDescriptor entityDescriptor) throws EntityException;
-
-  /**
    * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
    * otherwise it'll drop the message on the floor.
    *
@@ -83,9 +76,4 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    * the side-effect of adding a reference to this server-side entity, from this client.
    */
   byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException;
-
-  /**
-   * This method is the opposite of "retrieve()":  ask the implementation to tell the remote side we no longer want the entity.
-   */
-  void release(EntityDescriptor entityDescriptor) throws EntityException;
 }
