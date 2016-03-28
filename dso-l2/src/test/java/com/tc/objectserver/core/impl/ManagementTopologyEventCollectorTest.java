@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 
@@ -32,10 +33,12 @@ import static org.mockito.Mockito.mock;
 
 public class ManagementTopologyEventCollectorTest {
   private ManagementTopologyEventCollector collector;
+  private ServerID selfID;
 
   @Before
   public void setUp() throws Exception {
-    this.collector = new ManagementTopologyEventCollector(null);
+    this.selfID = mock(ServerID.class);
+    this.collector = new ManagementTopologyEventCollector(selfID, null);
   }
 
   @Test
@@ -102,7 +105,7 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertFalse(didSucceed);
     
     // Now, change state of the server to active.
-    this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR);
+    this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
     isActive = true;
     
     // Promote the entity to active.
@@ -129,7 +132,7 @@ public class ManagementTopologyEventCollectorTest {
     ClientID client = mock(ClientID.class);
     
     // Put us into the active state.
-    this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR);
+    this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
     boolean isActive = true;
     
     // Create the entity.

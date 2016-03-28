@@ -30,13 +30,21 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.util.Arrays;
+import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.monitoring.ServerState;
 
 
 /**
@@ -48,14 +56,21 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
+  private final Map<NodeID, PlatformServer> servers;
   private final Map<FetchTuple, Integer> fetchPairCounts;
   private boolean isActiveState;
+  
+  private final ServerID thisNode;
 
-  public ManagementTopologyEventCollector(IMonitoringProducer serviceInterface) {
+  private static final TCLogger LOGGER = TCLogging.getLogger(ManagementTopologyEventCollector.class);
+
+  public ManagementTopologyEventCollector(ServerID self, IMonitoringProducer serviceInterface) {
+    this.thisNode = self;
     this.serviceInterface = serviceInterface;
     this.connectedClients = new HashSet<ClientID>();
     this.entities = new HashSet<EntityID>();
     this.fetchPairCounts = new HashMap<FetchTuple, Integer>();
+    this.servers = new HashMap<NodeID, PlatformServer>();
     this.isActiveState = false;
     
     // Do our initial configuration of the service.
@@ -69,21 +84,51 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // Create the root of the client-entity fetch subtree.
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.FETCHED_ROOT_NAME, null);
       // Create the initial server state.
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, PlatformMonitoringConstants.SERVER_STATE_STOPPED);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.GROUP_ROOT_NAME, null);
+    }
+  }
+  
+  @Override
+  public synchronized void serverDidJoinGroup(ServerID node, String serverName, String hostname, 
+      String bindAddress, int bindPort, int groupPort, String version, String build) {
+    PlatformServer server = new PlatformServer(serverName, hostname, bindAddress, bindPort, groupPort, version, build, TCServerMain.getServer().getStartTime()); 
+    this.servers.put(node, server);
+    LOGGER.debug("adding NODE:" + Arrays.toString(makeServerPath(node)) + " NAME:" + PlatformMonitoringConstants.INSTANCE_NODE_NAME + " VALUE:" + server);
+    if (null != this.serviceInterface) {
+      this.serviceInterface.addNode(PlatformMonitoringConstants.GROUP_PATH, node.toString(), null);
+      this.serviceInterface.addNode(makeServerPath(node), PlatformMonitoringConstants.INSTANCE_NODE_NAME, server);
     }
   }
 
   @Override
-  public synchronized void serverDidEnterState(State state) {
+  public void serverDidLeaveGroup(ServerID node) {
+    LOGGER.debug("removing NODE:" + Arrays.toString(makeServerPath(node)) + " NAME:" + PlatformMonitoringConstants.INSTANCE_NODE_NAME);
+    if (this.servers.remove(node) != null) {
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.GROUP_PATH, node.toString());
+    }
+  }
+
+  @Override
+  public synchronized void serverDidEnterState(NodeID node, State state, long activateTime) {
     // We track whether or not we are in an active state to ensure that entities are created/loaded in the expected state.
-    this.isActiveState = (StateManager.ACTIVE_COORDINATOR == state);
-    
+    if (node.equals(thisNode)) {
+      this.isActiveState = StateManager.ACTIVE_COORDINATOR.getName().equals(state.getName());
+    }
+    boolean passive = (StateManager.PASSIVE_STANDBY.getName().equals(state.getName()));
+
+    String stateValue = this.isActiveState ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : (passive) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE : PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
+    LOGGER.debug("state NODE:" + node + " entering state " + stateValue);
     // Set this in the monitoring interface.
     if (null != this.serviceInterface) {
-      String stateValue = this.isActiveState ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_PASSIVE;
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, stateValue);
+      this.serviceInterface.removeNode(makeServerPath(node), PlatformMonitoringConstants.STATE_NODE_NAME);
+      this.serviceInterface.addNode(makeServerPath(node), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, activateTime));
     }
+  }
+  
+  private String[] makeServerPath(NodeID node) {
+    String[] path = Arrays.copyOf(PlatformMonitoringConstants.GROUP_PATH, PlatformMonitoringConstants.GROUP_PATH.length + 1);
+    path[PlatformMonitoringConstants.GROUP_PATH.length] = node.toString();
+    return path;
   }
 
   @Override
