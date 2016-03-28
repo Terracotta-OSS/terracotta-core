@@ -39,6 +39,11 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.EntityLockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockContext;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
@@ -46,6 +51,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
+import com.tc.util.runtime.LockState;
 import java.io.IOException;
 
 import java.util.EnumSet;
@@ -124,12 +130,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
     return internalLookup(entityDescriptor, closeHook);
   }
-
+/**
   @Override
   public void releaseEntity(EntityDescriptor entityDescriptor) throws EntityException {
     internalRelease(entityDescriptor);
   }
-
+*/
   @Override
   public void handleMessage(EntityDescriptor entityDescriptor, byte[] message) {
     EntityClientEndpoint endpoint = this.objectStoreMap.get(entityDescriptor);
@@ -235,15 +241,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     stateManager.start();
-    // Walk the objectStoreMap and add reconnect references for any objects found there.
-    for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
-      EntityID entityID = descriptor.getEntityID();
-      long entityVersion = descriptor.getClientSideVersion();
-      ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
-      byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
-      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
-      handshakeMessage.addReconnectReference(context);
-    }
     
     Stage<VoltronEntityResponse> responder = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class);
     logger.debug("size of request acks at resend " + responder.getSink().size());
@@ -253,10 +250,42 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       NetworkVoltronEntityMessage message = inFlight.getMessage();
+      if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY ||
+          message.getVoltronType() == VoltronEntityMessage.Type.DESTROY_ENTITY) {
+        logger.debug("Resending " + message.getVoltronType() + " on " + message.getEntityDescriptor().getEntityID());
+        boolean validated = false;
+        for (ClientServerExchangeLockContext cxt : handshakeMessage.getLockContexts()) {
+          if (cxt.getLockID().getLockType() == LockID.LockIDType.ENTITY) {
+            EntityID eid = message.getEntityDescriptor().getEntityID();
+            EntityLockID elock = (EntityLockID)cxt.getLockID();
+            if (elock.equals(new EntityLockID(eid.getClassName(), eid.getEntityName()))) {
+              if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY) {
+                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState(), ServerLockLevel.READ);
+              } else {
+                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState().getLockLevel(), ServerLockLevel.WRITE);
+              }
+              validated = true;
+              break;
+            }
+          }
+        }
+        Assert.assertTrue(validated);
+      }
       ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
           message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData(), 
           message.getOldestTransactionOnClient());
       handshakeMessage.addResendMessage(packaged);
+    }
+
+    // Walk the objectStoreMap and add reconnect references for any objects found there.
+    for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
+      EntityID entityID = descriptor.getEntityID();
+// this entity is about to be destroyed by a resend or has been destroyed by the original send, skip reconnect data
+      long entityVersion = descriptor.getClientSideVersion();
+      ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
+      byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
+      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
+      handshakeMessage.addReconnectReference(context);
     }
   }
 
@@ -278,17 +307,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     sender.interrupt();
   }
 
-  @Override
-  public byte[] retrieve(EntityDescriptor entityDescriptor) throws EntityException {
-    return internalRetrieve(entityDescriptor);
-  }
-
-  @Override
-  public void release(EntityDescriptor entityDescriptor) throws EntityException {
-    internalRelease(entityDescriptor);
-  }
-
-
   private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
 
@@ -304,12 +322,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         @Override
         public void run() {
           try {
-            internalRelease(entityDescriptor);
+            internalRelease(entityDescriptor, closeHook);
           } catch (EntityException e) {
             // We aren't expecting there to be any problems releasing an entity in the close hook so we will just log and re-throw.
             Util.printLogAndRethrowError(e, logger);
           }
-          closeHook.run();
         }
       };
       resolvedEndpoint = new EntityClientEndpointImpl(entityDescriptor, this, config, compoundRunnable);
@@ -321,14 +338,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       this.objectStoreMap.put(entityDescriptor, resolvedEndpoint);
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
-      internalRelease(entityDescriptor);
+      internalRelease(entityDescriptor, closeHook);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
       logger.warn("Exception retrieving entity descriptor " + entityDescriptor, t);
       // Clean up any client-side or server-side state regarding this failed connection.
-      internalRelease(entityDescriptor);
+      internalRelease(entityDescriptor, closeHook);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw Throwables.propagate(t);
     }
@@ -336,7 +353,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return resolvedEndpoint;
   }
 
-  private void internalRelease(EntityDescriptor entityDescriptor) throws EntityException {
+  private void internalRelease(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
     stateManager.waitUntilRunning();
 
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
@@ -351,6 +368,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // the case where a reconnect might happen before the message completes, thus causing a re-send.  If we don't include
     // this reference in the reconnect handshake, the re-sent release will try to release a non-fetched entity.
     this.objectStoreMap.remove(entityDescriptor);
+
+    closeHook.run();
   }
 
   /**

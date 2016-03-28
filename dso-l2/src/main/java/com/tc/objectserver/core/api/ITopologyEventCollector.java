@@ -19,6 +19,8 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.util.State;
@@ -30,11 +32,28 @@ import com.tc.util.State;
  */
 public interface ITopologyEventCollector {
   /**
+   * Called when the server first joins the group
+   * 
+   * @param node  - The nodeid of the server
+   * @param serverName  - The name of the server in the config
+   * @param host - user supplied hostname
+   * @param bindAddress - The address to which this server listens for connections
+   * @param bindPort - The port that is bound to this connection 0 for active, remote port for passive
+   */
+  public void serverDidJoinGroup(ServerID node, String serverName, String host, String bindAddress, int bindPort, int groupPort, String version, String build);
+  /**
+   * Called when the server first joins the group
+   * 
+   * @param node  - The nodeid of server
+   */
+  public void serverDidLeaveGroup(ServerID node);
+  /**
    * Called when the server first enters the given state.
    * 
+   * @param node node id of the server changing state
    * @param state The new server state now set.
    */
-  public void serverDidEnterState(State state);
+  public void serverDidEnterState(NodeID node, State state, long activateTime);
 
   /**
    * Called when a client connects for the first time.  Note that this won't be called if the connection is deemed to be a
