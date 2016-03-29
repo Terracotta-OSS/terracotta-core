@@ -46,62 +46,16 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
     exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS);
-    
-    exemptedProperties.add(TCPropertiesConsts.L1_SEDA_PINNED_ENTRY_FAULT_STAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L1_SERVERMAPMANAGER_FAULT_INVALIDATED_PINNED_ENTRIES);
-    exemptedProperties.add(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER);
-    exemptedProperties.add(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_OIDSET_TYPE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_CONCURRENCY);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_INITIAL_DATASIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_TABLESIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_DISABLED);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_SERVER_MAP_CAPACITY_EVICTION_STAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS);
 
     exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_MAPS);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_ENABLE_OBJECTS_HOTSET);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_MAPS_HOTSET);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_CHUNK_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_CHUNK_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_PAGE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_COUNT);
-    
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_PREFIX);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_POLICY);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_AMOUNT);
 
     exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS);
     exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE);
     exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE);
-
-    exemptedProperties.add(TCPropertiesConsts.CAS_LOGGING_ENABLED);
-
-    exemptedProperties.add(TCPropertiesConsts.EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE);
     
+    exemptedProperties.add(TCPropertiesConsts.ENTITY_PROCESSOR_THREADS);
+  
     exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS);
     exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS);
   }

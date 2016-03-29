@@ -91,7 +91,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile ConcurrencyStrategy<EntityMessage> concurrencyStrategy;
 
   private final DefermentQueue<SchedulingRunnable> runnables = new DefermentQueue<>(TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_ENTITY_DEFERMENT_QUEUE_SIZE, 1024));
+        .getInt(TCPropertiesConsts.ENTITY_DEFERMENT_QUEUE_SIZE, 1024));
 
   private volatile PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
