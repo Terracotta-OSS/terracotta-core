@@ -23,6 +23,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -130,11 +131,20 @@ public class ServerClientHandshakeManager {
           } catch (EntityException e) {
             // We don't expect to fail at this point.
             // TODO:  Determine if we have a meaningful way to handle this error.
-            Assert.failure("Unexpected failure to get entity in handshake", e);
+            throw Assert.failure("Unexpected failure to get entity in handshake", e);
           }
           // If we fail to find this, something is seriously wrong since either the restart/failover was incorrect or this message is invalid.
           // TODO:  Determine if we have a meaningful way to handle this error.
-          Assert.assertTrue("entity:" + entityID + " version:" + version + " entities:" + entityManager, entity.isPresent());
+          if (!entity.isPresent()) {
+// added debug information if this assert is triggered
+            for (ResendVoltronEntityMessage resentMessage : handshake.getResendMessages()) {
+              logger.error("RESENT:" + resentMessage.getSource() + " " + resentMessage.getVoltronType() + " " + resentMessage.getEntityDescriptor().getEntityID());
+            }
+            for (ClientServerExchangeLockContext locks : lockContexts) {
+              logger.error("LOCK:" + locks.getNodeID() + " " + locks.getLockID() + " " + locks.getState());
+            }
+            Assert.assertTrue("entity:" + entityID + " version:" + version + " entities:" + entityManager, entity.isPresent());
+          }
           EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
           ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
           byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
