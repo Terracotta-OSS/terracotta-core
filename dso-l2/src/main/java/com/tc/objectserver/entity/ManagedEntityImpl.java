@@ -31,6 +31,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.SyncMessageCodec;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -85,6 +86,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile boolean isDestroyed;
   
   private final MessageCodec<EntityMessage, EntityResponse> codec;
+  private final SyncMessageCodec<EntityMessage, EntityResponse> syncCodec;
   private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private volatile ConcurrencyStrategy<EntityMessage> concurrencyStrategy;
 
@@ -113,6 +115,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.isInActiveState = isInActiveState;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
+    this.syncCodec = factory.getSyncMessageCodec();
   }
 
   @Override
@@ -143,7 +146,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     
       EntityMessage message = null;
       try {
-        message = runWithHelper(()->codec.deserialize(payload));
+        message = runWithHelper(()->codec.decodeMessage(payload));
       } catch (EntityUserException e) {
         throw new RuntimeException(e);
       }
@@ -201,7 +204,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->{
         EntityMessage message = null;
         try {
-          message = runWithHelper(()->codec.deserializeForSync(concurrencyKey, payload));
+          message = runWithHelper(()->syncCodec.decode(concurrencyKey, payload));
         } catch (EntityUserException e) {
           throw new RuntimeException(e);
         }
@@ -498,7 +501,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           public void synchronizeToPassive(EntityResponse payload) {
             for (NodeID passive : passives) {
               try {
-                byte[] message = runWithHelper(()->codec.serializeForSync(concurrencyKey, payload));
+                byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
                 executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).get();
               } catch (EntityUserException eu) {
               // TODO: do something reasoned here
@@ -539,7 +542,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
-          byte[] er = runWithHelper(()->codec.serialize(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
+          byte[] er = runWithHelper(()->codec.encodeResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
           wrappedRequest.complete(er);
         } catch (EntityUserException e) {
           wrappedRequest.failure(e);

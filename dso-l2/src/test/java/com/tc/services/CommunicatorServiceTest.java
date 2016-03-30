@@ -88,7 +88,7 @@ public class CommunicatorServiceTest {
     consumerID = 1;
     owningEntity = mock(ManagedEntity.class);
     codec = mock(MessageCodec.class);
-    when(codec.serialize(response)).thenReturn(payload);
+    when(codec.encodeResponse(response)).thenReturn(payload);
     when((MessageCodec)owningEntity.getCodec()).thenReturn(codec);
     
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
@@ -168,8 +168,8 @@ public class CommunicatorServiceTest {
     ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
     ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
     
-    when(codec.serialize(response1)).thenReturn(payload1);
-    when(codec.serialize(response2)).thenReturn(payload2);
+    when(codec.encodeResponse(response1)).thenReturn(payload1);
+    when(codec.encodeResponse(response2)).thenReturn(payload2);
     
     ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     
@@ -204,8 +204,8 @@ public class CommunicatorServiceTest {
     ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
     ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
     
-    when(codec.serialize(response1)).thenReturn(payload1);
-    when(codec.serialize(response2)).thenReturn(payload2);
+    when(codec.encodeResponse(response1)).thenReturn(payload1);
+    when(codec.encodeResponse(response2)).thenReturn(payload2);
     
     ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     

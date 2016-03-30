@@ -74,6 +74,6 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
   private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse response) throws MessageCodecException {
     // We do this downcast, inline, instead of asking the codec (since a safer cast is all it could do, anyway).
     // This should be safe as we received this object from an entity using this codec. 
-    return codec.serialize((R)response);
+    return codec.encodeResponse((R)response);
   }
 }

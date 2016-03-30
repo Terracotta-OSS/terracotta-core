@@ -20,6 +20,9 @@ package com.tc.object;
 
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.VoltronEntityMessage;
@@ -54,7 +57,7 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    * @param closeHook To be passed into the found EntityClientEndpoint for it to call on close or called, directly, if lookup fails.
    * @return The end-point or null if the entity doesn't exist
    */
-  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException;
+  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException;
 
   /**
    * Release the client's reference to the given entityID.

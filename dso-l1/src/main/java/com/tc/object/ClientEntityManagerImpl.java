@@ -23,6 +23,9 @@ import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -121,8 +124,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
-    return internalLookup(entityDescriptor, closeHook);
+  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
+    return internalLookup(entityDescriptor, codec, closeHook);
   }
 
   @Override
@@ -289,7 +292,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
 
-  private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final Runnable closeHook) throws EntityException {
+  private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
 
     EntityClientEndpoint resolvedEndpoint = null;
@@ -312,7 +315,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           closeHook.run();
         }
       };
-      resolvedEndpoint = new EntityClientEndpointImpl(entityDescriptor, this, config, compoundRunnable);
+      resolvedEndpoint = new EntityClientEndpointImpl(entityDescriptor, this, config, codec, compoundRunnable);
       
       if (null != this.objectStoreMap.get(entityDescriptor)) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()

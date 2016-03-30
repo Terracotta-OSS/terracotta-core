@@ -23,18 +23,26 @@ import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodecException;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.util.Assert;
+import org.terracotta.exception.EntityException;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
-public class EntityClientEndpointImpl implements EntityClientEndpoint {
+public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
   private final InvocationHandler invocationHandler;
   private final byte[] configuration;
   private final EntityDescriptor entityDescriptor;
+  private final MessageCodec<M, R> codec;
   private final Runnable closeHook;
   private EndpointDelegate delegate;
   private boolean isOpen;
@@ -45,10 +53,11 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
    * @param entityConfiguration Opaque byte[] describing how to configure the entity to be built on top of this end-point.
    * @param closeHook A Runnable which will be run last when the end-point is closed.
    */
-  public EntityClientEndpointImpl(EntityDescriptor entityDescriptor, InvocationHandler invocationHandler, byte[] entityConfiguration, Runnable closeHook) {
+  public EntityClientEndpointImpl(EntityDescriptor entityDescriptor, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Runnable closeHook) {
     this.entityDescriptor = entityDescriptor;
     this.invocationHandler = invocationHandler;
     this.configuration = entityConfiguration;
+    this.codec = codec;
     Assert.assertNotNull("Endpoint didn't have close hook", closeHook);
     this.closeHook = closeHook;
     // We start in the open state.
@@ -85,18 +94,18 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     return new InvocationBuilderImpl();
   }
 
-  private class InvocationBuilderImpl implements InvocationBuilder {
+  private class InvocationBuilderImpl implements InvocationBuilder<M, R> {
     private boolean invoked = false;
-    private byte[] payload;
+    private M request;
     private final Set<VoltronEntityMessage.Acks> acks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     private boolean requiresReplication = true;
 
     // TODO: fill in durability/consistency options here.
 
     @Override
-    public synchronized InvocationBuilderImpl payload(byte[] pl) {
+    public synchronized InvocationBuilderImpl message(M request) {
       checkInvoked();
-      this.payload = pl;
+      this.request = request;
       return this;
     }
 
@@ -125,10 +134,39 @@ public class EntityClientEndpointImpl implements EntityClientEndpoint {
     }
 
     @Override
-    public synchronized InvokeFuture<byte[]> invoke() {
+    public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
       checkInvoked();
       invoked = true;
-      return invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, this.payload);
+      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, codec.encodeMessage(request));
+      return new InvokeFuture<R>() {
+        @Override
+        public boolean isDone() {
+          return invokeFuture.isDone();
+        }
+
+        @Override
+        public R get() throws InterruptedException, EntityException {
+          try {
+            return codec.decodeResponse(invokeFuture.get());
+          } catch (MessageCodecException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        @Override
+        public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+          try {
+            return codec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
+          } catch (MessageCodecException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        @Override
+        public void interrupt() {
+          invokeFuture.interrupt();
+        }
+      };
     }
 
     private void checkInvoked() {

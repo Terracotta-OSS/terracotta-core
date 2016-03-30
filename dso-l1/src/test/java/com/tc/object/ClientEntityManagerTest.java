@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
@@ -401,7 +402,7 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public void run() {
       try {
-        this.result = this.manager.fetchEntity(this.entityDescriptor, mock(Runnable.class));
+        this.result = this.manager.fetchEntity(this.entityDescriptor, mock(MessageCodec.class), mock(Runnable.class));
       } catch (Throwable t) {
         this.exception = t;
       }
