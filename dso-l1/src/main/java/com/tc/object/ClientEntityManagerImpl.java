@@ -18,6 +18,10 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandler;
+import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
@@ -45,7 +49,6 @@ import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.EntityLockID;
 import com.tc.object.locks.LockID;
-import com.tc.object.locks.ServerLockContext;
 import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -54,28 +57,22 @@ import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
-import com.tc.util.runtime.LockState;
 import java.io.IOException;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
-  private static final int MAX_PENDING_REQUESTS = 5000;
-  private static final int MAX_QUEUED_REQUESTS = 100;
   private final TCLogger logger;
   
   private final ClientMessageChannel channel;
-  private final Thread sender;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
-  private final BlockingQueue<InFlightMessage> outbound;
+  private final Sink<InFlightMessage> outbound;
   private final Semaphore requestTickets;
   private final AtomicLong currentTransactionID;
 
@@ -90,23 +87,34 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.logger = new ClientIDLogger(channel, TCLogging.getLogger(ClientEntityManager.class));
     
     this.channel = channel;
-    this.sender = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        sendLoop();
-      }
-    });
+
     this.inFlightMessages = new ConcurrentHashMap<TransactionID, InFlightMessage>();
-    this.outbound = new LinkedBlockingQueue<InFlightMessage>(MAX_QUEUED_REQUESTS);
-    this.requestTickets = new Semaphore(MAX_PENDING_REQUESTS);
+    this.requestTickets = new Semaphore(ClientConfigurationContext.MAX_SENT_REQUESTS);
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint>(10240, 0.75f, 128);
     this.stages = mgr;
     
-    // TODO:  This constructor should not be starting a thread so we probably want some external methods to manage the
-    //  life-cycle of this internal thread.
-    this.sender.start();
+    this.outbound = createSendStage(stages);
+  }
+  
+  private Sink<InFlightMessage> createSendStage(StageManager stages) {
+    EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
+      @Override
+      public void handleEvent(InFlightMessage first) throws EventHandlerException {
+        try {
+          requestTickets.acquire();
+          synchronized (this) {
+            inFlightMessages.put(first.getTransactionID(), first);
+            first.sent();
+          }
+          first.send();
+        } catch (InterruptedException ie) {
+          throw new EventHandlerException(ie);
+        }
+      }
+    };
+    return stages.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_SENDER_STAGE, InFlightMessage.class, handler, 1, ClientConfigurationContext.MAX_PENDING_REQUESTS).getSink();
   }
   
   @Override
@@ -182,7 +190,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     out.print(this.getClass().getName()).flush();
     out.duplicateAndIndent().indent().print(this.stateManager.getCurrentState()).flush();
     out.duplicateAndIndent().indent().print("inFlightMessages size: ").print(Integer.valueOf(this.inFlightMessages.size())).flush();
-    out.duplicateAndIndent().indent().print("outbound size: ").print(Integer.valueOf(this.outbound.size())).flush();
+    out.duplicateAndIndent().indent().print("outbound size: ").print(Integer.valueOf(outbound.size())).flush();
     out.duplicateAndIndent().indent().print("objectStoreMap size: ").print(Integer.valueOf(this.objectStoreMap.size())).flush();
     return out;
   }
@@ -301,7 +309,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // And then drop them.
     this.objectStoreMap.clear();
     isAlive = false;
-    sender.interrupt();
   }
 
   private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, final Runnable closeHook) throws EntityException {
@@ -398,37 +405,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return synchronousWaitForResponse(message, requestedAcks);
   }
 
-  private void sendLoop() {
-    boolean interrupted = false;
-    while (!interrupted && isAlive) {
-      try {
-        InFlightMessage first = outbound.take();
-        synchronized (this) {
-          inFlightMessages.put(first.getTransactionID(), first);
-          first.sent();
-        }
-        first.send();
-      } catch (InterruptedException e) {
-        logger.info("ClientRequestManager interrupted! bailing out.");
-        // We now want to fall out of the loop.
-        interrupted = true;
-      }
-    }
-  }
-
   private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks) {
     InFlightMessage inFlight = new InFlightMessage(message, requestedAcks);
-    boolean interrupted = false;
-    while (true) {
-      try {
-        outbound.put(inFlight);
-        break;
-      } catch (InterruptedException e1) {
-        interrupted = true;
-      }
-    }
+    outbound.addSingleThreaded(inFlight);
     inFlight.waitForAcks();
-    Util.selfInterruptIfNeeded(interrupted);
     return inFlight;
   }
 

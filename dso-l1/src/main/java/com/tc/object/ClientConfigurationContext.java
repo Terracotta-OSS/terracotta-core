@@ -22,6 +22,9 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.ClientLockManager;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {
 
@@ -33,7 +36,11 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             MANAGEMENT_STAGE                            = "management_stage";
   public static final String             VOLTRON_ENTITY_RESPONSE_STAGE                      = "request_ack_stage";
   public static final String             SERVER_ENTITY_MESSAGE_STAGE                 = "server_entity_message_stage";
+  public static final String             SERVER_ENTITY_MESSAGE_SENDER_STAGE                 = "server_entity_message_sender_stage";
 
+  public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
+  public static final int                MAX_SENT_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS, 200);
+  
   private final ClientLockManager         lockManager;
   private final ClientEntityManager       entityManager;
   private final ClientHandshakeManager    clientHandshakeManager;

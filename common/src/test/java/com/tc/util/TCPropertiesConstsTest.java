@@ -101,6 +101,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.CAS_LOGGING_ENABLED);
 
     exemptedProperties.add(TCPropertiesConsts.EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE);
+    
+    exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS);
+    exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS);
   }
 
   private void loadDefaults(String propFile) {
