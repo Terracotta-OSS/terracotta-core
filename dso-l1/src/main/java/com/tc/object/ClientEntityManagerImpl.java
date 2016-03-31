@@ -104,7 +104,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
         try {
           requestTickets.acquire();
-          synchronized (this) {
+          synchronized (ClientEntityManagerImpl.this) {
             inFlightMessages.put(first.getTransactionID(), first);
             first.sent();
           }
