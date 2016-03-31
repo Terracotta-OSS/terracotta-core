@@ -18,6 +18,11 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.EventHandler;
+import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
+import com.tc.async.api.SpecializedEventContext;
+import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,6 +45,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
@@ -52,6 +58,8 @@ import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
 import org.hamcrest.Matchers;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -71,6 +79,14 @@ public class ClientEntityManagerTest extends TestCase {
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
     this.stageMgr = mock(StageManager.class);
+    when(this.stageMgr.createStage(any(String.class), any(Class.class), any(EventHandler.class), anyInt(), anyInt())).then(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        Stage stage = mock(Stage.class);
+        when(stage.getSink()).thenReturn(new FakeSink((EventHandler)invocation.getArguments()[2]));
+        return stage;
+      }
+    });
     this.manager = new ClientEntityManagerImpl(this.channel, stageMgr);
     
     String entityClassName = "Class Name";
@@ -523,5 +539,74 @@ public class ClientEntityManagerTest extends TestCase {
     public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
       this.transactionID = transactionID;
     }
+  }
+  
+  private static class FakeSink implements Sink<Object> {
+    
+    private final EventHandler<Object> handle;
+
+    public FakeSink(EventHandler<Object> handle) {
+      this.handle = handle;
+    }
+
+    @Override
+    public void addSingleThreaded(Object context) {
+      try {
+        handle.handleEvent(context);
+      } catch (EventHandlerException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void addMultiThreaded(Object context) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void addSpecialized(SpecializedEventContext specialized) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    public void clear() {
+// NOOP
+    }
+
+    @Override
+    public void setClosed(boolean closed) {
+//  NOOP
+    }
+
+    @Override
+    public void enableStatsCollection(boolean enable) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean isStatsCollectionEnabled() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Stats getStats(long frequency) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Stats getStatsAndReset(long frequency) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void resetStats() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
   }
 }
