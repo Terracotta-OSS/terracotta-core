@@ -29,7 +29,7 @@ import java.math.RoundingMode;
 public class L2Utils {
   private static final int MAX_DEFAULT_COMM_THREADS = 16;
   private static final int MAX_DEFAULT_STAGE_THREADS = 16;
-  private static final int MAX_APPLY_STAGE_THREADS = 64;
+  private static final int MAX_ENTITY_PROCESSOR_THREADS = 128;
   public static final long MIN_COMMS_DIRECT_MEMORY_REQUIREMENT = 4 * 1024 * 1024;  // 4MiB
   public static final long MAX_COMMS_DIRECT_MEMORY_REQUIREMENT = 256 * 1024 * 1024; // 256MiB
 
@@ -57,8 +57,8 @@ public class L2Utils {
     // in restartable mode wait/compute time ratio is low due to disk I/O
     final int threadsCount = (usesDisk) ? calculateOptimalThreadsCount(cpus, 30, 70, 0.75)
         : calculateOptimalThreadsCount(cpus, 0, 100, 0.75);
-    return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS,
-        Math.min(threadsCount, MAX_APPLY_STAGE_THREADS));
+    return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.ENTITY_PROCESSOR_THREADS,
+        Math.min(threadsCount, MAX_ENTITY_PROCESSOR_THREADS));
   }
 
   /**

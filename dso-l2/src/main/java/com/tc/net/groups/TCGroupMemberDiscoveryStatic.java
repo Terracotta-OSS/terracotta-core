@@ -164,7 +164,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     if (nodeStateMap.isEmpty()) { throw new GroupException("No nodes"); }
 
     if (running.getAndSet(true)) {
-      Assert.failure("Not to start discovert second time");
+      throw Assert.failure("Not to start discovert second time");
     }
 
     manager.registerForGroupEvents(this);

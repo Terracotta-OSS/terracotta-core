@@ -92,7 +92,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   @Override
   public boolean isLegacyProductionModeEnabled() {
-    return TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_ENABLE_LEGACY_PRODUCTION_MODE);
+    return false;
   }
 
   @Override

@@ -68,7 +68,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
         }
       } catch (Exception e) {
         // If something happened here, that is a serious bug so we need to assert.
-        Assert.failure("Failure flushing FlatFileKeyValueStorage", e);
+        throw Assert.failure("Failure flushing FlatFileKeyValueStorage", e);
       }
       return result;
     }
