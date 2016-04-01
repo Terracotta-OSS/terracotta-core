@@ -78,9 +78,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private final ClientEntityStateManager stateManager;
   private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint> objectStoreMap;
-  
-  private volatile boolean isAlive = true;
-  
+    
   private final StageManager stages;
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
@@ -246,6 +244,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
+// need to reset the allowable permits on the semaphore because releases will not come back from the crashed server
+    requestTickets.release(ClientConfigurationContext.MAX_SENT_REQUESTS - requestTickets.availablePermits());
     stateManager.start();
     // Walk the objectStoreMap and add reconnect references for any objects found there.
     for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
@@ -308,7 +308,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     // And then drop them.
     this.objectStoreMap.clear();
-    isAlive = false;
   }
 
   private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, final Runnable closeHook) throws EntityException {
