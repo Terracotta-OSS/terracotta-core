@@ -73,8 +73,10 @@ import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
+import com.tc.l2.handler.PlatformInfoRequestHandler;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
@@ -111,6 +113,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.MessageID;
 import com.tc.net.groups.Node;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -160,6 +163,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -616,7 +620,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public Class<IMonitoringProducer> getServiceType() {
         return IMonitoringProducer.class;
       }});
-    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(this.getServerNodeID(), serviceInterface);
+// add this server to the tree of servers
+    eventCollector.serverDidJoinGroup(this.getServerNodeID(), server.getL2Identifier(), host, 
+        bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(),
+        pInfo.buildVersion(), pInfo.buildID());
 
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
@@ -685,7 +693,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
 
-    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
+    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(this.getServerNodeID(), createStageController(), eventCollector), 1, maxStageSize);
     StateManager state = new StateManagerImpl(this.consoleLogger, this.groupCommManager, 
         stateChange.getSink(),
         new StateManagerConfigImpl(configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs()),
@@ -736,7 +744,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     GroupEventsDispatchHandler dispatchHandler = new GroupEventsDispatchHandler();
     dispatchHandler.addListener(this.l2Coordinator);  
     dispatchHandler.addListener(passives);
-    dispatchHandler.addListener(connectPassiveOperatorEvents(haConfig.getNodesStore()));
+    dispatchHandler.addListener(connectPassiveOperatorEvents(haConfig.getNodesStore(), eventCollector));
     Stage<GroupEvent> groupEvents = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE, GroupEvent.class, dispatchHandler, 1, maxStageSize);
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically    
@@ -824,6 +832,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         server.updateActivateTime();
         PlatformInfoRequest req = new PlatformInfoRequest();
         req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+//  due to the broadcast nature of this call, it is possible to get multiple 
+//  responses from the same server.  The underlying collector must tolerate this
         groupCommManager.sendAll(req);  //  request info from all the other servers
       } else {
         try {
@@ -878,14 +888,22 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return control;
   }
   
-  private GroupEventsListener connectPassiveOperatorEvents(NodesStore nodesStore) {
+  private GroupEventsListener connectPassiveOperatorEvents(NodesStore nodesStore, ManagementTopologyEventCollector monitor) {
     OperatorEventsPassiveServerConnectionListener delegate = new OperatorEventsPassiveServerConnectionListener(nodesStore);
     return new GroupEventsListener() {
 
       @Override
       public void nodeJoined(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          delegate.passiveServerLeft((ServerID)nodeID);
+          delegate.passiveServerJoined((ServerID)nodeID);
+          PlatformInfoRequest req = new PlatformInfoRequest(PlatformInfoRequest.REQUEST);
+          req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+          try {
+            groupCommManager.sendTo(nodeID, req);
+ // monitor will be updated when the remote server responds with it's info
+          } catch (GroupException g) {
+            
+          }
         }
       }
 
@@ -893,6 +911,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeLeft(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerLeft((ServerID)nodeID);
+          monitor.serverDidLeaveGroup((ServerID)nodeID);
         }
       }
     };
