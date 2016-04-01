@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
@@ -53,6 +55,8 @@ import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
+import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.monitoring.ServerState;
 import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
@@ -67,6 +71,7 @@ import org.terracotta.persistence.KeyValueStorage;
  * and also test concurrency strategy.
  */
 public class PassthroughServerProcess implements MessageHandler {
+  private final int processID;
   private boolean isRunning;
   private final List<ServerEntityService<?, ?>> entityServices;
   private Thread serverThread;
@@ -85,6 +90,8 @@ public class PassthroughServerProcess implements MessageHandler {
   private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
   private LifeCycleMessageHandler lifeCycleMessageHandler;
   
+  private static final AtomicInteger processIdGen = new AtomicInteger(0);
+  
   // We need to hold onto any registered monitoring services to report client connection/disconnection events.
   private IMonitoringProducer serviceInterface;
   
@@ -98,6 +105,7 @@ public class PassthroughServerProcess implements MessageHandler {
     this.builtInServiceProviders = new Vector<PassthroughBuiltInServiceProvider>();
     // Consumer IDs start at 0 since that is the one the platform gives itself.
     this.nextConsumerID = 0;
+    this.processID = processIdGen.incrementAndGet();
   }
   
   @SuppressWarnings("deprecation")
@@ -160,7 +168,7 @@ public class PassthroughServerProcess implements MessageHandler {
       // Create the root of the client-entity fetch subtree.
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.FETCHED_ROOT_NAME, null);
       // Create the initial server state.
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, PlatformMonitoringConstants.SERVER_STATE_STOPPED);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.SERVERS_ROOT_NAME, null);
     }
     // And start the server thread.
     startServerThreadRunning();
@@ -181,11 +189,27 @@ public class PassthroughServerProcess implements MessageHandler {
     });
     this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.isRunning = true;
-    // Set our state.
+//  set instance
     if (null != this.serviceInterface) {
       String stateValue = (null != this.activeEntities) ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_PASSIVE;
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, stateValue);
+      String server = serverIdentifierForService(this);
+      PlatformServer serverObj = new PlatformServer(
+          "server" + processID, //  server name
+          "localhost", // hostname
+          "127.0.0.1", // hostAddress
+          "0.0.0.0", // bindAddress
+          processID, //  bindPort but just fake with processID
+          0, // groupPort
+          "Version Passthrough 5.0.0-SNAPSHOT", //  version
+          "Build ID", // build
+          System.currentTimeMillis() // start time
+      );
+      
+      this.serviceInterface.removeNode(PlatformMonitoringConstants.SERVERS_PATH, server);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.SERVERS_PATH, server, serverObj);
+// Set state.
+      long timestamp = System.currentTimeMillis();
+      this.serviceInterface.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, timestamp, (this.activeEntities != null) ? timestamp : -1));
     }
     this.serverThread.start();
   }
@@ -235,8 +259,7 @@ public class PassthroughServerProcess implements MessageHandler {
       this.isRunning = false;
       // Set our state.
       if (null != this.serviceInterface) {
-        this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
-        this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, PlatformMonitoringConstants.SERVER_STATE_STOPPED);
+        this.serviceInterface.removeNode(PlatformMonitoringConstants.SERVERS_PATH, serverIdentifierForService(this));
       }
       this.notifyAll();
     }
@@ -766,11 +789,27 @@ public class PassthroughServerProcess implements MessageHandler {
       newData.getActive().loadExisting();
       this.activeEntities.put(entry.getKey(), newData);
     }
+//  show promotion in monitoring    
+    if (this.serviceInterface != null) {
+      this.serviceInterface.removeNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME);
+      long timestamp = System.currentTimeMillis();
+      this.serviceInterface.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_ACTIVE, timestamp, timestamp));
+    }
     
     // Clear our passives.
     this.passiveEntities = null;
   }
 
+  private String[] makeServerPath(Object node, String...slot) {
+    String[] path = Arrays.copyOf(PlatformMonitoringConstants.SERVERS_PATH, PlatformMonitoringConstants.SERVERS_PATH.length + 1 + slot.length);
+    path[PlatformMonitoringConstants.SERVERS_PATH.length] = serverIdentifierForService(node);
+    System.arraycopy(slot, 0, path, PlatformMonitoringConstants.SERVERS_PATH.length + 1, slot.length);
+    return path;
+  }
+
+  private String serverIdentifierForService(Object id) {
+    return Integer.toHexString(System.identityHashCode(id));
+  }    
   /**
    * Called when a new connection has been established to this server.
    * 
