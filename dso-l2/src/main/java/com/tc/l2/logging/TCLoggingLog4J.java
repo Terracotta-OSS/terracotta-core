@@ -36,6 +36,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
+import com.tc.properties.TCPropertiesConsts;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,7 +70,6 @@ public class TCLoggingLog4J implements TCLoggingService {
   
   private static final int          MAX_BUFFERED_LOG_MESSAGES          = 10 * 1000;
 
-  private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
   private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
   private static final int          DEFAULT_MAX_LOG_FILE_SIZE          = 512;
   private static final String       MAX_BACKUPS_PROPERTY               = "maxBackups";
@@ -416,7 +416,7 @@ public class TCLoggingLog4J implements TCLoggingService {
 
     synchronized (TCLoggingLog4J.class) {
       try {
-        TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(LOGGING_PROPERTIES_SECTION);
+        TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TCPropertiesConsts.LOGGING_CATEGORY);
         newFileAppender = new TCRollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
         newFileAppender.setName("file appender");
         int maxLogFileSize = props.getInt(MAX_LOG_FILE_SIZE_PROPERTY, DEFAULT_MAX_LOG_FILE_SIZE);

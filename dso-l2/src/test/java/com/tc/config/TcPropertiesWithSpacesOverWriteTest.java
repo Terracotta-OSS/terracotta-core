@@ -23,6 +23,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.properties.TCPropertiesConsts;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -36,10 +37,8 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
         + "\n<tc-config xmlns=\"http://www.terracotta.org/config\">"
         + "<tc-properties>"
-        + "<property name=\" l1.cachemanager.enabled \" value=\"    false    \" />"
-        + "<property name=\"   logging.maxLogFileSize  \" value=\"   1234\" />"
-        + "<property name=\"l1.transactionmanager.maxPendingBatches   \" value=\"2345   \" />"
-        + "<property name=\"    l1.cachemanager.leastCount    \" value=\"  9000   \" />"
+        + "<property name=\"  " + TCPropertiesConsts.L2_HEALTHCHECK_L2_SOCKECT_CONNECT + "  \" value=\"    false    \" />"
+        + "<property name=\"  " +   TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE  + "  \" value=\"   1234\" />"
         + "</tc-properties>"
         + "\n<servers>"
         + "\n      <server name=\"server1\">"
@@ -53,10 +52,8 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
     factory.createL2TVSConfigurationSetupManager("server1", getClass().getClassLoader());
 
     TCProperties tcProps = TCPropertiesImpl.getProperties();
-    Assert.assertEquals(false, tcProps.getBoolean("l1.cachemanager.enabled"));
-    Assert.assertEquals(1234, tcProps.getInt("logging.maxLogFileSize"));
-    Assert.assertEquals(2345, tcProps.getInt("l1.transactionmanager.maxPendingBatches"));
-    Assert.assertEquals(9000, tcProps.getInt("l1.cachemanager.leastCount"));
+    Assert.assertEquals(false, tcProps.getBoolean(TCPropertiesConsts.L2_HEALTHCHECK_L2_SOCKECT_CONNECT));
+    Assert.assertEquals(1234, tcProps.getInt(TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE));
   }
 
   private synchronized void writeConfigFile(String fileContents) {

@@ -22,6 +22,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -33,7 +34,6 @@ import java.net.SocketException;
 class SocketParams {
   private static final TCLogger logger       = TCLogging.getLogger(SocketParams.class);
 
-  private static final String   PREFIX       = "net.core";
   private static final String   RECV_BUFFER  = "recv.buffer";
   private static final String   SEND_BUFFER  = "send.buffer";
   private static final String   TCP_NO_DELAY = "tcpnodelay";
@@ -45,7 +45,7 @@ class SocketParams {
   private final boolean         keepAlive;
 
   SocketParams() {
-    TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(PREFIX);
+    TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TCPropertiesConsts.NETCORE_CATEGORY);
 
     this.recvBuffer = props.getInt(RECV_BUFFER, -1);
     this.sendBuffer = props.getInt(SEND_BUFFER, -1);

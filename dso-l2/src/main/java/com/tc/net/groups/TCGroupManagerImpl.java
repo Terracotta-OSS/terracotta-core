@@ -230,7 +230,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   private void init(TCSocketAddress socketAddress) {
 
-    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
+    TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    l2Properties = tcProperties.getPropertiesFor(TCPropertiesConsts.L2_CATEGORY);
 
     createTCGroupManagerStages();
     final NetworkStackHarnessFactory networkStackHarnessFactory = getNetworkStackHarnessFactory();
@@ -245,8 +246,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                                                           new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory, this.connectionPolicy,
                                                           L2Utils.getOptimalCommWorkerThreads(),
-                                                          new HealthCheckerConfigImpl(l2Properties
-                                                              .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
+                                                          new HealthCheckerConfigImpl(tcProperties
+                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
                                                           messageTypeClassMapping, Collections.emptyMap(),
         securityManager);

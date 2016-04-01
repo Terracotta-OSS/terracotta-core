@@ -55,9 +55,21 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE);
     
     exemptedProperties.add(TCPropertiesConsts.ENTITY_PROCESSOR_THREADS);
+    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_STAGE_WORKERTHREADS);
+    exemptedProperties.add(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS);
   
     exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS);
     exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS);
+
+    // exempt all subcategories
+    exemptedProperties.add(TCPropertiesConsts.L1_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L2_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.L1_LOCK_MANAGER_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.LOGGING_CATEGORY);
+    exemptedProperties.add(TCPropertiesConsts.NETCORE_CATEGORY);
   }
 
   private void loadDefaults(String propFile) {

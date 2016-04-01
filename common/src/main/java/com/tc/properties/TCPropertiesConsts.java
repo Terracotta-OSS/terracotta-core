@@ -47,6 +47,8 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String ENTITY_PROCESSOR_THREADS                                    = "server.entity.processor.threads";
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
+  String L2_TCCOM_WORKERTHREADS                                                          = "l2.tccom.workerthreads";
+  String L2_SEDA_STAGE_WORKERTHREADS                                                     = "l2.seda.stage.workerthreads";
 
   /*********************************************************************************************************************
    * <code>
@@ -391,5 +393,20 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String VERSION_COMPATIBILITY_CHECK                                    = "version.compatibility.check";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Some useful subcategories
+   * </code>
+   ********************************************************************************************************************/
+
+  public static final String  L1_CATEGORY                                                   = "L1";
+  public static final String  L2_CATEGORY                                                   = "L2";
+  public static final String  L1_L2_HEALTH_CHECK_CATEGORY                                   = "l1.healthcheck.l2";
+  public static final String  L2_L1_HEALTH_CHECK_CATEGORY                                   = "l2.healthcheck.l1";
+  public static final String  L2_L2_HEALTH_CHECK_CATEGORY                                   = "l2.healthcheck.l2";
+  public static final String  L1_LOCK_MANAGER_CATEGORY                                      = "l1.lockmanager";
+  public static final String  LOGGING_CATEGORY                                              = "logging";
+  public static final String  NETCORE_CATEGORY                                              = "net.core";
 
 }

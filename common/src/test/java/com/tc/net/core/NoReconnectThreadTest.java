@@ -52,6 +52,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
+import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
 import java.util.Collections;
@@ -113,7 +114,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          new NullConnectionPolicy(), 3,
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getPropertiesFor("l2.healthcheck.l2"),
+                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
@@ -175,7 +176,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          new NullConnectionPolicy(), 3,
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getPropertiesFor("l2.healthcheck.l2"),
+                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),

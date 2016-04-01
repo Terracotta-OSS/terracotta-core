@@ -314,7 +314,7 @@ public class DistributedObjectClient implements TCClient {
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final boolean checkClientServerVersions = tcProperties.getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
-    this.l1Properties = tcProperties.getPropertiesFor("l1");
+    this.l1Properties = tcProperties.getPropertiesFor(TCPropertiesConsts.L1_CATEGORY);
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
     final SessionManager sessionManager = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
@@ -348,8 +348,8 @@ public class DistributedObjectClient implements TCClient {
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
                                      this.connectionComponents.createConnectionInfoConfigItemByGroup().length,
-                                     new HealthCheckerConfigClientImpl(this.l1Properties
-                                         .getPropertiesFor("healthcheck.l2"), "DSO Client"),
+                                     new HealthCheckerConfigClientImpl(tcProperties
+                                         .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "DSO Client"),
                                      getMessageTypeClassMapping(),
             ReconnectionRejectedHandlerL1.SINGLETON, securityManager, productId);
 
@@ -408,7 +408,7 @@ public class DistributedObjectClient implements TCClient {
                            new ClientIDLogger(this.channel, TCLogging
                                .getLogger(ClientLockManager.class)), sessionManager, this.channel
                                .getLockRequestMessageFactory(), this.threadIDManager,
-            new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")),
+            new ClientLockManagerConfigImpl(tcProperties.getPropertiesFor(TCPropertiesConsts.L1_LOCK_MANAGER_CATEGORY)),
             this.taskRunner);
     final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);

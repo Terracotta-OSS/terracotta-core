@@ -25,6 +25,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 
 import static com.tc.net.protocol.transport.ConnectionHealthCheckerImpl.HealthCheckerMonitorThreadEngine;
 import static org.junit.Assert.assertFalse;
@@ -39,7 +40,7 @@ public class HealthCheckerMonitorThreadEngineTest {
 
   @Test
   public void testAllowCheckTimeIfEnabledInConfig() {
-    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l2.healthcheck.l2");
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY);
     // enable time checking
     props.setProperty("checkTime.enabled", "true");
     // ignore interval
@@ -52,7 +53,7 @@ public class HealthCheckerMonitorThreadEngineTest {
 
   @Test
   public void testDisallowCheckTimeIfDisabledInConfig() {
-    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l2.healthcheck.l2");
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY);
     // disable time checking
     props.setProperty("checkTime.enabled", "false");
     HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(props, "test-config");
@@ -63,7 +64,7 @@ public class HealthCheckerMonitorThreadEngineTest {
 
   @Test
   public void testDisallowCheckTimeIfIntervalNotExceeded() {
-    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l2.healthcheck.l2");
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY);
     // set short interval
     props.setProperty("checkTime.interval", "900000");
     HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(props, "test-config");
