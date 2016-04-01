@@ -746,6 +746,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.routeMessages(PassiveSyncMessage.class, replication);
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
+    createPlatformInformationStages(stageManager, maxStageSize, eventCollector);
     
     // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
     //  and passive.
@@ -811,6 +812,27 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     startGroupManagers();
     this.l2Coordinator.start();
     setLoggerOnExit();
+  }
+  
+  private void createPlatformInformationStages(StageManager stageManager, int maxStageSize, ITopologyEventCollector eventCollector) {
+    Stage<PlatformInfoRequest> stage = stageManager.createStage(ServerConfigurationContext.PLATFORM_INFORMATION_REQUEST, 
+        PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, eventCollector).getEventHandler(), 1, maxStageSize);
+    groupCommManager.routeMessages(PlatformInfoRequest.class, stage.getSink());
+//  publish state change events to everyone in the stripe
+    this.l2Coordinator.getStateManager().registerForStateChangeEvents((StateChangedEvent sce) -> {
+      if (sce.movedToActive()) {
+        server.updateActivateTime();
+        PlatformInfoRequest req = new PlatformInfoRequest();
+        req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+        groupCommManager.sendAll(req);  //  request info from all the other servers
+      } else {
+        try {
+          groupCommManager.sendTo(l2Coordinator.getStateManager().getActiveNodeID(), new PlatformInfoRequest(sce.getCurrentState().getName(), -1, MessageID.NULL_ID));
+        } catch (GroupException ge) {
+         //  IGNORE
+        }
+      }
+    });
   }
   
   private void startStages(StageManager stageManager, List<PostInit> toInit) {
