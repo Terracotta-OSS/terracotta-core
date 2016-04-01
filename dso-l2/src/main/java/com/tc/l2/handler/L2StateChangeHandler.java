@@ -23,8 +23,10 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManager;
+import com.tc.net.ServerID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.server.TCServerMain;
 import com.tc.util.State;
 
 
@@ -34,10 +36,12 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
   private final StageController stageManager;
   private ConfigurationContext context;
   private final ITopologyEventCollector eventCollector;
+  private final ServerID serverID;
 
-  public L2StateChangeHandler(StageController stageManager, ITopologyEventCollector eventCollector) {
+  public L2StateChangeHandler(ServerID myID, StageController stageManager, ITopologyEventCollector eventCollector) {
     this.stageManager = stageManager;
     this.eventCollector = eventCollector;
+    this.serverID = myID;
   }
 
   @Override
@@ -50,7 +54,7 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
     stateManager.fireStateChangedEvent(sce);
     // Now that we have processed the event, the last thing we want to do is notify the collector that the server's state
     // has changed.
-    eventCollector.serverDidEnterState(newState);
+    eventCollector.serverDidEnterState(this.serverID, newState, TCServerMain.getServer().getActivateTime());
   }
 
   @Override

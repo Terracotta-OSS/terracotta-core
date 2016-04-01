@@ -78,6 +78,8 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String PASSIVE_REPLICATION_STAGE                            = "passive_replication_stage";
   public static final String PASSIVE_REPLICATION_ACK_STAGE                            = "passive_replication_ack_stage";
   
+  public static final String PLATFORM_INFORMATION_REQUEST                       = "platform_information_request";
+  
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
