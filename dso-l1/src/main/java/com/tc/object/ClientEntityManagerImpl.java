@@ -244,8 +244,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
-// need to reset the allowable permits on the semaphore because releases will not come back from the crashed server
-    requestTickets.release(ClientConfigurationContext.MAX_SENT_REQUESTS - requestTickets.availablePermits());
     stateManager.start();
     // Walk the objectStoreMap and add reconnect references for any objects found there.
     for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
