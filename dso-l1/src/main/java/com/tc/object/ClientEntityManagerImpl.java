@@ -301,7 +301,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         endpoint.didCloseUnexpectedly();
       } catch (Throwable t) {
 //  something happened in cleanup.  log and continue
-        logger.error("error in shutfdown", t);
+        logger.error("error in shutdown", t);
       }
     }
     // And then drop them.
@@ -339,14 +339,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       this.objectStoreMap.put(entityDescriptor, resolvedEndpoint);
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
-      internalRelease(entityDescriptor, closeHook);
+      internalRelease(entityDescriptor, null);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
       logger.warn("Exception retrieving entity descriptor " + entityDescriptor, t);
       // Clean up any client-side or server-side state regarding this failed connection.
-      internalRelease(entityDescriptor, closeHook);
+      internalRelease(entityDescriptor, null);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw Throwables.propagate(t);
     }
@@ -369,8 +369,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // the case where a reconnect might happen before the message completes, thus causing a re-send.  If we don't include
     // this reference in the reconnect handshake, the re-sent release will try to release a non-fetched entity.
     this.objectStoreMap.remove(entityDescriptor);
-
-    closeHook.run();
+    
+    if (closeHook != null) {
+      closeHook.run();
+    }
   }
 
   /**
