@@ -30,6 +30,19 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   public static final int SERVER_START_PORT = 9000;
 
   public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, boolean enableVerbose) throws IOException, FileNotFoundException, InterruptedException {
+    boolean didPass = false;
+    // We wrap the actual call in a try-catch since the normal SureFire runner discards all exception data and we want to
+    // see our assertion failures.
+    try {
+      didPass = internalRunTestHarness(environmentOptions, master, debugOptions, enableVerbose);
+    } catch (AssertionError e) {
+      e.printStackTrace();
+      throw e;
+    }
+    return didPass;
+  }
+
+  private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, boolean enableVerbose) throws IOException, FileNotFoundException, InterruptedException {
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
     
