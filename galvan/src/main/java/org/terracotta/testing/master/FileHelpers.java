@@ -80,8 +80,11 @@ public class FileHelpers {
   public static String createTempCopyOfDirectory(ILogger logger, String targetParentDirectoryString, String newDirectoryName, String sourceDirectoryString) throws IOException {
     FileSystem fileSystem = FileSystems.getDefault();
     Path targetParentDirectory = fileSystem.getPath(targetParentDirectoryString);
+    logger.log(" Target directory: " + targetParentDirectoryString);
     Assert.assertTrue(targetParentDirectory.toFile().isDirectory());
+    logger.log(" Source directory: " + sourceDirectoryString);
     Path sourceDirectory = fileSystem.getPath(sourceDirectoryString);
+    Assert.assertTrue(sourceDirectory.toFile().exists());
     Assert.assertTrue(sourceDirectory.toFile().isDirectory());
     // Create the target directory path.
     Path targetDirectory = targetParentDirectory.resolve(newDirectoryName);
