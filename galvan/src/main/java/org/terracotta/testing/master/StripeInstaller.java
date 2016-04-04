@@ -32,7 +32,7 @@ public class StripeInstaller {
   private final String stripeInstallDirectory;
   private final String kitOriginDirectory;
   private final List<String> extraJarPaths;
-  private final List<ServerRunner> installedServers;
+  private final List<ServerInstallation> installedServers;
   private boolean isBuilt;
   
   public StripeInstaller(ILogger fileHelperLogger, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
@@ -41,29 +41,29 @@ public class StripeInstaller {
     this.kitOriginDirectory = kitOriginDirectory;
     this.extraJarPaths = extraJarPaths;
     
-    this.installedServers = new Vector<ServerRunner>();
+    this.installedServers = new Vector<ServerInstallation>();
   }
   
   public void installNewServer(String serverName) throws IOException {
     Assert.assertFalse(this.isBuilt);
     String installPath = FileHelpers.createTempCopyOfDirectory(this.fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
     FileHelpers.copyJarsToServer(this.fileHelperLogger, installPath, this.extraJarPaths);
-    ServerRunner runner = new ServerRunner(serverName, new File(installPath));
-    runner.setupStandardLogFiles();
-    this.installedServers.add(runner);
+    ServerInstallation installation = new ServerInstallation(serverName, new File(installPath));
+    installation.openStandardLogFiles();
+    this.installedServers.add(installation);
   }
   
   public void installConfig(String configText) throws IOException {
     Assert.assertFalse(this.isBuilt);
-    for (ServerRunner oneServer : this.installedServers) {
-      oneServer.overwriteConfig(configText);
+    for (ServerInstallation installation : this.installedServers) {
+      installation.overwriteConfig(configText);
     }
   }
   
   public void startServers(SynchronousProcessControl control) {
     Assert.assertFalse(this.isBuilt);
-    for (ServerRunner oneServer : this.installedServers) {
-      control.addServerAndStart(oneServer);
+    for (ServerInstallation installation : this.installedServers) {
+      control.addServerAndStart(installation);
     }
     this.isBuilt = true;
   }

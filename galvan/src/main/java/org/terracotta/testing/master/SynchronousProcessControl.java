@@ -26,11 +26,11 @@ import org.terracotta.testing.logging.ILogger;
 public class SynchronousProcessControl implements IMultiProcessControl {
   private final ILogger logger;
   // Note that the active may be null if we haven't yet observed a server enter the active state.
-  private ServerRunner activeServer;
+  private ServerProcess activeServer;
   // These servers have at least once entered the passive state.  It is possible that an active may be in this list if we haven't yet tried to find the active after a restart.
-  private final List<ServerRunner> passiveServers = new Vector<ServerRunner>();
+  private final List<ServerProcess> passiveServers = new Vector<ServerProcess>();
   // These servers have recently been restarted so we don't yet know their states.
-  private final List<ServerRunner> unknownServers = new Vector<ServerRunner>();
+  private final List<ServerProcess> unknownServers = new Vector<ServerProcess>();
   
   public SynchronousProcessControl(ILogger logger) {
     this.logger = logger;
@@ -52,7 +52,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     Assert.assertTrue(null != this.activeServer);
     
     // Remove the active.
-    ServerRunner victim = this.activeServer;
+    ServerProcess victim = this.activeServer;
     this.activeServer = null;
     // Stop it.
     try {
@@ -62,11 +62,17 @@ public class SynchronousProcessControl implements IMultiProcessControl {
       // We can't leave a consistent state if interrupted at this point.
       Assert.unexpected(e);
     }
-    // Restart it.
-    long pid = victim.start();
+    // Return the process to its installation and get a new one.
+    ServerInstallation underlyingInstallation = victim.getUnderlyingInstallation();
+    underlyingInstallation.retireProcess(victim);
+    victim = null;
+    ServerProcess freshProcess = underlyingInstallation.createNewProcess();
+    
+    // Start it.
+    long pid = freshProcess.start();
     this.logger.log("Server restarted with PID: " + pid);
     // Enqueue it onto the unknown list.
-    this.unknownServers.add(victim);
+    this.unknownServers.add(freshProcess);
     
     // At this point, we don't know the active server.
     this.logger.log("<<< restartActive");
@@ -76,19 +82,25 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   public synchronized void shutDown() {
     this.logger.log(">>> shutDown");
     // We don't care about any server states here.  Just walk all of them and stop everyone.
+    
     // First the active.
     if (null != this.activeServer) {
       shutdownServer(this.activeServer, "active");
       this.activeServer = null;
     }
+    
     // Then the passives.
-    for (ServerRunner passive : this.passiveServers) {
+    for (ServerProcess passive : this.passiveServers) {
       shutdownServer(passive, "passive");
     }
+    this.passiveServers.clear();
+    
     // Then the unknowns.
-    for (ServerRunner unknown : this.unknownServers) {
+    for (ServerProcess unknown : this.unknownServers) {
       shutdownServer(unknown, "unknown");
     }
+    this.unknownServers.clear();
+    
     this.logger.log("<<< shutDown");
   }
 
@@ -108,18 +120,21 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     this.logger.log("<<< waitForPassive");
   }
 
-  public void addServerAndStart(ServerRunner serverRunner) {
+  public void addServerAndStart(ServerInstallation installation) {
     this.logger.log(">>> addServerAndStart");
-    // First, we start the server.
-    long pid = serverRunner.start();
+    // We don't want to track the actual installations, as we only need to know about them restarting a server, so just
+    // create the processes.
+    ServerProcess process = installation.createNewProcess();
+    // We also want to start it.
+    long pid = process.start();
     this.logger.log("Server up with PID: " + pid);
     // Now, add it to the unknown list.
-    this.unknownServers.add(serverRunner);
+    this.unknownServers.add(process);
     this.logger.log("<<< addServerAndStart");
   }
 
 
-  private void shutdownServer(ServerRunner server, String serverType) {
+  private void shutdownServer(ServerProcess server, String serverType) {
     // Stop the server.
     try {
       int ret = server.stop();
@@ -128,9 +143,14 @@ public class SynchronousProcessControl implements IMultiProcessControl {
       // TODO:  Determine if we want to handle interruption in this harness.
       Assert.unexpected(e);
     }
+    
+    // Retire it.
+    ServerInstallation underlyingInstallation = server.getUnderlyingInstallation();
+    underlyingInstallation.retireProcess(server);
+    
     // Close its logs.
     try {
-      server.closeStandardLogFiles();
+      underlyingInstallation.closeStandardLogFiles();
     } catch (IOException e) {
       // We don't expect this IOException on closing the logs.
       Assert.unexpected(e);
@@ -144,10 +164,10 @@ public class SynchronousProcessControl implements IMultiProcessControl {
       // If we still have no active, walk the passives to see if one was promoted.
       if (null == this.activeServer) {
         // Note that we don't want to walk this list while placing servers in states since looping the list, at this point, is either a bug or a serious race condition.
-        Vector<ServerRunner> oldPassives = new Vector<ServerRunner>(this.passiveServers);
+        Vector<ServerProcess> oldPassives = new Vector<ServerProcess>(this.passiveServers);
         this.passiveServers.clear();
         while (!oldPassives.isEmpty()) {
-          ServerRunner passive = oldPassives.remove(0);
+          ServerProcess passive = oldPassives.remove(0);
           waitAndPlaceServerInState(passive);
         }
         // If there is no active at this point, we have a serious bug (this could be a race condition we haven't eliminated).
@@ -158,12 +178,12 @@ public class SynchronousProcessControl implements IMultiProcessControl {
 
   private void waitForAllUnknowns() {
     while (!this.unknownServers.isEmpty()) {
-      ServerRunner unknown = this.unknownServers.remove(0);
+      ServerProcess unknown = this.unknownServers.remove(0);
       waitAndPlaceServerInState(unknown);
     }
   }
 
-  private void waitAndPlaceServerInState(ServerRunner unknown) {
+  private void waitAndPlaceServerInState(ServerProcess unknown) {
     try {
       boolean isActive = unknown.waitForStartIsActive();
       if (isActive) {

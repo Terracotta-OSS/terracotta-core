@@ -16,9 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,52 +28,33 @@ import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
 
 
-public class ServerRunner {
+public class ServerProcess {
   private static enum ServerState {
     UNKNOWN,
     ACTIVE,
     PASSIVE,
   };
+  private final ServerInstallation underlyingInstallation;
   private final String serverName;
   private final File serverWorkingDirectory;
-  private FileOutputStream stdoutLog;
-  private FileOutputStream stderrLog;
+  private final FileOutputStream stdoutLog;
+  private final FileOutputStream stderrLog;
   private AnyProcess process;
   private ServerState state;
   private boolean isScriptReady;
 
-  public ServerRunner(String serverName, File serverWorkingDirectory) {
+  public ServerProcess(ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
+    this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
+    this.stdoutLog = stdoutLog;
+    this.stderrLog = stderrLog;
     // Start in the unknown state and we will wait for the stream scraping to determine our actual state.
     this.state = ServerState.UNKNOWN;
   }
 
-  public void overwriteConfig(String config) throws IOException {
-    File installPath = this.serverWorkingDirectory;
-    File configPath = new File(installPath, "tc-config.xml");
-    File oldConfigPath = new File(installPath, "tc-config.xml-old");
-    configPath.renameTo(oldConfigPath);
-    FileOutputStream stream = new FileOutputStream(configPath);
-    byte[] toWrite = config.getBytes();
-    stream.write(toWrite);
-    stream.close();
-  }
-
-  public void setupStandardLogFiles() throws FileNotFoundException {
-    Assert.assertNull(this.stdoutLog);
-    Assert.assertNull(this.stderrLog);
-    
-    // We want to create an output log file for both STDOUT and STDERR.
-    this.stdoutLog = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"));
-    this.stderrLog = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"));
-  }
-
-  public void closeStandardLogFiles() throws IOException {
-    this.stdoutLog.close();
-    this.stdoutLog = null;
-    this.stderrLog.close();
-    this.stderrLog = null;
+  public ServerInstallation getUnderlyingInstallation() {
+    return this.underlyingInstallation;
   }
 
   /**
@@ -101,9 +80,9 @@ public class ServerRunner {
     serverBus.on(startedReadyName, new EventListener(){
       @Override
       public void onEvent(Event arg0) throws Throwable {
-        synchronized(ServerRunner.this) {
-          ServerRunner.this.isScriptReady = true;
-          ServerRunner.this.notifyAll();
+        synchronized(ServerProcess.this) {
+          ServerProcess.this.isScriptReady = true;
+          ServerProcess.this.notifyAll();
         }
       }});
     serverBus.on(activeReadyName, new ActivePassiveEventWaiter(ServerState.ACTIVE));
@@ -174,7 +153,7 @@ public class ServerRunner {
     }
     @Override
     public synchronized void onEvent(Event e) throws Throwable {
-      ServerRunner.this.enterState(stateToEnter);
+      ServerProcess.this.enterState(stateToEnter);
     }
   }
 }
