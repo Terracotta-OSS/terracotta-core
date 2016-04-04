@@ -44,6 +44,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
@@ -213,11 +214,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     proxy.setDelay(Integer.MAX_VALUE);
 
-    long minTimeToSayDead = TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.idletime")
-                            + (TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval") * TCPropertiesImpl
-                                .getProperties().getLong("l2.healthcheck.l1.ping.probes"));
+    long minTimeToSayDead = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_IDLETIME)
+                            + (TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_INTERVAL) * TCPropertiesImpl
+                                .getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_PROBES));
     // giving more buffer time, to catch problem if any
-    minTimeToSayDead += (3 * TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval"));
+    minTimeToSayDead += (3 * TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_IDLETIME));
 
     // HC will not say the other end is DEAD as the callback port from the client TCGroupMgr is available
     System.out.println("Sleeping for min time " + minTimeToSayDead);
@@ -228,8 +229,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
     // eventually after full probe, the node has to goto DEAD state
     while (groups[1].size() != 0) {
       System.out.println(".");
-      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval")
-                             * TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.probes"));
+      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_INTERVAL)
+                             * TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_PROBES));
     }
     tearGroups();
   }

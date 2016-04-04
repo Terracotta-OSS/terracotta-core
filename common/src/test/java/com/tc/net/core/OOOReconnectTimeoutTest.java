@@ -49,6 +49,7 @@ import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
+import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
 import java.util.Collections;
@@ -106,7 +107,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3,
                                                                    new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                        .getProperties()
-                                                                       .getPropertiesFor("l2.healthcheck.l1"),
+                                                                       .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY),
                                                                                                "Test Server"),
                                                                    new ServerID(),
                                                                    new TransportHandshakeErrorNullHandler(),
