@@ -23,11 +23,13 @@ import org.terracotta.testing.logging.VerboseLogger;
 
 
 /**
- * A container of much of the client operation logic for a test.
- * Note that the current state of this class is a stop-gap to transition to a different design which will do asynchronous
- * client execution and management.
+ * A class which just contains the common logic of the process of running the client-side setup/tearDown/test logic for a
+ * run.  It runs this task in a background thread and exposes an interruption mechanism, in case the test needs to be forced
+ * to stop.
+ * It extends Thread since it is just an additional helper to coordinate external interruption.
  */
-public class InterruptableClientManager {
+public class InterruptableClientManager extends Thread implements IClientManager {
+  private final ITestStateManager stateManager;
   private final VerboseLogger logger;
   private final String testParentDirectory;
   private final String clientClassPath;
@@ -36,8 +38,10 @@ public class InterruptableClientManager {
   private final String testClassName;
   private final IMultiProcessControl processControl;
   private final String connectUri;
+  private boolean interruptRequested;
 
   public InterruptableClientManager(ITestStateManager stateManager, VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) {
+    this.stateManager = stateManager;
     this.logger = logger;
     this.testParentDirectory = testParentDirectory;
     this.clientClassPath = clientClassPath;
@@ -48,7 +52,16 @@ public class InterruptableClientManager {
     this.connectUri = connectUri;
   }
 
-  public boolean runClientSequence() {
+  @Override
+  public void forceTerminate() {
+    // We need to set that an interrupt is requested in order for our asserts, within, to trigger.
+    this.interruptRequested = true;
+    // We now interrupt the thread, which should cause it to shut everything down, forcefully, and fail out.
+    this.interrupt();
+  }
+
+  @Override
+  public void run() {
     // All clients use the same entry-point stub.
     String clientClassName = "org.terracotta.testing.client.TestClientStub";
     ContextualLogger clientsLogger = new ContextualLogger(this.logger, "[Clients]");
@@ -60,8 +73,12 @@ public class InterruptableClientManager {
     try {
       setupExitValue = runClientSynchronous(setupClient);
     } catch (InterruptedException e) {
-      // We don't have a definition of this case.
-      Assert.unexpected(e);
+      // We can only be interrupted if an interruption is expected.
+      Assert.assertTrue(this.interruptRequested);
+      // Terminate the client.
+      setupClient.forceTerminate();
+      // Mark this as a failure so we fall out.
+      setupExitValue = -1;
     } catch (IOException e) {
       // We don't expect this here.
       Assert.unexpected(e);
@@ -84,8 +101,14 @@ public class InterruptableClientManager {
           didRunCleanly &= (0 == result);
         }
       } catch (InterruptedException e) {
-        // We don't have a definition of this case.
-        Assert.unexpected(e);
+        // We can only be interrupted if an interruption is expected.
+        Assert.assertTrue(this.interruptRequested);
+        // Terminate the clients.
+        for (ClientRunner oneClient : concurrentTests) {
+          oneClient.forceTerminate();
+        }
+        // Mark this as a failure so we fall out.
+        didRunCleanly = false;
       } catch (IOException e) {
         // We don't expect this here.
         Assert.unexpected(e);
@@ -100,8 +123,12 @@ public class InterruptableClientManager {
       try {
         destroyExitValue = runClientSynchronous(destroyClient);
       } catch (InterruptedException e) {
-        // We don't have a definition of this case.
-        Assert.unexpected(e);
+        // We can only be interrupted if an interruption is expected.
+        Assert.assertTrue(this.interruptRequested);
+        // Terminate the client.
+        destroyClient.forceTerminate();
+        // Mark this as a failure so we fall out.
+        destroyExitValue = -1;
       } catch (IOException e) {
         // We don't expect this here.
         Assert.unexpected(e);
@@ -113,7 +140,11 @@ public class InterruptableClientManager {
     } else {
       this.logger.fatal("FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!");
     }
-    return setupWasClean && didRunCleanly && destroyWasClean;
+    if (setupWasClean && didRunCleanly && destroyWasClean) {
+      this.stateManager.testDidPass();
+    } else {
+      this.stateManager.testDidFail();
+    }
   }
 
   private int runClientSynchronous(ClientRunner client) throws InterruptedException, IOException {

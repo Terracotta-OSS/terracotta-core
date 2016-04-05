@@ -36,9 +36,13 @@ public class CommonIdioms {
     return ReadyStripe.configureAndStartStripe(stateManager, stripeLogger, fileHelperLogger, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment);
   }
 
-  public static boolean installAndRunClients(ITestStateManager stateManager, VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
+  /**
+   * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
+   */
+  public static void installAndRunClients(ITestStateManager stateManager, VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
     InterruptableClientManager manager = new InterruptableClientManager(stateManager, logger, testParentDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
-    return manager.runClientSequence();
+    stateManager.setClientShutdown(manager);
+    manager.start();
   }
 
   public static <T> List<T> uniquifyList(List<T> list) {
