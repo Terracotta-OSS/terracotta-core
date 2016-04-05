@@ -76,6 +76,8 @@ public class PassthroughServerProcess implements MessageHandler {
   private final int bindPort;
   private final int groupPort;
   
+  private final AtomicInteger clientPort = new AtomicInteger(49152);  //  current recommended start value of ephemeral ports 
+  
   private final int processID;
   private boolean isRunning;
   private final List<ServerEntityService<?, ?>> entityServices;
@@ -834,9 +836,7 @@ public class PassthroughServerProcess implements MessageHandler {
         // We don't have handling for this.
         Assert.unexpected(e);
       }
-      int serverPort = 1;
-      int clientPort = 2;
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, serverPort, localHost, clientPort);
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, this.bindPort, localHost, this.clientPort.getAndIncrement());
       String nodeName = clientIdentifierForService(connectionID);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }
