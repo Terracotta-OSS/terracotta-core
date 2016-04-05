@@ -39,6 +39,12 @@ import org.terracotta.entity.EntityResponse;
  * downstream passives attached to it.
  */
 public class PassthroughServer {
+  private String serverName;
+  private int bindPort;
+  private int groupPort;
+  
+  private final boolean isActive;
+    
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
@@ -52,7 +58,7 @@ public class PassthroughServer {
   private PassthroughServer savedPassiveServer;
   
   public PassthroughServer(boolean isActiveMode) {
-    this.serverProcess = new PassthroughServerProcess(isActiveMode);
+    this.isActive = isActiveMode;
     this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
     this.nextConnectionID = 1;
     
@@ -60,15 +66,23 @@ public class PassthroughServer {
     this.savedServerEntityServices = new Vector<ServerEntityService<?, ?>>();
     this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
-    
-    // Register built-in services.
-    registerBuiltInServices();
   }
 
+  public void setServerName(String serverName) {
+    this.serverName = serverName;
+  }
+
+  public void setBindPort(int bindPort) {
+    this.bindPort = bindPort;
+  }
+
+  public void setGroupPort(int groupPort) {
+    this.groupPort = groupPort;
+  }
+   
   public void registerServerEntityService(ServerEntityService<?, ?> service) {
     Assert.assertFalse(this.hasStarted);
     this.savedServerEntityServices.add(service);
-    this.serverProcess.registerEntityService(service);
   }
 
   public void registerClientEntityService(EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service) {
@@ -109,7 +123,32 @@ public class PassthroughServer {
     
     this.hasStarted = true;
     boolean shouldLoadStorage = false;
+    
+    bootstrapProcess(this.isActive);
+    
     this.serverProcess.start(shouldLoadStorage);
+  }
+  
+  private void bootstrapProcess(boolean active) {
+    this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, active);
+
+    // Populate the server with its services.
+    for (ServerEntityService<?, ?> serverEntityService : this.savedServerEntityServices) {
+      this.serverProcess.registerEntityService(serverEntityService);
+    }
+    
+    // Register built-in services.
+    registerBuiltInServices();
+    // Install the user-created services.
+    for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
+      try {
+        this.serverProcess.registerServiceProvider(tuple.serviceProvider.getClass().newInstance(), tuple.providerConfiguration);
+      } catch (IllegalAccessException a) {
+        throw new RuntimeException(a);
+      } catch (InstantiationException i) {
+        throw new RuntimeException(i);
+      }
+    }
   }
 
   public void stop() {
@@ -154,23 +193,8 @@ public class PassthroughServer {
     // Start a new one.
     // (we will make it active if it is the only server in the stripe, otherwise it will become passive when we fail-over).
     boolean isActiveMode = (null == this.savedPassiveServer);
-    this.serverProcess = new PassthroughServerProcess(isActiveMode);
-    // Populate the server with its services.
-    for (ServerEntityService<?, ?> serverEntityService : this.savedServerEntityServices) {
-      this.serverProcess.registerEntityService(serverEntityService);
-    }
-    // Install the built-in services.
-    registerBuiltInServices();
-    // Install the user-created services.
-    for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
-      try {
-        this.serverProcess.registerServiceProvider(tuple.serviceProvider.getClass().newInstance(), tuple.providerConfiguration);
-      } catch (IllegalAccessException a) {
-        throw new RuntimeException(a);
-      } catch (InstantiationException i) {
-        throw new RuntimeException(i);
-      }
-    }
+  
+    bootstrapProcess(isActiveMode);
     
     // Handle the difference between active restart and passive fail-over.
     // If there was previously a passive, we want to tell it to become active, given this new server as passive, and also
@@ -225,7 +249,6 @@ public class PassthroughServer {
 
   private void internalRegisterServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     this.savedServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
-    this.serverProcess.registerServiceProvider(serviceProvider, providerConfiguration);
   }
   
   private static class ServiceProviderAndConfiguration {
