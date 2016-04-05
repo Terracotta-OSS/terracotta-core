@@ -24,6 +24,7 @@ import org.terracotta.testing.logging.ILogger;
 
 
 public class SynchronousProcessControl implements IMultiProcessControl {
+  private final ITestStateManager stateManager;
   private final ILogger logger;
   // Note that the active may be null if we haven't yet observed a server enter the active state.
   private ServerProcess activeServer;
@@ -32,7 +33,8 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   // These servers have recently been restarted so we don't yet know their states.
   private final List<ServerProcess> unknownServers = new Vector<ServerProcess>();
   
-  public SynchronousProcessControl(ILogger logger) {
+  public SynchronousProcessControl(ITestStateManager stateManager, ILogger logger) {
+    this.stateManager = stateManager;
     this.logger = logger;
   }
 
@@ -66,7 +68,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     ServerInstallation underlyingInstallation = victim.getUnderlyingInstallation();
     underlyingInstallation.retireProcess(victim);
     victim = null;
-    ServerProcess freshProcess = underlyingInstallation.createNewProcess();
+    ServerProcess freshProcess = underlyingInstallation.createNewProcess(this.stateManager);
     
     // Start it.
     long pid = freshProcess.start();
@@ -124,7 +126,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     this.logger.log(">>> addServerAndStart");
     // We don't want to track the actual installations, as we only need to know about them restarting a server, so just
     // create the processes.
-    ServerProcess process = installation.createNewProcess();
+    ServerProcess process = installation.createNewProcess(this.stateManager);
     // We also want to start it.
     long pid = process.start();
     this.logger.log("Server up with PID: " + pid);

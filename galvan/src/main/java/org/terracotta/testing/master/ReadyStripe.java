@@ -26,7 +26,7 @@ import org.terracotta.testing.logging.ContextualLogger;
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
-  public static ReadyStripe configureAndStartStripe(ContextualLogger stripeLogger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
+  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, ContextualLogger stripeLogger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
     ContextualLogger configLogger = new ContextualLogger(stripeLogger, "[ConfigBuilder] ");
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -49,7 +49,7 @@ public class ReadyStripe {
     
     // Create the process control object.
     ContextualLogger processControlLogger = new ContextualLogger(stripeLogger, "[ProcessControl] ");
-    SynchronousProcessControl processControl = new SynchronousProcessControl(processControlLogger);
+    SynchronousProcessControl processControl = new SynchronousProcessControl(stateManager, processControlLogger);
     // Register the stripe into it and start up the server in the stripe.
     installer.startServers(processControl);
     String connectUri = configBuilder.buildUri();

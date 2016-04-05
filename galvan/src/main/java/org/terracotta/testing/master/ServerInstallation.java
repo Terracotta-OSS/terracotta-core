@@ -72,7 +72,7 @@ public class ServerInstallation {
   /**
    * @return A new ServerProcess which has not yet been started.
    */
-  public ServerProcess createNewProcess() {
+  public ServerProcess createNewProcess(ITestStateManager stateManager) {
     // Assert that the config has been written to the installation (so it is complete).
     Assert.assertTrue(this.configWritten);
     // Assert that the log files have been opened.
@@ -81,7 +81,7 @@ public class ServerInstallation {
     Assert.assertNull(this.outstandingProcess);
     
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog);
+    ServerProcess process = new ServerProcess(stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog);
     this.outstandingProcess = process;
     return process;
   }

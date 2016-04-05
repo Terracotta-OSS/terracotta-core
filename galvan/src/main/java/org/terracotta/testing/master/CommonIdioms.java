@@ -29,14 +29,14 @@ import org.terracotta.testing.logging.VerboseLogger;
  * It exists purely to avoid duplication.
  */
 public class CommonIdioms {
-  public static ReadyStripe setupConfigureAndStartStripe(VerboseLogger logger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String stripeName) throws IOException, FileNotFoundException {
+  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String stripeName) throws IOException, FileNotFoundException {
     ContextualLogger stripeLogger = new ContextualLogger(logger, "[" + stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(testParentDirectory, stripeName);
-    return ReadyStripe.configureAndStartStripe(stripeLogger, fileHelperLogger, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment);
+    return ReadyStripe.configureAndStartStripe(stateManager, stripeLogger, fileHelperLogger, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment);
   }
 
-  public static boolean installAndRunClients(VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
+  public static boolean installAndRunClients(ITestStateManager stateManager, VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
     // All clients use the same entry-point stub.
     String clientClassName = "org.terracotta.testing.client.TestClientStub";
     ContextualLogger clientsLogger = new ContextualLogger(logger, "[Clients]");

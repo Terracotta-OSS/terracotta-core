@@ -68,10 +68,11 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     boolean wasCompleteSuccess = true;
     int clientsToCreate = master.getClientsToStart();
     for (C runConfiguration : runConfigurations) {
+      ITestStateManager stateManager = null;
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
       String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
-      boolean runWasSuccess = runOneConfiguration(logger, fileHelperLogger, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, runConfiguration);
+      boolean runWasSuccess = runOneConfiguration(stateManager, logger, fileHelperLogger, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, runConfiguration);
       if (!runWasSuccess) {
         wasCompleteSuccess = false;
         break;
@@ -81,5 +82,5 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   }
 
   // Run the one configuration.
-  protected abstract boolean runOneConfiguration(VerboseLogger logger, ContextualLogger fileHelperLogger, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract boolean runOneConfiguration(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
 }
