@@ -39,11 +39,11 @@ public class ServerProcess {
   private final File serverWorkingDirectory;
   private final FileOutputStream stdoutLog;
   private final FileOutputStream stderrLog;
-  private AnyProcess process;
   private ServerState state;
   private boolean isScriptReady;
+  private final ExitWaiter exitWaiter;
 
-  public ServerProcess(ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
+  public ServerProcess(ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
@@ -51,6 +51,9 @@ public class ServerProcess {
     this.stderrLog = stderrLog;
     // Start in the unknown state and we will wait for the stream scraping to determine our actual state.
     this.state = ServerState.UNKNOWN;
+    // Because a server can crash at any time, not just when we are expecting it to, we need a thread to wait on this operation and notify stateManager if the
+    // crash was not expected.
+    this.exitWaiter = new ExitWaiter(stateManager);
   }
 
   public ServerInstallation getUnderlyingInstallation() {
@@ -89,7 +92,7 @@ public class ServerProcess {
     serverBus.on(passiveReadyName, new ActivePassiveEventWaiter(ServerState.PASSIVE));
     
     this.isScriptReady = false;
-    this.process = AnyProcess.newBuilder()
+    AnyProcess process = AnyProcess.newBuilder()
         .command("server/bin/start-tc-server.sh", "-n", this.serverName)
         .workingDir(this.serverWorkingDirectory)
         .pipeStdout(outputStream)
@@ -106,7 +109,9 @@ public class ServerProcess {
         }
       }
     }
-    return this.process.getPid();
+    // We will now hand off the process to the ExitWaiter.
+    this.exitWaiter.startBackgroundWait(process);
+    return process.getPid();
   }
 
   /**
@@ -122,15 +127,7 @@ public class ServerProcess {
   }
 
   public int stop() throws InterruptedException {
-    int retVal = -1;
-    this.process.destroy();
-    try {
-      retVal = this.process.waitFor();
-    } catch (java.util.concurrent.CancellationException e) {
-      retVal = this.process.exitValue();
-    }
-    this.process = null;
-    return retVal;
+    return this.exitWaiter.bringDownServer();
   }
 
 
@@ -154,6 +151,60 @@ public class ServerProcess {
     @Override
     public synchronized void onEvent(Event e) throws Throwable {
       ServerProcess.this.enterState(stateToEnter);
+    }
+  }
+
+  private class ExitWaiter extends Thread {
+    private final ITestStateManager stateManager;
+    private AnyProcess process;
+    private boolean isCrashExpected;
+    private int returnValue;
+    
+    public ExitWaiter(ITestStateManager stateManager) {
+      this.stateManager = stateManager;
+      this.returnValue = -1;
+    }
+    public void startBackgroundWait(AnyProcess process) {
+      Assert.assertNull(this.process);
+      this.process = process;
+      this.start();
+    }
+    @Override
+    public void run() {
+      try {
+        this.returnValue = this.process.waitFor();
+      } catch (java.util.concurrent.CancellationException e) {
+        this.returnValue = this.process.exitValue();
+      } catch (InterruptedException e) {
+        // We don't expect interruption in this part of the test - we need to wait for the termination.
+        Assert.unexpected(e);
+      }
+      // If we send the failure, we don't want to do it under lock.
+      boolean shouldSendFailure = false;
+      synchronized(this) {
+        // See if this crash was expected.
+        if (this.isCrashExpected) {
+          // This means that someone is waiting for us.
+          this.notifyAll();
+        } else {
+          // We weren't expecting this so we need to notify the stateManager.
+          shouldSendFailure = true;
+        }
+      }
+      if (shouldSendFailure) {
+        this.stateManager.testDidFail();
+      }
+    }
+    public synchronized int bringDownServer() throws InterruptedException {
+      // Mark this as expected.
+      this.isCrashExpected = true;
+      // Destroy the process.
+      this.process.destroy();
+      // Wait until we get a return value.
+      while (-1 == this.returnValue) {
+        wait();
+      }
+      return this.returnValue;
     }
   }
 }

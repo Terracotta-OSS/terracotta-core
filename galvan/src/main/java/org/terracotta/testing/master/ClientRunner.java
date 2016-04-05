@@ -142,6 +142,21 @@ public class ClientRunner extends Thread {
     return result;
   }
 
+  /**
+   * Called to force the client process to terminate and then wait for the thread managing the runner to exit.
+   */
+  public void forceTerminate() {
+    // Force the process to terminate.
+    this.process.destroyForcibly();
+    // We still want to wait for the thread managing the runner to terminate gracefully.
+    try {
+      this.join();
+    } catch (InterruptedException e) {
+      // This is really not expected since this is already in the interruption path.
+      Assert.unexpected(e);
+    }
+  }
+
   private void setupStandardLogFiles() throws FileNotFoundException {
     Assert.assertNull(this.stdoutLog);
     Assert.assertNull(this.stderrLog);
