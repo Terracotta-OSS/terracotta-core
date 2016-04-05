@@ -40,8 +40,12 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     Assert.assertTrue(null != processControl);
     Assert.assertTrue(null != connectUri);
     
-    // Set up our termination controller in the state manager.
-    stateManager.setShutdownControl(processControl);
+    // Register to shut down the process control (the servers in the stripe) once the test has passed/failed.
+    stateManager.addComponentToShutDown(new IComponentManager() {
+      @Override
+      public void forceTerminateComponent() {
+        processControl.shutDown();
+      }});
     
     // The cluster is now running so install and run the clients.
     CommonIdioms.installAndRunClients(stateManager, logger, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);

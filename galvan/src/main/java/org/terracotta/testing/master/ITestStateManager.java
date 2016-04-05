@@ -27,7 +27,5 @@ public interface ITestStateManager {
 
   public void testDidFail();
 
-  public void setShutdownControl(IMultiProcessControl processControl);
-
-  public void setClientShutdown(IClientManager clientManager);
+  public void addComponentToShutDown(IComponentManager componentManager);
 }

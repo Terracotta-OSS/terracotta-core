@@ -17,10 +17,13 @@ package org.terracotta.testing.master;
 
 
 /**
- * An interface implemented by a component which manages the client processes, in a test.  This can be used by the broader
- * harness state logic to force the clients to terminate, in the case of an unexpected kind of failure (server crash, for
- * example).
+ * The interface implemented by components which can be force terminated by an ITestStateManager implementation.
  */
-public interface IClientManager {
-  public void forceTerminate();
+public interface IComponentManager {
+  /**
+   * Terminates the underlying component's asynchronous or background tasks.
+   * Note that this could be called after these tasks have naturally terminated so an implementation must be able to handle
+   * this case.
+   */
+  public void forceTerminateComponent();
 }

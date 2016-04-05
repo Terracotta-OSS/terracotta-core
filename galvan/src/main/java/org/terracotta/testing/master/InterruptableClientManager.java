@@ -28,7 +28,7 @@ import org.terracotta.testing.logging.VerboseLogger;
  * to stop.
  * It extends Thread since it is just an additional helper to coordinate external interruption.
  */
-public class InterruptableClientManager extends Thread implements IClientManager {
+public class InterruptableClientManager extends Thread implements IComponentManager {
   private final ITestStateManager stateManager;
   private final VerboseLogger logger;
   private final String testParentDirectory;
@@ -53,7 +53,7 @@ public class InterruptableClientManager extends Thread implements IClientManager
   }
 
   @Override
-  public void forceTerminate() {
+  public void forceTerminateComponent() {
     // We need to set that an interrupt is requested in order for our asserts, within, to trigger.
     this.interruptRequested = true;
     // We now interrupt the thread, which should cause it to shut everything down, forcefully, and fail out.
