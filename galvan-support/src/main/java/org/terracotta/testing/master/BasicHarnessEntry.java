@@ -27,7 +27,7 @@ import org.terracotta.testing.logging.VerboseLogger;
 
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
-  protected boolean runOneConfiguration(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
+  protected void runOneConfiguration(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
@@ -40,10 +40,10 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     Assert.assertTrue(null != processControl);
     Assert.assertTrue(null != connectUri);
     
+    // Set up our termination controller in the state manager.
+    stateManager.setShutdownControl(processControl);
+    
     // The cluster is now running so install and run the clients.
-    boolean wasCompleteSuccess = CommonIdioms.installAndRunClients(stateManager, logger, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
-    // Stop all the servers.
-    processControl.shutDown();
-    return wasCompleteSuccess;
+    CommonIdioms.installAndRunClients(stateManager, logger, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
   }
 }
