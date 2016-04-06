@@ -111,6 +111,38 @@ public class ReplicatedTransactionHandlerTest {
   }
   
   @Test
+  public void testEntityNoIgnoresDuringSyncOfKey() throws Exception {
+    EntityID eid = new EntityID("foo", "bar");
+    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
+    ServerID sid = new ServerID("test", "test".getBytes());
+    ManagedEntity entity = mock(ManagedEntity.class);
+    ReplicationMessage msg = mock(ReplicationMessage.class);
+    int rand = 1;
+    when(msg.getConcurrency()).thenReturn(rand);
+    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
+    when(msg.getReplicationType()).thenReturn(ReplicationMessage.ReplicationType.INVOKE_ACTION);
+    when(msg.getEntityID()).thenReturn(eid);
+    when(msg.messageFrom()).thenReturn(sid);
+    when(msg.getEntityDescriptor()).thenReturn(descriptor);
+    when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    Mockito.doAnswer(invocation->{
+      ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
+      return null;
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0]));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
+    this.loopbackSink.addSingleThreaded(msg);
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, rand));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityMessage(eid, 1));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
+
+    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    verify(groupManager).sendTo(Matchers.eq(sid), Matchers.any());
+  }  
+  
+  @Test
   public void testEntityGetsConcurrencyKey() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
     EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);

@@ -123,11 +123,11 @@ public class ReplicatedTransactionHandler {
         if (state.ignore(rep)) {
           LOGGER.debug("Ignoring:" + rep);
           acknowledge(rep);
-        } else if (!state.defer(rep)) {
+        } else if (state.defer(rep)) {
+          LOGGER.debug("Deferring:" + rep);
+        } else {
           LOGGER.debug("Applying:" + rep);
           replicatedMessageReceived(rep);
-        } else {
-          LOGGER.debug("Deferring:" + rep);
         }
         break;
       case ReplicationMessage.SYNC:
@@ -476,6 +476,8 @@ public class ReplicatedTransactionHandler {
             LOGGER.debug("Dropping " + rep + " due to destroy");
           }
           return true;
+        } else if (rep.getConcurrency() == currentKey) {
+          return false;
         } else if (!syncdKeys.contains(rep.getConcurrency())) {
 //  ignore, haven't gotten to this key yet
           if (LOGGER.isDebugEnabled()) {
