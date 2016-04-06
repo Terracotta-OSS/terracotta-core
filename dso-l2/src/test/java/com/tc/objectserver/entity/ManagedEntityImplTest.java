@@ -18,8 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import org.junit.Before;
 import org.junit.Test;
@@ -121,7 +119,7 @@ public class ManagedEntityImplTest {
         return null;
       }
     }).when(requestMulti).scheduleRequest(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyInt());
-    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    Thread.currentThread().setName(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
   }
   
   @SuppressWarnings("unchecked")
@@ -167,6 +165,7 @@ public class ManagedEntityImplTest {
   public void testGetEntityMissing() throws Exception {
     // create a ManagedEntity which is in active state
     ManagedEntityImpl managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true);
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest request = mockGetRequest(requester);
@@ -181,7 +180,8 @@ public class ManagedEntityImplTest {
     byte[] config = mockCreatePayload("foo");
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(),  config);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
-    
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
     ServerEntityRequest request = mockGetRequest(requester);
     managedEntity.addLifecycleRequest(request, null);
@@ -237,6 +237,7 @@ public class ManagedEntityImplTest {
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
 
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
@@ -313,6 +314,9 @@ public class ManagedEntityImplTest {
       barrier.await();
       return new EntityResponse() {};
     });
+    
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    
     managedEntity.addInvokeRequest(mgmtInvoke, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
     verify(loopback, times(3)).accept(Matchers.any(), Matchers.anyLong());
@@ -379,6 +383,7 @@ public class ManagedEntityImplTest {
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), new byte[0]);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
 
     Deque<Integer> queued = new LinkedList<>();
     Deque<Runnable> blockers = new LinkedList<>();
@@ -494,6 +499,7 @@ public class ManagedEntityImplTest {
 
     // Get and release are only relevant on the active.
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     
     // Run the GET and verify that connected() call was received by the entity.
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
@@ -523,8 +529,10 @@ public class ManagedEntityImplTest {
     
     // Now, switch modes to active.
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     verify(activeServerEntity).loadExisting();
     
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     // Verify that we fail to create it again.
     ServerEntityRequest failedCreateRequest = mockCreateEntityRequest();
     managedEntity.addLifecycleRequest(failedCreateRequest, null);
@@ -549,7 +557,7 @@ public class ManagedEntityImplTest {
   public void testDestroy() throws Exception {
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
-    
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     managedEntity.addLifecycleRequest(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY), null);
 
     verify(activeServerEntity).destroy();

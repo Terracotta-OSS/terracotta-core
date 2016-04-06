@@ -54,7 +54,6 @@ import org.terracotta.entity.ConcurrencyStrategy;
 
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityUserException;
 
 
 public class ProcessTransactionHandler {
@@ -72,6 +71,11 @@ public class ProcessTransactionHandler {
   private final AbstractEventHandler<VoltronEntityMessage> voltronHandler = new AbstractEventHandler<VoltronEntityMessage>() {
     @Override
     public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
+//  resends are only processed the first time an event is handled.  
+//  resends are processed in this manner so invokes are scheduled by the expected stage thread
+//  see ManagedEntityImpl.scheduleInOrder()
+//  the call always happens and immediately returns if the resends have already been processed
+      processAllResends();
       ClientID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
@@ -246,7 +250,10 @@ public class ProcessTransactionHandler {
     }
   }
   
-  public void executeAllResends() {
+  private void processAllResends() {
+    if (this.resendReplayList == null && this.resendNewList == null) {
+      return;
+    }
     // Clear the transaction order persistor since we are starting fresh.
     this.transactionOrderPersistor.clearAllRecords();
     
