@@ -70,73 +70,107 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       filtering.remove(nodeid);
       context.release();
     } else {
-      AtomicLong rOrder = ordering.get(nodeid);
-      SyncState syncing = null;
-
+      SyncState syncing = getSyncState(nodeid, msg);
+      AtomicLong rOrder = getOrdering(nodeid, msg);
+      
       if (rOrder == null) {
-        rOrder = new AtomicLong();
-        ordering.put(nodeid, rOrder);
-        
-        if (msg.getType() == ReplicationMessage.START) {
-//  release the message so sync can continue
-          context.release();
-//  this is a priming event.  The passive does not need to receive this
-          return;
-        } else {
-//  make sure node is not connected
-          Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
-          if (msg instanceof PassiveSyncMessage) {
-
-//  release the msg like it went through so things can progress
-            context.release();
-//  passive must have died during passive sync, ignore this message
-            return;
-          } else {
-            logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
-            context.release();
-            return;
-          }
-        }
-      } else {
-        if (msg.getReplicationType() == SYNC_BEGIN) {
-          syncing = new SyncState();
-          filtering.put(nodeid, syncing);
-        } else {
-          syncing = filtering.get(nodeid);
-        }
+// this is message priming, the order is being established or the passive is gone
+        context.release();
+        return;
       }
-      if (msg.getType() == ReplicationMessage.START ||
-          msg.getType() == ReplicationMessage.RESPONSE) {
-//  these types of messages are incoming types or internal server use, not outgoing
-        throw new AssertionError("unexpected message type " + msg);
+// check to make sure that this message is a type that is relevant to a passive
+      if (!shouldReplicate(msg)) {
+        context.release();
+        return;
+      }   
+// filter out messages based on sync state.
+      if (filterMessage(syncing, nodeid, msg)) {
+        context.release();
+        return;
       }
-      if (syncing != null) {
-//  there is an active sync going on, need to filter out messages that should not be replicated
-        if (!syncing.filter(msg)) {
-          if (logger.isDebugEnabled()) {
-            logger.debug(nodeid + ":Filtering " + msg + " for " + msg.getEntityDescriptor().getEntityID());
-          }
-          context.release();
-          return;
-        } else {
-          syncing.validateSending(msg);
-          if (syncing.isComplete()) {
-            filtering.remove(nodeid);
-          }
-        }
-      } else {
-//  sending message on to passive, either it will be ignored because passive sync has not started yet or this was a peer passive at one time
-//  and is up-to-date
-      }
+//  sending message on to passive, additional filtering may happen on the other side.
+//  the only messages that are relevant before passive sync starts are create messages
       try {
         msg.setReplicationID(rOrder.getAndIncrement());
-        if (logger.isDebugEnabled()) {
-          logger.debug(nodeid + ":Sending " + msg + " for " + msg.getEntityID() + "/" + msg.getConcurrency() + "-" + msg.getSequenceID());
-        }
         group.sendTo(nodeid, msg);
       }  catch (GroupException ge) {
         logger.info(msg, ge);
       }
+    }
+  }
+  
+  private AtomicLong getOrdering(NodeID nodeid, ReplicationMessage msg) {
+    if (!ordering.containsKey(nodeid)) {
+      if (msg.getType() == ReplicationMessage.START) {
+        ordering.put(nodeid, new AtomicLong());
+//  release the message so sync can continue
+//  this is a priming event.  The passive does not need to receive this
+        return null;
+      } else {
+        if (dropMessageForDisconnectedServer(nodeid, msg)) {
+          return null;
+        }
+      }
+    }
+    return ordering.get(nodeid);
+  }
+  
+  private SyncState getSyncState(NodeID nodeid, ReplicationMessage msg) {
+    if (msg.getReplicationType() == SYNC_BEGIN) {
+      SyncState syncing = new SyncState();
+      filtering.put(nodeid, syncing);
+      return syncing;
+    } else {
+      return filtering.get(nodeid);
+    }
+  }
+  
+  private boolean filterMessage(SyncState state, NodeID nodeid, ReplicationMessage msg) {
+    if (state != null) {
+//  there is an active sync going on, need to filter out messages that should not be replicated
+      if (!state.filter(msg)) {
+        if (logger.isDebugEnabled()) {
+          logger.debug(nodeid + ":Filtering " + msg + " for " + msg.getEntityDescriptor().getEntityID());
+        }
+        return true;
+      } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug(nodeid + ":Sending " + msg + " for " + msg.getEntityDescriptor().getEntityID());
+        }
+        state.validateSending(msg);
+        if (state.isComplete()) {
+          filtering.remove(nodeid);
+        }
+      }
+    }
+    return false;
+  }
+  
+  private boolean dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
+//  make sure node is not connected
+    Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
+    if (msg instanceof PassiveSyncMessage) {
+//  passive must have died during passive sync, ignore this message
+      return true;
+    } else {
+      logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
+      return true;
+    }
+  }
+  
+  private boolean shouldReplicate(ReplicationMessage msg) {
+    if (msg.getType() == ReplicationMessage.START ||
+        msg.getType() == ReplicationMessage.RESPONSE) {
+//  these types of messages are incoming types or internal server use, not outgoing
+      throw new AssertionError("unexpected message type " + msg);
+    }
+    switch (msg.getReplicationType()) {
+      case NOOP:
+      case DOES_EXIST:
+      case RELEASE_ENTITY:
+        return false;
+      default:
+        return true;
     }
   }
 
@@ -149,6 +183,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     private final Set<EntityID> syncd = new HashSet<>();
     private EntityID syncingID = EntityID.NULL_ID;
     private final Set<Integer> syncdID = new HashSet<>();
+    private final Set<EntityID> created = new HashSet<>();
+    private final Set<EntityID> destroyed = new HashSet<>();
     private int syncingConcurrency = -1;
     private ReplicationMessage.ReplicationType lastSeen;
     private ReplicationMessage.ReplicationType lastSent;
@@ -164,7 +200,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             syncingConcurrency = 0;
 //  if the entity is created through the create message replication, the entity should not be sync'd
 //  set syncid to null so all messages until end get filtered out.  this should not be alot, it just got created
-            if (syncd.contains(syncingID)) {
+            if (created.contains(syncingID) || destroyed.contains(eid)) {
               syncingID = EntityID.NULL_ID;
               logger.debug("Drop: entity " + syncingID + " was created no sync required");
               return false;
@@ -180,6 +216,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             return true;
           case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
             if (syncingID == EntityID.NULL_ID) {
+              return false;
+            }
+            if (destroyed.contains(eid)) {
               return false;
             }
             return true;
@@ -202,12 +241,22 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
           case SYNC_END:
             return true;
           case CREATE_ENTITY:
-            if (syncd.contains(eid) || eid.equals(syncingID)) {
+            if (syncd.contains(eid)) {
+              Assert.assertTrue(destroyed.contains(eid));
+              created.add(eid);
+              destroyed.remove(eid);
+              return true;
+            } else if (destroyed.contains(eid)) {
+              created.add(eid);
+              destroyed.remove(eid);
+              return true;
+            } else if (eid.equals(syncingID)) {
 //  this entity is being or has been replicated, don't create it on the passive
               return false;
             } else {
 //  add this to the list of entities already syncd
-              syncd.add(eid);
+              created.add(eid);
+              destroyed.remove(eid);
               return true;
             }
           case RECONFIGURE_ENTITY:
@@ -220,17 +269,26 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             }
           case DESTROY_ENTITY:
             if (syncd.contains(eid)) {
+//  this would only happen if an entity was destroyed
+              destroyed.add(eid);
+              Assert.assertFalse(created.contains(eid));
               return true;
             } else if (syncingID.equals(eid)) {
  //  tricky.  this one needs to pass but only be applied after sync of this entity is complete
+              destroyed.add(eid);
+              Assert.assertFalse(created.contains(eid));
+              return true;
+            } else if (created.contains(eid)) {
+              destroyed.add(eid);
+              created.remove(eid);
               return true;
             } else {
  //  hasn't been syncd yet.  never sync it
-              syncd.add(eid);
+              destroyed.add(eid);
               return false;
             }
           case INVOKE_ACTION:
-            if (syncd.contains(eid)) {
+            if (syncd.contains(eid) || created.contains(eid)) {
               return true;
             } else if (syncingID.equals(eid)) {
               if (syncingConcurrency == msg.getConcurrency()) {
@@ -274,22 +332,22 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
           Assert.assertNull(compare);
           break;
         case SYNC_ENTITY_BEGIN:
-          Assert.assertTrue(EnumSet.of(SYNC_BEGIN, SYNC_ENTITY_END).contains(compare));
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SYNC_BEGIN, SYNC_ENTITY_END).contains(compare));
           break;
         case SYNC_ENTITY_CONCURRENCY_BEGIN:
-          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_BEGIN, SYNC_ENTITY_CONCURRENCY_END).contains(compare));
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SYNC_ENTITY_BEGIN, SYNC_ENTITY_CONCURRENCY_END).contains(compare));
           break;
         case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_CONCURRENCY_BEGIN, SYNC_ENTITY_CONCURRENCY_PAYLOAD).contains(compare));
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SYNC_ENTITY_CONCURRENCY_BEGIN, SYNC_ENTITY_CONCURRENCY_PAYLOAD).contains(compare));
           break;
         case SYNC_ENTITY_CONCURRENCY_END:
-          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_CONCURRENCY_BEGIN, SYNC_ENTITY_CONCURRENCY_PAYLOAD).contains(compare));
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SYNC_ENTITY_CONCURRENCY_BEGIN, SYNC_ENTITY_CONCURRENCY_PAYLOAD).contains(compare));
           break;
         case SYNC_ENTITY_END:
-          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_BEGIN, SYNC_ENTITY_CONCURRENCY_END).contains(compare));
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SYNC_ENTITY_BEGIN, SYNC_ENTITY_CONCURRENCY_END).contains(compare));
           break;
         case SYNC_END:
-          Assert.assertTrue(EnumSet.of(SYNC_ENTITY_END, SYNC_BEGIN).contains(compare));
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SYNC_ENTITY_END, SYNC_BEGIN).contains(compare));
           break;
         default:
           throw new AssertionError("unexpected message type");

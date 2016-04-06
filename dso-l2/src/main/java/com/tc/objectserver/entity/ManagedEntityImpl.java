@@ -169,11 +169,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void scheduleInOrder(EntityDescriptor desc, ServerEntityRequest request, byte[] payload, Runnable r, int ckey) {
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
-    Assert.assertTrue(
-        Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE)
-        || Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE)
-        || Thread.currentThread().getName().contains(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE)
-    );
+    if (isInActiveState) {
+      Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE));
+    } else {
+      Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
+    }
     
     SchedulingRunnable next = new SchedulingRunnable(desc, request, payload, r, ckey);
     

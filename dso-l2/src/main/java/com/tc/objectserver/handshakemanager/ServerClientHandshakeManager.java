@@ -38,6 +38,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
+import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.util.Assert;
@@ -65,7 +66,7 @@ public class ServerClientHandshakeManager {
   private final LockManager              lockManager;
   private final EntityManager entityManager;
   private final ProcessTransactionHandler transactionHandler;
-  private final Stage<?> messageStage;
+  private final Stage<VoltronEntityMessage> messageStage;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
   private final TCLogger                 logger;
@@ -76,7 +77,7 @@ public class ServerClientHandshakeManager {
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       LockManager lockManager, EntityManager entityManager, 
                                       ProcessTransactionHandler transactionHandler,
-                                      Stage<?> messageStage, 
+                                      Stage<VoltronEntityMessage> messageStage, 
                                       Timer timer, long reconnectTimeout,
                                       boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
@@ -208,10 +209,11 @@ public class ServerClientHandshakeManager {
       final ClientID clientID = (ClientID) nid;
       sendAckMessageFor(clientID);
     }
-    // Tell the transaction handler the message to replay any resends we received.
-    this.transactionHandler.executeAllResends();
     this.state = State.STARTED;
     messageStage.unpause();
+    // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
+    // in case all the clients are waiting on resends
+    this.messageStage.getSink().addSingleThreaded(new NoopEntityMessage(EntityDescriptor.NULL_ID));
   }
 
   public synchronized void setStarting(Set<ConnectionID> existingConnections) {

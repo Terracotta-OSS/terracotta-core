@@ -19,6 +19,7 @@
 
 package com.tc.objectserver.handshakemanager;
 
+import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +32,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.locks.LockManager;
 
@@ -41,6 +43,7 @@ import java.util.Timer;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,6 +55,8 @@ public class ServerClientHandshakeManagerTest {
   private LockManager lockManager;
   private ProcessTransactionHandler transactionHandler;
   private ServerClientHandshakeManager manager;
+  private Stage voltronStage;
+  private Sink voltronSink;
 
   @Before
   public void setUp() throws Exception {
@@ -64,7 +69,10 @@ public class ServerClientHandshakeManagerTest {
     long reconnectTimeout = 1000;
     boolean persistent = true;
     TCLogger consoleLogger = mock(TCLogger.class);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, this.lockManager, entityManager, this.transactionHandler, mock(Stage.class), timer, reconnectTimeout, persistent, consoleLogger);
+    voltronStage = mock(Stage.class);
+    voltronSink = mock(Sink.class);
+    when(voltronStage.getSink()).thenReturn(voltronSink);
+    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, this.lockManager, entityManager, this.transactionHandler, voltronStage, timer, reconnectTimeout, persistent, consoleLogger);
   }
 
   @Test
@@ -103,7 +111,7 @@ public class ServerClientHandshakeManagerTest {
     assertTrue(this.manager.isStarted());
     
     verify(this.lockManager).start();
-    verify(this.transactionHandler).executeAllResends();
+    verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
   }
 
   @Test
@@ -137,7 +145,7 @@ public class ServerClientHandshakeManagerTest {
     assertFalse(this.manager.isStarted());
     verify(this.lockManager, never()).start();
     verify(this.transactionHandler).handleResentMessage(resend);
-    verify(this.transactionHandler, never()).executeAllResends();
+    verify(this.voltronSink, never()).addSingleThreaded(any(NoopEntityMessage.class));
     
     // This second message will now start the server.
     ClientHandshakeMessage message2 = mock(ClientHandshakeMessage.class);
@@ -146,7 +154,7 @@ public class ServerClientHandshakeManagerTest {
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
     verify(this.lockManager).start();
-    verify(this.transactionHandler).executeAllResends();
+    verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
   }
 
   @Test
