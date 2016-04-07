@@ -89,28 +89,21 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  /**
-   * XXX: Should we wait for the monitor thread to stop completely.
-   */
   private void stopMonitorThread() {
     if (monitor != null) {
-      monitor.stop();
-      monitor = null;
+      monitor.stopMonitoring();
+      try {
+        monitor.join();
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
     }
   }
 
   private synchronized void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
       this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), sleepInterval);
-      Thread t = new Thread(this.threadGroup, this.monitor);
-      t.setDaemon(true);
-      if (Os.isSolaris()) {
-        t.setPriority(Thread.MAX_PRIORITY);
-        t.setName("TC Memory Monitor(High Priority)");
-      } else {
-        t.setName("TC Memory Monitor");
-      }
-      t.start();
+      monitor.start();
     }
   }
 
@@ -120,7 +113,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  public class MemoryMonitor implements Runnable {
+  public class MemoryMonitor extends Thread {
 
     private final JVMMemoryManager manager;
     private volatile boolean       run = true;
@@ -128,23 +121,34 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     private long                   sleepTime;
 
     public MemoryMonitor(JVMMemoryManager manager, long sleepInterval) {
+      super(threadGroup, "TC Memory Monitor");
+      if (Os.isSolaris()) {
+        monitor.setPriority(Thread.MAX_PRIORITY);
+        monitor.setName("TC Memory Monitor(High Priority)");
+      }
       this.manager = manager;
       this.sleepTime = sleepInterval;
     }
 
-    public void stop() {
+    private void stopMonitoring() {
       run = false;
+      this.interrupt();
     }
 
     @Override
     public void run() {
       logger.debug("Starting Memory Monitor - sleep interval - " + sleepTime);
+      boolean interrupt = false;
       while (run) {
         try {
           Thread.sleep(sleepTime);
           MemoryUsage mu = manager.isMemoryPoolMonitoringSupported() ? manager.getOldGenUsage() : manager.getMemoryUsage();
           fireMemoryEvent(mu);
           adjust(mu);
+        } catch (InterruptedException ie) {
+          if (run) {
+            interrupt = true;
+          }
         } catch (Throwable t) {
           // for debugging purpose
           StackTraceElement[] trace = t.getStackTrace();
@@ -153,6 +157,9 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
           logger.error(t);
           throw new TCRuntimeException(t);
         }
+      }
+      if (interrupt) {
+        this.interrupt();
       }
       logger.debug("Stopping Memory Monitor - sleep interval - " + sleepTime);
     }

@@ -686,13 +686,19 @@ public class DistributedObjectClient implements TCClient {
                          + TCPropertiesImpl.getProperties()
                              .getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
 
-        while (this.threadGroup.activeCount() > 0 && System.currentTimeMillis() < end) {
-          try {
-            Thread.sleep(1000);
-          } catch (final InterruptedException e) {
-            interrupted = true;
+        int threadCount = this.threadGroup.activeCount();
+        Thread[] t = new Thread[threadCount];
+        threadCount = this.threadGroup.enumerate(t);
+        final long time = System.currentTimeMillis();
+        for (int x=0;x<threadCount;x++) {
+          long start = System.currentTimeMillis();
+          while (System.currentTimeMillis() < end && t[x].isAlive()) {
+            t[x].join(1000);
           }
+          logger.info("Destroyed thread " + t[x].getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
         }
+        logger.info("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
+
         if (this.threadGroup.activeCount() > 0) {
           logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
                       + "Live threads: " + getLiveThreads(this.threadGroup));
