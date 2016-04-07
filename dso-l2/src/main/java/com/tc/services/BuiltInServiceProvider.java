@@ -18,7 +18,6 @@
  */
 package com.tc.services;
 
-import java.io.Closeable;
 import java.util.Collection;
 
 import org.terracotta.entity.ServiceConfiguration;
@@ -38,7 +37,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
  * This has no explicit initialization routine as it is expected that the implementation will be initialized with rich
  * context, inline, prior to being registered with the platform's provider registry.
  */
-public interface BuiltInServiceProvider extends Closeable {
+public interface BuiltInServiceProvider {
   /**
    * Get an instance of service from the provider.
    *

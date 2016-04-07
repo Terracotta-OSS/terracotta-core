@@ -183,7 +183,5 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
     assertEquals(null, keyValueStorage.get(1));
     assertEquals(null, keyValueStorage.get(2));
     assertEquals(null, keyValueStorage.get(3));
-    
-    provider.close();
   }
 }

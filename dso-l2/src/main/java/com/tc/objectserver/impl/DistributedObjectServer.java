@@ -439,7 +439,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       //  services or be discarded, entirely.
       FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
       if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(null, restartable))) {
-        flatFileService.close();
         throw new AssertionError("bad flat file initialization");
       }
       serviceRegistry.registerExternal(flatFileService);
@@ -562,7 +561,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    @SuppressWarnings("resource")
     CommunicatorService communicatorService = new CommunicatorService(channelManager);
     serviceRegistry.registerBuiltin(communicatorService);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);

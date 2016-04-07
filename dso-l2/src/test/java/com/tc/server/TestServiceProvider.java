@@ -18,7 +18,6 @@
  */
 package com.tc.server;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import org.terracotta.entity.ServiceConfiguration;
@@ -26,12 +25,8 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 
-/**
- *
- * @author mscott
- */
-public class TestServiceProvider implements ServiceProvider {
 
+public class TestServiceProvider implements ServiceProvider {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
     return true;
@@ -48,13 +43,7 @@ public class TestServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void close() throws IOException {
-
-  }
-
-  @Override
   public void clear() throws ServiceProviderCleanupException {
     // nothing to do
   }
-  
 }
