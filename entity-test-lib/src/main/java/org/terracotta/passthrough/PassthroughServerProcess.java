@@ -390,7 +390,7 @@ public class PassthroughServerProcess implements MessageHandler {
     entity.invoke(deserialize(className, entityName, codec, payload));
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, PassiveServerEntity<M, R> entity, SyncMessageCodec<M, R> codec, int concurrencyKey, byte[] payload) throws EntityUserException {
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, PassiveServerEntity<M, R> entity, SyncMessageCodec<M> codec, int concurrencyKey, byte[] payload) throws EntityUserException {
     entity.invoke(deserializeForSync(className, entityName, codec, concurrencyKey, payload));
   }
   
@@ -403,7 +403,7 @@ public class PassthroughServerProcess implements MessageHandler {
     });
   }
   
-  private <M extends EntityMessage, R extends EntityResponse> M deserializeForSync(String className, String entityName, final SyncMessageCodec<M, R> codec, final int concurrencyKey, final byte[] payload) throws EntityUserException {
+  private <M extends EntityMessage, R extends EntityResponse> M deserializeForSync(String className, String entityName, final SyncMessageCodec<M> codec, final int concurrencyKey, final byte[] payload) throws EntityUserException {
     return runWithHelper(className, entityName, new CodecHelper<M>() {
       @Override
       public M run() throws MessageCodecException {
@@ -910,7 +910,7 @@ public class PassthroughServerProcess implements MessageHandler {
     public final ServerEntityService<M, R> service;
     public CommonServerEntity<M, R> entityInstance;
     public final MessageCodec<M, R> messageCodec;
-    public final SyncMessageCodec<M, R> syncMessageCodec;
+    public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
     public boolean isActive;
     
@@ -965,9 +965,9 @@ public class PassthroughServerProcess implements MessageHandler {
     }
     
     public void synchronizeToPassive(final PassthroughServerProcess passive, final int key) {
-      getActive().synchronizeKeyToPassive(new PassiveSynchronizationChannel<R>() {
+      getActive().synchronizeKeyToPassive(new PassiveSynchronizationChannel<M>() {
           @Override
-          public void synchronizeToPassive(R payload) {
+          public void synchronizeToPassive(M payload) {
             PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, key, serialize(key, payload));
             PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
             passive.sendMessageToServerFromActive(wrapper, payloadMessage.asSerializedBytes());
@@ -976,9 +976,9 @@ public class PassthroughServerProcess implements MessageHandler {
         }, key);
     }
     
-    private byte[] serialize(int key, R response) {
+    private byte[] serialize(int key, M message) {
       try {
-        return syncMessageCodec.encode(key, response);
+        return syncMessageCodec.encode(key, message);
       } catch (MessageCodecException me) {
         throw new RuntimeException(me);
       }
