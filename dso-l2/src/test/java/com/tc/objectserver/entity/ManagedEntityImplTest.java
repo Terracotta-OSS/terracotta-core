@@ -222,10 +222,9 @@ public class ManagedEntityImplTest {
         return new EntityResponse() {};
       }
     });
-    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
-
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
         throw new UnsupportedOperationException("not supported!");
       }
 
@@ -272,10 +271,9 @@ public class ManagedEntityImplTest {
         return new EntityResponse() {};
       }
     });
-    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
-
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
         throw new UnsupportedOperationException("not supported!");
       }
 
@@ -354,10 +352,9 @@ public class ManagedEntityImplTest {
         };
       }
     };
-    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
-
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
         throw new UnsupportedOperationException("not supported!");
       }
 
@@ -468,10 +465,9 @@ public class ManagedEntityImplTest {
         return new EntityResponse() {};
       }
     });
-    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage, EntityResponse>(){
-
+    when(serverEntityService.getSyncMessageCodec()).thenReturn(new SyncMessageCodec<EntityMessage>(){
       @Override
-      public byte[] encode(int concurrencyKey, EntityResponse response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, EntityMessage message) throws MessageCodecException {
         Assert.fail("Synchronization not used in this test");
         return null;
       }

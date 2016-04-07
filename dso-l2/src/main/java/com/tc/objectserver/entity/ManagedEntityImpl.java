@@ -55,7 +55,6 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -86,7 +85,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile boolean isDestroyed;
   
   private final MessageCodec<EntityMessage, EntityResponse> codec;
-  private final SyncMessageCodec<EntityMessage, EntityResponse> syncCodec;
+  private final SyncMessageCodec<EntityMessage> syncCodec;
   private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private volatile ConcurrencyStrategy<EntityMessage> concurrencyStrategy;
 
@@ -495,10 +494,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         // Create the channel which will send the payloads over the wire.
-        PassiveSynchronizationChannel<EntityResponse> syncChannel = new PassiveSynchronizationChannel<EntityResponse>() {
+        PassiveSynchronizationChannel<EntityMessage> syncChannel = new PassiveSynchronizationChannel<EntityMessage>() {
           @Override
 //  TODO:  what should be done about exception handling?
-          public void synchronizeToPassive(EntityResponse payload) {
+          public void synchronizeToPassive(EntityMessage payload) {
             for (NodeID passive : passives) {
               try {
                 byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
