@@ -35,6 +35,7 @@ public class ServerProcess {
     ACTIVE,
     PASSIVE,
   };
+  private final ILogger stripeLogger;
   private final ServerInstallation underlyingInstallation;
   private final String serverName;
   private final File serverWorkingDirectory;
@@ -45,6 +46,7 @@ public class ServerProcess {
   private final ExitWaiter exitWaiter;
 
   public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
+    this.stripeLogger = stripeLogger;
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
@@ -92,10 +94,23 @@ public class ServerProcess {
     serverBus.on(activeReadyName, new ActivePassiveEventWaiter(ServerState.ACTIVE));
     serverBus.on(passiveReadyName, new ActivePassiveEventWaiter(ServerState.PASSIVE));
     
+    // Check to see if we need to explicitly set the JAVA_HOME environment variable or it if already exists.
+    String javaHome = System.getenv("JAVA_HOME");
+    if (null == javaHome) {
+      // Use the existing JRE path from the java.home in the current JVM instance as the JAVA_HOME.
+      javaHome = System.getProperty("java.home");
+      // This better exist.
+      Assert.assertNotNull(javaHome);
+      // Log that we did this.
+      this.stripeLogger.log("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
+    }
+    
+    // Start the inferior process.
     this.isScriptReady = false;
     AnyProcess process = AnyProcess.newBuilder()
         .command("server/bin/start-tc-server.sh", "-n", this.serverName)
         .workingDir(this.serverWorkingDirectory)
+        .env("JAVA_HOME", javaHome)
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
         .build();
