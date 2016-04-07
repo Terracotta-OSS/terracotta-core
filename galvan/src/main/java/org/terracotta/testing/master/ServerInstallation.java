@@ -21,12 +21,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.logging.ILogger;
 
 
 /**
  * The physical representation of a server installation, on disk.  Server processes can be started from the installation.
  */
 public class ServerInstallation {
+  private final ILogger stripeLogger;
   private final String serverName;
   private final File serverWorkingDirectory;
   private FileOutputStream stdoutLog;
@@ -34,7 +36,8 @@ public class ServerInstallation {
   private boolean configWritten;
   private ServerProcess outstandingProcess;
 
-  public ServerInstallation(String serverName, File serverWorkingDirectory) {
+  public ServerInstallation(ILogger stripeLogger, String serverName, File serverWorkingDirectory) {
+    this.stripeLogger = stripeLogger;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
   }
@@ -81,7 +84,7 @@ public class ServerInstallation {
     Assert.assertNull(this.outstandingProcess);
     
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog);
+    ServerProcess process = new ServerProcess(this.stripeLogger, stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog);
     this.outstandingProcess = process;
     return process;
   }

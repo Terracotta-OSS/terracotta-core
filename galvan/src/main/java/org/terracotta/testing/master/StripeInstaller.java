@@ -28,6 +28,7 @@ import org.terracotta.testing.logging.ILogger;
  * Handles the description, installation, and start-up of a stripe of servers in a cluster.
  */
 public class StripeInstaller {
+  private final ILogger stripeLogger;
   private final ILogger fileHelperLogger;
   private final String stripeInstallDirectory;
   private final String kitOriginDirectory;
@@ -35,7 +36,8 @@ public class StripeInstaller {
   private final List<ServerInstallation> installedServers;
   private boolean isBuilt;
   
-  public StripeInstaller(ILogger fileHelperLogger, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
+  public StripeInstaller(ILogger stripeLogger, ILogger fileHelperLogger, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
+    this.stripeLogger = stripeLogger;
     this.fileHelperLogger = fileHelperLogger;
     this.stripeInstallDirectory = stripeInstallDirectory;
     this.kitOriginDirectory = kitOriginDirectory;
@@ -48,7 +50,7 @@ public class StripeInstaller {
     Assert.assertFalse(this.isBuilt);
     String installPath = FileHelpers.createTempCopyOfDirectory(this.fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
     FileHelpers.copyJarsToServer(this.fileHelperLogger, installPath, this.extraJarPaths);
-    ServerInstallation installation = new ServerInstallation(serverName, new File(installPath));
+    ServerInstallation installation = new ServerInstallation(this.stripeLogger, serverName, new File(installPath));
     installation.openStandardLogFiles();
     this.installedServers.add(installation);
   }

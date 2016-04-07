@@ -26,6 +26,7 @@ import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
+import org.terracotta.testing.logging.ILogger;
 
 
 public class ServerProcess {
@@ -43,7 +44,7 @@ public class ServerProcess {
   private boolean isScriptReady;
   private final ExitWaiter exitWaiter;
 
-  public ServerProcess(ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
+  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
