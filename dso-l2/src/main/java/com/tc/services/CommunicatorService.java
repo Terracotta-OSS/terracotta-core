@@ -121,7 +121,6 @@ public class CommunicatorService implements BuiltInServiceProvider, DSOChannelMa
     return Collections.singleton(ClientCommunicator.class);
   }
 
-  @Override
   public void close() {
     clientAccounts.values().stream().forEach(a->a.close());
     clientAccounts.clear();

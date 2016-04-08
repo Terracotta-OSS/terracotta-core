@@ -12,9 +12,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author vmad
- */
+
 public class NullPlatformStorageServiceProvider implements ServiceProvider {
     private final Map<Long, IPersistentStorage> providers = new ConcurrentHashMap<>();
 
@@ -35,7 +33,6 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider {
         return Collections.singleton(IPersistentStorage.class);
     }
 
-    @Override
     public void close() throws IOException {
         providers.clear();
     }

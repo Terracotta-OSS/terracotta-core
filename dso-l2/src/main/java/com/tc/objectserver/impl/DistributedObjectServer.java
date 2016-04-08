@@ -22,7 +22,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 
@@ -115,12 +114,12 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.MessageID;
 import com.tc.net.groups.Node;
+import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
-import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -277,7 +276,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ConnectionIDFactoryImpl                connectionIdFactory;
 
   private final TCThreadGroup                    threadGroup;
-  private final SEDA                             seda;
+  private final SEDA<HttpConnectionContext>                             seda;
 
   private ReconnectConfig                        l1ReconnectConfig;
 
@@ -296,13 +295,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
-    this(configSetupManager, threadGroup, connectionPolicy, new SEDA(threadGroup), null, null);
+    this(configSetupManager, threadGroup, connectionPolicy, new SEDA<HttpConnectionContext>(threadGroup), null, null);
 
   }
 
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy,
-                                 SEDA seda,
+                                 SEDA<HttpConnectionContext> seda,
                                  TCServer server, TCSecurityManager securityManager) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
@@ -440,7 +439,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       //  services or be discarded, entirely.
       FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
       if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(null, restartable))) {
-        flatFileService.close();
         throw new AssertionError("bad flat file initialization");
       }
       serviceRegistry.registerExternal(flatFileService);
@@ -563,7 +561,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    @SuppressWarnings("resource")
     CommunicatorService communicatorService = new CommunicatorService(channelManager);
     serviceRegistry.registerBuiltin(communicatorService);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
@@ -694,7 +691,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
 
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(this.getServerNodeID(), createStageController(), eventCollector), 1, maxStageSize);
-    StateManager state = new StateManagerImpl(this.consoleLogger, this.groupCommManager, 
+    StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(),
         new StateManagerConfigImpl(configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs()),
         weightGeneratorFactory, 
@@ -1138,7 +1135,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return new NullThreadIDMapImpl();
   }
 
-  protected GroupManager getGroupManager() {
+  protected GroupManager<AbstractGroupMessage> getGroupManager() {
     return this.groupCommManager;
   }
 
