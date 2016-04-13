@@ -28,59 +28,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 
-
-class ResponseWaiter implements Future<Void> {
-  private boolean done;
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return false;
-  }
-
-  @Override
-  public synchronized boolean isDone() {
-    return done;
-  }
-
-  @Override
-  public synchronized Void get() throws InterruptedException, ExecutionException {
-    while (!done) {
-      wait();
-    }
-    return null;
-  }
-
-  @Override
-  public synchronized Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    long timeoutTime = unit.toNanos(timeout) + System.nanoTime();
-    while (!done) {
-      long waitTime = TimeUnit.NANOSECONDS.toMillis(timeoutTime - System.nanoTime());
-      if (waitTime <= 0) {
-        throw new TimeoutException();
-      }
-      wait(waitTime);
-    }
-    return null;
-  }
-
-  synchronized void done() {
-    done = true;
-    notifyAll();
-  }
-}
 
 public class CommunicatorService implements BuiltInServiceProvider, DSOChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
