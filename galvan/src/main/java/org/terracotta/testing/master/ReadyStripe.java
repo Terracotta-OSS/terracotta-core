@@ -37,7 +37,7 @@ public class ReadyStripe {
       configBuilder.setRestartable();
     }
     // Create the stripe installer.
-    StripeInstaller installer = new StripeInstaller(fileHelperLogger, testParentDirectory, serverInstallDirectory, extraJarPaths);
+    StripeInstaller installer = new StripeInstaller(stripeLogger, fileHelperLogger, testParentDirectory, serverInstallDirectory, extraJarPaths);
     // Configure and install each server in the stripe.
     for (int i = 0; i < serversToCreate; ++i) {
       String serverName = "testServer" + (i + serverStartNumber);
