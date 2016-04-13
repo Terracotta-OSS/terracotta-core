@@ -162,12 +162,9 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
    */
   @Override
   public void send(TCNetworkMessage message) {
-    if (this.channelSessionID == ((DSOMessageBase) message).getLocalSessionID()) {
-      super.send(message);
-    } else {
-      logger.info("Drop old message: " + ((DSOMessageBase) message).getMessageType() + " Expected "
-                  + this.channelSessionID + " but got " + ((DSOMessageBase) message).getLocalSessionID());
-    }
+// used to do session filtering here.  This wreaks havoc on upper layers to silently drop 
+// messages on the floor.  send everything through
+    super.send(message);
   }
 
   @Override
@@ -224,5 +221,4 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
     return this;
   }
-
 }
