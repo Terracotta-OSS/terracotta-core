@@ -351,7 +351,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     }
   }
-
+//  FOR TESTING ONLY
   public void stop(long timeout) throws TCTimeoutException {
     isStopped.set(true);
     stageManager.stopAll();
@@ -407,6 +407,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public NodeID join(Node thisNode, NodesStore nodesStore) throws GroupException {
+    Assert.assertNotNull(thisNode);
     if (!alreadyJoined.compareAndSet(false, true)) { throw new GroupException("Already Joined"); }
 
     // discover must be started before listener thread to avoid missing nodeJoined group events.

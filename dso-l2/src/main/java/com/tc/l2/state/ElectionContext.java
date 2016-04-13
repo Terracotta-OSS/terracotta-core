@@ -18,20 +18,39 @@
  */
 package com.tc.l2.state;
 
-import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.NodeID;
+import java.util.function.Consumer;
 
-public interface ElectionManager {
+/**
+ *
+ */
+public class ElectionContext {
+  private final NodeID node;
+  private final boolean isNew;
+  private final WeightGeneratorFactory factory;
+  private final Consumer<NodeID> winner;
 
-  public void declareWinner(NodeID myNodeId);
+  public ElectionContext(NodeID node, boolean isNew, WeightGeneratorFactory factory, Consumer<NodeID> winner) {
+    this.node = node;
+    this.isNew = isNew;
+    this.factory = factory;
+    this.winner = winner;
+  }
 
-  public boolean handleStartElectionRequest(L2StateMessage msg);
+  public NodeID getNode() {
+    return node;
+  }
 
-  public void handleElectionAbort(L2StateMessage msg);
+  public boolean isNew() {
+    return isNew;
+  }
 
-  public void handleElectionResultMessage(L2StateMessage msg);
-
-  public void reset(Enrollment winner);
-
-  public long getElectionTime();
+  public WeightGeneratorFactory getFactory() {
+    return factory;
+  }
+  
+  public void setWinner(NodeID node) {
+    winner.accept(node);
+  }
 }

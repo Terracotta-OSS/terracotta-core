@@ -147,10 +147,10 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.19</version>
         <configuration>
-            <forkCount>2C</forkCount>
+            <forkCount>1C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
-            <argLine>-Xmx2G -Djava.awt.headless=true</argLine>
+            <argLine>-Djava.awt.headless=true</argLine>
             <systemPropertyVariables>
                 <testClassesDir>${project.build.testOutputDirectory}</testClassesDir>
             </systemPropertyVariables>

@@ -18,10 +18,7 @@
  */
 package com.tc.net.groups;
 
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.ConfigurationContextImpl;
-import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.exception.TCShutdownServerException;
@@ -50,7 +47,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
-import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDump;
 
@@ -86,8 +82,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private TestGroupMessageListener listeners[];
   private TestGroupEventListener   groupEventListeners[];
   private Node                     nodes[];
-  private ThrowableHandler         throwableHandler;
   private AtomicReference<Throwable> error;
+  private MockStageManagerFactory  stages;
 
   private void setupGroups(int n) throws Exception {
     ports = new int[n];
@@ -97,14 +93,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groupEventListeners = new TestGroupEventListener[n];
     nodes = new Node[n];
     error = new AtomicReference<>();
-    throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(getClass())) {
-      @Override
-      public void handleThrowable(Thread thread, Throwable t) {
-        if (error.compareAndSet(null, t)) {
-          t.printStackTrace();
-        }
-      }
-    };
+    stages = new MockStageManagerFactory(TCLogging.getLogger(TCGroupManagerImplTest.class), new ThreadGroup("stage-manager"));
 
     PortChooser pc = new PortChooser();
     for (int i = 0; i < n; ++i) {
@@ -113,11 +102,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
-      StageManager stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler),
-                                                       new QueueFactory());
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager, null, RandomWeightGenerator.createTestingFactory(2));
-      ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.emptyList());
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);
@@ -131,7 +116,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       System.out.println("Shutting down " + group);
       group.shutdown();
     }
-    ThreadUtil.reallySleep(200);
+    stages.shutdown();
     throwExceptionIfNecessary();
   }
 
@@ -178,7 +163,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
     while ((groups[0].size() != 0) || (groups[1].size() != 0)) {
       System.err.println("XXX " + member1 + "; size: " + groups[0].size());
       System.err.println("XXX " + member2 + "; size: " + groups[1].size());
-      ThreadUtil.reallySleep(5000);
     }
 
     tearGroups();
@@ -513,7 +497,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
       assertTrue(cmpL2StateMessage((L2StateMessage) sMesg, (L2StateMessage) rMesg));
     }
 
-    ThreadUtil.reallySleep(200);
     tearGroups();
   }
 
@@ -548,7 +531,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
       }
     }
 
-    ThreadUtil.reallySleep(200);
     tearGroups();
   }
 
@@ -680,7 +662,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     // setup throwable ThreadGroup to catch AssertError from threads.
     TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(null), "TCGroupManagerImplTestGroup");
-    ThreadUtil.reallySleep(1000);
 
     Thread t1 = new SenderThread(threadGroup, "Node-0", mgr1, upbound);
     Thread t2 = new SenderThread(threadGroup, "Node-1", mgr2, upbound);
