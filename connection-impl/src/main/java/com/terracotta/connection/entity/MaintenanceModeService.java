@@ -19,6 +19,8 @@
 
 package com.terracotta.connection.entity;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import org.terracotta.connection.entity.Entity;
 
 import com.tc.object.locks.ClientLockManager;
@@ -38,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author twu
  */
 public class MaintenanceModeService {
+  private static TCLogger LOGGER = TCLogging.getLogger(MaintenanceModeService.class);
   private final ExecutorService executorService = new DirectExecutor();
   private final ClientLockManager clientLockManager;
  
@@ -69,7 +72,7 @@ public class MaintenanceModeService {
     }
 
     @Override
-    public synchronized void execute(Runnable command) {
+    public void execute(Runnable command) {
       command.run();
     }
     
@@ -142,15 +145,30 @@ public class MaintenanceModeService {
   }
 
   private void lock(LockID id, LockLevel level) {
+    long time = System.nanoTime();
     this.clientLockManager.lock(id, level);
+    if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("time to lock:" + id + " " + level + " " + (System.nanoTime() - time) + " nanos");
+    }
   }
 
   private boolean tryLock(LockID id, LockLevel level) {
-    return this.clientLockManager.tryLock(id, level);
+    long time = System.nanoTime();
+    try {
+      return this.clientLockManager.tryLock(id, level);
+    } finally {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("time to try lock:" + id + " " + level + " " + (System.nanoTime() - time) + " nanos");
+      }
+    }
   }
 
   private void unlock(LockID id, LockLevel level) {
+    long time = System.nanoTime();
     this.clientLockManager.unlock(id, level);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("time to unlock:" + id + " " + level + " " + (System.nanoTime() - time) + " nanos");
+      }
   }
 
 
