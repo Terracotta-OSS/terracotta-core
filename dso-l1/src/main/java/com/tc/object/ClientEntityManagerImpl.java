@@ -274,7 +274,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
             EntityLockID elock = (EntityLockID)cxt.getLockID();
             if (elock.equals(new EntityLockID(eid.getClassName(), eid.getEntityName()))) {
               if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY) {
-                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState(), ServerLockLevel.READ);
+                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState().getLockLevel(), ServerLockLevel.READ);
               } else {
                 Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState().getLockLevel(), ServerLockLevel.WRITE);
               }

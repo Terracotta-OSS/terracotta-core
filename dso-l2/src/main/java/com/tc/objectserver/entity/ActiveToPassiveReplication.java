@@ -222,12 +222,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     passiveNodes.remove(nodeID);
 //  acknowledge all the messages for this node because it is gone, this may result in 
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
-    waiters.forEach((key, value)->acknowledge(key, nodeID));
+    if (activated) {
+      waiters.forEach((key, value)->acknowledge(key, nodeID));
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
-    Semaphore block = new Semaphore(0);
-    replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, ()->block.release()));
-    waitOnSemaphore(block);
+      Semaphore block = new Semaphore(0);
+      replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, ()->block.release()));
+      waitOnSemaphore(block);
+    }
   }
   
   private void waitOnSemaphore(Semaphore block) {
