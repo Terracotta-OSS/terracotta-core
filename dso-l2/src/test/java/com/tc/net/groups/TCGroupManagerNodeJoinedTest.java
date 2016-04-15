@@ -18,9 +18,7 @@
  */
 package com.tc.net.groups;
 
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
@@ -64,17 +62,20 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   private TCGroupManagerImpl[]  groupManagers;
   private MyListener[]          listeners;
   private TestThrowableHandler throwableHandler;
+  private MockStageManagerFactory stages;
 
   @Override
   public void setUp() {
     throwableHandler = new TestThrowableHandler(logger);
     threadGroup = new TCThreadGroup(throwableHandler, "TCGroupManagerNodeJoinedTest");
+    stages = new MockStageManagerFactory(logger, new ThreadGroup(threadGroup, "stage-managers"));
   }
 
   @Override
   protected void tcTestCaseTearDown(Throwable testException) throws Throwable {
     super.tcTestCaseTearDown(testException);
     throwableHandler.throwIfNecessary();
+    stages.shutdown();
   }
 
   public void testNodejoinedTwoServers() throws Exception {
@@ -123,11 +124,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
 
     for (int i = 0; i < nodes; ++i) {
-      StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
-      ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.emptyList());
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
@@ -180,9 +178,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
-      ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.emptyList());
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
@@ -247,11 +243,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
 
     for (int i = 0; i < nodes; ++i) {
-      StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null, RandomWeightGenerator.createTestingFactory(2));
-      ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context, Collections.emptyList());
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
@@ -276,7 +269,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     System.out.println("XXX 1st verification done");
 
-    ThreadUtil.reallySleep(5000);
     for (int i = 0; i < nodes; ++i) {
       proxy[i].stop();
     }
@@ -309,7 +301,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       ThreadUtil.reallySleep(ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
     }
 
-    ThreadUtil.reallySleep(5000);
     ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME, count);
     shutdown();
   }

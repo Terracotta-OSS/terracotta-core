@@ -18,8 +18,9 @@
  */
 package com.tc.l2.state;
 
-import com.tc.l2.L2DebugLogging;
-import com.tc.l2.L2DebugLogging.LogLevel;
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandler;
+import com.tc.async.api.EventHandlerException;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.logging.TCLogger;
@@ -57,6 +58,15 @@ public class ElectionManagerImpl implements ElectionManager {
   public ElectionManagerImpl(GroupManager groupManager, StateManagerConfig stateManagerConfig) {
     this.groupManager = groupManager;
     electionTime = stateManagerConfig.getElectionTimeInSecs() * 1000;
+  }
+  
+  public EventHandler<ElectionContext> getEventHandler() {
+    return new AbstractEventHandler<ElectionContext> () {
+      @Override
+      public void handleEvent(ElectionContext context) throws EventHandlerException {
+          context.setWinner(runElection(context.getNode(), context.isNew(), context.getFactory()));
+      }
+    };
   }
 
   @Override
@@ -161,8 +171,7 @@ public class ElectionManagerImpl implements ElectionManager {
     notifyAll();
   }
 
-  @Override
-  public NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
+  private NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
     while (winnerID.isNull()) {
@@ -289,7 +298,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   private static void debugInfo(String message) {
-    L2DebugLogging.log(logger, LogLevel.INFO, message, null);
+    logger.debug(message);
   }
 
 }

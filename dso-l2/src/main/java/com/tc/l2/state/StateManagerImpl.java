@@ -19,8 +19,7 @@
 package com.tc.l2.state;
 
 import com.tc.async.api.Sink;
-import com.tc.l2.L2DebugLogging;
-import com.tc.l2.L2DebugLogging.LogLevel;
+import com.tc.async.api.StageManager;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -34,6 +33,7 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
@@ -49,21 +49,23 @@ public class StateManagerImpl implements StateManager {
 
   private final TCLogger               consoleLogger;
   private final GroupManager<AbstractGroupMessage> groupManager;
-  private final ElectionManager        electionMgr;
+  private final ElectionManagerImpl        electionMgr;
   private final Sink<StateChangedEvent> stateChangeSink;
+  private final Sink<ElectionContext> electionSink;
   private final WeightGeneratorFactory weightsFactory;
 
   private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<>();
-  private final Object                 electionLock        = new Object();
+  private volatile boolean       initiated;
   private final ClusterStatePersistor  clusterStatePersistor;
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
   private volatile State               state               = START_STATE;
   private State               startState               = null;
-  private boolean                      electionInProgress  = false;
+  private final ElectionGate                      elections  = new ElectionGate();
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
-  public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, Sink<StateChangedEvent> stateChangeSink,
+  public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, 
+                          Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
                           StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory,
                           ClusterStatePersistor clusterStatePersistor) {
     this.consoleLogger = consoleLogger;
@@ -71,6 +73,7 @@ public class StateManagerImpl implements StateManager {
     this.stateChangeSink = stateChangeSink;
     this.weightsFactory = weightFactory;
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
+    this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
   }
 
@@ -78,7 +81,30 @@ public class StateManagerImpl implements StateManager {
   public State getCurrentState() {
     return this.state;
   }
-
+  
+  private boolean electionStarted() {
+    return elections.electionStarted();
+  }
+  
+  private boolean electionFinished() {
+    return elections.electionFinished();
+  }
+// for tests  
+  public void waitForDeclaredActive() throws InterruptedException {
+    synchronized (this) {
+      while(activeNode.isNull()) {
+        wait();
+      }
+    }
+//  now make sure elections are done
+    elections.waitForElectionToFinish();
+  }
+  
+  public void endElection() {
+    initiated = false;
+    state = STOP_STATE;
+    activeNode = ServerID.NULL_ID;
+  }
   /*
    * XXX:: If ACTIVE went dead before any passive moved to STANDBY state, then the cluster is hung and there is no going
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
@@ -86,57 +112,60 @@ public class StateManagerImpl implements StateManager {
   @Override
   public void startElection() {
     debugInfo("Starting election");
-    synchronized (electionLock) {
-      if (electionInProgress) return;
-      electionInProgress = true;
-    }
-    try {
-      startState = clusterStatePersistor.getInitialState();
-      // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
-      // the election and wait for a zap.
-      if (startState != null && !startState.equals(ACTIVE_COORDINATOR)) {
-        info("Skipping election and waiting for the active to zap since this this L2 did not go down as active.");
-      } else if (state == START_STATE || state == PASSIVE_STANDBY) {
-        runElection();
-      } else {
-        info("Ignoring Election request since not in right state");
-      }
-    } finally {
-      synchronized (electionLock) {
-        electionInProgress = false;
-      }
+    initiated = true;
+    startState = clusterStatePersistor.getInitialState();
+    // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
+    // the election and wait for a zap.
+    info("Starting election initial state:" + startState);
+    if (startState != null && !startState.equals(ACTIVE_COORDINATOR)) {
+      info("Skipping election and waiting for the active to zap since this L2 did not go down as active.");
+    } else if (state == START_STATE || state == PASSIVE_STANDBY) {
+      runElection();
+    } else {
+      info("Ignoring Election request since not in right state");
     }
   }
 
   private void runElection() {
+    if (!electionStarted()) {
+      return;
+    }
     NodeID myNodeID = getLocalNodeID();
-    NodeID winner = ServerID.NULL_ID;
-    int count = 0;
     // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
     // concluded)
     boolean isNew = state == START_STATE && startState == null;
-    while (getActiveNodeID().isNull()) {
-      if (++count > 1) {
-        logger.info("Rerunning election since node " + winner + " never declared itself as ACTIVE !");
-      }
+    if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      winner = electionMgr.runElection(myNodeID, isNew, weightsFactory);
-      if (winner == myNodeID) {
-        debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-        moveToActiveState();
-      } else {
-        electionMgr.reset(null);
-        // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
-        // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
-        // thinking the other one is the winner.
-        // @see MNK-518
-        debugInfo("Lost election, waiting for winner to declare as active, winner=" + winner);
-        waitUntilActiveNodeIDNotNull(electionMgr.getElectionTime());
-      }
+      electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, (nodeid)-> {
+        boolean rerun = false;
+        if (nodeid == myNodeID) {
+          debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
+          moveToActiveState();
+        } else if (nodeid.isNull()) {
+          Assert.fail();
+        } else {
+          electionMgr.reset(null);
+          // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
+          // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
+          // thinking the other one is the winner.
+          // @see MNK-518
+          debugInfo("Lost election, waiting for winner to declare as active, winner=" + nodeid);
+          if (!waitUntilActiveNodeIDNotNull(electionMgr.getElectionTime())) {
+            logger.info("rerunning election because " + nodeid + " never declared active");
+            rerun = true;
+          }
+        }
+        electionFinished();
+        if (rerun) {
+          runElection();
+        }
+      }));
+    } else {
+      electionFinished();
     }
   }
 
-  private synchronized void waitUntilActiveNodeIDNotNull(long timeout) {
+  private synchronized boolean waitUntilActiveNodeIDNotNull(long timeout) {
     while (activeNode.isNull() && timeout > 0) {
       long start = System.currentTimeMillis();
       try {
@@ -149,8 +178,8 @@ public class StateManagerImpl implements StateManager {
     }
     debugInfo("Wait for other active to declare as active over. Declared? activeNodeId.isNull() = "
               + activeNode.isNull() + ", activeNode=" + activeNode);
+    return !activeNode.isNull();
   }
-
   // should be called from synchronized code
   private void setActiveNodeID(NodeID nodeID) {
     this.activeNode = nodeID;
@@ -210,11 +239,11 @@ public class StateManagerImpl implements StateManager {
       debugInfo("Moving to active state");
       StateChangedEvent event = new StateChangedEvent(state, ACTIVE_COORDINATOR);
       state = ACTIVE_COORDINATOR;
+      stateChangeSink.addSingleThreaded(event);
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
       fireStateChangedOperatorEvent();
-      electionMgr.declareWinner(this.activeNode);
-      stateChangeSink.addSingleThreaded(event);
+      electionMgr.declareWinner(getLocalNodeID());
     } else {
       throw new AssertionError("Cant move to " + ACTIVE_COORDINATOR + " from " + state);
     }
@@ -301,11 +330,11 @@ public class StateManagerImpl implements StateManager {
       // the active is down but the other node did. Go with the new active.
       setActiveNodeID(winningEnrollment.getNodeID());
       if (startState == null || startState == START_STATE) {
-      moveToPassiveState(winningEnrollment);
-      if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
-        sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
-      }
-    } else {
+        moveToPassiveState(winningEnrollment);
+        if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
+          sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
+        }
+      } else {
 //  this server was started with persistent data.  don't start this server in passive state.
         Assert.assertEquals(startState, StateManager.ACTIVE_COORDINATOR);
 // TODO: send a negative response so the active zaps this server.  This is a bad way to agree.  find a better way
@@ -352,7 +381,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
-  private void handleElectionAbort(L2StateMessage clusterMsg) {
+  private synchronized void handleElectionAbort(L2StateMessage clusterMsg) {
     if (state == ACTIVE_COORDINATOR) {
       // Cant get Abort back to ACTIVE, if so then there is a split brain
       String error = state + " Received Abort Election  Msg : Possible split brain detected ";
@@ -361,10 +390,11 @@ public class StateManagerImpl implements StateManager {
     } else {
       debugInfo("ElectionMgr handling election abort");
       electionMgr.handleElectionAbort(clusterMsg);
+      setActiveNodeID(clusterMsg.getEnrollment().getNodeID());
     }
   }
 
-  private void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
+  private synchronized void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
     if (state == ACTIVE_COORDINATOR) {
       // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
       AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
@@ -372,9 +402,8 @@ public class StateManagerImpl implements StateManager {
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
     } else if (!electionMgr.handleStartElectionRequest(msg)) {
-      // TODO::FIXME:: Commenting so that stage thread is not held up doing election.
-      // startElectionIfNecessary(NodeID.NULL_ID);
-      logger.warn("Not starting election as it was commented out");
+//  another server started an election.  Unclear which server is now active, clear the active and run our own election
+      startElectionIfNecessary(getActiveNodeID());
     }
   }
 
@@ -402,6 +431,11 @@ public class StateManagerImpl implements StateManager {
   public void startElectionIfNecessary(NodeID disconnectedNode) {
     Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
     boolean elect = false;
+    if (!initiated) {
+//  election has never been initiated.  do not participate
+      return;
+    }
+
     synchronized (this) {
       if (activeNode.equals(disconnectedNode)) {
         // ACTIVE Node is gone
@@ -413,7 +447,7 @@ public class StateManagerImpl implements StateManager {
     }
     if (elect) {
       info("Starting Election to determine cluser wide ACTIVE L2");
-      startElection();
+      runElection();
     } else {
       debugInfo("Not starting election even though node left: " + disconnectedNode);
     }
@@ -471,6 +505,38 @@ public class StateManagerImpl implements StateManager {
   }
 
   private static void debugInfo(String message) {
-    L2DebugLogging.log(logger, LogLevel.INFO, message, null);
+    logger.debug(message);
+  }
+  
+  private static class ElectionGate {
+    private boolean electionInProgress = false;
+    
+    public synchronized boolean electionStarted() {
+      try {
+        return !electionInProgress;
+      } finally {
+        electionInProgress = true;
+        notifyAll();
+      }
+    }
+    
+    public synchronized boolean electionFinished() {
+      try {
+        return electionInProgress;
+      } finally {
+        electionInProgress = false;
+        notifyAll();
+      }
+    }    
+    
+    public synchronized boolean isFinished() {
+      return electionInProgress;
+    }
+    
+    public synchronized void waitForElectionToFinish() throws InterruptedException {
+      while (electionInProgress) {
+        wait();
+      }
+    }    
   }
 }
