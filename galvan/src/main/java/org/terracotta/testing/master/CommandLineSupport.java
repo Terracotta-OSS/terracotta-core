@@ -42,9 +42,9 @@ public class CommandLineSupport {
 
   public static DebugOptions parseDebugOptions(String[] args) {
     DebugOptions debugOptions = new DebugOptions();
-    debugOptions.setupClientPort = getIntArg(args, "--debugClientSetup");
-    debugOptions.destroyClientPort = getIntArg(args, "--debugClientDestroy");
-    debugOptions.testClientsStartPort = getIntArg(args, "--debugClientsStart");
+    debugOptions.setupClientDebugPort = getIntArg(args, "--debugClientSetup");
+    debugOptions.destroyClientDebugPort = getIntArg(args, "--debugClientDestroy");
+    debugOptions.testClientDebugPortStart = getIntArg(args, "--debugClientsStart");
     return debugOptions;
   }
 

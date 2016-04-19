@@ -68,7 +68,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     ClientInstaller clientInstaller = new ClientInstaller(clientsLogger, this.processControl, this.testParentDirectory, this.clientClassPath, clientClassName, this.testClassName, this.connectUri);
     
     // Run the setup client, synchronously.
-    ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientPort);
+    ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort);
     int setupExitValue = -1;
     try {
       setupExitValue = runClientSynchronous(setupClient);
@@ -118,7 +118,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       }
       
       // Run the destroy client, synchronously.
-      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientPort);
+      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort);
       int destroyExitValue = -1;
       try {
         destroyExitValue = runClientSynchronous(destroyClient);
@@ -160,8 +160,8 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     for (int i = 0; i < clientsToCreate; ++i) {
       String clientName = "client" + i;
       // Determine if we need a debug port set.
-      int debugPort = (0 != debugOptions.testClientsStartPort)
-          ? (debugOptions.testClientsStartPort + i)
+      int debugPort = (0 != debugOptions.testClientDebugPortStart)
+          ? (debugOptions.testClientDebugPortStart + i)
           : 0;
       testClients[i] = clientInstaller.installClient(clientName, "TEST", debugPort);
     }

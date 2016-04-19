@@ -24,13 +24,13 @@ public class DebugOptions {
   /**
    * The port the setup client should listen on.
    */
-  public int setupClientPort;
+  public int setupClientDebugPort;
   /**
    * The port the destroy client should list on.
    */
-  public int destroyClientPort;
+  public int destroyClientDebugPort;
   /**
    * The port number to use as the base for the test clients (each will pick ports, in order, starting with this one).
    */
-  public int testClientsStartPort;
+  public int testClientDebugPortStart;
 }

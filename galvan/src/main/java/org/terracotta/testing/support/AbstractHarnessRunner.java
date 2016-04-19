@@ -59,11 +59,10 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     // Get the test master implementation.
     ITestMaster<C> masterClass = this.testCase.getTestMaster();
     
-    // TODO:  Find a way to pass these in as defines, or something.
     DebugOptions debugOptions = new DebugOptions();
-    debugOptions.setupClientPort = 0;
-    debugOptions.destroyClientPort = 0;
-    debugOptions.testClientsStartPort = 0;
+    debugOptions.setupClientDebugPort = readIntProperty("setupClientDebugPort");
+    debugOptions.destroyClientDebugPort = readIntProperty("destroyClientDebugPort");
+    debugOptions.testClientDebugPortStart = readIntProperty("testClientDebugPortStart");
     boolean enableVerbose = true;
     
     // We will only succeed or fail.
@@ -91,6 +90,19 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
       // Failure.
       notifier.fireTestFailure(new Failure(testDescription, error));
     }
+  }
+
+  private int readIntProperty(String propertyName) {
+    int result = 0;
+    String value = System.getProperty(propertyName);
+    if (null != value) {
+      try {
+        result = Integer.parseInt(value);
+      } catch (NumberFormatException e) {
+        // Means it wasn't a number so we will treat that like it wasn't there.
+      }
+    }
+    return result;
   }
 
   protected abstract boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, boolean enableVerbose) throws IOException, FileNotFoundException, InterruptedException;
