@@ -33,4 +33,9 @@ public class DebugOptions {
    * The port number to use as the base for the test clients (each will pick ports, in order, starting with this one).
    */
   public int testClientDebugPortStart;
+  /**
+   * The port number to use as the starting-point for debug port assignments.
+   * Setting this to <=0 will result in no server debugging.
+   */
+  public int serverDebugPortStart;
 }

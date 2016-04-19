@@ -44,8 +44,9 @@ public class ServerProcess {
   private ServerState state;
   private boolean isScriptReady;
   private final ExitWaiter exitWaiter;
+  private final int debugPort;
 
-  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog) {
+  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog, int debugPort) {
     this.stripeLogger = stripeLogger;
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
@@ -57,6 +58,7 @@ public class ServerProcess {
     // Because a server can crash at any time, not just when we are expecting it to, we need a thread to wait on this operation and notify stateManager if the
     // crash was not expected.
     this.exitWaiter = new ExitWaiter(stateManager);
+    this.debugPort = debugPort;
   }
 
   public ServerInstallation getUnderlyingInstallation() {
@@ -105,12 +107,26 @@ public class ServerProcess {
       this.stripeLogger.log("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
     }
     
+    // Put together any additional options we wanted to pass to the VM under the start script.
+    // We want to bootstrap the variable with whatever is in our current environment.
+    String javaOpts = System.getenv("JAVA_OPTS");
+    if (null == javaOpts) {
+      javaOpts = "";
+    }
+    if (this.debugPort > 0) {
+      // Set up the client to block while waiting for connection.
+      javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
+      // Log that debug is enabled.
+      this.stripeLogger.log("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
+    }
+    
     // Start the inferior process.
     this.isScriptReady = false;
     AnyProcess process = AnyProcess.newBuilder()
         .command("server/bin/start-tc-server.sh", "-n", this.serverName)
         .workingDir(this.serverWorkingDirectory)
         .env("JAVA_HOME", javaHome)
+        .env("JAVA_OPTS", javaOpts)
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
         .build();

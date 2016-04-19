@@ -63,6 +63,7 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     debugOptions.setupClientDebugPort = readIntProperty("setupClientDebugPort");
     debugOptions.destroyClientDebugPort = readIntProperty("destroyClientDebugPort");
     debugOptions.testClientDebugPortStart = readIntProperty("testClientDebugPortStart");
+    debugOptions.serverDebugPortStart = readIntProperty("serverDebugPortStart");
     boolean enableVerbose = true;
     
     // We will only succeed or fail.

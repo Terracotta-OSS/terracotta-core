@@ -46,11 +46,11 @@ public class StripeInstaller {
     this.installedServers = new Vector<ServerInstallation>();
   }
   
-  public void installNewServer(String serverName) throws IOException {
+  public void installNewServer(String serverName, int debugPort) throws IOException {
     Assert.assertFalse(this.isBuilt);
     String installPath = FileHelpers.createTempCopyOfDirectory(this.fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
     FileHelpers.copyJarsToServer(this.fileHelperLogger, installPath, this.extraJarPaths);
-    ServerInstallation installation = new ServerInstallation(this.stripeLogger, serverName, new File(installPath));
+    ServerInstallation installation = new ServerInstallation(this.stripeLogger, serverName, new File(installPath), debugPort);
     installation.openStandardLogFiles();
     this.installedServers.add(installation);
   }

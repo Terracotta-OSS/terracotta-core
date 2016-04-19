@@ -45,6 +45,7 @@ public class CommandLineSupport {
     debugOptions.setupClientDebugPort = getIntArg(args, "--debugClientSetup");
     debugOptions.destroyClientDebugPort = getIntArg(args, "--debugClientDestroy");
     debugOptions.testClientDebugPortStart = getIntArg(args, "--debugClientsStart");
+    debugOptions.serverDebugPortStart = getIntArg(args, "--debugServersStart");
     return debugOptions;
   }
 
@@ -61,6 +62,7 @@ public class CommandLineSupport {
         + " [--debugClientSetup <port>]"
         + " [--debugClientDestroy <port>]"
         + " [--debugClientsStart <starting port>]"
+        + " [--debugServersStart <starting port>]"
         + " [--verbose]";
   }
 

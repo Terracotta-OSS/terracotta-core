@@ -26,7 +26,7 @@ import org.terracotta.testing.logging.ContextualLogger;
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
-  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, ContextualLogger stripeLogger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
+  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, ContextualLogger stripeLogger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
     ContextualLogger configLogger = new ContextualLogger(stripeLogger, "[ConfigBuilder] ");
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -41,8 +41,12 @@ public class ReadyStripe {
     // Configure and install each server in the stripe.
     for (int i = 0; i < serversToCreate; ++i) {
       String serverName = "testServer" + (i + serverStartNumber);
+      // Determine if we want a debug port.
+      int debugPort = (serverDebugPortStart > 0)
+          ? (serverDebugPortStart + i)
+          : 0;
       configBuilder.addServer(serverName);
-      installer.installNewServer(serverName);
+      installer.installNewServer(serverName, debugPort);
     }
     // The config is built and stripe has been installed so write the config to the stripe.
     installer.installConfig(configBuilder.buildConfig());
