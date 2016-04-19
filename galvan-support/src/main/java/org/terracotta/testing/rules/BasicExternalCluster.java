@@ -82,12 +82,16 @@ public class BasicExternalCluster extends Cluster {
     testParentDirectory.mkdir();
     List<String> serverJarPaths = convertToStringPaths(serverJars);
     int serverPort = new PortChooser().chooseRandomPort();
+    String debugPortString = System.getProperty("serverDebugStartPort");
+    int serverDebugStartPort = (null != debugPortString)
+        ? Integer.parseInt(debugPortString)
+        : 0;
 
     stateManager = new TestStateManager();
     cluster = ReadyStripe.configureAndStartStripe(stateManager, stripeLogger, fileLogger,
             serverInstallDirectory.getAbsolutePath(),
             testParentDirectory.getAbsolutePath(),
-            stripeSize, serverPort, 0, false,
+            stripeSize, serverPort, serverDebugStartPort, 0, false,
             serverJarPaths, namespaceFragment, serviceFragment);
 
     stateManager.addComponentToShutDown(new IComponentManager() {
