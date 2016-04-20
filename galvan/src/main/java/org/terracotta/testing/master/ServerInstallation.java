@@ -31,15 +31,17 @@ public class ServerInstallation {
   private final ILogger stripeLogger;
   private final String serverName;
   private final File serverWorkingDirectory;
+  private final int debugPort;
   private FileOutputStream stdoutLog;
   private FileOutputStream stderrLog;
   private boolean configWritten;
   private ServerProcess outstandingProcess;
 
-  public ServerInstallation(ILogger stripeLogger, String serverName, File serverWorkingDirectory) {
+  public ServerInstallation(ILogger stripeLogger, String serverName, File serverWorkingDirectory, int debugPort) {
     this.stripeLogger = stripeLogger;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
+    this.debugPort = debugPort;
   }
 
   public void overwriteConfig(String config) throws IOException {
@@ -73,6 +75,8 @@ public class ServerInstallation {
   }
 
   /**
+   * @param stateManager The state manager the inferior process can use to interact with the harness
+   * 
    * @return A new ServerProcess which has not yet been started.
    */
   public ServerProcess createNewProcess(ITestStateManager stateManager) {
@@ -84,7 +88,7 @@ public class ServerInstallation {
     Assert.assertNull(this.outstandingProcess);
     
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(this.stripeLogger, stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog);
+    ServerProcess process = new ServerProcess(this.stripeLogger, stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog, this.debugPort);
     this.outstandingProcess = process;
     return process;
   }

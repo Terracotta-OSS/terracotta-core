@@ -33,7 +33,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
     String stripeName = "stripe" + 0;
-    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, logger, fileHelperLogger, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, stripeName);
+    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, logger, fileHelperLogger, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, stripeName);
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;

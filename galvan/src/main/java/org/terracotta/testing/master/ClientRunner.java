@@ -193,6 +193,8 @@ public class ClientRunner extends Thread {
       String serverLine = "-Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
       processBuilder.command("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
       this.logger.log("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      // Specifically point out that we are starting with debug.
+      this.logger.log("NOTE:  Starting client with debug port: " + this.debugPort);
     } else {
       // No debug.
       processBuilder.command("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
