@@ -51,9 +51,9 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     verboseManager.setVerboseLogger(logger);
     // Create a logger to describe the test configuration.
     ContextualLogger configurationLogger = new ContextualLogger(logger, "[Configuration] ");
-    configurationLogger.log("Client class path: " + environmentOptions.clientClassPath);
-    configurationLogger.log("Kit installation directory: " + environmentOptions.serverInstallDirectory);
-    configurationLogger.log("Test parent directory: " + environmentOptions.testParentDirectory);
+    configurationLogger.output("Client class path: " + environmentOptions.clientClassPath);
+    configurationLogger.output("Kit installation directory: " + environmentOptions.serverInstallDirectory);
+    configurationLogger.output("Test parent directory: " + environmentOptions.testParentDirectory);
     
     // Create a copy of the server installation.
     ContextualLogger fileHelperLogger = new ContextualLogger(logger, "[FileHelpers] ");

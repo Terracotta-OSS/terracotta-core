@@ -26,12 +26,12 @@ public class ContextualLogger implements ILogger {
   }
 
   @Override
-  public void log(String message) {
-    this.output.log(this.prefix + message);
+  public void output(String message) {
+    this.output.output(this.prefix + message);
   }
 
   @Override
-  public void fatal(String message) {
-    this.output.fatal(this.prefix + message);
+  public void error(String message) {
+    this.output.error(this.prefix + message);
   }
 }

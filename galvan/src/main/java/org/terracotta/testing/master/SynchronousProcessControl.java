@@ -40,14 +40,14 @@ public class SynchronousProcessControl implements IMultiProcessControl {
 
   @Override
   public synchronized void synchronizeClient() {
-    this.logger.log(">>> synchronizeClient");
+    this.logger.output(">>> synchronizeClient");
     // Do nothing - this is just for demonstration purposes.
-    this.logger.log("<<< synchronizeClient");
+    this.logger.output("<<< synchronizeClient");
   }
 
   @Override
   public synchronized void restartActive() {
-    this.logger.log(">>> restartActive");
+    this.logger.output(">>> restartActive");
     // First, make sure that there is an active.
     internalWaitForActive();
     // We MUST now have an active.
@@ -59,7 +59,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     // Stop it.
     try {
       int ret = victim.stop();
-      this.logger.log("Stopped server, for restart, returning: " + ret);
+      this.logger.output("Stopped server, for restart, returning: " + ret);
     } catch (InterruptedException e) {
       // We can't leave a consistent state if interrupted at this point.
       Assert.unexpected(e);
@@ -72,17 +72,17 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     
     // Start it.
     long pid = freshProcess.start();
-    this.logger.log("Server restarted with PID: " + pid);
+    this.logger.output("Server restarted with PID: " + pid);
     // Enqueue it onto the unknown list.
     this.unknownServers.add(freshProcess);
     
     // At this point, we don't know the active server.
-    this.logger.log("<<< restartActive");
+    this.logger.output("<<< restartActive");
   }
 
   @Override
   public synchronized void shutDown() {
-    this.logger.log(">>> shutDown");
+    this.logger.output(">>> shutDown");
     // We don't care about any server states here.  Just walk all of them and stop everyone.
     
     // First the active.
@@ -103,36 +103,36 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     }
     this.unknownServers.clear();
     
-    this.logger.log("<<< shutDown");
+    this.logger.output("<<< shutDown");
   }
 
   @Override
   public synchronized void waitForActive() {
-    this.logger.log(">>> waitForActive");
+    this.logger.output(">>> waitForActive");
     internalWaitForActive();
     Assert.assertTrue(null != this.activeServer);
-    this.logger.log("<<< waitForActive");
+    this.logger.output("<<< waitForActive");
   }
 
   @Override
   public synchronized void waitForPassive() {
-    this.logger.log(">>> waitForPassive");
+    this.logger.output(">>> waitForPassive");
     // We wait for passives by making sure that nothing is left in the unknown list.
     waitForAllUnknowns();
-    this.logger.log("<<< waitForPassive");
+    this.logger.output("<<< waitForPassive");
   }
 
   public void addServerAndStart(ServerInstallation installation) {
-    this.logger.log(">>> addServerAndStart");
+    this.logger.output(">>> addServerAndStart");
     // We don't want to track the actual installations, as we only need to know about them restarting a server, so just
     // create the processes.
     ServerProcess process = installation.createNewProcess(this.stateManager);
     // We also want to start it.
     long pid = process.start();
-    this.logger.log("Server up with PID: " + pid);
+    this.logger.output("Server up with PID: " + pid);
     // Now, add it to the unknown list.
     this.unknownServers.add(process);
-    this.logger.log("<<< addServerAndStart");
+    this.logger.output("<<< addServerAndStart");
   }
 
 
@@ -140,7 +140,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     // Stop the server.
     try {
       int ret = server.stop();
-      this.logger.log("Stopped " + serverType + " server, for shutdown, returning: " + ret);
+      this.logger.output("Stopped " + serverType + " server, for shutdown, returning: " + ret);
     } catch (InterruptedException e) {
       // TODO:  Determine if we want to handle interruption in this harness.
       Assert.unexpected(e);

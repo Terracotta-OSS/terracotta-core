@@ -26,12 +26,12 @@ public interface ILogger {
    * 
    * @param message A human-readable message.
    */
-  public void log(String message);
+  public void output(String message);
 
   /**
    * Logs a message which is considered fatal/important.
    * 
    * @param message A human-readable message.
    */
-  public void fatal(String message);
+  public void error(String message);
 }

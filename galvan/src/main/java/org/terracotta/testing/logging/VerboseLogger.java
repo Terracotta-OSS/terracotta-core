@@ -33,14 +33,14 @@ public class VerboseLogger implements ILogger {
   }
 
   @Override
-  public void log(String message) {
+  public void output(String message) {
     if (null != this.output) {
       this.output.println(message);
     }
   }
 
   @Override
-  public void fatal(String message) {
+  public void error(String message) {
     if (null != this.fatal) {
       this.fatal.println(message);
     }

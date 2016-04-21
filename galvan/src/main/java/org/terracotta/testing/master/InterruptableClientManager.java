@@ -114,7 +114,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         Assert.unexpected(e);
       }
       if (!didRunCleanly) {
-        logger.fatal("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
+        logger.error("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
       }
       
       // Run the destroy client, synchronously.
@@ -135,10 +135,10 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       }
       destroyWasClean = (0 == destroyExitValue);
       if (!destroyWasClean) {
-        this.logger.fatal("ERROR encountered in destroy.  This is a failure");
+        this.logger.error("ERROR encountered in destroy.  This is a failure");
       }
     } else {
-      this.logger.fatal("FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!");
+      this.logger.error("FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!");
     }
     if (setupWasClean && didRunCleanly && destroyWasClean) {
       this.stateManager.testDidPass();

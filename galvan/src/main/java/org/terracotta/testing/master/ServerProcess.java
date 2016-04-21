@@ -104,7 +104,7 @@ public class ServerProcess {
       // This better exist.
       Assert.assertNotNull(javaHome);
       // Log that we did this.
-      this.stripeLogger.log("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
+      this.stripeLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
     }
     
     // Put together any additional options we wanted to pass to the VM under the start script.
@@ -117,7 +117,7 @@ public class ServerProcess {
       // Set up the client to block while waiting for connection.
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
       // Log that debug is enabled.
-      this.stripeLogger.log("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
+      this.stripeLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
     }
     
     // Start the inferior process.

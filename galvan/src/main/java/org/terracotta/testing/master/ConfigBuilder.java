@@ -43,7 +43,7 @@ public class ConfigBuilder {
   public ConfigBuilder addServer(String serverName) {
     Assert.assertFalse(this.serverNames.contains(serverName));
     this.serverNames.add(serverName);
-    this.logger.log("Added " + serverName);
+    this.logger.output("Added " + serverName);
     return this;
   }
 
@@ -59,7 +59,7 @@ public class ConfigBuilder {
 
   public ConfigBuilder setRestartable() {
     this.isRestartable = true;
-    this.logger.log("Config set restartable");
+    this.logger.output("Config set restartable");
     return this;
   }
 
@@ -110,7 +110,7 @@ public class ConfigBuilder {
       connectUri += "localhost:" + port;
       needsComma = true;
     }
-    this.logger.log("Stripe URI: " + connectUri);
+    this.logger.output("Stripe URI: " + connectUri);
     return connectUri;
   }
 }

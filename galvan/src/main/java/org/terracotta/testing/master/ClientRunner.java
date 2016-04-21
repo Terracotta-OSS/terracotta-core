@@ -118,7 +118,7 @@ public class ClientRunner extends Thread {
       }
     }
     // Report our PID.
-    this.logger.log("PID: " + pid);
+    this.logger.output("PID: " + pid);
     return pid;
   }
 
@@ -135,9 +135,9 @@ public class ClientRunner extends Thread {
       result = this.result;
     }
     if (0 == result) {
-      this.logger.log("Return value (normal): " + result);
+      this.logger.output("Return value (normal): " + result);
     } else {
-      this.logger.fatal("Return value (ERROR): " + result);
+      this.logger.error("Return value (ERROR): " + result);
     }
     return result;
   }
@@ -192,13 +192,13 @@ public class ClientRunner extends Thread {
       // Enable debug.
       String serverLine = "-Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
       processBuilder.command("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
-      this.logger.log("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      this.logger.output("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
       // Specifically point out that we are starting with debug.
-      this.logger.log("NOTE:  Starting client with debug port: " + this.debugPort);
+      this.logger.output("NOTE:  Starting client with debug port: " + this.debugPort);
     } else {
       // No debug.
       processBuilder.command("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
-      this.logger.log("Starting: " + condenseCommandLine("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      this.logger.output("Starting: " + condenseCommandLine("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
     }
     this.process = processBuilder
         .workingDir(this.clientWorkingDirectory)
@@ -206,7 +206,7 @@ public class ClientRunner extends Thread {
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
         .build();
-    this.logger.log("Client running");
+    this.logger.output("Client running");
     return this.process.getPid();
   }
 
