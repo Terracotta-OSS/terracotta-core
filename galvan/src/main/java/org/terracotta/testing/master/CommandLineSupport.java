@@ -51,7 +51,11 @@ public class CommandLineSupport {
   }
 
   public static VerboseManager parseVerbose(String[] args) {
-    return new VerboseManager(isArgSet(args, "--verbose"));
+    boolean shouldLogHarness = isArgSet(args, "--harnessVerbose");
+    boolean shouldLogFileHelpers = isArgSet(args, "--fileHelpersVerbose");
+    boolean shouldLogClients = isArgSet(args, "--clientVerbose");
+    boolean shouldLogServers = isArgSet(args, "--serverVerbose");
+    return new VerboseManager(shouldLogHarness || shouldLogFileHelpers || shouldLogClients || shouldLogServers);
   }
 
   public static String getUsageString() {
@@ -64,7 +68,11 @@ public class CommandLineSupport {
         + " [--debugClientDestroy <port>]"
         + " [--debugClientsStart <starting port>]"
         + " [--debugServersStart <starting port>]"
-        + " [--verbose]";
+        + " [--harnessVerbose]"
+        + " [--fileHelpersVerbose]"
+        + " [--clientVerbose]"
+        + " [--serverVerbose]"
+        ;
   }
 
   public static String getArg(String[] args, String argName) {
