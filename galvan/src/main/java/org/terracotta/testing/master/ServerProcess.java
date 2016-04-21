@@ -16,7 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,14 +39,14 @@ public class ServerProcess {
   private final ServerInstallation underlyingInstallation;
   private final String serverName;
   private final File serverWorkingDirectory;
-  private final FileOutputStream stdoutLog;
-  private final FileOutputStream stderrLog;
+  private final OutputStream stdoutLog;
+  private final OutputStream stderrLog;
   private ServerState state;
   private boolean isScriptReady;
   private final ExitWaiter exitWaiter;
   private final int debugPort;
 
-  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog, int debugPort) {
+  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
     this.stripeLogger = stripeLogger;
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
