@@ -69,6 +69,12 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     
     // Run the setup client, synchronously.
     ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort);
+    try {
+      setupClient.openStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this here.
+      Assert.unexpected(e);
+    }
     int setupExitValue = -1;
     try {
       setupExitValue = runClientSynchronous(setupClient);
@@ -83,6 +89,12 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       // We don't expect this here.
       Assert.unexpected(e);
     }
+    try {
+      setupClient.closeStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this here.
+      Assert.unexpected(e);
+    }
     
     boolean setupWasClean = (0 == setupExitValue);
     boolean didRunCleanly = true;
@@ -92,12 +104,24 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       try {
         // Start them.
         for (ClientRunner oneClient : concurrentTests) {
+          try {
+            oneClient.openStandardLogFiles();
+          } catch (IOException e) {
+            // We don't expect this here.
+            Assert.unexpected(e);
+          }
           oneClient.start();
           oneClient.waitForPid();
         }
         // Now, wait for them to finish.
         for (ClientRunner oneClient : concurrentTests) {
           int result = oneClient.waitForJoinResult();
+          try {
+            oneClient.closeStandardLogFiles();
+          } catch (IOException e) {
+            // We don't expect this here.
+            Assert.unexpected(e);
+          }
           didRunCleanly &= (0 == result);
         }
       } catch (InterruptedException e) {
@@ -119,6 +143,12 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       
       // Run the destroy client, synchronously.
       ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort);
+      try {
+        destroyClient.openStandardLogFiles();
+      } catch (IOException e) {
+        // We don't expect this here.
+        Assert.unexpected(e);
+      }
       int destroyExitValue = -1;
       try {
         destroyExitValue = runClientSynchronous(destroyClient);
@@ -129,6 +159,12 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         destroyClient.forceTerminate();
         // Mark this as a failure so we fall out.
         destroyExitValue = -1;
+      } catch (IOException e) {
+        // We don't expect this here.
+        Assert.unexpected(e);
+      }
+      try {
+        destroyClient.closeStandardLogFiles();
       } catch (IOException e) {
         // We don't expect this here.
         Assert.unexpected(e);
