@@ -27,6 +27,7 @@ import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 public class ClientRunner extends Thread {
@@ -55,8 +56,10 @@ public class ClientRunner extends Thread {
   private long pid = -1;
   private int result = -1;
 
-  public ClientRunner(ContextualLogger harnessLogger, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort) {
-    this. harnessLogger = harnessLogger;
+  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort) {
+    // We just want to create the harness logger, for now, and then discard the verbose manager.
+    this.harnessLogger = clientVerboseManager.createHarnessLogger();
+    
     this.control = control;
     this.clientWorkingDirectory = clientWorkingDirectory;
     this.clientClassPath = clientClassPath;

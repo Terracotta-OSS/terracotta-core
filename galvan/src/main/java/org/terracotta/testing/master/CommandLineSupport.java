@@ -15,10 +15,12 @@
  */
 package org.terracotta.testing.master;
 
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
+import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
 
@@ -55,7 +57,11 @@ public class CommandLineSupport {
     boolean shouldLogFileHelpers = isArgSet(args, "--fileHelpersVerbose");
     boolean shouldLogClients = isArgSet(args, "--clientVerbose");
     boolean shouldLogServers = isArgSet(args, "--serverVerbose");
-    return new VerboseManager(shouldLogHarness || shouldLogFileHelpers || shouldLogClients || shouldLogServers);
+    VerboseLogger harnessLogger = createRootLogger(shouldLogHarness);
+    VerboseLogger fileHelpersLogger = createRootLogger(shouldLogFileHelpers);
+    VerboseLogger clientLogger = createRootLogger(shouldLogClients);
+    VerboseLogger serverLogger = createRootLogger(shouldLogServers);
+    return new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
   }
 
   public static String getUsageString() {
@@ -116,5 +122,13 @@ public class CommandLineSupport {
     @SuppressWarnings("rawtypes")
     Class<ITestMaster> interfaceClass = ITestMaster.class;
     return interfaceClass.cast(instance);
+  }
+
+
+  private static VerboseLogger createRootLogger(boolean shouldLog) {
+    PrintStream output = shouldLog
+        ? System.out
+        : null;
+    return new VerboseLogger(output, System.err);
   }
 }

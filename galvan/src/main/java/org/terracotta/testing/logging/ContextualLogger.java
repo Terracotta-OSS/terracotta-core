@@ -32,8 +32,4 @@ public class ContextualLogger {
   public void error(String message) {
     this.output.error(this.prefix + " " + message);
   }
-
-  public ContextualLogger createSubLogger(String newContext) {
-    return new ContextualLogger(this.output, this.prefix + newContext);
-  }
 }

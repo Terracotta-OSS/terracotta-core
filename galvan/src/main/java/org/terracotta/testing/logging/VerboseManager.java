@@ -15,46 +15,39 @@
  */
 package org.terracotta.testing.logging;
 
-import org.terracotta.testing.common.Assert;
 
-
-/**
- * Note that this version of this class is a placeholder to simplify an API transformation.  Hence why it is little more than
- * a container for a small number of data elements of no obvious connection (as it just replaces them in some parameter
- * lists).
- * In a later change, it will expand to have a more meaningful purpose but introducing it allows a broad API change to be
- * made, in isolation.
- */
 public class VerboseManager {
-  private final boolean enableVerbose;
-  private VerboseLogger verboseLogger;
-  private ContextualLogger fileHelpersLogger;
+  private final String prefix;
+  private final VerboseLogger harnessLogger;
+  private final VerboseLogger fileHelpersLogger;
+  private final VerboseLogger clientLogger;
+  private final VerboseLogger serverLogger;
 
-  public VerboseManager(boolean enableVerbose) {
-    this.enableVerbose = enableVerbose;
-  }
-
-  public boolean isVerboseEnabled() {
-    return this.enableVerbose;
-  }
-
-  public void setVerboseLogger(VerboseLogger verboseLogger) {
-    Assert.assertNull(this.verboseLogger);
-    this.verboseLogger = verboseLogger;
-  }
-
-  public VerboseLogger getVerboseLogger() {
-    Assert.assertNotNull(this.verboseLogger);
-    return this.verboseLogger;
-  }
-
-  public void setFileHelpersLogger(ContextualLogger fileHelpersLogger) {
-    Assert.assertNull(this.fileHelpersLogger);
+  public VerboseManager(String prefix, VerboseLogger harnessLogger, VerboseLogger fileHelpersLogger, VerboseLogger clientLogger, VerboseLogger serverLogger) {
+    this.prefix = prefix;
+    this.harnessLogger = harnessLogger;
     this.fileHelpersLogger = fileHelpersLogger;
+    this.clientLogger = clientLogger;
+    this.serverLogger = serverLogger;
   }
 
-  public ContextualLogger getFileHelpersLogger() {
-    Assert.assertNotNull(this.fileHelpersLogger);
-    return this.fileHelpersLogger;
+  public VerboseManager createComponentManager(String componentName) {
+    return new VerboseManager(this.prefix + componentName, this.harnessLogger, this.fileHelpersLogger, this.clientLogger, this.serverLogger);
+  }
+
+  public ContextualLogger createHarnessLogger() {
+    return new ContextualLogger(this.harnessLogger, this.prefix);
+  }
+
+  public ContextualLogger createFileHelpersLogger() {
+    return new ContextualLogger(this.fileHelpersLogger, this.prefix);
+  }
+
+  public ContextualLogger createClientLogger() {
+    return new ContextualLogger(this.clientLogger, this.prefix);
+  }
+
+  public ContextualLogger createServerLogger() {
+    return new ContextualLogger(this.serverLogger, this.prefix);
   }
 }

@@ -17,8 +17,8 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
-import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseLogger;
+import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.IComponentManager;
 import org.terracotta.testing.master.ReadyStripe;
 import org.terracotta.testing.master.TestStateManager;
@@ -74,8 +74,13 @@ public class BasicExternalCluster extends Cluster {
 
   @Override
   protected void before() throws Throwable {
-    ContextualLogger stripeLogger = new ContextualLogger(new VerboseLogger(System.out, null), "[" + displayName + "]");
-    ContextualLogger fileLogger = new ContextualLogger(new VerboseLogger(null, null), "[" + displayName + "]");
+    VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
+    VerboseLogger fileHelpersLogger = new VerboseLogger(null, null);
+    VerboseLogger clientLogger = null;
+    VerboseLogger serverLogger = new VerboseLogger(System.out, System.err);
+    VerboseManager verboseManager = new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
+    VerboseManager displayVerboseManager = verboseManager.createComponentManager("[" + displayName + "]");
+    
     File serverInstallDirectory = new File(System.getProperty("kitInstallationPath"));
     File testParentDirectory = File.createTempFile(displayName, "", clusterDirectory);
     testParentDirectory.delete();
@@ -88,7 +93,7 @@ public class BasicExternalCluster extends Cluster {
         : 0;
 
     stateManager = new TestStateManager();
-    cluster = ReadyStripe.configureAndStartStripe(stateManager, stripeLogger, fileLogger,
+    cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
             serverInstallDirectory.getAbsolutePath(),
             testParentDirectory.getAbsolutePath(),
             stripeSize, serverPort, serverDebugStartPort, 0, false,

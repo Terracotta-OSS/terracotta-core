@@ -27,6 +27,7 @@ import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
 import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 public class ServerProcess {
@@ -46,8 +47,10 @@ public class ServerProcess {
   private final ExitWaiter exitWaiter;
   private final int debugPort;
 
-  public ServerProcess(ContextualLogger harnessLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
-    this. harnessLogger = harnessLogger;
+  public ServerProcess(VerboseManager serverVerboseManager, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
+    // We just want to create the harness logger, for now, but then discard the verbose manager.
+    this.harnessLogger = serverVerboseManager.createHarnessLogger();
+    
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;

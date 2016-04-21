@@ -25,6 +25,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.DebugOptions;
 import org.terracotta.testing.master.EnvironmentOptions;
@@ -65,10 +66,15 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     debugOptions.destroyClientDebugPort = readIntProperty("destroyClientDebugPort");
     debugOptions.testClientDebugPortStart = readIntProperty("testClientDebugPortStart");
     debugOptions.serverDebugPortStart = readIntProperty("serverDebugPortStart");
-    boolean enableVerbose = true;
     
     // Configure our verbose settings.
-    VerboseManager verboseManager = new VerboseManager(enableVerbose);
+    // TODO:  Provide a property, etc, to change these defaults.
+    VerboseLogger harnessLogger = new VerboseLogger(System.out, System.err);
+    // By default, we don't log the file helpers since they are too verbose.
+    VerboseLogger fileHelpersLogger = new VerboseLogger(null, System.err);
+    VerboseLogger clientLogger = new VerboseLogger(System.out, System.err);
+    VerboseLogger serverLogger = new VerboseLogger(System.out, System.err);
+    VerboseManager verboseManager = new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
     
     // We will only succeed or fail.
     Throwable error = null;

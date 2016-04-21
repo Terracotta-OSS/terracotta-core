@@ -23,7 +23,6 @@ import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
 
@@ -47,17 +46,14 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
     
-    VerboseLogger logger = new VerboseLogger(verboseManager.isVerboseEnabled() ? System.out : null, System.err);
-    verboseManager.setVerboseLogger(logger);
     // Create a logger to describe the test configuration.
-    ContextualLogger configurationLogger = new ContextualLogger(logger, "[Configuration] ");
+    ContextualLogger configurationLogger = verboseManager.createComponentManager("[Configuration]").createHarnessLogger();
     configurationLogger.output("Client class path: " + environmentOptions.clientClassPath);
     configurationLogger.output("Kit installation directory: " + environmentOptions.serverInstallDirectory);
     configurationLogger.output("Test parent directory: " + environmentOptions.testParentDirectory);
     
     // Create a copy of the server installation.
-    ContextualLogger fileHelperLogger = new ContextualLogger(logger, "[FileHelpers] ");
-    verboseManager.setFileHelpersLogger(fileHelperLogger);
+    ContextualLogger fileHelperLogger = verboseManager.createFileHelpersLogger();
     FileHelpers.cleanDirectory(fileHelperLogger, environmentOptions.testParentDirectory);
     // Put together the config for the stripe.
     String testClassName = master.getTestClassName();

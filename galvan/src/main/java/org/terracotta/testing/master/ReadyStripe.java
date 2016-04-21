@@ -20,14 +20,15 @@ import java.io.IOException;
 import java.util.List;
 
 import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
-  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, ContextualLogger stripeLogger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
-    ContextualLogger configLogger = stripeLogger.createSubLogger("[ConfigBuilder] ");
+  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
+    ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
     // Set fixed config details.
@@ -37,7 +38,7 @@ public class ReadyStripe {
       configBuilder.setRestartable();
     }
     // Create the stripe installer.
-    StripeInstaller installer = new StripeInstaller(stripeLogger, fileHelperLogger, testParentDirectory, serverInstallDirectory, extraJarPaths);
+    StripeInstaller installer = new StripeInstaller(stripeVerboseManager, testParentDirectory, serverInstallDirectory, extraJarPaths);
     // Configure and install each server in the stripe.
     for (int i = 0; i < serversToCreate; ++i) {
       String serverName = "testServer" + (i + serverStartNumber);
@@ -52,7 +53,7 @@ public class ReadyStripe {
     installer.installConfig(configBuilder.buildConfig());
     
     // Create the process control object.
-    ContextualLogger processControlLogger = stripeLogger.createSubLogger("[ProcessControl] ");
+    ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
     SynchronousProcessControl processControl = new SynchronousProcessControl(stateManager, processControlLogger);
     // Register the stripe into it and start up the server in the stripe.
     installer.startServers(processControl);
