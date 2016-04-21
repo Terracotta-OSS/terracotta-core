@@ -15,14 +15,11 @@
  */
 package org.terracotta.testing.client;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.passthrough.ICommonTest;
 import org.terracotta.testing.common.Assert;
 
@@ -33,8 +30,13 @@ public class TestClientStub {
    * [0] - "SETUP", "TEST", or "DESTROY"
    * [1] - full name of test class
    * [2] - connect URI
+   * 
+   * @throws Throwable We allow the test to fail at any point and return a non-zero exit code
    */
-  public static void main(String[] args) throws InterruptedException, ConnectionException, URISyntaxException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException {
+  public static void main(String[] args) throws Throwable {
+    // Before anything, set the default exception handler.
+    Thread.setDefaultUncaughtExceptionHandler(new ClientExceptionHandler());
+    
     // Load the class.
     String task = args[0];
     boolean isSetup = task.equals("SETUP");
@@ -60,12 +62,7 @@ public class TestClientStub {
       test.runSetup(connection);
     }
     if (isTest) {
-      try {
-        test.runTest(clusterControl, connection);
-      } catch (Throwable e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+      test.runTest(clusterControl, connection);
     }
     if (isDestroy) {
       test.runDestroy(connection);
@@ -76,5 +73,16 @@ public class TestClientStub {
     // Note that this explicit exit seems to be required when attached to an active-active cluster.
     // TODO:  Determine why that is so we can remove this (it probably indicates that a non-daemon thread is still running).
     System.exit(0);
+  }
+
+
+  private static class ClientExceptionHandler implements UncaughtExceptionHandler {
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      // Log the error.
+      e.printStackTrace();
+      // We will return non-zero (99 will do) to flag the error.
+      System.exit(99);
+    }
   }
 }
