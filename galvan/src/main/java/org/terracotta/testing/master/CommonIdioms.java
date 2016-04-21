@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Vector;
 
 import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
@@ -29,18 +29,18 @@ import org.terracotta.testing.logging.VerboseLogger;
  * It exists purely to avoid duplication.
  */
 public class CommonIdioms {
-  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String stripeName) throws IOException, FileNotFoundException {
-    ContextualLogger stripeLogger = new ContextualLogger(logger, "[" + stripeName + "]");
+  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseManager verboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String stripeName) throws IOException, FileNotFoundException {
+    ContextualLogger stripeLogger = new ContextualLogger(verboseManager.getVerboseLogger(), "[" + stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(testParentDirectory, stripeName);
-    return ReadyStripe.configureAndStartStripe(stateManager, stripeLogger, fileHelperLogger, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverDebugPortStart, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment);
+    return ReadyStripe.configureAndStartStripe(stateManager, stripeLogger, verboseManager.getFileHelpersLogger(), serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverDebugPortStart, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment);
   }
 
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
-  public static void installAndRunClients(ITestStateManager stateManager, VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
-    InterruptableClientManager manager = new InterruptableClientManager(stateManager, logger, testParentDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
+  public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
+    InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager.getVerboseLogger(), testParentDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
     stateManager.addComponentToShutDown(manager);
     manager.start();
   }

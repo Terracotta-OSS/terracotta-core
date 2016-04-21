@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
@@ -49,8 +50,8 @@ public class CommandLineSupport {
     return debugOptions;
   }
 
-  public static boolean parseVerbose(String[] args) {
-    return isArgSet(args, "--verbose");
+  public static VerboseManager parseVerbose(String[] args) {
+    return new VerboseManager(isArgSet(args, "--verbose"));
   }
 
   public static String getUsageString() {

@@ -25,6 +25,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.DebugOptions;
 import org.terracotta.testing.master.EnvironmentOptions;
 
@@ -66,10 +67,13 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     debugOptions.serverDebugPortStart = readIntProperty("serverDebugPortStart");
     boolean enableVerbose = true;
     
+    // Configure our verbose settings.
+    VerboseManager verboseManager = new VerboseManager(enableVerbose);
+    
     // We will only succeed or fail.
     Throwable error = null;
     try {
-      boolean wasCompleteSuccess = runTest(environmentOptions, masterClass, debugOptions, enableVerbose);
+      boolean wasCompleteSuccess = runTest(environmentOptions, masterClass, debugOptions, verboseManager);
       if (wasCompleteSuccess) {
         error = null;
       } else {
@@ -106,5 +110,5 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     return result;
   }
 
-  protected abstract boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, boolean enableVerbose) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException;
 }

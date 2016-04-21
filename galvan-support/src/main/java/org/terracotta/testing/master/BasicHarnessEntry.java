@@ -21,19 +21,18 @@ import java.util.List;
 
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
-  protected void runOneConfiguration(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
+  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
     String stripeName = "stripe" + 0;
-    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, logger, fileHelperLogger, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, stripeName);
+    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, stripeName);
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;
@@ -48,6 +47,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       }});
     
     // The cluster is now running so install and run the clients.
-    CommonIdioms.installAndRunClients(stateManager, logger, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
+    CommonIdioms.installAndRunClients(stateManager, verboseManager, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
   }
 }

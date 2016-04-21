@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 public class BasicHarnessMain {
@@ -30,7 +31,7 @@ public class BasicHarnessMain {
     if (environmentOptions.isValid() && (null != parsedMasterClass)) {
       // Determine if any debug options were given (these are all optional).
       DebugOptions debugOptions = CommandLineSupport.parseDebugOptions(args);
-      boolean enableVerbose = CommandLineSupport.parseVerbose(args);
+      VerboseManager verboseManager = CommandLineSupport.parseVerbose(args);
       // Get the master given by the user.
       ITestMaster<BasicTestClusterConfiguration> master = null;
       try {
@@ -41,7 +42,7 @@ public class BasicHarnessMain {
         System.exit(1);
       }
       BasicHarnessEntry harness = new BasicHarnessEntry();
-      boolean wasCompleteSuccess = harness.runTestHarness(environmentOptions, master, debugOptions, enableVerbose);
+      boolean wasCompleteSuccess = harness.runTestHarness(environmentOptions, master, debugOptions, verboseManager);
       if (wasCompleteSuccess) {
         System.out.println("TEST RUN SUCCESSFUL!");
       } else {
