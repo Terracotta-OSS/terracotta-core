@@ -20,12 +20,12 @@ import java.util.List;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
 
 
 public class SynchronousProcessControl implements IMultiProcessControl {
   private final ITestStateManager stateManager;
-  private final ILogger logger;
+  private final ContextualLogger logger;
   // Note that the active may be null if we haven't yet observed a server enter the active state.
   private ServerProcess activeServer;
   // These servers have at least once entered the passive state.  It is possible that an active may be in this list if we haven't yet tried to find the active after a restart.
@@ -33,7 +33,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   // These servers have recently been restarted so we don't yet know their states.
   private final List<ServerProcess> unknownServers = new Vector<ServerProcess>();
   
-  public SynchronousProcessControl(ITestStateManager stateManager, ILogger logger) {
+  public SynchronousProcessControl(ITestStateManager stateManager, ContextualLogger logger) {
     this.stateManager = stateManager;
     this.logger = logger;
   }

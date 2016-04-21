@@ -23,26 +23,24 @@ import java.io.PrintStream;
  * If the instance is initialized with a null output PrintStream, it will assume that it is to run in "silent" mode and will
  * log nothing to output.
  */
-public class VerboseLogger implements ILogger {
+public class VerboseLogger {
   private final PrintStream output;
-  private final PrintStream fatal;
+  private final PrintStream error;
   
-  public VerboseLogger(PrintStream output, PrintStream fatal) {
+  public VerboseLogger(PrintStream output, PrintStream error) {
     this.output = output;
-    this.fatal = fatal;
+    this.error = error;
   }
 
-  @Override
   public void output(String message) {
     if (null != this.output) {
       this.output.println(message);
     }
   }
 
-  @Override
   public void error(String message) {
-    if (null != this.fatal) {
-      this.fatal.println(message);
+    if (null != this.error) {
+      this.error.println(message);
     }
   }
 }

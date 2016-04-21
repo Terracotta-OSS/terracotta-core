@@ -21,22 +21,22 @@ import java.util.List;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging. ContextualLogger;
 
 
 /**
  * Handles the description, installation, and start-up of a stripe of servers in a cluster.
  */
 public class StripeInstaller {
-  private final ILogger stripeLogger;
-  private final ILogger fileHelperLogger;
+  private final ContextualLogger stripeLogger;
+  private final ContextualLogger fileHelperLogger;
   private final String stripeInstallDirectory;
   private final String kitOriginDirectory;
   private final List<String> extraJarPaths;
   private final List<ServerInstallation> installedServers;
   private boolean isBuilt;
   
-  public StripeInstaller(ILogger stripeLogger, ILogger fileHelperLogger, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
+  public StripeInstaller(ContextualLogger stripeLogger, ContextualLogger fileHelperLogger, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
     this.stripeLogger = stripeLogger;
     this.fileHelperLogger = fileHelperLogger;
     this.stripeInstallDirectory = stripeInstallDirectory;

@@ -21,14 +21,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging. ContextualLogger;
 
 
 /**
  * The physical representation of a server installation, on disk.  Server processes can be started from the installation.
  */
 public class ServerInstallation {
-  private final ILogger stripeLogger;
+  private final ContextualLogger stripeLogger;
   private final String serverName;
   private final File serverWorkingDirectory;
   private final int debugPort;
@@ -37,7 +37,7 @@ public class ServerInstallation {
   private boolean configWritten;
   private ServerProcess outstandingProcess;
 
-  public ServerInstallation(ILogger stripeLogger, String serverName, File serverWorkingDirectory, int debugPort) {
+  public ServerInstallation(ContextualLogger stripeLogger, String serverName, File serverWorkingDirectory, int debugPort) {
     this.stripeLogger = stripeLogger;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;

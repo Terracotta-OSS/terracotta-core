@@ -16,22 +16,24 @@
 package org.terracotta.testing.logging;
 
 
-public class ContextualLogger implements ILogger {
-  private final ILogger output;
+public class ContextualLogger {
+  private final VerboseLogger output;
   private final String prefix;
   
-  public ContextualLogger(ILogger output, String prefix) {
+  public ContextualLogger(VerboseLogger output, String prefix) {
     this.output = output;
     this.prefix = prefix;
   }
 
-  @Override
   public void output(String message) {
-    this.output.output(this.prefix + message);
+    this.output.output(this.prefix + " " + message);
   }
 
-  @Override
   public void error(String message) {
-    this.output.error(this.prefix + message);
+    this.output.error(this.prefix + " " + message);
+  }
+
+  public ContextualLogger createSubLogger(String newContext) {
+    return new ContextualLogger(this.output, this.prefix + newContext);
   }
 }

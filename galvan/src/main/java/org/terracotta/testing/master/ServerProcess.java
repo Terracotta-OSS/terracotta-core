@@ -26,7 +26,7 @@ import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
 
 
 public class ServerProcess {
@@ -35,7 +35,7 @@ public class ServerProcess {
     ACTIVE,
     PASSIVE,
   };
-  private final ILogger stripeLogger;
+  private final ContextualLogger harnessLogger;
   private final ServerInstallation underlyingInstallation;
   private final String serverName;
   private final File serverWorkingDirectory;
@@ -46,8 +46,8 @@ public class ServerProcess {
   private final ExitWaiter exitWaiter;
   private final int debugPort;
 
-  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
-    this.stripeLogger = stripeLogger;
+  public ServerProcess(ContextualLogger harnessLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
+    this. harnessLogger = harnessLogger;
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
@@ -104,7 +104,7 @@ public class ServerProcess {
       // This better exist.
       Assert.assertNotNull(javaHome);
       // Log that we did this.
-      this.stripeLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
+      this.harnessLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
     }
     
     // Put together any additional options we wanted to pass to the VM under the start script.
@@ -117,7 +117,7 @@ public class ServerProcess {
       // Set up the client to block while waiting for connection.
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
       // Log that debug is enabled.
-      this.stripeLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
+      this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
     }
     
     // Start the inferior process.

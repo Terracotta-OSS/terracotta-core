@@ -26,11 +26,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
 
 
 public class FileHelpers {
-  public static void cleanDirectory(final ILogger logger, String directoryToClean) throws IOException {
+  public static void cleanDirectory(final ContextualLogger logger, String directoryToClean) throws IOException {
     final Path start = FileSystems.getDefault().getPath(directoryToClean);
     // We will assume that we are intended to create the directory, if it doesn't already exist.
     if (!start.toFile().exists()) {
@@ -77,7 +77,7 @@ public class FileHelpers {
     );
   }
 
-  public static String createTempCopyOfDirectory(ILogger logger, String targetParentDirectoryString, String newDirectoryName, String sourceDirectoryString) throws IOException {
+  public static String createTempCopyOfDirectory(ContextualLogger logger, String targetParentDirectoryString, String newDirectoryName, String sourceDirectoryString) throws IOException {
     FileSystem fileSystem = FileSystems.getDefault();
     Path targetParentDirectory = fileSystem.getPath(targetParentDirectoryString);
     logger.output(" Target directory: " + targetParentDirectoryString);
@@ -107,12 +107,12 @@ public class FileHelpers {
 
 
   private static class DirectoryCopier implements FileVisitor<Path> {
-    private final ILogger logger;
+    private final ContextualLogger logger;
     private final Path targetDirectory;
     private final Path sourceDirectory;
     private Path currentTargetDirectory;
     
-    public DirectoryCopier(ILogger logger, Path targetDirectory, Path sourceDirectory) {
+    public DirectoryCopier(ContextualLogger logger, Path targetDirectory, Path sourceDirectory) {
       this.logger = logger;
       this.targetDirectory = targetDirectory;
       this.sourceDirectory = sourceDirectory;
@@ -159,7 +159,7 @@ public class FileHelpers {
   }
 
 
-  public static void copyJarsToServer(ILogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
+  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
     // We know we want to copy these into plugins/lib.
     FileSystem fileSystem = FileSystems.getDefault();
     Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "plugins", "lib");
