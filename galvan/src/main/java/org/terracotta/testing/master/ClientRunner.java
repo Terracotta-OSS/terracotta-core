@@ -28,10 +28,12 @@ import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.testing.logging.VerboseOutputStream;
 
 
 public class ClientRunner extends Thread {
   private final ContextualLogger harnessLogger;
+  private final ContextualLogger clientProcessLogger;
   private final IMultiProcessControl control;
   private final File clientWorkingDirectory;
   private final String clientClassPath;
@@ -44,9 +46,8 @@ public class ClientRunner extends Thread {
   // TODO:  Manage these files at a higher-level, much like ServerProcess does, so that open/close isn't done here.
   private FileOutputStream logFileOutput;
   private FileOutputStream logFileError;
-  // We will use an output stream to prove that we are correctly life-cycling the logs.
-  private OutputStream stdoutLog;
-  private OutputStream stderrLog;
+  private VerboseOutputStream stdoutLog;
+  private VerboseOutputStream stderrLog;
   private AnyProcess process;
   
   // Data which we need to pass back to the other thread.
@@ -57,8 +58,9 @@ public class ClientRunner extends Thread {
   private int result = -1;
 
   public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort) {
-    // We just want to create the harness logger, for now, and then discard the verbose manager.
+    // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = clientVerboseManager.createHarnessLogger();
+    this.clientProcessLogger = clientVerboseManager.createClientLogger();
     
     this.control = control;
     this.clientWorkingDirectory = clientWorkingDirectory;
@@ -100,8 +102,8 @@ public class ClientRunner extends Thread {
     Assert.assertNull(this.stdoutLog);
     Assert.assertNotNull(this.logFileOutput);
     Assert.assertNotNull(this.logFileError);
-    this.stdoutLog = this.logFileOutput;
-    this.stderrLog = this.logFileError;
+    this.stdoutLog = new VerboseOutputStream(this.logFileOutput, this.clientProcessLogger, false);
+    this.stderrLog = new VerboseOutputStream(this.logFileError, this.clientProcessLogger, true);
     
     // Start the process, passing back the pid.
     long thePid = startProcess();
