@@ -60,7 +60,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private final AtomicBoolean              reconnectMode    = new AtomicBoolean(false);
   private final AtomicBoolean              handshakeMode    = new AtomicBoolean(false);
   private final AtomicBoolean              channelConnected = new AtomicBoolean(false);
-  private boolean                          isClosed         = false;
+  private volatile boolean                          isClosed         = false;
   private final boolean                    isClient;
   private final String                     debugId;
   private UUID                             sessionId        = UUID.NULL_ID;
@@ -304,13 +304,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   @Override
   public void close() {
+    isClosed = true;
     Assert.assertNotNull(sendLayer);
     if (isClient) {
       // send goobye message with session-id on it in case of client. Server never sends goodbye message.
       OOOProtocolMessage opm = messageFactory.createNewGoodbyeMessage(getSessionId());
+      debugLog("Sending GoodBye message...");
       sendMessage(opm);
     }
-    sendLayer.close();
     // Also reset delivery on close() to clear out the send queue.
     delivery.reset();
   }
@@ -343,14 +344,22 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
-    final boolean restoreConnectionMode = reconnectMode.get();
-    debugLog("Transport Disconnected - pausing delivery, reconnectMode = " + restoreConnectionMode
-             + " channelConnected " + channelConnected.get() + " forcedDisconnect " + forcedDisconnect
-             + CallStackTrace.getCallStack());
-    this.delivery.pause();
-    if (!restoreConnectionMode) {
-      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, forcedDisconnect);
-      channelConnected.set(false);
+    if (isClosed()) {
+//  closed.  disconnected by the server-side goodbye message.  close resources and go away
+      sendLayer.close();
+      receiveLayer.close();
+      delivery.pause();
+      return;
+    } else {
+      final boolean restoreConnectionMode = reconnectMode.get();
+      debugLog("Transport Disconnected - pausing delivery, reconnectMode = " + restoreConnectionMode
+               + " channelConnected " + channelConnected.get() + " forcedDisconnect " + forcedDisconnect
+               + CallStackTrace.getCallStack());
+      this.delivery.pause();
+      if (!restoreConnectionMode) {
+        if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, forcedDisconnect);
+        channelConnected.set(false);
+      }
     }
   }
 
