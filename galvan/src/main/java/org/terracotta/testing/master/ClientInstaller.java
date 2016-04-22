@@ -17,8 +17,7 @@ package org.terracotta.testing.master;
 
 import java.io.File;
 
-import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
@@ -26,7 +25,7 @@ import org.terracotta.testing.logging.ILogger;
  * This doesn't explicitly treat setup/destroy/test clients any differently, leaving that distinction up to the caller.
  */
 public class ClientInstaller {
-  private final ILogger clientLogger;
+  private final VerboseManager clientsVerboseManager;
   private final IMultiProcessControl control;
   private final String testParentDirectory;
   private final String clientAbsoluteClassPath;
@@ -34,8 +33,8 @@ public class ClientInstaller {
   private final String testClassName;
   private final String stripeUri;
   
-  public ClientInstaller(ILogger clientLogger, IMultiProcessControl control, String testParentDirectory, String clientClassPath, String clientClassName, String testClassName, String stripeUri) {
-    this.clientLogger = clientLogger;
+  public ClientInstaller(VerboseManager clientsVerboseManager, IMultiProcessControl control, String testParentDirectory, String clientClassPath, String clientClassName, String testClassName, String stripeUri) {
+    this.clientsVerboseManager = clientsVerboseManager;
     this.control = control;
     this.testParentDirectory = testParentDirectory;
     // The client class path may have path separators in it so be sure to convert anything referenced there into an absolute
@@ -48,8 +47,8 @@ public class ClientInstaller {
   
   public ClientRunner installClient(String clientName, String clientTask, int debugPort) {
     String clientWorkingDirectory = FileHelpers.createTempEmptyDirectory(this.testParentDirectory, clientName);
-    ContextualLogger oneLogger = new ContextualLogger(this.clientLogger, "[" + clientTask +"] ");
-    return new ClientRunner(oneLogger, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, this.clientClassName, clientTask, this.testClassName, this.stripeUri, debugPort);
+    VerboseManager clientVerboseManager = this.clientsVerboseManager.createComponentManager("[" + clientTask + "]");
+    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, this.clientClassName, clientTask, this.testClassName, this.stripeUri, debugPort);
   }
   
   

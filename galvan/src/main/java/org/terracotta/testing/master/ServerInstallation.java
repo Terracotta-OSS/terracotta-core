@@ -21,14 +21,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
  * The physical representation of a server installation, on disk.  Server processes can be started from the installation.
  */
 public class ServerInstallation {
-  private final ILogger stripeLogger;
+  private final VerboseManager stripeVerboseManager;
   private final String serverName;
   private final File serverWorkingDirectory;
   private final int debugPort;
@@ -37,8 +37,8 @@ public class ServerInstallation {
   private boolean configWritten;
   private ServerProcess outstandingProcess;
 
-  public ServerInstallation(ILogger stripeLogger, String serverName, File serverWorkingDirectory, int debugPort) {
-    this.stripeLogger = stripeLogger;
+  public ServerInstallation(VerboseManager stripeVerboseManager, String serverName, File serverWorkingDirectory, int debugPort) {
+    this.stripeVerboseManager = stripeVerboseManager;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
     this.debugPort = debugPort;
@@ -87,8 +87,10 @@ public class ServerInstallation {
     // Assert that there isn't already a process running in this location.
     Assert.assertNull(this.outstandingProcess);
     
+    // Create the VerboseManager for the instance.
+    VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + this.serverName + "]");
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(this.stripeLogger, stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog, this.debugPort);
+    ServerProcess process = new ServerProcess(serverVerboseManager, stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog, this.debugPort);
     this.outstandingProcess = process;
     return process;
   }

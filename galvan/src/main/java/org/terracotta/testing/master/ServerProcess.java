@@ -16,7 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +26,9 @@ import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.testing.logging.VerboseOutputStream;
 
 
 public class ServerProcess {
@@ -35,24 +37,27 @@ public class ServerProcess {
     ACTIVE,
     PASSIVE,
   };
-  private final ILogger stripeLogger;
+  private final ContextualLogger harnessLogger;
   private final ServerInstallation underlyingInstallation;
   private final String serverName;
   private final File serverWorkingDirectory;
-  private final FileOutputStream stdoutLog;
-  private final FileOutputStream stderrLog;
+  private final OutputStream stdoutLog;
+  private final OutputStream stderrLog;
   private ServerState state;
   private boolean isScriptReady;
   private final ExitWaiter exitWaiter;
   private final int debugPort;
 
-  public ServerProcess(ILogger stripeLogger, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, FileOutputStream stdoutLog, FileOutputStream stderrLog, int debugPort) {
-    this.stripeLogger = stripeLogger;
+  public ServerProcess(VerboseManager serverVerboseManager, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
+    // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
+    this.harnessLogger = serverVerboseManager.createHarnessLogger();
+    ContextualLogger serverLogger = serverVerboseManager.createServerLogger();
+    
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
-    this.stdoutLog = stdoutLog;
-    this.stderrLog = stderrLog;
+    this.stdoutLog = new VerboseOutputStream(stdoutLog, serverLogger, false);
+    this.stderrLog = new VerboseOutputStream(stderrLog, serverLogger, true);
     // Start in the unknown state and we will wait for the stream scraping to determine our actual state.
     this.state = ServerState.UNKNOWN;
     // Because a server can crash at any time, not just when we are expecting it to, we need a thread to wait on this operation and notify stateManager if the
@@ -104,7 +109,7 @@ public class ServerProcess {
       // This better exist.
       Assert.assertNotNull(javaHome);
       // Log that we did this.
-      this.stripeLogger.log("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
+      this.harnessLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
     }
     
     // Put together any additional options we wanted to pass to the VM under the start script.
@@ -117,7 +122,7 @@ public class ServerProcess {
       // Set up the client to block while waiting for connection.
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
       // Log that debug is enabled.
-      this.stripeLogger.log("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
+      this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
     }
     
     // Start the inferior process.

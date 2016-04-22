@@ -23,18 +23,18 @@ import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
   public static final int SERVER_START_PORT = 9000;
 
-  public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, boolean enableVerbose) throws IOException, FileNotFoundException, InterruptedException {
+  public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
     boolean didPass = false;
     // We wrap the actual call in a try-catch since the normal SureFire runner discards all exception data and we want to
     // see our assertion failures.
     try {
-      didPass = internalRunTestHarness(environmentOptions, master, debugOptions, enableVerbose);
+      didPass = internalRunTestHarness(environmentOptions, master, debugOptions, verboseManager);
     } catch (AssertionError e) {
       e.printStackTrace();
       throw e;
@@ -42,19 +42,18 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     return didPass;
   }
 
-  private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, boolean enableVerbose) throws IOException, FileNotFoundException, InterruptedException {
+  private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
     
-    VerboseLogger logger = new VerboseLogger(enableVerbose ? System.out : null, System.err);
     // Create a logger to describe the test configuration.
-    ContextualLogger configurationLogger = new ContextualLogger(logger, "[Configuration] ");
-    configurationLogger.log("Client class path: " + environmentOptions.clientClassPath);
-    configurationLogger.log("Kit installation directory: " + environmentOptions.serverInstallDirectory);
-    configurationLogger.log("Test parent directory: " + environmentOptions.testParentDirectory);
+    ContextualLogger configurationLogger = verboseManager.createComponentManager("[Configuration]").createHarnessLogger();
+    configurationLogger.output("Client class path: " + environmentOptions.clientClassPath);
+    configurationLogger.output("Kit installation directory: " + environmentOptions.serverInstallDirectory);
+    configurationLogger.output("Test parent directory: " + environmentOptions.testParentDirectory);
     
     // Create a copy of the server installation.
-    ContextualLogger fileHelperLogger = new ContextualLogger(logger, "[FileHelpers] ");
+    ContextualLogger fileHelperLogger = verboseManager.createFileHelpersLogger();
     FileHelpers.cleanDirectory(fileHelperLogger, environmentOptions.testParentDirectory);
     // Put together the config for the stripe.
     String testClassName = master.getTestClassName();
@@ -72,7 +71,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
       String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
-      runOneConfiguration(stateManager, logger, fileHelperLogger, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, runConfiguration);
+      runOneConfiguration(stateManager, verboseManager, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, runConfiguration);
       boolean runWasSuccess = stateManager.waitForFinish();
       if (!runWasSuccess) {
         wasCompleteSuccess = false;
@@ -83,5 +82,5 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   }
 
   // Run the one configuration.
-  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseLogger logger, ContextualLogger fileHelperLogger, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
 }

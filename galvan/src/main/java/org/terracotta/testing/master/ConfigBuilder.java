@@ -19,22 +19,22 @@ import java.util.List;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
 
 
 public class ConfigBuilder {
-  public static ConfigBuilder buildStartPort(ILogger logger, int startPort) {
+  public static ConfigBuilder buildStartPort(ContextualLogger logger, int startPort) {
     return new ConfigBuilder(logger, startPort);
   }
   
-  private final ILogger logger;
+  private final ContextualLogger logger;
   private final int startPort;
   private final List<String> serverNames;
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
   private boolean isRestartable;
   
-  private ConfigBuilder(ILogger logger, int startPort) {
+  private ConfigBuilder(ContextualLogger logger, int startPort) {
     this.logger = logger;
     this.startPort = startPort;
     this.serverNames = new Vector<String>();
@@ -43,7 +43,7 @@ public class ConfigBuilder {
   public ConfigBuilder addServer(String serverName) {
     Assert.assertFalse(this.serverNames.contains(serverName));
     this.serverNames.add(serverName);
-    this.logger.log("Added " + serverName);
+    this.logger.output("Added " + serverName);
     return this;
   }
 
@@ -59,7 +59,7 @@ public class ConfigBuilder {
 
   public ConfigBuilder setRestartable() {
     this.isRestartable = true;
-    this.logger.log("Config set restartable");
+    this.logger.output("Config set restartable");
     return this;
   }
 
@@ -110,7 +110,7 @@ public class ConfigBuilder {
       connectUri += "localhost:" + port;
       needsComma = true;
     }
-    this.logger.log("Stripe URI: " + connectUri);
+    this.logger.output("Stripe URI: " + connectUri);
     return connectUri;
   }
 }

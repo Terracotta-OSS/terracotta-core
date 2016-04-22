@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import org.terracotta.passthrough.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
@@ -30,7 +30,7 @@ import org.terracotta.testing.logging.VerboseLogger;
  */
 public class InterruptableClientManager extends Thread implements IComponentManager {
   private final ITestStateManager stateManager;
-  private final VerboseLogger logger;
+  private final VerboseManager verboseManager;
   private final String testParentDirectory;
   private final String clientClassPath;
   private final DebugOptions debugOptions;
@@ -40,9 +40,9 @@ public class InterruptableClientManager extends Thread implements IComponentMana
   private final String connectUri;
   private boolean interruptRequested;
 
-  public InterruptableClientManager(ITestStateManager stateManager, VerboseLogger logger, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) {
+  public InterruptableClientManager(ITestStateManager stateManager, VerboseManager verboseManager, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) {
     this.stateManager = stateManager;
-    this.logger = logger;
+    this.verboseManager = verboseManager;
     this.testParentDirectory = testParentDirectory;
     this.clientClassPath = clientClassPath;
     this.debugOptions = debugOptions;
@@ -64,11 +64,19 @@ public class InterruptableClientManager extends Thread implements IComponentMana
   public void run() {
     // All clients use the same entry-point stub.
     String clientClassName = "org.terracotta.testing.client.TestClientStub";
-    ContextualLogger clientsLogger = new ContextualLogger(this.logger, "[Clients]");
-    ClientInstaller clientInstaller = new ClientInstaller(clientsLogger, this.processControl, this.testParentDirectory, this.clientClassPath, clientClassName, this.testClassName, this.connectUri);
+    VerboseManager clientsVerboseManager = this.verboseManager.createComponentManager("[Clients]");
+    ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, this.testParentDirectory, this.clientClassPath, clientClassName, this.testClassName, this.connectUri);
+    
+    ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
     
     // Run the setup client, synchronously.
     ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort);
+    try {
+      setupClient.openStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this here.
+      Assert.unexpected(e);
+    }
     int setupExitValue = -1;
     try {
       setupExitValue = runClientSynchronous(setupClient);
@@ -83,6 +91,12 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       // We don't expect this here.
       Assert.unexpected(e);
     }
+    try {
+      setupClient.closeStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this here.
+      Assert.unexpected(e);
+    }
     
     boolean setupWasClean = (0 == setupExitValue);
     boolean didRunCleanly = true;
@@ -92,12 +106,24 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       try {
         // Start them.
         for (ClientRunner oneClient : concurrentTests) {
+          try {
+            oneClient.openStandardLogFiles();
+          } catch (IOException e) {
+            // We don't expect this here.
+            Assert.unexpected(e);
+          }
           oneClient.start();
           oneClient.waitForPid();
         }
         // Now, wait for them to finish.
         for (ClientRunner oneClient : concurrentTests) {
           int result = oneClient.waitForJoinResult();
+          try {
+            oneClient.closeStandardLogFiles();
+          } catch (IOException e) {
+            // We don't expect this here.
+            Assert.unexpected(e);
+          }
           didRunCleanly &= (0 == result);
         }
       } catch (InterruptedException e) {
@@ -114,11 +140,17 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         Assert.unexpected(e);
       }
       if (!didRunCleanly) {
-        logger.fatal("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
+        harnessLogger.error("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
       }
       
       // Run the destroy client, synchronously.
       ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort);
+      try {
+        destroyClient.openStandardLogFiles();
+      } catch (IOException e) {
+        // We don't expect this here.
+        Assert.unexpected(e);
+      }
       int destroyExitValue = -1;
       try {
         destroyExitValue = runClientSynchronous(destroyClient);
@@ -133,12 +165,18 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         // We don't expect this here.
         Assert.unexpected(e);
       }
+      try {
+        destroyClient.closeStandardLogFiles();
+      } catch (IOException e) {
+        // We don't expect this here.
+        Assert.unexpected(e);
+      }
       destroyWasClean = (0 == destroyExitValue);
       if (!destroyWasClean) {
-        this.logger.fatal("ERROR encountered in destroy.  This is a failure");
+        harnessLogger.error("ERROR encountered in destroy.  This is a failure");
       }
     } else {
-      this.logger.fatal("FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!");
+      harnessLogger.error("FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!");
     }
     if (setupWasClean && didRunCleanly && destroyWasClean) {
       this.stateManager.testDidPass();

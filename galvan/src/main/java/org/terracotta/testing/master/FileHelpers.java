@@ -26,11 +26,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
 
 
 public class FileHelpers {
-  public static void cleanDirectory(final ILogger logger, String directoryToClean) throws IOException {
+  public static void cleanDirectory(final ContextualLogger logger, String directoryToClean) throws IOException {
     final Path start = FileSystems.getDefault().getPath(directoryToClean);
     // We will assume that we are intended to create the directory, if it doesn't already exist.
     if (!start.toFile().exists()) {
@@ -52,12 +52,12 @@ public class FileHelpers {
             Assert.assertFalse(start.equals(file));
             // Delete the file.
             Files.delete(file);
-            logger.log("Deleted file " + file);
+            logger.output("Deleted file " + file);
             return FileVisitResult.CONTINUE;
           }
           @Override
           public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-            logger.fatal("visitFileFailed: \"" + file + "\"");
+            logger.error("visitFileFailed: \"" + file + "\"");
             throw exc;
           }
           @Override
@@ -66,7 +66,7 @@ public class FileHelpers {
               // Make sure that this isn't the starting directory.
               if (!start.equals(dir)) {
                 Files.delete(dir);
-                logger.log("Deleted directory " + dir);
+                logger.output("Deleted directory " + dir);
               }
             } else {
               throw exc;
@@ -77,12 +77,12 @@ public class FileHelpers {
     );
   }
 
-  public static String createTempCopyOfDirectory(ILogger logger, String targetParentDirectoryString, String newDirectoryName, String sourceDirectoryString) throws IOException {
+  public static String createTempCopyOfDirectory(ContextualLogger logger, String targetParentDirectoryString, String newDirectoryName, String sourceDirectoryString) throws IOException {
     FileSystem fileSystem = FileSystems.getDefault();
     Path targetParentDirectory = fileSystem.getPath(targetParentDirectoryString);
-    logger.log(" Target directory: " + targetParentDirectoryString);
+    logger.output(" Target directory: " + targetParentDirectoryString);
     Assert.assertTrue(targetParentDirectory.toFile().isDirectory());
-    logger.log(" Source directory: " + sourceDirectoryString);
+    logger.output(" Source directory: " + sourceDirectoryString);
     Path sourceDirectory = fileSystem.getPath(sourceDirectoryString);
     Assert.assertTrue(sourceDirectory.toFile().exists());
     Assert.assertTrue(sourceDirectory.toFile().isDirectory());
@@ -107,12 +107,12 @@ public class FileHelpers {
 
 
   private static class DirectoryCopier implements FileVisitor<Path> {
-    private final ILogger logger;
+    private final ContextualLogger logger;
     private final Path targetDirectory;
     private final Path sourceDirectory;
     private Path currentTargetDirectory;
     
-    public DirectoryCopier(ILogger logger, Path targetDirectory, Path sourceDirectory) {
+    public DirectoryCopier(ContextualLogger logger, Path targetDirectory, Path sourceDirectory) {
       this.logger = logger;
       this.targetDirectory = targetDirectory;
       this.sourceDirectory = sourceDirectory;
@@ -127,7 +127,7 @@ public class FileHelpers {
         Path newDirectory = this.currentTargetDirectory.resolve(dir.getFileName());
         boolean didCreate = newDirectory.toFile().mkdir();
         Assert.assertTrue(didCreate);
-        logger.log("Created directory: " + newDirectory);
+        logger.output("Created directory: " + newDirectory);
         this.currentTargetDirectory = newDirectory;
       }
       return FileVisitResult.CONTINUE;
@@ -138,13 +138,13 @@ public class FileHelpers {
       // Copy this file to the current target.
       Path targetFile = this.currentTargetDirectory.resolve(file.getFileName());
       Files.copy(file, targetFile);
-      logger.log("Copied file: " + targetFile);
+      logger.output("Copied file: " + targetFile);
       return FileVisitResult.CONTINUE;
     }
 
     @Override
     public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-      logger.fatal("FATAL ERROR IN VISIT OF: " + file);
+      logger.error("FATAL ERROR IN VISIT OF: " + file);
       throw exc;
     }
 
@@ -159,7 +159,7 @@ public class FileHelpers {
   }
 
 
-  public static void copyJarsToServer(ILogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
+  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
     // We know we want to copy these into plugins/lib.
     FileSystem fileSystem = FileSystems.getDefault();
     Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "plugins", "lib");
@@ -171,10 +171,10 @@ public class FileHelpers {
       Assert.assertTrue(sourcePath.toFile().isFile());
       Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
       // This must not exist.
-      logger.log("Installing JAR: " + targetPath + "...");
+      logger.output("Installing JAR: " + targetPath + "...");
       Assert.assertFalse(targetPath.toFile().exists());
       Files.copy(sourcePath, targetPath);
-      logger.log("Done");
+      logger.output("Done");
     }
   }
 }

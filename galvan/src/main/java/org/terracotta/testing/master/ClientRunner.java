@@ -26,11 +26,14 @@ import java.io.PipedOutputStream;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.testing.logging.VerboseOutputStream;
 
 
 public class ClientRunner extends Thread {
-  private final ILogger logger;
+  private final ContextualLogger harnessLogger;
+  private final ContextualLogger clientProcessLogger;
   private final IMultiProcessControl control;
   private final File clientWorkingDirectory;
   private final String clientClassPath;
@@ -40,8 +43,11 @@ public class ClientRunner extends Thread {
   private final String connectUri;
   private final int debugPort;
   
-  private FileOutputStream stdoutLog;
-  private FileOutputStream stderrLog;
+  // TODO:  Manage these files at a higher-level, much like ServerProcess does, so that open/close isn't done here.
+  private FileOutputStream logFileOutput;
+  private FileOutputStream logFileError;
+  private VerboseOutputStream stdoutLog;
+  private VerboseOutputStream stderrLog;
   private AnyProcess process;
   
   // Data which we need to pass back to the other thread.
@@ -51,8 +57,11 @@ public class ClientRunner extends Thread {
   private long pid = -1;
   private int result = -1;
 
-  public ClientRunner(ILogger logger, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort) {
-    this.logger = logger;
+  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort) {
+    // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
+    this.harnessLogger = clientVerboseManager.createHarnessLogger();
+    this.clientProcessLogger = clientVerboseManager.createClientLogger();
+    
     this.control = control;
     this.clientWorkingDirectory = clientWorkingDirectory;
     this.clientClassPath = clientClassPath;
@@ -63,46 +72,67 @@ public class ClientRunner extends Thread {
     this.debugPort = debugPort;
   }
 
+  public void openStandardLogFiles() throws FileNotFoundException {
+    Assert.assertNull(this.logFileOutput);
+    Assert.assertNull(this.logFileError);
+    
+    // We want to create an output log file for both STDOUT and STDERR.
+    this.logFileOutput = new FileOutputStream(new File(this.clientWorkingDirectory, "stdout.log"));
+    this.logFileError = new FileOutputStream(new File(this.clientWorkingDirectory, "stderr.log"));
+  }
+
+  public void closeStandardLogFiles() throws IOException {
+    Assert.assertNull(this.stderrLog);
+    Assert.assertNull(this.stdoutLog);
+    Assert.assertNotNull(this.logFileOutput);
+    Assert.assertNotNull(this.logFileError);
+    
+    this.logFileOutput.close();
+    this.logFileOutput = null;
+    this.logFileError.close();
+    this.logFileError = null;
+  }
+
   @Override
   public void run() {
     // We over-ride the Thread.run() since we want to provide a few synchronization points, thus requiring that we _are_ a Thread instead of just a Runnable.
-    // First, we set up the log files.
-    boolean canContinue = false;
+    
+    // First step is we need to set up the verbose output stream to point at the log files.
+    Assert.assertNull(this.stderrLog);
+    Assert.assertNull(this.stdoutLog);
+    Assert.assertNotNull(this.logFileOutput);
+    Assert.assertNotNull(this.logFileError);
+    this.stdoutLog = new VerboseOutputStream(this.logFileOutput, this.clientProcessLogger, false);
+    this.stderrLog = new VerboseOutputStream(this.logFileError, this.clientProcessLogger, true);
+    
+    // Start the process, passing back the pid.
+    long thePid = startProcess();
+    synchronized(this.waitMonitor) {
+      this.pid = thePid;
+      this.waitMonitor.notifyAll();
+    }
+    
+    // Note that the ClientEventManager will synthesize actual events from the output stream within ITS OWN THREAD.
+    // That means that here we just need to wait on termination.
+    
+    // Wait for the process to complete, passing back the return value.
+    int theResult = -1;
+    IOException failure = null;
     try {
-      setupStandardLogFiles();
-      canContinue = true;
-    } catch (FileNotFoundException e) {
-      synchronized(this.waitMonitor) {
-        this.setupFilesException = e;
-        this.waitMonitor.notifyAll();
-      }
+      theResult = waitForTermination();
+    } catch (IOException e) {
+      failure = e;
     }
-    if (canContinue) {
-      // Start the process, passing back the pid.
-      long thePid = startProcess();
-      synchronized(this.waitMonitor) {
-        this.pid = thePid;
-        this.waitMonitor.notifyAll();
-      }
-      
-      // Note that the ClientEventManager will synthesize actual events from the output stream within ITS OWN THREAD.
-      // That means that here we just need to wait on termination.
-      
-      // Wait for the process to complete, passing back the return value.
-      int theResult = -1;
-      IOException failure = null;
-      try {
-        theResult = waitForTermination();
-      } catch (IOException e) {
-        failure = e;
-      }
-      // Whatever happened, synchronize and terminate.
-      synchronized(this.waitMonitor) {
-        this.result = theResult;
-        this.closeException = failure;
-        this.waitMonitor.notifyAll();
-      }
+    // Whatever happened, synchronize and terminate.
+    synchronized(this.waitMonitor) {
+      this.result = theResult;
+      this.closeException = failure;
+      this.waitMonitor.notifyAll();
     }
+    
+    // Drop our verbose output stream shims.
+    this.stdoutLog = null;
+    this.stderrLog = null;
   }
 
   public long waitForPid() throws FileNotFoundException, InterruptedException {
@@ -118,7 +148,7 @@ public class ClientRunner extends Thread {
       }
     }
     // Report our PID.
-    this.logger.log("PID: " + pid);
+    this.harnessLogger.output("PID: " + pid);
     return pid;
   }
 
@@ -135,9 +165,9 @@ public class ClientRunner extends Thread {
       result = this.result;
     }
     if (0 == result) {
-      this.logger.log("Return value (normal): " + result);
+      this.harnessLogger.output("Return value (normal): " + result);
     } else {
-      this.logger.fatal("Return value (ERROR): " + result);
+      this.harnessLogger.error("Return value (ERROR): " + result);
     }
     return result;
   }
@@ -155,15 +185,6 @@ public class ClientRunner extends Thread {
       // This is really not expected since this is already in the interruption path.
       Assert.unexpected(e);
     }
-  }
-
-  private void setupStandardLogFiles() throws FileNotFoundException {
-    Assert.assertNull(this.stdoutLog);
-    Assert.assertNull(this.stderrLog);
-    
-    // We want to create an output log file for both STDOUT and STDERR.
-    this.stdoutLog = new FileOutputStream(new File(this.clientWorkingDirectory, "stdout.log"));
-    this.stderrLog = new FileOutputStream(new File(this.clientWorkingDirectory, "stderr.log"));
   }
 
   // Returns the PID.
@@ -192,13 +213,13 @@ public class ClientRunner extends Thread {
       // Enable debug.
       String serverLine = "-Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
       processBuilder.command("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
-      this.logger.log("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      this.harnessLogger.output("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
       // Specifically point out that we are starting with debug.
-      this.logger.log("NOTE:  Starting client with debug port: " + this.debugPort);
+      this.harnessLogger.output("NOTE:  Starting client with debug port: " + this.debugPort);
     } else {
       // No debug.
       processBuilder.command("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
-      this.logger.log("Starting: " + condenseCommandLine("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      this.harnessLogger.output("Starting: " + condenseCommandLine("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
     }
     this.process = processBuilder
         .workingDir(this.clientWorkingDirectory)
@@ -206,7 +227,7 @@ public class ClientRunner extends Thread {
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
         .build();
-    this.logger.log("Client running");
+    this.harnessLogger.output("Client running");
     return this.process.getPid();
   }
 
@@ -224,10 +245,6 @@ public class ClientRunner extends Thread {
       }
     }
     this.process = null;
-    this.stdoutLog.close();
-    this.stdoutLog = null;
-    this.stderrLog.close();
-    this.stderrLog = null;
     return retVal;
   }
 

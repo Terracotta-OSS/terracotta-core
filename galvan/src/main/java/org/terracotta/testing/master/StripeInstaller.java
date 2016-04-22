@@ -21,24 +21,23 @@ import java.util.List;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ILogger;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
  * Handles the description, installation, and start-up of a stripe of servers in a cluster.
  */
 public class StripeInstaller {
-  private final ILogger stripeLogger;
-  private final ILogger fileHelperLogger;
+  private final VerboseManager stripeVerboseManager;
   private final String stripeInstallDirectory;
   private final String kitOriginDirectory;
   private final List<String> extraJarPaths;
   private final List<ServerInstallation> installedServers;
   private boolean isBuilt;
   
-  public StripeInstaller(ILogger stripeLogger, ILogger fileHelperLogger, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
-    this.stripeLogger = stripeLogger;
-    this.fileHelperLogger = fileHelperLogger;
+  public StripeInstaller(VerboseManager stripeVerboseManager, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
+    this.stripeVerboseManager = stripeVerboseManager;
     this.stripeInstallDirectory = stripeInstallDirectory;
     this.kitOriginDirectory = kitOriginDirectory;
     this.extraJarPaths = extraJarPaths;
@@ -48,9 +47,10 @@ public class StripeInstaller {
   
   public void installNewServer(String serverName, int debugPort) throws IOException {
     Assert.assertFalse(this.isBuilt);
-    String installPath = FileHelpers.createTempCopyOfDirectory(this.fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
-    FileHelpers.copyJarsToServer(this.fileHelperLogger, installPath, this.extraJarPaths);
-    ServerInstallation installation = new ServerInstallation(this.stripeLogger, serverName, new File(installPath), debugPort);
+    ContextualLogger fileHelperLogger = this.stripeVerboseManager.createFileHelpersLogger();
+    String installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
+    FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
+    ServerInstallation installation = new ServerInstallation(this.stripeVerboseManager, serverName, new File(installPath), debugPort);
     installation.openStandardLogFiles();
     this.installedServers.add(installation);
   }
