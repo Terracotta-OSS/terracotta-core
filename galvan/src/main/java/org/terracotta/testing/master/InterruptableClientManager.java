@@ -70,7 +70,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
     
     // Run the setup client, synchronously.
-    ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort);
+    ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort, this.clientsToCreate, 0);
     try {
       setupClient.openStandardLogFiles();
     } catch (IOException e) {
@@ -144,7 +144,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       }
       
       // Run the destroy client, synchronously.
-      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort);
+      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort, this.clientsToCreate, 0);
       try {
         destroyClient.openStandardLogFiles();
       } catch (IOException e) {
@@ -201,7 +201,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       int debugPort = (0 != debugOptions.testClientDebugPortStart)
           ? (debugOptions.testClientDebugPortStart + i)
           : 0;
-      testClients[i] = clientInstaller.installClient(clientName, "TEST", debugPort);
+      testClients[i] = clientInstaller.installClient(clientName, "TEST", debugPort, clientsToCreate, i);
     }
     return testClients;
   }
