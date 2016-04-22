@@ -32,13 +32,13 @@ public interface ICommonTest {
    * Called at the beginning of a test run, by a single thread or process, to prepare the server state for the test before
    * multiple threads or processes are started to run it.
    */
-  public void runSetup(Connection connection);
+  public void runSetup(IClientTestEnvironment env, IClusterControl control, Connection connection);
 
   /**
    * Called at the end of a test run, by a single thread or process, to clean up the server state now that the test has
    * completed.
    */
-  public void runDestroy(Connection connection);
+  public void runDestroy(IClientTestEnvironment env, IClusterControl control, Connection connection);
 
   /**
    * Runs the actual test.  Note that this call is expected to have no side-effects within the receiver, as it may be called
@@ -46,5 +46,5 @@ public interface ICommonTest {
    * The control or connection are the only ways side-effects should be realized (as the test obviously needs to interact
    * with the server and may way to control the cluster).
    */
-  public void runTest(IClusterControl control, Connection connection) throws Throwable;
+  public void runTest(IClientTestEnvironment env, IClusterControl control, Connection connection) throws Throwable;
 }
