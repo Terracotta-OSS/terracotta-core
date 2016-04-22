@@ -251,10 +251,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       }
 
       if (isConnected()) {
-        isClosed = true;
-        sendLayer.close();
-        receiveLayer.close();
-        delivery.pause();
+        this.close();
       } else {
         logger.warn("Channel not yet connected. Ignoring OOO Goodbye Message: ChannelConnected: "
                     + channelConnected.get() + "; DeliveryEngine: " + delivery);
@@ -307,10 +304,13 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     isClosed = true;
     Assert.assertNotNull(sendLayer);
     if (isClient) {
-      // send goobye message with session-id on it in case of client. Server never sends goodbye message.
+      // send goodbye message with session-id on it in case of client. Server never sends goodbye message.
       OOOProtocolMessage opm = messageFactory.createNewGoodbyeMessage(getSessionId());
       debugLog("Sending GoodBye message...");
       sendMessage(opm);
+    } else {
+      sendLayer.close();
+      receiveLayer.close();
     }
     // Also reset delivery on close() to clear out the send queue.
     delivery.reset();
@@ -349,7 +349,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       sendLayer.close();
       receiveLayer.close();
       delivery.pause();
-      return;
     } else {
       final boolean restoreConnectionMode = reconnectMode.get();
       debugLog("Transport Disconnected - pausing delivery, reconnectMode = " + restoreConnectionMode
