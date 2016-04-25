@@ -18,34 +18,25 @@
  */
 package com.tc.net.protocol.delivery;
 
-import com.tc.net.core.TCConnection;
-import com.tc.net.protocol.NetworkStackHarness;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
-import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.net.protocol.transport.MessageTransportFactory;
-import com.tc.net.protocol.transport.MessageTransportListener;
-import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
-import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.properties.ReconnectConfig;
-import com.tc.util.ProductID;
-import java.util.List;
+import com.tc.util.UUID;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  *
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerImplTest {
-  
-  OnceAndOnlyOnceProtocolNetworkLayerImpl server;
-  OnceAndOnlyOnceProtocolNetworkLayerImpl client;
+  OOOProtocolMessageFactory msgFactory;
+  OOOProtocolMessageParser msgParser;
+  ReconnectConfig reconnect;
   
   public OnceAndOnlyOnceProtocolNetworkLayerImplTest() {
   }
@@ -60,12 +51,58 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImplTest {
   
   @Before
   public void setUp() {
+    msgFactory = new OOOProtocolMessageFactory();
+    msgParser = new OOOProtocolMessageParser(msgFactory);
+    reconnect = new AbstractReconnectConfig(true, 5000, 5000, 16, 32, "test");
 
   }
   
   @Test
-  public void testDisconnects() throws Exception {
-//  TODO:  Add a unit test to make sure disconnects and OOO layer are doing the right things
+  public void testGoodByeMessage() throws Exception {
+    OnceAndOnlyOnceProtocolNetworkLayerImpl server = new OnceAndOnlyOnceProtocolNetworkLayerImpl(msgFactory, msgParser, reconnect, false);
+    MessageChannelInternal recv = mock(MessageChannelInternal.class);
+    server.setReceiveLayer(recv);
+    MessageTransport send = mock(MessageTransport.class);
+    server.setSendLayer(send);
+    
+    server.receive(msgFactory.createNewHandshakeMessage(UUID.NULL_ID, 0L).getEntireMessageData());
+    OOOProtocolMessage msg = msgFactory.createNewGoodbyeMessage(UUID.NULL_ID);
+    server.receive(msg.getEntireMessageData());
+    
+    verify(recv).close();
+    verify(send).close();
+  }
+  
+  @Test
+  public void testClientClose() throws Exception {
+    OnceAndOnlyOnceProtocolNetworkLayerImpl client = new OnceAndOnlyOnceProtocolNetworkLayerImpl(msgFactory, msgParser, reconnect, true);
+    MessageChannelInternal recv = mock(MessageChannelInternal.class);
+    client.setReceiveLayer(recv);
+    MessageTransport send = mock(MessageTransport.class);
+    client.setSendLayer(send);
+    
+    client.notifyTransportConnected(send);
+    client.close();
+    client.notifyTransportDisconnected(send, false);
+    
+    verify(recv).close();
+    verify(send).close();
+  }
+  
+  @Test
+  public void testServerDisconnect() throws Exception {
+    OnceAndOnlyOnceProtocolNetworkLayerImpl client = new OnceAndOnlyOnceProtocolNetworkLayerImpl(msgFactory, msgParser, reconnect, true);
+    MessageChannelInternal recv = mock(MessageChannelInternal.class);
+    client.setReceiveLayer(recv);
+    MessageTransport send = mock(MessageTransport.class);
+    client.setSendLayer(send);
+    
+    client.notifyTransportConnected(send);
+    client.close();
+    client.notifyTransportDisconnected(send, false);
+    
+    verify(recv).close();
+    verify(send).close();
   }
   
   @After
