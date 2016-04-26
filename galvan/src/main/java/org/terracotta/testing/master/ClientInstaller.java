@@ -45,10 +45,10 @@ public class ClientInstaller {
     this.stripeUri = stripeUri;
   }
   
-  public ClientRunner installClient(String clientName, String clientTask, int debugPort) {
+  public ClientRunner installClient(String clientName, String clientTask, int debugPort, int totalClientCount, int thisClientIndex) {
     String clientWorkingDirectory = FileHelpers.createTempEmptyDirectory(this.testParentDirectory, clientName);
     VerboseManager clientVerboseManager = this.clientsVerboseManager.createComponentManager("[" + clientTask + "]");
-    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, this.clientClassName, clientTask, this.testClassName, this.stripeUri, debugPort);
+    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, this.clientClassName, clientTask, this.testClassName, this.stripeUri, debugPort, totalClientCount, thisClientIndex);
   }
   
   

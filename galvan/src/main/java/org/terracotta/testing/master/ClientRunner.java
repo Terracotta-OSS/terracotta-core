@@ -43,6 +43,10 @@ public class ClientRunner extends Thread {
   private final String connectUri;
   private final int debugPort;
   
+  // Information which we only possess in order to pass it into the client process so it understands the test environment.
+  private final int totalClientCount;
+  private final int thisClientIndex;
+  
   // TODO:  Manage these files at a higher-level, much like ServerProcess does, so that open/close isn't done here.
   private FileOutputStream logFileOutput;
   private FileOutputStream logFileError;
@@ -57,7 +61,7 @@ public class ClientRunner extends Thread {
   private long pid = -1;
   private int result = -1;
 
-  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort) {
+  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort, int totalClientCount, int thisClientIndex) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = clientVerboseManager.createHarnessLogger();
     this.clientProcessLogger = clientVerboseManager.createClientLogger();
@@ -70,6 +74,8 @@ public class ClientRunner extends Thread {
     this.testClassName = testClassName;
     this.connectUri = connectUri;
     this.debugPort = debugPort;
+    this.totalClientCount = totalClientCount;
+    this.thisClientIndex = thisClientIndex;
   }
 
   public void openStandardLogFiles() throws FileNotFoundException {
@@ -205,20 +211,34 @@ public class ClientRunner extends Thread {
     OutputStream outputStream = eventManager.getEventingStream();
     AnyProcessBuilder<?> processBuilder = AnyProcess.newBuilder();
     // Java args:
-    // [0] - client task (SETUP, TEST, or DESTROY)
-    // [1] - full name of test class
-    // [2] - connect URI
+    // --task: SETUP, TEST, or DESTROY
+    // --testClass:  <full name of test class>
+    // --connectUri:  <the cluster URI used in the test>
+    // --totalClientCount:  <number of clients running the test>
+    // --thisClientIndex:  <the 0-indexed number of this client instance>
     // Figure out if we want to enable debug.
     if (0 != this.debugPort) {
       // Enable debug.
       String serverLine = "-Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
-      processBuilder.command("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
+      processBuilder.command("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName
+          , "--task", this.clientTask
+          , "--testClass", this.testClassName
+          , "--connectUri", this.connectUri
+          , "--totalClientCount", ("" + this.totalClientCount)
+          , "--thisClientIndex", ("" + this.thisClientIndex)
+      );
       this.harnessLogger.output("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
       // Specifically point out that we are starting with debug.
       this.harnessLogger.output("NOTE:  Starting client with debug port: " + this.debugPort);
     } else {
       // No debug.
-      processBuilder.command("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri);
+      processBuilder.command("java", "-cp", this.clientClassPath, this.clientClassName
+          , "--task", this.clientTask
+          , "--testClass", this.testClassName
+          , "--connectUri", this.connectUri
+          , "--totalClientCount", ("" + this.totalClientCount)
+          , "--thisClientIndex", ("" + this.thisClientIndex)
+      );
       this.harnessLogger.output("Starting: " + condenseCommandLine("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
     }
     this.process = processBuilder
