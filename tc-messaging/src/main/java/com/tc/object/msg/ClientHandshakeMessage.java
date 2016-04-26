@@ -34,6 +34,10 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   String getClientVersion();
 
+  void setClientPID(int pid);
+
+  int getClientPID();
+
   void setEnterpriseClient(boolean isEnterpirseClient);
 
   boolean enterpriseClient();

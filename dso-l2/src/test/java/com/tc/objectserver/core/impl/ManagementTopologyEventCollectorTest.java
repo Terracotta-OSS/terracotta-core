@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.core.impl;
 
+import com.tc.net.TCSocketAddress;
+import com.tc.stats.Client;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,8 +29,16 @@ import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
+import org.mockito.ArgumentCaptor;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformClientFetchedEntity;
+import org.terracotta.monitoring.PlatformConnectedClient;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -133,6 +143,7 @@ public class ManagementTopologyEventCollectorTest {
     EntityID id = mock(EntityID.class);
     MessageChannel channel = mock(MessageChannel.class);
     ClientID client = mock(ClientID.class);
+    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
     
     // Put us into the active state.
     this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
@@ -145,10 +156,10 @@ public class ManagementTopologyEventCollectorTest {
     this.collector.clientDidConnect(channel, client);
     
     // Fetch the entity.
-    this.collector.clientDidFetchEntity(client, id);
+    this.collector.clientDidFetchEntity(client, id, clientDescriptor);
     
     // Fetch again, since there can be multiple fetches from the same client.
-    this.collector.clientDidFetchEntity(client, id);
+    this.collector.clientDidFetchEntity(client, id, clientDescriptor);
     
     // Release the entity twice.
     this.collector.clientDidReleaseEntity(client, id);
@@ -169,5 +180,50 @@ public class ManagementTopologyEventCollectorTest {
     
     // Destroy the entity.
     this.collector.entityWasDestroyed(id);
+  }
+
+  @Test
+  public void testClientPIDInclusion() throws Exception {
+    IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
+    when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
+    this.collector = new ManagementTopologyEventCollector(selfID, monitoringProducer);
+
+    // reset monitoringProducer.addNode(...) invocation counts
+    reset(monitoringProducer);
+
+    final long TEST_CLIENT_PID = 2498L;
+
+    // prepare and call collector.clientDidConnect(...)
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getAttachment(any())).thenReturn(TEST_CLIENT_PID);
+    when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("localhost", 1234));
+    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("localhost", 4567));
+    ClientID client = mock(ClientID.class);
+    this.collector.clientDidConnect(channel, client);
+
+    // verify
+    ArgumentCaptor<PlatformConnectedClient> argumentCaptor = ArgumentCaptor.forClass(PlatformConnectedClient.class);
+    verify(monitoringProducer).addNode(any(), any(), argumentCaptor.capture());
+    Assert.assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
+  }
+
+  @Test
+  public void testClientDescriptorInclusion() throws Exception {
+    IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
+    when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
+    this.collector = new ManagementTopologyEventCollector(selfID, monitoringProducer);
+
+    // reset monitoringProducer.addNode(...) invocation counts
+    reset(monitoringProducer);
+
+    EntityID entityID = mock(EntityID.class);
+    ClientID client = mock(ClientID.class);
+    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+    this.collector.clientDidFetchEntity(client, entityID, clientDescriptor);
+
+    // verify
+    ArgumentCaptor<PlatformClientFetchedEntity> argumentCaptor = ArgumentCaptor.forClass(PlatformClientFetchedEntity.class);
+    verify(monitoringProducer).addNode(any(), any(), argumentCaptor.capture());
+    Assert.assertEquals(clientDescriptor, argumentCaptor.getValue().clientDescriptor);
   }
 }

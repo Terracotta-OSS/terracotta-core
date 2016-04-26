@@ -258,7 +258,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       write.unlock();
     }
     // Fire the event that the client fetched the entity.
-    this.eventCollector.clientDidFetchEntity(clientID, this.getID());
+    this.eventCollector.clientDidFetchEntity(clientID, this.getID(), clientDescriptor);
   }
   
   private void invokeLifecycleOperation(ServerEntityRequest request, byte[] payload) {
@@ -579,7 +579,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity.connected(sourceDescriptor);
         getEntityRequest.complete(this.constructorInfo);
         // Fire the event that the client fetched the entity.
-        this.eventCollector.clientDidFetchEntity(clientID, this.getID());
+        this.eventCollector.clientDidFetchEntity(clientID, this.getID(), sourceDescriptor);
       } else {
         getEntityRequest.complete();
       }

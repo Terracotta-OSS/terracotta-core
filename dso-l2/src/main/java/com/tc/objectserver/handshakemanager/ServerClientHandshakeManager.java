@@ -19,6 +19,7 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Stage;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
@@ -115,6 +116,7 @@ public class ServerClientHandshakeManager {
             throw new ClientHandshakeException("Client " + clientID + " connected after startup should have no existing wait contexts.");
           }
         }
+        handshake.getChannel().addAttachment(ManagementTopologyEventCollector.CLIENT_PID_CONST_NAME, handshake.getClientPID(), false);
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {
         // This is a client reconnecting after a restart.

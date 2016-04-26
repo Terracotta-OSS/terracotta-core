@@ -44,11 +44,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte   LOCAL_TIME_MILLS         = 4;
   private static final byte   RECONNECT_REFERENCES     = 5;
   private static final byte   RESEND_MESSAGES          = 6;
+  private static final byte   CLIENT_PID               = 7;
 
   private final Set<ClientServerExchangeLockContext> lockContexts             = new HashSet<ClientServerExchangeLockContext>();
   private long                currentLocalTimeMills    = System.currentTimeMillis();
   private boolean             enterpriseClient         = false;
-  private String              clientVersion            = "UNKNOW";
+  private String              clientVersion            = "UNKNOWN";
+  private int                 pid                      = -1;
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
   private final Set<ResendVoltronEntityMessage> resendMessages = new TreeSet<ResendVoltronEntityMessage>(new Comparator<ResendVoltronEntityMessage>() {
     @Override
@@ -75,6 +77,16 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   @Override
   public String getClientVersion() {
     return this.clientVersion;
+  }
+
+  @Override
+  public void setClientPID(int pid) {
+    this.pid = pid;
+  }
+
+  @Override
+  public int getClientPID() {
+    return pid;
   }
 
   @Override
@@ -109,6 +121,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     }
     putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
     putNVPair(CLIENT_VERSION, this.clientVersion);
+    putNVPair(CLIENT_PID, this.pid);
     putNVPair(LOCAL_TIME_MILLS, this.currentLocalTimeMills);
     for (final ClientEntityReferenceContext referenceContext : this.reconnectReferences) {
       putNVPair(RECONNECT_REFERENCES, referenceContext);
@@ -138,6 +151,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         return true;
       case RESEND_MESSAGES:
         this.resendMessages.add(getObject(new ResendVoltronEntityMessage()));
+        return true;
+      case CLIENT_PID:
+        this.pid = getIntValue();
         return true;
       default:
         return false;
