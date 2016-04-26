@@ -466,7 +466,7 @@ public class PassthroughServerProcess implements MessageHandler {
               // Record that this entity has been fetched by this client.
               String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
               String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
-              PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier);
+              PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
               String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
               PassthroughServerProcess.this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
             }
@@ -836,7 +836,7 @@ public class PassthroughServerProcess implements MessageHandler {
         // We don't have handling for this.
         Assert.unexpected(e);
       }
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, this.bindPort, localHost, CLIENT_PORT.getAndIncrement());
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, this.bindPort, localHost, CLIENT_PORT.getAndIncrement(), -1);
       String nodeName = clientIdentifierForService(connectionID);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }
