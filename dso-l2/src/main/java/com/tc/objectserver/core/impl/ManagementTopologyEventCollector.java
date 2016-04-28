@@ -173,7 +173,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // Create the structure to describe this client.
       TCSocketAddress localAddress = channel.getLocalAddress();
       TCSocketAddress remoteAddress = channel.getRemoteAddress();
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort(), (long)channel.getAttachment(CLIENT_PID_CONST_NAME));
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort(),
+              ((Integer)channel.getAttachment(CLIENT_PID_CONST_NAME)).longValue());
       // We will use the ClientID long value as the node name.
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
