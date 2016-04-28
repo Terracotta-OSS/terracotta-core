@@ -37,46 +37,46 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  * the same process).  Serializing them ensures that there are no invalid assumptions being made on either side, however.
  */
 public class PassthroughMessageCodec {
-  public static PassthroughMessage createFetchMessage(final Class<?> clazz, final String entityName, final long clientInstanceID, final long version) {
+  public static PassthroughMessage createFetchMessage(final String entityClassName, final String entityName, final long clientInstanceID, final long version) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.FETCH_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(clazz.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
         output.writeLong(version);
       }};
   }
 
-  public static PassthroughMessage createReleaseMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID) {
+  public static PassthroughMessage createReleaseMessage(final String entityClassName, final String entityName, final long clientInstanceID) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.RELEASE_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
       }};
   }
 
-  public static PassthroughMessage createExistsMessage(final Class<?> entityClass, final String entityName, final long version) {
+  public static PassthroughMessage createExistsMessage(final String entityClassName, final String entityName, final long version) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.DOES_ENTITY_EXIST, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
         output.writeLong(version);
       }};
   }
 
-  public static PassthroughMessage createDestroyMessage(final Class<?> entityClass, final String entityName) {
+  public static PassthroughMessage createDestroyMessage(final String entityClassName, final String entityName) {
     boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.DESTROY_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
       }};
   }
@@ -107,11 +107,11 @@ public class PassthroughMessageCodec {
       }};
   }
   
-  public static PassthroughMessage createInvokeMessage(final Class<?> clazz, final String entityName, final long clientInstanceID, final byte[] payload, final boolean shouldReplicateToPassives) {
+  public static PassthroughMessage createInvokeMessage(final String entityClassName, final String entityName, final long clientInstanceID, final byte[] payload, final boolean shouldReplicateToPassives) {
     return new PassthroughMessage(Type.INVOKE_ON_SERVER, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(clazz.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
         output.writeInt(payload.length);
@@ -164,35 +164,35 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createWriteLockAcquireMessage(final Class<?> entityClass, final String entityName) {
+  public static PassthroughMessage createWriteLockAcquireMessage(final String entityClassName, final String entityName) {
     // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.LOCK_ACQUIRE, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
       }};
   }
 
-  public static PassthroughMessage createWriteLockTryAcquireMessage(final Class<?> entityClass, final String entityName) {
+  public static PassthroughMessage createWriteLockTryAcquireMessage(final String entityClassName, final String entityName) {
     // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.LOCK_TRY_ACQUIRE, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
       }};
   }
 
-  public static PassthroughMessage createWriteLockReleaseMessage(final Class<?> entityClass, final String entityName) {
+  public static PassthroughMessage createWriteLockReleaseMessage(final String entityClassName, final String entityName) {
     // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.LOCK_RELEASE, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
       }};
   }
@@ -208,14 +208,14 @@ public class PassthroughMessageCodec {
       }};
   }
 
-  public static PassthroughMessage createReconnectMessage(final Class<?> entityClass, final String entityName, final long clientInstanceID, final byte[] extendedData) {
+  public static PassthroughMessage createReconnectMessage(final String entityClassName, final String entityName, final long clientInstanceID, final byte[] extendedData) {
     Assert.assertTrue(null != extendedData);
     // This is equivalent to a FETCH so we don't care about replication.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.RECONNECT, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        output.writeUTF(entityClass.getCanonicalName());
+        output.writeUTF(entityClassName);
         output.writeUTF(entityName);
         output.writeLong(clientInstanceID);
         output.writeInt(extendedData.length);

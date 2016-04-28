@@ -75,7 +75,7 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   public InvocationBuilder<M, R> beginInvoke() {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new PassthroughInvocationBuilder<M, R>(this.connection, this.entityClass, this.entityName, this.clientInstanceID, messageCodec);
+    return new PassthroughInvocationBuilder<M, R>(this.connection, this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID, messageCodec);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     checkEndpointOpen();
     this.isOpen = false;
     // We need to release this entity.
-    PassthroughMessage releaseMessage = PassthroughMessageCodec.createReleaseMessage(this.entityClass, this.entityName, this.clientInstanceID);
+    PassthroughMessage releaseMessage = PassthroughMessageCodec.createReleaseMessage(this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID);
     InvokeFuture<byte[]> received = this.connection.sendInternalMessageAfterAcks(releaseMessage);
     try {
       received.get();
@@ -125,7 +125,7 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   public PassthroughMessage buildReconnectMessage(byte[] extendedData) {
     // Construct the reconnect message.
     // NOTE:  This currently only describes the entity we are referencing.
-    return PassthroughMessageCodec.createReconnectMessage(this.entityClass, this.entityName, this.clientInstanceID, extendedData);
+    return PassthroughMessageCodec.createReconnectMessage(this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID, extendedData);
   }
 
   private void checkEndpointOpen() {

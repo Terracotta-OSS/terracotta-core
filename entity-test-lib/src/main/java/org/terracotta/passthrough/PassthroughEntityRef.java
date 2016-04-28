@@ -57,7 +57,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   @Override
   public T fetchEntity() throws EntityNotFoundException, EntityVersionMismatchException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
-    PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
+    PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz.getCanonicalName(), this.name, clientInstanceID, this.version);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
     // Wait for the config on the response.
     byte[] rawConfig = null;
@@ -172,7 +172,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   private void getWriteLock() {
-    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.clazz, this.name);
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.clazz.getCanonicalName(), this.name);
     try {
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
       // Notify the connection that we have this write lock since it will need it if we reconnect.
@@ -187,7 +187,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
 
   private boolean tryWriteLock() {
     boolean didLock = false;
-    PassthroughMessage tryLockMessage = PassthroughMessageCodec.createWriteLockTryAcquireMessage(this.clazz, this.name);
+    PassthroughMessage tryLockMessage = PassthroughMessageCodec.createWriteLockTryAcquireMessage(this.clazz.getCanonicalName(), this.name);
     try {
       byte[] response = this.passthroughConnection.sendInternalMessageAfterAcks(tryLockMessage).get();
       // We just send back a byte:  0x1 for success, 0x0 for failure.
@@ -207,7 +207,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   private void releaseWriteLock() {
-    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.clazz, this.name);
+    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.clazz.getCanonicalName(), this.name);
     try {
       this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage).get();
       // Notify the connection that we released this write lock so it isn't requested on reconnect.
@@ -221,7 +221,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   private void destroyLockedEntity() throws EntityNotProvidedException, EntityNotFoundException {
-    PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
+    PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz.getCanonicalName(), this.name);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
     try {
       received.get();

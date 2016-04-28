@@ -38,7 +38,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class PassthroughInvocationBuilder<M extends EntityMessage, R extends EntityResponse> implements InvocationBuilder<M, R> {
   private final PassthroughConnection connection;
-  private final Class<?> entityClass;
+  private final String entityClassName;
   private final String entityName;
   private final long clientInstanceID;
   private final MessageCodec<M, R> messageCodec;
@@ -49,9 +49,9 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   private boolean shouldReplicate;
   private M request;
   
-  public PassthroughInvocationBuilder(PassthroughConnection connection, Class<?> entityClass, String entityName, long clientInstanceID, MessageCodec<M, R> messageCodec) {
+  public PassthroughInvocationBuilder(PassthroughConnection connection, String entityClassName, String entityName, long clientInstanceID, MessageCodec<M, R> messageCodec) {
     this.connection = connection;
-    this.entityClass = entityClass;
+    this.entityClassName = entityClassName;
     this.entityName = entityName;
     this.clientInstanceID = clientInstanceID;
     this.messageCodec = messageCodec;
@@ -89,7 +89,7 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
 
   @Override
   public InvokeFuture<R> invoke() throws MessageCodecException {
-    final PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClass, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), this.shouldReplicate);
+    final PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), this.shouldReplicate);
     final InvokeFuture<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted);
     return new InvokeFuture<R>() {
       @Override
