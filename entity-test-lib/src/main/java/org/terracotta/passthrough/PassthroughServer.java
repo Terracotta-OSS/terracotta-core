@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.junit.Assert;
-import org.terracotta.connection.Connection;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceProvider;
@@ -90,7 +89,7 @@ public class PassthroughServer {
     this.entityClientServices.add(service);
   }
 
-  public synchronized Connection connectNewClient() {
+  public synchronized PassthroughConnection connectNewClient() {
     Assert.assertTrue(this.hasStarted);
     final long thisConnectionID = this.nextConnectionID;
     this.nextConnectionID += 1;
@@ -110,6 +109,20 @@ public class PassthroughServer {
     PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
     this.serverProcess.connectConnection(connection, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
+    return connection;
+  }
+
+  private PassthroughConnection internalConnectPseudoConnection() {
+    final long thisConnectionID = this.nextConnectionID;
+    this.nextConnectionID += 1;
+    // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
+    Runnable onClose = new Runnable() {
+      @Override
+      public void run() {
+        // We do nothing in this case.
+      }
+    };
+    PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
     return connection;
   }
 
@@ -264,5 +277,8 @@ public class PassthroughServer {
   private void registerBuiltInServices() {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
     this.serverProcess.registerBuiltInServiceProvider(communicatorServiceProvider, null);
+    PassthroughConnection pseudoConnection = internalConnectPseudoConnection();
+    PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(pseudoConnection);
+    this.serverProcess.registerBuiltInServiceProvider(messengerServiceProvider, null);
   }
 }
