@@ -202,7 +202,7 @@ public class PassthroughServerProcess implements MessageHandler {
     this.isRunning = true;
 //  set instance
     if (null != this.serviceInterface) {
-      String stateValue = (null != this.activeEntities) ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_PASSIVE;
+      String stateValue = (null != this.activeEntities) ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
       String server = serverIdentifierForService(this);
       PlatformServer serverObj = new PlatformServer(
           serverName == null ? "server" + processID : serverName, //  server name
@@ -224,7 +224,23 @@ public class PassthroughServerProcess implements MessageHandler {
     }
     this.serverThread.start();
   }
-
+  
+  private void setStateSynchronizing(IMonitoringProducer tracker) {
+// Set state.
+    if (tracker != null) {
+      long timestamp = System.currentTimeMillis();
+      tracker.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING, timestamp, (this.activeEntities != null) ? timestamp : -1));
+    }
+  }
+  
+  private void setStateStandbyReady(IMonitoringProducer tracker) {
+// Set state.
+    if (tracker != null ) {
+      long timestamp = System.currentTimeMillis();
+      tracker.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_PASSIVE, timestamp, (this.activeEntities != null) ? timestamp : -1));
+    }
+  }
+  
   private IPersistentStorage preparePersistentStorage(boolean shouldLoadStorage) {
     ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new ServiceConfiguration<IPersistentStorage>() {
       @Override
@@ -752,7 +768,7 @@ public class PassthroughServerProcess implements MessageHandler {
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassive = serverProcess;
-    
+    serverProcess.setStateSynchronizing(this.serviceInterface);
     // Synchronize any entities we have.
     // NOTE:  This synchronization implementation is relatively simplistic and we may require a more substantial
     // implementation, in the future, to support concurrent replication/synchronization ordering concerns, multiple
@@ -787,6 +803,8 @@ public class PassthroughServerProcess implements MessageHandler {
       this.downstreamPassive.sendMessageToServerFromActive(wrapper, entityEnd.asSerializedBytes());
       wrapper.waitForComplete();
     }
+    
+    serverProcess.setStateStandbyReady(this.serviceInterface);
   }
 
   public void promoteToActive() {
