@@ -191,7 +191,7 @@ public class ManagementTopologyEventCollectorTest {
     // reset monitoringProducer.addNode(...) invocation counts
     reset(monitoringProducer);
 
-    final long TEST_CLIENT_PID = 2498L;
+    final int TEST_CLIENT_PID = 2498;
 
     // prepare and call collector.clientDidConnect(...)
     MessageChannel channel = mock(MessageChannel.class);
