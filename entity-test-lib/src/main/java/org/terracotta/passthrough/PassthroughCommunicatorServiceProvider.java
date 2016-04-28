@@ -32,12 +32,6 @@ import org.terracotta.entity.ServiceConfiguration;
  */
 public class PassthroughCommunicatorServiceProvider implements PassthroughBuiltInServiceProvider {
   @Override
-  public void close() {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
   public <T> T getService(long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
     return configuration.getServiceType().cast(new PassthroughCommunicatorService(container));
   }

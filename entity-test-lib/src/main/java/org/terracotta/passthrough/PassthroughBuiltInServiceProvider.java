@@ -18,7 +18,6 @@
  */
 package org.terracotta.passthrough;
 
-import java.io.Closeable;
 import java.util.Collection;
 
 import org.terracotta.entity.CommonServerEntity;
@@ -26,7 +25,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceConfiguration;
 
 
-public interface PassthroughBuiltInServiceProvider extends Closeable {
+public interface PassthroughBuiltInServiceProvider {
   /**
    * Get an instance of service from the provider.
    *
