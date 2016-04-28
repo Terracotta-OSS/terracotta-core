@@ -72,10 +72,10 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
   }
 
   @Override
-  public InvocationBuilder beginInvoke() {
+  public InvocationBuilder<M, R> beginInvoke() {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
-    return new PassthroughInvocationBuilder(this.connection, this.entityClass, this.entityName, this.clientInstanceID, messageCodec);
+    return new PassthroughInvocationBuilder<M, R>(this.connection, this.entityClass, this.entityName, this.clientInstanceID, messageCodec);
   }
 
   @Override

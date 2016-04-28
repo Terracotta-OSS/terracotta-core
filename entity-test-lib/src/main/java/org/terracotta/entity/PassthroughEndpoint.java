@@ -67,7 +67,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   @Override
-  public InvocationBuilder beginInvoke() {
+  public InvocationBuilder<M, R> beginInvoke() {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
     return new InvocationBuilderImpl();
@@ -80,31 +80,31 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     private M request = null;
 
     @Override
-    public InvocationBuilder ackSent() {
+    public InvocationBuilder<M, R> ackSent() {
       // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder ackReceived() {
+    public InvocationBuilder<M, R> ackReceived() {
       // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder ackCompleted() {
+    public InvocationBuilder<M, R> ackCompleted() {
       // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder replicate(boolean requiresReplication) {
+    public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       // Replication ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder message(M message) {
+    public InvocationBuilder<M, R> message(M message) {
       this.request = message;
       return this;
     }

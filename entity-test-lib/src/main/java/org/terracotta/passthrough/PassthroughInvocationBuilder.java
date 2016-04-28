@@ -58,31 +58,31 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   }
 
   @Override
-  public InvocationBuilder ackSent() {
+  public InvocationBuilder<M, R> ackSent() {
     this.shouldWaitForSent = true;
     return this;
   }
 
   @Override
-  public InvocationBuilder ackReceived() {
+  public InvocationBuilder<M, R> ackReceived() {
     this.shouldWaitForReceived = true;
     return this;
   }
 
   @Override
-  public InvocationBuilder ackCompleted() {
+  public InvocationBuilder<M, R> ackCompleted() {
     this.shouldWaitForCompleted = true;
     return this;
   }
 
   @Override
-  public InvocationBuilder replicate(boolean requiresReplication) {
+  public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
     this.shouldReplicate = requiresReplication;
     return this;
   }
 
   @Override
-  public InvocationBuilder message(M message) {
+  public InvocationBuilder<M, R> message(M message) {
     this.request = message;
     return this;
   }

@@ -53,7 +53,7 @@ public class PassthroughConnection implements Connection {
   
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
   private long nextClientEndpointID;
-  private final Map<Long, PassthroughEntityClientEndpoint> localEndpoints;
+  private final Map<Long, PassthroughEntityClientEndpoint<?, ?>> localEndpoints;
   private final Set<PassthroughEntityTuple> writeLockedEntities;
   private final Runnable onClose;
   private final long uniqueConnectionID;
@@ -74,7 +74,7 @@ public class PassthroughConnection implements Connection {
     this.connectionState = new PassthroughConnectionState(serverProcess);
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
-    this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint>();
+    this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint<?, ?>>();
     this.writeLockedEntities = new HashSet<PassthroughEntityTuple>();
     this.onClose = onClose;
     this.uniqueConnectionID = uniqueConnectionID;
@@ -129,15 +129,20 @@ public class PassthroughConnection implements Connection {
   @SuppressWarnings({ "unchecked" })
   public <T> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config) {
     EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service = getEntityClientService(cls);
+    return (T) storeNewEndpointAndCreateInstance(cls, name, clientInstanceID, config, service);
+  }
+
+  // Exists to create a generic type context for M and R.
+  private <M extends EntityMessage, R extends EntityResponse> Entity storeNewEndpointAndCreateInstance(Class<?> cls, String name, final long clientInstanceID, byte[] config, EntityClientService<?, ?, M, R> service) {
     Runnable onClose = new Runnable() {
       @Override
       public void run() {
         localEndpoints.remove(clientInstanceID);
       }
     };
-    PassthroughEntityClientEndpoint endpoint = new PassthroughEntityClientEndpoint(this, cls, name, clientInstanceID, config, service.getMessageCodec(), onClose);
+    PassthroughEntityClientEndpoint<M, R> endpoint = new PassthroughEntityClientEndpoint<M, R>(this, cls, name, clientInstanceID, config, service.getMessageCodec(), onClose);
     this.localEndpoints.put(clientInstanceID, endpoint);
-    return (T) service.create(endpoint);
+    return service.create(endpoint);
   }
 
   public synchronized void sendMessageToClient(PassthroughServerProcess sender, byte[] payload) {
@@ -270,7 +275,7 @@ public class PassthroughConnection implements Connection {
       // First, call the runnable hook.
       this.onClose.run();
       // Second, walk any end-points still open and tell them they were disconnected.
-      for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
+      for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
         endpoint.didCloseUnexpectedly();
       }
       this.localEndpoints.clear();
@@ -364,7 +369,7 @@ public class PassthroughConnection implements Connection {
     }
     
     // Tell all of our still-open end-points to reconnect to the server.
-    for (PassthroughEntityClientEndpoint endpoint : this.localEndpoints.values()) {
+    for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
       byte[] extendedData = endpoint.getExtendedReconnectData();
       PassthroughMessage message = endpoint.buildReconnectMessage(extendedData);
       // Send the message directly to the new process, waiting for all acks.

@@ -36,12 +36,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 
   private final ServerEntityService<M, R> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
-  private final Map<String, ActiveServerEntity<?, ?>> activeMap = new HashMap<String, ActiveServerEntity<?, ?>>();
-  private final Map<String, PassiveServerEntity<?, ?>> passiveMap = new HashMap<String, PassiveServerEntity<?, ?>>();
-  private final Map<String, MessageCodec<?, ?>> codecs = new HashMap<String, MessageCodec<?, ?>>();
+  private final Map<String, ActiveServerEntity<M, R>> activeMap = new HashMap<String, ActiveServerEntity<M, R>>();
+  private final Map<String, PassiveServerEntity<M, R>> passiveMap = new HashMap<String, PassiveServerEntity<M, R>>();
+  private final Map<String, MessageCodec<M, R>> codecs = new HashMap<String, MessageCodec<M, R>>();
   private final Map<String, byte[]> configMap = new HashMap<String, byte[]>();
   private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
-  private final Map<ClientDescriptor, FakeEndpoint<?>> endpoints = new HashMap<ClientDescriptor, FakeEndpoint<?>>();
+  private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
   
   private int nextClientID = 1;
 
@@ -71,11 +71,11 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     return didCreate;
   }
   
-  public EntityClientEndpoint connectNewClientToEntity(String name) {
-    FakeEndpoint<?> endpoint = null;
+  public EntityClientEndpoint<M, R> connectNewClientToEntity(String name) {
+    FakeEndpoint endpoint = null;
     if (activeMap.containsKey(name)) {
       ClientDescriptor descriptor = new FakeClientDescriptor(nextClientID);
-      MessageCodec<?, ?> codec = codecs.get(name);
+      MessageCodec<M, R> codec = codecs.get(name);
       endpoint = getEndpoint(name, descriptor, codec);
       endpoints.put(descriptor, endpoint);
       nextClientID += 1;
@@ -85,21 +85,21 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     return endpoint;
   }
 
-  private <R extends EntityResponse> FakeEndpoint<R> getEndpoint(String name, ClientDescriptor descriptor, MessageCodec<?, R> codec) {
-    return new FakeEndpoint<R>(name, descriptor, codec);
+  private FakeEndpoint getEndpoint(String name, ClientDescriptor descriptor, MessageCodec<M, R> codec) {
+    return new FakeEndpoint(name, descriptor, codec);
   }
   
 
   @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
-    FakeEndpoint<?> endpoint = endpoints.get(clientDescriptor);
+    FakeEndpoint endpoint = endpoints.get(clientDescriptor);
     byte[] payload = endpoint.serializeResponse(message);
     endpoint.sendNoResponse(payload);
   }
 
   @Override
   public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
-    FakeEndpoint<?> endpoint = endpoints.get(clientDescriptor);
+    FakeEndpoint endpoint = endpoints.get(clientDescriptor);
     byte[] payload = endpoint.serializeResponse(message);
     endpoints.get(clientDescriptor).sendNoResponse(payload);
     return Futures.immediateFuture(null);
@@ -112,13 +112,13 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
   }
   
-  private class FakeEndpoint<R extends EntityResponse> implements EntityClientEndpoint {
+  private class FakeEndpoint implements EntityClientEndpoint<M, R> {
     private EndpointDelegate delegate;
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
-    private final MessageCodec<?, R> codec;
+    private final MessageCodec<M, R> codec;
     
-    public FakeEndpoint(String name, ClientDescriptor clientDescriptor, MessageCodec<?, R> codec) {
+    public FakeEndpoint(String name, ClientDescriptor clientDescriptor, MessageCodec<M, R> codec) {
       this.entityName = name;
       this.clientDescriptor = clientDescriptor;
       this.codec = codec;
@@ -155,7 +155,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public InvocationBuilder beginInvoke() {
+    public InvocationBuilder<M, R> beginInvoke() {
       return new StripeInvocationBuilder(
           this.clientDescriptor,
           PassthroughStripe.this.activeMap.get(this.entityName),
@@ -192,13 +192,14 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       return this.id;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
       return ((FakeClientDescriptor)obj).id == this.id;
     }
   }
 
-  private class StripeInvocationBuilder<M extends EntityMessage, R extends EntityResponse> implements InvocationBuilder<M, R> {
+  private class StripeInvocationBuilder implements InvocationBuilder<M, R> {
     private final ClientDescriptor clientDescriptor;
     private final ActiveServerEntity<M, R> activeServerEntity;
     private final MessageCodec<M, R> codec;
@@ -219,31 +220,31 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public InvocationBuilder ackSent() {
+    public InvocationBuilder<M, R> ackSent() {
       // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder ackReceived() {
+    public InvocationBuilder<M, R> ackReceived() {
       // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder ackCompleted() {
+    public InvocationBuilder<M, R> ackCompleted() {
       // ACKs ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder replicate(boolean requiresReplication) {
+    public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       // Replication ignored in this implementation.
       return this;
     }
 
     @Override
-    public InvocationBuilder message(M message) {
+    public InvocationBuilder<M, R> message(M message) {
       this.request = message;
       return this;
     }
