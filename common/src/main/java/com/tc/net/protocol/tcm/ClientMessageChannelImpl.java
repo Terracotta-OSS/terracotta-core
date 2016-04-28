@@ -45,6 +45,7 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
 
 
@@ -214,11 +215,21 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     final ClientHandshakeMessage rv = (ClientHandshakeMessage) createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     rv.setClientVersion(clientVersion);
     rv.setEnterpriseClient(isEnterpriseClient);
+    rv.setClientPID(getPID());
     return rv;
   }
 
   @Override
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
     return this;
+  }
+
+  private int getPID() {
+    String vmName = ManagementFactory.getRuntimeMXBean().getName();
+    int index = vmName.indexOf('@');
+
+    if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
+
+    return Integer.parseInt(vmName.substring(0, index));
   }
 }

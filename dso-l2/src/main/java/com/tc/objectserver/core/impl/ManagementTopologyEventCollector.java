@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
@@ -53,6 +54,7 @@ import org.terracotta.monitoring.ServerState;
  * consistent state and symmetry of events.
  */
 public class ManagementTopologyEventCollector implements ITopologyEventCollector {
+  public static final String CLIENT_PID_CONST_NAME = "CLIENT_PID_FOR_MONITORING";
   // Note that serviceInterface may be null if there isn't an IMonitoringProducer service registered.
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
@@ -171,7 +173,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // Create the structure to describe this client.
       TCSocketAddress localAddress = channel.getLocalAddress();
       TCSocketAddress remoteAddress = channel.getRemoteAddress();
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort());
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort(), (long)channel.getAttachment(CLIENT_PID_CONST_NAME));
       // We will use the ClientID long value as the node name.
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
@@ -221,7 +223,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void clientDidFetchEntity(ClientID client, EntityID id) {
+  public synchronized void clientDidFetchEntity(ClientID client, EntityID id, ClientDescriptor clientDescriptor) {
     // XXX: Note that there is currently no handling of reconnect on entity promotion from passive to active so there may
     // be double-counting, here.
     FetchTuple tuple = new FetchTuple(client, id);
@@ -236,7 +238,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     if (null != this.serviceInterface) {
       String clientIdentifier = clientIdentifierForService(client);
       String entityIdentifier = entityIdentifierForService(id);
-      PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier);
+      PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
       String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
       this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
     }
