@@ -195,6 +195,7 @@ import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.services.CommunicatorResponseHandler;
 import com.tc.services.CommunicatorService;
+import com.tc.services.EntityMessengerProvider;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
@@ -627,6 +628,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
+    
+    // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
+    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(voltronMessageSink);
+    this.serviceRegistry.registerBuiltin(messengerProvider);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
     if (restartable) {

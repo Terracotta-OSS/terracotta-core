@@ -175,14 +175,17 @@ public class ProcessTransactionHandler {
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
     ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
-    if (null != oldestTransactionOnClient) {
-      // This client still needs transaction order persistence.
-      this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
-    } else {
-      // This is probably a disconnect: we can discard transaction order persistence for this client.
-      this.transactionOrderPersistor.removeTrackingForClient(sourceNodeID);
-      // And the entity journal persistence.
-      this.entityPersistor.removeTrackingForClient(sourceNodeID);
+    // (Note that synthetic messages have a null sourceNodeID)
+    if (null != sourceNodeID) {
+      if (null != oldestTransactionOnClient) {
+        // This client still needs transaction order persistence.
+        this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+      } else {
+        // This is probably a disconnect: we can discard transaction order persistence for this client.
+        this.transactionOrderPersistor.removeTrackingForClient(sourceNodeID);
+        // And the entity journal persistence.
+        this.entityPersistor.removeTrackingForClient(sourceNodeID);
+      }
     }
     serverEntityRequest.received();
     if (didAlreadyHandle) {
