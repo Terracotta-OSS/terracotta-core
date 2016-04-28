@@ -27,14 +27,16 @@ import org.terracotta.entity.ServiceConfiguration;
 
 public interface PassthroughBuiltInServiceProvider {
   /**
-   * Get an instance of service from the provider.
+   * Get an instance of service from the provider for the entity with the corresponding class, name, and consumerID.
    *
+   * @param entityClassName The fully-qualified name of the class (can be null if the entity is synthetic)
+   * @param entityName The name of the entity instance (can be null if the entity is synthetic)
    * @param consumerID The unique ID used to name-space the returned service
    * @param container The container which will eventually hold the entity instance (may be null if this is a non-entity consumer)
    * @param configuration Service configuration which is to be used
    * @return service instance
    */
-  <T> T getService(long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration);
+  <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration);
 
   /**
    * Since a service provider can know how to build more than one type of service, this method allows the platform to query

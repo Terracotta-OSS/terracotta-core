@@ -121,7 +121,7 @@ public class PassthroughServerProcess implements MessageHandler {
   @SuppressWarnings("deprecation")
   public void start(boolean shouldLoadStorage) {
     // We can now get the service registry for the platform.
-    this.platformServiceRegistry = getNextServiceRegistry(null);
+    this.platformServiceRegistry = getNextServiceRegistry(null, null, null);
     // See if we have persistence support.
     IPersistentStorage persistentStorage = preparePersistentStorage(shouldLoadStorage);
     if (null != persistentStorage) {
@@ -133,10 +133,10 @@ public class PassthroughServerProcess implements MessageHandler {
       for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
         // This is an entity consumer so we use the deferred container.
         DeferredEntityContainer container = new DeferredEntityContainer();
+        EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
         // Create the registry for the entity.
-        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(consumerID, this.serviceProviders, this.builtInServiceProviders, container);
+        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.builtInServiceProviders, container);
         // Construct the entity.
-        EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);        
         ServerEntityService<?, ?> service = null;
         try {
           service = getServerEntityServiceForVersion(entityData.className, entityData.entityName, entityData.version);
@@ -528,7 +528,8 @@ public class PassthroughServerProcess implements MessageHandler {
     ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
     // This is an entity consumer so we use the deferred container.
     DeferredEntityContainer container = new DeferredEntityContainer();
-    PassthroughServiceRegistry registry = getNextServiceRegistry(container);
+    PassthroughServiceRegistry registry = getNextServiceRegistry(entityClassName, entityName, container);
+    // Before we create the entity, we want to store this information regarding class and name, since that might be needed by a service in its start up.
     CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry, consumerID);
     container.entity = newEntity;
     container.codec = service.getMessageCodec();
@@ -863,10 +864,10 @@ public class PassthroughServerProcess implements MessageHandler {
     }
   }
 
-  private PassthroughServiceRegistry getNextServiceRegistry(DeferredEntityContainer container) {
+  private PassthroughServiceRegistry getNextServiceRegistry(String entityClassName, String entityName, DeferredEntityContainer container) {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
-    return new PassthroughServiceRegistry(thisConsumerID, this.serviceProviders, this.builtInServiceProviders, container);
+    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.builtInServiceProviders, container);
   }
 
   private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {

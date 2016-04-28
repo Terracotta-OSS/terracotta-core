@@ -34,12 +34,16 @@ import com.google.common.collect.ImmutableMap;
  * The registry of services available on a PassthroughServer.
  */
 public class PassthroughServiceRegistry implements ServiceRegistry {
+  private final String entityClassName;
+  private final String entityName;
   private final long consumerID;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
   private final Map<Class<?>, PassthroughBuiltInServiceProvider> builtInServiceProviderMap;
   private final DeferredEntityContainer owningEntityContainer;
   
-  public PassthroughServiceRegistry(long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughBuiltInServiceProvider> builtInServiceProviders, DeferredEntityContainer container) {
+  public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughBuiltInServiceProvider> builtInServiceProviders, DeferredEntityContainer container) {
+    this.entityClassName = entityClassName;
+    this.entityName = entityName;
     this.consumerID = consumerID;
     
     Map<Class<?>, ServiceProvider> tempProviders = new HashMap<Class<?>, ServiceProvider>();
@@ -82,7 +86,7 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     PassthroughBuiltInServiceProvider provider = this.builtInServiceProviderMap.get(configuration.getServiceType());
     T service = null;
     if (null != provider) {
-      service = provider.getService(this.consumerID, this.owningEntityContainer, configuration);
+      service = provider.getService(this.entityClassName, this.entityName, this.consumerID, this.owningEntityContainer, configuration);
     }
     return service;
   }
