@@ -39,26 +39,24 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 public class DistributedObjectClientFactory {
   private final List<String> stripeMemberUris;
   private final TCSecurityManager securityManager;
   private final SecurityInfo      securityInfo;
   private final ProductID         productId;
-  private final UUID                      uuid;
   private final Properties        properties;
 
   public DistributedObjectClientFactory(List<String> stripeMemberUris, TCSecurityManager securityManager,
                                         SecurityInfo securityInfo, 
                                         ProductID productId,
-                                        UUID uuid, Properties properties) {
+                                        Properties properties) {
     this.stripeMemberUris = stripeMemberUris;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
     this.productId = productId;
-    this.uuid = uuid;
     this.properties = properties;
   }
 
@@ -93,13 +91,17 @@ public class DistributedObjectClientFactory {
 
     final ClusterInternal cluster = new ClusterImpl();
     
+    String uuid = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_UUID, UUID.getUUID().toString());
+    String name = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME, "");
+    
     DistributedObjectClient client = ClientFactory.createClient(configHelper, group, connectionComponents, cluster, securityManager,
         uuid,
+        name,
         productId);
 
     try {
       client.start();
-      String timeout = properties.getProperty("connection.timeout", "0");
+      String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
       if (!client.waitForConnection(Integer.parseInt(timeout), TimeUnit.MILLISECONDS)) {
 //  timed out, shutdown the extra threads and return null;
         client.shutdown();

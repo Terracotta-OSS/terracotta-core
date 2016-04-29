@@ -116,7 +116,8 @@ public class ServerClientHandshakeManager {
             throw new ClientHandshakeException("Client " + clientID + " connected after startup should have no existing wait contexts.");
           }
         }
-        handshake.getChannel().addAttachment(ManagementTopologyEventCollector.CLIENT_PID_CONST_NAME, handshake.getClientPID(), false);
+        handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
+            new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {
         // This is a client reconnecting after a restart.

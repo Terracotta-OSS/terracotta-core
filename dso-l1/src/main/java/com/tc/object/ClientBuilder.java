@@ -81,6 +81,8 @@ public interface ClientBuilder {
                                                       ClientHandshakeMessageFactory chmf, Sink<PauseContext> pauseSink,
                                                       SessionManager sessionManager,
                                                       ClusterInternalEventsGun clusterEventsGun,
+                                                      String uuid,
+                                                      String name,
                                                       String clientVersion,
                                                       Collection<ClientHandshakeCallback> callbacks);
 

@@ -249,7 +249,8 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     synchronized (this.stateLock) {
       return serverState.equals(StateManager.PASSIVE_STANDBY) ||
        serverState.equals(StateManager.ACTIVE_COORDINATOR) || 
-       serverState.equals(StateManager.PASSIVE_UNINITIALIZED);
+       serverState.equals(StateManager.PASSIVE_UNINITIALIZED) ||
+       serverState.equals(StateManager.PASSIVE_SYNCING);
     }
   }
 

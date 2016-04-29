@@ -110,9 +110,12 @@ public class StandardClientBuilder implements ClientBuilder {
   public ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
                                                              ClientHandshakeMessageFactory chmf, Sink<PauseContext> pauseSink,
                                                              SessionManager sessionManager,
-                                                             ClusterInternalEventsGun clusterEventsGun, String clientVersion,
+                                                             ClusterInternalEventsGun clusterEventsGun, 
+                                                             String uuid, 
+                                                             String name, 
+                                                             String clientVersion,
                                                              Collection<ClientHandshakeCallback> callbacks) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, clientVersion, callbacks);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, callbacks);
   }
 
   @Override

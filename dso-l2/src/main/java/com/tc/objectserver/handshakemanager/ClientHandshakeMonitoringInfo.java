@@ -16,10 +16,33 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
+package com.tc.objectserver.handshakemanager;
 
-public interface ClientHandshakeMessageFactory {
+/**
+ *
+ */
+public class ClientHandshakeMonitoringInfo {
+  public static String MONITORING_INFO_ATTACHMENT = "client_monitoring_info_attachment";
+  
+  private final int pid;
+  private final String uuid;
+  private final String name;
 
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient);
+  public ClientHandshakeMonitoringInfo(int pid, String uuid, String name) {
+    this.pid = pid;
+    this.uuid = uuid;
+    this.name = name;
+  }
 
+  public int getPid() {
+    return pid;
+  }
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

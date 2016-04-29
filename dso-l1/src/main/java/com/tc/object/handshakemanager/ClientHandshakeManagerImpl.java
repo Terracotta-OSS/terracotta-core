@@ -49,6 +49,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final TCLogger logger;
   private final SessionManager sessionManager;
   private final String clientVersion;
+  
+  private final String   uuid;
+  private final String name;
 
   private State state;
   private volatile boolean disconnected;
@@ -59,12 +62,15 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final ClusterInternalEventsGun clusterEventsGun;
 
   public ClientHandshakeManagerImpl(TCLogger logger, ClientHandshakeMessageFactory chmf,
-                                    SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, String clientVersion,
+                                    SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
+                                    String uuid, String name, String clientVersion,
                                     Collection<ClientHandshakeCallback> callbacks) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
     this.clusterEventsGun = clusterEventsGun;
+    this.uuid = uuid;
+    this.name = name;
     this.clientVersion = clientVersion;
     this.callBacks = callbacks;
     this.state = State.PAUSED;
@@ -97,7 +103,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     lock.lock();
     try {
       changeToStarting();
-      handshakeMessage = this.chmf.newClientHandshakeMessage(this.clientVersion, isEnterpriseClient());
+      handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient());
       notifyCallbackOnHandshake(handshakeMessage);
     } finally {
       lock.unlock();

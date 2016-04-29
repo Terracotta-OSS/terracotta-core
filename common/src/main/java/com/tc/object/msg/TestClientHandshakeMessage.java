@@ -32,6 +32,7 @@ import com.tc.util.Assert;
 import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -55,6 +56,8 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public List<SequenceID>                   transactionSequenceIDs         = new ArrayList<SequenceID>();
   public List<TransactionID>                   transactionIDs                 = new ArrayList<TransactionID>();
   private TestMessageChannel    channel;
+  private String                uuid;
+  private String                name;
   private String                clientVersion;
   private int                   pid;
   private final Set<ClientEntityReferenceContext> reconnectReferenceSet = new HashSet<ClientEntityReferenceContext>();
@@ -126,6 +129,26 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   @Override
   public void setClientVersion(String v) {
     this.clientVersion = v;
+  }
+
+  @Override
+  public void setUUID(String uuid) {
+    this.uuid = uuid;
+  }
+
+  @Override
+  public String getUUID() {
+    return this.uuid;
+  }
+
+  @Override
+  public String getName() {
+    return this.name;
+  }
+
+  @Override
+  public void setName(String name) {
+    this.name = name;
   }
 
   @Override
