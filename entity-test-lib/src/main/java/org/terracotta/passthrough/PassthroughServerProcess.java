@@ -20,6 +20,7 @@ package org.terracotta.passthrough;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -845,7 +846,7 @@ public class PassthroughServerProcess implements MessageHandler {
         // We don't have handling for this.
         Assert.unexpected(e);
       }
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, this.bindPort, localHost, CLIENT_PORT.getAndIncrement(), -1);
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localHost, this.bindPort, localHost, CLIENT_PORT.getAndIncrement(), Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]));
       String nodeName = clientIdentifierForService(connectionID);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }
