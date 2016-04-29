@@ -42,7 +42,7 @@ limitations under the License.
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>ipc-eventbus</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
