@@ -28,6 +28,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
@@ -175,8 +176,9 @@ public class ProcessTransactionHandler {
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
     ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
-    // (Note that synthetic messages have a null sourceNodeID)
-    if (null != sourceNodeID) {
+    // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
+    // don't have one (although sync messages shouldn't come down this path).
+    if (!ClientInstanceID.NULL_ID.equals(sourceNodeID)) {
       if (null != oldestTransactionOnClient) {
         // This client still needs transaction order persistence.
         this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);

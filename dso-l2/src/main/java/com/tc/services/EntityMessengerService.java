@@ -48,8 +48,7 @@ public class EntityMessengerService implements IEntityMessenger {
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();
     
-    ClientInstanceID clientInstanceID = null;
-    this.fakeDescriptor = new EntityDescriptor(owningEntity.getID(), clientInstanceID, owningEntity.getVersion());
+    this.fakeDescriptor = new EntityDescriptor(owningEntity.getID(), ClientInstanceID.NULL_ID, owningEntity.getVersion());
   }
 
   @Override
@@ -75,11 +74,11 @@ public class EntityMessengerService implements IEntityMessenger {
     }
     @Override
     public ClientID getSource() {
-      return null;
+      return ClientID.NULL_ID;
     }
     @Override
     public TransactionID getTransactionID() {
-      return null;
+      return TransactionID.NULL_ID;
     }
     @Override
     public EntityDescriptor getEntityDescriptor() {
@@ -99,7 +98,7 @@ public class EntityMessengerService implements IEntityMessenger {
     }
     @Override
     public TransactionID getOldestTransactionOnClient() {
-      return null;
+      return TransactionID.NULL_ID;
     }
   }
 }
