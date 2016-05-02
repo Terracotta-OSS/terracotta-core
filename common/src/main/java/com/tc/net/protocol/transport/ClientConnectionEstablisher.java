@@ -394,7 +394,7 @@ public class ClientConnectionEstablisher {
   static class AsyncReconnect implements Runnable {
     private static final TCLogger             logger             = TCLogging.getLogger(AsyncReconnect.class);
     private final ClientConnectionEstablisher cce;
-    private volatile boolean                  stopped            = false;
+    private boolean                  stopped            = false;
     private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<ConnectionRequest>();
     private Thread                            connectionEstablisherThread;
     private boolean                           disableThreadSpawn = false;
@@ -403,7 +403,7 @@ public class ClientConnectionEstablisher {
       this.cce = cce;
     }
 
-    public boolean isStopped() {
+    public synchronized boolean isStopped() {
       return stopped;
     }
     
@@ -488,35 +488,37 @@ public class ClientConnectionEstablisher {
 
     @Override
     public void run() {
-      while (!stopped) {
+      logger.info("Connection establisher starting.");
+      while (!isStopped()) {
         ConnectionRequest request = waitUntilRequestAvailableOrStopped();
-        if (stopped) {
-          break;
-        }
-        if (request == null) { throw new AssertionError("AsyncReconnect not stopped yet, but next request was null"); }
-
-        logger.info("Handling connection request: " + request);
-        ClientMessageTransport cmt = request.getClientMessageTransport();
-        try {
-          switch (request.getType()) {
-            case RECONNECT:
-              this.cce.reconnect(cmt);
-              break;
-            case RESTORE_CONNECTION:
-              RestoreConnectionRequest req = (RestoreConnectionRequest) request;
-              this.cce.restoreConnection(req.getClientMessageTransport(), req.getSocketAddress(),
-                                         req.getTimeoutMillis(), req.getCallback());
-              break;
-            default:
-              throw new AssertionError("Unknown connection request type - " + request.getType());
+        if (request != null) {
+          logger.info("Handling connection request: " + request);
+          ClientMessageTransport cmt = request.getClientMessageTransport();
+          try {
+            switch (request.getType()) {
+              case RECONNECT:
+                this.cce.reconnect(cmt);
+                break;
+              case RESTORE_CONNECTION:
+                RestoreConnectionRequest req = (RestoreConnectionRequest) request;
+                this.cce.restoreConnection(req.getClientMessageTransport(), req.getSocketAddress(),
+                                           req.getTimeoutMillis(), req.getCallback());
+                break;
+              default:
+                throw new AssertionError("Unknown connection request type - " + request.getType());
+            }
+          } catch (MaxConnectionsExceededException e) {
+            String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
+            CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
+            if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
+            return;
+          } catch (Throwable t) {
+            if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
           }
-        } catch (MaxConnectionsExceededException e) {
-          String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-          CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
-          if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
-          return;
-        } catch (Throwable t) {
-          if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
+        } else {
+          if (!isStopped()) {
+            throw new AssertionError("AsyncReconnect not stopped yet, but next request was null");
+          }
         }
       }
       logger.info("Connection establisher exiting.");

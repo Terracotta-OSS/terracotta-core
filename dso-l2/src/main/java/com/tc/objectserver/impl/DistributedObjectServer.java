@@ -877,9 +877,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private StageController createStageController() {
     StageController control = new StageController();
-//  PASSIVE-UNINITIALIZED handle replicate messages right away.  SYNC also needs to be handled
+//  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
-//  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC goes away
+//  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC also needs to be handled.
+    control.addStageToState(StateManager.PASSIVE_SYNCING, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+//  REPLICATION needs to continue in STANDBY so include that stage here. SYNC goes away
     control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start

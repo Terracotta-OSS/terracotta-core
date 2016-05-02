@@ -315,7 +315,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 //  mutliple tests can be running in the same JVM so this is kind of bogus.
 //  just wait until they all finish.  If there is a problem in one of the 
 //  tests, things will just hang.
-          t.join();
+          t.join(5000);
         } catch (InterruptedException ie) {
           throw Assert.failure("trouble joining", ie);
         }
@@ -346,6 +346,17 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   private void shutdown() {
     shutdown(groupManagers, 0, groupManagers.length);
+    Thread[] allThreads = ThreadDumpUtil.getAllThreads();
+//  clean up threads from previous run
+    for (Thread t : allThreads) {
+      if (t.isAlive() && t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME)) {
+        try {
+          t.join();
+        } catch (InterruptedException ie) {
+          throw new AssertionError("trouble shutting down test", ie);
+        }
+      }
+    }
   }
 
   private void shutdown(TCGroupManagerImpl[] groupMgr, int start, int end) {
