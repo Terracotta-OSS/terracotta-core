@@ -151,12 +151,16 @@ public class ReplicatedTransactionHandler {
     TransactionID transactionID = rep.getTransactionID();
     TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
 
-    if (!oldestTransactionOnClient.isNull()) {
-      this.orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
-    } else {
-      // This corresponds to a disconnect.
-      this.orderedTransactions.removeTrackingForClient(sourceNodeID);
-      this.entityPersistor.removeTrackingForClient(sourceNodeID);
+    // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
+    // don't have one (although sync messages shouldn't come down this path).
+    if (!ClientInstanceID.NULL_ID.equals(sourceNodeID)) {
+      if (!oldestTransactionOnClient.isNull()) {
+        this.orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+      } else {
+        // This corresponds to a disconnect.
+        this.orderedTransactions.removeTrackingForClient(sourceNodeID);
+        this.entityPersistor.removeTrackingForClient(sourceNodeID);
+      }
     }
 
     long version = rep.getVersion();
