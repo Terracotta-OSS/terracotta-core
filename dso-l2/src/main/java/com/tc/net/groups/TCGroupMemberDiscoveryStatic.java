@@ -52,17 +52,18 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final AtomicBoolean                      stopAttempt             = new AtomicBoolean(false);
   private final Map<String, DiscoveryStateMachine> nodeStateMap            = new ConcurrentHashMap<>();
   private final TCGroupManagerImpl                 manager;
-  private Node                                     local;
+  private final Node                                     local;
   private Integer                                  joinedNodes             = 0;
   private final HashSet<String>                    nodeThreadConnectingSet = new HashSet<>();
 
-  public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager) {
+  public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager,Node local) {
     this.manager = manager;
+    this.local = local;
   }
 
   @Override
   public void setupNodes(Node local, Node[] nodes) {
-    this.local = local;
+    Assert.assertEquals(this.local, local);
     for (Node node : nodes) {
       DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);
       DiscoveryStateMachine old = nodeStateMap.put(getNodeName(node), stateMachine);
@@ -219,7 +220,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private void removeNodeFromConnectingSet(String nodeName) {
     synchronized (local) {
       nodeThreadConnectingSet.remove(nodeName);
-      if (nodeThreadConnectingSet.size() == 0) local.notifyAll();
+      if (nodeThreadConnectingSet.isEmpty()) local.notifyAll();
     }
   }
 

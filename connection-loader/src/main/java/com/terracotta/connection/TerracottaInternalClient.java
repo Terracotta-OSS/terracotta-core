@@ -45,8 +45,6 @@ public interface TerracottaInternalClient {
    * Returns whether this client is initialized or not
    */
   boolean isInitialized();
-
-  String getUuid();
   
   /**
    * Required for TerracottaConnectionService Connection instantiation.

@@ -129,7 +129,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   }
 
   private boolean validateState(State state) {
-    return StateManager.validStates.contains(state);
+    return StateManager.VALID_STATES.contains(state);
   }
 
 
@@ -249,7 +249,8 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     synchronized (this.stateLock) {
       return serverState.equals(StateManager.PASSIVE_STANDBY) ||
        serverState.equals(StateManager.ACTIVE_COORDINATOR) || 
-       serverState.equals(StateManager.PASSIVE_UNINITIALIZED);
+       serverState.equals(StateManager.PASSIVE_UNINITIALIZED) ||
+       serverState.equals(StateManager.PASSIVE_SYNCING);
     }
   }
 

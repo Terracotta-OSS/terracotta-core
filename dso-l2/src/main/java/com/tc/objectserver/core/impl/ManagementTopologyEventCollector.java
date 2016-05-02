@@ -40,6 +40,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
@@ -54,7 +55,6 @@ import org.terracotta.monitoring.ServerState;
  * consistent state and symmetry of events.
  */
 public class ManagementTopologyEventCollector implements ITopologyEventCollector {
-  public static final String CLIENT_PID_CONST_NAME = "CLIENT_PID_FOR_MONITORING";
   // Note that serviceInterface may be null if there isn't an IMonitoringProducer service registered.
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
@@ -136,9 +136,21 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     if (node.equals(thisNode)) {
       this.isActiveState = StateManager.ACTIVE_COORDINATOR.getName().equals(state.getName());
     }
-    boolean passive = (StateManager.PASSIVE_STANDBY.getName().equals(state.getName()));
+    boolean syncing = false;
+    boolean standby = false;
+    if (!this.isActiveState) {
+      syncing = StateManager.PASSIVE_SYNCING.equals(state);
+      if (!syncing) {
+        standby = StateManager.PASSIVE_STANDBY.equals(state);
+      }
+    }
 
-    String stateValue = this.isActiveState ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : (passive) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE : PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
+    String stateValue = this.isActiveState ? 
+        PlatformMonitoringConstants.SERVER_STATE_ACTIVE : 
+          (standby) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE : 
+            (syncing) ? PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING : 
+                        PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
+    
     LOGGER.debug("state NODE:" + serverIdentifierForService(node) + " announcing state " + stateValue);
     // Set this in the monitoring interface.
     if (null != this.serviceInterface) {
@@ -173,8 +185,13 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // Create the structure to describe this client.
       TCSocketAddress localAddress = channel.getLocalAddress();
       TCSocketAddress remoteAddress = channel.getRemoteAddress();
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort(),
-              ((Integer)channel.getAttachment(CLIENT_PID_CONST_NAME)).longValue());
+      ClientHandshakeMonitoringInfo minfo = (ClientHandshakeMonitoringInfo)channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT);
+      Assert.assertNotNull(minfo);
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(
+          minfo.getUuid(),
+          minfo.getName(),
+          localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort(),
+              minfo.getPid() & 0xffffffffL);
       // We will use the ClientID long value as the node name.
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);

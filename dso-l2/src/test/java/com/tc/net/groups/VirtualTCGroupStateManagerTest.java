@@ -140,7 +140,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       TestStateManagerFactory state = new TestStateManagerFactory(stages, groupMgr[i], logger);
       managers[i] = state.getStateManager();
       groupMgr[i].routeMessages(L2StateMessage.class, state.getStateMessageSink());
-      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i]));
+      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i], allNodes[i]));
     }
 
     // joining
@@ -218,7 +218,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       TestStateManagerFactory state = new TestStateManagerFactory(stages, groupMgr[i], logger);
       managers[i] = state.getStateManager();
       groupMgr[i].routeMessages(L2StateMessage.class, state.getStateMessageSink());
-      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i]));
+      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i], allNodes[i]));
     }
 
     // Joining and Electing
@@ -231,10 +231,8 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     managers[0].waitForDeclaredActive();
     for (int i = 1; i < virtuals; ++i) {
       groupMgr[i].join(allNodes[i], nodeStore);
+      managers[i].moveToPassiveStandbyState();
       managers[i].startElection();
-    }
-    for (int i = virtuals; i < nodes; ++i) {
-      groupMgr[i].join(allNodes[i], nodeStore);
     }
 
     // verification
@@ -283,7 +281,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       TestStateManagerFactory state = new TestStateManagerFactory(stages, groupMgr[i], logger);
       managers[i] = state.getStateManager();
       groupMgr[i].routeMessages(L2StateMessage.class, state.getStateMessageSink());
-      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i]));
+      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i], allNodes[i]));
     }
 
     // the first node to be the active one
@@ -324,8 +322,12 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     while (nodesNeedToMoveToPassive > 0) {
       NodeID toBePassiveNode = joinedNodes.take();
       System.out.println("*** moveNodeToPassiveStandby -> " + toBePassiveNode);
-      managers[0].moveNodeToPassiveStandby(toBePassiveNode);
-      --nodesNeedToMoveToPassive;
+      for (int i=0;i<virtuals;i++) {
+        if (ids[i].equals(toBePassiveNode)) {
+          managers[i].moveToPassiveStandbyState();
+          --nodesNeedToMoveToPassive;
+        }
+      }
     }
     assertTrue(nodesNeedToMoveToPassive == 0);
 
@@ -338,15 +340,6 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     }
     assertEquals("Active coordinator", 1, activeCount);
     assertTrue("Node-0 must be active coordinator", managers[0].isActiveCoordinator());
-
-    // check API
-    try {
-      // active is supported not to move itself to passive stand-by
-      managers[0].moveNodeToPassiveStandby(ids[0]);
-      throw new RuntimeException("moveNodeToPassiveStandy expected to trows an expection");
-    } catch (Exception x) {
-      // expected
-    }
 
     System.out.println("*** Stop active and re-elect");
     // stop active node

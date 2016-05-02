@@ -19,11 +19,7 @@
 package com.tc.net.groups;
 
 import com.google.common.base.Throwables;
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
-import com.tc.async.api.StageManager;
-import com.tc.async.impl.ConfigurationContextImpl;
-import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -34,18 +30,15 @@ import com.tc.lang.TestThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
-import com.tc.util.concurrent.QueueFactory;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.apache.commons.io.FileUtils;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mock;
 
 
@@ -289,36 +282,33 @@ public class TCGroupStateManagerTest extends TCTestCase {
       ids[i] = groupMgr[i].join(allNodes[i], nodeStore);
     }
     
-    for (int i = 1; i < nodes; ++i) {
+    NodeID activeNode = ServerID.NULL_ID;
+    for (int i = 0; i < nodes; ++i) {
       managers[i].waitForDeclaredActive();
+      if (managers[i].isActiveCoordinator()) {
+        activeNode = ids[i];
+      }
     }
 
-    int nodesNeedToMoveToPassive = nodes - 1;
-    while (nodesNeedToMoveToPassive > 0) {
-      NodeID toBePassiveNode = joinedNodes.take();
-      System.out.println("*** moveNodeToPassiveStandby -> " + toBePassiveNode);
-      managers[0].moveNodeToPassiveStandby(toBePassiveNode);
-      --nodesNeedToMoveToPassive;
+    int passiveStandBys = 0;
+    for (int i=0;i < nodes; i++) {
+      if (!managers[i].isActiveCoordinator()) {
+        managers[i].moveToPassiveSyncing(activeNode);
+        managers[i].moveToPassiveStandbyState();
+        passiveStandBys++;
+      }
     }
-    assertTrue(nodesNeedToMoveToPassive == 0);
+    assertEquals("Passive standbys", nodes-1, passiveStandBys);
     // verification: first node must be active
     int activeCount = 0;
     for (int i = 0; i < nodes; ++i) {
+      managers[i].waitForDeclaredActive();
       boolean active = managers[i].isActiveCoordinator();
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + managers[i].getCurrentState());
     }
     assertEquals("Active coordinator", 1, activeCount);
     assertTrue("Node-0 must be active coordinator", managers[0].isActiveCoordinator());
-
-    // check API
-    try {
-      // active is supported not to move itself to passive stand-by
-      managers[0].moveNodeToPassiveStandby(ids[0]);
-      throw new RuntimeException("moveNodeToPassiveStandy expected to trows an expection");
-    } catch (Exception x) {
-      // expected
-    }
 
     System.out.println("*** Stop active and re-elect");
     // stop active node
@@ -346,7 +336,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(),
                                                    node.getPort(), node.getGroupPort(),
                                                    stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
-    gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
+    gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, node));
 
     return gm;
   }

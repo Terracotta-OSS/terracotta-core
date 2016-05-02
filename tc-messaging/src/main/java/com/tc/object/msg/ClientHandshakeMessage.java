@@ -29,7 +29,15 @@ public interface ClientHandshakeMessage extends TCMessage {
   void addLockContext(ClientServerExchangeLockContext ctxt);
 
   Collection<ClientServerExchangeLockContext> getLockContexts();
-
+  
+  void setUUID(String uuid);
+  
+  String getUUID();
+  
+  String getName();
+  
+  void setName(String name);
+  
   void setClientVersion(String v);
 
   String getClientVersion();

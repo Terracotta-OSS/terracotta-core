@@ -36,8 +36,6 @@ public class L2StateMessage extends AbstractGroupMessage {
   public static final int ABORT_ELECTION          = 4; // Sent in response to START_ELECTION by already elected ACTIVE
   public static final int ELECTION_WON            = 5; // Sent by the node that wins an election
   public static final int ELECTION_WON_ALREADY    = 6; // Sent to new nodes joining after the node wins an election and
-  // turns ACTIVE
-  public static final int MOVE_TO_PASSIVE_STANDBY = 7; // Sent by active to notify passive can become PASSIVE_STANDBY
 
   private Enrollment      enrollment;
 
@@ -93,8 +91,6 @@ public class L2StateMessage extends AbstractGroupMessage {
         return "ELECTION_WON";
       case ELECTION_WON_ALREADY:
         return "ELECTION_WON_ALREADY";
-      case MOVE_TO_PASSIVE_STANDBY:
-        return "MOVE_TO_PASSIVE_STANDBY";
       default:
         throw new AssertionError("Unknow Type ! : " + getType());
     }
@@ -130,9 +126,5 @@ public class L2StateMessage extends AbstractGroupMessage {
 
   public static L2StateMessage createElectionWonAlreadyMessage(Enrollment e) {
     return new L2StateMessage(L2StateMessage.ELECTION_WON_ALREADY, e);
-  }
-
-  public static L2StateMessage createMoveToPassiveStandbyMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.MOVE_TO_PASSIVE_STANDBY, e);
   }
 }

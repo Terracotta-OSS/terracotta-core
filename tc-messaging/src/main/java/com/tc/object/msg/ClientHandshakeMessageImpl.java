@@ -45,10 +45,14 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte   RECONNECT_REFERENCES     = 5;
   private static final byte   RESEND_MESSAGES          = 6;
   private static final byte   CLIENT_PID               = 7;
+  private static final byte   CLIENT_UUID              = 8;
+  private static final byte   CLIENT_NAME              = 9;
 
   private final Set<ClientServerExchangeLockContext> lockContexts             = new HashSet<ClientServerExchangeLockContext>();
   private long                currentLocalTimeMills    = System.currentTimeMillis();
   private boolean             enterpriseClient         = false;
+  private String                uuid                     = com.tc.util.UUID.NULL_ID.toString();
+  private String              name                     = "";
   private String              clientVersion            = "UNKNOWN";
   private int                 pid                      = -1;
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
@@ -90,6 +94,26 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
+  public void setUUID(String uuid) {
+    this.uuid = uuid;
+  }
+
+  @Override
+  public String getUUID() {
+    return this.uuid;
+  }
+
+  @Override
+  public String getName() {
+    return this.name;
+  }
+
+  @Override
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  @Override
   public void setClientVersion(String version) {
     this.clientVersion = version;
   }
@@ -120,6 +144,8 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       putNVPair(LOCK_CONTEXT, lockContext);
     }
     putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
+    putNVPair(CLIENT_UUID, this.uuid);
+    putNVPair(CLIENT_NAME, this.name);
     putNVPair(CLIENT_VERSION, this.clientVersion);
     putNVPair(CLIENT_PID, this.pid);
     putNVPair(LOCAL_TIME_MILLS, this.currentLocalTimeMills);
@@ -154,6 +180,12 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         return true;
       case CLIENT_PID:
         this.pid = getIntValue();
+        return true;
+      case CLIENT_UUID:
+        this.uuid = getStringValue();
+        return true;
+      case CLIENT_NAME:
+        this.name = getStringValue();
         return true;
       default:
         return false;

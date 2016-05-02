@@ -164,8 +164,7 @@ public class DistributedObjectClient implements TCClient {
   private ClientLockManager                          lockManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
-  private TCProperties                               l1Properties;
-  private boolean                                    createDedicatedMBeanServer          = false;
+
   private CounterManager                             counterManager;
   private ThreadIDManager                            threadIDManager;
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
@@ -175,7 +174,8 @@ public class DistributedObjectClient implements TCClient {
 
   private final TCSecurityManager                    securityManager;
 
-  private final UUID                                 uuid;
+  private final String                                 uuid;
+  private final String                               name;
 
   private final TaskRunner                           taskRunner;
 
@@ -193,13 +193,13 @@ public class DistributedObjectClient implements TCClient {
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster) {
     this(config, threadGroup, connectionComponents, cluster, null,
-        UUID.NULL_ID, null);
+        UUID.NULL_ID.toString(), "", null);
   }
 
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster, TCSecurityManager securityManager,
-                                 UUID uuid, ProductID productId) {
+                                 String uuid, String name, ProductID productId) {
     this.productId = productId;
     Assert.assertNotNull(config);
     this.config = config;
@@ -210,6 +210,7 @@ public class DistributedObjectClient implements TCClient {
     this.threadIDMap = new ThreadIDMapImpl();
     this.clientBuilder = createClientBuilder();
     this.uuid = uuid;
+    this.name = name;
     this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(threadGroup);
     this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
     Runtime.getRuntime().addShutdownHook(this.shutdownAction);
@@ -252,10 +253,6 @@ public class DistributedObjectClient implements TCClient {
     } else {
       DSO_LOGGER.error("LockManager not initialised still. LockInfo for threads cannot be updated");
     }
-  }
-
-  public void setCreateDedicatedMBeanServer(boolean createDedicatedMBeanServer) {
-    this.createDedicatedMBeanServer = createDedicatedMBeanServer;
   }
 
   private void validateSecurityConfig() {
@@ -313,8 +310,6 @@ public class DistributedObjectClient implements TCClient {
     validateSecurityConfig();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
-    final boolean checkClientServerVersions = tcProperties.getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
-    this.l1Properties = tcProperties.getPropertiesFor(TCPropertiesConsts.L1_CATEGORY);
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
     final SessionManager sessionManager = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
@@ -434,7 +429,7 @@ public class DistributedObjectClient implements TCClient {
         .createClientHandshakeManager(new ClientIDLogger(this.channel, TCLogging
                                           .getLogger(ClientHandshakeManagerImpl.class)), this.channel
                                           .getClientHandshakeMessageFactory(), pauseSink, sessionManager,
-                                      cluster, pInfo.version(), Collections
+                                      cluster, this.uuid, this.name, pInfo.version(), Collections
                                           .unmodifiableCollection(clientHandshakeCallbacks));
 
     ClientChannelEventController.connectChannelEventListener(channel, pauseSink, clientHandshakeManager);
@@ -755,7 +750,7 @@ public class DistributedObjectClient implements TCClient {
 
   @Override
   public String getUUID() {
-    return uuid.toString();
+    return uuid;
   }
 
   private static class TCThreadGroupCleanerRunnable implements Runnable {

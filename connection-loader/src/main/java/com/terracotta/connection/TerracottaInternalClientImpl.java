@@ -37,7 +37,6 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     private static final long serialVersionUID = 1L;
   }
 
-  private final UUID                  clientUUID;
   private final DistributedObjectClientFactory clientCreator;
   private volatile ClientHandle       clientHandle;
   private volatile boolean            shutdown             = false;
@@ -45,7 +44,6 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId, Properties props) {
     try {
-      this.clientUUID = UUID.getUUID();
       this.clientCreator = buildClientCreator(stripeConnectionConfig, productId, props);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -58,7 +56,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
          null,  // no security features
          new SecurityInfo(false, null),  // no security info
          productId,
-         clientUUID, props);
+         props);
   }
 
   @Override
@@ -72,11 +70,6 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     } else {
       throw new TimeoutException();
     }
-  }
-
-  @Override
-  public String getUuid() {
-    return this.clientUUID.toString();
   }
 
   @Override

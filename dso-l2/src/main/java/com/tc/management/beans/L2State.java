@@ -55,7 +55,7 @@ public class L2State implements StateChangeListener {
   }
 
   private boolean validateState(State state) {
-    return StateManager.validStates.contains(state);
+    return StateManager.VALID_STATES.contains(state);
   }
 
   @Override

@@ -65,7 +65,7 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
-  public void moveNodeToPassiveStandby(NodeID nodeID) {
+  public void moveToPassiveSyncing(NodeID connectedTo) {
     isActive = false;
   }
 

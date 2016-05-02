@@ -221,6 +221,7 @@ public class ReplicatedTransactionHandler {
   
   private void requestPassiveSync() {
     NodeID node = stateManager.getActiveNodeID();
+    moveToPassiveUnitialized(node);
     try {
       LOGGER.info("Requesting Passive Sync from " + node);
       groupManager.sendTo(node, new ReplicationMessageAck(ReplicationMessage.START));
@@ -300,6 +301,12 @@ public class ReplicatedTransactionHandler {
           throw new RuntimeException(ee);
         }
       }
+    }
+  }
+  
+  private void moveToPassiveUnitialized(NodeID connectedTo) {
+    if (!stateManager.isActiveCoordinator()) {
+      stateManager.moveToPassiveSyncing(connectedTo);
     }
   }
   

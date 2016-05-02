@@ -35,7 +35,6 @@ import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionID;
@@ -211,11 +210,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public ClientHandshakeMessage newClientHandshakeMessage(String clientVersion, boolean isEnterpriseClient) {
+  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient) {
     final ClientHandshakeMessage rv = (ClientHandshakeMessage) createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     rv.setClientVersion(clientVersion);
     rv.setEnterpriseClient(isEnterpriseClient);
     rv.setClientPID(getPID());
+    rv.setUUID(uuid);
+    rv.setName(name);
     return rv;
   }
 

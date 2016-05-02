@@ -29,7 +29,10 @@ import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
+import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
+import com.tc.util.UUID;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
@@ -192,10 +195,13 @@ public class ManagementTopologyEventCollectorTest {
     reset(monitoringProducer);
 
     final int TEST_CLIENT_PID = 2498;
-
+    final String uuid = UUID.getUUID().toString();
+    final String name = "TEST";
+    
     // prepare and call collector.clientDidConnect(...)
     MessageChannel channel = mock(MessageChannel.class);
-    when(channel.getAttachment(any())).thenReturn(TEST_CLIENT_PID);
+    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name);
+    when(channel.getAttachment(Matchers.eq(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT))).thenReturn(info);
     when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("localhost", 1234));
     when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("localhost", 4567));
     ClientID client = mock(ClientID.class);
@@ -205,6 +211,8 @@ public class ManagementTopologyEventCollectorTest {
     ArgumentCaptor<PlatformConnectedClient> argumentCaptor = ArgumentCaptor.forClass(PlatformConnectedClient.class);
     verify(monitoringProducer).addNode(any(), any(), argumentCaptor.capture());
     Assert.assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
+    Assert.assertEquals(uuid, argumentCaptor.getValue().uuid);
+    Assert.assertEquals(name, argumentCaptor.getValue().name);
   }
 
   @Test

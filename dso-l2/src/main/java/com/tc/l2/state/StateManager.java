@@ -33,13 +33,15 @@ public interface StateManager {
   public static final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
   public static final State       RECOVERING           = new State("RECOVERING");
   public static final State       PASSIVE_UNINITIALIZED = new State("PASSIVE-UNINITIALIZED");
+  public static final State       PASSIVE_SYNCING = new State("PASSIVE-SYNCING");
   public static final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public static final State       START_STATE          = new State("START-STATE");
   public static final State       STOP_STATE           = new State("STOP-STATE");
-  public static final List<State> validStates          = Collections.unmodifiableList(Arrays
-                                                           .asList(START_STATE, PASSIVE_UNINITIALIZED, PASSIVE_STANDBY,
+  public static final List<State> VALID_STATES          = Collections.unmodifiableList(Arrays
+                                                           .asList(START_STATE, PASSIVE_UNINITIALIZED, PASSIVE_SYNCING, PASSIVE_STANDBY,
                                                                    ACTIVE_COORDINATOR, STOP_STATE, RECOVERING));
-
+  public static final List<State> PASSIVE_STATES          = Collections.unmodifiableList(Arrays
+                                                           .asList(PASSIVE_UNINITIALIZED, PASSIVE_SYNCING, PASSIVE_STANDBY));
   public void startElection();
 
   public State getCurrentState();
@@ -52,8 +54,8 @@ public interface StateManager {
 
   public boolean isActiveCoordinator();
 
-  public void moveNodeToPassiveStandby(NodeID nodeID);
-
+  public void moveToPassiveSyncing(NodeID connectedTo);
+  
   public void moveToPassiveStandbyState();
 
   public void publishActiveState(NodeID nodeID) throws GroupException;
