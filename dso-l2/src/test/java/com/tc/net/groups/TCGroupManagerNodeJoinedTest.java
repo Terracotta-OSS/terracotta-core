@@ -126,7 +126,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                      allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
-      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
+      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
       MyGroupEventListener gel = new MyGroupEventListener(gm);
@@ -179,7 +179,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                      allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
-      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
+      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
       gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
@@ -245,7 +245,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
                                                      allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
-      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
+      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
       gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
@@ -309,12 +309,24 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     Thread[] allThreads = ThreadDumpUtil.getAllThreads();
     int count = 0;
     for (Thread t : allThreads) {
-      if (t.getName().contains(absentThreadName)) {
-        System.out.println("XXX " + t);
-        for (StackTraceElement ste : t.getStackTrace()) {
-          System.out.println("   " + ste);
+      if (t.isAlive() && t.getName().contains(absentThreadName)) {
+//  one more chance to wait for death
+        try {
+//  mutliple tests can be running in the same JVM so this is kind of bogus.
+//  just wait until they all finish.  If there is a problem in one of the 
+//  tests, things will just hang.
+          t.join();
+        } catch (InterruptedException ie) {
+          throw Assert.failure("trouble joining", ie);
         }
-        count++;
+        if (t.isAlive()) {
+//  still alive, track it
+          System.out.println("XXX " + t);
+          for (StackTraceElement ste : t.getStackTrace()) {
+            System.out.println("   " + ste);
+          }
+          count++;
+        }
       }
     }
     System.out.println("XXX count = " + count + "; allowedlimit = " + allowedLimit);

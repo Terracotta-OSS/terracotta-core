@@ -103,7 +103,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
     for (int i = 0; i < n; ++i) {
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
-      groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));
+      groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);
       System.out.println("Starting " + groups[i]);

@@ -140,7 +140,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       TestStateManagerFactory state = new TestStateManagerFactory(stages, groupMgr[i], logger);
       managers[i] = state.getStateManager();
       groupMgr[i].routeMessages(L2StateMessage.class, state.getStateMessageSink());
-      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i]));
+      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i], allNodes[i]));
     }
 
     // joining
@@ -218,7 +218,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       TestStateManagerFactory state = new TestStateManagerFactory(stages, groupMgr[i], logger);
       managers[i] = state.getStateManager();
       groupMgr[i].routeMessages(L2StateMessage.class, state.getStateMessageSink());
-      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i]));
+      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i], allNodes[i]));
     }
 
     // Joining and Electing
@@ -281,7 +281,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       TestStateManagerFactory state = new TestStateManagerFactory(stages, groupMgr[i], logger);
       managers[i] = state.getStateManager();
       groupMgr[i].routeMessages(L2StateMessage.class, state.getStateMessageSink());
-      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i]));
+      groupMgr[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupMgr[i], allNodes[i]));
     }
 
     // the first node to be the active one

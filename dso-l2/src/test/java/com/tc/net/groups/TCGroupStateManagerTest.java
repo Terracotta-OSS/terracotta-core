@@ -336,7 +336,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(),
                                                    node.getPort(), node.getGroupPort(),
                                                    stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
-    gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
+    gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, node));
 
     return gm;
   }

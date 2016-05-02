@@ -159,12 +159,12 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, NodesStore nodesStore, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, nodesStore, securityManager, weightGenerator);
+                            ServerID thisNodeID, Node thisNode, NodesStore nodesStore, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, nodesStore, securityManager, weightGenerator);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, NodesStore nodesStore,
+                            StageManager stageManager, ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
                             TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
@@ -194,7 +194,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     }
     init(socketAddress);
     Assert.assertNotNull(thisNodeID);
-    setDiscover(new TCGroupMemberDiscoveryStatic(this));
+    setDiscover(new TCGroupMemberDiscoveryStatic(this, thisNode));
 
     nodesStore.registerForTopologyChange(this);
     registerForGroupEvents(new OperatorEventsNodeConnectionListener(nodesStore));
@@ -412,6 +412,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     // discover must be started before listener thread to avoid missing nodeJoined group events.
     debugInfo("Starting discover... thisNode: " + thisNode + ", otherNodes: " + Arrays.asList(nodesStore.getAllNodes()));
+//    discover = new TCGroupMemberDiscoveryStatic(this, thisNode);
     discover.setupNodes(thisNode, nodesStore.getAllNodes());
     discover.start();
     try {
@@ -652,8 +653,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   public Collection<TCGroupMember> getMembers() {
     return Collections.unmodifiableCollection(members.values());
   }
-
-  public void setDiscover(TCGroupMemberDiscovery discover) {
+//  FOR TESTING ONLY
+  void setDiscover(TCGroupMemberDiscovery discover) {
     this.discover = discover;
   }
 
