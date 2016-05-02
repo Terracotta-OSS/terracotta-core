@@ -58,14 +58,13 @@ public class DummyStateManager implements StateManager {
   }
 
   @Override
-  public void moveNodeToPassiveStandby(NodeID nodeID) {
-    throw new UnsupportedOperationException();
-  }
-
-
-  @Override
   public void registerForStateChangeEvents(StateChangeListener listener) {
     stateListeners.add(listener);
+  }
+
+  @Override
+  public void moveToPassiveSyncing(NodeID connectedTo) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

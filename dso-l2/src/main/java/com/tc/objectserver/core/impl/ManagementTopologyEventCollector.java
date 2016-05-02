@@ -136,9 +136,21 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     if (node.equals(thisNode)) {
       this.isActiveState = StateManager.ACTIVE_COORDINATOR.getName().equals(state.getName());
     }
-    boolean passive = (StateManager.PASSIVE_STANDBY.getName().equals(state.getName()));
+    boolean syncing = false;
+    boolean standby = false;
+    if (!this.isActiveState) {
+      syncing = StateManager.PASSIVE_SYNCING.equals(state);
+      if (!syncing) {
+        standby = StateManager.PASSIVE_STANDBY.equals(state);
+      }
+    }
 
-    String stateValue = this.isActiveState ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : (passive) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE : PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
+    String stateValue = this.isActiveState ? 
+        PlatformMonitoringConstants.SERVER_STATE_ACTIVE : 
+          (standby) ? PlatformMonitoringConstants.SERVER_STATE_PASSIVE : 
+            (syncing) ? PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING : 
+                        PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
+    
     LOGGER.debug("state NODE:" + serverIdentifierForService(node) + " announcing state " + stateValue);
     // Set this in the monitoring interface.
     if (null != this.serviceInterface) {

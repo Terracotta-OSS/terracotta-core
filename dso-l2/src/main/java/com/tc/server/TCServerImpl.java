@@ -129,7 +129,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   }
 
   private boolean validateState(State state) {
-    return StateManager.validStates.contains(state);
+    return StateManager.VALID_STATES.contains(state);
   }
 
 

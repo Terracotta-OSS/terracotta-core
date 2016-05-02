@@ -82,10 +82,6 @@ public class L2StateMessageTest {
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createMoveToPassiveStandbyMessage(enrollment);
-    l2sm1 = writeAndRead(l2sm);
-    validate(l2sm, l2sm1);
-
     l2sm = L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment);
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
