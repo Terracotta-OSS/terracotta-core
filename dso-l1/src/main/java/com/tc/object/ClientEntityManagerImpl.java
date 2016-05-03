@@ -30,6 +30,7 @@ import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -145,7 +146,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     EntityClientEndpoint endpoint = this.objectStoreMap.get(entityDescriptor);
     if (endpoint != null) {
       EntityClientEndpointImpl endpointImpl = (EntityClientEndpointImpl) endpoint;
-      endpointImpl.handleMessage(message);
+      try {
+        endpointImpl.handleMessage(message);
+      } catch (MessageCodecException e) {
+        // For now (at least), we will fail on this codec exception since it indicates a serious bug in the entity
+        // implementation.
+        Assert.fail(e.getLocalizedMessage());
+      }
     } else {
       logger.info("Entity " + entityDescriptor + " not found. Ignoring message.");
     }

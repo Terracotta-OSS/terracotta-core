@@ -79,11 +79,12 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     this.delegate = delegate;
   }
   
-  public void handleMessage(byte[] message) {
+  public void handleMessage(byte[] message) throws MessageCodecException {
     // We technically allow messages to come back from the server, after we are closed, simple because it means that the
     // server hasn't yet handled the close.
     if (null != this.delegate) {
-      this.delegate.handleMessage(message);
+      R messageFromServer = this.codec.decodeResponse(message);
+      this.delegate.handleMessage(messageFromServer);
     }
   }
 
