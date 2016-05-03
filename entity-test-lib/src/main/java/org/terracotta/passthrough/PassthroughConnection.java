@@ -38,6 +38,7 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
@@ -209,7 +210,12 @@ public class PassthroughConnection implements Connection {
             byte[] result = new byte[length];
             input.readFully(result);
             // First we handle the invoke.
-            handleInvokeOnClient(clientInstanceID, result);
+            try {
+              handleInvokeOnClient(clientInstanceID, result);
+            } catch (MessageCodecException e) {
+              // Not expected (implies there is a serious bug in the entity being tested).
+              Assert.unexpected(e);
+            }
             // Now, we need to send this response as a sort of ack, to the server.  They typically don't wait for it but
             // they can.
             // TODO:  Remove this in favor of splitting the server-side execution thread from its message processing thread.
@@ -252,7 +258,7 @@ public class PassthroughConnection implements Connection {
     }
   }
 
-  private void handleInvokeOnClient(long clientInstanceID, byte[] result) {
+  private void handleInvokeOnClient(long clientInstanceID, byte[] result) throws MessageCodecException {
     this.localEndpoints.get(clientInstanceID).handleMessageFromServer(result);
   }
 

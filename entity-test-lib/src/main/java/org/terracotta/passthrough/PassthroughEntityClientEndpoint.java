@@ -22,6 +22,7 @@ import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -103,9 +104,10 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     }
   }
 
-  public void handleMessageFromServer(byte[] payload) {
+  public void handleMessageFromServer(byte[] payload) throws MessageCodecException {
     if (null != this.delegate) {
-      this.delegate.handleMessage(payload);
+      R fromServer = this.messageCodec.decodeResponse(payload);
+      this.delegate.handleMessage(fromServer);
     }
   }
 

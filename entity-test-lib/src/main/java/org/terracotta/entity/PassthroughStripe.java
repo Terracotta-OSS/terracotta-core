@@ -94,14 +94,24 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
     FakeEndpoint endpoint = endpoints.get(clientDescriptor);
     byte[] payload = endpoint.serializeResponse(message);
-    endpoint.sendNoResponse(payload);
+    try {
+      endpoint.sendNoResponse(payload);
+    } catch (MessageCodecException e) {
+      // Not expected in the testing environment.
+      Assert.fail(e.getLocalizedMessage());
+    }
   }
 
   @Override
   public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
     FakeEndpoint endpoint = endpoints.get(clientDescriptor);
     byte[] payload = endpoint.serializeResponse(message);
-    endpoints.get(clientDescriptor).sendNoResponse(payload);
+    try {
+      endpoints.get(clientDescriptor).sendNoResponse(payload);
+    } catch (MessageCodecException e) {
+      // Not expected in the testing environment.
+      Assert.fail(e.getLocalizedMessage());
+    }
     return Futures.immediateFuture(null);
   }
 
@@ -137,9 +147,10 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       return raw;
     }
 
-    public void sendNoResponse(byte[] payload) {
+    public void sendNoResponse(byte[] payload) throws MessageCodecException {
       if (null != this.delegate) {
-        this.delegate.handleMessage(payload);
+        R fromServer = this.codec.decodeResponse(payload);
+        this.delegate.handleMessage(fromServer);
       }
     }
 

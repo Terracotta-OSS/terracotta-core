@@ -151,9 +151,11 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       if (clientDescriptor == PassthroughEndpoint.this.clientDescriptor) {
         if (null != PassthroughEndpoint.this.delegate) {
           try {
+            // We will encode and decode the message, to simulate how this would function over a network.
             @SuppressWarnings("unchecked")
             byte[] payload = PassthroughEndpoint.this.codec.encodeResponse((R)message);
-            PassthroughEndpoint.this.delegate.handleMessage(payload);
+            R fromServer = PassthroughEndpoint.this.codec.decodeResponse(payload);
+            PassthroughEndpoint.this.delegate.handleMessage(fromServer);
           } catch (MessageCodecException e) {
             // Unexpected in this test.
             Assert.fail();
