@@ -88,7 +88,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   }
 
   @Override
-  public InvocationBuilder beginInvoke() {
+  public InvocationBuilder<M, R> beginInvoke() {
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
     return new InvocationBuilderImpl();
@@ -110,25 +110,25 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
-    public InvocationBuilder ackSent() {
+    public InvocationBuilder<M, R> ackSent() {
       acks.add(VoltronEntityMessage.Acks.SENT);
       return this;
     }
 
     @Override
-    public InvocationBuilder ackReceived() {
+    public InvocationBuilder<M, R> ackReceived() {
       acks.add(VoltronEntityMessage.Acks.RECEIVED);
       return this;
     }
 
     @Override
-    public InvocationBuilder ackCompleted() {
+    public InvocationBuilder<M, R> ackCompleted() {
       acks.add(VoltronEntityMessage.Acks.APPLIED);
       return this;
     }
 
     @Override
-    public InvocationBuilder replicate(boolean requiresReplication) {
+    public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       this.requiresReplication = requiresReplication;
       return this;
     }
