@@ -159,6 +159,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   private void cleanConnectionWithoutNotifyListeners() {
     List<MessageTransportListener> tl = new ArrayList<MessageTransportListener>(this.getTransportListeners());
     this.removeTransportListeners();
+    this.getConnectionEstablisher().reset();
     clearConnection();
     this.addTransportListeners(tl);
     this.status.reset();

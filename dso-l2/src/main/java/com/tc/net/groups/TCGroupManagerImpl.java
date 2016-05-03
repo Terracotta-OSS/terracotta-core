@@ -1096,19 +1096,23 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       }
     }
 
-    synchronized void handshakeTimeout() {
+    void handshakeTimeout() {
       cancelTimerTask();
-      if (current == STATE_SUCCESS) {
-        debugInfo("Handshake successed. Ignore timeout " + stateInfo(current));
-        return;
+      synchronized (this) {
+        if (current == STATE_SUCCESS) {
+          debugInfo("Handshake successed. Ignore timeout " + stateInfo(current));
+          return;
+        }
+        logger.warn("Group member handshake timeout. " + stateInfo(current));
       }
-      logger.warn("Group member handshake timeout. " + stateInfo(current));
       switchToState(STATE_FAILURE);
     }
 
-    synchronized void disconnected() {
-      debugWarn("[TCGroupHandshakeStateMachine]: Group member handshake disconnected. " + stateInfo(current)
+    void disconnected() {
+      synchronized (this) {
+        debugWarn("[TCGroupHandshakeStateMachine]: Group member handshake disconnected. " + stateInfo(current)
                 + ", for channel: " + channel);
+      }
       switchToState(STATE_FAILURE);
     }
 
