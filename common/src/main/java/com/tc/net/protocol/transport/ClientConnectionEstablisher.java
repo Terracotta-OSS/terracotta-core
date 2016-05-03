@@ -441,6 +441,7 @@ public class ClientConnectionEstablisher {
     }
 
     public synchronized void stop() {
+      logger.info("Connection establisher stopping " + System.identityHashCode(this));
       stopped = true;
       this.notifyAll();
     }
@@ -479,7 +480,7 @@ public class ClientConnectionEstablisher {
     private void startThreadIfNecessary() {
   //  Should be synchronized by caller
       if (connectionEstablisherThread == null && !disableThreadSpawn) {
-        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId());
+        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId() + "-" + System.identityHashCode(this));
         thread.setDaemon(true);
         thread.start();
         connectionEstablisherThread = thread;
@@ -488,7 +489,7 @@ public class ClientConnectionEstablisher {
 
     @Override
     public void run() {
-      logger.info("Connection establisher starting.");
+      logger.info("Connection establisher starting. " + System.identityHashCode(this));
       while (!isStopped()) {
         ConnectionRequest request = waitUntilRequestAvailableOrStopped();
         if (request != null) {
@@ -521,7 +522,7 @@ public class ClientConnectionEstablisher {
           }
         }
       }
-      logger.info("Connection establisher exiting.");
+      logger.info("Connection establisher exiting." + System.identityHashCode(this));
     }
   }
 
