@@ -138,7 +138,6 @@ public class ReplicatedTransactionHandler {
         }
         break;
       case ReplicationMessage.START:
-      case ReplicationMessage.RESPONSE:
         throw new AssertionError("unexpected message type " + rep);
       default:
         // This is an unexpected replicated message type.

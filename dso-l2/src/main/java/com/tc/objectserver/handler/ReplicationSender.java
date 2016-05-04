@@ -159,8 +159,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   }
   
   private boolean shouldReplicate(ReplicationMessage msg) {
-    if (msg.getType() == ReplicationMessage.START ||
-        msg.getType() == ReplicationMessage.RESPONSE) {
+    if (msg.getType() == ReplicationMessage.START) {
 //  these types of messages are incoming types or internal server use, not outgoing
       throw new AssertionError("unexpected message type " + msg);
     }

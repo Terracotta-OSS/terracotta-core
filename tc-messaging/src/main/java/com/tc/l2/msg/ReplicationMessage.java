@@ -24,7 +24,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -40,8 +39,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public static final int INVALID               = 0; // Sent to replicate a request on the passive
   public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
   public static final int SYNC               = 2; // Sent to replicate a request on the passive
-  public static final int RESPONSE                = 3; // response that the replicated action completed
-  public static final int START                = 4; // response that the replicated action completed
+  public static final int START                = 3; // response that the replicated action completed
 
   public enum ReplicationType {
     NOOP,
@@ -98,9 +96,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     super(type);
   }
   
-  protected ReplicationMessage(MessageID mid) {
-    super(RESPONSE, mid);
-  }  
 //  a true replicated message
   private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
@@ -206,9 +201,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
         in.readFully(this.payload);
         this.concurrency = in.readInt();
         break;
-      case RESPONSE:
-        this.rid = in.readLong();
-        break;
     }
   }
 
@@ -239,10 +231,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
           out.writeInt(0);
         }
         out.writeInt(concurrency);
-        break;
-      case RESPONSE:
-//      do nothing, just need the messageid
-        out.writeLong(rid);
         break;
     }
   }
