@@ -156,7 +156,7 @@ public class RequestProcessor implements StateChangeListener {
     }
 //  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
 //  NOOP should be replicated.  For now, NOOPs hold ordering
-    return new ReplicationMessage(id, src, tid, oldest, actionCode, payload, concurrency);
+    return ReplicationMessage.createReplicatedMessage(id, src, tid, oldest, actionCode, payload, concurrency);
   }
   
   private static class EntityRequest implements MultiThreadedEventContext, Runnable {

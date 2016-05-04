@@ -287,7 +287,7 @@ public class ReplicatedTransactionHandlerTest {
   }
   
   private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
-    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
+    return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
         source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency);
   }
 

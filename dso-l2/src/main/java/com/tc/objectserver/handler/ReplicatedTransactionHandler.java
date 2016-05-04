@@ -224,7 +224,7 @@ public class ReplicatedTransactionHandler {
     moveToPassiveUnitialized(node);
     try {
       LOGGER.info("Requesting Passive Sync from " + node);
-      groupManager.sendTo(node, new ReplicationMessageAck(ReplicationMessage.START));
+      groupManager.sendTo(node, ReplicationMessageAck.createSyncRequestMessage());
     } catch (GroupException ge) {
       LOGGER.warn("can't request passive sync", ge);
     }
@@ -364,7 +364,7 @@ public class ReplicatedTransactionHandler {
         LOGGER.debug("acking " + rep);
       }
       if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-        groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createCompletedAck(rep.getMessageID()));
       }
     } catch (GroupException ge) {
 //  Passive must have died.  Swallow the exception

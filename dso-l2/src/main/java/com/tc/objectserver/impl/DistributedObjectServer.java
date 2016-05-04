@@ -863,7 +863,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0));
+            .getSink().addSingleThreaded(ReplicationMessage.createNoOpMessage(eid, version));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added

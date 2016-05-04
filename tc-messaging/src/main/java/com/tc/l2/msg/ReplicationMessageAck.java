@@ -27,15 +27,24 @@ import java.io.IOException;
  *
  */
 public class ReplicationMessageAck extends ReplicationMessage {
+  // Factory methods.
+  public static ReplicationMessageAck createSyncRequestMessage() {
+    return new ReplicationMessageAck(START);
+  }
+
+  public static ReplicationMessageAck createCompletedAck(MessageID requestToAck) {
+    return new ReplicationMessageAck(requestToAck);
+  }
+
 
   public ReplicationMessageAck() {
   }
 //  this type requests passive sync from the active  
-  public ReplicationMessageAck(int type) {
+  private ReplicationMessageAck(int type) {
     super(type);
   }
   
-  public ReplicationMessageAck(MessageID requestID) {
+  private ReplicationMessageAck(MessageID requestID) {
     super(requestID);
   }
 

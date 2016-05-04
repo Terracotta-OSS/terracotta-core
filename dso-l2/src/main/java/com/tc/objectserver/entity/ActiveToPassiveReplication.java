@@ -94,7 +94,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
-      ReplicationMessage resetOrderedSink = new ReplicationMessage(ReplicationMessage.START);
+      ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
       Semaphore block = new Semaphore(0);
       replicate.addSingleThreaded(resetOrderedSink.target(node,()->block.release()));
       waitOnSemaphore(block);

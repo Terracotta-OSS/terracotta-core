@@ -61,6 +61,21 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     SYNC_ENTITY_CONCURRENCY_END;
   }
   
+  // Factory methods.
+  public static ReplicationMessage createStartMessage() {
+    return new ReplicationMessage(START);
+  }
+
+  public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
+    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0);
+  }
+
+  public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, 
+      TransactionID tid, TransactionID oldest, 
+      ReplicationType action, byte[] payload, int concurrency) {
+    return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency);
+  }
+
   EntityDescriptor descriptor;
     
   ClientID src;
@@ -79,15 +94,15 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     
   }
   
-  public ReplicationMessage(int type) {
+  protected ReplicationMessage(int type) {
     super(type);
   }
   
-  public ReplicationMessage(MessageID mid) {
+  protected ReplicationMessage(MessageID mid) {
     super(RESPONSE, mid);
   }  
 //  a true replicated message
-  public ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
+  private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
       ReplicationType action, byte[] payload, int concurrency) {
     super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);

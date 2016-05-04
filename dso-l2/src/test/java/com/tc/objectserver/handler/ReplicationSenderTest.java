@@ -87,10 +87,6 @@ public class ReplicationSenderTest {
     });
   }
   
-  private ReplicationMessage makeMessage(int type) {
-    return new ReplicationMessage(type);
-  }
-    
   private ReplicationMessage makeMessage(ReplicationType type) {
     switch (type) {
       case CREATE_ENTITY:
@@ -100,7 +96,7 @@ public class ReplicationSenderTest {
       case NOOP:
       case RECONFIGURE_ENTITY:
       case RELEASE_ENTITY:
-        return new ReplicationMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], 0);
+        return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], 0);
       case SYNC_BEGIN:
         return PassiveSyncMessage.createStartSyncMessage();
       case SYNC_END:
@@ -130,7 +126,7 @@ public class ReplicationSenderTest {
     entity = new EntityID("TEST", "test");
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
-    buildTest(origin, validation, makeMessage(ReplicationMessage.START), true);
+    buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
     buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
     buildTest(origin, validation, makeMessage(ReplicationType.SYNC_BEGIN), false);
@@ -167,7 +163,7 @@ public class ReplicationSenderTest {
     entity = new EntityID("TEST", "test");
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
-    buildTest(origin, validation, makeMessage(ReplicationMessage.START), true);
+    buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
     buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
     buildTest(origin, validation, makeMessage(ReplicationType.SYNC_BEGIN), false);
@@ -204,7 +200,7 @@ public class ReplicationSenderTest {
     entity = new EntityID("TEST", "test");
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
-    buildTest(origin, validation, makeMessage(ReplicationMessage.START), true);
+    buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
     buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
     buildTest(origin, validation, makeMessage(ReplicationType.CREATE_ENTITY), false);
