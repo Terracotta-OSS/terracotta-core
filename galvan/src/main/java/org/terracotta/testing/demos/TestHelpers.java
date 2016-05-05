@@ -35,10 +35,18 @@ public class TestHelpers {
       if (conn instanceof JarURLConnection) {
         JarURLConnection connection = (JarURLConnection) conn;
         jarPath = connection.getJarFileURL().getFile();
+        //trim leading "/" from maven jar path on windows
+        if (isWindows() && jarPath.startsWith("/")){
+          jarPath = jarPath.substring(1);
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     return jarPath;
+  }
+
+  public static boolean isWindows(){
+    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 }

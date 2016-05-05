@@ -40,6 +40,13 @@ limitations under the License.
       <artifactId>ipc-eventbus</artifactId>
       <version>1.0.1-SNAPSHOT</version>
     </dependency>
+    <!-- ipc-eventbus needs it for getting sub process PID on windows -->
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+      <version>4.1.0</version>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-test-lib</artifactId>
