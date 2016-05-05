@@ -24,7 +24,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -37,9 +36,9 @@ import java.io.IOException;
  */
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
 //  message types  
-  public static final int REPLICATE               = 0; // Sent to replicate a request on the passive
-  public static final int SYNC               = 1; // Sent to replicate a request on the passive
-  public static final int RESPONSE                = 2; // response that the replicated action completed
+  public static final int INVALID               = 0; // Sent to replicate a request on the passive
+  public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
+  public static final int SYNC               = 2; // Sent to replicate a request on the passive
   public static final int START                = 3; // response that the replicated action completed
 
   public enum ReplicationType {
@@ -60,6 +59,21 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     SYNC_ENTITY_CONCURRENCY_END;
   }
   
+  // Factory methods.
+  public static ReplicationMessage createStartMessage() {
+    return new ReplicationMessage(START);
+  }
+
+  public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
+    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0);
+  }
+
+  public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, 
+      TransactionID tid, TransactionID oldest, 
+      ReplicationType action, byte[] payload, int concurrency) {
+    return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency);
+  }
+
   EntityDescriptor descriptor;
     
   ClientID src;
@@ -73,20 +87,17 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   long rid = 0;
   
   public ReplicationMessage() {
-    super(START);
+    super(INVALID);
     descriptor = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, 0);
     
   }
   
-  public ReplicationMessage(int type) {
+  protected ReplicationMessage(int type) {
     super(type);
   }
   
-  public ReplicationMessage(MessageID mid) {
-    super(RESPONSE, mid);
-  }  
 //  a true replicated message
-  public ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
+  private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
       ReplicationType action, byte[] payload, int concurrency) {
     super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
@@ -163,51 +174,64 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    if (getType() == START) {
-// do nothing, just need the source
-    } else if (getType() == REPLICATE || getType() == SYNC) {
-      this.rid = in.readLong();
-      this.descriptor = EntityDescriptor.readFrom(in);
-      int type = in.read();
-      if (type == NodeID.CLIENT_NODE_TYPE) {
-        this.src = new ClientID().deserializeFrom(in);
-      } else if (type == NodeID.SERVER_NODE_TYPE) {
-        throw new AssertionError("node type is incorrect");
-      }
-      this.tid = new TransactionID(in.readLong());
-      this.oldest = new TransactionID(in.readLong());
-      this.action = ReplicationType.values()[in.readInt()];
-      int length = in.readInt();
-      this.payload = new byte[length];
-      in.readFully(this.payload);
-      this.concurrency = in.readInt();
-    } else {
-      this.rid = in.readLong();
+    int messageType = getType();
+    switch (messageType) {
+      case INVALID:
+        // This message was not correctly initialized.
+        Assert.fail();
+        break;
+      case START:
+     // do nothing, just need the source
+        break;
+      case REPLICATE:
+      case SYNC:
+        this.rid = in.readLong();
+        this.descriptor = EntityDescriptor.readFrom(in);
+        int type = in.read();
+        if (type == NodeID.CLIENT_NODE_TYPE) {
+          this.src = new ClientID().deserializeFrom(in);
+        } else if (type == NodeID.SERVER_NODE_TYPE) {
+          throw new AssertionError("node type is incorrect");
+        }
+        this.tid = new TransactionID(in.readLong());
+        this.oldest = new TransactionID(in.readLong());
+        this.action = ReplicationType.values()[in.readInt()];
+        int length = in.readInt();
+        this.payload = new byte[length];
+        in.readFully(this.payload);
+        this.concurrency = in.readInt();
+        break;
     }
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    if (getType() == START) {
-// do nothing, just need the source
-    } else if (getType() == RESPONSE) {
-//  do nothing, just need the messageid
-      out.writeLong(rid);
-    } else {
-      out.writeLong(rid);
-      this.descriptor.serializeTo(out);
-      out.write(this.src.getNodeType());
-      this.src.serializeTo(out);
-      out.writeLong(tid.toLong());
-      out.writeLong(oldest.toLong());
-      out.writeInt(this.action.ordinal());
-      if (payload != null) {
-        out.writeInt(payload.length);
-        out.write(payload);
-      } else {
-        out.writeInt(0);
-      }
-      out.writeInt(concurrency);
+    int messageType = getType();
+    switch (messageType) {
+      case INVALID:
+        // This message was not correctly initialized.
+        Assert.fail();
+        break;
+      case START:
+     // do nothing, just need the source
+        break;
+      case REPLICATE:
+      case SYNC:
+        out.writeLong(rid);
+        this.descriptor.serializeTo(out);
+        out.write(this.src.getNodeType());
+        this.src.serializeTo(out);
+        out.writeLong(tid.toLong());
+        out.writeLong(oldest.toLong());
+        out.writeInt(this.action.ordinal());
+        if (payload != null) {
+          out.writeInt(payload.length);
+          out.write(payload);
+        } else {
+          out.writeInt(0);
+        }
+        out.writeInt(concurrency);
+        break;
     }
   }
 

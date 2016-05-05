@@ -38,13 +38,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
 
 /**
  *  This class acts to connect {@link ProcessTransactionHandler} to the {@link ReplicationSender}
@@ -60,7 +57,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
-  private final ConcurrentHashMap<MessageID, Set<NodeID>> waiters = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<MessageID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
 
@@ -94,7 +91,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
-      ReplicationMessage resetOrderedSink = new ReplicationMessage();
+      ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
       Semaphore block = new Semaphore(0);
       replicate.addSingleThreaded(resetOrderedSink.target(node,()->block.release()));
       waitOnSemaphore(block);
@@ -126,7 +123,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         // start passive sync message
         logger.debug("starting sync for " + newNode);
         try {
-          replicateMessage(PassiveSyncMessage.createStartSyncMessage(), Collections.singleton(newNode)).get();
+          replicateMessage(PassiveSyncMessage.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
           for (ManagedEntity entity : entities) {
             logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
             entity.sync(newNode);
@@ -134,33 +131,35 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           }
       //  passive sync done message.  causes passive to go into passive standby mode
           logger.debug("ending sync " + newNode);
-          replicateMessage(PassiveSyncMessage.createEndSyncMessage(), Collections.singleton(newNode)).get();
-        } catch (InterruptedException | ExecutionException e) {
+          replicateMessage(PassiveSyncMessage.createEndSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
+        } catch (InterruptedException e) {
           throw new AssertionError("error during passive sync", e);
         }
       }
     });
   }
 
-  private void acknowledge(MessageID mid, NodeID releaser) {
-    Set<NodeID> plist = waiters.get(mid);
-    if (plist != null) {
-      synchronized(plist) {
-        if (plist.remove(releaser)) {
-          if (plist.isEmpty()) {
-            if (!waiters.remove(mid, plist)) {
-              throwAssertionError();
-            }
-            plist.notifyAll();
-          }
-        }
-      }
+  public void ackReceived(GroupMessage msg) {
+    ActivePassiveAckWaiter waiter = waiters.get(msg.inResponseTo());
+    if (null != waiter) {
+      waiter.didReceiveOnPassive(msg.messageFrom());
     }
-  }    
+  }
 
-  public void acknowledge(GroupMessage msg) {
-    acknowledge(msg.inResponseTo(), msg.messageFrom());
-  }    
+  public void ackCompleted(GroupMessage msg) {
+    internalAckCompleted(msg.inResponseTo(), msg.messageFrom());
+  }
+
+  /**
+   * This internal handling for completed is split out since it happens for both completed acks but also situations which
+   * implies no ack is forthcoming (the passive disappearing, for example).
+   */
+  private void internalAckCompleted(MessageID mid, NodeID passive) {
+    ActivePassiveAckWaiter waiter = waiters.get(mid);
+    if (null != waiter) {
+      waiter.didCompleteOnPassive(passive);
+    }
+  }
 
   @Override
   public Set<NodeID> passives() {
@@ -168,52 +167,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   @Override
-  public Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
+  public ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
     Set<NodeID> copy = new HashSet<>(all); 
 // don't replicate to a passive that is no longer there
     copy.retainAll(passives());
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy);
     if (!copy.isEmpty()) {
-      waiters.put(msg.getMessageID(), copy);
+      waiters.put(msg.getMessageID(), waiter);
       for (NodeID node : copy) {
-        replicate.addSingleThreaded(msg.target(node, ()->acknowledge(msg.getMessageID(), node)));
+        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node)));
       }
     }
-    
-    return new Future<Void>() {
-
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean isCancelled() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean isDone() {
-        synchronized(copy) {
-          return copy.isEmpty();
-        }
-      }
-
-      @Override
-      public Void get() throws InterruptedException, ExecutionException {
-        synchronized (copy) {
-          copy.retainAll(passiveNodes);
-          while (!copy.isEmpty()) {
-            copy.wait();
-          }
-        }
-        return null;
-      }
-
-      @Override
-      public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        throw new UnsupportedOperationException("not implemented");
-      }
-    };
+    return waiter;
   }
 
   public void removePassive(NodeID nodeID) {
@@ -223,7 +188,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  acknowledge all the messages for this node because it is gone, this may result in 
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
     if (activated) {
-      waiters.forEach((key, value)->acknowledge(key, nodeID));
+      waiters.forEach((key, value)->internalAckCompleted(key, nodeID));
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
       Semaphore block = new Semaphore(0);
@@ -238,11 +203,6 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
-  }
-  
-  private void throwAssertionError() {
-    throw new AssertionError("an error in the implementation has occurred standby nodes:" 
-        + standByNodes + " passivesNodes:" + passiveNodes);
   }
 
   @Override

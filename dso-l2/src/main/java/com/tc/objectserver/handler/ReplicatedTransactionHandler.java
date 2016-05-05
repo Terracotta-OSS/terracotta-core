@@ -138,7 +138,6 @@ public class ReplicatedTransactionHandler {
         }
         break;
       case ReplicationMessage.START:
-      case ReplicationMessage.RESPONSE:
         throw new AssertionError("unexpected message type " + rep);
       default:
         // This is an unexpected replicated message type.
@@ -151,6 +150,9 @@ public class ReplicatedTransactionHandler {
     TransactionID transactionID = rep.getTransactionID();
     TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
 
+    // Send the RECEIVED ack before we run this.
+    ackReceived(rep);
+    
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
     if (!ClientInstanceID.NULL_ID.equals(sourceNodeID)) {
@@ -224,7 +226,7 @@ public class ReplicatedTransactionHandler {
     moveToPassiveUnitialized(node);
     try {
       LOGGER.info("Requesting Passive Sync from " + node);
-      groupManager.sendTo(node, new ReplicationMessageAck(ReplicationMessage.START));
+      groupManager.sendTo(node, ReplicationMessageAck.createSyncRequestMessage());
     } catch (GroupException ge) {
       LOGGER.warn("can't request passive sync", ge);
     }
@@ -356,19 +358,33 @@ public class ReplicatedTransactionHandler {
           rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
     }
   }
-  
+
+  private void ackReceived(ReplicationMessage rep) {
+    try {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("acking(received) " + rep);
+      }
+      if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
+        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createReceivedAck(rep.getMessageID()));
+      }
+    } catch (GroupException ge) {
+      // Active must have died.  Swallow the exception after logging.
+      LOGGER.warn("active died on received ack", ge);
+    }
+  }
+
   private void acknowledge(ReplicationMessage rep) {
 //  when is the right time to send the ack?
     try {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("acking " + rep);
+        LOGGER.debug("acking(completed) " + rep);
       }
       if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-        groupManager.sendTo(rep.messageFrom(), new ReplicationMessageAck(rep.getMessageID()));
+        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createCompletedAck(rep.getMessageID()));
       }
     } catch (GroupException ge) {
-//  Passive must have died.  Swallow the exception
-      LOGGER.info("active died on ack", ge);
+      // Active must have died.  Swallow the exception after logging.
+      LOGGER.warn("active died on ack", ge);
     }
   }
 

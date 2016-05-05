@@ -139,7 +139,8 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
 
     verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
-    verify(groupManager).sendTo(Matchers.eq(sid), Matchers.any());
+    // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
+    verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }  
   
   @Test
@@ -166,7 +167,8 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
     this.loopbackSink.addSingleThreaded(msg);
     verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
-    verify(groupManager).sendTo(Matchers.eq(sid), Matchers.any());
+    // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
+    verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }
   
   @Test
@@ -287,7 +289,7 @@ public class ReplicatedTransactionHandlerTest {
   }
   
   private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
-    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
+    return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
         source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency);
   }
 

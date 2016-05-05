@@ -20,32 +20,54 @@ package com.tc.l2.msg;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import java.io.IOException;
 
 /**
  *
  */
-public class ReplicationMessageAck extends ReplicationMessage {
+public class ReplicationMessageAck extends AbstractGroupMessage {
+  //message types  
+  public static final int INVALID               = 0; // Sent to replicate a request on the passive
+  public static final int RECEIVED                = 2; // Means that the replicated action has been received by the passive
+  public static final int COMPLETED                = 3; // response that the replicated action completed
+  public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
+
+  // Factory methods.
+  public static ReplicationMessageAck createSyncRequestMessage() {
+    return new ReplicationMessageAck(START_SYNC);
+  }
+
+  public static ReplicationMessageAck createReceivedAck(MessageID requestToAck) {
+    return new ReplicationMessageAck(RECEIVED, requestToAck);
+  }
+
+  public static ReplicationMessageAck createCompletedAck(MessageID requestToAck) {
+    return new ReplicationMessageAck(COMPLETED, requestToAck);
+  }
+
 
   public ReplicationMessageAck() {
+    super(INVALID);
   }
+
 //  this type requests passive sync from the active  
-  public ReplicationMessageAck(int type) {
+  private ReplicationMessageAck(int type) {
     super(type);
   }
   
-  public ReplicationMessageAck(MessageID requestID) {
-    super(requestID);
+  private ReplicationMessageAck(int type, MessageID requestID) {
+    super(type, requestID);
   }
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-
+    // Do nothing - no instance variables.
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-
+    // Do nothing - no instance variables.
   }
 }

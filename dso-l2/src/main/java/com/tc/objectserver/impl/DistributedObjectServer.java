@@ -159,7 +159,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
@@ -727,10 +726,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
             switch (context.getType()) {
-              case ReplicationMessage.RESPONSE:
-            passives.acknowledge(context);
+              case ReplicationMessageAck.RECEIVED:
+                passives.ackReceived(context);
                 break;
-              case ReplicationMessage.START:
+              case ReplicationMessageAck.COMPLETED:
+                passives.ackCompleted(context);
+                break;
+              case ReplicationMessageAck.START_SYNC:
                 passives.startPassiveSync(context.messageFrom());
                 break;
               default:
@@ -863,7 +865,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0));
+            .getSink().addSingleThreaded(ReplicationMessage.createNoOpMessage(eid, version));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
