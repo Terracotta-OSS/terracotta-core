@@ -727,6 +727,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
             switch (context.getType()) {
+              case ReplicationMessageAck.RECEIVED:
+                // TODO:  Implement support for received act in ActiveToPassiveReplication.
+                break;
               case ReplicationMessageAck.COMPLETED:
             passives.acknowledge(context);
                 break;
