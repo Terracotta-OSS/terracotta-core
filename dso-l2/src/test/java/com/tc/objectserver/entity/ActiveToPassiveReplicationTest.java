@@ -26,7 +26,6 @@ import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
 import java.util.Collections;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -40,10 +39,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-/**
- *
- * @author mscott
- */
+
 public class ActiveToPassiveReplicationTest {
   
   ServerID passive;
@@ -62,6 +58,7 @@ public class ActiveToPassiveReplicationTest {
   }
   
   @Before
+  @SuppressWarnings("unchecked")
   public void setUp() {
     passive = mock(ServerID.class);
     Iterable<ManagedEntity> entities = mock(Iterable.class);
@@ -85,8 +82,7 @@ public class ActiveToPassiveReplicationTest {
     when(msg.getMessageID()).thenReturn(id);
     ReplicationEnvelope env = mock(ReplicationEnvelope.class);
     when(msg.target(Matchers.any(), Matchers.any())).thenReturn(env);
-    Future<Void> ack = replication.replicateMessage(msg, Collections.singleton(passive));
-    Thread target = Thread.currentThread();
+    ActivePassiveAckWaiter ack = replication.replicateMessage(msg, Collections.singleton(passive));
     Thread it = new Thread(()->{
       try {
         TimeUnit.MILLISECONDS.sleep(100);
@@ -98,11 +94,11 @@ public class ActiveToPassiveReplicationTest {
     });
     it.start();
     try {
-      ack.get();
+      ack.waitForCompleted();
     } catch (InterruptedException ie) {
       Assert.fail("test failed");
     }
-    Assert.assertTrue(ack.isDone());
+    Assert.assertTrue(ack.isCompleted());
   }
   
   @After

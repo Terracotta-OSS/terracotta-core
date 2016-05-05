@@ -159,7 +159,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
@@ -728,10 +727,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
             switch (context.getType()) {
               case ReplicationMessageAck.RECEIVED:
-                // TODO:  Implement support for received act in ActiveToPassiveReplication.
+                passives.ackReceived(context);
                 break;
               case ReplicationMessageAck.COMPLETED:
-            passives.acknowledge(context);
+                passives.ackCompleted(context);
                 break;
               case ReplicationMessageAck.START_SYNC:
                 passives.startPassiveSync(context.messageFrom());

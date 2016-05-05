@@ -21,10 +21,10 @@ package com.tc.objectserver.entity;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.NodeID;
 import java.util.Set;
-import java.util.concurrent.Future;
+
 
 public interface PassiveReplicationBroker {
-  Future<Void> replicateMessage(ReplicationMessage msg, Set<NodeID> passives);
+  ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> passives);
   Set<NodeID> passives();
   void enterActiveState();
 }

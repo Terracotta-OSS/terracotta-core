@@ -179,7 +179,7 @@ public class RequestProcessorTest {
 
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.singleton(mock(NodeID.class)));
-    when(broker.replicateMessage(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_FUTURE);
+    when(broker.replicateMessage(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     
