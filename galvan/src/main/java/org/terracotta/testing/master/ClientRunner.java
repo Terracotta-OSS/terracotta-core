@@ -57,7 +57,6 @@ public class ClientRunner extends Thread {
   // Data which we need to pass back to the other thread.
   private Object waitMonitor = new Object();
   private FileNotFoundException setupFilesException;
-  private IOException closeException;
   private long pid = -1;
   private int result = -1;
 
@@ -122,17 +121,10 @@ public class ClientRunner extends Thread {
     // That means that here we just need to wait on termination.
     
     // Wait for the process to complete, passing back the return value.
-    int theResult = -1;
-    IOException failure = null;
-    try {
-      theResult = waitForTermination();
-    } catch (IOException e) {
-      failure = e;
-    }
+    int theResult = waitForTermination();
     // Whatever happened, synchronize and terminate.
     synchronized(this.waitMonitor) {
       this.result = theResult;
-      this.closeException = failure;
       this.waitMonitor.notifyAll();
     }
     
@@ -158,15 +150,13 @@ public class ClientRunner extends Thread {
     return pid;
   }
 
-  public int waitForJoinResult() throws FileNotFoundException, IOException, InterruptedException {
+  public int waitForJoinResult() throws FileNotFoundException, InterruptedException {
     // We can just join on the thread and then read the state without the waitMonitor.
     this.join();
     // Now, read the result.
     int result = -1;
     if (null != this.setupFilesException) {
       throw this.setupFilesException;
-    } else if (null != this.closeException) {
-        throw this.closeException;
     } else {
       result = this.result;
     }
@@ -251,7 +241,7 @@ public class ClientRunner extends Thread {
     return this.process.getPid();
   }
 
-  private int waitForTermination() throws IOException {
+  private int waitForTermination() {
     // Terminate the process.
     int retVal = -1;
     while (-1 == retVal) {
