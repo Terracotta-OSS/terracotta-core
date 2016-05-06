@@ -23,4 +23,19 @@ import junit.framework.TestCase;
 
 public abstract class AbstractHarnessTest<C extends ITestClusterConfiguration> extends TestCase {
   public abstract ITestMaster<C> getTestMaster();
+
+  /**
+   * Called when a test is finished, passing in an error, if there was one.
+   * The implementation can return (implying this was a "pass"), or throw something (implying this was a "failure").
+   * 
+   * The default implementation merely re-throws the given error, assuming that most tests are looking for successful runs.
+   * 
+   * @param error An error describing the failure, or null if the test passed
+   * @throws Throwable An exception thrown to describe the failure, not thrown on a pass
+   */
+  public void interpretResult(Throwable error) throws Throwable {
+    if (null != error) {
+      throw error;
+    }
+  }
 }
