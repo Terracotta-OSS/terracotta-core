@@ -16,6 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
+import org.terracotta.testing.demos.TestHelpers;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.logging.VerboseOutputStream;
@@ -127,8 +129,14 @@ public class ServerProcess {
     
     // Start the inferior process.
     this.isScriptReady = false;
+    String startScript;
+    if (TestHelpers.isWindows()){
+      startScript = new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath();
+    }else {
+      startScript = "server/bin/start-tc-server.sh";
+    }
     AnyProcess process = AnyProcess.newBuilder()
-        .command("server/bin/start-tc-server.sh", "-n", this.serverName)
+        .command(startScript, "-n", this.serverName)
         .workingDir(this.serverWorkingDirectory)
         .env("JAVA_HOME", javaHome)
         .env("JAVA_OPTS", javaOpts)
@@ -137,6 +145,10 @@ public class ServerProcess {
         .build();
     // Wait for the server to enter started.
     synchronized (this) {
+      if (TestHelpers.isWindows()){
+        //windows start script doesn't emit this event, so skip it.
+        this.isScriptReady = true;
+      }
       while (!this.isScriptReady) {
         try {
           wait();
@@ -236,12 +248,29 @@ public class ServerProcess {
       // Mark this as expected.
       this.isCrashExpected = true;
       // Destroy the process.
-      this.process.destroy();
+      if (TestHelpers.isWindows()){
+        //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
+        killProcessWindows();
+      }else {
+        this.process.destroy();
+      }
+
       // Wait until we get a return value.
       while (-1 == this.returnValue) {
         wait();
       }
       return this.returnValue;
+    }
+
+    private void killProcessWindows() throws InterruptedException {
+      try {
+        ProcessBuilder processBuilder = new ProcessBuilder("taskkill", "/F", "/t", "/pid", String.valueOf(process.getPid()));
+        Process p = processBuilder.start();
+        //not checking exit code here..taskkill may faill if server process was crashed during the test.
+        p.waitFor();
+      }catch (IOException ex){
+        Assert.unexpected(ex);
+      }
     }
   }
 }
