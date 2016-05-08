@@ -71,29 +71,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     
     // Run the setup client, synchronously.
     ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort, this.clientsToCreate, 0);
-    try {
-      setupClient.openStandardLogFiles();
-    } catch (IOException e) {
-      // We don't expect this here.
-      Assert.unexpected(e);
-    }
-    int setupExitValue = -1;
-    try {
-      setupExitValue = runClientSynchronous(setupClient);
-    } catch (InterruptedException e) {
-      // We can only be interrupted if an interruption is expected.
-      Assert.assertTrue(this.interruptRequested);
-      // Terminate the client.
-      setupClient.forceTerminate();
-      // Mark this as a failure so we fall out.
-      setupExitValue = -1;
-    }
-    try {
-      setupClient.closeStandardLogFiles();
-    } catch (IOException e) {
-      // We don't expect this here.
-      Assert.unexpected(e);
-    }
+    int setupExitValue = runClientLifeCycle(setupClient);
     
     boolean setupWasClean = (0 == setupExitValue);
     boolean didRunCleanly = true;
@@ -139,29 +117,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       
       // Run the destroy client, synchronously.
       ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort, this.clientsToCreate, 0);
-      try {
-        destroyClient.openStandardLogFiles();
-      } catch (IOException e) {
-        // We don't expect this here.
-        Assert.unexpected(e);
-      }
-      int destroyExitValue = -1;
-      try {
-        destroyExitValue = runClientSynchronous(destroyClient);
-      } catch (InterruptedException e) {
-        // We can only be interrupted if an interruption is expected.
-        Assert.assertTrue(this.interruptRequested);
-        // Terminate the client.
-        destroyClient.forceTerminate();
-        // Mark this as a failure so we fall out.
-        destroyExitValue = -1;
-      }
-      try {
-        destroyClient.closeStandardLogFiles();
-      } catch (IOException e) {
-        // We don't expect this here.
-        Assert.unexpected(e);
-      }
+      int destroyExitValue = runClientLifeCycle(destroyClient);
       destroyWasClean = (0 == destroyExitValue);
       if (!destroyWasClean) {
         harnessLogger.error("ERROR encountered in destroy.  This is a failure");
@@ -174,6 +130,33 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     } else {
       this.stateManager.testDidFail();
     }
+  }
+
+  private int runClientLifeCycle(ClientRunner synchronousClient) {
+    try {
+      synchronousClient.openStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this here.
+      Assert.unexpected(e);
+    }
+    int setupExitValue = -1;
+    try {
+      setupExitValue = runClientSynchronous(synchronousClient);
+    } catch (InterruptedException e) {
+      // We can only be interrupted if an interruption is expected.
+      Assert.assertTrue(this.interruptRequested);
+      // Terminate the client.
+      synchronousClient.forceTerminate();
+      // Mark this as a failure so we fall out.
+      setupExitValue = -1;
+    }
+    try {
+      synchronousClient.closeStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this here.
+      Assert.unexpected(e);
+    }
+    return setupExitValue;
   }
 
   private int runClientSynchronous(ClientRunner client) throws InterruptedException {
