@@ -93,23 +93,18 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         // Now, wait for them to finish.
         for (ClientRunner oneClient : concurrentTests) {
           int result = oneClient.waitForJoinResult();
-          try {
-            oneClient.closeStandardLogFiles();
-          } catch (IOException e) {
-            // We don't expect this here.
-            Assert.unexpected(e);
-          }
+          // We clean up the log files in shutDownAndCleanUpClients.
           didRunCleanly &= (0 == result);
         }
+        
+        shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
       } catch (InterruptedException e) {
         // We can only be interrupted if an interruption is expected.
         Assert.assertTrue(this.interruptRequested);
-        // Terminate the clients.
-        for (ClientRunner oneClient : concurrentTests) {
-          oneClient.forceTerminate();
-        }
         // Mark this as a failure so we fall out.
         didRunCleanly = false;
+        // Terminate and clean up.
+        shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
       }
       if (!didRunCleanly) {
         harnessLogger.error("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
@@ -129,6 +124,25 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       this.stateManager.testDidPass();
     } else {
       this.stateManager.testDidFail();
+    }
+  }
+
+  private void shutDownAndCleanUpClients(boolean shouldForceTerminate, ClientRunner[] concurrentTests) {
+    if (shouldForceTerminate) {
+      // Terminate all the tests.
+      for (ClientRunner oneClient : concurrentTests) {
+        oneClient.forceTerminate();
+      }
+    }
+    
+    // Close log files.
+    for (ClientRunner oneClient : concurrentTests) {
+      try {
+        oneClient.closeStandardLogFiles();
+      } catch (IOException e) {
+        // We don't expect this here.
+        Assert.unexpected(e);
+      }
     }
   }
 
