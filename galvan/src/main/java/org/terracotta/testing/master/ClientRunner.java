@@ -53,11 +53,7 @@ public class ClientRunner extends Thread {
   private VerboseOutputStream stdoutLog;
   private VerboseOutputStream stderrLog;
   private AnyProcess process;
-  
-  // Data which we need to pass back to the other thread.
-  private Object waitMonitor = new Object();
-  private long pid = -1;
-  private int result = -1;
+  private Listener listener;
 
   public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort, int totalClientCount, int thisClientIndex) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -100,6 +96,8 @@ public class ClientRunner extends Thread {
   @Override
   public void run() {
     // We over-ride the Thread.run() since we want to provide a few synchronization points, thus requiring that we _are_ a Thread instead of just a Runnable.
+    // We assume that the listener must have been set, prior to starting the thread.
+    Assert.assertNotNull(this.listener);
     
     // First step is we need to set up the verbose output stream to point at the log files.
     Assert.assertNull(this.stderrLog);
@@ -111,66 +109,42 @@ public class ClientRunner extends Thread {
     
     // Start the process, passing back the pid.
     long thePid = startProcess();
-    synchronized(this.waitMonitor) {
-      this.pid = thePid;
-      this.waitMonitor.notifyAll();
-    }
+    // Report our PID.
+    this.harnessLogger.output("PID: " + thePid);
     
     // Note that the ClientEventManager will synthesize actual events from the output stream within ITS OWN THREAD.
     // That means that here we just need to wait on termination.
     
     // Wait for the process to complete, passing back the return value.
     int theResult = waitForTermination();
-    // Whatever happened, synchronize and terminate.
-    synchronized(this.waitMonitor) {
-      this.result = theResult;
-      this.waitMonitor.notifyAll();
+    if (0 == theResult) {
+      this.harnessLogger.output("Return value (normal): " + theResult);
+    } else {
+      this.harnessLogger.error("Return value (ERROR): " + theResult);
     }
     
     // Drop our verbose output stream shims.
     this.stdoutLog = null;
     this.stderrLog = null;
-  }
-
-  public long waitForPid() throws InterruptedException {
-    long pid = -1;
-    synchronized(this.waitMonitor) {
-      while (-1 == this.pid) {
-        this.waitMonitor.wait();
-      }
-      pid = this.pid;
-    }
-    // Report our PID.
-    this.harnessLogger.output("PID: " + pid);
-    return pid;
-  }
-
-  public int waitForJoinResult() throws InterruptedException {
-    // We can just join on the thread and then read the state without the waitMonitor.
-    this.join();
-    // Now, read the result.
-    int result = this.result;
-    if (0 == result) {
-      this.harnessLogger.output("Return value (normal): " + result);
-    } else {
-      this.harnessLogger.error("Return value (ERROR): " + result);
-    }
-    return result;
+    
+    // Report the termination details, before exiting (the receiver will also know that they can join on us).
+    this.listener.clientDidTerminate(this, theResult);
   }
 
   /**
-   * Called to force the client process to terminate and then wait for the thread managing the runner to exit.
+   * Called to force the client process to terminate.
+   * 
+   * NOTE:  The caller is still expected to join on the thread shutting down.
    */
   public void forceTerminate() {
     // Force the process to terminate.
+    // (if the process already terminated, this will have no effect).
     this.process.destroyForcibly();
-    // We still want to wait for the thread managing the runner to terminate gracefully.
-    try {
-      this.join();
-    } catch (InterruptedException e) {
-      // This is really not expected since this is already in the interruption path.
-      Assert.unexpected(e);
-    }
+  }
+  
+  public synchronized void setListener(Listener listener) {
+    Assert.assertNull(this.listener);
+    this.listener = listener;
   }
 
   // Returns the PID.
@@ -244,7 +218,6 @@ public class ClientRunner extends Thread {
         e.printStackTrace();
       }
     }
-    this.process = null;
     return retVal;
   }
 
@@ -255,5 +228,13 @@ public class ClientRunner extends Thread {
       command += " \"" + args[i] + "\"";
     }
     return command;
+  }
+
+
+  /**
+   * NOTE:  Messages related to the client life-cycle are all posted within the client's thread.
+   */
+  public static interface Listener {
+    void clientDidTerminate(ClientRunner clientRunner, int theResult);
   }
 }

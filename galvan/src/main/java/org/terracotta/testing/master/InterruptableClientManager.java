@@ -16,6 +16,8 @@
 package org.terracotta.testing.master;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Vector;
 
 import org.terracotta.passthrough.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -79,8 +81,11 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     if (setupWasClean) {
       ClientRunner[] concurrentTests = installTestClients(this.debugOptions, this.clientsToCreate, clientInstaller);
       try {
+        // Create a listener.
+        ClientListener listener = new ClientListener();
         // Start them.
         for (ClientRunner oneClient : concurrentTests) {
+          oneClient.setListener(listener);
           try {
             oneClient.openStandardLogFiles();
           } catch (IOException e) {
@@ -88,13 +93,15 @@ public class InterruptableClientManager extends Thread implements IComponentMana
             Assert.unexpected(e);
           }
           oneClient.start();
-          oneClient.waitForPid();
         }
         // Now, wait for them to finish.
-        for (ClientRunner oneClient : concurrentTests) {
-          int result = oneClient.waitForJoinResult();
-          // We clean up the log files in shutDownAndCleanUpClients.
+        int pendingResults = concurrentTests.length;
+        // Run until we get all the results or a test reported failure.
+        // (we need to eagerly kill all processes if any test exited with an error since someone may be waiting for it)
+        while ((pendingResults > 0) && didRunCleanly) {
+          int result = listener.waitForNextResult();
           didRunCleanly &= (0 == result);
+          pendingResults -= 1;
         }
         
         shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
@@ -135,8 +142,14 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       }
     }
     
-    // Close log files.
+    // Join all the threads and close log files.
     for (ClientRunner oneClient : concurrentTests) {
+      try {
+        oneClient.join();
+      } catch (InterruptedException e) {
+        // This is not expected in this join since we already expect that the thread terminated (since we were notified that it was shutting down).
+        Assert.unexpected(e);
+      }
       try {
         oneClient.closeStandardLogFiles();
       } catch (IOException e) {
@@ -161,6 +174,13 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       Assert.assertTrue(this.interruptRequested);
       // Terminate the client.
       synchronousClient.forceTerminate();
+      // We may need to join after requesting the termination.
+      try {
+        synchronousClient.join();
+      } catch (InterruptedException e1) {
+        // We don't expect an interruption within the interruption.
+        Assert.unexpected(e1);
+      }
       // Mark this as a failure so we fall out.
       setupExitValue = -1;
     }
@@ -174,9 +194,12 @@ public class InterruptableClientManager extends Thread implements IComponentMana
   }
 
   private int runClientSynchronous(ClientRunner client) throws InterruptedException {
+    ClientListener listener = new ClientListener();
+    client.setListener(listener);
     client.start();
-    client.waitForPid();
-    return client.waitForJoinResult();
+    int result = listener.waitForNextResult();
+    client.join();
+    return result;
   }
 
   private ClientRunner[] installTestClients(DebugOptions debugOptions, int clientsToCreate, ClientInstaller clientInstaller) {
@@ -192,5 +215,23 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       testClients[i] = clientInstaller.installClient(clientName, "TEST", debugPort, clientsToCreate, i);
     }
     return testClients;
+  }
+
+
+  private static class ClientListener implements ClientRunner.Listener {
+    private final List<Integer> results = new Vector<Integer>();
+    
+    public synchronized int waitForNextResult() throws InterruptedException {
+      while (this.results.isEmpty()) {
+        wait();
+      }
+      return this.results.remove(0);
+    }
+    
+    @Override
+    public synchronized void clientDidTerminate(ClientRunner clientRunner, int theResult) {
+      this.results.add(theResult);
+      notifyAll();
+    }
   }
 }
