@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.terracotta.passthrough.Assert;
@@ -88,9 +87,6 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       setupClient.forceTerminate();
       // Mark this as a failure so we fall out.
       setupExitValue = -1;
-    } catch (FileNotFoundException e) {
-      // We don't expect this here.
-      Assert.unexpected(e);
     }
     try {
       setupClient.closeStandardLogFiles();
@@ -136,9 +132,6 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         }
         // Mark this as a failure so we fall out.
         didRunCleanly = false;
-      } catch (FileNotFoundException e) {
-        // We don't expect this here.
-        Assert.unexpected(e);
       }
       if (!didRunCleanly) {
         harnessLogger.error("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
@@ -162,9 +155,6 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         destroyClient.forceTerminate();
         // Mark this as a failure so we fall out.
         destroyExitValue = -1;
-      } catch (FileNotFoundException e) {
-        // We don't expect this here.
-        Assert.unexpected(e);
       }
       try {
         destroyClient.closeStandardLogFiles();
@@ -186,7 +176,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     }
   }
 
-  private int runClientSynchronous(ClientRunner client) throws InterruptedException, FileNotFoundException {
+  private int runClientSynchronous(ClientRunner client) throws InterruptedException {
     client.start();
     client.waitForPid();
     return client.waitForJoinResult();

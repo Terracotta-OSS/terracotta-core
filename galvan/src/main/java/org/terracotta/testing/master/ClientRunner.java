@@ -56,7 +56,6 @@ public class ClientRunner extends Thread {
   
   // Data which we need to pass back to the other thread.
   private Object waitMonitor = new Object();
-  private FileNotFoundException setupFilesException;
   private long pid = -1;
   private int result = -1;
 
@@ -133,33 +132,24 @@ public class ClientRunner extends Thread {
     this.stderrLog = null;
   }
 
-  public long waitForPid() throws FileNotFoundException, InterruptedException {
+  public long waitForPid() throws InterruptedException {
     long pid = -1;
     synchronized(this.waitMonitor) {
-      while ((-1 == this.pid) && (null == this.setupFilesException)) {
+      while (-1 == this.pid) {
         this.waitMonitor.wait();
       }
-      if (null != this.setupFilesException) {
-        throw this.setupFilesException;
-      } else {
-        pid = this.pid;
-      }
+      pid = this.pid;
     }
     // Report our PID.
     this.harnessLogger.output("PID: " + pid);
     return pid;
   }
 
-  public int waitForJoinResult() throws FileNotFoundException, InterruptedException {
+  public int waitForJoinResult() throws InterruptedException {
     // We can just join on the thread and then read the state without the waitMonitor.
     this.join();
     // Now, read the result.
-    int result = -1;
-    if (null != this.setupFilesException) {
-      throw this.setupFilesException;
-    } else {
-      result = this.result;
-    }
+    int result = this.result;
     if (0 == result) {
       this.harnessLogger.output("Return value (normal): " + result);
     } else {
