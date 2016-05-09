@@ -94,12 +94,14 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
       error = e;
     }
     // Determine how to handle the result.
-    if (null == error) {
+    try {
+      this.testCase.interpretResult(error);
+      
       // Success.
       notifier.fireTestFinished(testDescription);
-    } else {
+    } catch (Throwable t) {
       // Failure.
-      notifier.fireTestFailure(new Failure(testDescription, error));
+      notifier.fireTestFailure(new Failure(testDescription, t));
     }
   }
 

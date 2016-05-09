@@ -120,6 +120,7 @@ limitations under the License.
         <configuration>
           <systemPropertyVariables>
             <kitInstallationPath>${kitUnzipLocation}/terracotta-5.0.0-SNAPSHOT</kitInstallationPath>
+            <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
           </systemPropertyVariables>
         </configuration>
       </plugin>

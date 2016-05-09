@@ -17,6 +17,7 @@ package org.terracotta.testing.master;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
 import org.terracotta.testing.api.ITestClusterConfiguration;
@@ -30,6 +31,9 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   public static final int SERVER_START_PORT = 9000;
 
   public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
+    // Before anything, set the default exception handler - since we create threads to manage the sub-processes.
+    Thread.setDefaultUncaughtExceptionHandler(new GalvanExceptionHandler());
+    
     boolean didPass = false;
     // We wrap the actual call in a try-catch since the normal SureFire runner discards all exception data and we want to
     // see our assertion failures.
@@ -83,4 +87,21 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
 
   // Run the one configuration.
   protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+
+
+  /**
+   * For now, this exception handler is going to be very heavy-weight:  uncaught exception terminates the process with exit
+   * code 99.
+   * In the future, we may want a gentler way of communicating these errors or to potentially mask the uncaught handler with
+   * per-thread handlers which can use their context to better report the error.
+   */
+  private static class GalvanExceptionHandler implements UncaughtExceptionHandler {
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      // Log the error.
+      e.printStackTrace();
+      // Bring down the process.
+      System.exit(99);
+    }
+  }
 }
