@@ -576,10 +576,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         // The FETCH can only come directly from a client so we can down-cast.
         ClientID clientID = (ClientID) getEntityRequest.getNodeID();
         clientEntityStateManager.addReference(clientID, entityDescriptor);
-        this.activeServerEntity.connected(sourceDescriptor);
         getEntityRequest.complete(this.constructorInfo);
         // Fire the event that the client fetched the entity.
         this.eventCollector.clientDidFetchEntity(clientID, this.getID(), sourceDescriptor);
+        // finally notify the entity that it was fetched
+        this.activeServerEntity.connected(sourceDescriptor);
       } else {
         getEntityRequest.complete();
       }
