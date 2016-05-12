@@ -480,7 +480,6 @@ public class PassthroughServerProcess implements MessageHandler {
           long expectedVersion = service.getVersion();
           if (expectedVersion == version) {
             PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-            entity.connected(clientDescriptor);
             config = entityData.configuration;
             
             if (null != PassthroughServerProcess.this.serviceInterface) {
@@ -491,6 +490,8 @@ public class PassthroughServerProcess implements MessageHandler {
               String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
               PassthroughServerProcess.this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
             }
+//  connected call must happen after a possible modification to monitoring tree.  
+            entity.connected(clientDescriptor);
           } else {
             error = new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
           }
