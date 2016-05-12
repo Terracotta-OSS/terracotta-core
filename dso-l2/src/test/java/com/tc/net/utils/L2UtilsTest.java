@@ -16,17 +16,52 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.net.utils;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author Eugene Shelestovich
- */
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+
+
 public class L2UtilsTest {
+  /**
+   * A test to verify that the default thread counts respond as expected.
+   */
+  @Test
+  public void testVerifyDefaultThreadCounts() {
+    int processorCount = Runtime.getRuntime().availableProcessors();
+    
+    int commThreadCount = L2Utils.getOptimalCommWorkerThreads();
+    Assert.assertTrue(commThreadCount > 0);
+    // We currently bound the number of comm threads at 16 (may change in the future).
+    Assert.assertTrue((commThreadCount == processorCount) || (commThreadCount <= 16));
+    
+    int stageThreadCount = L2Utils.getOptimalStageWorkerThreads();
+    Assert.assertTrue(stageThreadCount > 0);
+    // We currently bound the number of stage threads at 16 (may change in the future).
+    Assert.assertTrue((stageThreadCount == processorCount) || (stageThreadCount <= 16));
+  }
+
+  /**
+   * A test to verify that the default thread counts can be tweaked with TCProperties.
+   */
+  @Test
+  public void testVerifyTCPropertiesThreadCounts() {
+    TCProperties properties = TCPropertiesImpl.getProperties();
+    int originalCommThreadCount = L2Utils.getOptimalCommWorkerThreads();
+    int originalStageThreadCount = L2Utils.getOptimalStageWorkerThreads();
+    
+    // WARNING:  setting L2_TCCOM_WORKERTHREADS and L2_SEDA_STAGE_WORKERTHREADS cannot be undone!
+    properties.setProperty(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS, "" + (originalCommThreadCount + 1));
+    properties.setProperty(TCPropertiesConsts.L2_SEDA_STAGE_WORKERTHREADS, "" + (originalStageThreadCount + 1));
+    Assert.assertTrue((originalCommThreadCount + 1) == L2Utils.getOptimalCommWorkerThreads());
+    Assert.assertTrue((originalStageThreadCount + 1) == L2Utils.getOptimalStageWorkerThreads());
+  }
 
   @Test
   public void testShouldCorrectlyCalculateOptimalThreadsCount() {

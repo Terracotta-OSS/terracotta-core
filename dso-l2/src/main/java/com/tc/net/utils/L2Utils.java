@@ -34,14 +34,22 @@ public class L2Utils {
   public static final long MAX_COMMS_DIRECT_MEMORY_REQUIREMENT = 256 * 1024 * 1024; // 256MiB
 
   public static int getOptimalCommWorkerThreads() {
-//  TODO:  reduced number of default threads.  re-evaluate closer to release MKS 6.8.2015
-    int def = Math.min(Runtime.getRuntime().availableProcessors()/2, MAX_DEFAULT_COMM_THREADS);
+    // We currently set the number of comm threads to the number of available processors.
+    // This is further limited by MAX_DEFAULT_COMM_THREADS to ensure that the number selected doesn't go so far as to expose
+    // other performance bottlenecks within the application logic.
+    // Note that this value is only the result of observations and reasonable behavior but may need to be tweaked, in the
+    // future.
+    int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_COMM_THREADS);
     return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS, def);
   }
 
   public static int getOptimalStageWorkerThreads() {
-//  TODO:  reduced number of default threads.  re-evaluate closer to release MKS 6.8.2015
-    int def = Math.min(Runtime.getRuntime().availableProcessors()/2, MAX_DEFAULT_STAGE_THREADS);
+    // We currently set the number of stage worker threads to the number of available processors.
+    // This is further limited by MAX_DEFAULT_STAGE_THREADS to ensure that the number selected doesn't go so far as to
+    // expose other performance bottlenecks within the application logic.
+    // Note that this value is only the result of observations and reasonable behavior but may need to be tweaked, in the
+    // future.
+    int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_STAGE_THREADS);
     return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_WORKERTHREADS, def);
   }
 
