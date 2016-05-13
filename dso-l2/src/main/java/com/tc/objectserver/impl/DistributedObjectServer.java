@@ -406,8 +406,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     final boolean restartable = l2DSOConfig.getRestartable();
+    
+    TCFile dataLoc = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath());
+    String serverName = this.configSetupManager.dsoL2Config().serverName();
+//  this is character replacement for windows platform file names.  This is probably a bogus way to 
+//  handle this.  Re-evaluate the way data directories are managed for 5.0 and fix this when a plan is
+//  devised
+    serverName = serverName.replace('.', '-');
+    serverName = serverName.replace(':', '$');
 
-    final TCFile location = new TCFileImpl(new TCFileImpl(this.configSetupManager.commonl2Config().dataPath()), this.configSetupManager.dsoL2Config().serverName());
+    final TCFile location = new TCFileImpl(dataLoc, serverName);
     boolean retries = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
     this.startupLock = this.serverBuilder.createStartupLock(location, retries);
 
