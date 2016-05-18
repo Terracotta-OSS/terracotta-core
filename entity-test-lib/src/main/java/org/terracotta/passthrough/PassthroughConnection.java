@@ -123,7 +123,18 @@ public class PassthroughConnection implements Connection {
 
   private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
     PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
-    waiter.waitForAck();
+    if (Thread.currentThread() == clientThread) {
+//  this check is kind of horrible but if this is the client thread as the result of being invoked from within 
+//  message handling (server originated), then just do message completion locally.
+      while (!waiter.isDone()) {
+        if (!handleNextMessage()) {
+  //  what happend?
+          break;
+        }
+      }
+    } else {
+      waiter.waitForAck();      
+    }
     return waiter;
   }
 
@@ -155,15 +166,29 @@ public class PassthroughConnection implements Connection {
     }
   }
   
-  private synchronized void runClientThread() {
+  private void runClientThread() {
     Thread.currentThread().setName("Client thread");
+    while (handleNextMessage()) {  
+      
+    }
+  }
+  
+  private boolean handleNextMessage() {
+    ServerToClientMessageRecord message = getNextClientMessage();
+    if (message != null) {
+      if (this.connectionState.isConnected(message.sender)) {
+        clientThreadHandleMessage(message.sender, message.payload);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  private synchronized ServerToClientMessageRecord getNextClientMessage() {
     while (this.isRunning) {
       if (!this.messageQueue.isEmpty()) {
-        ServerToClientMessageRecord message = this.messageQueue.remove(0);
-        // We will do a quick pre-check that this is from the sender we are currently using.
-        if (this.connectionState.isConnected(message.sender)) {
-          clientThreadHandleMessage(message.sender, message.payload);
-        }
+        return this.messageQueue.remove(0);
       } else {
         try {
           this.wait();
@@ -172,9 +197,9 @@ public class PassthroughConnection implements Connection {
         }
       }
     }
+    return null;
   }
 
-  // Note that this method is called under the monitor.
   private void clientThreadHandleMessage(final PassthroughServerProcess sender, byte[] message) {
     PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughMessageCodec.Decoder<Void>() {
       @Override
