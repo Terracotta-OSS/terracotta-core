@@ -72,7 +72,7 @@ import org.terracotta.persistence.KeyValueStorage;
  * In the future, message execution will likely be split out into other threads to better support entity read-write locking
  * and also test concurrency strategy.
  */
-public class PassthroughServerProcess implements MessageHandler {
+public class PassthroughServerProcess implements MessageHandler, PassthroughDumper {
   private final String serverName;
   private final int bindPort;
   private final int groupPort;
@@ -440,6 +440,17 @@ public class PassthroughServerProcess implements MessageHandler {
         return codec.encodeResponse(response);
       }
     });
+  }
+
+  @Override
+  public void dump() {
+    System.out.println("Existing entities:");
+    if(this.persistedEntitiesByConsumerID != null) {
+      for(EntityData entityData : this.persistedEntitiesByConsumerID.values()) {
+        System.out.println("\t" + entityData.className + ":" + entityData.entityName + ":" + entityData.version);
+      }
+    }
+
   }
 
   private static interface CodecHelper<R> {

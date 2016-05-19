@@ -37,7 +37,7 @@ import org.terracotta.entity.EntityResponse;
  * The server can be put into either an "active" or "passive" mode when constructed.  This determines whether server can have
  * downstream passives attached to it.
  */
-public class PassthroughServer {
+public class PassthroughServer implements PassthroughDumper {
   private String serverName;
   private int bindPort;
   private int groupPort;
@@ -263,7 +263,16 @@ public class PassthroughServer {
   private void internalRegisterServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     this.savedServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
   }
-  
+
+  @Override
+  public void dump() {
+    System.out.println("Connected passthrough clients:");
+    for(PassthroughConnection connection : this.savedClientConnections.values()) {
+      System.out.println("\t" + connection);
+    }
+    this.serverProcess.dump();
+  }
+
   private static class ServiceProviderAndConfiguration {
     public final ServiceProvider serviceProvider;
     public final ServiceProviderConfiguration providerConfiguration;
@@ -280,5 +289,7 @@ public class PassthroughServer {
     PassthroughConnection pseudoConnection = internalConnectPseudoConnection();
     PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(pseudoConnection);
     this.serverProcess.registerBuiltInServiceProvider(messengerServiceProvider, null);
+    PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
+    this.serverProcess.registerBuiltInServiceProvider(passthroughPlatformServiceProvider, null);
   }
 }
