@@ -21,6 +21,7 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import com.tc.services.PlatformServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -572,6 +573,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     CommunicatorService communicatorService = new CommunicatorService(channelManager);
     serviceRegistry.registerBuiltin(communicatorService);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
+
+    PlatformServiceProvider platformServiceProvider = new PlatformServiceProvider(this);
+    serviceRegistry.registerBuiltin(platformServiceProvider);
 
     // Creating a stage here so that the sink can be passed
     final Stage<LockResponseContext> respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, LockResponseContext.class, new RespondToRequestLockHandler(), 1, maxStageSize);
