@@ -57,7 +57,8 @@ public class ActivePassiveAckWaiterTest {
     interlock.waitOnStarts();
     waiter.didReceiveOnPassive(onePassive);
     interlock.waitOnReceivesOnly();
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }
@@ -77,8 +78,10 @@ public class ActivePassiveAckWaiterTest {
     waiter.didReceiveOnPassive(onePassive);
     waiter.didReceiveOnPassive(twoPassive);
     interlock.waitOnReceivesOnly();
-    waiter.didCompleteOnPassive(twoPassive);
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive);
+    Assert.assertFalse(waiterIsDone);
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }
@@ -100,8 +103,10 @@ public class ActivePassiveAckWaiterTest {
     waiter.didReceiveOnPassive(onePassive);
     waiter.didReceiveOnPassive(twoPassive);
     interlock.waitOnReceivesOnly();
-    waiter.didCompleteOnPassive(twoPassive);
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive);
+    Assert.assertFalse(waiterIsDone);
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep1.join();
     lockStep2.join();
@@ -119,8 +124,10 @@ public class ActivePassiveAckWaiterTest {
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    waiter.didCompleteOnPassive(twoPassive);
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive);
+    Assert.assertFalse(waiterIsDone);
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }

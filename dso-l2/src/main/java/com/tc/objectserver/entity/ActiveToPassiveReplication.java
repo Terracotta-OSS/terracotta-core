@@ -157,7 +157,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private void internalAckCompleted(MessageID mid, NodeID passive) {
     ActivePassiveAckWaiter waiter = waiters.get(mid);
     if (null != waiter) {
-      waiter.didCompleteOnPassive(passive);
+      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive);
+      if (shouldDiscardWaiter) {
+        waiters.remove(mid);
+      }
     }
   }
 

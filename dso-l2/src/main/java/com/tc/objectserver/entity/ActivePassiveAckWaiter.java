@@ -64,16 +64,21 @@ public class ActivePassiveAckWaiter {
     }
   }
 
-  public synchronized void didCompleteOnPassive(NodeID onePassive) {
+  /** 
+   * @return True if this was the last outstanding completion required and the waiter is now done.
+   */
+  public synchronized boolean didCompleteOnPassive(NodeID onePassive) {
     // Note that we will try to remove from the received set, but usually it will already have been removed.
     boolean didContainInReceived = this.receivedPending.remove(onePassive);
     // We know that it must still be in the completed set, though.
     boolean didContainInCompleted = this.completedPending.remove(onePassive);
     // We must have contained this passive in order to complete.
     Assert.assertTrue(didContainInCompleted);
+    boolean isDoneWaiting = this.completedPending.isEmpty();
     // Wake everyone up if this changed something.
-    if ((didContainInReceived && this.receivedPending.isEmpty()) || this.completedPending.isEmpty()) {
+    if ((didContainInReceived && this.receivedPending.isEmpty()) || isDoneWaiting) {
       notifyAll();
     }
+    return isDoneWaiting;
   }
 }
