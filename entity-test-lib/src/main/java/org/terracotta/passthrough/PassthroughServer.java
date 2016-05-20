@@ -49,6 +49,7 @@ public class PassthroughServer implements PassthroughDumper {
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
   // Note that we don't currently use the connection ID outside of this class but it is convenient and may be exposed outside, later.
   private long nextConnectionID;
+  private PassthroughConnection pseudoConnection;
   
   // We also track various information for the restart case.
   private final List<ServerEntityService<?, ?>> savedServerEntityServices;
@@ -112,7 +113,7 @@ public class PassthroughServer implements PassthroughDumper {
     return connection;
   }
 
-  private PassthroughConnection internalConnectPseudoConnection() {
+  private PassthroughConnection internalConnectNewPseudoConnection() {
     final long thisConnectionID = this.nextConnectionID;
     this.nextConnectionID += 1;
     // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
@@ -122,8 +123,7 @@ public class PassthroughServer implements PassthroughDumper {
         // We do nothing in this case.
       }
     };
-    PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
-    return connection;
+    return new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
   }
 
   public void start() {
@@ -150,8 +150,12 @@ public class PassthroughServer implements PassthroughDumper {
       this.serverProcess.registerEntityService(serverEntityService);
     }
     
+    // Create the pseudo-connection, life-cycled within the server, which can be used by services.
+    Assert.assertNull(this.pseudoConnection);
+    this.pseudoConnection = internalConnectNewPseudoConnection();
+    
     // Register built-in services.
-    registerBuiltInServices();
+    registerBuiltInServices(pseudoConnection);
     // Install the user-created services.
     for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
       try {
@@ -165,7 +169,14 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   public void stop() {
+    internalStop();
+  }
+
+  private void internalStop() {
     this.serverProcess.shutdown();
+    Assert.assertNotNull(this.pseudoConnection);
+    this.pseudoConnection.close();
+    this.pseudoConnection = null;
   }
 
   @Deprecated
@@ -198,9 +209,11 @@ public class PassthroughServer implements PassthroughDumper {
     }
     // Shut down the server processes.  Note that this is just stopping the processes since we want to clear the message queues.  We will only actually restart the state of the active.
     // First, the active.
-    this.serverProcess.shutdown();
+    internalStop();
     if (null != this.savedPassiveServer) {
       // Now, the passive.
+      // NOTE:  The passive has state we want to continue to use so it only partially restarts - not the same as the full
+      // "stop" and "bootstrap" sequence in the active. 
       this.savedPassiveServer.serverProcess.shutdown();
     }
     // Start a new one.
@@ -283,10 +296,9 @@ public class PassthroughServer implements PassthroughDumper {
     }
   }
 
-  private void registerBuiltInServices() {
+  private void registerBuiltInServices(PassthroughConnection pseudoConnection) {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
     this.serverProcess.registerBuiltInServiceProvider(communicatorServiceProvider, null);
-    PassthroughConnection pseudoConnection = internalConnectPseudoConnection();
     PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(pseudoConnection);
     this.serverProcess.registerBuiltInServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
