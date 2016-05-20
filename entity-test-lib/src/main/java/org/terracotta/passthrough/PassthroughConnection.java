@@ -71,7 +71,7 @@ public class PassthroughConnection implements Connection {
   private final List<Waiter> clientResponseWaitQueue;
 
 
-  public PassthroughConnection(PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
+  public PassthroughConnection(String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
     this.connectionState = new PassthroughConnectionState(serverProcess);
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
@@ -87,6 +87,7 @@ public class PassthroughConnection implements Connection {
         runClientThread();
       }
     });
+    this.clientThread.setName(readerThreadName);
     this.clientThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.messageQueue = new Vector<ServerToClientMessageRecord>();
     this.clientResponseWaitQueue = new Vector<Waiter>();
@@ -167,7 +168,6 @@ public class PassthroughConnection implements Connection {
   }
   
   private void runClientThread() {
-    Thread.currentThread().setName("Client thread");
     while (handleNextMessage()) {  
       
     }

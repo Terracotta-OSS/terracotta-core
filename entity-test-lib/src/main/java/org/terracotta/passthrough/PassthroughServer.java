@@ -107,7 +107,8 @@ public class PassthroughServer implements PassthroughDumper {
         }
       }
     };
-    PassthroughConnection connection = new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
+    String readerThreadName = "Client connection " + thisConnectionID;
+    PassthroughConnection connection = new PassthroughConnection(readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
     this.serverProcess.connectConnection(connection, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
     return connection;
@@ -123,7 +124,8 @@ public class PassthroughServer implements PassthroughDumper {
         // We do nothing in this case.
       }
     };
-    return new PassthroughConnection(this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
+    String readerThreadName = "Pseudo-connection " + thisConnectionID;
+    return new PassthroughConnection(readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
   }
 
   public void start() {
