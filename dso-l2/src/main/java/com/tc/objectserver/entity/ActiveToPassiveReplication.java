@@ -147,17 +147,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   public void ackCompleted(GroupMessage msg) {
-    internalAckCompleted(msg.inResponseTo(), msg.messageFrom());
+    // This is a normal completion.
+    boolean isNormalComplete = true;
+    internalAckCompleted(msg.inResponseTo(), msg.messageFrom(), isNormalComplete);
   }
 
   /**
    * This internal handling for completed is split out since it happens for both completed acks but also situations which
    * implies no ack is forthcoming (the passive disappearing, for example).
    */
-  private void internalAckCompleted(MessageID mid, NodeID passive) {
+  private void internalAckCompleted(MessageID mid, NodeID passive, boolean isNormalComplete) {
     ActivePassiveAckWaiter waiter = waiters.get(mid);
     if (null != waiter) {
-      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive);
+      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete);
       if (shouldDiscardWaiter) {
         waiters.remove(mid);
       }
@@ -178,7 +180,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     if (!copy.isEmpty()) {
       waiters.put(msg.getMessageID(), waiter);
       for (NodeID node : copy) {
-        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node)));
+        // This is a normal completion.
+        boolean isNormalComplete = true;
+        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node, isNormalComplete)));
       }
     }
     return waiter;
@@ -191,7 +195,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  acknowledge all the messages for this node because it is gone, this may result in 
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
     if (activated) {
-      waiters.forEach((key, value)->internalAckCompleted(key, nodeID));
+      // This is a an unexpected kind of completion.
+      boolean isNormalComplete = false;
+      waiters.forEach((key, value)->internalAckCompleted(key, nodeID, isNormalComplete));
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
       Semaphore block = new Semaphore(0);
