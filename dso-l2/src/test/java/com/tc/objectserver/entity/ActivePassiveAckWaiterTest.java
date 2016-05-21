@@ -57,7 +57,8 @@ public class ActivePassiveAckWaiterTest {
     interlock.waitOnStarts();
     waiter.didReceiveOnPassive(onePassive);
     interlock.waitOnReceivesOnly();
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }
@@ -77,8 +78,10 @@ public class ActivePassiveAckWaiterTest {
     waiter.didReceiveOnPassive(onePassive);
     waiter.didReceiveOnPassive(twoPassive);
     interlock.waitOnReceivesOnly();
-    waiter.didCompleteOnPassive(twoPassive);
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive, true);
+    Assert.assertFalse(waiterIsDone);
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }
@@ -100,8 +103,10 @@ public class ActivePassiveAckWaiterTest {
     waiter.didReceiveOnPassive(onePassive);
     waiter.didReceiveOnPassive(twoPassive);
     interlock.waitOnReceivesOnly();
-    waiter.didCompleteOnPassive(twoPassive);
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive, true);
+    Assert.assertFalse(waiterIsDone);
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep1.join();
     lockStep2.join();
@@ -119,8 +124,57 @@ public class ActivePassiveAckWaiterTest {
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    waiter.didCompleteOnPassive(twoPassive);
-    waiter.didCompleteOnPassive(onePassive);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive, true);
+    Assert.assertFalse(waiterIsDone);
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    Assert.assertTrue(waiterIsDone);
+    interlock.waitOnCompletes();
+    lockStep.join();
+  }
+
+  @Test
+  public void testFailedDoubleComplete() throws Exception {
+    Set<NodeID> passives = new HashSet<NodeID>();
+    NodeID onePassive = mock(NodeID.class);
+    passives.add(onePassive);
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    Interlock interlock = new Interlock(1);
+    LockStep lockStep = new LockStep(waiter, interlock);
+    lockStep.start();
+    interlock.waitOnStarts();
+    waiter.didReceiveOnPassive(onePassive);
+    interlock.waitOnReceivesOnly();
+    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    Assert.assertTrue(waiterIsDone);
+    boolean didFail = false;
+    try {
+      waiter.didCompleteOnPassive(onePassive, true);
+    } catch (AssertionError e) {
+      // We expect this to fail on double-complete.
+      didFail = true;
+    }
+    Assert.assertTrue(didFail);
+    interlock.waitOnCompletes();
+    lockStep.join();
+  }
+
+  @Test
+  public void testDisconnectAfterComplete() throws Exception {
+    Set<NodeID> passives = new HashSet<NodeID>();
+    NodeID onePassive = mock(NodeID.class);
+    passives.add(onePassive);
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    Interlock interlock = new Interlock(1);
+    LockStep lockStep = new LockStep(waiter, interlock);
+    lockStep.start();
+    interlock.waitOnStarts();
+    waiter.didReceiveOnPassive(onePassive);
+    interlock.waitOnReceivesOnly();
+    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    Assert.assertTrue(waiterIsDone);
+    // We will try to complete, again, but this won't assert, since we are stating that it is not a normal complete.
+    waiterIsDone = waiter.didCompleteOnPassive(onePassive, false);
+    Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }
