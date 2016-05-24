@@ -18,13 +18,18 @@
  */
 package org.terracotta.passthrough;
 
+import java.net.URI;
+
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionFactory;
 
 
 /**
  * The implementation used to control the passthrough testing cluster.
  */
 public class PassthroughClusterControl implements IClusterControl {
+  private final String stripeName;
   // We track the "original" server state for tear-down.
   private final PassthroughServer originalActiveServer;
   private final PassthroughServer originalPassiveServer;
@@ -32,13 +37,16 @@ public class PassthroughClusterControl implements IClusterControl {
   // The active we are currently using can change on restart.
   private PassthroughServer activeServer;
 
-  public PassthroughClusterControl(PassthroughServer activeServer, PassthroughServer passiveServer) {
+  public PassthroughClusterControl(String stripeName, PassthroughServer activeServer, PassthroughServer passiveServer) {
+    this.stripeName = stripeName;
     // The active cannot be null but the passive can be.
     Assert.assertTrue(null != activeServer);
     this.originalActiveServer = activeServer;
     this.originalPassiveServer = passiveServer;
     // We set the changing active server to be the original.
     this.activeServer = activeServer;
+    PassthroughServer previous = PassthroughServerRegistry.getSharedInstance().registerServer(this.stripeName, activeServer);
+    Assert.assertTrue(null == previous);
   }
 
   @Override
@@ -58,7 +66,14 @@ public class PassthroughClusterControl implements IClusterControl {
 
   @Override
   public Connection createConnectionToActive() {
-    return this.activeServer.connectNewClient();
+    URI uri = URI.create("passthrough://" + this.stripeName);
+    Connection connection = null;
+    try {
+      connection = ConnectionFactory.connect(uri, null);
+    } catch (ConnectionException e) {
+      Assert.unexpected(e);
+    }
+    return connection;
   }
 
   @Override
@@ -67,5 +82,7 @@ public class PassthroughClusterControl implements IClusterControl {
     if (null != this.originalPassiveServer) {
       this.originalPassiveServer.stop();
     }
+    PassthroughServer removedServer = PassthroughServerRegistry.getSharedInstance().unregisterServer(this.stripeName);
+    Assert.assertTrue(this.originalActiveServer == removedServer);
   }
 }

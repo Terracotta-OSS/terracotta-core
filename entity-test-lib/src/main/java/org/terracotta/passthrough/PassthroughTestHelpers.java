@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.UUID;
+
 
 /**
  * Used for setting up IClusterControl instances to wrap test cluster configurations, based on the passthrough classes.
@@ -34,10 +36,12 @@ public class PassthroughTestHelpers {
    * @return A control object to use for interacting with the cluster.
    */
   public static IClusterControl createActiveOnly(ServerInitializer initializer) {
+    // We will synthesize a unique name for this stripe.
+    String stripeName = UUID.randomUUID().toString();
     boolean activeMode = true;
     PassthroughServer activeServer = intializeOneServer(initializer, activeMode);
     PassthroughServer passiveServer = null;
-    return new PassthroughClusterControl(activeServer, passiveServer);
+    return new PassthroughClusterControl(stripeName, activeServer, passiveServer);
   }
 
   /**
@@ -47,11 +51,13 @@ public class PassthroughTestHelpers {
    * @return A control object to use for interacting with the cluster.
    */
   public static IClusterControl createActivePassive(ServerInitializer initializer) {
+    // We will synthesize a unique name for this stripe.
+    String stripeName = UUID.randomUUID().toString();
     boolean activeMode = true;
     PassthroughServer activeServer = intializeOneServer(initializer, activeMode);
     PassthroughServer passiveServer = intializeOneServer(initializer, !activeMode);
     activeServer.attachDownstreamPassive(passiveServer);
-    return new PassthroughClusterControl(activeServer, passiveServer);
+    return new PassthroughClusterControl(stripeName, activeServer, passiveServer);
   }
 
   private static PassthroughServer intializeOneServer(ServerInitializer initializer, boolean activeMode) {
