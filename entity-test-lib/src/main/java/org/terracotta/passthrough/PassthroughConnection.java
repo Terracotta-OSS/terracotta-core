@@ -229,6 +229,9 @@ public class PassthroughConnection implements Connection {
             handleComplete(sender, transactionID, result, error);
             break;
           }
+          case RETIRE_FROM_SERVER:
+            handleRetire(sender, transactionID);
+            break;
           case INVOKE_ON_CLIENT: {
             long clientInstanceID = input.readLong();
             int length = input.readInt();
@@ -281,6 +284,11 @@ public class PassthroughConnection implements Connection {
     if (null != waiter) {
       waiter.handleComplete(result, error);
     }
+  }
+
+  private void handleRetire(PassthroughServerProcess sender, long transactionID) {
+    // TODO:  Implement.
+    Assert.unimplemented();
   }
 
   private void handleInvokeOnClient(long clientInstanceID, byte[] result) throws MessageCodecException {

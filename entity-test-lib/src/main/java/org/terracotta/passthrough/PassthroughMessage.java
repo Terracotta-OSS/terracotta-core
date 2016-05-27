@@ -38,6 +38,7 @@ public abstract class PassthroughMessage {
     INVOKE_ON_SERVER,
     ACK_FROM_SERVER,
     COMPLETE_FROM_SERVER,
+    RETIRE_FROM_SERVER,
     INVOKE_ON_CLIENT,
     LOCK_ACQUIRE,
     LOCK_TRY_ACQUIRE,

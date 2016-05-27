@@ -255,6 +255,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
       }
       case ACK_FROM_SERVER:
       case COMPLETE_FROM_SERVER:
+      case RETIRE_FROM_SERVER:
       case INVOKE_ON_CLIENT:
         // Not invoked on server.
         Assert.unreachable();

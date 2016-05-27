@@ -152,6 +152,16 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createRetireMessage() {
+    // Replication ignored in this context.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.RETIRE_FROM_SERVER, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeInt(Type.RETIRE_FROM_SERVER.ordinal());
+      }};
+  }
+
   public static PassthroughMessage createMessageToClient(final long clientInstanceID, final byte[] payload) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;
