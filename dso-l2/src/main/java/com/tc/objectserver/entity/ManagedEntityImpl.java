@@ -130,7 +130,9 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public void addInvokeRequest(final ServerEntityRequest request, byte[] payload, int defaultKey) {
     if (request.getAction() == ServerEntityAction.NOOP) {
-      scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, request::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
+      scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, () -> {
+        request.complete();
+      }, ConcurrencyStrategy.UNIVERSAL_KEY);
       return;
     }
     Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);

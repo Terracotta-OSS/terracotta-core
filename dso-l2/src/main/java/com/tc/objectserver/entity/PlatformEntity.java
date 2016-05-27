@@ -54,17 +54,23 @@ public class PlatformEntity implements ManagedEntity {
 
   @Override
   public void addInvokeRequest(ServerEntityRequest request, byte[] payload, int defaultKey) {
-    processor.scheduleRequest(descriptor, request, payload, ()-> {request.complete();}, ConcurrencyStrategy.UNIVERSAL_KEY);
+    processor.scheduleRequest(descriptor, request, payload, ()-> {
+      request.complete();
+    }, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
 
   @Override
   public void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
-    processor.scheduleRequest(descriptor, sync, payload, ()-> {sync.complete();}, ConcurrencyStrategy.MANAGEMENT_KEY);
+    processor.scheduleRequest(descriptor, sync, payload, ()-> {
+      sync.complete();
+    }, ConcurrencyStrategy.MANAGEMENT_KEY);
   }
 
   @Override
   public void addLifecycleRequest(ServerEntityRequest create, byte[] arg) {
-    processor.scheduleRequest(descriptor, create, arg, ()-> {create.complete();}, ConcurrencyStrategy.MANAGEMENT_KEY);
+    processor.scheduleRequest(descriptor, create, arg, ()-> {
+      create.complete();
+    }, ConcurrencyStrategy.MANAGEMENT_KEY);
   }
 
   @Override
