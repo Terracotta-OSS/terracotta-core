@@ -662,15 +662,17 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   @Override
   public void destroy(String entityClassName, String entityName) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    boolean didDestroy = false;
+    // Look up the entity.
+    CreationData<?, ?> entityData = null;
     if (null != this.activeEntities) {
-      CreationData<?, ?> entityData = this.activeEntities.remove(entityTuple);
-      didDestroy = (null != entityData);
+      entityData = this.activeEntities.remove(entityTuple);
     } else {
-      CreationData<?, ?> entityData = this.passiveEntities.remove(entityTuple);
-      didDestroy = (null != entityData);
+      entityData = this.passiveEntities.remove(entityTuple);
     }
-    if (!didDestroy) {
+    // If we found it, destroy it.  Otherwise, throw that we didn't find it.
+    if (null != entityData) {
+      entityData.entityInstance.destroy();
+    } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
     
