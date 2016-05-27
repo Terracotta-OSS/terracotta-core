@@ -249,6 +249,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
+    public InvocationBuilder<M, R> ackRetired() {
+      // ACKs ignored in this implementation.
+      return this;
+    }
+
+    @Override
     public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       // Replication ignored in this implementation.
       return this;
@@ -257,6 +263,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     @Override
     public InvocationBuilder<M, R> message(M message) {
       this.request = message;
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<M, R> blockGetOnRetire() {
+      // ACKs ignored in this implementation.
       return this;
     }
 

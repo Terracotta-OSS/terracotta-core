@@ -76,6 +76,12 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   }
 
   @Override
+  public InvocationBuilder<M, R> ackRetired() {
+    // TODO:  Implement retired support.
+    return this;
+  }
+
+  @Override
   public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
     this.shouldReplicate = requiresReplication;
     return this;
@@ -84,6 +90,12 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   @Override
   public InvocationBuilder<M, R> message(M message) {
     this.request = message;
+    return this;
+  }
+
+  @Override
+  public InvocationBuilder<M, R> blockGetOnRetire() {
+    // TODO:  Implement retired support.
     return this;
   }
 
