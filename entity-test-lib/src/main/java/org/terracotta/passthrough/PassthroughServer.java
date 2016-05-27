@@ -301,7 +301,7 @@ public class PassthroughServer implements PassthroughDumper {
   private void registerBuiltInServices(PassthroughConnection pseudoConnection) {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
     this.serverProcess.registerBuiltInServiceProvider(communicatorServiceProvider, null);
-    PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(pseudoConnection);
+    PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess, pseudoConnection);
     this.serverProcess.registerBuiltInServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
     this.serverProcess.registerBuiltInServiceProvider(passthroughPlatformServiceProvider, null);

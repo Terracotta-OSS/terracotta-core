@@ -27,15 +27,17 @@ import org.terracotta.entity.ServiceConfiguration;
 
 
 public class PassthroughMessengerServiceProvider implements PassthroughBuiltInServiceProvider {
+  private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughConnection pseudoConnection;
   
-  public PassthroughMessengerServiceProvider(PassthroughConnection connection) {
+  public PassthroughMessengerServiceProvider(PassthroughServerProcess passthroughServerProcess, PassthroughConnection connection) {
+    this.passthroughServerProcess = passthroughServerProcess;
     this.pseudoConnection = connection;
   }
 
   @Override
   public <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
-    return configuration.getServiceType().cast(new PassthroughMessengerService(this.pseudoConnection, container, entityClassName, entityName));
+    return configuration.getServiceType().cast(new PassthroughMessengerService(this.passthroughServerProcess, this.pseudoConnection, container, entityClassName, entityName));
   }
 
   @Override

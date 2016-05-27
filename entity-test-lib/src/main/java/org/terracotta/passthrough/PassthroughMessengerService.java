@@ -26,12 +26,14 @@ import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEnti
 
 
 public class PassthroughMessengerService implements IEntityMessenger {
+  private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughConnection pseudoConnection;
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
   private final String entityName;
   
-  public PassthroughMessengerService(PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, String entityClassName, String entityName) {
+  public PassthroughMessengerService(PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, String entityClassName, String entityName) {
+    this.passthroughServerProcess = passthroughServerProcess;
     this.pseudoConnection = pseudoConnection;
     // Note that we hold the entity container to get the codec but this container is deferred so we hold onto it, instead of
     // the codec (which probably isn't set yet).
