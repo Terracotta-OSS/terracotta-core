@@ -55,4 +55,10 @@ public class PassthroughMessengerService implements IEntityMessenger {
     boolean shouldWaitForCompleted = false;
     this.pseudoConnection.invokeActionAndWaitForAcks(passthroughMessage, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
   }
+
+  @Override
+  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
+    // TODO:  Implement.
+    Assert.unimplemented();
+  }
 }
