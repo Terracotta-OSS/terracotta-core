@@ -225,7 +225,7 @@ public class ManagedEntityImplTest {
   @Test
   public void testPerformActionMissingEntityPassive() throws Exception {
     ServerEntityRequest request = mockInvokeRequest();
-    managedEntity.addInvokeRequest(request, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
+    managedEntity.addInvokeRequest(request, null, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
     verify(request).failure(any(EntityNotFoundException.class));
     // No retired when passive.
     verify(request, never()).retired();
@@ -238,7 +238,7 @@ public class ManagedEntityImplTest {
     ManagedEntityImpl activeEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, retirementManager, serverEntityService, isInActiveState);
     
     ServerEntityRequest request = mockInvokeRequest();
-    activeEntity.addInvokeRequest(request, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
+    activeEntity.addInvokeRequest(request, null, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
     verify(request).failure(any(EntityNotFoundException.class));
     verify(request).retired();
   }
@@ -286,7 +286,7 @@ public class ManagedEntityImplTest {
 
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
-    managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
+    managedEntity.addInvokeRequest(invokeRequest, null, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
@@ -334,7 +334,7 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     
     Mockito.doAnswer((Answer<Object>) (invocation) -> {
-      managedEntity.addInvokeRequest(mockNoopRequest(), null, ConcurrencyStrategy.UNIVERSAL_KEY);
+      managedEntity.addInvokeRequest(mockNoopRequest(), null, null, ConcurrencyStrategy.UNIVERSAL_KEY);
       return null;
     }).when(loopback).accept(Matchers.any(), Matchers.any());
     
@@ -345,7 +345,7 @@ public class ManagedEntityImplTest {
     new Thread(()-> {
       try {
         barrier.await();
-        managedEntity.addInvokeRequest(deferInvoke, payload, ConcurrencyStrategy.UNIVERSAL_KEY);
+        managedEntity.addInvokeRequest(deferInvoke, null, payload, ConcurrencyStrategy.UNIVERSAL_KEY);
         barrier.await();
         barrier.await();
         barrier.await();
@@ -362,7 +362,7 @@ public class ManagedEntityImplTest {
     
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     
-    managedEntity.addInvokeRequest(mgmtInvoke, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
+    managedEntity.addInvokeRequest(mgmtInvoke, null, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
     verify(loopback, times(3)).accept(Matchers.any(), Matchers.anyLong());
     verify(activeServerEntity, times(2)).invoke(eq(clientDescriptor), any(EntityMessage.class));
@@ -450,15 +450,15 @@ public class ManagedEntityImplTest {
     Mockito.doAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
-        managedEntity.addInvokeRequest(mockNoopRequest(), null, ConcurrencyStrategy.UNIVERSAL_KEY);
+        managedEntity.addInvokeRequest(mockNoopRequest(), null, null, ConcurrencyStrategy.UNIVERSAL_KEY);
         return null;
       }
     }).when(loopback).accept(Matchers.any(), Matchers.any());
 
-    managedEntity.addInvokeRequest(mockInvokeRequest(), Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), ConcurrencyStrategy.MANAGEMENT_KEY);
+    managedEntity.addInvokeRequest(mockInvokeRequest(), null, Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), ConcurrencyStrategy.MANAGEMENT_KEY);
     for (int x=1;x<=24;x++) {
       int key = (x == 12) ? ConcurrencyStrategy.MANAGEMENT_KEY : x;
-      managedEntity.addInvokeRequest(mockInvokeRequest(), Integer.toString(key).getBytes(), ConcurrencyStrategy.MANAGEMENT_KEY);
+      managedEntity.addInvokeRequest(mockInvokeRequest(), null, Integer.toString(key).getBytes(), ConcurrencyStrategy.MANAGEMENT_KEY);
     }
 //  only thing in the queue should be the MGMT action    
     Assert.assertTrue(queued.isEmpty());
@@ -527,7 +527,7 @@ public class ManagedEntityImplTest {
       }
     });
     ServerEntityRequest invokeRequest = mockInvokeRequest();
-    managedEntity.addInvokeRequest(invokeRequest, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
+    managedEntity.addInvokeRequest(invokeRequest, null, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
     verify(activeServerEntity, never()).invoke(any(ClientDescriptor.class), any(EntityMessage.class));
     verify(invokeRequest, never()).complete(any(byte[].class));

@@ -122,7 +122,7 @@ public class ReplicatedTransactionHandlerTest {
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0]));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
@@ -131,7 +131,7 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityMessage(eid, 1));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
 
-    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }  
@@ -156,11 +156,11 @@ public class ReplicatedTransactionHandlerTest {
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
     this.loopbackSink.addSingleThreaded(msg);
-    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }
@@ -173,11 +173,12 @@ public class ReplicatedTransactionHandlerTest {
     when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
+      // We will ignore the EntityMessage at index [1].
       req.complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
-      verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
+      verifySequence(req, (byte[])invocation.getArguments()[2], (int)invocation.getArguments()[3]);
       return null;
-    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.anyInt());
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       req.complete(new byte[0]);

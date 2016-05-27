@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
 import org.terracotta.entity.ConcurrencyStrategy;
-
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
@@ -77,12 +77,13 @@ public class ProcessTransactionHandler {
       ClientID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
+      EntityMessage entityMessage = message.getEntityMessage();
       byte[] extendedData = message.getExtendedData();
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, entityMessage, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
     }
 
     @Override
@@ -131,7 +132,7 @@ public class ProcessTransactionHandler {
   }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
-  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
+  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, EntityMessage entityMessage, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
@@ -223,9 +224,9 @@ public class ProcessTransactionHandler {
         // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
         if (null != entity) {
           if (ServerEntityAction.INVOKE_ACTION == action) {
-            entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+            entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
           } else if (ServerEntityAction.NOOP == action) {
-            entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
+            entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
           } else {
             entity.addLifecycleRequest(serverEntityRequest, extendedData);
           }
@@ -293,12 +294,15 @@ public class ProcessTransactionHandler {
     ClientID sourceNodeID = message.getSource();
     EntityDescriptor descriptor = message.getEntityDescriptor();
     ServerEntityAction action = decodeMessageType(message.getVoltronType());
+    // Note that we currently don't expect messages which already have an EntityMessage instance to appear here.
+    EntityMessage entityMessage = message.getEntityMessage();
+    Assert.assertNull(entityMessage);
     byte[] extendedData = message.getExtendedData();
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, entityMessage, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {

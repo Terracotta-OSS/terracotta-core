@@ -54,7 +54,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
-
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.exception.EntityException;
 
 
@@ -207,7 +207,10 @@ public class ReplicatedTransactionHandler {
             if (null != request.getAction()) switch (request.getAction()) {
               case INVOKE_ACTION:
               case NOOP:
-                entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
+                // For now, we will assume that there can be no existing message (in the future, this might change if we
+                // move the deserialization earlier).
+                EntityMessage entityMessage = null;
+                entityInstance.addInvokeRequest(request, entityMessage, extendedData, rep.getConcurrency());
                 break;
               default:
                 entityInstance.addLifecycleRequest(request, extendedData);

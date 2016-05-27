@@ -131,7 +131,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(final ServerEntityRequest request, byte[] payload, int defaultKey) {
+  public void addInvokeRequest(final ServerEntityRequest request, EntityMessage entityMessage, byte[] payload, int defaultKey) {
     if (request.getAction() == ServerEntityAction.NOOP) {
       scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, () -> {
         request.complete();
@@ -154,11 +154,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       Assert.assertNotNull(entity);
       Assert.assertNotNull(payload);
     
-      EntityMessage message = null;
-      try {
-        message = runWithHelper(()->codec.decodeMessage(payload));
-      } catch (EntityUserException e) {
-        throw new RuntimeException(e);
+      EntityMessage message = entityMessage;
+      if (null == message) {
+        try {
+          message = runWithHelper(()->codec.decodeMessage(payload));
+        } catch (EntityUserException e) {
+          throw new RuntimeException(e);
+        }
       }
       // If we are still ok and managed to deserialize the message, continue.
       if (null != message) {
@@ -168,8 +170,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         // key which on passives is the key used to run the action on the active.
         final int concurrencyKey = ((null != concurrencyStrategy)) ?
           concurrencyStrategy.concurrencyKey(message) : defaultKey;
-        final EntityMessage safeMessage = message;
-        processInvokeRequest(request, payload, safeMessage, concurrencyKey);
+        processInvokeRequest(request, payload, message, concurrencyKey);
       } else {
         throw new RuntimeException("entity deserializer returned null while processing invoke request");
       }

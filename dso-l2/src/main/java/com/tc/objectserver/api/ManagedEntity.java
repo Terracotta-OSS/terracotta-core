@@ -19,6 +19,7 @@
 package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodec;
 
 import com.tc.net.ClientID;
@@ -39,10 +40,11 @@ public interface ManagedEntity {
   * Schedules the request with the entity on the execution queue.
   * 
   * @param request translated request for execution on the server
-   * @param extendedData payload of the invoke
-   * @param defaultKey default concurrency key if no concurrency strategy is installed
+  * @param entityMessage The message instance, if it was generated internally (the extendedData is still expected)
+  * @param extendedData payload of the invoke
+  * @param defaultKey default concurrency key if no concurrency strategy is installed
   */ 
-  void addInvokeRequest(ServerEntityRequest request, byte[] extendedData, int defaultKey);
+  void addInvokeRequest(ServerEntityRequest request, EntityMessage entityMessage, byte[] extendedData, int defaultKey);
   
   void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
   

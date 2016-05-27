@@ -29,6 +29,7 @@ import com.tc.util.Assert;
 
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodec;
 
 
@@ -56,7 +57,10 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(ServerEntityRequest request, byte[] payload, int defaultKey) {
+  public void addInvokeRequest(ServerEntityRequest request, EntityMessage entityMessage, byte[] payload, int defaultKey) {
+    // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
+    // expect to use.
+    Assert.assertNull(entityMessage);
     processor.scheduleRequest(descriptor, request, payload, ()-> {
       request.complete();
       if (this.isActive) {
