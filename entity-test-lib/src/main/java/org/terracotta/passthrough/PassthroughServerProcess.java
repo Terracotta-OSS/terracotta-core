@@ -442,6 +442,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     });
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void dump() {
     System.out.println("Existing entities:");
@@ -450,7 +451,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         System.out.println("\t" + entityData.className + ":" + entityData.entityName + ":" + entityData.version);
       }
     }
-
   }
 
   private static interface CodecHelper<R> {
