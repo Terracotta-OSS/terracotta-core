@@ -77,6 +77,13 @@ public interface VoltronEntityMessage {
      * If this Ack is not requested, the get() will only return any local exceptions and no return value (null).
      */
     APPLIED,
+    /**
+     * Sent AFTER the APPLIED response.  Even if APPLIED is received, it is still possible that a reconnect could cause the
+     * message to re-send until the RETIRED is received.
+     * While this ACK typically arrives immediately after APPLIED, it can come much later if EntityMessenger is used to
+     * defer the retirement of a completed message.
+     */
+    RETIRED,
   }
   
   ClientID getSource();
