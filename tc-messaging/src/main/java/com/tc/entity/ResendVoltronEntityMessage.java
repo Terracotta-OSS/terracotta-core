@@ -28,6 +28,8 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 
+import org.terracotta.entity.EntityMessage;
+
 
 /**
  * This implementation of VoltronEntityMessage is purely to handle the case of transaction resends when the message data
@@ -119,5 +121,11 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     serialInput.read(this.extendedData);
     this.oldestTransactionPending = new TransactionID(serialInput.readLong());
     return this;
+  }
+
+  @Override
+  public EntityMessage getEntityMessage() {
+    // There is no built-in message.
+    return null;
   }
 }

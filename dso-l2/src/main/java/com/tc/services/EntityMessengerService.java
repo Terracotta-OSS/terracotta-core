@@ -59,7 +59,7 @@ public class EntityMessengerService implements IEntityMessenger {
     // We first serialize the message (note that this is partially so we can use the common message processor, which expects
     // to deserialize, but also because we may have to replicate the message to the passive).
     byte[] serializedMessage = this.codec.encodeMessage(message);
-    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, serializedMessage);
+    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, null, serializedMessage);
     this.messageSink.addSingleThreaded(interEntityMessage);
   }
 
@@ -75,10 +75,12 @@ public class EntityMessengerService implements IEntityMessenger {
    */
   private static class FakeEntityMessage implements VoltronEntityMessage {
     private final EntityDescriptor descriptor;
+    private final EntityMessage identityMessage;
     private final byte[] message;
 
-    public FakeEntityMessage(EntityDescriptor descriptor, byte[] message) {
+    public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, byte[] message) {
       this.descriptor = descriptor;
+      this.identityMessage = identityMessage;
       this.message = message;
     }
     @Override
@@ -108,6 +110,10 @@ public class EntityMessengerService implements IEntityMessenger {
     @Override
     public TransactionID getOldestTransactionOnClient() {
       return TransactionID.NULL_ID;
+    }
+    @Override
+    public EntityMessage getEntityMessage() {
+      return this.identityMessage;
     }
   }
 }

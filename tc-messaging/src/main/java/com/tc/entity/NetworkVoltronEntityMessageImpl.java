@@ -34,6 +34,8 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 
+import org.terracotta.entity.EntityMessage;
+
 
 public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements NetworkVoltronEntityMessage {
   private ClientID clientID;
@@ -149,5 +151,11 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
     return true;
+  }
+
+  @Override
+  public EntityMessage getEntityMessage() {
+    // Network messages don't contain an identity message.
+    return null;
   }
 }

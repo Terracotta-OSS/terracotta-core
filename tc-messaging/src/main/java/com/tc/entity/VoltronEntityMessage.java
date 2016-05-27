@@ -19,6 +19,8 @@
 
 package com.tc.entity;
 
+import org.terracotta.entity.EntityMessage;
+
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
@@ -105,4 +107,12 @@ public interface VoltronEntityMessage {
    * re-send order in the case of a restart or fail-over.
    */
   TransactionID getOldestTransactionOnClient();
+  
+  /**
+   * Provided for the cases where an entity message instance already exists.  Note that getExtendedData is expected to
+   * return a serialized version of this message, if it isn't null.
+   * 
+   * @return The EntityMessage instance or null, if there isn't one.
+   */
+  public EntityMessage getEntityMessage();
 }

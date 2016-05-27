@@ -544,6 +544,10 @@ public class ClientEntityManagerTest extends TestCase {
     public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
       this.transactionID = transactionID;
     }
+    @Override
+    public EntityMessage getEntityMessage() {
+      throw new UnsupportedOperationException();
+    }
   }
   
   private static class FakeSink implements Sink<Object> {
