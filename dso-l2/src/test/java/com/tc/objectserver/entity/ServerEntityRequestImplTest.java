@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -45,6 +46,7 @@ public class ServerEntityRequestImplTest {
   private MessageChannel messageChannel;
   private VoltronEntityReceivedResponse requestAckMessage;
   private VoltronEntityAppliedResponse responseMessage;
+  private VoltronEntityRetiredResponse retiredMessage;
   private EntityDescriptor entityDescriptor;
   private TransactionID transactionID;
   private ClientID nodeID;
@@ -53,7 +55,8 @@ public class ServerEntityRequestImplTest {
   public void setUp() throws Exception {
     requestAckMessage = mock(VoltronEntityReceivedResponse.class);
     responseMessage = mock(VoltronEntityAppliedResponse.class);
-    messageChannel = mockMessageChannel(requestAckMessage, responseMessage);
+    retiredMessage = mock(VoltronEntityRetiredResponse.class);
+    messageChannel = mockMessageChannel(requestAckMessage, responseMessage, retiredMessage);
     entityDescriptor = new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1);
     transactionID = new TransactionID(1);
     nodeID = mock(ClientID.class);
@@ -65,6 +68,7 @@ public class ServerEntityRequestImplTest {
     
     byte[] value = new byte[0];
     serverEntityRequest.complete(value);
+    serverEntityRequest.retired();
     
     verify(responseMessage).setSuccess(transactionID, value);
     verify(responseMessage).send();
@@ -73,9 +77,11 @@ public class ServerEntityRequestImplTest {
   @Test
   public void testCompleteCreate() throws Exception {
     boolean requiresReplication = true;
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel));
+    boolean isReplicatedMessage = false;
+    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
 
     serverEntityRequest.complete();
+    serverEntityRequest.retired();
     
     verify(responseMessage).setSuccess(transactionID, new byte[0]);
     verify(responseMessage).send();
@@ -92,15 +98,17 @@ public class ServerEntityRequestImplTest {
     verify(requestAckMessage).send();
   }
 
-  private static MessageChannel mockMessageChannel(VoltronEntityReceivedResponse requestAckMessage, VoltronEntityAppliedResponse responseMessage) {
+  private static MessageChannel mockMessageChannel(VoltronEntityReceivedResponse requestAckMessage, VoltronEntityAppliedResponse responseMessage, VoltronEntityRetiredResponse retiredMessage) {
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(requestAckMessage);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(responseMessage);
+    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(retiredMessage);
     return channel;
   }
 
   private ServerEntityRequest buildInvoke() {
     boolean requiresReplication = true;
-    return new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel));
+    boolean isReplicatedMessage = false;
+    return new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
   }
 }

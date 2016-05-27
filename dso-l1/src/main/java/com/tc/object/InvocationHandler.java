@@ -29,5 +29,5 @@ import org.terracotta.entity.InvokeFuture;
  * The minimal interface, provided to the EntityClientEndpoint, to handle invocations to send to the server.
  */
 public interface InvocationHandler {
-  InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, byte[] payload);
+  InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload);
 }

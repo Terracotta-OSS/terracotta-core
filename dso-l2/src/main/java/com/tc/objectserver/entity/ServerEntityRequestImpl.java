@@ -23,6 +23,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.util.Assert;
 
 import java.util.Optional;
 import org.terracotta.entity.ClientDescriptor;
@@ -36,12 +37,15 @@ import org.terracotta.exception.EntityException;
 public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
   private final EntityDescriptor descriptor;
   protected final Optional<MessageChannel> returnChannel;
+  // We only track whether this is replicated to know that we should reject retire acks.
+  private final boolean isReplicatedMessage;
 
   public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel) {
+      TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel, boolean isReplicatedMessage) {
     super(action, transaction, oldest, src, requiresReplication);
     this.descriptor = descriptor;
     this.returnChannel = returnChannel;
+    this.isReplicatedMessage = isReplicatedMessage;
   }
 
   @Override
@@ -51,20 +55,31 @@ public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
 
   @Override
   public synchronized void complete(byte[] value) {
-    if (isDone()) throw new AssertionError("Double-sending response");
+    if (isComplete()) throw new AssertionError("Double-sending response");
     super.complete(value); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
   public synchronized void complete() {
-    if (isDone()) throw new AssertionError("Double-sending response");
+    if (isComplete()) throw new AssertionError("Double-sending response");
     super.complete(); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
   public synchronized void failure(EntityException e) {
-    if (isDone()) throw new AssertionError("Double-sending response", e);
+    if (isComplete()) throw new AssertionError("Double-sending response", e);
     super.failure(e); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public synchronized void retired() {
+    // Replicated messages are never retired.
+    Assert.assertFalse(this.isReplicatedMessage);
+    // We can only send the retire, once.
+    if (isRetired()) {
+      throw new AssertionError("Double-sending retire");
+    }
+    super.retired();
   }
 
   @Override

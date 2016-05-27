@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -27,6 +28,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.util.Assert;
 import java.util.Collections;
 
 import java.util.Optional;
@@ -42,7 +44,8 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   private final ClientID  src;
   private final boolean requiresReplication;
   
-  private boolean done = false;
+  private boolean isComplete = false;
+  private boolean isRetired = false;
 
   public AbstractServerEntityRequest(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
     this.action = action;
@@ -87,13 +90,13 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   
   @Override
   public synchronized void failure(EntityException e) {
-    if (isDone()) throw new AssertionError("Error after successful complete");
+    if (isComplete()) throw new AssertionError("Error after successful complete");
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
       message.setFailure(transaction, e);
       message.send();
     });
-    done = true;
+    this.isComplete = true;
     this.notifyAll();
   }
 
@@ -125,7 +128,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
           throw new IllegalArgumentException("Unexpected action in complete() " + action);
       }
     });
-    done = true;
+    this.isComplete = true;
     this.notifyAll();
   }
   
@@ -144,11 +147,29 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
           throw new IllegalArgumentException("Unexpected action in complete(byte[]) " + action);
       }
     });
-    done = true;
+    this.isComplete = true;
     this.notifyAll();
   }
   
-  protected boolean isDone() {
-    return done;
+  @Override
+  public synchronized void retired() {
+    Assert.assertTrue("Double-retire", !isRetired());
+    Assert.assertTrue("Retiring incomplete", isComplete());
+    
+    getReturnChannel().ifPresent(channel -> {
+      VoltronEntityRetiredResponse response = (VoltronEntityRetiredResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE);
+      response.setTransactionID(transaction);
+      response.send();
+    });
+    this.isRetired = true;
+    this.notifyAll();
+  }
+  
+  protected boolean isComplete() {
+    return this.isComplete;
+  }  
+  
+  protected boolean isRetired() {
+    return this.isRetired;
   }  
 }

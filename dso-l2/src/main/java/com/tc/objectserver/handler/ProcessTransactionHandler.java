@@ -170,8 +170,10 @@ public class ProcessTransactionHandler {
       throw Assert.failure("Unexpected exception in entity - CRASHING", t);
     }
     
+    // This is active-side processing so this is never a replicated message.
+    boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
+    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID), isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -192,13 +194,16 @@ public class ProcessTransactionHandler {
       if (null == cachedAlreadyHandledResult) {
         // This means the result has no return value;
         serverEntityRequest.complete();
+        serverEntityRequest.retired();
       } else {
         // Pass back the cached result.
         serverEntityRequest.complete(cachedAlreadyHandledResult);
+        serverEntityRequest.retired();
       }
     } else if (null != entityException) {
       // Either this was an error found in the record of a re-send or a fail-fast scenario.
       serverEntityRequest.failure(entityException);
+      serverEntityRequest.retired();
     } else {
       // If no exception has been fired, do any special handling required by the message type.
       // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
@@ -208,9 +213,11 @@ public class ProcessTransactionHandler {
         if (doesExist) {
           // Even though it may not currently exist, if this is a re-send, we will give whatever answer we gave, the first time.
           serverEntityRequest.complete();
+          serverEntityRequest.retired();
         } else {
           // Even though the entity may currently exist, we will mimic the response we gave, initially.
           serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+          serverEntityRequest.retired();
         }
       } else {
         // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
@@ -224,6 +231,7 @@ public class ProcessTransactionHandler {
           }
         } else {
           serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+          serverEntityRequest.retired();
         }
       }
     }

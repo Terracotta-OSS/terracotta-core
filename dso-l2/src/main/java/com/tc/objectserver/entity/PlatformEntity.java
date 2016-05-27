@@ -37,9 +37,12 @@ public class PlatformEntity implements ManagedEntity {
   public static long VERSION = 1L;
   private static EntityDescriptor descriptor = new EntityDescriptor(PLATFORM_ID, ClientInstanceID.NULL_ID, VERSION);
   public final RequestProcessor processor;
+  private boolean isActive;
 
   public PlatformEntity(RequestProcessor processor) {
     this.processor = processor;
+    // We always start in the passive state.
+    this.isActive = false;
   }
   
   @Override
@@ -56,6 +59,9 @@ public class PlatformEntity implements ManagedEntity {
   public void addInvokeRequest(ServerEntityRequest request, byte[] payload, int defaultKey) {
     processor.scheduleRequest(descriptor, request, payload, ()-> {
       request.complete();
+      if (this.isActive) {
+        request.retired();
+      }
     }, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
 
@@ -63,6 +69,9 @@ public class PlatformEntity implements ManagedEntity {
   public void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
     processor.scheduleRequest(descriptor, sync, payload, ()-> {
       sync.complete();
+      if (this.isActive) {
+        sync.retired();
+      }
     }, ConcurrencyStrategy.MANAGEMENT_KEY);
   }
 
@@ -70,6 +79,9 @@ public class PlatformEntity implements ManagedEntity {
   public void addLifecycleRequest(ServerEntityRequest create, byte[] arg) {
     processor.scheduleRequest(descriptor, create, arg, ()-> {
       create.complete();
+      if (this.isActive) {
+        create.retired();
+      }
     }, ConcurrencyStrategy.MANAGEMENT_KEY);
   }
 
@@ -97,6 +109,7 @@ public class PlatformEntity implements ManagedEntity {
 
   @Override
   public void promoteEntity() {
-
+    // Set us to active mode.
+    this.isActive = true;
   }
 }

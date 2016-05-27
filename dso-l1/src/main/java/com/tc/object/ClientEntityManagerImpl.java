@@ -164,7 +164,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A create needs to be replicated.
     boolean requiresReplication = true;
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
-    return createInFlightMessageAfterAcks(message, requestedAcks);
+    // Only invoke calls can wait for retire so don't wait in this path.
+    boolean shouldBlockGetOnRetire = false;
+    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
   }
 
   @Override
@@ -172,7 +174,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A create needs to be replicated.
     boolean requiresReplication = true;
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.RECONFIGURE_ENTITY);
-    return createInFlightMessageAfterAcks(message, requestedAcks);
+    // Only invoke calls can wait for retire so don't wait in this path.
+    boolean shouldBlockGetOnRetire = false;
+    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
   }
   
   @Override
@@ -182,13 +186,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A destroy call has no extended data.
     byte[] emtpyExtendedData = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
-    return createInFlightMessageAfterAcks(message, requestedAcks);
+    // Only invoke calls can wait for retire so don't wait in this path.
+    boolean shouldBlockGetOnRetire = false;
+    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
   }
 
   @Override
-  public InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, byte[] payload) {
+  public InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION);
-    return createInFlightMessageAfterAcks(message, requestedAcks);
+    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
   }
 
   @Override
@@ -220,9 +226,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public void complete(TransactionID id, byte[] value) {
     // Note that this call comes the platform, potentially concurrently with received().
-    InFlightMessage inFlight = inFlightMessages.remove(id);
+    InFlightMessage inFlight = inFlightMessages.get(id);
     if (inFlight != null) {
-      requestTickets.release();
       inFlight.setResult(value, null);
     } else {
       throw new IllegalArgumentException("Got an unknown transaction id ack " + id);
@@ -230,14 +235,25 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public void failed(TransactionID id, EntityException e) {
+  public void failed(TransactionID id, EntityException error) {
     // Note that this call comes the platform, potentially concurrently with received().
+    InFlightMessage inFlight = inFlightMessages.get(id);
+    if (inFlight != null) {
+      inFlight.setResult(null, error);
+    } else {
+      throw new IllegalArgumentException("Got an unknown transaction id that failed with error.", error);
+    }
+  }
+
+  @Override
+  public void retired(TransactionID id) {
+    // We only retire the InFlightMessage from our mapping and release the request ticket once we get the retired ACK.
     InFlightMessage inFlight = inFlightMessages.remove(id);
     if (inFlight == null) {
-      throw new IllegalArgumentException("Got an unknown transaction id that failed with error.", e);
+      throw new IllegalArgumentException("Got an unknown transaction id in retirement: " + id);
     }
+    inFlight.retired();
     requestTickets.release();
-    inFlight.setResult(null, e);
   }
 
   @Override
@@ -388,7 +404,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
    * @return The returned byte[], on success, or throws the ExecutionException representing the failure.
    */
   private byte[] synchronousWaitForResponse(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks) throws EntityException {
-    InFlightMessage inFlight = createInFlightMessageAfterAcks(message, requestedAcks);
+    // Only invoke calls can wait for retire so don't wait in this path.
+    boolean shouldBlockGetOnRetire = false;
+    InFlightMessage inFlight = createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
     // Just wait for it.
     byte[] result = null;
     try {
@@ -412,8 +430,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return synchronousWaitForResponse(message, requestedAcks);
   }
 
-  private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks) {
-    InFlightMessage inFlight = new InFlightMessage(message, requestedAcks);
+  private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) {
+    InFlightMessage inFlight = new InFlightMessage(message, requestedAcks, shouldBlockGetOnRetire);
     outbound.addSingleThreaded(inFlight);
     inFlight.waitForAcks();
     return inFlight;

@@ -120,6 +120,7 @@ public class ReplicatedTransactionHandlerTest {
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
@@ -153,6 +154,7 @@ public class ReplicatedTransactionHandlerTest {
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
@@ -172,12 +174,14 @@ public class ReplicatedTransactionHandlerTest {
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       req.complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
       return null;
     }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       req.complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
       return null;
     }).when(entity).addSyncRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());

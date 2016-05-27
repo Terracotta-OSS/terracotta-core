@@ -137,9 +137,18 @@ public class ManagedEntityImplTest {
     String config = "foo";
     byte[] arg = mockCreatePayload(config);
     managedEntity.addLifecycleRequest(request, arg);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
-    verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
     verify(request).complete();
+    // The create is run in passive mode, which is not retired.
+    verify(request, never()).retired();
+    
+    ServerEntityRequest promotion = mockPromoteToActiveRequest();
+    managedEntity.addLifecycleRequest(promotion, null);
+    verify(promotion).complete();
+    // The promote is not retired, in our implementation
+    verify(promotion, never()).retired();
+    
+    // We expected to see this as a result of the promotion.
+    verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
   }
 
   @Test
@@ -150,14 +159,33 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(request, arg);
     verify(serverEntityService).createPassiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
     verify(request).complete();
+    // We don't retire in the passive case.
+    verify(request, never()).retired();
   }
 
   @Test
-  public void testDoubleCreate() throws Exception {
+  public void testDoubleCreatePassve() throws Exception {
     ServerEntityRequest request = mockCreateEntityRequest();
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), mockCreatePayload("foo"));
     managedEntity.addLifecycleRequest(request, mockCreatePayload("bar"));
     verify(request).failure(any(EntityAlreadyExistsException.class));
+    // No retire on passive.
+    verify(request, never()).retired();
+    verify(request, never()).complete();
+  }
+
+  @Test
+  public void testDoubleCreateActive() throws Exception {
+    // create a ManagedEntity which is in active state
+    ManagedEntityImpl activeEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true);
+    // We want to pretend that we are the expected thread.
+    Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    
+    ServerEntityRequest request = mockCreateEntityRequest();
+    activeEntity.addLifecycleRequest(mockCreateEntityRequest(), mockCreatePayload("foo"));
+    activeEntity.addLifecycleRequest(request, mockCreatePayload("bar"));
+    verify(request).failure(any(EntityAlreadyExistsException.class));
+    verify(request).retired();
     verify(request, never()).complete();
   }
 
@@ -188,13 +216,28 @@ public class ManagedEntityImplTest {
 
     verify(clientEntityStateManager).addReference(requester, new EntityDescriptor(entityID, clientInstanceID, version));
     verify(request).complete(Matchers.eq(config));
+    verify(request).retired();
   }
 
   @Test
-  public void testPerformActionMissingEntity() throws Exception {
+  public void testPerformActionMissingEntityPassive() throws Exception {
     ServerEntityRequest request = mockInvokeRequest();
     managedEntity.addInvokeRequest(request, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
     verify(request).failure(any(EntityNotFoundException.class));
+    // No retired when passive.
+    verify(request, never()).retired();
+  }
+
+  @Test
+  public void testPerformActionMissingEntityActive() throws Exception {
+    // We will need to create an active managed entity (the default one in the test is passive).
+    boolean isInActiveState = true;
+    ManagedEntityImpl activeEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState);
+    
+    ServerEntityRequest request = mockInvokeRequest();
+    activeEntity.addInvokeRequest(request, new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
+    verify(request).failure(any(EntityNotFoundException.class));
+    verify(request).retired();
   }
 
   @Test
@@ -244,6 +287,7 @@ public class ManagedEntityImplTest {
     
     verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(invokeRequest).complete(returnValue);
+    verify(invokeRequest).retired();
   }
   
   @Test
@@ -320,7 +364,9 @@ public class ManagedEntityImplTest {
     verify(loopback, times(3)).accept(Matchers.any(), Matchers.anyLong());
     verify(activeServerEntity, times(2)).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(mgmtInvoke).complete(any());
+    verify(mgmtInvoke).retired();
     verify(deferInvoke).complete(any());
+    verify(deferInvoke).retired();
   }
   
   @Test
@@ -483,16 +529,18 @@ public class ManagedEntityImplTest {
     verify(activeServerEntity, never()).invoke(any(ClientDescriptor.class), any(EntityMessage.class));
     verify(invokeRequest, never()).complete(any(byte[].class));
     verify(invokeRequest).failure(any(EntityUserException.class));
+    verify(invokeRequest).retired();
   }
 
   @Test
-  public void testGetAndRelease() throws Exception {
-    
+  public void testGetAndReleaseActive() throws Exception {
     // Create the entity.
     ServerEntityRequest createRequest = mockCreateEntityRequest();
     managedEntity.addLifecycleRequest(createRequest,  null);
     verify(createRequest).complete();
-
+    // No retire on create of passive - we will change to active, soon.
+    verify(createRequest, never()).retired();
+    
     // Get and release are only relevant on the active.
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
@@ -503,12 +551,14 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(getRequest,  null);
     verify(activeServerEntity).connected(clientDescriptor);
     verify(getRequest).complete(null);
+    verify(getRequest).retired();
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
     ServerEntityRequest releaseRequest = mockReleaseRequest(requester);
     managedEntity.addLifecycleRequest(releaseRequest, null);
     verify(activeServerEntity).disconnected(clientDescriptor);
     verify(releaseRequest).complete();
+    verify(releaseRequest).retired();
   }
 
   
@@ -518,6 +568,8 @@ public class ManagedEntityImplTest {
     ServerEntityRequest createRequest = mockCreateEntityRequest();
     managedEntity.addLifecycleRequest(createRequest, null);
     verify(createRequest).complete();
+    // No retire while passive.
+    verify(createRequest, never()).retired();
     
     // Verify that it was created as a passive.
     verify(passiveServerEntity).createNew();
@@ -533,6 +585,7 @@ public class ManagedEntityImplTest {
     ServerEntityRequest failedCreateRequest = mockCreateEntityRequest();
     managedEntity.addLifecycleRequest(failedCreateRequest, null);
     verify(failedCreateRequest).failure(any(EntityAlreadyExistsException.class));
+    verify(failedCreateRequest).retired();
     verify(failedCreateRequest, never()).complete();
     
     // Verify that we can get and release, just like with any other active.
@@ -541,12 +594,14 @@ public class ManagedEntityImplTest {
     managedEntity.addLifecycleRequest(getRequest, null);
     verify(activeServerEntity).connected(clientDescriptor);
     verify(getRequest).complete(null);
+    verify(getRequest).retired();
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
     ServerEntityRequest releaseRequest = mockReleaseRequest(requester);
     managedEntity.addLifecycleRequest(releaseRequest, null);
     verify(activeServerEntity).disconnected(clientDescriptor);
     verify(releaseRequest).complete();
+    verify(releaseRequest).retired();
   }
 
   @Test
