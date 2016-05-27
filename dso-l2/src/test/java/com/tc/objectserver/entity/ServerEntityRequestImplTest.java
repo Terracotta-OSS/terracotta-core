@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import org.junit.Before;
@@ -25,7 +24,6 @@ import org.junit.Test;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;

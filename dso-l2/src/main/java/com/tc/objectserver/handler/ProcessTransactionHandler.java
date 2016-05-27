@@ -23,8 +23,6 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -58,7 +56,6 @@ import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ProcessTransactionHandler {
-  private final static TCLogger logger = TCLogging.getLogger(ProcessTransactionHandler.class);
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
   

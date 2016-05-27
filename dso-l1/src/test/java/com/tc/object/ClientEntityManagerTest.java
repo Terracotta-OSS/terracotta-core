@@ -27,6 +27,8 @@ import com.tc.async.api.StageManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
@@ -75,6 +77,7 @@ public class ClientEntityManagerTest extends TestCase {
   private EntityID entityID;
   private EntityDescriptor entityDescriptor;
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
@@ -388,7 +391,7 @@ public class ClientEntityManagerTest extends TestCase {
   private boolean didFindEndpoint(TestFetcher fetcher) {
     boolean didFind = false;
     try {
-      EntityClientEndpoint endpoint = fetcher.getResult();
+      EntityClientEndpoint<EntityMessage, EntityResponse> endpoint = fetcher.getResult();
       didFind = true;
       endpoint.close();
     } catch (EntityNotFoundException e) {
@@ -405,13 +408,14 @@ public class ClientEntityManagerTest extends TestCase {
   private static class TestFetcher extends Thread {
     private final ClientEntityManager manager;
     private final EntityDescriptor entityDescriptor;
-    private EntityClientEndpoint result;
+    private EntityClientEndpoint<EntityMessage, EntityResponse> result;
     private Throwable exception;
     
     public TestFetcher(ClientEntityManager manager, EntityDescriptor entityDescriptor) {
       this.manager = manager;
       this.entityDescriptor = entityDescriptor;
     }
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
       try {
@@ -420,7 +424,7 @@ public class ClientEntityManagerTest extends TestCase {
         this.exception = t;
       }
     }
-    public EntityClientEndpoint getResult() throws Throwable {
+    public EntityClientEndpoint<EntityMessage, EntityResponse> getResult() throws Throwable {
       if (null != this.exception) {
         throw this.exception;
       }

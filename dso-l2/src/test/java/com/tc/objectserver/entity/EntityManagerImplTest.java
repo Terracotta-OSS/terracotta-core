@@ -46,6 +46,7 @@ public class EntityManagerImplTest {
   private long version;
   private long consumerID;
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);

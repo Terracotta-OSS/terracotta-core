@@ -256,7 +256,7 @@ public final class TCMessageType {
     }
 
     if (!intFields.isEmpty()) {
-      final String unused = Arrays.asList(intFields.keySet()).toString();
+      final String unused = intFields.keySet().toString();
       throw new RuntimeException("TCMessageType: Unused integer constants (please remove): " + unused);
     }
 

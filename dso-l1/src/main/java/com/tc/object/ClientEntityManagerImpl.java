@@ -78,7 +78,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final AtomicLong currentTransactionID;
 
   private final ClientEntityStateManager stateManager;
-  private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint> objectStoreMap;
+  private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint<?, ?>> objectStoreMap;
     
   private final StageManager stages;
   
@@ -91,7 +91,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.requestTickets = new Semaphore(ClientConfigurationContext.MAX_SENT_REQUESTS);
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
-    this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint>(10240, 0.75f, 128);
+    this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint<?, ?>>(10240, 0.75f, 128);
     this.stages = mgr;
     
     this.outbound = createSendStage(stages);
@@ -136,6 +136,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return doesExist;
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
   public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
     return internalLookup(entityDescriptor, codec, closeHook);
@@ -143,9 +144,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public void handleMessage(EntityDescriptor entityDescriptor, byte[] message) {
-    EntityClientEndpoint endpoint = this.objectStoreMap.get(entityDescriptor);
+    EntityClientEndpoint<?, ?> endpoint = this.objectStoreMap.get(entityDescriptor);
     if (endpoint != null) {
-      EntityClientEndpointImpl endpointImpl = (EntityClientEndpointImpl) endpoint;
+      EntityClientEndpointImpl<?, ?> endpointImpl = (EntityClientEndpointImpl<?, ?>) endpoint;
       try {
         endpointImpl.handleMessage(message);
       } catch (MessageCodecException e) {
@@ -303,7 +304,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public synchronized void shutdown(boolean fromShutdownHook) {
     stateManager.stop();
     // We also want to notify any end-points that they have been disconnected.
-    for(EntityClientEndpoint endpoint : this.objectStoreMap.values()) {
+    for(EntityClientEndpoint<?, ?> endpoint : this.objectStoreMap.values()) {
       try {
         endpoint.didCloseUnexpectedly();
       } catch (Throwable t) {
@@ -315,10 +316,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.objectStoreMap.clear();
   }
 
-  private EntityClientEndpoint internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, final Runnable closeHook) throws EntityException {
+  private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
 
-    EntityClientEndpoint resolvedEndpoint = null;
+    EntityClientEndpoint<M, R> resolvedEndpoint = null;
     try {
       byte[] config = internalRetrieve(entityDescriptor);
       // We can only fail to get the config if we threw an exception.
@@ -337,7 +338,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           }
         }
       };
-      resolvedEndpoint = new EntityClientEndpointImpl(entityDescriptor, this, config, codec, compoundRunnable);
+      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entityDescriptor, this, config, codec, compoundRunnable);
       
       if (null != this.objectStoreMap.get(entityDescriptor)) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()
