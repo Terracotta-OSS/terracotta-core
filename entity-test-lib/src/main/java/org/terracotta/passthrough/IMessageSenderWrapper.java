@@ -29,6 +29,7 @@ package org.terracotta.passthrough;
 public interface IMessageSenderWrapper {
   void sendAck(PassthroughMessage ack);
   void sendComplete(PassthroughMessage complete);
+  void sendRetire(PassthroughMessage retire);
   PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID);
   /**
    * Used for identifying a PassthroughConnection or anything which wraps one as an IMessageSenderWrapper.  This allows for

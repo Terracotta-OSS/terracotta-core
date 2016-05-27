@@ -55,12 +55,17 @@ public class PassthroughMessengerService implements IEntityMessenger {
     boolean shouldWaitForSent = false;
     boolean shouldWaitForReceived = false;
     boolean shouldWaitForCompleted = false;
-    this.pseudoConnection.invokeActionAndWaitForAcks(passthroughMessage, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+    boolean shouldWaitForRetired = false;
+    boolean shouldBlockGetUntilRetire = false;
+    this.pseudoConnection.invokeActionAndWaitForAcks(passthroughMessage, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, shouldBlockGetUntilRetire);
   }
 
   @Override
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
-    // TODO:  Implement.
-    Assert.unimplemented();
+    // Serialize the message.
+    @SuppressWarnings("unchecked")
+    MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
+    byte[] serializedMessage = codec.encodeMessage(newMessageToSchedule);
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, serializedMessage);
   }
 }

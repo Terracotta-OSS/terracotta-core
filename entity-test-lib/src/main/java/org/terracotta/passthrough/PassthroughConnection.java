@@ -112,18 +112,21 @@ public class PassthroughConnection implements Connection {
     boolean shouldWaitForSent = true;
     boolean shouldWaitForReceived = true;
     boolean shouldWaitForCompleted = true;
-    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+    // No need to block on retire for internal messages - we only want the first message.
+    boolean shouldWaitForRetired = false;
+    boolean forceGetToBlockOnRetire = false;
+    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
   /**
    * This entry-point is specifically used for entity-defined action messages.
    */
-  public InvokeFuture<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
-    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+  public InvokeFuture<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
+    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
-  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
-    PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
+    PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
     if (Thread.currentThread() == clientThread) {
 //  this check is kind of horrible but if this is the client thread as the result of being invoked from within 
 //  message handling (server originated), then just do message completion locally.
@@ -279,7 +282,7 @@ public class PassthroughConnection implements Connection {
   }
 
   private void handleComplete(PassthroughServerProcess sender, long transactionID, byte[] result, EntityException error) {
-    PassthroughWait waiter = this.connectionState.removeWaiterForTransaction(sender, transactionID);
+    PassthroughWait waiter = this.connectionState.getWaiterForTransaction(sender, transactionID);
     // Note that we may fail because this server may be dead.
     if (null != waiter) {
       waiter.handleComplete(result, error);
@@ -287,8 +290,11 @@ public class PassthroughConnection implements Connection {
   }
 
   private void handleRetire(PassthroughServerProcess sender, long transactionID) {
-    // TODO:  Implement.
-    Assert.unimplemented();
+    PassthroughWait waiter = this.connectionState.removeWaiterForTransaction(sender, transactionID);
+    // Note that we may fail because this server may be dead.
+    if (null != waiter) {
+      waiter.handleRetire();
+    }
   }
 
   private void handleInvokeOnClient(long clientInstanceID, byte[] result) throws MessageCodecException {
@@ -403,7 +409,9 @@ public class PassthroughConnection implements Connection {
       boolean shouldWaitForSent = true;
       boolean shouldWaitForReceived = true;
       boolean shouldWaitForCompleted = true;
-      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+      boolean shouldWaitForRetired = true;
+      boolean forceGetToBlockOnRetire = true;
+      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
       waiter.waitForAck();
     }
     
@@ -415,7 +423,9 @@ public class PassthroughConnection implements Connection {
       boolean shouldWaitForSent = true;
       boolean shouldWaitForReceived = true;
       boolean shouldWaitForCompleted = true;
-      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+      boolean shouldWaitForRetired = true;
+      boolean forceGetToBlockOnRetire = true;
+      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
       waiter.waitForAck();
     }
     

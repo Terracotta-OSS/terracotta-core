@@ -25,14 +25,25 @@ package org.terracotta.passthrough;
  */
 public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   private final IMessageSenderWrapper sender;
-  private boolean isDone = false;
+  private boolean isComplete = false;
+  private boolean isRetired = false;
   
   public PassthroughInterserverInterlock(IMessageSenderWrapper sender) {
     this.sender = sender;
   }
 
   public synchronized void waitForComplete() {
-    while (!this.isDone) {
+    while (!this.isComplete) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        Assert.unexpected(e);
+      }
+    }
+  }
+
+  public synchronized void waitForRetired() {
+    while (!this.isRetired) {
       try {
         wait();
       } catch (InterruptedException e) {
@@ -45,7 +56,12 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   }
   @Override
   public synchronized void sendComplete(PassthroughMessage complete) {
-    this.isDone = true;
+    this.isComplete = true;
+    notifyAll();
+  }
+  @Override
+  public synchronized void sendRetire(PassthroughMessage retire) {
+    this.isRetired = true;
     notifyAll();
   }
   @Override

@@ -46,7 +46,9 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   private boolean shouldWaitForSent;
   private boolean shouldWaitForReceived;
   private boolean shouldWaitForCompleted;
+  private boolean shouldWaitForRetired;
   private boolean shouldReplicate;
+  private boolean shouldBlockGetUntilRetire;
   private M request;
   
   public PassthroughInvocationBuilder(PassthroughConnection connection, String entityClassName, String entityName, long clientInstanceID, MessageCodec<M, R> messageCodec) {
@@ -55,6 +57,8 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
     this.entityName = entityName;
     this.clientInstanceID = clientInstanceID;
     this.messageCodec = messageCodec;
+    
+    this.shouldBlockGetUntilRetire = false;
   }
 
   @Override
@@ -77,7 +81,7 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
 
   @Override
   public InvocationBuilder<M, R> ackRetired() {
-    // TODO:  Implement retired support.
+    this.shouldWaitForRetired = true;
     return this;
   }
 
@@ -95,14 +99,14 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
 
   @Override
   public InvocationBuilder<M, R> blockGetOnRetire() {
-    // TODO:  Implement retired support.
+    this.shouldBlockGetUntilRetire = true;
     return this;
   }
 
   @Override
   public InvokeFuture<R> invoke() throws MessageCodecException {
     final PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), this.shouldReplicate);
-    final InvokeFuture<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted);
+    final InvokeFuture<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted, this.shouldWaitForRetired, this.shouldBlockGetUntilRetire);
     return new InvokeFuture<R>() {
       @Override
       public boolean isDone() {

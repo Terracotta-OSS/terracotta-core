@@ -46,7 +46,7 @@ public class PassthroughConnectionState {
     this.nextTransactionID = 1;
   }
 
-  public synchronized PassthroughWait sendNormal(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+  public synchronized PassthroughWait sendNormal(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
     // This uses the normal server process so wait for it to become available.
     while (null == this.serverProcess) {
       try {
@@ -62,11 +62,11 @@ public class PassthroughConnectionState {
         oldestTransactionID = oneID;
       }
     }
-    return createAndSend(this.serverProcess, this.inFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+    return createAndSend(this.serverProcess, this.inFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
-  private PassthroughWait createAndSend(PassthroughServerProcess target, Map<Long, PassthroughWait> tracker, PassthroughConnection sender, PassthroughMessage message, long oldestTransactionID, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
-    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+  private PassthroughWait createAndSend(PassthroughServerProcess target, Map<Long, PassthroughWait> tracker, PassthroughConnection sender, PassthroughMessage message, long oldestTransactionID, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
+    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
     long transactionID = this.nextTransactionID;
     this.nextTransactionID += 1;
     message.setTransactionTracking(transactionID, oldestTransactionID);
@@ -84,12 +84,12 @@ public class PassthroughConnectionState {
     return (sender == this.serverProcess) || (sender == this.reconnectingServerProcess);
   }
 
-  public synchronized PassthroughWait sendAsReconnect(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted) {
+  public synchronized PassthroughWait sendAsReconnect(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
     // This is similar to the normal send but only happens in the reconnect state and creates a waiter in that in-flight set.
     Assert.assertTrue(null != this.reconnectingServerProcess);
     // We won't bother clearing transactions on re-send.
     long oldestTransactionID = 0;
-    return createAndSend(this.reconnectingServerProcess, this.reconnectingInFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted);
+    return createAndSend(this.reconnectingServerProcess, this.reconnectingInFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
   public synchronized Map<Long, PassthroughWait> enterReconnectState(PassthroughServerProcess newServerProcess) {
@@ -110,6 +110,8 @@ public class PassthroughConnectionState {
     Assert.assertTrue(null != this.reconnectingServerProcess);
     byte[] raw = waiter.resetAndGetMessageForResend();
     this.reconnectingInFlightMessages.put(transactionID, waiter);
+    // We always want to block on retire, when doing a re-send.
+    waiter.blockGetOnRetire();
     this.reconnectingServerProcess.sendMessageToServer(sender, raw);
   }
 
