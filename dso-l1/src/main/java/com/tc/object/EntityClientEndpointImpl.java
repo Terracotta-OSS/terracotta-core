@@ -129,8 +129,20 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
+    public InvocationBuilder<M, R> ackRetired() {
+      // TODO:  Implement retired support.
+      return this;
+    }
+
+    @Override
     public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       this.requiresReplication = requiresReplication;
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<M, R> blockGetOnRetire() {
+      // TODO:  Implement retired support.
       return this;
     }
 
