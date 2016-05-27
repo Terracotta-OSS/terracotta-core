@@ -43,6 +43,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
@@ -71,6 +72,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private static final TCLogger logger   = TCLogging.getLogger(ManagedEntityImpl.class);
 
   private final RequestProcessor executor;
+  private final RetirementManager retirementManager;
 
   private final EntityID id;
   private final long version;
@@ -101,7 +103,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
-                    RequestProcessor process, ServerEntityService<EntityMessage, EntityResponse> factory,
+                    RequestProcessor process, RetirementManager retirementManager, ServerEntityService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
@@ -111,6 +113,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector = eventCollector;
     this.factory = factory;
     this.executor = process;
+    this.retirementManager = retirementManager;
     this.isInActiveState = isInActiveState;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();

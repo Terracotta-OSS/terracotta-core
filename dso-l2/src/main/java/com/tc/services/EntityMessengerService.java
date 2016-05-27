@@ -30,6 +30,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.handler.RetirementManager;
 
 
 /**
@@ -38,12 +39,14 @@ import com.tc.objectserver.api.ManagedEntity;
  */
 public class EntityMessengerService implements IEntityMessenger {
   private final Sink<VoltronEntityMessage> messageSink;
+  private final RetirementManager retirementManager;
   private final MessageCodec<EntityMessage, ?> codec;
   private final EntityDescriptor fakeDescriptor;
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, RetirementManager retirementManager, ManagedEntity owningEntity) {
     this.messageSink = messageSink;
+    this.retirementManager = retirementManager;
     // Note that the codec will actually expect to work on a sub-type of EntityMessage but this service isn't explicitly
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();
