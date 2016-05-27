@@ -52,7 +52,7 @@ import static com.tc.util.Assert.assertNotNull;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
-
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -579,12 +579,22 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
+          final int concurrencyKey = (null != this.concurrencyStrategy)
+              ? this.concurrencyStrategy.concurrencyKey(message)
+              : ConcurrencyStrategy.MANAGEMENT_KEY;
+          this.retirementManager.registerWithMessage(wrappedRequest, message, concurrencyKey);
           byte[] er = runWithHelper(()->codec.encodeResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
           wrappedRequest.complete(er);
-          wrappedRequest.retired();
+          List<ServerEntityRequest> readyToRetire = this.retirementManager.retireForCompletion(message);
+          for (ServerEntityRequest toRetire : readyToRetire) {
+            toRetire.retired();
+          }
         } catch (EntityUserException e) {
           wrappedRequest.failure(e);
-          wrappedRequest.retired();
+          List<ServerEntityRequest> readyToRetire = this.retirementManager.retireForCompletion(message);
+          for (ServerEntityRequest toRetire : readyToRetire) {
+            toRetire.retired();
+          }
           throw new RuntimeException(e);
         }
       }

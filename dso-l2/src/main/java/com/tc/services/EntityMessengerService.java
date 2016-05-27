@@ -56,17 +56,24 @@ public class EntityMessengerService implements IEntityMessenger {
 
   @Override
   public void messageSelf(EntityMessage message) throws MessageCodecException {
-    // We first serialize the message (note that this is partially so we can use the common message processor, which expects
-    // to deserialize, but also because we may have to replicate the message to the passive).
-    byte[] serializedMessage = this.codec.encodeMessage(message);
-    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, null, serializedMessage);
-    this.messageSink.addSingleThreaded(interEntityMessage);
+    scheduleMessage(message);
   }
 
   @Override
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
-    // TODO: Implement.
-    throw new UnsupportedOperationException("TODO:  Implement");
+    // This requires that we access the RetirementManager to change the retirement of the current message.
+    this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule);
+    // Schedule the message, as per normal.
+    scheduleMessage(newMessageToSchedule);
+  }
+
+
+  private void scheduleMessage(EntityMessage message) throws MessageCodecException {
+    // We first serialize the message (note that this is partially so we can use the common message processor, which expects
+    // to deserialize, but also because we may have to replicate the message to the passive).
+    byte[] serializedMessage = this.codec.encodeMessage(message);
+    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, serializedMessage);
+    this.messageSink.addSingleThreaded(interEntityMessage);
   }
 
 
