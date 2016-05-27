@@ -60,6 +60,12 @@ public class EntityMessengerService implements IEntityMessenger {
     this.messageSink.addSingleThreaded(interEntityMessage);
   }
 
+  @Override
+  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
+    // TODO: Implement.
+    throw new UnsupportedOperationException("TODO:  Implement");
+  }
+
 
   /**
    * We fake up a Voltron entity message to enqueue for the entity to process in the future.
