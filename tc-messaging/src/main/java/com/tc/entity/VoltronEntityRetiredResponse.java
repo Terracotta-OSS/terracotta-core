@@ -16,18 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object;
+package com.tc.entity;
 
-import com.tc.entity.VoltronEntityMessage;
-
-import java.util.Set;
-
-import org.terracotta.entity.InvokeFuture;
+import com.tc.object.tx.TransactionID;
 
 
-/**
- * The minimal interface, provided to the EntityClientEndpoint, to handle invocations to send to the server.
- */
-public interface InvocationHandler {
-  InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload);
+public interface VoltronEntityRetiredResponse extends VoltronEntityResponse {
+  void setTransactionID(TransactionID id);
 }

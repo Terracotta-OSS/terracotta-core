@@ -30,6 +30,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.handler.RetirementManager;
 
 
 /**
@@ -38,12 +39,14 @@ import com.tc.objectserver.api.ManagedEntity;
  */
 public class EntityMessengerService implements IEntityMessenger {
   private final Sink<VoltronEntityMessage> messageSink;
+  private final RetirementManager retirementManager;
   private final MessageCodec<EntityMessage, ?> codec;
   private final EntityDescriptor fakeDescriptor;
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, RetirementManager retirementManager, ManagedEntity owningEntity) {
     this.messageSink = messageSink;
+    this.retirementManager = retirementManager;
     // Note that the codec will actually expect to work on a sub-type of EntityMessage but this service isn't explicitly
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();
@@ -53,10 +56,23 @@ public class EntityMessengerService implements IEntityMessenger {
 
   @Override
   public void messageSelf(EntityMessage message) throws MessageCodecException {
+    scheduleMessage(message);
+  }
+
+  @Override
+  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
+    // This requires that we access the RetirementManager to change the retirement of the current message.
+    this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule);
+    // Schedule the message, as per normal.
+    scheduleMessage(newMessageToSchedule);
+  }
+
+
+  private void scheduleMessage(EntityMessage message) throws MessageCodecException {
     // We first serialize the message (note that this is partially so we can use the common message processor, which expects
     // to deserialize, but also because we may have to replicate the message to the passive).
     byte[] serializedMessage = this.codec.encodeMessage(message);
-    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, serializedMessage);
+    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, serializedMessage);
     this.messageSink.addSingleThreaded(interEntityMessage);
   }
 
@@ -66,10 +82,12 @@ public class EntityMessengerService implements IEntityMessenger {
    */
   private static class FakeEntityMessage implements VoltronEntityMessage {
     private final EntityDescriptor descriptor;
+    private final EntityMessage identityMessage;
     private final byte[] message;
 
-    public FakeEntityMessage(EntityDescriptor descriptor, byte[] message) {
+    public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, byte[] message) {
       this.descriptor = descriptor;
+      this.identityMessage = identityMessage;
       this.message = message;
     }
     @Override
@@ -99,6 +117,10 @@ public class EntityMessengerService implements IEntityMessenger {
     @Override
     public TransactionID getOldestTransactionOnClient() {
       return TransactionID.NULL_ID;
+    }
+    @Override
+    public EntityMessage getEntityMessage() {
+      return this.identityMessage;
     }
   }
 }

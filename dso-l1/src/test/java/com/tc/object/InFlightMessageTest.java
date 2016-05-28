@@ -38,7 +38,9 @@ public class InFlightMessageTest extends TestCase {
     // the message interrupt call actually knows which thread to interrupt.
     // While we could interrupt the thread before the blocking call, and it would still behave as if we interrupted it after
     // it started the call, the message won't know what thread(s) are blocked until they call it.
-    InterlockMessage message = new InterlockMessage(mockedEntityMessage, Collections.<Acks>emptySet());
+    // This is a FETCH so we won't worry about blocking on retire.
+    boolean shouldBlockGetOnRetire = false;
+    InterlockMessage message = new InterlockMessage(mockedEntityMessage, Collections.<Acks>emptySet(), shouldBlockGetOnRetire);
     // Create the thread which we will interrupt.
     InterruptableThread thread = new InterruptableThread(message);
     
@@ -89,8 +91,8 @@ public class InFlightMessageTest extends TestCase {
   private static class InterlockMessage extends InFlightMessage {
     private boolean didEnter;
     
-    public InterlockMessage(NetworkVoltronEntityMessage message, Set<Acks> acks) {
-      super(message, acks);
+    public InterlockMessage(NetworkVoltronEntityMessage message, Set<Acks> acks, boolean shouldBlockGetOnRetire) {
+      super(message, acks, shouldBlockGetOnRetire);
       this.didEnter = false;
     }
 

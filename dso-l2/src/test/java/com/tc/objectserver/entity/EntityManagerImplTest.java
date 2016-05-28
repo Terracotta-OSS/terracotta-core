@@ -28,6 +28,7 @@ import org.terracotta.TestEntity;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.handler.RetirementManager;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 
@@ -46,6 +47,7 @@ public class EntityManagerImplTest {
   private long version;
   private long consumerID;
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
@@ -55,6 +57,7 @@ public class EntityManagerImplTest {
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
         mock(RequestProcessor.class),
+        mock(RetirementManager.class),
         mock(BiConsumer.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");

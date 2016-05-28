@@ -16,19 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.entity;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
+
+import org.terracotta.entity.EntityMessage;
 
 
 /**
@@ -121,5 +121,11 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     serialInput.read(this.extendedData);
     this.oldestTransactionPending = new TransactionID(serialInput.readLong());
     return this;
+  }
+
+  @Override
+  public EntityMessage getEntityMessage() {
+    // There is no built-in message.
+    return null;
   }
 }

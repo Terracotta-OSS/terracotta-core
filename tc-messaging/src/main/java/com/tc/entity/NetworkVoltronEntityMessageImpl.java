@@ -34,6 +34,8 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 
+import org.terracotta.entity.EntityMessage;
+
 
 public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements NetworkVoltronEntityMessage {
   private ClientID clientID;
@@ -114,7 +116,6 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
 
   @Override
   protected void dehydrateValues() {
-    @SuppressWarnings("resource")
     TCByteBufferOutputStream outputStream = getOutputStream();
     // We don't want to use the NVpair stuff:  it is horrendously complicated, doesn't work well with all types, and doesn't buy us anything.
     putNVPair((byte)0, (byte)0);
@@ -150,5 +151,11 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
     return true;
+  }
+
+  @Override
+  public EntityMessage getEntityMessage() {
+    // Network messages don't contain an identity message.
+    return null;
   }
 }

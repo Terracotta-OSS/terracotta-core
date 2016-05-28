@@ -28,15 +28,14 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
-import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -49,19 +48,15 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
-import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
-import java.nio.ByteBuffer;
 
-import java.util.LinkedList;
+import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Random;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -71,23 +66,21 @@ import static org.mockito.Mockito.verify;
 
 
 public class ReplicatedTransactionHandlerTest {
-  private TerracottaServiceProviderRegistry terracottaServiceProviderRegistry;
   private EntityPersistor entityPersistor;
   private TransactionOrderPersistor transactionOrderPersistor;
   private ReplicatedTransactionHandler rth;
   private ClientID source;
   private ForwardingSink loopbackSink;
   private ClientEntityStateManager clientEntityStateManager;
-  private ITopologyEventCollector eventCollector;
   private StateManager stateManager;
   private EntityManager entityManager;
-  private GroupManager groupManager;
+  private GroupManager<AbstractGroupMessage> groupManager;
   
   private long rid = 0;
   
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
-    this.terracottaServiceProviderRegistry = mock(TerracottaServiceProviderRegistry.class);
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
     this.stateManager = mock(StateManager.class);
@@ -106,7 +99,6 @@ public class ReplicatedTransactionHandlerTest {
     
     this.loopbackSink = new ForwardingSink(this.rth.getEventHandler());
     
-    this.eventCollector = mock(ITopologyEventCollector.class);
     channelManager.addEventListener(clientEntityStateManager);
   }
   
@@ -128,8 +120,9 @@ public class ReplicatedTransactionHandlerTest {
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0]));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
@@ -138,7 +131,7 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityMessage(eid, 1));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
 
-    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }  
@@ -161,12 +154,13 @@ public class ReplicatedTransactionHandlerTest {
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       ((ServerEntityRequest)invocation.getArguments()[0]).complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
     this.loopbackSink.addSingleThreaded(msg);
-    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.eq(rand));
+    verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }
@@ -175,19 +169,20 @@ public class ReplicatedTransactionHandlerTest {
   public void testTestDefermentDuringSync() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
     long VERSION = 1;
-    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
-    ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
     when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
+      // We will ignore the EntityMessage at index [1].
       req.complete(new byte[0]);
-      verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
+      // NOTE:  We don't retire replicated messages.
+      verifySequence(req, (byte[])invocation.getArguments()[2], (int)invocation.getArguments()[3]);
       return null;
-    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());
+    }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.anyInt());
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       req.complete(new byte[0]);
+      // NOTE:  We don't retire replicated messages.
       verifySequence(req, (byte[])invocation.getArguments()[1], (int)invocation.getArguments()[2]);
       return null;
     }).when(entity).addSyncRequest(Matchers.any(), Matchers.any(), Matchers.anyInt());
@@ -293,32 +288,6 @@ public class ReplicatedTransactionHandlerTest {
         source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency);
   }
 
-  /**
-   * This is pulled out as its own helper since the mocked EntityIDs aren't .equals() each other so using the same
-   * instance gives convenient de facto equality.
-   */
-  private EntityID createMockEntity(String entityName) {
-    EntityID entityID = mock(EntityID.class);
-    // We will use the TestEntity since we only want to proceed with the check, not actually create it (this is from entity-api).
-    when(entityID.getClassName()).thenReturn("org.terracotta.TestEntity");
-    when(entityID.getEntityName()).thenReturn(entityName);
-    return entityID;
-  }
-
-  private NetworkVoltronEntityMessage createMockRequest(VoltronEntityMessage.Type type, EntityID entityID, TransactionID transactionID) {
-    NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
-    when(request.getSource()).thenReturn(this.source);
-    when(request.getVoltronType()).thenReturn(type);
-    EntityDescriptor entityDescriptor = mock(EntityDescriptor.class);
-    when(entityDescriptor.getClientSideVersion()).thenReturn((long) 1);
-    when(entityDescriptor.getEntityID()).thenReturn(entityID);
-    when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
-    when(request.getTransactionID()).thenReturn(transactionID);
-    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(0));
-    return request;
-  }
-
-
   private static abstract class NoStatsSink<T> implements Sink<T> {
     @Override
     public void enableStatsCollection(boolean enable) {
@@ -352,36 +321,6 @@ public class ReplicatedTransactionHandlerTest {
     public void clear() {
       throw new UnsupportedOperationException();
     }
-  }
-
-
-  private static class RunnableSink extends NoStatsSink<Runnable> {
-    private final Queue<Runnable> runnableQueue;
-
-    public RunnableSink() {
-      this.runnableQueue = new LinkedList<>();
-    }
-
-    public void runUntilEmpty() {
-      while (!this.runnableQueue.isEmpty()) {
-        Runnable task = this.runnableQueue.poll();
-        task.run();
-      }
-    }
-    @Override
-    public void addSingleThreaded(Runnable context) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addMultiThreaded(Runnable context) {
-      this.runnableQueue.add(context);
-    }
-
-    @Override
-    public void setClosed(boolean closed) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
   }
 
 

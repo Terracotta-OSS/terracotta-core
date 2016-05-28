@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import org.terracotta.entity.EntityMessage;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -121,6 +123,12 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
       // Since it is a disconnect, that means that this client can't end up in a reconnect scenario.  Therefore, we
       // will return null, here, and define that to mean that the client is no longer requiring persistent ordering.
       // Note that it may be worth making this a more explicit case in case other unexpected null cases are found.
+      return null;
+    }
+
+    @Override
+    public EntityMessage getEntityMessage() {
+      // There is no message instance for this type.
       return null;
     }
   }

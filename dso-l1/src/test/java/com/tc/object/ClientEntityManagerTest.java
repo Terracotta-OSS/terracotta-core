@@ -27,6 +27,8 @@ import com.tc.async.api.StageManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
@@ -75,6 +77,7 @@ public class ClientEntityManagerTest extends TestCase {
   private EntityID entityID;
   private EntityDescriptor entityDescriptor;
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
@@ -310,7 +313,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -323,7 +326,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     long start = System.currentTimeMillis();
     try {
@@ -366,7 +369,7 @@ public class ClientEntityManagerTest extends TestCase {
 
       @Override
       public void run() {
-        mgr.invokeAction(entityDescriptor, requestedAcks, false, new byte[0]);
+        mgr.invokeAction(entityDescriptor, requestedAcks, false, true, new byte[0]);
       }
       
     });
@@ -388,7 +391,7 @@ public class ClientEntityManagerTest extends TestCase {
   private boolean didFindEndpoint(TestFetcher fetcher) {
     boolean didFind = false;
     try {
-      EntityClientEndpoint endpoint = fetcher.getResult();
+      EntityClientEndpoint<EntityMessage, EntityResponse> endpoint = fetcher.getResult();
       didFind = true;
       endpoint.close();
     } catch (EntityNotFoundException e) {
@@ -405,13 +408,14 @@ public class ClientEntityManagerTest extends TestCase {
   private static class TestFetcher extends Thread {
     private final ClientEntityManager manager;
     private final EntityDescriptor entityDescriptor;
-    private EntityClientEndpoint result;
+    private EntityClientEndpoint<EntityMessage, EntityResponse> result;
     private Throwable exception;
     
     public TestFetcher(ClientEntityManager manager, EntityDescriptor entityDescriptor) {
       this.manager = manager;
       this.entityDescriptor = entityDescriptor;
     }
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
       try {
@@ -420,7 +424,7 @@ public class ClientEntityManagerTest extends TestCase {
         this.exception = t;
       }
     }
-    public EntityClientEndpoint getResult() throws Throwable {
+    public EntityClientEndpoint<EntityMessage, EntityResponse> getResult() throws Throwable {
       if (null != this.exception) {
         throw this.exception;
       }
@@ -489,6 +493,7 @@ public class ClientEntityManagerTest extends TestCase {
             this.clientEntityManager.complete(this.transactionID);
           }
         }
+        this.clientEntityManager.retired(this.transactionID);
       }
     }
     @Override
@@ -538,6 +543,10 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
       this.transactionID = transactionID;
+    }
+    @Override
+    public EntityMessage getEntityMessage() {
+      throw new UnsupportedOperationException();
     }
   }
   

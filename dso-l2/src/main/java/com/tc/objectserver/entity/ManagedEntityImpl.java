@@ -43,6 +43,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
@@ -51,7 +52,7 @@ import static com.tc.util.Assert.assertNotNull;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
-
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -71,6 +72,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private static final TCLogger logger   = TCLogging.getLogger(ManagedEntityImpl.class);
 
   private final RequestProcessor executor;
+  private final RetirementManager retirementManager;
 
   private final EntityID id;
   private final long version;
@@ -101,7 +103,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
-                    RequestProcessor process, ServerEntityService<EntityMessage, EntityResponse> factory,
+                    RequestProcessor process, RetirementManager retirementManager, ServerEntityService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
@@ -111,6 +113,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector = eventCollector;
     this.factory = factory;
     this.executor = process;
+    this.retirementManager = retirementManager;
     this.isInActiveState = isInActiveState;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
@@ -128,26 +131,36 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(final ServerEntityRequest request, byte[] payload, int defaultKey) {
+  public void addInvokeRequest(final ServerEntityRequest request, EntityMessage entityMessage, byte[] payload, int defaultKey) {
     if (request.getAction() == ServerEntityAction.NOOP) {
-      scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, request::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
+      scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, () -> {
+        request.complete();
+        if (this.isInActiveState) {
+          request.retired();
+        }
+      }, ConcurrencyStrategy.UNIVERSAL_KEY);
       return;
     }
     Assert.assertTrue(request.getAction() == ServerEntityAction.INVOKE_ACTION);
       // Invoke and payload requests need to wait for the entity creation so that they can request the concurrency strategy.
     if ((this.activeServerEntity == null) && (this.passiveServerEntity == null)) {
       request.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
+      if (this.isInActiveState) {
+        request.retired();
+      }
     } else {
       // We only decode messages for INVOKE and RECEIVE_SYNC_PAYLOAD requests.
       CommonServerEntity<EntityMessage,EntityResponse> entity = (null != this.activeServerEntity) ? this.activeServerEntity : this.passiveServerEntity;
       Assert.assertNotNull(entity);
       Assert.assertNotNull(payload);
     
-      EntityMessage message = null;
-      try {
-        message = runWithHelper(()->codec.decodeMessage(payload));
-      } catch (EntityUserException e) {
-        throw new RuntimeException(e);
+      EntityMessage message = entityMessage;
+      if (null == message) {
+        try {
+          message = runWithHelper(()->codec.decodeMessage(payload));
+        } catch (EntityUserException e) {
+          throw new RuntimeException(e);
+        }
       }
       // If we are still ok and managed to deserialize the message, continue.
       if (null != message) {
@@ -157,8 +170,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         // key which on passives is the key used to run the action on the active.
         final int concurrencyKey = ((null != concurrencyStrategy)) ?
           concurrencyStrategy.concurrencyKey(message) : defaultKey;
-        final EntityMessage safeMessage = message;
-        processInvokeRequest(request, payload, safeMessage, concurrencyKey);
+        processInvokeRequest(request, payload, message, concurrencyKey);
       } else {
         throw new RuntimeException("entity deserializer returned null while processing invoke request");
       }
@@ -373,6 +385,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.endSyncEntity();
     request.complete();
+    // No retire on passive.
+    Assert.assertFalse(this.isInActiveState);
   }
 
   private void receiveSyncEntityKeyStart(ServerEntityRequest request, int concurrencyKey) {
@@ -380,6 +394,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncConcurrencyKey(concurrencyKey);
     request.complete();
+    // No retire on passive.
+    Assert.assertFalse(this.isInActiveState);
   }
 
   private void receiveSyncEntityKeyEnd(ServerEntityRequest request, int concurrencyKey) {
@@ -387,6 +403,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.endSyncConcurrencyKey(concurrencyKey);
     request.complete();
+    // No retire on passive.
+    Assert.assertFalse(this.isInActiveState);
   }
 
   private void receiveSyncEntityPayload(ServerEntityRequest request, EntityMessage message) {
@@ -394,6 +412,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.invoke(message);
     request.complete();
+    // No retire on passive.
+    Assert.assertFalse(this.isInActiveState);
   }
 
   private void destroyEntity(ServerEntityRequest request) {
@@ -408,6 +428,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       commonServerEntity.destroy();
     }
     request.complete();
+    if (this.isInActiveState) {
+      request.retired();
+    }
     // Fire the event that the entity was destroyed.
     this.eventCollector.entityWasDestroyed(this.getID());
     this.isDestroyed = true;
@@ -417,6 +440,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     byte[] oldconfig = this.constructorInfo;
     if (this.activeServerEntity == null && this.passiveServerEntity == null) {
       reconfigureEntityRequest.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
+      if (this.isInActiveState) {
+        reconfigureEntityRequest.retired();
+      }
       return;
     }
     this.constructorInfo = constructorInfo;
@@ -444,6 +470,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     reconfigureEntityRequest.complete(oldconfig);
+    if (this.isInActiveState) {
+      reconfigureEntityRequest.retired();
+    }
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.loadExisting();
@@ -454,6 +483,9 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void createEntity(ServerEntityRequest createEntityRequest, byte[] constructorInfo) {
     if (this.activeServerEntity != null || this.passiveServerEntity != null) {
       createEntityRequest.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
+      if (this.isInActiveState) {
+        createEntityRequest.retired();
+      }
       return;
     }
     this.constructorInfo = constructorInfo;
@@ -481,6 +513,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     createEntityRequest.complete();
+    if (this.isInActiveState) {
+      createEntityRequest.retired();
+    }
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.createNew();
@@ -525,6 +560,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           }
         }
         wrappedRequest.complete();
+        if (this.isInActiveState) {
+          wrappedRequest.retired();
+        }
       }
     } else {
       if (null == this.passiveServerEntity) {
@@ -541,10 +579,22 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
+          final int concurrencyKey = (null != this.concurrencyStrategy)
+              ? this.concurrencyStrategy.concurrencyKey(message)
+              : ConcurrencyStrategy.MANAGEMENT_KEY;
+          this.retirementManager.registerWithMessage(wrappedRequest, message, concurrencyKey);
           byte[] er = runWithHelper(()->codec.encodeResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
           wrappedRequest.complete(er);
+          List<ServerEntityRequest> readyToRetire = this.retirementManager.retireForCompletion(message);
+          for (ServerEntityRequest toRetire : readyToRetire) {
+            toRetire.retired();
+          }
         } catch (EntityUserException e) {
           wrappedRequest.failure(e);
+          List<ServerEntityRequest> readyToRetire = this.retirementManager.retireForCompletion(message);
+          for (ServerEntityRequest toRetire : readyToRetire) {
+            toRetire.retired();
+          }
           throw new RuntimeException(e);
         }
       }
@@ -554,6 +604,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       } else {
         this.passiveServerEntity.invoke(message);
         wrappedRequest.complete();
+        // No retire on passive.
+        Assert.assertFalse(this.isInActiveState);
       }
     }
   }
@@ -577,12 +629,14 @@ public class ManagedEntityImpl implements ManagedEntity {
         ClientID clientID = (ClientID) getEntityRequest.getNodeID();
         clientEntityStateManager.addReference(clientID, entityDescriptor);
         getEntityRequest.complete(this.constructorInfo);
+        getEntityRequest.retired();
         // Fire the event that the client fetched the entity.
         this.eventCollector.clientDidFetchEntity(clientID, this.getID(), sourceDescriptor);
         // finally notify the entity that it was fetched
         this.activeServerEntity.connected(sourceDescriptor);
       } else {
         getEntityRequest.complete();
+        getEntityRequest.retired();
       }
     } else {
       throw new IllegalStateException("GET called on passive entity.");
@@ -602,6 +656,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.eventCollector.clientDidReleaseEntity(clientID, this.getID());
       }
       request.complete();
+      request.retired();
     } else {
       throw new IllegalStateException("RELEASE called on passive entity.");
     }
@@ -635,6 +690,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void promoteEntity(ServerEntityRequest request) {
     promoteEntity();
     request.complete();
+    // Even though this moves us to the active state, the request is purely internal so there is no retire.
   }
 
   @Override
@@ -652,6 +708,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           assertNotNull(this.activeServerEntity);
           assertNotNull(concurrencyStrategy);
           barrier.complete(); 
+          barrier.retired();
         }, ConcurrencyStrategy.MANAGEMENT_KEY).get();
 
         for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {

@@ -30,6 +30,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.handler.RetirementManager;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.when;
 
 public class EntityMessengerProviderTest {
   private Sink<VoltronEntityMessage> messageSink;
+  private RetirementManager retirementManager;
   private long consumerID;
   private MessageCodec<EntityMessage, EntityResponse> messageCodec;
   private ManagedEntity owningEntity;
@@ -53,6 +55,7 @@ public class EntityMessengerProviderTest {
   public void setUp() throws Exception {
     // Build the underlying components needed by the provider or common to tests.
     this.messageSink = mock(Sink.class);
+    this.retirementManager = mock(RetirementManager.class);
     this.consumerID = 1;
     this.messageCodec = mock(MessageCodec.class);
     this.owningEntity = mock(ManagedEntity.class);
@@ -61,7 +64,7 @@ public class EntityMessengerProviderTest {
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     
     // Build the test subject.
-    this.entityMessengerProvider = new EntityMessengerProvider(this.messageSink);
+    this.entityMessengerProvider = new EntityMessengerProvider(this.messageSink, this.retirementManager);
   }
 
   @Test

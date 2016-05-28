@@ -51,4 +51,10 @@ public interface RequestResponseHandler {
    * EntityException instances.
    */
   void failed(TransactionID id, EntityException e);
+
+  /**
+   * Called when the server sends back a response that the message no longer needs to be tracked, at all, and can be retired.
+   * This is the last message in the sequence, coming after either a "complete" or "failed".
+   */
+  void retired(TransactionID id);
 }

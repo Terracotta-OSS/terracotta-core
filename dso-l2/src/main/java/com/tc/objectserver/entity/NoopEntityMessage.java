@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import org.terracotta.entity.EntityMessage;
+
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
@@ -72,5 +74,10 @@ public class NoopEntityMessage implements VoltronEntityMessage {
   public TransactionID getOldestTransactionOnClient() {
     return TransactionID.NULL_ID;
   }
-  
+
+  @Override
+  public EntityMessage getEntityMessage() {
+    // No instance for this type.
+    return null;
+  }
 }

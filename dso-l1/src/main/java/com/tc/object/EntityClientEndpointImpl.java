@@ -100,6 +100,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     private M request;
     private final Set<VoltronEntityMessage.Acks> acks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     private boolean requiresReplication = true;
+    private boolean shouldBlockGetOnRetire = false;
 
     // TODO: fill in durability/consistency options here.
 
@@ -129,8 +130,20 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
+    public InvocationBuilder<M, R> ackRetired() {
+      acks.add(VoltronEntityMessage.Acks.RETIRED);
+      return this;
+    }
+
+    @Override
     public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       this.requiresReplication = requiresReplication;
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<M, R> blockGetOnRetire() {
+      this.shouldBlockGetOnRetire = true;
       return this;
     }
 
@@ -138,7 +151,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
       checkInvoked();
       invoked = true;
-      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, codec.encodeMessage(request));
+      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request));
       return new InvokeFuture<R>() {
         @Override
         public boolean isDone() {

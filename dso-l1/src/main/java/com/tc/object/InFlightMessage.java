@@ -55,13 +55,19 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private boolean isSent;
   private EntityException exception;
   private byte[] value;
-  private boolean done;
+  private boolean canSetResult;
+  private boolean getCanComplete;
+  private final boolean blockGetOnRetired;
 
-  public InFlightMessage(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks) {
+  public InFlightMessage(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
     this.message = message;
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
     this.waitingThreads = new HashSet<Thread>();
+    this.blockGetOnRetired = shouldBlockGetOnRetire;
+    
+    // We always assume that we can set the result, the first time.
+    this.canSetResult = true;
   }
 
   /**
@@ -120,7 +126,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
 
   @Override
   public synchronized boolean isDone() {
-    return done;
+    return this.getCanComplete;
   }
 
   @Override
@@ -131,7 +137,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     Assert.assertTrue(didAdd);
     
     try {
-      while (!done) {
+      while (!this.getCanComplete) {
         wait();
       }
     } finally {
@@ -156,7 +162,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     
     long end = System.nanoTime() + unit.toNanos(timeout);
     try {
-      while (!done) {
+      while (!this.getCanComplete) {
         long timing = end - System.nanoTime();
         if (timing <= 0) {
           throw new TimeoutException();
@@ -174,11 +180,25 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     }
   }
 
-  synchronized void setResult(byte[] value, EntityException e) {
+  synchronized void setResult(byte[] value, EntityException error) {
     this.pendingAcks.remove(VoltronEntityMessage.Acks.APPLIED);
-    this.exception = e;
-    this.value = value;
-    this.done = true;
-    notifyAll();
+    if (this.canSetResult) {
+      this.exception = error;
+      this.value = value;
+      if (!this.blockGetOnRetired) {
+        this.getCanComplete = true;
+        notifyAll();
+      }
+      // Determine if this can be over-written - only if we are waiting for the retired.
+      this.canSetResult = this.blockGetOnRetired;
+    }
+  }
+
+  public synchronized void retired() {
+    this.pendingAcks.remove(VoltronEntityMessage.Acks.RETIRED);
+    if (this.blockGetOnRetired) {
+      this.getCanComplete = true;
+      notifyAll();
+    }
   }
 }

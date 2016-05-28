@@ -45,6 +45,7 @@ import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
+import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.exception.TCRuntimeException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
@@ -172,6 +173,7 @@ import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
+import com.tc.objectserver.handler.RetirementManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
@@ -636,12 +638,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         pInfo.buildVersion(), pInfo.buildID());
 
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
+    RetirementManager retirementManager = new RetirementManager();
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, retirementManager, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
     
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
-    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(voltronMessageSink);
+    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(voltronMessageSink, retirementManager);
     this.serviceRegistry.registerBuiltin(messengerProvider);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
@@ -988,6 +991,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MESSAGE, NetworkVoltronEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
+    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
     return messageTypeClassMapping;

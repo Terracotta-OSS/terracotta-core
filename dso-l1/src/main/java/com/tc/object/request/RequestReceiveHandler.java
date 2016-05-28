@@ -40,6 +40,9 @@ public class RequestReceiveHandler extends AbstractEventHandler<VoltronEntityRes
     TransactionID transactionID = response.getTransactionID();
     if (!transactionID.isNull()) {
       switch (response.getAckType()) {
+        case RETIRED:
+          this.handler.retired(transactionID);
+          break;
         case APPLIED:
           VoltronEntityAppliedResponse appliedResponse = (VoltronEntityAppliedResponse) response;
           EntityException failureException = appliedResponse.getFailureException();

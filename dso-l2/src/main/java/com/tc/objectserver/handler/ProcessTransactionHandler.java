@@ -23,8 +23,6 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -52,13 +50,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
 import org.terracotta.entity.ConcurrencyStrategy;
-
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ProcessTransactionHandler {
-  private final static TCLogger logger = TCLogging.getLogger(ProcessTransactionHandler.class);
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
   
@@ -80,12 +77,13 @@ public class ProcessTransactionHandler {
       ClientID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
+      EntityMessage entityMessage = message.getEntityMessage();
       byte[] extendedData = message.getExtendedData();
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, entityMessage, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
     }
 
     @Override
@@ -134,7 +132,7 @@ public class ProcessTransactionHandler {
   }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
-  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
+  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, EntityMessage entityMessage, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
@@ -173,8 +171,10 @@ public class ProcessTransactionHandler {
       throw Assert.failure("Unexpected exception in entity - CRASHING", t);
     }
     
+    // This is active-side processing so this is never a replicated message.
+    boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID));
+    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID), isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -195,13 +195,16 @@ public class ProcessTransactionHandler {
       if (null == cachedAlreadyHandledResult) {
         // This means the result has no return value;
         serverEntityRequest.complete();
+        serverEntityRequest.retired();
       } else {
         // Pass back the cached result.
         serverEntityRequest.complete(cachedAlreadyHandledResult);
+        serverEntityRequest.retired();
       }
     } else if (null != entityException) {
       // Either this was an error found in the record of a re-send or a fail-fast scenario.
       serverEntityRequest.failure(entityException);
+      serverEntityRequest.retired();
     } else {
       // If no exception has been fired, do any special handling required by the message type.
       // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
@@ -211,22 +214,25 @@ public class ProcessTransactionHandler {
         if (doesExist) {
           // Even though it may not currently exist, if this is a re-send, we will give whatever answer we gave, the first time.
           serverEntityRequest.complete();
+          serverEntityRequest.retired();
         } else {
           // Even though the entity may currently exist, we will mimic the response we gave, initially.
           serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+          serverEntityRequest.retired();
         }
       } else {
         // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
         if (null != entity) {
           if (ServerEntityAction.INVOKE_ACTION == action) {
-            entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+            entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
           } else if (ServerEntityAction.NOOP == action) {
-            entity.addInvokeRequest(serverEntityRequest, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
+            entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
           } else {
             entity.addLifecycleRequest(serverEntityRequest, extendedData);
           }
         } else {
           serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+          serverEntityRequest.retired();
         }
       }
     }
@@ -288,12 +294,15 @@ public class ProcessTransactionHandler {
     ClientID sourceNodeID = message.getSource();
     EntityDescriptor descriptor = message.getEntityDescriptor();
     ServerEntityAction action = decodeMessageType(message.getVoltronType());
+    // Note that we currently don't expect messages which already have an EntityMessage instance to appear here.
+    EntityMessage entityMessage = message.getEntityMessage();
+    Assert.assertNull(entityMessage);
     byte[] extendedData = message.getExtendedData();
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, entityMessage, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {

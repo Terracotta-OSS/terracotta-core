@@ -54,7 +54,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
-
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.exception.EntityException;
 
 
@@ -192,12 +192,14 @@ public class ReplicatedTransactionHandler {
     // If we satisfied this as a known re-send, don't add the request to the entity.
     if (didAlreadyHandle) {
       request.complete();
+      // NOTE:  No retire on replicated message.
     } else {
       // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
       if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
         // We don't actually care about the response.  We just need the question and answer to be recorded, at this point in time.
         EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
         request.complete();
+        // NOTE:  No retire on replicated message.
       } else {
         if (entity.isPresent()) {
           if (request != null) {
@@ -205,7 +207,10 @@ public class ReplicatedTransactionHandler {
             if (null != request.getAction()) switch (request.getAction()) {
               case INVOKE_ACTION:
               case NOOP:
-                entityInstance.addInvokeRequest(request, extendedData, rep.getConcurrency());
+                // For now, we will assume that there can be no existing message (in the future, this might change if we
+                // move the deserialization earlier).
+                EntityMessage entityMessage = null;
+                entityInstance.addInvokeRequest(request, entityMessage, extendedData, rep.getConcurrency());
                 break;
               default:
                 entityInstance.addLifecycleRequest(request, extendedData);
@@ -216,6 +221,7 @@ public class ReplicatedTransactionHandler {
 // must be syncing and this entity has not been sync'd yet.  just complete like 
 // we weren't here
           request.complete();
+          // NOTE:  No retire on replicated message.
         }
       }
     }
@@ -319,7 +325,9 @@ public class ReplicatedTransactionHandler {
   }
   
   private ServerEntityRequest makeNoop(EntityID eid, long version) {
-    return new ServerEntityRequestImpl(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, true, Optional.empty());
+    // Anything created within this class represents a replicated message.
+    boolean isReplicatedMessage = true;
+    return new ServerEntityRequestImpl(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, true, Optional.empty(), isReplicatedMessage);
   }
       
   private ServerEntityRequestImpl make(ReplicationMessage rep) {
@@ -564,7 +572,8 @@ public class ReplicatedTransactionHandler {
     private final Runnable onComplete;
 
     public ServerEntityRequestWithCompletion(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Runnable onComplete) {
-      super(descriptor, action, transaction, oldest, src, requiresReplication, Optional.empty());
+      // Anything created within this class represents a replicated message.
+      super(descriptor, action, transaction, oldest, src, requiresReplication, Optional.empty(), true);
       this.onComplete = onComplete;
     }
 

@@ -93,6 +93,7 @@ public final class TCMessageType {
   public static final int           TYPE_SERVER_ENTITY_RESPONSE_MESSAGE               = 89;
   public static final int           TYPE_VOLTRON_ENTITY_MESSAGE                       = 90;
   public static final int           TYPE_VOLTRON_ENTITY_APPLIED_RESPONSE              = 91;
+  public static final int           TYPE_VOLTRON_ENTITY_RETIRED_RESPONSE              = 92;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType LOCK_REQUEST_MESSAGE                              = new TCMessageType();
@@ -114,6 +115,7 @@ public final class TCMessageType {
   public static final TCMessageType SERVER_ENTITY_RESPONSE_MESSAGE                    = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_MESSAGE                            = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_APPLIED_RESPONSE                   = new TCMessageType();
+  public static final TCMessageType VOLTRON_ENTITY_RETIRED_RESPONSE                   = new TCMessageType();
 
   public static TCMessageType getInstance(int i) {
     return typeMap.get(i);
@@ -256,7 +258,7 @@ public final class TCMessageType {
     }
 
     if (!intFields.isEmpty()) {
-      final String unused = Arrays.asList(intFields.keySet()).toString();
+      final String unused = intFields.keySet().toString();
       throw new RuntimeException("TCMessageType: Unused integer constants (please remove): " + unused);
     }
 
