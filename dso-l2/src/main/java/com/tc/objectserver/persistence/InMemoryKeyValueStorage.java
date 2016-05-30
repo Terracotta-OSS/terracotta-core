@@ -1,5 +1,7 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.KeyValueStorage;
 
 import java.util.Collection;
@@ -10,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author vmad
  */
-public class InMemoryKeyValueStorage<K, V> implements KeyValueStorage<K, V> {
+public class InMemoryKeyValueStorage<K, V> implements KeyValueStorage<K, V>, StateDumpable {
 
     private final Map<K, V> delegate = new ConcurrentHashMap<>();
 
@@ -64,5 +66,10 @@ public class InMemoryKeyValueStorage<K, V> implements KeyValueStorage<K, V> {
     @Override
     public void clear() {
         delegate.clear();
+    }
+
+    @Override
+    public void dumpStateTo(StateDumper stateDumper) {
+        stateDumper.dumpState("size", String.valueOf(delegate.size()));
     }
 }

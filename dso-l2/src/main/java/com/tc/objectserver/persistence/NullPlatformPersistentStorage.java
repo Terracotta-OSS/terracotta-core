@@ -1,5 +1,7 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -10,10 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author vmad
  */
-public class NullPlatformPersistentStorage implements IPersistentStorage {
+public class NullPlatformPersistentStorage implements IPersistentStorage, StateDumpable {
 
     final Map<String, String> properties = new ConcurrentHashMap<>();
-    final Map<String, KeyValueStorage<?, ?>> maps = new ConcurrentHashMap<>();
+    final Map<String, InMemoryKeyValueStorage<?, ?>> maps = new ConcurrentHashMap<>();
 
     @Override
     public void open() throws IOException {
@@ -65,5 +67,12 @@ public class NullPlatformPersistentStorage implements IPersistentStorage {
     @Override
     public <K, V> KeyValueStorage<K, V> destroyKeyValueStorage(String alias) {
         return (KeyValueStorage<K, V>) maps.remove(alias);
+    }
+
+    @Override
+    public void dumpStateTo(StateDumper stateDumper) {
+        for (Map.Entry<String, InMemoryKeyValueStorage<?, ?>> entry : maps.entrySet()) {
+            entry.getValue().dumpStateTo(stateDumper.subStateDumper(entry.getKey()));
+        }
     }
 }

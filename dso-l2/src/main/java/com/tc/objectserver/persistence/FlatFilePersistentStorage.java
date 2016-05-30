@@ -25,6 +25,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -42,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * NOTE:  the current implementation is NOT thread-safe so all consumers must be ensure serialized access to this object as
  * well as any key-value storage objects or properties maps it returns.
  */
-public class FlatFilePersistentStorage implements IPersistentStorage {
+public class FlatFilePersistentStorage implements IPersistentStorage, StateDumpable {
   private final File store;
   private FlatFileProperties properties;
   private Map<String, FlatFileKeyValueStorage<?, ?>> maps;
@@ -173,4 +175,11 @@ public class FlatFilePersistentStorage implements IPersistentStorage {
   }
 
 
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+    stateDumper.subStateDumper("location").dumpState("StorageDir", store.getAbsolutePath());
+    for (Map.Entry<String, FlatFileKeyValueStorage<?, ?>> entry : maps.entrySet()) {
+      entry.getValue().dumpStateTo(stateDumper.subStateDumper(entry.getKey()));
+    }
+  }
 }
