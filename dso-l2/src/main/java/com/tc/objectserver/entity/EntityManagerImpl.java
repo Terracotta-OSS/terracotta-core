@@ -20,6 +20,8 @@ package com.tc.objectserver.entity;
 
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -34,6 +36,7 @@ import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -169,6 +172,14 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public String toString() {
     return "EntityManagerImpl{" + "entities=" + entities.keySet() + '}';
+  }
+
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+    for (Map.Entry<EntityID, ManagedEntity> entry : entities.entrySet()) {
+      EntityID entityID = entry.getKey();
+      entry.getValue().dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
+    }
   }
 }
 

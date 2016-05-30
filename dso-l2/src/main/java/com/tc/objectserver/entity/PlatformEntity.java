@@ -31,6 +31,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.StateDumper;
 
 
 public class PlatformEntity implements ManagedEntity {
@@ -115,5 +116,10 @@ public class PlatformEntity implements ManagedEntity {
   public void promoteEntity() {
     // Set us to active mode.
     this.isActive = true;
+  }
+
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+
   }
 }

@@ -25,6 +25,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.KeyValueStorage;
 
 /**
@@ -32,7 +35,7 @@ import org.terracotta.persistence.KeyValueStorage;
  * the entire backing flat file to be re-written to disk (this flush is aggressive, eager, and can only operate on the
  * entire file at once).
  */
-public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Serializable {
+public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, StateDumpable, Serializable {
   private final HashMap<K, V> storage;
   private transient FlatFileWrite doFlush;
   
@@ -113,5 +116,10 @@ public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, Ser
 
   private static Callable<Void> makeCallable(Runnable r) {
     return ()-> { r.run(); return null; };
+  }
+
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+    stateDumper.dumpState("size", String.valueOf(storage.size()));
   }
 }

@@ -25,6 +25,7 @@ import org.terracotta.entity.MessageCodec;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
+import org.terracotta.entity.StateDumpable;
 
 
 /**
@@ -32,7 +33,7 @@ import com.tc.object.EntityID;
  * The ProcessTransactionHandler passes requests into this to be applied to the underlying entity.
  * Additionally, client-entity connections are rebuilt, after reconnect, using this interface.
  */
-public interface ManagedEntity {
+public interface ManagedEntity extends StateDumpable {
   public EntityID getID();
   
   public long getVersion();

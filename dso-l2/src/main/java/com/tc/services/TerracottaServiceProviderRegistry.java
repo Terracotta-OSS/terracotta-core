@@ -22,6 +22,7 @@ import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpable;
 
 
 /**
@@ -29,7 +30,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
  *
  * @author twu
  */
-public interface TerracottaServiceProviderRegistry {
+public interface TerracottaServiceProviderRegistry extends StateDumpable {
 
   /**
    * Initialize each of the service provider with platform configuration

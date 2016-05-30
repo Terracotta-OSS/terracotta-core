@@ -24,9 +24,10 @@ import java.util.Collection;
 
 import java.util.Optional;
 
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
 
-public interface EntityManager {
+public interface EntityManager extends StateDumpable {
 
   /**
    * The entity manager normally starts in a "passive" state but will be notified that it should become active when the server becomes active.

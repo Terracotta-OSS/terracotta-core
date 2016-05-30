@@ -31,6 +31,8 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.entity.SyncMessageCodec;
 
 import com.tc.net.ClientID;
@@ -228,6 +230,23 @@ public class ManagedEntityImpl implements ManagedEntity {
       }, concurrencyKey);
     } else {
       scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, payload, ()->invoke(sync, null, concurrencyKey), concurrencyKey);
+    }
+  }
+
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+    if(activeServerEntity != null) {
+      // Entities can optionally implement StateDumpable, so we do a instanceof check before calling dump state method
+      if(activeServerEntity instanceof StateDumpable) {
+        ((StateDumpable) activeServerEntity).dumpStateTo(stateDumper);
+      }
+    }
+
+    if(passiveServerEntity != null) {
+      // Entities can optionally implement StateDumpable, so we do a instanceof check before calling dump state method
+      if(passiveServerEntity instanceof StateDumpable) {
+        ((StateDumpable) passiveServerEntity).dumpStateTo(stateDumper);
+      }
     }
   }
 

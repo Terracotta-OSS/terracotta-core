@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 
 
 public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceProviderRegistry {
@@ -109,5 +111,26 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private void registerNewServiceProvider(ServiceProvider service) {
     logger.info("Initializing " + service);
     serviceProviders.add(service);
+  }
+
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+    for (ServiceProvider serviceProvider : serviceProviders) {
+      // ServiceProviders can optionally implement StateDumpable, so we do a instanceof check before calling dump state
+      // method
+      if(serviceProvider instanceof StateDumpable) {
+        ((StateDumpable) serviceProvider).dumpStateTo(stateDumper.subStateDumper(serviceProvider.getClass().getName()));
+      }
+    }
+
+    for (BuiltInServiceProvider builtInServiceProvider : builtInServiceProviders) {
+      // ServiceProviders can optionally implement StateDumpable, so we do a instanceof check before calling dump state
+      // method
+      if(builtInServiceProvider instanceof StateDumpable) {
+        ((StateDumpable) builtInServiceProvider).dumpStateTo(stateDumper.subStateDumper(builtInServiceProvider
+          .getClass()
+                                                                                    .getName()));
+      }
+    }
   }
 }
