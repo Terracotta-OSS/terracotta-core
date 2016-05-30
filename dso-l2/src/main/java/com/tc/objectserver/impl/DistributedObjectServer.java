@@ -21,6 +21,8 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import com.tc.objectserver.api.EntityManager;
+import com.tc.services.LogBasedStateDumper;
 import com.tc.services.PlatformServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
@@ -294,6 +296,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private final TaskRunner                       taskRunner;
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
+  private EntityManager entityManager;
 
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -346,6 +349,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public void dump() {
     this.dumpHandler.dump();
     this.serverBuilder.dump();
+    LogBasedStateDumper stateDumper = new LogBasedStateDumper("platform");
+    this.entityManager.dumpStateTo(stateDumper.subStateDumper("entities"));
+    this.serviceRegistry.dumpStateTo(stateDumper.subStateDumper("services"));
+    stateDumper.logState();
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
@@ -639,7 +646,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     RetirementManager retirementManager = new RetirementManager();
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, retirementManager, this::sendNoop);
+    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, retirementManager, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
     
