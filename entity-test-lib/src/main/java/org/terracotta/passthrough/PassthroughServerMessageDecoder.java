@@ -233,6 +233,23 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         sendCompleteResponse(sender, transactionID, response, error);
         break;
       }
+      case UNEXPECTED_RELEASE: {
+        String entityClassName = input.readUTF();
+        String entityName = input.readUTF();
+        long clientInstanceID = input.readLong();
+        try {
+          // We don't even want to hand back an error, in this case, since the call is just to emulate a disconnect.
+          this.messageHandler.release(sender, clientInstanceID, entityClassName, entityName);
+        } catch (Exception e) {
+          // If there is an error, it is fatal.
+          Assert.unexpected(e);
+        }
+        // Just send the empty response.
+        byte[] response = null;
+        EntityException error = null;
+        sendCompleteResponse(sender, transactionID, response, error);
+        break;
+      }
       case INVOKE_ON_SERVER: {
         String entityClassName = input.readUTF();
         String entityName = input.readUTF();
@@ -304,7 +321,8 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         }
         break;
       }
-      case LOCK_RELEASE: {
+      case LOCK_RELEASE:
+      case DROP_LOCK: {
         // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
         // "clientInstanceIDs" for maintenance mode refs).
         String entityClassName = input.readUTF();

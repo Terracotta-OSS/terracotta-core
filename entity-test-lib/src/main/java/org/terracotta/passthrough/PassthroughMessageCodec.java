@@ -60,6 +60,17 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createUnexpectedReleaseMessage(final String entityClassName, final String entityName, final long clientInstanceID) {
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.UNEXPECTED_RELEASE, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+        output.writeLong(clientInstanceID);
+      }};
+  }
+
   public static PassthroughMessage createExistsMessage(final String entityClassName, final String entityName, final long version) {
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.DOES_ENTITY_EXIST, shouldReplicateToPassives) {
@@ -211,6 +222,17 @@ public class PassthroughMessageCodec {
     // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
     boolean shouldReplicateToPassives = false;
     return new PassthroughMessage(Type.LOCK_RESTORE, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        output.writeUTF(entityClassName);
+        output.writeUTF(entityName);
+      }};
+  }
+
+  public static PassthroughMessage createDropWriteLockMessage(final String entityClassName, final String entityName) {
+    // Lock-state is just an interaction between client and server which must be cleanly rebuilt on reconnect so don't replicate.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.DROP_LOCK, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
         output.writeUTF(entityClassName);

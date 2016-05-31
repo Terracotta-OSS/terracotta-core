@@ -263,6 +263,7 @@ public class PassthroughConnection implements Connection {
           case RELEASE_ENTITY:
           case INVOKE_ON_SERVER:
           case RECONNECT:
+          case UNEXPECTED_RELEASE:
             // Not handled on client.
             Assert.unreachable();
             break;
@@ -308,6 +309,22 @@ public class PassthroughConnection implements Connection {
   public void close() {
     // Note that the caller may not know if we were already closed by another test trying to simulate unexpected disconnect situations so check this.
     if (this.isRunning) {
+      // Tell each our still-connected end-points to disconnect from the server.
+      // (we use a message for this, since it keeps the flow obvious, but we should probably use something more jarring)
+      for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
+        // Ask the end-point to create the message (only has it the information regarding what entity this is, etc).
+        PassthroughMessage releaseMessage = endpoint.createUnexpectedReleaseMessage();
+        // Send the message.
+        sendUnexpectedCloseMessage(releaseMessage);
+      }
+      
+      // We also need to drop all locks.
+      for (PassthroughEntityTuple lockedEntity : this.writeLockedEntities) {
+        PassthroughMessage message = PassthroughMessageCodec.createDropWriteLockMessage(lockedEntity.entityClassName, lockedEntity.entityName);
+        // Send the message.
+        sendUnexpectedCloseMessage(message);
+      }
+     
       // We are going to stop processing messages so set us not running and stop our thread.
       synchronized (this) {
         this.isRunning = false;
@@ -326,7 +343,28 @@ public class PassthroughConnection implements Connection {
       for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
         endpoint.didCloseUnexpectedly();
       }
+      
+      // We might as well drop the references from our tracking, also, since they can't reasonably be used.
       this.localEndpoints.clear();
+      this.writeLockedEntities.clear();
+    }
+  }
+
+  private void sendUnexpectedCloseMessage(PassthroughMessage message) {
+    // We block on the release only to make the execution order easier to follow but this isn't required.
+    // To signify this, we will push the entire blocking operation into the get() call.
+    boolean shouldWaitForSent = false;
+    boolean shouldWaitForReceived = false;
+    boolean shouldWaitForCompleted = false;
+    boolean shouldWaitForRetired = false;
+    boolean forceGetToBlockOnRetire = false;
+    InvokeFuture<byte[]> received = invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
+    try {
+      received.get();
+    } catch (InterruptedException e) {
+      Assert.unexpected(e);
+    } catch (EntityException e) {
+      Assert.unexpected(e);
     }
   }
 

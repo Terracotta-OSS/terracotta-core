@@ -50,6 +50,8 @@ public abstract class PassthroughMessage {
     SYNC_ENTITY_KEY_START,
     SYNC_ENTITY_KEY_END,
     SYNC_ENTITY_PAYLOAD,
+    UNEXPECTED_RELEASE,
+    DROP_LOCK,
   }
 
   public static Type getType(DataInputStream input) throws IOException {

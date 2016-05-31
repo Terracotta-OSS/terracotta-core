@@ -130,6 +130,19 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     return PassthroughMessageCodec.createReconnectMessage(this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID, extendedData);
   }
 
+  /**
+   * This is called by the PassthroughConnection, when it is unexpectedly closed, to get the message which describes which
+   * connection to break, to the server.
+   * 
+   * @return The message which can be sent to the server.
+   */
+  public PassthroughMessage createUnexpectedReleaseMessage() {
+    // The unexpected release message is similar to the normal kind but we give it a different type so that we can track
+    // this exceptional case, more easily.
+    // In the future, this may also allow the implementation to be more aggressive.
+    return PassthroughMessageCodec.createUnexpectedReleaseMessage(this.entityClass.getCanonicalName(), this.entityName, this.clientInstanceID);
+  }
+
   private void checkEndpointOpen() {
     if (!this.isOpen) {
       throw new IllegalStateException("Endpoint closed");
