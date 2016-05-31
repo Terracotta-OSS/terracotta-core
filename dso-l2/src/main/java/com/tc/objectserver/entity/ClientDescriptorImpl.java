@@ -18,10 +18,9 @@
  */
 package com.tc.objectserver.entity;
 
-import org.terracotta.entity.ClientDescriptor;
-
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
+import org.terracotta.entity.ClientDescriptor;
 
 /**
  * An opaque token representing a specific entity instance on a specific client node.
@@ -64,13 +63,9 @@ public class ClientDescriptorImpl implements ClientDescriptor {
   
   @Override
   public boolean equals(Object other) {
-    boolean doesMatch = (this == other);
-    if (!doesMatch && (getClass() == other.getClass()))
-    {
-      final ClientDescriptorImpl that = (ClientDescriptorImpl) other;
-      doesMatch = this.nodeID.equals(that.nodeID)
-          && this.entityDescriptor.equals(that.entityDescriptor);
-    }
-    return doesMatch;
+    if (this == other) return true;
+    if (other == null || getClass() != other.getClass()) return false;
+    final ClientDescriptorImpl that = (ClientDescriptorImpl) other;
+    return this.nodeID.equals(that.nodeID) && this.entityDescriptor.equals(that.entityDescriptor);
   }
 }
