@@ -129,6 +129,12 @@ public class PassthroughConnection implements Connection {
   }
 
   private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
+    // If we have already disconnected, fail.
+    if (!this.isRunning) {
+      // TODO:  Determine a more appropriate exception if tests come to test this path.
+      // (for this, this is just to make testing easier)
+      throw new RuntimeException("Connection not open");
+    }
     PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
     if (Thread.currentThread() == clientThread) {
 //  this check is kind of horrible but if this is the client thread as the result of being invoked from within 
