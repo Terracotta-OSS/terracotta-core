@@ -48,4 +48,9 @@ public class PassthroughEntityTuple {
   public int hashCode() {
     return this.entityClassName.hashCode() ^ this.entityName.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return this.entityClassName + ":" + this.entityName;
+  }
 }
