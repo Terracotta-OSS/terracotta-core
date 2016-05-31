@@ -112,9 +112,12 @@ public class PassthroughConnection implements Connection {
     boolean shouldWaitForSent = true;
     boolean shouldWaitForReceived = true;
     boolean shouldWaitForCompleted = true;
-    // No need to block on retire for internal messages - we only want the first message.
+    // We won't block the invoke on retired but internal messages do need to block the get().
+    // Note that the cases where we want to block get() aren't because we want the "final answer" but because we want to
+    // know that the message won't be re-sent (matters for locks, etc, where the reconnect message must agree with what is
+    // going to be re-sent - otherwise, we may double-release or double-acquire).
     boolean shouldWaitForRetired = false;
-    boolean forceGetToBlockOnRetire = false;
+    boolean forceGetToBlockOnRetire = true;
     return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
