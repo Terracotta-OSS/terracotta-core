@@ -66,6 +66,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
+import org.terracotta.connection.ConnectionException;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
@@ -81,6 +82,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint<?, ?>> objectStoreMap;
     
   private final StageManager stages;
+  
+  private boolean isShutdown = false;
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
     this.logger = new ClientIDLogger(channel, TCLogging.getLogger(ClientEntityManager.class));
@@ -103,11 +106,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
         try {
           requestTickets.acquire();
+          boolean doSend = false;
           synchronized (ClientEntityManagerImpl.this) {
-            inFlightMessages.put(first.getTransactionID(), first);
-            first.sent();
+            if (!isShutdown) {
+              inFlightMessages.put(first.getTransactionID(), first);
+              first.sent();
+              doSend = true;
+            }
           }
-          first.send();
+          if (doSend) {
+            first.send();
+          } else {
+            throwClosedExceptionOnMessage(first);
+          }
         } catch (InterruptedException ie) {
           throw new EventHandlerException(ie);
         }
@@ -318,7 +329,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public synchronized void shutdown(boolean fromShutdownHook) {
+    isShutdown = true;
     stateManager.stop();
+    for (InFlightMessage msg : inFlightMessages.values()) {
+      throwClosedExceptionOnMessage(msg);
+    }
     // We also want to notify any end-points that they have been disconnected.
     for(EntityClientEndpoint<?, ?> endpoint : this.objectStoreMap.values()) {
       try {
@@ -330,6 +345,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     // And then drop them.
     this.objectStoreMap.clear();
+  }
+  
+  private void throwClosedExceptionOnMessage(InFlightMessage msg) {
+    msg.setResult(null, new EntityException(
+        msg.getMessage().getEntityDescriptor().getEntityID().getClassName(),
+        msg.getMessage().getEntityDescriptor().getEntityID().getEntityName(),
+        "connection closed",
+        new ConnectionException(null)) {});
+    msg.retired();
   }
 
   private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
