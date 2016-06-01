@@ -65,7 +65,7 @@ public class ClientDescriptorImpl implements ClientDescriptor {
   @Override
   public boolean equals(Object other) {
     boolean doesMatch = (this == other);
-    if (!doesMatch && (getClass() == other.getClass()))
+    if (!doesMatch && other != null && (getClass() == other.getClass()))
     {
       final ClientDescriptorImpl that = (ClientDescriptorImpl) other;
       doesMatch = this.nodeID.equals(that.nodeID)
