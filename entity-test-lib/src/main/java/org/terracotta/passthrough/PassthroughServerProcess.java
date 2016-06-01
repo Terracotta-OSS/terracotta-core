@@ -313,7 +313,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {
-    Assert.assertTrue(this.isRunning);
+    // If the server shut down, throw IllegalStateException
+    if (!this.isRunning) {
+      throw new IllegalStateException("Connection already closed");
+    }
+
     MessageContainer container = new MessageContainer();
     container.sender = new IMessageSenderWrapper() {
       @Override

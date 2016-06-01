@@ -129,11 +129,9 @@ public class PassthroughConnection implements Connection {
   }
 
   private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
-    // If we have already disconnected, fail.
+    // If we have already disconnected, fail with IllegalStateException (this is consistent with the double-close case).
     if (!this.isRunning) {
-      // TODO:  Determine a more appropriate exception if tests come to test this path.
-      // (for this, this is just to make testing easier)
-      throw new RuntimeException("Connection not open");
+      throw new IllegalStateException("Connection already closed");
     }
     PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
     if (Thread.currentThread() == clientThread) {
@@ -313,22 +311,27 @@ public class PassthroughConnection implements Connection {
 
   @Override
   public void close() {
-    // Note that the caller may not know if we were already closed by another test trying to simulate unexpected disconnect situations so check this.
+    // We expect a double-close to throw IllegalStateException so check if we are running.
     if (this.isRunning) {
-      // Tell each our still-connected end-points to disconnect from the server.
-      // (we use a message for this, since it keeps the flow obvious, but we should probably use something more jarring)
-      for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
-        // Ask the end-point to create the message (only has it the information regarding what entity this is, etc).
-        PassthroughMessage releaseMessage = endpoint.createUnexpectedReleaseMessage();
-        // Send the message.
-        sendUnexpectedCloseMessage(releaseMessage);
-      }
-      
-      // We also need to drop all locks.
-      for (PassthroughEntityTuple lockedEntity : this.writeLockedEntities) {
-        PassthroughMessage message = PassthroughMessageCodec.createDropWriteLockMessage(lockedEntity.entityClassName, lockedEntity.entityName);
-        // Send the message.
-        sendUnexpectedCloseMessage(message);
+      // It is possible that the server already shut down and will throw IllegalStateException so catch that, here.
+      try {
+        // Tell each our still-connected end-points to disconnect from the server.
+        // (we use a message for this, since it keeps the flow obvious, but we should probably use something more jarring)
+        for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
+          // Ask the end-point to create the message (only has it the information regarding what entity this is, etc).
+          PassthroughMessage releaseMessage = endpoint.createUnexpectedReleaseMessage();
+          // Send the message.
+          sendUnexpectedCloseMessage(releaseMessage);
+        }
+        
+        // We also need to drop all locks.
+        for (PassthroughEntityTuple lockedEntity : this.writeLockedEntities) {
+          PassthroughMessage message = PassthroughMessageCodec.createDropWriteLockMessage(lockedEntity.entityClassName, lockedEntity.entityName);
+          // Send the message.
+          sendUnexpectedCloseMessage(message);
+        }
+      } catch (IllegalStateException e) {
+        // Ignore this - it just means the server is shut down so we don't need to send them any messages.
       }
      
       // We are going to stop processing messages so set us not running and stop our thread.
@@ -353,6 +356,8 @@ public class PassthroughConnection implements Connection {
       // We might as well drop the references from our tracking, also, since they can't reasonably be used.
       this.localEndpoints.clear();
       this.writeLockedEntities.clear();
+    } else {
+      throw new IllegalStateException("Connection already closed");
     }
   }
 
