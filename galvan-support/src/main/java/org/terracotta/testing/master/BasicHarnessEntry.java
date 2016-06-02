@@ -26,13 +26,14 @@ import org.terracotta.testing.logging.VerboseManager;
 
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
-  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
+  @Override
+  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
     String stripeName = "stripe" + 0;
-    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, stripeName);
+    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, entityFragment, stripeName);
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;
