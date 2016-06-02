@@ -67,6 +67,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     List<String> extraJarPaths = CommonIdioms.uniquifyList(master.getExtraServerJarPaths());
     String namespaceFragment = master.getConfigNamespaceSnippet();
     String serviceFragment = master.getServiceConfigXMLSnippet();
+    String entityFragment = master.getEntityConfigXMLSnippet();
     List<C> runConfigurations = master.getRunConfigurations();
     boolean wasCompleteSuccess = true;
     int clientsToCreate = master.getClientsToStart();
@@ -75,7 +76,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
       String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
-      runOneConfiguration(stateManager, verboseManager, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, runConfiguration);
+      runOneConfiguration(stateManager, verboseManager, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, entityFragment, runConfiguration);
       boolean runWasSuccess = stateManager.waitForFinish();
       if (!runWasSuccess) {
         wasCompleteSuccess = false;
@@ -86,7 +87,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   }
 
   // Run the one configuration.
-  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
 
 
   /**

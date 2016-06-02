@@ -28,13 +28,12 @@ import org.terracotta.testing.logging.VerboseManager;
  * It exists purely to avoid duplication.
  */
 public class CommonIdioms {
-  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseManager verboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String stripeName) throws IOException, FileNotFoundException {
+  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseManager verboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, String stripeName) throws IOException, FileNotFoundException {
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(testParentDirectory, stripeName);
-    return ReadyStripe.configureAndStartStripe(stateManager, stripeVerboseManager, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverDebugPortStart, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment);
+    return ReadyStripe.configureAndStartStripe(stateManager, stripeVerboseManager, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverDebugPortStart, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, entityFragment);
   }
-
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
