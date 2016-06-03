@@ -40,7 +40,17 @@ import org.terracotta.config.TcConfig;
 import org.w3c.dom.Element;
 
 /**
- *
+ * This parser is intended to figure out which entities are to be created for the cluster 
+ * through server configuration.  
+ * 
+ * Parsing involves iterating the proper XML tag and supplying the type, name and version 
+ * of the entity to be produced.  Configuration of these entities is slightly different from 
+ * client created entities.  Because these entities are configured through XML, what can be passed as 
+ * raw bytes of configuration to entity creation is limited to two choices.  If the {@code <properties/>} tag
+ * is used, each tag contained will be turned into a key value pair in a properties object.  The properties 
+ * object will be serialized into raw bytes using {@code Properties.store() } and passed to the 
+ * Entity service for construction.  Otherwise, the raw xml bytes will be passed to the Entity service
+ * for processing there.
  */
 public class PermanentEntityParser {
   public static List<VoltronEntityMessage> parseEntities(TcConfig config) {
