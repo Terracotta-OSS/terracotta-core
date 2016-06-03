@@ -105,7 +105,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
-                    RequestProcessor process, RetirementManager retirementManager, ServerEntityService<EntityMessage, EntityResponse> factory,
+                    RequestProcessor process, ServerEntityService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
@@ -115,7 +115,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector = eventCollector;
     this.factory = factory;
     this.executor = process;
-    this.retirementManager = retirementManager;
+    // Create the RetirementManager here, since it is currently scoped per-entity.
+    this.retirementManager = new RetirementManager();
     this.isInActiveState = isInActiveState;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
@@ -632,6 +633,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public MessageCodec<?, ?> getCodec() {
     return this.codec;
+  }
+
+  @Override
+  public RetirementManager getRetirementManager() {
+    return this.retirementManager;
   }
 
   @Override

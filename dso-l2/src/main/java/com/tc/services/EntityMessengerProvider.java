@@ -28,7 +28,6 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.handler.RetirementManager;
 
 
 /**
@@ -37,16 +36,14 @@ import com.tc.objectserver.handler.RetirementManager;
  */
 public class EntityMessengerProvider implements BuiltInServiceProvider {
   private final Sink<VoltronEntityMessage> messageSink;
-  private final RetirementManager retirementManager;
 
-  public EntityMessengerProvider(Sink<VoltronEntityMessage> messageSink, RetirementManager retirementManager) {
+  public EntityMessengerProvider(Sink<VoltronEntityMessage> messageSink) {
     this.messageSink = messageSink;
-    this.retirementManager = retirementManager;
   }
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
-    return configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, this.retirementManager, owningEntity));
+    return configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
   }
 
   @Override

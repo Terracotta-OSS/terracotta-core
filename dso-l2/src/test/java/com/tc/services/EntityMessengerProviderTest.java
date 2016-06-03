@@ -40,7 +40,6 @@ import static org.mockito.Mockito.when;
 
 public class EntityMessengerProviderTest {
   private Sink<VoltronEntityMessage> messageSink;
-  private RetirementManager retirementManager;
   private long consumerID;
   private MessageCodec<EntityMessage, EntityResponse> messageCodec;
   private ManagedEntity owningEntity;
@@ -55,16 +54,16 @@ public class EntityMessengerProviderTest {
   public void setUp() throws Exception {
     // Build the underlying components needed by the provider or common to tests.
     this.messageSink = mock(Sink.class);
-    this.retirementManager = mock(RetirementManager.class);
     this.consumerID = 1;
     this.messageCodec = mock(MessageCodec.class);
     this.owningEntity = mock(ManagedEntity.class);
     when(this.owningEntity.getCodec()).thenReturn((MessageCodec)this.messageCodec);
+    when(this.owningEntity.getRetirementManager()).thenReturn(mock(RetirementManager.class));
     this.configuration = mock(ServiceConfiguration.class);
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     
     // Build the test subject.
-    this.entityMessengerProvider = new EntityMessengerProvider(this.messageSink, this.retirementManager);
+    this.entityMessengerProvider = new EntityMessengerProvider(this.messageSink);
   }
 
   @Test
