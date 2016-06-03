@@ -31,6 +31,7 @@
             <plugin>
                 <groupId>org.terracotta</groupId>
                 <artifactId>maven-forge-plugin</artifactId>
+                <version>${maven-forge-plugin.version}</version>
                 <configuration>
                     <rootPath>${basedir}/..</rootPath>
                     <addClasspath>true</addClasspath>
