@@ -74,6 +74,8 @@ public interface ManagedEntity extends StateDumpable {
   void loadEntity(byte[] configuration);
   
   void promoteEntity();
+  
+  boolean canDelete();
 
   /**
    * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this

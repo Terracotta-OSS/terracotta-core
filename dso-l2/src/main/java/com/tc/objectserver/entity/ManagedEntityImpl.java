@@ -86,6 +86,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final BiConsumer<EntityID, Long> noopLoopback;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
+  private final boolean canDelete;
   private volatile boolean isDestroyed;
   
   private final MessageCodec<EntityMessage, EntityResponse> codec;
@@ -106,7 +107,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, ServerEntityService<EntityMessage, EntityResponse> factory,
-                    boolean isInActiveState) {
+                    boolean isInActiveState, boolean canDelete) {
     this.id = id;
     this.version = version;
     this.noopLoopback = loopback;
@@ -118,6 +119,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     // Create the RetirementManager here, since it is currently scoped per-entity.
     this.retirementManager = new RetirementManager();
     this.isInActiveState = isInActiveState;
+    this.canDelete = canDelete;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
     this.syncCodec = factory.getSyncMessageCodec();
@@ -432,6 +434,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     // No retire on passive.
     Assert.assertFalse(this.isInActiveState);
   }
+  
+  @Override
+  public boolean canDelete() {
+    return this.canDelete;
+  }
 
   private void destroyEntity(ServerEntityRequest request) {
     CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
@@ -720,7 +727,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (!this.isDestroyed) {
       try {
     // wait for future is ok, occuring on sync executor thread
-        executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo), passive).get();
+        executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo, canDelete), passive).get();
     // iterate through all the concurrency keys of an entity
         EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
     //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).

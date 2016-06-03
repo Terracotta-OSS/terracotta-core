@@ -124,7 +124,7 @@ public class ReplicatedTransactionHandlerTest {
       return null;
     }).when(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0]));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0], true));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
     this.loopbackSink.addSingleThreaded(msg);
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, rand));
@@ -246,7 +246,7 @@ public class ReplicatedTransactionHandlerTest {
     long VERSION = 1;
     byte[] config = new byte[0];
     send(PassiveSyncMessage.createStartSyncMessage());
-    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config));
+    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config, true));
     send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 1));
     send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 1, config));
     send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 1));

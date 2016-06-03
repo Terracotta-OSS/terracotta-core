@@ -41,7 +41,7 @@ public interface EntityManager extends StateDumpable {
    * @param version the version of the entity on the calling client
    * @param consumerID the unique consumerID this entity uses when interacting with services
    */
-  void createEntity(EntityID id, long version, long consumerID) throws EntityException;
+  void createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException;
 
   /**
    * Deletes an existing entity.
@@ -71,7 +71,7 @@ public interface EntityManager extends StateDumpable {
    * @param consumerID the unique consumerID this entity uses when interacting with services
    * @param configuration The opaque configuration to use in the creation.
    */
-  void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException;
+  void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException;
 
   Collection<ManagedEntity> getAll();
 }

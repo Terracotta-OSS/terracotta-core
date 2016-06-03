@@ -102,7 +102,7 @@ public class ReplicationSenderTest {
       case SYNC_END:
         return PassiveSyncMessage.createEndSyncMessage();
       case SYNC_ENTITY_BEGIN:
-        return PassiveSyncMessage.createStartEntityMessage(entity, 1, new byte[0]);
+        return PassiveSyncMessage.createStartEntityMessage(entity, 1, new byte[0], true);
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
         return PassiveSyncMessage.createStartEntityKeyMessage(entity, 1, concurrency);
       case SYNC_ENTITY_CONCURRENCY_END:

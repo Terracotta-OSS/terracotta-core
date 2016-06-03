@@ -90,7 +90,7 @@ public class EntityPersistorTest extends TCTestCase {
     long version = 1;
     long consumerID = 1;
     byte[] configuration = new byte[0];
-    this.entityPersistor.entityCreated(this.client, createTransactionID, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, createTransactionID, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     
     // Query that it exists.
     long doesExist2TransactionID = 4;
@@ -121,7 +121,7 @@ public class EntityPersistorTest extends TCTestCase {
     long version = 1;
     long consumerID = 1;
     byte[] configuration = new byte[0];
-    this.entityPersistor.entityCreated(this.client, createTransactionID, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, createTransactionID, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     
     // Reconfigure.
     long reconfigureTransactionID = 4;
@@ -151,7 +151,7 @@ public class EntityPersistorTest extends TCTestCase {
     long doesExist1 = 1;
     Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExist1, oldestTransactionOnClient, id));
     long create1 = 2;
-    this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     long doesExist2 = 3;
     Assert.assertTrue(this.entityPersistor.containsEntity(this.client, doesExist2, oldestTransactionOnClient, id));
     long destroy1 = 4;
@@ -159,7 +159,7 @@ public class EntityPersistorTest extends TCTestCase {
     long doesExist3 = 5;
     Assert.assertFalse(this.entityPersistor.containsEntity(this.client, doesExist3, oldestTransactionOnClient, id));
     long create2 = 6;
-    this.entityPersistor.entityCreated(this.client, create2, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, create2, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     long doesExist4 = 7;
     Assert.assertTrue(this.entityPersistor.containsEntity(this.client, doesExist4, oldestTransactionOnClient, id));
     long destroy2 = 8;
@@ -185,12 +185,12 @@ public class EntityPersistorTest extends TCTestCase {
     // Create and destroy an entity, twice, but update the oldest transactions such that the journal will be kept tightly restricted.
     long oldestTransactionOnClient = 1;
     long create1 = 1;
-    this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     long destroy1 = 2;
     this.entityPersistor.entityDestroyed(this.client, destroy1, oldestTransactionOnClient, id);
     oldestTransactionOnClient = 2;
     long create2 = 3;
-    this.entityPersistor.entityCreated(this.client, create2, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, create2, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     oldestTransactionOnClient = 3;
     long destroy2 = 4;
     this.entityPersistor.entityDestroyed(this.client, destroy2, oldestTransactionOnClient, id);
@@ -212,7 +212,7 @@ public class EntityPersistorTest extends TCTestCase {
     
     // Create an entity.
     long create1 = 1;
-    this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, configuration);
+    this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     // Synthesize a failure (double-create).
     long create2 = 2;
     EntityException error = mock(EntityException.class);

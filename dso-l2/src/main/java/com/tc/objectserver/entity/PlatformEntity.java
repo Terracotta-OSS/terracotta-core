@@ -70,6 +70,11 @@ public class PlatformEntity implements ManagedEntity {
       }
     }, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
+  
+  @Override
+  public boolean canDelete() {
+    return false;
+  }
 
   @Override
   public void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {

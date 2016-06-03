@@ -147,7 +147,7 @@ public class ProcessTransactionHandler {
         long clientSideVersion = descriptor.getClientSideVersion();
         long consumerID = this.entityPersistor.getNextConsumerID();
         // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-        didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, consumerID, extendedData);
+        didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, consumerID, extendedData, !sourceNodeID.isNull());
       }
       if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
         long clientSideVersion = descriptor.getClientSideVersion();
@@ -256,7 +256,7 @@ public class ProcessTransactionHandler {
       Assert.assertTrue(entityValue.consumerID > 0);
       EntityID entityID = new EntityID(entityValue.className, entityValue.entityName);
       try {
-        entityManager.loadExisting(entityID, entityValue.version, entityValue.consumerID, entityValue.configuration);
+        entityManager.loadExisting(entityID, entityValue.version, entityValue.consumerID, entityValue.canDelete, entityValue.configuration);
       } catch (EntityException e) {
         // We aren't expecting to fail loading anything from the existing set.
         throw new IllegalArgumentException(e);
