@@ -103,11 +103,10 @@ public class ProcessTransactionHandlerTest {
     this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
     this.eventCollector = mock(ITopologyEventCollector.class);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
-    RetirementManager retirementManager = new RetirementManager();
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, retirementManager, this::sendNoop);
+    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     entityManager.enterActiveState();
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);

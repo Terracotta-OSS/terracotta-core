@@ -45,14 +45,12 @@ public class EntityMessengerService implements IEntityMessenger {
   private final EntityDescriptor fakeDescriptor;
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, RetirementManager retirementManager, ManagedEntity owningEntity) {
+  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
     this.messageSink = messageSink;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
     this.retirementManager = owningEntity.getRetirementManager();
     // If this service is being created, we expect that the entity has a retirement mananger.
     Assert.assertTrue(null != this.retirementManager);
-    // The passed-in retirementManager is expected to be null (just a remnant of an old API to keep this change minimal).
-    Assert.assertTrue(null == retirementManager);
     // Note that the codec will actually expect to work on a sub-type of EntityMessage but this service isn't explicitly
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();

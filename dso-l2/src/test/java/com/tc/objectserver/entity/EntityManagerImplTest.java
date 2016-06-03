@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.entity;
 
 import org.junit.Before;
@@ -28,7 +27,6 @@ import org.terracotta.TestEntity;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
-import com.tc.objectserver.handler.RetirementManager;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 
@@ -40,8 +38,8 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+
 public class EntityManagerImplTest {
-  
   private EntityManager entityManager;
   private EntityID id;
   private long version;
@@ -57,7 +55,6 @@ public class EntityManagerImplTest {
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
         mock(RequestProcessor.class),
-        mock(RetirementManager.class),
         mock(BiConsumer.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");

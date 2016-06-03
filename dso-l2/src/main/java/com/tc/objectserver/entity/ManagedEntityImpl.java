@@ -105,7 +105,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
-                    RequestProcessor process, RetirementManager retirementManager, ServerEntityService<EntityMessage, EntityResponse> factory,
+                    RequestProcessor process, ServerEntityService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState) {
     this.id = id;
     this.version = version;
