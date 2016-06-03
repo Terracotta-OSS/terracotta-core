@@ -115,7 +115,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector = eventCollector;
     this.factory = factory;
     this.executor = process;
-    this.retirementManager = retirementManager;
+    // Create the RetirementManager here, since it is currently scoped per-entity.
+    this.retirementManager = new RetirementManager();
     this.isInActiveState = isInActiveState;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();

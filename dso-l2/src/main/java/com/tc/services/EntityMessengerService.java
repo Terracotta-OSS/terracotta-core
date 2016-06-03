@@ -49,9 +49,10 @@ public class EntityMessengerService implements IEntityMessenger {
     this.messageSink = messageSink;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
     this.retirementManager = owningEntity.getRetirementManager();
-    // NOTE:  The retirement manager is still passed in, to reduce the scope of this change, so just verify that it is the
-    // same instance we got from the owningEntity.
-    Assert.assertTrue(retirementManager == this.retirementManager);
+    // If this service is being created, we expect that the entity has a retirement mananger.
+    Assert.assertTrue(null != this.retirementManager);
+    // The passed-in retirementManager is expected to be null (just a remnant of an old API to keep this change minimal).
+    Assert.assertTrue(null == retirementManager);
     // Note that the codec will actually expect to work on a sub-type of EntityMessage but this service isn't explicitly
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();

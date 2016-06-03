@@ -645,7 +645,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         pInfo.buildVersion(), pInfo.buildID());
 
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
-    RetirementManager retirementManager = new RetirementManager();
+    // This will be removed in a later change - just minimizing an API change for clarity.
+    RetirementManager retirementManager = null;
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, retirementManager, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
     processTransactionHandler.setLateBoundComponents(channelManager, entityManager);

@@ -55,12 +55,12 @@ public class EntityMessengerProviderTest {
   public void setUp() throws Exception {
     // Build the underlying components needed by the provider or common to tests.
     this.messageSink = mock(Sink.class);
-    this.retirementManager = mock(RetirementManager.class);
+    this.retirementManager = null;
     this.consumerID = 1;
     this.messageCodec = mock(MessageCodec.class);
     this.owningEntity = mock(ManagedEntity.class);
     when(this.owningEntity.getCodec()).thenReturn((MessageCodec)this.messageCodec);
-    when(this.owningEntity.getRetirementManager()).thenReturn(this.retirementManager);
+    when(this.owningEntity.getRetirementManager()).thenReturn(mock(RetirementManager.class));
     this.configuration = mock(ServiceConfiguration.class);
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     
