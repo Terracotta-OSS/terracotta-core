@@ -949,7 +949,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
         if (sce.movedToActive()) {
-          startActiveMode();
+          startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener();
           } catch (IOException ioe) {
@@ -1039,7 +1039,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.startupLock != null && this.startupLock.isBlocked();
   }
 
-  public void startActiveMode() {
+  public void startActiveMode(boolean wasStandby) {
+    if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
+      Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+      List<VoltronEntityMessage> msgs = PermanentEntityParser.parseEntities(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
+      for (VoltronEntityMessage vem : msgs) {
+        msgSink.addSingleThreaded(vem);
+      }
+    }
   }
 
   public void startL1Listener() throws IOException {

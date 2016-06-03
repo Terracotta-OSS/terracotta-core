@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.PermanentEntityException;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -116,7 +117,7 @@ public class EntityManagerImpl implements EntityManager {
   public void destroyEntity(EntityID id) throws EntityException {
     ManagedEntity e = entities.get(id);
     if (e != null && !e.canDelete()) {
-      throw new EntityNotFoundException(id.getClassName(), id.getEntityName());
+      throw new PermanentEntityException(id.getClassName(), id.getEntityName());
     }
     if (entities.remove(id) == null) {
       throw new EntityNotFoundException(id.getClassName(), id.getEntityName());
