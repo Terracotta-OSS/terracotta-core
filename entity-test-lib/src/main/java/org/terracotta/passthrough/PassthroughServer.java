@@ -236,7 +236,10 @@ public class PassthroughServer implements PassthroughDumper {
       
       // Reconnect all the connections.
       for(PassthroughConnection connection : this.savedClientConnections.values()) {
-        connection.reconnect(this.serverProcess);
+        connection.startReconnect(this.serverProcess);
+      }
+      for(PassthroughConnection connection : this.savedClientConnections.values()) {
+        connection.finishReconnect(this.serverProcess);
       }
       newActive = this;
     } else {
@@ -252,6 +255,9 @@ public class PassthroughServer implements PassthroughDumper {
       for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
         newActive.failOverReconnect(connection.getKey(), connection.getValue());
       }
+      for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
+        connection.getValue().finishReconnect(this.serverProcess);
+      }
       // Our clients are no longer connected to us so wipe them.
       this.savedClientConnections.clear();
     }
@@ -262,7 +268,7 @@ public class PassthroughServer implements PassthroughDumper {
     // Save this to our connection list.
     this.savedClientConnections.put(connectionID, connection);
     // Tell the connection to reconnect.
-    connection.reconnect(this.serverProcess);
+    connection.startReconnect(this.serverProcess);
   }
 
   private void doFailOver(PassthroughServer restartedAsPassive) {
