@@ -216,7 +216,7 @@ public class StateManagerImpl implements StateManager {
       stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state));
     } else if (state == PASSIVE_UNINITIALIZED) {
 // double election
-      Assert.assertEquals(syncdTo, winningEnrollment.getNodeID());
+      Assert.assertTrue(syncdTo.isNull());
       setActiveNodeID(winningEnrollment.getNodeID());
     } else if (state == PASSIVE_SYNCING) {
       setActiveNodeID(winningEnrollment.getNodeID());
