@@ -635,6 +635,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
+  public RetirementManager getRetirementManager() {
+    return this.retirementManager;
+  }
+
+  @Override
   public void loadEntity(byte[] configuration) {
     this.loadExisting(configuration);
   }

@@ -25,6 +25,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 
 import org.terracotta.entity.ClientDescriptor;
@@ -121,5 +122,12 @@ public class PlatformEntity implements ManagedEntity {
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
 
+  }
+
+  @Override
+  public RetirementManager getRetirementManager() {
+    // The platform entity doesn't expose this since it isn't expecting message interdependencies, internally.
+    Assert.fail();
+    return null;
   }
 }

@@ -60,6 +60,7 @@ public class EntityMessengerProviderTest {
     this.messageCodec = mock(MessageCodec.class);
     this.owningEntity = mock(ManagedEntity.class);
     when(this.owningEntity.getCodec()).thenReturn((MessageCodec)this.messageCodec);
+    when(this.owningEntity.getRetirementManager()).thenReturn(this.retirementManager);
     this.configuration = mock(ServiceConfiguration.class);
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     

@@ -25,6 +25,8 @@ import org.terracotta.entity.MessageCodec;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
+import com.tc.objectserver.handler.RetirementManager;
+
 import org.terracotta.entity.StateDumpable;
 
 
@@ -78,4 +80,12 @@ public interface ManagedEntity extends StateDumpable {
    * @return The codec which can translate to/from this entity's message dialect.
    */
   MessageCodec<?, ?> getCodec();
+
+  /**
+   * Of specific interest to the EntityMessengerService since it may need to install dependencies between messages to this
+   * entity.
+   * 
+   * @return The entity's local RetirementManager instance.
+   */
+  public RetirementManager getRetirementManager();
 }
