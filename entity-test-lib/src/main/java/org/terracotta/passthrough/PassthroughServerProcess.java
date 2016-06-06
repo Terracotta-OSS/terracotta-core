@@ -83,7 +83,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private boolean isRunning;
   private final List<ServerEntityService<?, ?>> entityServices;
   private Thread serverThread;
-  private final List<MessageContainer> messageQueue;
+  private final List<PassthroughMessageContainer> messageQueue;
   private final PassthroughLockManager lockManager;
   // Currently, for simplicity, we will resolve entities by name.
   // Technically, these should be resolved by class+name.
@@ -109,7 +109,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.bindPort = bindPort;
     this.groupPort = groupPort;
     this.entityServices = new Vector<ServerEntityService<?, ?>>();
-    this.messageQueue = new Vector<MessageContainer>();
+    this.messageQueue = new Vector<PassthroughMessageContainer>();
     this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<?, ?>>());
@@ -318,7 +318,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       throw new IllegalStateException("Connection already closed");
     }
 
-    MessageContainer container = new MessageContainer();
+    PassthroughMessageContainer container = new PassthroughMessageContainer();
     container.sender = new IMessageSenderWrapper() {
       @Override
       public void sendAck(PassthroughMessage ack) {
@@ -358,7 +358,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     
     // Defer the current message, blocking it on the new one.
     this.retirementManager.deferCurrentMessage(newMessage);
-    MessageContainer container = new MessageContainer();
+    PassthroughMessageContainer container = new PassthroughMessageContainer();
     container.sender = new IMessageSenderWrapper() {
       @Override
       public void sendAck(PassthroughMessage ack) {
@@ -403,7 +403,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public synchronized void sendMessageToServerFromActive(IMessageSenderWrapper senderCallback, byte[] message) {
-    MessageContainer container = new MessageContainer();
+    PassthroughMessageContainer container = new PassthroughMessageContainer();
     container.sender = senderCallback;
     container.message = message;
     this.messageQueue.add(container);
@@ -412,7 +412,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   private void runServerThread() {
     Thread.currentThread().setName("Server thread isActive: " + ((null != this.activeEntities) ? "active" : "passive"));
-    MessageContainer toRun = getNextMessage();
+    PassthroughMessageContainer toRun = getNextMessage();
     while (null != toRun) {
       IMessageSenderWrapper sender = toRun.sender;
       byte[] message = toRun.message;
@@ -422,8 +422,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
   
-  private synchronized MessageContainer getNextMessage() {
-    MessageContainer toRun = null;
+  private synchronized PassthroughMessageContainer getNextMessage() {
+    PassthroughMessageContainer toRun = null;
     while (this.isRunning && this.messageQueue.isEmpty()) {
       try {
         this.wait();
@@ -1003,12 +1003,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
 
-  private static class MessageContainer {
-    public IMessageSenderWrapper sender;
-    public byte[] message;
-  }
-
-
   private static class EntityData implements Serializable {
     private static final long serialVersionUID = 1L;
     public String className;
@@ -1094,5 +1088,5 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         throw new RuntimeException(me);
       }
     }
-  }  
+  }
 }
