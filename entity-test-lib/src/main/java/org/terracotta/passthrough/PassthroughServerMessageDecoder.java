@@ -34,13 +34,15 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  */
 public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.Decoder<Void> {
   private final MessageHandler messageHandler;
+  private final PassthroughTransactionOrderManager transactionOrderManager;
   private final LifeCycleMessageHandler lifeCycleMessageHandler;
   private final PassthroughServerProcess downstreamPassive;
   private final IMessageSenderWrapper sender;
   private final byte[] message;
 
-  public PassthroughServerMessageDecoder(MessageHandler messageHandler, LifeCycleMessageHandler lifeCycleMessageHandler, PassthroughServerProcess downstreamPassive, IMessageSenderWrapper sender, byte[] message) {
+  public PassthroughServerMessageDecoder(MessageHandler messageHandler, PassthroughTransactionOrderManager transactionOrderManager, LifeCycleMessageHandler lifeCycleMessageHandler, PassthroughServerProcess downstreamPassive, IMessageSenderWrapper sender, byte[] message) {
     this.messageHandler = messageHandler;
+    this.transactionOrderManager = transactionOrderManager;
     this.lifeCycleMessageHandler = lifeCycleMessageHandler;
     this.downstreamPassive = downstreamPassive;
     this.sender = sender;
@@ -48,7 +50,14 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   }
   @Override
   public Void decode(Type type, boolean shouldReplicate, final long transactionID, final long oldestTransactionID, DataInputStream input) throws IOException {
-    // First step, send the ack.
+    // First step, update our persistence.
+    long originID = this.sender.getClientOriginID();
+    // Negative origin IDs are for internal messages - we don't want to track them.
+    if ((null != this.transactionOrderManager) && (originID >= 0)) {
+      this.transactionOrderManager.updateTracking(originID, transactionID, oldestTransactionID);
+    }
+    
+    // Next, send the ack.
     PassthroughMessage ack = PassthroughMessageCodec.createAckMessage();
     // The oldestTransactionID isn't relevant when sent back.
     long oldestTransactionIDToReturn = -1;

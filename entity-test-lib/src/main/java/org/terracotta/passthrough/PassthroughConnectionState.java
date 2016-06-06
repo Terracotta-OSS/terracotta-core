@@ -33,9 +33,9 @@ import com.google.common.base.Throwables;
  */
 public class PassthroughConnectionState {
   private PassthroughServerProcess serverProcess;
-  private Map<Long, PassthroughWait> inFlightMessages;
+  private final Map<Long, PassthroughWait> inFlightMessages;
+  // We store the reconnecting server just to assert details of correct usage.
   private PassthroughServerProcess reconnectingServerProcess;
-  private Map<Long, PassthroughWait> reconnectingInFlightMessages;
   
   // Transaction IDs are managed here, as well.
   private long nextTransactionID;
@@ -89,71 +89,46 @@ public class PassthroughConnectionState {
     Assert.assertTrue(null != this.reconnectingServerProcess);
     // We won't bother clearing transactions on re-send.
     long oldestTransactionID = 0;
-    return createAndSend(this.reconnectingServerProcess, this.reconnectingInFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
+    return createAndSend(this.reconnectingServerProcess, this.inFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
   public synchronized Map<Long, PassthroughWait> enterReconnectState(PassthroughServerProcess newServerProcess) {
     Assert.assertTrue(null == this.serverProcess);
     Assert.assertTrue(null == this.reconnectingServerProcess);
     Assert.assertTrue(null != this.inFlightMessages);
-    Assert.assertTrue(null == this.reconnectingInFlightMessages);
     
-    Map<Long, PassthroughWait> toReturn = this.inFlightMessages;
-    this.inFlightMessages = null;
     this.reconnectingServerProcess = newServerProcess;
-    this.reconnectingInFlightMessages = new HashMap<Long, PassthroughWait>();
-    return toReturn;
+    return this.inFlightMessages;
   }
 
   public synchronized void sendAsResend(PassthroughConnection sender, long transactionID, PassthroughWait waiter) {
     // This is similar to the normal send but only happens in the reconnect state and creates a waiter in that in-flight set.
     Assert.assertTrue(null != this.reconnectingServerProcess);
     byte[] raw = waiter.resetAndGetMessageForResend();
-    this.reconnectingInFlightMessages.put(transactionID, waiter);
+    this.inFlightMessages.put(transactionID, waiter);
     // We always want to block on retire, when doing a re-send.
     waiter.blockGetOnRetire();
     this.reconnectingServerProcess.sendMessageToServer(sender, raw);
   }
 
   public synchronized PassthroughWait getWaiterForTransaction(PassthroughServerProcess sender, long transactionID) {
-    PassthroughWait waiter = null;
-    if (sender == this.reconnectingServerProcess) {
-      waiter = this.reconnectingInFlightMessages.get(transactionID);
-      Assert.assertTrue(null != waiter);
-    } else if (sender == this.serverProcess) {
-      waiter = this.inFlightMessages.get(transactionID);
-      Assert.assertTrue(null != waiter);
-    } else {
-      System.err.println("WARNING:  Get with unknown sender: " + transactionID);
-    }
+    PassthroughWait waiter = this.inFlightMessages.get(transactionID);
+    Assert.assertTrue(null != waiter);
     return waiter;
   }
 
   public synchronized PassthroughWait removeWaiterForTransaction(PassthroughServerProcess sender, long transactionID) {
-    PassthroughWait waiter = null;
-    if (sender == this.reconnectingServerProcess) {
-      waiter = this.reconnectingInFlightMessages.remove(transactionID);
-      Assert.assertTrue(null != waiter);
-    } else if (sender == this.serverProcess) {
-      waiter = this.inFlightMessages.remove(transactionID);
-      Assert.assertTrue(null != waiter);
-    } else {
-      System.err.println("WARNING:  Removed with unknown sender: " + transactionID);
-    }
+    PassthroughWait waiter = this.inFlightMessages.remove(transactionID);
+    Assert.assertTrue(null != waiter);
     return waiter;
   }
 
   public synchronized void finishReconnectState() {
     Assert.assertTrue(null == this.serverProcess);
-    Assert.assertTrue(null == this.inFlightMessages);
     Assert.assertTrue(null != this.reconnectingServerProcess);
-    Assert.assertTrue(null != this.reconnectingInFlightMessages);
-    Assert.assertTrue(0 == this.reconnectingInFlightMessages.size());
     
     this.serverProcess = this.reconnectingServerProcess;
     this.reconnectingServerProcess = null;
-    this.inFlightMessages = new HashMap<Long, PassthroughWait>();
-    this.reconnectingInFlightMessages = null;
     notifyAll();
   }
 

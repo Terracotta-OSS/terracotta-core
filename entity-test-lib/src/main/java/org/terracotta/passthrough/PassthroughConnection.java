@@ -506,16 +506,8 @@ public class PassthroughConnection implements Connection {
       long transactionID = entry.getKey();
       PassthroughWait waiter = entry.getValue();
       this.connectionState.sendAsResend(this, transactionID, waiter);
-      // This is a little heavy-handed but it gives us a clean state for leaving reconnect.
-      // We don't really care what the get does, just that it blocks until complete.
-      try {
-        waiter.get();
-      } catch (InterruptedException e) {
-        // Unexpected.
-        Throwables.propagate(e);
-      } catch (EntityException e) {
-        // We ignore this since someone will call the get(), later, in a more appropriate place.
-      }
+      // NOTE:  We cannot block on the get since the server won't send any acks until ALL re-sent messages are
+      // received.
     }
     
     // Now that we send the reconnect handshake and the re-sent transactions, we can install the new serverProcess and permit the new messages to go through.
