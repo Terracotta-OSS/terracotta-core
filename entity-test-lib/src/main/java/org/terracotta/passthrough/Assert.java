@@ -24,7 +24,7 @@ package org.terracotta.passthrough;
  */
 public class Assert {
 
-  public static void unexpected(Exception e) {
+  public static void unexpected(Throwable e) {
     throw (AssertionError) new AssertionError("Unexpected exception").initCause(e);
   }
 
