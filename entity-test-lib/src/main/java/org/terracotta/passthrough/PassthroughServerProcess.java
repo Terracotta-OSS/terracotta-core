@@ -104,6 +104,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   // We need to hold onto any registered monitoring services to report client connection/disconnection events.
   private IMonitoringProducer serviceInterface;
   
+  // Special flag used to change behavior when we are receiving re-sends:  we don't want to run them until we seem them all.
+  private boolean isHandlingResends;
+
+
   public PassthroughServerProcess(String serverName, int bindPort, int groupPort, boolean isActiveMode) {
     this.serverName = serverName;
     this.bindPort = bindPort;
@@ -290,6 +294,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
   
   public void shutdown() {
+    // Shutdown can't happen while handling resends.
+    Assert.assertTrue(!this.isHandlingResends);
+    
     // TODO:  Find a way to cut the connections of any current task so that they can't send a response to the client.
     synchronized(this) {
       this.isRunning = false;
@@ -355,6 +362,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     Assert.assertTrue(null != serializedMessage);
     // This entry-point is only used in the cases where the message already exists.
     Assert.assertTrue(null != newMessage);
+    // When handling re-sends, we are effectively paused so this shouldn't happen.
+    Assert.assertTrue(!this.isHandlingResends);
     
     // Defer the current message, blocking it on the new one.
     this.retirementManager.deferCurrentMessage(newMessage);
@@ -403,6 +412,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public synchronized void sendMessageToServerFromActive(IMessageSenderWrapper senderCallback, byte[] message) {
+    // Passives don't care whether a message is a re-send, or not.
+    Assert.assertTrue(!this.isHandlingResends);
+    
     PassthroughMessageContainer container = new PassthroughMessageContainer();
     container.sender = senderCallback;
     container.message = message;
@@ -968,6 +980,16 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       String nodeName = clientIdentifierForService(connectionID);
       this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
     }
+  }
+
+  public synchronized void beginReceivingResends() {
+    Assert.assertTrue(!this.isHandlingResends);
+    this.isHandlingResends = true;
+  }
+
+  public synchronized void endReceivingResends() {
+    Assert.assertTrue(this.isHandlingResends);
+    this.isHandlingResends = false;
   }
 
   private PassthroughServiceRegistry getNextServiceRegistry(String entityClassName, String entityName, DeferredEntityContainer container) {
