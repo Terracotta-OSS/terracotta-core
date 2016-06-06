@@ -175,7 +175,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   /**
    * Resets the ACK wait state for the receiver and returns the raw message for the caller to re-send.
    */
-  public byte[] resetAndGetMessageForResend() {
+  public synchronized byte[] resetAndGetMessageForResend() {
     this.waitingForReceive = this.shouldWaitForReceived;
     this.waitingForComplete = this.shouldWaitForCompleted;
     this.waitingForRetired = this.shouldWaitForRetired;
