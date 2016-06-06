@@ -71,6 +71,12 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   }
   @Override
   public long getClientOriginID() {
-    return sender.getClientOriginID();
+    // Note that we will have a null sender when this is being used for sync messages.  Those are
+    // internally-originating messages so return -1.
+    long origin = -1;
+    if (null != sender) {
+      origin = sender.getClientOriginID();
+    }
+    return origin;
   }
 }
