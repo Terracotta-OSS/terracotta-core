@@ -239,7 +239,7 @@ public class PassthroughServer implements PassthroughDumper {
         connection.startReconnect(this.serverProcess);
       }
       for(PassthroughConnection connection : this.savedClientConnections.values()) {
-        connection.finishReconnect(this.serverProcess);
+        connection.finishReconnect();
       }
       newActive = this;
     } else {
@@ -256,7 +256,7 @@ public class PassthroughServer implements PassthroughDumper {
         newActive.failOverReconnect(connection.getKey(), connection.getValue());
       }
       for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
-        connection.getValue().finishReconnect(this.serverProcess);
+        connection.getValue().finishReconnect();
       }
       // Our clients are no longer connected to us so wipe them.
       this.savedClientConnections.clear();

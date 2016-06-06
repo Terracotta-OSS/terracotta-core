@@ -498,7 +498,7 @@ public class PassthroughConnection implements Connection {
   /**
    * The second phase of the reconnect - re-send in-flight messages and exit the reconnecting state.
    */
-  public void finishReconnect(PassthroughServerProcess serverProcess) {
+  public void finishReconnect() {
     Assert.assertTrue(null != this.waitersToResend);
     
     // Re-send the existing in-flight messages - note that we need to take a snapshot of these instead of walking the map since it will change as the responses come back.
