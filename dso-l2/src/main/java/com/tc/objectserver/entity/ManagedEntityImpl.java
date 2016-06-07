@@ -134,7 +134,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(final ServerEntityRequest request, EntityMessage entityMessage, byte[] payload, int defaultKey) {
+  public void addInvokeRequest(final ServerEntityRequest request, EntityMessage entityMessage, byte[] payload, int defaultKey) throws EntityUserException {
     if (request.getAction() == ServerEntityAction.NOOP) {
       scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, payload, () -> {
         request.complete();
@@ -159,11 +159,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     
       EntityMessage message = entityMessage;
       if (null == message) {
-        try {
-          message = runWithHelper(()->codec.decodeMessage(payload));
-        } catch (EntityUserException e) {
-          throw new RuntimeException(e);
-        }
+        // NOTE:  This can throw EntityUserException.
+        message = runWithHelper(()->codec.decodeMessage(payload));
       }
       // If we are still ok and managed to deserialize the message, continue.
       if (null != message) {

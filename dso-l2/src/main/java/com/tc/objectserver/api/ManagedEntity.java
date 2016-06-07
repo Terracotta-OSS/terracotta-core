@@ -28,6 +28,7 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.handler.RetirementManager;
 
 import org.terracotta.entity.StateDumpable;
+import org.terracotta.exception.EntityUserException;
 
 
 /**
@@ -46,8 +47,9 @@ public interface ManagedEntity extends StateDumpable {
   * @param entityMessage The message instance, if it was generated internally (the extendedData is still expected)
   * @param extendedData payload of the invoke
   * @param defaultKey default concurrency key if no concurrency strategy is installed
+  * @throws EntityUserException A state-safe exception (MessageCodecException) was encountered while setting up the invoke.
   */ 
-  void addInvokeRequest(ServerEntityRequest request, EntityMessage entityMessage, byte[] extendedData, int defaultKey);
+  void addInvokeRequest(ServerEntityRequest request, EntityMessage entityMessage, byte[] extendedData, int defaultKey) throws EntityUserException;
   
   void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
   

@@ -482,7 +482,7 @@ public class ManagedEntityImplTest {
     
   }
 
-  @Test (expected = RuntimeException.class)
+  @Test (expected = EntityUserException.class)
   public void testCodecException() throws Exception {
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
     managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
@@ -520,16 +520,13 @@ public class ManagedEntityImplTest {
 
       @Override
       public EntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
-        throw new UnsupportedOperationException("not supported!");
+        // We will fail here, simulating a decode exception.
+        throw new MessageCodecException("Simulated failure", new UnsupportedOperationException("not supported!"));
       }
     });
     ServerEntityRequest invokeRequest = mockInvokeRequest();
+    // We expect that this addInvokeRequest will throw EntityUserException.
     managedEntity.addInvokeRequest(invokeRequest, null, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
-    
-    verify(activeServerEntity, never()).invoke(any(ClientDescriptor.class), any(EntityMessage.class));
-    verify(invokeRequest, never()).complete(any(byte[].class));
-    verify(invokeRequest).failure(any(EntityUserException.class));
-    verify(invokeRequest).retired();
   }
 
   @Test
