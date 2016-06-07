@@ -53,6 +53,7 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityUserException;
 
 
 public class ProcessTransactionHandler {
@@ -223,10 +224,21 @@ public class ProcessTransactionHandler {
       } else {
         // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
         if (null != entity) {
+          // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
           if (ServerEntityAction.INVOKE_ACTION == action) {
-            entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+            try {
+              entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+            } catch (EntityUserException e) {
+              serverEntityRequest.failure(e);
+              serverEntityRequest.retired();
+            }
           } else if (ServerEntityAction.NOOP == action) {
-            entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
+            try {
+              entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
+            } catch (EntityUserException e) {
+              serverEntityRequest.failure(e);
+              serverEntityRequest.retired();
+            }
           } else {
             entity.addLifecycleRequest(serverEntityRequest, extendedData);
           }
