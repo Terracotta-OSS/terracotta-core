@@ -61,6 +61,7 @@ public class EntityData {
     public String className;
     public long version;
     public long consumerID;
+    public boolean canDelete;
     public String entityName;
     public byte[] configuration;
   }

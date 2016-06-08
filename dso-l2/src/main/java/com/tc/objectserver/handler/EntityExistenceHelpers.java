@@ -37,7 +37,7 @@ import org.terracotta.exception.EntityNotFoundException;
  * ReplicatedTransactionHandler.
  */
 public class EntityExistenceHelpers {
-  public static boolean createEntityReturnWasCached(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration) throws EntityException {
+  public static boolean createEntityReturnWasCached(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration, boolean canDelete) throws EntityException {
     boolean resultWasCached = false;
     // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
@@ -52,9 +52,9 @@ public class EntityExistenceHelpers {
       // There is no record of this, so give it a try.
       long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
       try {
-        entityManager.createEntity(entityID, version, consumerID);
+        entityManager.createEntity(entityID, version, consumerID, canDelete);
         // Record the success.
-        entityPersistor.entityCreated(clientID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, configuration);
+        entityPersistor.entityCreated(clientID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, canDelete, configuration);
       } catch (EntityException e) {
         // Record the failure and re-throw.
         entityPersistor.entityCreateFailed(clientID, transactionID, oldestTransactionOnClient, e);

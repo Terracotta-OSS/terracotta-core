@@ -174,7 +174,7 @@ public class ReplicatedTransactionHandler {
     if (ReplicationMessage.ReplicationType.CREATE_ENTITY == replicationType) {
       long consumerID = entityPersistor.getNextConsumerID();
       // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-      didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, extendedData);
+      didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, extendedData, !rep.getSource().isNull());
     }
     if (ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY == replicationType) {
       byte[] cachedResult = EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, extendedData);
@@ -245,9 +245,10 @@ public class ReplicatedTransactionHandler {
       try {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
-          this.entityManager.createEntity(eid, sync.getVersion(), consumerID);
+ //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
+          this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency() == 0);
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
-          this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, sync.getExtendedData());
+          this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !sync.getSource().isNull(), sync.getExtendedData());
         }
       } catch (EntityException exception) {
 //  TODO: this needs to be controlled.  

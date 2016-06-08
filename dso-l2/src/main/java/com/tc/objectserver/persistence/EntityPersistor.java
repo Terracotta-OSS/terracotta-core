@@ -113,15 +113,15 @@ public class EntityPersistor {
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, error);
   }
 
-  public void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, byte[] configuration) {
-    addNewEntityToMap(id, version, consumerID, configuration);
+  public void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
+    addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     
     // Record this in the journal - null error on success.
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, null);
   }
 
-  public void entityCreatedNoJournal(EntityID id, long version, long consumerID, byte[] configuration) {
-    addNewEntityToMap(id, version, consumerID, configuration);
+  public void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
+    addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     // (Note that we don't store this into the journal - this is used for passive sync).
   }
 
@@ -255,7 +255,7 @@ public class EntityPersistor {
     return foundEntry;
   }
 
-  private void addNewEntityToMap(EntityID id, long version, long consumerID, byte[] configuration) {
+  private void addNewEntityToMap(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     String className = id.getClassName();
     String entityName = id.getEntityName();
     
@@ -266,6 +266,7 @@ public class EntityPersistor {
     value.className = className;
     value.version = version;
     value.consumerID = consumerID;
+    value.canDelete = canDelete;
     value.entityName = entityName;
     value.configuration = configuration;
     this.entities.put(key, value);

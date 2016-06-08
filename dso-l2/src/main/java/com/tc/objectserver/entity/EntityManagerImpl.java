@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.PermanentEntityException;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -91,21 +92,21 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void createEntity(EntityID id, long version, long consumerID) throws EntityException {
+  public void createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     ManagedEntity temp = new ManagedEntityImpl(id, version, noopLoopback, serviceRegistry.subRegistry(consumerID),
-        clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities);
+        clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
     if (entities.putIfAbsent(id, temp) != null) {
       throw new EntityAlreadyExistsException(id.getClassName(), id.getEntityName());
     }
   }
 
   @Override
-  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, byte[] configuration) throws EntityException {
+  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }    
@@ -114,6 +115,10 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public void destroyEntity(EntityID id) throws EntityException {
+    ManagedEntity e = entities.get(id);
+    if (e != null && !e.canDelete()) {
+      throw new PermanentEntityException(id.getClassName(), id.getEntityName());
+    }
     if (entities.remove(id) == null) {
       throw new EntityNotFoundException(id.getClassName(), id.getEntityName());
     }

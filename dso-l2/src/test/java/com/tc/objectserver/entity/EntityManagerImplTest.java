@@ -68,19 +68,19 @@ public class EntityManagerImplTest {
 
   @Test
   public void testCreateEntity() throws Exception {
-    entityManager.createEntity(id, version, consumerID);
+    entityManager.createEntity(id, version, consumerID, true);
     assertThat(entityManager.getEntity(id, version).get().getID(), is(id));
   }
 
   @Test(expected = EntityAlreadyExistsException.class)
   public void testCreateExistingEntity() throws Exception {
-    entityManager.createEntity(id, version, consumerID);
-    entityManager.createEntity(id, version, consumerID);
+    entityManager.createEntity(id, version, consumerID, true);
+    entityManager.createEntity(id, version, consumerID, true);
   }
 
   @Test
   public void testDestroyEntity() throws Exception {
-    entityManager.createEntity(id, version, consumerID);
+    entityManager.createEntity(id, version, consumerID, true);
     entityManager.destroyEntity(id);
     assertThat(entityManager.getEntity(id, version), is(empty()));
   }
