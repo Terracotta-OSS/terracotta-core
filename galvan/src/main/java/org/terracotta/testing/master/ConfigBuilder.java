@@ -32,6 +32,7 @@ public class ConfigBuilder {
   private final List<String> serverNames;
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
+  private String entityXMLSnippet;
   private boolean isRestartable;
   
   private ConfigBuilder(ContextualLogger logger, int startPort) {
@@ -57,6 +58,11 @@ public class ConfigBuilder {
     return this;
   }
 
+  public ConfigBuilder setEntitySnippet(String entityFragment) {
+    this.entityXMLSnippet = entityFragment;
+    return this;
+  }
+  
   public ConfigBuilder setRestartable() {
     this.isRestartable = true;
     this.logger.output("Config set restartable");
@@ -69,9 +75,14 @@ public class ConfigBuilder {
           "<tc-config xmlns=\"http://www.terracotta.org/config\"" + namespaces + ">\n"
         + "  <services>\n";
     String services = (null != this.serviceXMLSnippet) ? this.serviceXMLSnippet : "";
-    String mid =
+    String postservices =
           "  </services>\n"
-        + "  <tc-properties/>\n"
+        + "  <entities>\n";
+    
+    String entities = (null != this.entityXMLSnippet) ? this.entityXMLSnippet : "";
+    
+    String postentities = "  </entities>\n" + 
+                          "  <tc-properties/>\n"
         + "  <servers secure=\"false\">\n";
     int nextPort = this.startPort;
     String servers = "";
@@ -94,7 +105,7 @@ public class ConfigBuilder {
         + restartString
         + "  </servers>\n"
         + "</tc-config>\n";
-    return pre + services + mid + servers + post;
+    return pre + services + postservices + entities + postentities + servers + post;
   }
 
   public String buildUri() {

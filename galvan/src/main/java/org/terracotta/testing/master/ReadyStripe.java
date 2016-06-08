@@ -27,13 +27,14 @@ import org.terracotta.testing.logging.VerboseManager;
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
-  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment) throws IOException, FileNotFoundException {
+  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException, FileNotFoundException {
     ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
     // Set fixed config details.
     configBuilder.setNamespaceSnippet(namespaceFragment);
     configBuilder.setServiceSnippet(serviceFragment);
+    configBuilder.setEntitySnippet(entityFragment);
     if (isRestartable) {
       configBuilder.setRestartable();
     }

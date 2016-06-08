@@ -23,6 +23,8 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
 
   public String getServiceConfigXMLSnippet();
 
+  public String getEntityConfigXMLSnippet();
+
   /**
    * @return A list of paths to JARs which must be copied to the server kit being used in the test.
    */

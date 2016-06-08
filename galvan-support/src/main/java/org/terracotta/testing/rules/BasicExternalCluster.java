@@ -36,16 +36,17 @@ public class BasicExternalCluster extends Cluster {
   private final List<File> serverJars;
   private final String namespaceFragment;
   private final String serviceFragment;
+  private final String entityFragment;
 
   private String displayName;
   private ReadyStripe cluster;
   private TestStateManager stateManager;
 
   public BasicExternalCluster(File clusterDirectory, int stripeSize) {
-    this(clusterDirectory, stripeSize, emptyList(), "", "");
+    this(clusterDirectory, stripeSize, emptyList(), "", "", "");
   }
 
-  public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment) {
+  public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment) {
     if (clusterDirectory == null) {
       throw new NullPointerException("Cluster directory must be non-null");
     }
@@ -63,6 +64,7 @@ public class BasicExternalCluster extends Cluster {
     this.stripeSize = stripeSize;
     this.namespaceFragment = namespaceFragment;
     this.serviceFragment = serviceFragment;
+    this.entityFragment = entityFragment;
     this.serverJars = serverJars;
   }
 
@@ -97,7 +99,7 @@ public class BasicExternalCluster extends Cluster {
             serverInstallDirectory.getAbsolutePath(),
             testParentDirectory.getAbsolutePath(),
             stripeSize, serverPort, serverDebugStartPort, 0, false,
-            serverJarPaths, namespaceFragment, serviceFragment);
+            serverJarPaths, namespaceFragment, serviceFragment, entityFragment);
 
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
