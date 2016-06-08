@@ -410,7 +410,7 @@ public class StateManagerImpl implements StateManager {
       groupManager.sendTo(msg.messageFrom(), abortMsg);      
     } else if (!electionMgr.handleStartElectionRequest(msg)) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
-      startElectionIfNecessary(syncdTo);
+      startElectionIfNecessary(ServerID.NULL_ID);
     }
   }
 
@@ -444,7 +444,7 @@ public class StateManagerImpl implements StateManager {
     }
 
     synchronized (this) {
-      if (state == START_STATE || (!disconnectedNode.isNull() && disconnectedNode.equals(syncdTo))) {
+      if (state == START_STATE || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
       }
@@ -453,7 +453,7 @@ public class StateManagerImpl implements StateManager {
       }
     }
     if (elect) {
-      info("Starting Election to determine cluser wide ACTIVE L2");
+      info("Starting Election to determine cluster wide ACTIVE L2");
       runElection();
     } else {
       debugInfo("Not starting election even though node left: " + disconnectedNode);
