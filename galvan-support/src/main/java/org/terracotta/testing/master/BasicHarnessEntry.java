@@ -30,9 +30,22 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
+    CommonIdioms.StripeConfiguration stripeConfiguration = new CommonIdioms.StripeConfiguration();
+    stripeConfiguration.kitOriginPath = harnessOptions.kitOriginPath;
+    stripeConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
+    stripeConfiguration.serversToCreate = serversToCreate;
+    stripeConfiguration.serverStartPort = SERVER_START_PORT;
+    stripeConfiguration.serverDebugPortStart = debugOptions.serverDebugPortStart;
+    stripeConfiguration.serverStartNumber = 0;
+    stripeConfiguration.isRestartable = harnessOptions.isRestartable;
+    stripeConfiguration.extraJarPaths = harnessOptions.extraJarPaths;
+    stripeConfiguration.namespaceFragment = harnessOptions.namespaceFragment;
+    stripeConfiguration.serviceFragment = harnessOptions.serviceFragment;
+    stripeConfiguration.entityFragment = harnessOptions.entityFragment;
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
-    String stripeName = "stripe" + 0;
-    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, harnessOptions.kitOriginPath, harnessOptions.configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, harnessOptions.isRestartable, harnessOptions.extraJarPaths, harnessOptions.namespaceFragment, harnessOptions.serviceFragment, harnessOptions.entityFragment, stripeName);
+    stripeConfiguration.stripeName = "stripe" + 0;
+    
+    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, stripeConfiguration);
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;
@@ -47,6 +60,15 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       }});
     
     // The cluster is now running so install and run the clients.
-    CommonIdioms.installAndRunClients(stateManager, verboseManager, harnessOptions.configTestDirectory, harnessOptions.clientClassPath, debugOptions, harnessOptions.clientsToCreate, processControl, new BasicClientArgumentBuilder(harnessOptions.testClassName), connectUri);
+    CommonIdioms.ClientsConfiguration clientsConfiguration = new CommonIdioms.ClientsConfiguration();
+    clientsConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
+    clientsConfiguration.clientClassPath = harnessOptions.clientClassPath;
+    clientsConfiguration.clientsToCreate = harnessOptions.clientsToCreate;
+    clientsConfiguration.clientArgumentBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName);
+    clientsConfiguration.connectUri = connectUri;
+    clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
+    clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
+    clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
+    CommonIdioms.installAndRunClients(stateManager, verboseManager, clientsConfiguration, processControl);
   }
 }
