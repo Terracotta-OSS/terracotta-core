@@ -28,17 +28,17 @@ import org.terracotta.testing.logging.VerboseManager;
  * It exists purely to avoid duplication.
  */
 public class CommonIdioms {
-  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseManager verboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, String stripeName) throws IOException, FileNotFoundException {
-    VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
+  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseManager verboseManager, StripeConfiguration stripeConfiguration) throws IOException, FileNotFoundException {
+    VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfiguration.stripeName + "]");
     // We want to create a sub-directory per-stripe.
-    String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(testParentDirectory, stripeName);
-    return ReadyStripe.configureAndStartStripe(stateManager, stripeVerboseManager, serverInstallDirectory, stripeParentDirectory, serversToCreate, serverStartPort, serverDebugPortStart, serverStartNumber, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, entityFragment);
+    String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(stripeConfiguration.testParentDirectory, stripeConfiguration.stripeName);
+    return ReadyStripe.configureAndStartStripe(stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.isRestartable, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment);
   }
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
-  public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, IMultiProcessControl processControl, IClientArgumentBuilder clientArgumentBuilder , String connectUri) throws InterruptedException, IOException, FileNotFoundException {
-    InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager, testParentDirectory, clientClassPath, debugOptions, clientsToCreate, processControl, clientArgumentBuilder , connectUri);
+  public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws InterruptedException, IOException, FileNotFoundException {
+    InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri);
     stateManager.addComponentToShutDown(manager);
     manager.start();
   }
@@ -51,5 +51,45 @@ public class CommonIdioms {
       }
     }
     return newList;
+  }
+
+
+  /**
+   * This class is essentially a struct containing the data which describes how the servers in the stripe are to be
+   * configured, where they are sourced, and how they should be run.
+   * It exists to give context to the parameters in CommonIdioms.
+   */
+  public static class StripeConfiguration {
+    public String kitOriginPath;
+    public String testParentDirectory;
+    public int serversToCreate;
+    public int serverStartPort;
+    public int serverDebugPortStart;
+    public int serverStartNumber;
+    public boolean isRestartable;
+    public List<String> extraJarPaths;
+    public String namespaceFragment;
+    public String serviceFragment;
+    public String entityFragment;
+    public String stripeName;
+  }
+
+
+  /**
+   * This class is essentially a struct containing the data which describes how the client for a test are to be
+   * configured and how they should be run.
+   * It exists to give context to the parameters in CommonIdioms.
+   */
+  public static class ClientsConfiguration {
+    public String testParentDirectory;
+    public String clientClassPath;
+    public int clientsToCreate;
+    public IClientArgumentBuilder clientArgumentBuilder;
+    public String connectUri;
+    
+    // Debug options specific to clients.
+    public int setupClientDebugPort;
+    public int destroyClientDebugPort;
+    public int testClientDebugPortStart;
   }
 }
