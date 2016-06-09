@@ -76,7 +76,21 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
       String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
-      runOneConfiguration(stateManager, verboseManager, environmentOptions.serverInstallDirectory, configTestDirectory, environmentOptions.clientClassPath, debugOptions, clientsToCreate, testClassName, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, entityFragment, runConfiguration);
+      
+      // Create the common configuration structure.
+      CommonHarnessOptions harnessOptions = new CommonHarnessOptions();
+      harnessOptions.kitOriginPath = environmentOptions.serverInstallDirectory;
+      harnessOptions.configTestDirectory = configTestDirectory;
+      harnessOptions.clientClassPath = environmentOptions.clientClassPath;
+      harnessOptions.clientsToCreate = clientsToCreate;
+      harnessOptions.testClassName = testClassName;
+      harnessOptions.isRestartable = isRestartable;
+      harnessOptions.extraJarPaths = extraJarPaths;
+      harnessOptions.namespaceFragment = namespaceFragment;
+      harnessOptions.serviceFragment = serviceFragment;
+      harnessOptions.entityFragment = entityFragment;
+      
+      runOneConfiguration(stateManager, verboseManager, debugOptions, harnessOptions, runConfiguration);
       boolean runWasSuccess = stateManager.waitForFinish();
       if (!runWasSuccess) {
         wasCompleteSuccess = false;
@@ -87,7 +101,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   }
 
   // Run the one configuration.
-  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
 
 
   /**
@@ -104,5 +118,19 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       // Bring down the process.
       System.exit(99);
     }
+  }
+
+
+  protected static class CommonHarnessOptions {
+    public String kitOriginPath;
+    public String configTestDirectory;
+    public String clientClassPath;
+    public int clientsToCreate;
+    public String testClassName;
+    public boolean isRestartable;
+    public List<String> extraJarPaths;
+    public String namespaceFragment;
+    public String serviceFragment;
+    public String entityFragment;
   }
 }
