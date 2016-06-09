@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
-import org.terracotta.passthrough.Assert;
+import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
