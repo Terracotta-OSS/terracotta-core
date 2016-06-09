@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.List;
+import java.util.Vector;
 
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
@@ -37,15 +39,9 @@ public class ClientRunner extends Thread {
   private final IMultiProcessControl control;
   private final File clientWorkingDirectory;
   private final String clientClassPath;
-  private final String clientClassName;
-  private final String clientTask;
-  private final String testClassName;
-  private final String connectUri;
   private final int debugPort;
-  
-  // Information which we only possess in order to pass it into the client process so it understands the test environment.
-  private final int totalClientCount;
-  private final int thisClientIndex;
+  private final String clientClassName;
+  private final List<String> extraArguments;
   
   // TODO:  Manage these files at a higher-level, much like ServerProcess does, so that open/close isn't done here.
   private FileOutputStream logFileOutput;
@@ -55,7 +51,7 @@ public class ClientRunner extends Thread {
   private AnyProcess process;
   private Listener listener;
 
-  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, String clientClassName, String clientTask, String testClassName, String connectUri, int debugPort, int totalClientCount, int thisClientIndex) {
+  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, int debugPort, String clientClassName, List<String> extraArguments) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = clientVerboseManager.createHarnessLogger();
     this.clientProcessLogger = clientVerboseManager.createClientLogger();
@@ -63,13 +59,9 @@ public class ClientRunner extends Thread {
     this.control = control;
     this.clientWorkingDirectory = clientWorkingDirectory;
     this.clientClassPath = clientClassPath;
-    this.clientClassName = clientClassName;
-    this.clientTask = clientTask;
-    this.testClassName = testClassName;
-    this.connectUri = connectUri;
     this.debugPort = debugPort;
-    this.totalClientCount = totalClientCount;
-    this.thisClientIndex = thisClientIndex;
+    this.clientClassName = clientClassName;
+    this.extraArguments = extraArguments;
   }
 
   public void openStandardLogFiles() throws FileNotFoundException {
@@ -164,36 +156,21 @@ public class ClientRunner extends Thread {
     ClientEventManager eventManager = new ClientEventManager(this.control, writingEnd, this.stdoutLog);
     OutputStream outputStream = eventManager.getEventingStream();
     AnyProcessBuilder<?> processBuilder = AnyProcess.newBuilder();
-    // Java args:
-    // --task: SETUP, TEST, or DESTROY
-    // --testClass:  <full name of test class>
-    // --connectUri:  <the cluster URI used in the test>
-    // --totalClientCount:  <number of clients running the test>
-    // --thisClientIndex:  <the 0-indexed number of this client instance>
     // Figure out if we want to enable debug.
     if (0 != this.debugPort) {
       // Enable debug.
-      String serverLine = "-Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
-      processBuilder.command("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName
-          , "--task", this.clientTask
-          , "--testClass", this.testClassName
-          , "--connectUri", this.connectUri
-          , "--totalClientCount", ("" + this.totalClientCount)
-          , "--thisClientIndex", ("" + this.thisClientIndex)
-      );
-      this.harnessLogger.output("Starting: " + condenseCommandLine("java", "-Xdebug", serverLine, "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      String debugArg = "-Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
+      String[] commandLine = buildCommandLine(debugArg);
+      processBuilder.command(commandLine);
+      this.harnessLogger.output("Starting: " + condenseCommandLine(commandLine));
       // Specifically point out that we are starting with debug.
       this.harnessLogger.output("NOTE:  Starting client with debug port: " + this.debugPort);
     } else {
       // No debug.
-      processBuilder.command("java", "-cp", this.clientClassPath, this.clientClassName
-          , "--task", this.clientTask
-          , "--testClass", this.testClassName
-          , "--connectUri", this.connectUri
-          , "--totalClientCount", ("" + this.totalClientCount)
-          , "--thisClientIndex", ("" + this.thisClientIndex)
-      );
-      this.harnessLogger.output("Starting: " + condenseCommandLine("java", "-cp", this.clientClassPath, this.clientClassName, this.clientTask, this.testClassName, this.connectUri));
+      String debugArg = null;
+      String[] commandLine = buildCommandLine(debugArg);
+      processBuilder.command(commandLine);
+      this.harnessLogger.output("Starting: " + condenseCommandLine(commandLine));
     }
     this.process = processBuilder
         .workingDir(this.clientWorkingDirectory)
@@ -203,6 +180,20 @@ public class ClientRunner extends Thread {
         .build();
     this.harnessLogger.output("Client running");
     return this.process.getPid();
+  }
+
+  private String[] buildCommandLine(String debugArg) {
+    List<String> fullCommandLine = new Vector<String>();
+    fullCommandLine.add("java");
+    if (null != debugArg) {
+      fullCommandLine.add("-Xdebug");
+      fullCommandLine.add(debugArg);
+    }
+    fullCommandLine.add("-cp");
+    fullCommandLine.add(this.clientClassPath);
+    fullCommandLine.add(this.clientClassName);
+    fullCommandLine.addAll(this.extraArguments);
+    return fullCommandLine.toArray(new String[fullCommandLine.size()]);
   }
 
   private int waitForTermination() {
@@ -221,7 +212,7 @@ public class ClientRunner extends Thread {
     return retVal;
   }
 
-  private static String condenseCommandLine(String... args) {
+  private static String condenseCommandLine(String[] args) {
     // We always start with the raw command.
     String command = args[0];
     for (int i = 1; i < args.length; ++i) {

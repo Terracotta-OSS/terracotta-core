@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
-import org.terracotta.passthrough.Assert;
+import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
@@ -33,24 +33,32 @@ import org.terracotta.testing.logging.VerboseManager;
 public class InterruptableClientManager extends Thread implements IComponentManager {
   private final ITestStateManager stateManager;
   private final VerboseManager verboseManager;
+  private final IMultiProcessControl processControl;
   private final String testParentDirectory;
   private final String clientClassPath;
-  private final DebugOptions debugOptions;
+  private final int setupClientDebugPort;
+  private final int destroyClientDebugPort;
+  private final int testClientDebugPortStart;
   private final int clientsToCreate;
-  private final String testClassName;
-  private final IMultiProcessControl processControl;
+  private final IClientArgumentBuilder clientArgumentBuilder;
   private final String connectUri;
+  
   private boolean interruptRequested;
 
-  public InterruptableClientManager(ITestStateManager stateManager, VerboseManager verboseManager, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) {
+  public InterruptableClientManager(ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri) {
     this.stateManager = stateManager;
     this.verboseManager = verboseManager;
+    this.processControl = processControl;
+    
     this.testParentDirectory = testParentDirectory;
     this.clientClassPath = clientClassPath;
-    this.debugOptions = debugOptions;
+    
+    this.setupClientDebugPort = setupClientDebugPort;
+    this.destroyClientDebugPort = destroyClientDebugPort;
+    this.testClientDebugPortStart = testClientDebugPortStart;
+    
     this.clientsToCreate = clientsToCreate;
-    this.testClassName = testClassName;
-    this.processControl = processControl;
+    this.clientArgumentBuilder = clientArgumentBuilder;
     this.connectUri = connectUri;
   }
 
@@ -64,22 +72,21 @@ public class InterruptableClientManager extends Thread implements IComponentMana
 
   @Override
   public void run() {
-    // All clients use the same entry-point stub.
-    String clientClassName = "org.terracotta.testing.client.TestClientStub";
     VerboseManager clientsVerboseManager = this.verboseManager.createComponentManager("[Clients]");
-    ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, this.testParentDirectory, this.clientClassPath, clientClassName, this.testClassName, this.connectUri);
+    ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, this.testParentDirectory, this.clientClassPath, this.clientArgumentBuilder.getMainClassName());
     
     ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
     
     // Run the setup client, synchronously.
-    ClientRunner setupClient = clientInstaller.installClient("client_setup", "SETUP", this.debugOptions.setupClientDebugPort, this.clientsToCreate, 0);
+    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri);
+    ClientRunner setupClient = clientInstaller.installClient("client_setup", this.setupClientDebugPort, extraSetupArguments);
     int setupExitValue = runClientLifeCycle(setupClient);
     
     boolean setupWasClean = (0 == setupExitValue);
     boolean didRunCleanly = true;
     boolean destroyWasClean = true;
     if (setupWasClean) {
-      ClientRunner[] concurrentTests = installTestClients(this.debugOptions, this.clientsToCreate, clientInstaller);
+      ClientRunner[] concurrentTests = installTestClients(this.testClientDebugPortStart, this.clientsToCreate, clientInstaller);
       try {
         // Create a listener.
         ClientListener listener = new ClientListener();
@@ -118,7 +125,8 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       }
       
       // Run the destroy client, synchronously.
-      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", "DESTROY", this.debugOptions.destroyClientDebugPort, this.clientsToCreate, 0);
+      List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri);
+      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, extraDestroyArguments);
       int destroyExitValue = runClientLifeCycle(destroyClient);
       destroyWasClean = (0 == destroyExitValue);
       if (!destroyWasClean) {
@@ -202,17 +210,18 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     return result;
   }
 
-  private ClientRunner[] installTestClients(DebugOptions debugOptions, int clientsToCreate, ClientInstaller clientInstaller) {
+  private ClientRunner[] installTestClients(int testClientDebugPortStart, int clientsToCreate, ClientInstaller clientInstaller) {
     // The setup was clean so run the test clients.
     // First, install them.
     ClientRunner[] testClients = new ClientRunner[clientsToCreate];
     for (int i = 0; i < clientsToCreate; ++i) {
       String clientName = "client" + i;
       // Determine if we need a debug port set.
-      int debugPort = (0 != debugOptions.testClientDebugPortStart)
-          ? (debugOptions.testClientDebugPortStart + i)
+      int debugPort = (0 != testClientDebugPortStart)
+          ? (testClientDebugPortStart + i)
           : 0;
-      testClients[i] = clientInstaller.installClient(clientName, "TEST", debugPort, clientsToCreate, i);
+      List<String> extraArguments = this.clientArgumentBuilder.getArgumentsForTestRun(this.connectUri, clientsToCreate, i);
+      testClients[i] = clientInstaller.installClient(clientName, debugPort, extraArguments);
     }
     return testClients;
   }

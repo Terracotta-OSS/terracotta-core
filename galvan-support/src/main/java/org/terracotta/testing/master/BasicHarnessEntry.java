@@ -17,7 +17,6 @@ package org.terracotta.testing.master;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
 import org.terracotta.testing.common.Assert;
@@ -27,13 +26,26 @@ import org.terracotta.testing.logging.VerboseManager;
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
   @Override
-  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, String kitOriginPath, String configTestDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
+  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
+    CommonIdioms.StripeConfiguration stripeConfiguration = new CommonIdioms.StripeConfiguration();
+    stripeConfiguration.kitOriginPath = harnessOptions.kitOriginPath;
+    stripeConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
+    stripeConfiguration.serversToCreate = serversToCreate;
+    stripeConfiguration.serverStartPort = SERVER_START_PORT;
+    stripeConfiguration.serverDebugPortStart = debugOptions.serverDebugPortStart;
+    stripeConfiguration.serverStartNumber = 0;
+    stripeConfiguration.isRestartable = harnessOptions.isRestartable;
+    stripeConfiguration.extraJarPaths = harnessOptions.extraJarPaths;
+    stripeConfiguration.namespaceFragment = harnessOptions.namespaceFragment;
+    stripeConfiguration.serviceFragment = harnessOptions.serviceFragment;
+    stripeConfiguration.entityFragment = harnessOptions.entityFragment;
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
-    String stripeName = "stripe" + 0;
-    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, kitOriginPath, configTestDirectory, serversToCreate, SERVER_START_PORT, debugOptions.serverDebugPortStart, 0, isRestartable, extraJarPaths, namespaceFragment, serviceFragment, entityFragment, stripeName);
+    stripeConfiguration.stripeName = "stripe" + 0;
+    
+    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, stripeConfiguration);
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;
@@ -48,6 +60,15 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       }});
     
     // The cluster is now running so install and run the clients.
-    CommonIdioms.installAndRunClients(stateManager, verboseManager, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
+    CommonIdioms.ClientsConfiguration clientsConfiguration = new CommonIdioms.ClientsConfiguration();
+    clientsConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
+    clientsConfiguration.clientClassPath = harnessOptions.clientClassPath;
+    clientsConfiguration.clientsToCreate = harnessOptions.clientsToCreate;
+    clientsConfiguration.clientArgumentBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName);
+    clientsConfiguration.connectUri = connectUri;
+    clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
+    clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
+    clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
+    CommonIdioms.installAndRunClients(stateManager, verboseManager, clientsConfiguration, processControl);
   }
 }

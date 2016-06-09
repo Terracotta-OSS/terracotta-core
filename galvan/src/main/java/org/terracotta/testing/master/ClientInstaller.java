@@ -16,6 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
+import java.util.List;
 
 import org.terracotta.testing.logging.VerboseManager;
 
@@ -29,26 +30,22 @@ public class ClientInstaller {
   private final IMultiProcessControl control;
   private final String testParentDirectory;
   private final String clientAbsoluteClassPath;
-  private final String clientClassName;
-  private final String testClassName;
-  private final String stripeUri;
+  private final String clientMainClassName;
   
-  public ClientInstaller(VerboseManager clientsVerboseManager, IMultiProcessControl control, String testParentDirectory, String clientClassPath, String clientClassName, String testClassName, String stripeUri) {
+  public ClientInstaller(VerboseManager clientsVerboseManager, IMultiProcessControl control, String testParentDirectory, String clientClassPath, String clientMainClassName) {
     this.clientsVerboseManager = clientsVerboseManager;
     this.control = control;
     this.testParentDirectory = testParentDirectory;
     // The client class path may have path separators in it so be sure to convert anything referenced there into an absolute
     // path, since we are going to change working directory when invoking the client processes.
     this.clientAbsoluteClassPath = makePathsAbsolute(clientClassPath);
-    this.clientClassName = clientClassName;
-    this.testClassName = testClassName;
-    this.stripeUri = stripeUri;
+    this.clientMainClassName = clientMainClassName;
   }
   
-  public ClientRunner installClient(String clientName, String clientTask, int debugPort, int totalClientCount, int thisClientIndex) {
+  public ClientRunner installClient(String clientName, int debugPort, List<String> extraArguments) {
+    VerboseManager clientVerboseManager = this.clientsVerboseManager.createComponentManager("[" + clientName + "]");
     String clientWorkingDirectory = FileHelpers.createTempEmptyDirectory(this.testParentDirectory, clientName);
-    VerboseManager clientVerboseManager = this.clientsVerboseManager.createComponentManager("[" + clientTask + "]");
-    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, this.clientClassName, clientTask, this.testClassName, this.stripeUri, debugPort, totalClientCount, thisClientIndex);
+    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, debugPort, this.clientMainClassName, extraArguments);
   }
   
   
