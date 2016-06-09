@@ -48,6 +48,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       }});
     
     // The cluster is now running so install and run the clients.
-    CommonIdioms.installAndRunClients(stateManager, verboseManager, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
+    CommonIdioms.installAndRunClients(stateManager, verboseManager, configTestDirectory, clientClassPath, debugOptions, clientsToCreate, processControl, new BasicClientArgumentBuilder(testClassName), connectUri);
   }
 }

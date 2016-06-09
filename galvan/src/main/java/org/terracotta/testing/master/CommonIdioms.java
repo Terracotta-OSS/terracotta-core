@@ -37,8 +37,8 @@ public class CommonIdioms {
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
-  public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, String testClassName, IMultiProcessControl processControl, String connectUri) throws InterruptedException, IOException, FileNotFoundException {
-    InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager, testParentDirectory, clientClassPath, debugOptions, clientsToCreate, testClassName, processControl, connectUri);
+  public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, String testParentDirectory, String clientClassPath, DebugOptions debugOptions, int clientsToCreate, IMultiProcessControl processControl, IClientArgumentBuilder clientArgumentBuilder , String connectUri) throws InterruptedException, IOException, FileNotFoundException {
+    InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager, testParentDirectory, clientClassPath, debugOptions, clientsToCreate, processControl, clientArgumentBuilder , connectUri);
     stateManager.addComponentToShutDown(manager);
     manager.start();
   }
