@@ -16,6 +16,7 @@ import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.passthrough.Assert;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
@@ -41,6 +42,10 @@ public class BasicExternalCluster extends Cluster {
   private String displayName;
   private ReadyStripe cluster;
   private TestStateManager stateManager;
+  // Note that the clientThread is actually the main thread of the JUnit runner.
+  private final Thread clientThread;
+  private Thread shepherdingThread;
+  private boolean isSafe;
 
   public BasicExternalCluster(File clusterDirectory, int stripeSize) {
     this(clusterDirectory, stripeSize, emptyList(), "", "", "");
@@ -66,6 +71,8 @@ public class BasicExternalCluster extends Cluster {
     this.serviceFragment = serviceFragment;
     this.entityFragment = entityFragment;
     this.serverJars = serverJars;
+    
+    this.clientThread = Thread.currentThread();
   }
 
   @Override
@@ -95,26 +102,51 @@ public class BasicExternalCluster extends Cluster {
         : 0;
 
     stateManager = new TestStateManager();
-    cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
-            serverInstallDirectory.getAbsolutePath(),
-            testParentDirectory.getAbsolutePath(),
-            stripeSize, serverPort, serverDebugStartPort, 0, false,
-            serverJarPaths, namespaceFragment, serviceFragment, entityFragment);
-
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
         cluster.stripeControl.shutDown();
       }
     });
+    cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
+        serverInstallDirectory.getAbsolutePath(),
+        testParentDirectory.getAbsolutePath(),
+        stripeSize, serverPort, serverDebugStartPort, 0, false,
+        serverJarPaths, namespaceFragment, serviceFragment, entityFragment);
+    // Spin up an extra thread to call waitForFinish on the stateManager.
+    // This is required since galvan expects that the client is running in a different thread (different process, usually)
+    // than the framework, and the framework waits for the finish so that it can terminate the clients/servers if any of
+    // them trigger an unexpected failure.
+    // Without this, the client will hang in the case when the server crashes since nobody is running the logic to detect
+    // that.
+    Assert.assertTrue(null == this.shepherdingThread);
+    this.shepherdingThread = new Thread(){
+      @Override
+      public void run() {
+        setSafeForRun(true);
+        boolean didPass = stateManager.waitForFinish();
+        setSafeForRun(false);
+        if (!didPass) {
+          clientThread.interrupt();
+        }
+      }
+    };
+    this.shepherdingThread.setName("Shepherding Thread");
+    this.shepherdingThread.start();
+    waitForSafe();
   }
 
   @Override
   protected void after() {
     stateManager.testDidPass();
-    if (!stateManager.waitForFinish()) {
-      throw new AssertionError("Test tear down failure");
+    // NOTE:  The waitForFinish is called by the shepherding thread so we just join on it having done that.
+    try {
+      this.shepherdingThread.join();
+    } catch (InterruptedException e) {
+      // We don't expect interruption in these tests.
+      Assert.unexpected(e);
     }
+    this.shepherdingThread = null;
   }
 
   @Override
@@ -124,6 +156,9 @@ public class BasicExternalCluster extends Cluster {
 
   @Override
   public Connection newConnection() throws ConnectionException {
+    if (!checkSafe()) {
+      throw new ConnectionException(null);
+    }
     return ConnectionFactory.connect(getConnectionURI(), new Properties());
   }
 
@@ -167,5 +202,31 @@ public class BasicExternalCluster extends Cluster {
       l.add(f.getAbsolutePath());
     }
     return l;
+  }
+
+  private synchronized void setSafeForRun(boolean isSafe) {
+    // Note that this is called in 2 cases:
+    // 1) To state that the shepherding thread is running and we can proceed.
+    // 2) To state that there was a problem and we can't proceed.
+    this.isSafe = isSafe;
+    this.notifyAll();
+  }
+
+  private synchronized void waitForSafe() {
+    boolean interrupted = false;
+    while (!interrupted && !this.isSafe) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private synchronized boolean checkSafe() {
+    return this.isSafe;
   }
 }
