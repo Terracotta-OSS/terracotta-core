@@ -43,9 +43,10 @@ public class EntityExistenceHelpers {
     Assert.assertNotNull(clientID);
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
-    long transactionID = transactionIDObject.toLong();
     
-    if (entityPersistor.wasEntityCreatedInJournal(clientID, transactionID)) {
+    long transactionID = transactionIDObject.toLong();
+    // if the clientID is null, then the create was server generated, don't log it or check it
+    if (!clientID.isNull() && entityPersistor.wasEntityCreatedInJournal(clientID, transactionID)) {
       // We either threw or did succeed in the journal, so just carry on as though we created it.
       resultWasCached = true;
     } else {
@@ -54,10 +55,16 @@ public class EntityExistenceHelpers {
       try {
         entityManager.createEntity(entityID, version, consumerID, canDelete);
         // Record the success.
-        entityPersistor.entityCreated(clientID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, canDelete, configuration);
+    // if the clientID is null, then the create was server generated, don't log it or check it
+        if (!clientID.isNull()) {
+          entityPersistor.entityCreated(clientID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, canDelete, configuration);
+        }
       } catch (EntityException e) {
         // Record the failure and re-throw.
-        entityPersistor.entityCreateFailed(clientID, transactionID, oldestTransactionOnClient, e);
+    // if the clientID is null, then the create was server generated, don't log it or check it
+        if (!clientID.isNull()) {
+          entityPersistor.entityCreateFailed(clientID, transactionID, oldestTransactionOnClient, e);
+        }
         throw e;
       }
     }
@@ -68,6 +75,7 @@ public class EntityExistenceHelpers {
     boolean resultWasCached = false;
     // We can't have a null client, transaction, or oldest transaction when an entity is destroyed - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
+    Assert.assertFalse(clientID.isNull());
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
     long transactionID = transactionIDObject.toLong();
@@ -98,6 +106,7 @@ public class EntityExistenceHelpers {
   public static boolean doesExist(EntityPersistor entityPersistor, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID) {
     // We can't have a null client, transaction, or oldest transaction when an entity is checked - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
+    Assert.assertFalse(clientID.isNull());
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
     long transactionID = transactionIDObject.toLong();
@@ -110,6 +119,7 @@ public class EntityExistenceHelpers {
   public static byte[] reconfigureEntityReturnCachedResult(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, byte[] configuration) throws EntityException {
     // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
+    Assert.assertFalse(clientID.isNull());
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
     long transactionID = transactionIDObject.toLong();
