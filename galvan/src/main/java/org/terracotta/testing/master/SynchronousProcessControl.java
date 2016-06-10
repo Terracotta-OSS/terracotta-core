@@ -32,6 +32,8 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   private final List<ServerProcess> passiveServers = new Vector<ServerProcess>();
   // These servers have recently been restarted so we don't yet know their states.
   private final List<ServerProcess> unknownServers = new Vector<ServerProcess>();
+  // It is invalid to use a process control object which has already been shut down so keep that flag.
+  private boolean isShutDown;
   
   public SynchronousProcessControl(ITestStateManager stateManager, ContextualLogger logger) {
     this.stateManager = stateManager;
@@ -41,6 +43,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void synchronizeClient() {
     this.logger.output(">>> synchronizeClient");
+    verifyNotShutdown();
     // Do nothing - this is just for demonstration purposes.
     this.logger.output("<<< synchronizeClient");
   }
@@ -48,6 +51,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void restartActive() {
     this.logger.output(">>> restartActive");
+    verifyNotShutdown();
     // First, make sure that there is an active.
     internalWaitForActive();
     // We MUST now have an active.
@@ -83,7 +87,10 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void shutDown() {
     this.logger.output(">>> shutDown");
+    verifyNotShutdown();
     // We don't care about any server states here.  Just walk all of them and stop everyone.
+    // Set our state to shut down so that nobody can call this, again.
+    this.isShutDown = true;
     
     // First the active.
     if (null != this.activeServer) {
@@ -109,6 +116,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void waitForActive() {
     this.logger.output(">>> waitForActive");
+    verifyNotShutdown();
     internalWaitForActive();
     Assert.assertTrue(null != this.activeServer);
     this.logger.output("<<< waitForActive");
@@ -117,6 +125,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void waitForPassive() {
     this.logger.output(">>> waitForPassive");
+    verifyNotShutdown();
     // We wait for passives by making sure that nothing is left in the unknown list.
     waitForAllUnknowns();
     this.logger.output("<<< waitForPassive");
@@ -124,6 +133,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
 
   public void addServerAndStart(ServerInstallation installation) {
     this.logger.output(">>> addServerAndStart");
+    verifyNotShutdown();
     // We don't want to track the actual installations, as we only need to know about them restarting a server, so just
     // create the processes.
     ServerProcess process = installation.createNewProcess(this.stateManager);
@@ -197,6 +207,12 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     } catch (InterruptedException e) {
       // TODO:  Determine if we want to support interruption, here.
       Assert.unexpected(e);
+    }
+  }
+
+  private void verifyNotShutdown() {
+    if (this.isShutDown) {
+      throw new IllegalStateException("Tried to use an already shut down SynchronousProcessControl object");
     }
   }
 }
