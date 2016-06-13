@@ -44,6 +44,9 @@ public class BasicExternalCluster extends Cluster {
   private TestStateManager stateManager;
   // Note that the clientThread is actually the main thread of the JUnit runner.
   private final Thread clientThread;
+  // We keep a flag to describe whether or not we are currently trying to interrupt the clientThread during what is
+  // probably its join on shepherdingThread (as that can be ignored).
+  private volatile boolean isInterruptingClient;
   private Thread shepherdingThread;
   private boolean isSafe;
 
@@ -127,6 +130,14 @@ public class BasicExternalCluster extends Cluster {
         boolean didPass = stateManager.waitForFinish();
         setSafeForRun(false);
         if (!didPass) {
+          // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
+          // attempt, etc.  When Galvan is run in the purely multi-process mode, this is typically where all
+          // sub-processes would be terminated.  Since we are running the client as another thread, in-process, the
+          // best we can do is interrupt it from a lower-level blocking call.
+          // NOTE:  the "client" is also the thread which created us and will join on our termination, before
+          // returning back to the user code so it is possible that this interruption could be experienced in its
+          // join() call (in which case, we can safely ignore it).
+          isInterruptingClient = true;
           clientThread.interrupt();
         }
       }
@@ -142,9 +153,20 @@ public class BasicExternalCluster extends Cluster {
     // NOTE:  The waitForFinish is called by the shepherding thread so we just join on it having done that.
     try {
       this.shepherdingThread.join();
-    } catch (InterruptedException e) {
-      // We don't expect interruption in these tests.
-      Assert.unexpected(e);
+    } catch (InterruptedException ignorable) {
+      // Note that we both need to join on the shepherding thread (since we created it) but it also tries to interrupt
+      // us in the case where we are stuck somewhere else so this exception is possible.
+      // This confusion is part of the double-duty being done by the thread from the test harness:  running Galvan
+      // _and_ the test.  We split off the Galvan duty to the shepherding thread, so that the test thread can run the
+      // test, but we still need to re-join, at the end.
+      Assert.assertTrue(this.isInterruptingClient);
+      // Clear this flag.
+      this.isInterruptingClient = false;
+      try {
+        this.shepherdingThread.join();
+      } catch (InterruptedException unexpected) {
+        Assert.unexpected(unexpected);
+      }
     }
     this.shepherdingThread = null;
   }
