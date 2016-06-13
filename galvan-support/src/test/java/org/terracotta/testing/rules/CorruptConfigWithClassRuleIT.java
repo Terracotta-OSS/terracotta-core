@@ -6,7 +6,6 @@
 package org.terracotta.testing.rules;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -27,7 +26,7 @@ public class CorruptConfigWithClassRuleIT {
   public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 1, Collections.<File>emptyList(), "", "", "BOGUS<ENTITY<FRAGMENT");
 
   @Test(expected=ConnectionException.class)
-  public void testDirectConnection() throws IOException, ConnectionException {
+  public void testDirectConnection() throws Exception {
     Connection connection = CLUSTER.newConnection();
     try {
       //do nothing
@@ -36,8 +35,14 @@ public class CorruptConfigWithClassRuleIT {
     }
   }
 
+  // We expect IllegalStateException when the active fails to come up while we are waiting for it.
+  @Test(expected=IllegalStateException.class)
+  public void testWaitForActiveCrash() throws Exception {
+    CLUSTER.getClusterControl().waitForActive();
+  }
+
   @Test(expected=ConnectionException.class)
-  public void testConnectionViaURI() throws IOException, ConnectionException {
+  public void testConnectionViaURI() throws Exception {
     Connection connection = ConnectionFactory.connect(CLUSTER.getConnectionURI(), new Properties());
     try {
       //do nothing

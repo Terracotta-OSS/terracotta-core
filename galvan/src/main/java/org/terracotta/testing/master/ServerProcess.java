@@ -36,6 +36,7 @@ import org.terracotta.testing.logging.VerboseOutputStream;
 public class ServerProcess {
   private static enum ServerState {
     UNKNOWN,
+    UNEXPECTED_CRASH,
     ACTIVE,
     PASSIVE,
   };
@@ -64,7 +65,8 @@ public class ServerProcess {
     this.state = ServerState.UNKNOWN;
     // Because a server can crash at any time, not just when we are expecting it to, we need a thread to wait on this operation and notify stateManager if the
     // crash was not expected.
-    this.exitWaiter = new ExitWaiter(stateManager);
+    // We also pass in something to wait on its state to notify us, in the event of an unexpected crash, so that nobody keeps waiting, out here.
+    this.exitWaiter = new ExitWaiter(stateManager, new ActivePassiveEventWaiter(ServerState.UNEXPECTED_CRASH));
     this.debugPort = debugPort;
   }
 
@@ -205,12 +207,14 @@ public class ServerProcess {
 
   private class ExitWaiter extends Thread {
     private final ITestStateManager stateManager;
+    private final ActivePassiveEventWaiter crashWaiter;
     private AnyProcess process;
     private boolean isCrashExpected;
     private int returnValue;
     
-    public ExitWaiter(ITestStateManager stateManager) {
+    public ExitWaiter(ITestStateManager stateManager, ActivePassiveEventWaiter crashWaiter) {
       this.stateManager = stateManager;
+      this.crashWaiter = crashWaiter;
       this.returnValue = -1;
     }
     public void startBackgroundWait(AnyProcess process) {
@@ -236,7 +240,13 @@ public class ServerProcess {
           // This means that someone is waiting for us.
           this.notifyAll();
         } else {
-          // We weren't expecting this so we need to notify the stateManager.
+          // We weren't expecting this so we need to notify the crash waiter and stateManager.
+          try {
+            this.crashWaiter.onEvent(null);
+          } catch (Throwable e) {
+            // Not expected in this case.
+            Assert.unexpected(e);
+          }
           shouldSendFailure = true;
         }
       }

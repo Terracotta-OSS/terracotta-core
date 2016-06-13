@@ -182,8 +182,13 @@ public class SynchronousProcessControl implements IMultiProcessControl {
           ServerProcess passive = oldPassives.remove(0);
           waitAndPlaceServerInState(passive);
         }
-        // If there is no active at this point, we have a serious bug (this could be a race condition we haven't eliminated).
-        Assert.assertTrue(null != this.activeServer);
+        
+        // See if we are still without an active.
+        if (null == this.activeServer) {
+          // If there is no active at this point, it probably means that there is something seriously wrong with the
+          // server, such that it crashed while we were waiting for it to start.
+          throw new IllegalStateException("Active process did not appear");
+        }
       }
     }
   }
