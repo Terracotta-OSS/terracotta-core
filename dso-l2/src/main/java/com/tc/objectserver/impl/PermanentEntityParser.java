@@ -63,37 +63,45 @@ public class PermanentEntityParser {
           String type = b.getType();
           int version = b.getVersion();
           Entity.Configuration c = b.getConfiguration();
-          Entity.Configuration.Properties m = c.getProperties();
           byte[] data;
-          if (m != null) {
-            Properties prop = new Properties();
-            List<Element> list = m.getAny();
-            for (Element pe : list) {
-              prop.setProperty(pe.getTagName(), pe.getTextContent());
-            }
-            try {
-              ByteArrayOutputStream bos = new ByteArrayOutputStream();
-              prop.store(bos, null);
-              data = bos.toByteArray();
-            } catch (IOException ioe) {
-              data = new byte[0];
+          if (c != null) {
+            Entity.Configuration.Properties m = c.getProperties();
+            if (m != null) {
+              Properties prop = new Properties();
+              List<Element> list = m.getAny();
+              for (Element pe : list) {
+                prop.setProperty(pe.getTagName(), pe.getTextContent());
+              }
+              try {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                prop.store(bos, null);
+                data = bos.toByteArray();
+              } catch (IOException ioe) {
+                data = new byte[0];
+              }
+            } else {
+              Element any = c.getAny();
+              if (any != null) {
+                try {
+                  TransformerFactory transFactory = TransformerFactory.newInstance();
+                  Transformer transformer = transFactory.newTransformer();
+                  StringWriter buffer = new StringWriter();
+                  transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+                  transformer.transform(new DOMSource(any), new StreamResult(buffer));
+                  String str = buffer.toString();
+                  data = str.getBytes();
+                } catch (TransformerException te) {
+                  data = new byte[0];
+                }
+              } else {
+                data = new byte[0];
+              }
             }
           } else {
-            Element any = c.getAny();
-            try {
-              TransformerFactory transFactory = TransformerFactory.newInstance();
-              Transformer transformer = transFactory.newTransformer();
-              StringWriter buffer = new StringWriter();
-              transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-              transformer.transform(new DOMSource(any), new StreamResult(buffer));
-              String str = buffer.toString();
-              data = str.getBytes();
-            } catch (TransformerException te) {
-              data = new byte[0];
-            }
+            data = new byte[0];
           }
           msgs.add(new CreateSystemEntityMessage(new EntityID(type, name),version, data));
-        } 
+        }
       } else {
         msgs = Collections.emptyList();
       }
