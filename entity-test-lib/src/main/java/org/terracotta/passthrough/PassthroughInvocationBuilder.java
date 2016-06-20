@@ -58,7 +58,8 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
     this.clientInstanceID = clientInstanceID;
     this.messageCodec = messageCodec;
     
-    this.shouldBlockGetUntilRetire = false;
+    // By default, get() will block on RETIRED.
+    this.shouldBlockGetUntilRetire = true;
   }
 
   @Override
@@ -98,8 +99,8 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   }
 
   @Override
-  public InvocationBuilder<M, R> blockGetOnRetire() {
-    this.shouldBlockGetUntilRetire = true;
+  public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
+    this.shouldBlockGetUntilRetire = shouldBlock;
     return this;
   }
 

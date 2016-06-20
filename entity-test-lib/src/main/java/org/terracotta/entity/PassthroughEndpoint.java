@@ -116,7 +116,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     }
 
     @Override
-    public InvocationBuilder<M, R> blockGetOnRetire() {
+    public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
       // ACKs ignored in this implementation.
       return this;
     }

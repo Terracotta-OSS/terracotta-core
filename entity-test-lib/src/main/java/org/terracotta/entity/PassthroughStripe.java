@@ -267,7 +267,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
-    public InvocationBuilder<M, R> blockGetOnRetire() {
+    public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
       // ACKs ignored in this implementation.
       return this;
     }
