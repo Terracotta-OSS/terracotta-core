@@ -100,7 +100,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     private M request;
     private final Set<VoltronEntityMessage.Acks> acks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     private boolean requiresReplication = true;
-    private boolean shouldBlockGetOnRetire = false;
+    // By default, we block the get() on the RETIRE ack.
+    private boolean shouldBlockGetOnRetire = true;
 
     // TODO: fill in durability/consistency options here.
 
@@ -142,8 +143,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
-    public InvocationBuilder<M, R> blockGetOnRetire() {
-      this.shouldBlockGetOnRetire = true;
+    public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
+      this.shouldBlockGetOnRetire = shouldBlock;
       return this;
     }
 
