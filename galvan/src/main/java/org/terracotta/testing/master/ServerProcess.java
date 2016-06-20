@@ -211,11 +211,13 @@ public class ServerProcess {
     private AnyProcess process;
     private boolean isCrashExpected;
     private int returnValue;
+    private boolean didExit;
     
     public ExitWaiter(ITestStateManager stateManager, ActivePassiveEventWaiter crashWaiter) {
       this.stateManager = stateManager;
       this.crashWaiter = crashWaiter;
       this.returnValue = -1;
+      this.didExit = false;
     }
     public void startBackgroundWait(AnyProcess process) {
       Assert.assertNull(this.process);
@@ -224,10 +226,11 @@ public class ServerProcess {
     }
     @Override
     public void run() {
+      int returnValue = -1;
       try {
-        this.returnValue = this.process.waitFor();
+        returnValue = this.process.waitFor();
       } catch (java.util.concurrent.CancellationException e) {
-        this.returnValue = this.process.exitValue();
+        returnValue = this.process.exitValue();
       } catch (InterruptedException e) {
         // We don't expect interruption in this part of the test - we need to wait for the termination.
         Assert.unexpected(e);
@@ -235,6 +238,8 @@ public class ServerProcess {
       // If we send the failure, we don't want to do it under lock.
       boolean shouldSendFailure = false;
       synchronized(this) {
+        this.returnValue = returnValue;
+        this.didExit = true;
         // See if this crash was expected.
         if (this.isCrashExpected) {
           // This means that someone is waiting for us.
@@ -266,7 +271,7 @@ public class ServerProcess {
       }
 
       // Wait until we get a return value.
-      while (-1 == this.returnValue) {
+      while (!this.didExit) {
         wait();
       }
       return this.returnValue;
