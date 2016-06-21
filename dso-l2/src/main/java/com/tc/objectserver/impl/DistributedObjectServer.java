@@ -240,12 +240,14 @@ import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
+import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import java.lang.management.ManagementFactory;
+import java.util.Map;
 
 
 /**
@@ -1042,8 +1044,20 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+      Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
+//  find annotated permanent entities
+      List<VoltronEntityMessage> annotated = ServerEntityFactory.getAnnotatedEntities(entityManager.getEntityLoader());
+      for (VoltronEntityMessage vem : annotated) {
+//  map them to weed out duplicates
+        checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
+      } 
+//  first configured permanent entities
       List<VoltronEntityMessage> msgs = PermanentEntityParser.parseEntities(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
       for (VoltronEntityMessage vem : msgs) {
+//  map them to weed out duplicates, opt for the configured version when there are duplicates
+        checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
+      }
+      for (VoltronEntityMessage vem : checkdups.values()) {
         msgSink.addSingleThreaded(vem);
       }
     }
