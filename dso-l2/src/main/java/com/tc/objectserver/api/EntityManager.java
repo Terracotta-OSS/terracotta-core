@@ -74,4 +74,9 @@ public interface EntityManager extends StateDumpable {
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException;
 
   Collection<ManagedEntity> getAll();
+  /**
+   * 
+   * @return the classloader used to create all entities
+   */
+  ClassLoader getEntityLoader();
 }
