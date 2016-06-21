@@ -100,11 +100,15 @@ public class PermanentEntityParser {
           } else {
             data = new byte[0];
           }
-          msgs.add(new CreateSystemEntityMessage(new EntityID(type, name),version, data));
+          msgs.add(createMessage(type, name, version, data));
         }
       } else {
         msgs = Collections.emptyList();
       }
       return msgs;
+  }
+  
+  public static VoltronEntityMessage createMessage(String type, String name, int version, byte[] data) {
+    return new CreateSystemEntityMessage(new EntityID(type, name),version, data);
   }
 }
