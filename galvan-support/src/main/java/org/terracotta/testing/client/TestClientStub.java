@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.passthrough.ICommonTest;
+import org.terracotta.passthrough.SimpleClientTestEnvironment;
 import org.terracotta.testing.common.Assert;
 
 
@@ -63,7 +64,7 @@ public class TestClientStub {
     Connection connection = clusterControl.createConnectionToActive();
     
     // Get the environment (we will pass this in all cases but it is only useful for TEST modes).
-    ClientTestEnvironment env = new ClientTestEnvironment(connectUri, totalClientCount, thisClientIndex);
+    SimpleClientTestEnvironment env = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex);
     
     if (isSetup) {
       test.runSetup(env, clusterControl, connection);
