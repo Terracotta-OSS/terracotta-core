@@ -18,8 +18,6 @@
  */
 package org.terracotta.passthrough;
 
-import java.util.UUID;
-
 
 /**
  * Used for setting up IClusterControl instances to wrap test cluster configurations, based on the passthrough classes.
@@ -32,12 +30,11 @@ public class PassthroughTestHelpers {
   /**
    * Creates a cluster consisting only of a single server in active state.
    * 
+   * @param stripeName The unique name for this stripe.
    * @param initializer The callback to handle initialization of the server.
    * @return A control object to use for interacting with the cluster.
    */
-  public static IClusterControl createActiveOnly(ServerInitializer initializer) {
-    // We will synthesize a unique name for this stripe.
-    String stripeName = UUID.randomUUID().toString();
+  public static IClusterControl createActiveOnly(String stripeName, ServerInitializer initializer) {
     boolean activeMode = true;
     PassthroughServer activeServer = intializeOneServer(initializer, activeMode);
     PassthroughServer passiveServer = null;
@@ -47,12 +44,11 @@ public class PassthroughTestHelpers {
   /**
    * Creates a cluster consisting only of 2 servers configured as 1 stripe:  an active and a passive.
    * 
+   * @param stripeName The unique name for this stripe.
    * @param initializer The callback to handle initialization of both servers, called on each.
    * @return A control object to use for interacting with the cluster.
    */
-  public static IClusterControl createActivePassive(ServerInitializer initializer) {
-    // We will synthesize a unique name for this stripe.
-    String stripeName = UUID.randomUUID().toString();
+  public static IClusterControl createActivePassive(String stripeName, ServerInitializer initializer) {
     boolean activeMode = true;
     PassthroughServer activeServer = intializeOneServer(initializer, activeMode);
     PassthroughServer passiveServer = intializeOneServer(initializer, !activeMode);
