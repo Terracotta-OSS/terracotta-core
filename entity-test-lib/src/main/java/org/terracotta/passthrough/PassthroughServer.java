@@ -18,9 +18,12 @@
  */
 package org.terracotta.passthrough;
 
+import com.tc.classloader.BuiltinService;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Vector;
 
 import org.junit.Assert;
@@ -30,6 +33,7 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.ServiceConfiguration;
 
 
 /**
@@ -153,6 +157,8 @@ public class PassthroughServer implements PassthroughDumper {
     
     // Register built-in services.
     registerBuiltInServices(pseudoConnection);
+    
+    findClasspathBuiltinServices();
     // Install the user-created services.
     for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
       try {
@@ -255,5 +261,16 @@ public class PassthroughServer implements PassthroughDumper {
     this.serverProcess.registerBuiltInServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
     this.serverProcess.registerBuiltInServiceProvider(passthroughPlatformServiceProvider, null);
+  }
+  
+  private void findClasspathBuiltinServices() {
+      java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+      for (ServiceProvider provider : loader) {
+        if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
+          System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
+        } else {
+          this.serverProcess.registerBuiltInServiceProvider(new PassthroughClasspathBuiltinServiceProvider(provider), null);
+        }
+      }
   }
 }

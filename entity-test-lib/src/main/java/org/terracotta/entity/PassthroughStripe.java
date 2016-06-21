@@ -23,6 +23,13 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import com.google.common.util.concurrent.Futures;
+import com.tc.classloader.BuiltinService;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityUserException;
@@ -44,6 +51,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
   
   private int nextClientID = 1;
+  private int consumerID = 1;
 
   public PassthroughStripe(ServerEntityService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
@@ -55,8 +63,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     if (!activeMap.containsKey(name)) {
       // Create the instances.
       MessageCodec<M, R> codec = service.getMessageCodec();
-      ActiveServerEntity<M, R> active = service.createActiveEntity(serviceRegistry, configuration);
-      PassiveServerEntity<M, R> passive = service.createPassiveEntity(serviceRegistry, configuration);
+      ActiveServerEntity<M, R> active = service.createActiveEntity(serviceRegistry.create(consumerID++), configuration);
+      PassiveServerEntity<M, R> passive = service.createPassiveEntity(serviceRegistry.create(consumerID++), configuration);
       // Set them as new instances.
       active.createNew();
       passive.createNew();
@@ -115,10 +123,61 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     return Futures.immediateFuture(null);
   }
 
-  private class FakeServiceRegistry implements ServiceRegistry {
-    @Override
-    public <T> T getService(ServiceConfiguration<T> configuration) {
-      return configuration.getServiceType().cast(PassthroughStripe.this);
+  private class FakeServiceRegistry {
+    private final Set<ServiceProvider> builtins = new HashSet<ServiceProvider>();
+    
+    FakeServiceRegistry() {
+      java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+      for (ServiceProvider provider : loader) {
+        if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
+          System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
+        } else {
+          builtins.add(provider);
+        }
+      }
+      final List<Class<?>> selfTypes = new ArrayList<Class<?>>(1);
+      selfTypes.add(ClientCommunicator.class);
+//  add the ClientCommunicator builtin
+      builtins.add(new ServiceProvider() {
+        @Override
+        public boolean initialize(ServiceProviderConfiguration configuration) {
+          return true;
+        }
+
+        @Override
+        public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+          if (configuration.getServiceType().equals(ClientCommunicator.class)) {
+            return configuration.getServiceType().cast(PassthroughStripe.this);
+          }
+          return null;
+        }
+//  weird 1.6 behavior that can't use Collections.singleton() or Arrays.asList()
+        @Override
+        public Collection<Class<?>> getProvidedServiceTypes() {
+          return selfTypes;
+        }
+
+        @Override
+        public void clear() throws ServiceProviderCleanupException {
+        }
+      });
+    }
+    
+    public ServiceRegistry create(final long cid) {
+      return new ServiceRegistry() {
+        @Override
+        public <T> T getService(ServiceConfiguration<T> configuration) {
+          for (ServiceProvider provider : builtins) {
+            if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
+              T service = provider.getService(cid, configuration);
+              if (service != null) {
+                return service;
+              }
+            }
+          }
+          return null;
+        }
+      };
     }
   }
   
