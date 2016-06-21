@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 
 # The contents of this file are subject to the Terracotta Public License Version
