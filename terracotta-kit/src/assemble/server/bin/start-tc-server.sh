@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 
 # The contents of this file are subject to the Terracotta Public License Version
@@ -108,21 +108,17 @@ ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
  # We want to output the PID of the underlying process to STDOUT.
  echo "Server started as $PID"
  
- # NOTE:  Wait may return prematurely if the shell runs its signal handler but we know that it
- # returns 127 if the call fails so we will loop on calling it until that happens (we want to see
- # it fail due to the child process exiting and no longer being a child of this shell).  The last
- # wait call, prior to this failing call, will contain the correct return value.
- exitValue=128
- keepWaiting=true
- while [ "$keepWaiting" == true ]; do
+ # Wait may will sometimes fail with 127, so we need to filter that as not a real return value.
+ # NOTE:  When using /bin/sh as the interpreter, wait has VERY different behavior:  it will only
+ # return the correct value once and can sometimes incorrectly return with an invalid value so,
+ # in that case, it must be called until the first time it DOES return 127, and then the value
+ # returned in the previous call is the correct return value.  This is also platform-dependent
+ # as different shells use to alias /bin/sh implement subtleties of sh differently.
+ exitValue=127
+ while [ $exitValue == 127 ]; do
   # Redirect error so we don't see the message about not being a child shell.
   wait $PID >& /dev/null
-  returnValue=$?
-  if [ $returnValue -ne 127 ]; then
-   exitValue=$returnValue
-  else
-   keepWaiting=false
-  fi
+  exitValue=$?
  done
  start=false;
 
