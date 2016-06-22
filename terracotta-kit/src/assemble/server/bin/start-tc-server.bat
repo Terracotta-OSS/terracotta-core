@@ -35,8 +35,8 @@ setlocal enabledelayedexpansion enableextensions
 
 set TC_INSTALL_DIR=%~d0%~p0..\..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
-set PLUGIN_LIB_DIR=%TC_INSTALL_DIR%\plugins\lib
-set PLUGIN_API_DIR=%TC_INSTALL_DIR%\plugins\api
+set PLUGIN_LIB_DIR=%TC_INSTALL_DIR%\server\plugins\lib
+set PLUGIN_API_DIR=%TC_INSTALL_DIR%\server\plugins\api
 
 if exist %TC_INSTALL_DIR%\server\bin\setenv.bat (
   call %TC_INSTALL_DIR%\server\bin\setenv.bat
