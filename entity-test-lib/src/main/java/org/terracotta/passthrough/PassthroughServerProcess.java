@@ -25,9 +25,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -92,7 +94,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private Map<PassthroughEntityTuple, CreationData<?, ?>> passiveEntities;
   private final List<ServiceProvider> serviceProviders;
   private final List<PassthroughBuiltInServiceProvider> builtInServiceProviders;
-  private PassthroughServerProcess downstreamPassive;
+  private Set<PassthroughServerProcess> downstreamPassives = new HashSet<PassthroughServerProcess>();
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
   private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
@@ -461,7 +463,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   
   private void serverThreadHandleMessage(IMessageSenderWrapper sender, byte[] message) {
     // Called on the server thread to handle a message.
-    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this.transactionOrderManager, this.lifeCycleMessageHandler, this.downstreamPassive, sender, message);
+    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this.transactionOrderManager, this.lifeCycleMessageHandler, this.downstreamPassives, sender, message);
     PassthroughMessageCodec.decodeRawMessage(decoder, message);
   }
 
@@ -872,11 +874,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serviceProviders.add(serviceProvider);
   }
 
-  public void setDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
+  public void addDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
     // Make sure that we are active and they are passive.
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
-    this.downstreamPassive = serverProcess;
+    this.downstreamPassives.add(serverProcess);
     serverProcess.setStateSynchronizing(this.serviceInterface);
     // Synchronize any entities we have.
     // NOTE:  This synchronization implementation is relatively simplistic and we may require a more substantial
@@ -889,38 +891,36 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // State that we will start to synchronize the entity.
       PassthroughMessage entityStart = PassthroughMessageCodec.createSyncEntityStartMessage(entityClassName, entityName, value.version, value.configuration);
       PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
-      this.downstreamPassive.sendMessageToServerFromActive(wrapper, entityStart.asSerializedBytes());
+      serverProcess.sendMessageToServerFromActive(wrapper, entityStart.asSerializedBytes());
       wrapper.waitForComplete();
       // Walk all the concurrency keys for this entity.
       for (final Integer oneKey : value.getConcurrency().getKeysForSynchronization()) {
         // State that we will start to synchronize the key.
         PassthroughMessage keyStart = PassthroughMessageCodec.createSyncEntityKeyStartMessage(entityClassName, entityName, oneKey);
         wrapper = new PassthroughInterserverInterlock(null);
-        this.downstreamPassive.sendMessageToServerFromActive(wrapper, keyStart.asSerializedBytes());
+        serverProcess.sendMessageToServerFromActive(wrapper, keyStart.asSerializedBytes());
         wrapper.waitForComplete();
         // Send all the data.
-        value.synchronizeToPassive(this.downstreamPassive, oneKey);
+        value.synchronizeToPassive(serverProcess, oneKey);
         // State that we are done synchronizing the key.
         PassthroughMessage keyEnd = PassthroughMessageCodec.createSyncEntityKeyEndMessage(entityClassName, entityName, oneKey);
         wrapper = new PassthroughInterserverInterlock(null);
-        this.downstreamPassive.sendMessageToServerFromActive(wrapper, keyEnd.asSerializedBytes());
+        serverProcess.sendMessageToServerFromActive(wrapper, keyEnd.asSerializedBytes());
         wrapper.waitForComplete();
       }
       // State that we are done synchronizing the entity.
       PassthroughMessage entityEnd = PassthroughMessageCodec.createSyncEntityEndMessage(entityClassName, entityName);
       wrapper = new PassthroughInterserverInterlock(null);
-      this.downstreamPassive.sendMessageToServerFromActive(wrapper, entityEnd.asSerializedBytes());
+      serverProcess.sendMessageToServerFromActive(wrapper, entityEnd.asSerializedBytes());
       wrapper.waitForComplete();
     }
-    
-    serverProcess.setStateStandbyReady(this.serviceInterface);
   }
 
   public void promoteToActive() {
     // Make sure that we are currently passive.
     Assert.assertTrue(null != this.passiveEntities);
     // Make us active and promote all passive entities.
-    this.downstreamPassive = null;
+    this.downstreamPassives.clear();
     this.activeEntities = new HashMap<PassthroughEntityTuple, CreationData<?, ?>>();
     
     // We need to create the entities as active but note that we would already have persisted this data so only create the

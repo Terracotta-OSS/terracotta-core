@@ -42,6 +42,20 @@ public interface IClusterControl {
   public void waitForActive() throws Exception;
 
   /**
+   * Terminates current active of this Stripe
+   *
+   * @throws Exception A failure in terminating the server, defined by the implementation
+   */
+  public void terminateActive() throws Exception;
+
+  /**
+   * Starts the last terminated server
+   *
+   * @throws Exception A failure in starting, defined by the implementation
+   */
+  public void startLastTerminatedServer() throws Exception;
+
+  /**
    * Waits for the active server in the cluster to come online and determine that it is passive.
    * 
    * @throws Exception A failure waiting, defined by the implementation.

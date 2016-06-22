@@ -20,6 +20,8 @@ package org.terracotta.passthrough;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityUserException;
@@ -36,15 +38,16 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   private final MessageHandler messageHandler;
   private final PassthroughTransactionOrderManager transactionOrderManager;
   private final LifeCycleMessageHandler lifeCycleMessageHandler;
-  private final PassthroughServerProcess downstreamPassive;
+  private final Set<PassthroughServerProcess> downstreamPassives = new HashSet<PassthroughServerProcess>();
   private final IMessageSenderWrapper sender;
   private final byte[] message;
 
-  public PassthroughServerMessageDecoder(MessageHandler messageHandler, PassthroughTransactionOrderManager transactionOrderManager, LifeCycleMessageHandler lifeCycleMessageHandler, PassthroughServerProcess downstreamPassive, IMessageSenderWrapper sender, byte[] message) {
+  public PassthroughServerMessageDecoder(MessageHandler messageHandler, PassthroughTransactionOrderManager
+    transactionOrderManager, LifeCycleMessageHandler lifeCycleMessageHandler, Set<PassthroughServerProcess> downstreamPassives, IMessageSenderWrapper sender, byte[] message) {
     this.messageHandler = messageHandler;
     this.transactionOrderManager = transactionOrderManager;
     this.lifeCycleMessageHandler = lifeCycleMessageHandler;
-    this.downstreamPassive = downstreamPassive;
+    this.downstreamPassives.addAll(downstreamPassives);
     this.sender = sender;
     this.message = message;
   }
@@ -66,9 +69,11 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     
     // Now, before we can actually RUN the message, we need to make sure that we wait for its replicated copy to complete
     // on the passive.
-    if (shouldReplicate && (null != this.downstreamPassive)) {
+    if (shouldReplicate && this.downstreamPassives.size() > 0) {
       PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(this.sender);
-      this.downstreamPassive.sendMessageToServerFromActive(wrapper, message);
+      for (PassthroughServerProcess passive : downstreamPassives) {
+        passive.sendMessageToServerFromActive(wrapper, message);
+      }
       wrapper.waitForComplete();
     }
     

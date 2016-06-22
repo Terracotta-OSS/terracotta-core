@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.Arrays;
 
 /**
  * Used for setting up IClusterControl instances to wrap test cluster configurations, based on the passthrough classes.
@@ -35,10 +36,7 @@ public class PassthroughTestHelpers {
    * @return A control object to use for interacting with the cluster.
    */
   public static IClusterControl createActiveOnly(String stripeName, ServerInitializer initializer) {
-    boolean activeMode = true;
-    PassthroughServer activeServer = intializeOneServer(initializer, activeMode);
-    PassthroughServer passiveServer = null;
-    return new PassthroughClusterControl(stripeName, activeServer, passiveServer);
+    return createMultiServerStripe(stripeName, 1, initializer);
   }
 
   /**
@@ -49,17 +47,24 @@ public class PassthroughTestHelpers {
    * @return A control object to use for interacting with the cluster.
    */
   public static IClusterControl createActivePassive(String stripeName, ServerInitializer initializer) {
-    boolean activeMode = true;
-    PassthroughServer activeServer = intializeOneServer(initializer, activeMode);
-    PassthroughServer passiveServer = intializeOneServer(initializer, !activeMode);
-    activeServer.attachDownstreamPassive(passiveServer);
-    return new PassthroughClusterControl(stripeName, activeServer, passiveServer);
+    return createMultiServerStripe(stripeName, 2, initializer);
   }
 
-  private static PassthroughServer intializeOneServer(ServerInitializer initializer, boolean activeMode) {
-    PassthroughServer activeServer = new PassthroughServer(activeMode);
+  public static IClusterControl createMultiServerStripe(String stripeName, int numOfServers, ServerInitializer initializer) {
+    PassthroughServer[] servers = new PassthroughServer[numOfServers];
+    for(int i = 0; i < numOfServers; i++) {
+      servers[i] = intializeServer(initializer);
+    }
+    if(numOfServers == 1) {
+      return new PassthroughClusterControl(stripeName, servers[0]);
+    } else {
+      return new PassthroughClusterControl(stripeName, servers[0], Arrays.copyOfRange(servers, 1, servers.length));
+    }
+  }
+
+  private static PassthroughServer intializeServer(ServerInitializer initializer) {
+    PassthroughServer activeServer = new PassthroughServer();
     initializer.registerServicesForServer(activeServer);
-    activeServer.start();
     return activeServer;
   }
 

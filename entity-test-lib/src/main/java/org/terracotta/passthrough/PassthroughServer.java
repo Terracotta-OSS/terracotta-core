@@ -42,7 +42,7 @@ public class PassthroughServer implements PassthroughDumper {
   private int bindPort;
   private int groupPort;
   
-  private final boolean isActive;
+  private boolean isActive;
     
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
@@ -55,10 +55,8 @@ public class PassthroughServer implements PassthroughDumper {
   private final List<ServerEntityService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final Map<Long, PassthroughConnection> savedClientConnections;
-  private PassthroughServer savedPassiveServer;
   
-  public PassthroughServer(boolean isActiveMode) {
-    this.isActive = isActiveMode;
+  public PassthroughServer() {
     this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
     this.nextConnectionID = 1;
     
@@ -128,19 +126,16 @@ public class PassthroughServer implements PassthroughDumper {
     return new PassthroughConnection(readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
   }
 
-  public void start() {
+  public void start(boolean isActive, boolean shouldLoadStorage) {
+    this.isActive = isActive;
     // See if there is a monitoring service.
     // XXX: Currently, we do nothing to simulate reconnect after fail-over or restart, which should probably be addressed.
     List<ServiceProvider> providers = new Vector<ServiceProvider>();
     for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
       providers.add(tuple.serviceProvider);
     }
-    
     this.hasStarted = true;
-    boolean shouldLoadStorage = false;
-    
     bootstrapProcess(this.isActive);
-    
     this.serverProcess.start(shouldLoadStorage);
   }
   
@@ -192,80 +187,28 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
-    this.savedPassiveServer = passiveServer;
-    this.serverProcess.setDownstreamPassiveServerProcess(passiveServer.serverProcess);
+    this.serverProcess.addDownstreamPassiveServerProcess(passiveServer.serverProcess);
   }
 
-  /**
-   * Called to act as though the server suddenly crashed and then restarted.  The method returns only when the server is
-   * back up, ready to receive reconnects (potentially having already handled them) and/or new calls.
-   * 
-   * NOTE:  This will always result in a fail-over if there is a downstream passive.
-   * 
-   * @return The new active server (typically this but could be a previous passive)
-   */
-  public PassthroughServer restart() {
-    // Disconnect all connections before shutdown.
-    for(PassthroughConnection connection : this.savedClientConnections.values()) {
-      connection.disconnect();
+  public void connectSavedClientsTo(PassthroughServer newActive) {
+    for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
+      newActive.failOverReconnect(connection.getKey(), connection.getValue());
     }
-    // Shut down the server processes.  Note that this is just stopping the processes since we want to clear the message queues.  We will only actually restart the state of the active.
-    // First, the active.
-    internalStop();
-    if (null != this.savedPassiveServer) {
-      // Now, the passive.
-      // NOTE:  The passive has state we want to continue to use so it only partially restarts - not the same as the full
-      // "stop" and "bootstrap" sequence in the active. 
-      this.savedPassiveServer.serverProcess.shutdown();
+    newActive.serverProcess.beginReceivingResends();
+    for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
+      connection.getValue().finishReconnect();
     }
-    // Start a new one.
-    // (we will make it active if it is the only server in the stripe, otherwise it will become passive when we fail-over).
-    boolean isActiveMode = (null == this.savedPassiveServer);
-  
-    bootstrapProcess(isActiveMode);
-    
-    // Handle the difference between active restart and passive fail-over.
-    // If there was previously a passive, we want to tell it to become active, given this new server as passive, and also
-    // hand off all our client connections since they will be reconnecting there, not here.
-    PassthroughServer newActive = null;
-    if (null == this.savedPassiveServer) {
-      // We are the active so just start, loading our storage.
-      // Start the server with a reloaded state.
-      boolean shouldLoadStorage = true;
-      this.serverProcess.start(shouldLoadStorage);
-      
-      // Reconnect all the connections.
-      for(PassthroughConnection connection : this.savedClientConnections.values()) {
-        connection.startReconnect(this.serverProcess);
-      }
-      this.serverProcess.beginReceivingResends();
-      for(PassthroughConnection connection : this.savedClientConnections.values()) {
-        connection.finishReconnect();
-      }
-      this.serverProcess.endReceivingResends();
-      newActive = this;
-    } else {
-      // Start us WITHOUT loading storage - this is because WE are the PASSIVE, now.
-      boolean shouldLoadStorage = false;
-      this.serverProcess.start(shouldLoadStorage);
-      // We are going to fail-over so tell the other passive to become active before we reconnect clients.
-      this.savedPassiveServer.doFailOver(this);
-      // The saved passive is now ACTIVE.
-      newActive = this.savedPassiveServer;
-      this.savedPassiveServer = null;
-      // Reconnect all the connections to the new active.
-      for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
-        newActive.failOverReconnect(connection.getKey(), connection.getValue());
-      }
-      newActive.serverProcess.beginReceivingResends();
-      for(Map.Entry<Long, PassthroughConnection> connection : this.savedClientConnections.entrySet()) {
-        connection.getValue().finishReconnect();
-      }
-      newActive.serverProcess.endReceivingResends();
-      // Our clients are no longer connected to us so wipe them.
+    newActive.serverProcess.endReceivingResends();
+
+    if(!this.isActive) {
       this.savedClientConnections.clear();
     }
-    return newActive;
+  }
+
+  public void disconnectClients() {
+    for (PassthroughConnection passthroughConnection : savedClientConnections.values()) {
+      passthroughConnection.disconnect();
+    }
   }
 
   private void failOverReconnect(Long connectionID, PassthroughConnection connection) {
@@ -273,16 +216,6 @@ public class PassthroughServer implements PassthroughDumper {
     this.savedClientConnections.put(connectionID, connection);
     // Tell the connection to reconnect.
     connection.startReconnect(this.serverProcess);
-  }
-
-  private void doFailOver(PassthroughServer restartedAsPassive) {
-    Assert.assertNull(this.savedPassiveServer);
-    this.savedPassiveServer = restartedAsPassive;
-    this.serverProcess.promoteToActive();
-    // We also want to ask the process to start processing messages as the active.
-    this.serverProcess.resumeMessageProcessing();
-    // Set the downstream process (has the side-effect of synchronizing all of our entities).
-    this.serverProcess.setDownstreamPassiveServerProcess(this.savedPassiveServer.serverProcess);
   }
 
   private void internalRegisterServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
@@ -296,6 +229,13 @@ public class PassthroughServer implements PassthroughDumper {
       System.out.println("\t" + connection);
     }
     this.serverProcess.dump();
+  }
+
+  public void promoteToActive() {
+    this.isActive = true;
+    this.serverProcess.shutdown();
+    this.serverProcess.promoteToActive();
+    this.serverProcess.resumeMessageProcessing();
   }
 
   private static class ServiceProviderAndConfiguration {
