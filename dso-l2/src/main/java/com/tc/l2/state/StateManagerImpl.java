@@ -342,8 +342,8 @@ public class StateManagerImpl implements StateManager {
           sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
         }
       } else {
-//  this server was started with persistent data.  don't start this server in passive state.
-        Assert.assertEquals(startState, StateManager.ACTIVE_COORDINATOR);
+        //this server was started with persistent data, this server could be either a ACTIVE or PASSIVE before
+        // it went down. In any case, don't start this server in passive state.
 // TODO: send a negative response so the active zaps this server.  This is a bad way to agree.  find a better way
         if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
           sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
