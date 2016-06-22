@@ -28,6 +28,10 @@ public interface IMultiProcessControl {
 
   public void restartActive();
 
+  public void terminateActive();
+
+  public void startLastTerminatedServer();
+
   public void shutDown();
 
   public void waitForActive();
