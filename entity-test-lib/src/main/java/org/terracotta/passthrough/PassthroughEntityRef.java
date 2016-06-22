@@ -88,30 +88,37 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException {
     // Make sure that we have a service provider.
     if (null != this.service) {
-      getWriteLock();
-      try {
-        byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-        PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
-        PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
-        received.blockGetOnRetire();
+      // NOTE:  We use a try-lock so that we can emulate the "fast fail" semantics now desired for create() - failure to acquire the lock
+      // assumes that the entity already exists.
+      boolean didLock = tryWriteLock();
+      if (didLock) {
         try {
-          received.get();
-        } catch (EntityException e) {
-          // Check that this is the correct type.
-          if (e instanceof EntityNotProvidedException) {
-            throw (EntityNotProvidedException) e;
-          } else if (e instanceof EntityAlreadyExistsException) {
-            throw (EntityAlreadyExistsException) e;
-          } else if (e instanceof EntityVersionMismatchException) {
-            throw (EntityVersionMismatchException) e;
-          } else {
+          byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
+          PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
+          PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+          received.blockGetOnRetire();
+          try {
+            received.get();
+          } catch (EntityException e) {
+            // Check that this is the correct type.
+            if (e instanceof EntityNotProvidedException) {
+              throw (EntityNotProvidedException) e;
+            } else if (e instanceof EntityAlreadyExistsException) {
+              throw (EntityAlreadyExistsException) e;
+            } else if (e instanceof EntityVersionMismatchException) {
+              throw (EntityVersionMismatchException) e;
+            } else {
+              Assert.unexpected(e);
+            }
+          } catch (InterruptedException e) {
             Assert.unexpected(e);
           }
-        } catch (InterruptedException e) {
-          Assert.unexpected(e);
+        } finally {
+          releaseWriteLock();
         }
-      } finally {
-        releaseWriteLock();
+      } else {
+        // We couldn't get the lock so we assume that the entity exists.
+        throw new EntityAlreadyExistsException(this.clazz.getCanonicalName(), this.name);
       }
     } else {
       throw new EntityNotProvidedException(this.clazz.getName(), this.name);
