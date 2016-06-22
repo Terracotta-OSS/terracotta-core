@@ -198,6 +198,16 @@ public class BasicExternalCluster extends Cluster {
       }
 
       @Override
+      public void terminateActive() throws Exception {
+        cluster.stripeControl.terminateActive();
+      }
+
+      @Override
+      public void startLastTerminatedServer() throws Exception {
+        cluster.stripeControl.startLastTerminatedServer();
+      }
+
+      @Override
       public void waitForPassive() throws Exception {
         cluster.stripeControl.waitForPassive();
       }

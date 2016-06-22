@@ -84,6 +84,10 @@ public class ClientSideIPCManager {
     sendAndWait(IPCMessageConstants.RESTART_ACTIVE);
   }
 
+  public void startLastTerminatedServer() { sendAndWait(IPCMessageConstants.START_LAST_TERMINATED_ACTIVE); }
+
+  public void terminateActive() { sendAndWait(IPCMessageConstants.TERMINATE_ACTIVE); }
+
   public void shutDownStripeAndWaitForTermination() {
     sendAndWait(IPCMessageConstants.SHUT_DOWN_STRIPE);
   }

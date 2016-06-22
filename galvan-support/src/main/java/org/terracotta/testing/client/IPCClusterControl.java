@@ -63,6 +63,16 @@ public class IPCClusterControl implements IClusterControl {
   }
 
   @Override
+  public void terminateActive() throws Exception {
+    ipcManager.terminateActive();
+  }
+
+  @Override
+  public void startLastTerminatedServer() throws Exception {
+    ipcManager.startLastTerminatedServer();
+  }
+
+  @Override
   public void waitForPassive() throws Exception {
     ipcManager.waitForPassive();
   }

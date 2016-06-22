@@ -58,6 +58,28 @@ public class ClientEventManager {
         processStdin.println(IPCMessageConstants.RESTART_ACTIVE_ACK);
         processStdin.flush();
       }});
+
+    String terminateActiveEventName = "Terminate active";
+    eventMap.put(IPCMessageConstants.TERMINATE_ACTIVE_SYN, terminateActiveEventName);
+    subBus.on(terminateActiveEventName, new EventListener() {
+      @Override
+      public void onEvent(Event e) throws Throwable {
+        control.terminateActive();
+        // We also want to send the ACK to the client.
+        processStdin.println(IPCMessageConstants.TERMINATE_ACTIVE_ACK);
+        processStdin.flush();
+      }});
+
+    String startLastTerminatedServerEventName = "Start Last Terminated active";
+    eventMap.put(IPCMessageConstants.START_LAST_TERMINATED_ACTIVE_SYN, startLastTerminatedServerEventName);
+    subBus.on(startLastTerminatedServerEventName, new EventListener() {
+      @Override
+      public void onEvent(Event e) throws Throwable {
+        control.startLastTerminatedServer();
+        // We also want to send the ACK to the client.
+        processStdin.println(IPCMessageConstants.START_LAST_TERMINATED_ACTIVE_ACK);
+        processStdin.flush();
+      }});
     
     String shutDownStripeEventName = "Shut down stripe";
     eventMap.put(IPCMessageConstants.SHUT_DOWN_STRIPE_SYN, shutDownStripeEventName);

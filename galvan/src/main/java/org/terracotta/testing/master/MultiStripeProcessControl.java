@@ -42,6 +42,20 @@ public class MultiStripeProcessControl implements IMultiProcessControl {
   }
 
   @Override
+  public void terminateActive() {
+    for (IMultiProcessControl oneControl : this.subControl) {
+      oneControl.terminateActive();
+    }
+  }
+
+  @Override
+  public void startLastTerminatedServer() {
+    for (IMultiProcessControl oneControl : this.subControl) {
+      oneControl.startLastTerminatedServer();
+    }
+  }
+
+  @Override
   public synchronized void shutDown() {
     for (IMultiProcessControl oneControl : this.subControl) {
       oneControl.shutDown();

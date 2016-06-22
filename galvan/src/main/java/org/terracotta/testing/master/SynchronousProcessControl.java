@@ -16,7 +16,9 @@
 package org.terracotta.testing.master;
 
 import java.io.IOException;
+import java.util.EmptyStackException;
 import java.util.List;
+import java.util.Stack;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
@@ -34,6 +36,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   private final List<ServerProcess> unknownServers = new Vector<ServerProcess>();
   // It is invalid to use a process control object which has already been shut down so keep that flag.
   private boolean isShutDown;
+  private Stack<ServerProcess> terminatedServers = new Stack();
   
   public SynchronousProcessControl(ITestStateManager stateManager, ContextualLogger logger) {
     this.stateManager = stateManager;
@@ -82,6 +85,60 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     
     // At this point, we don't know the active server.
     this.logger.output("<<< restartActive");
+  }
+
+  @Override
+  public void terminateActive() {
+    this.logger.output(">>> terminateActive");
+    verifyNotShutdown();
+    // First, make sure that there is an active.
+    internalWaitForActive();
+    // We MUST now have an active.
+    Assert.assertTrue(null != this.activeServer);
+
+    // Remove the active.
+    ServerProcess victim = this.activeServer;
+    this.activeServer = null;
+    // Stop it.
+    try {
+      int ret = victim.stop();
+      this.logger.output("terminated server, return status: " + ret);
+    } catch (InterruptedException e) {
+      // We can't leave a consistent state if interrupted at this point.
+      Assert.unexpected(e);
+    }
+    // Return the process to its installation and get a new one.
+    ServerInstallation underlyingInstallation = victim.getUnderlyingInstallation();
+    underlyingInstallation.retireProcess(victim);
+
+    // Close its logs.
+    try {
+      underlyingInstallation.closeStandardLogFiles();
+    } catch (IOException e) {
+      // We don't expect this IOException on closing the logs.
+      Assert.unexpected(e);
+    }
+  }
+
+  @Override
+  public void startLastTerminatedServer() {
+    try {
+      ServerProcess lastTerminatedServer = terminatedServers.pop();
+
+      ServerInstallation underlyingInstallation = lastTerminatedServer.getUnderlyingInstallation();
+      ServerProcess freshProcess = underlyingInstallation.createNewProcess(this.stateManager);
+
+      // Start it.
+      long pid = freshProcess.start();
+      this.logger.output("Server restarted with PID: " + pid);
+      // Enqueue it onto the unknown list.
+      this.unknownServers.add(freshProcess);
+
+      // At this point, we don't know the active server.
+      this.logger.output("<<< restartActive");
+    } catch (EmptyStackException e) {
+      throw new RuntimeException("There are no terminated processes");
+    }
   }
 
   @Override
@@ -175,14 +232,23 @@ public class SynchronousProcessControl implements IMultiProcessControl {
       waitForAllUnknowns();
       // If we still have no active, walk the passives to see if one was promoted.
       if (null == this.activeServer) {
-        // Note that we don't want to walk this list while placing servers in states since looping the list, at this point, is either a bug or a serious race condition.
-        Vector<ServerProcess> oldPassives = new Vector<ServerProcess>(this.passiveServers);
-        this.passiveServers.clear();
-        while (!oldPassives.isEmpty()) {
-          ServerProcess passive = oldPassives.remove(0);
-          waitAndPlaceServerInState(passive);
+        checkAllPassivesState();
+
+        // If we still can't find an active, do multiple retries with some timeout as it might take sometime for
+        // other passives to become active (Note that this is a hacky way to fix the issue for now, we are going to
+        // address this properly later)
+        if(null == this.activeServer) {
+          int retryCount = 30;
+          while (retryCount-- != 0) {
+            try {
+              Thread.sleep(1000);
+              checkAllPassivesState();
+            } catch (InterruptedException e) {
+              Assert.unexpected(e);
+            }
+          }
         }
-        
+
         // See if we are still without an active.
         if (null == this.activeServer) {
           // If there is no active at this point, it probably means that there is something seriously wrong with the
@@ -190,6 +256,16 @@ public class SynchronousProcessControl implements IMultiProcessControl {
           throw new IllegalStateException("Active process did not appear");
         }
       }
+    }
+  }
+
+  private void checkAllPassivesState() {
+    // Note that we don't want to walk this list while placing servers in states since looping the list, at this point, is either a bug or a serious race condition.
+    Vector<ServerProcess> oldPassives = new Vector<ServerProcess>(this.passiveServers);
+    this.passiveServers.clear();
+    while (!oldPassives.isEmpty()) {
+      ServerProcess passive = oldPassives.remove(0);
+      waitAndPlaceServerInState(passive);
     }
   }
 
