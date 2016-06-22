@@ -162,7 +162,7 @@ public class FileHelpers {
   public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
     // We know we want to copy these into plugins/lib.
     FileSystem fileSystem = FileSystems.getDefault();
-    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "plugins", "lib");
+    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "server", "plugins", "lib");
     // This needs to be a directory.
     Assert.assertTrue(pluginsLibDirectory.toFile().isDirectory());
     for (String oneJarPath : extraJarPaths) {
