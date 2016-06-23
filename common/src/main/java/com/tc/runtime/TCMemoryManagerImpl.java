@@ -122,10 +122,6 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
     public MemoryMonitor(JVMMemoryManager manager, long sleepInterval) {
       super(threadGroup, "TC Memory Monitor");
-      if (Os.isSolaris()) {
-        monitor.setPriority(Thread.MAX_PRIORITY);
-        monitor.setName("TC Memory Monitor(High Priority)");
-      }
       this.manager = manager;
       this.sleepTime = sleepInterval;
     }
