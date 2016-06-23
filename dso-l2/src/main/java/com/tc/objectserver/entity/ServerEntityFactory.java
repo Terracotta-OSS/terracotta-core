@@ -38,7 +38,11 @@
 
 package com.tc.objectserver.entity;
 
+import com.tc.classloader.PermanentEntity;
 import com.tc.classloader.ServiceLocator;
+import com.tc.entity.VoltronEntityMessage;
+import com.tc.objectserver.impl.PermanentEntityParser;
+import java.util.ArrayList;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
@@ -72,4 +76,22 @@ public class ServerEntityFactory {
     }
     throw new ClassNotFoundException(typeName);
   }
+  
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public static List<VoltronEntityMessage> getAnnotatedEntities(ClassLoader classLoader) {
+    List<VoltronEntityMessage> msgs = new ArrayList<>();
+    List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
+    for (Class<? extends ServerEntityService> serverService : serviceLoader) {
+        if (serverService.isAnnotationPresent(PermanentEntity.class)) {
+          PermanentEntity pe = serverService.getAnnotation(PermanentEntity.class);
+          String type = pe.type();
+          String[] names = pe.names();
+          int version = pe.version();
+          for (String name : names) {
+            msgs.add(PermanentEntityParser.createMessage(type, name, version, new byte[0]));
+          }
+        }
+    }
+    return msgs;
+  }  
 }

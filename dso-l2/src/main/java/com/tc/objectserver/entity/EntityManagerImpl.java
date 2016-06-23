@@ -78,6 +78,11 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
+  public ClassLoader getEntityLoader() {
+    return this.creationLoader;
+  }
+
+  @Override
   public void enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
