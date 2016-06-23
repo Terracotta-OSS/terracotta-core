@@ -46,17 +46,18 @@ import org.terracotta.entity.ServerEntityService;
 import java.util.List;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.EntityNotFoundException;
 
 /**
  * @author twu
  */
 public class ServerEntityFactory {
-  public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) {
+  public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws EntityNotFoundException {
     return getService(typeName, Thread.currentThread().getContextClassLoader());
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends ServerEntityService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) {
+  public static <T extends ServerEntityService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) throws EntityNotFoundException {
     List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
     for (Class<? extends ServerEntityService> serverService : serviceLoader) {
       try {
@@ -69,6 +70,6 @@ public class ServerEntityFactory {
       }
 
     }
-    throw new IllegalArgumentException("Can't handle entity type " + typeName);
+    throw new EntityNotFoundException(typeName, "Can't handle entity type");
   }
 }
