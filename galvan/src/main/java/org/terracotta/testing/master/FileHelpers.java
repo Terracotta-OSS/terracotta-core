@@ -105,6 +105,24 @@ public class FileHelpers {
     return targetDirectory.toAbsolutePath().toString();
   }
 
+  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
+    // We know we want to copy these into plugins/lib.
+    FileSystem fileSystem = FileSystems.getDefault();
+    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "server", "plugins", "lib");
+    // This needs to be a directory.
+    Assert.assertTrue(pluginsLibDirectory.toFile().isDirectory());
+    for (String oneJarPath : extraJarPaths) {
+      Path sourcePath = fileSystem.getPath(oneJarPath);
+      // This file must exist.
+      Assert.assertTrue(sourcePath.toFile().isFile());
+      Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
+      // This must not exist.
+      logger.output("Installing JAR: " + targetPath + "...");
+      Assert.assertFalse(targetPath.toFile().exists());
+      Files.copy(sourcePath, targetPath);
+      logger.output("Done");
+    }
+  }
 
   private static class DirectoryCopier implements FileVisitor<Path> {
     private final ContextualLogger logger;
@@ -155,26 +173,6 @@ public class FileHelpers {
         this.currentTargetDirectory = this.currentTargetDirectory.getParent();
       }
       return FileVisitResult.CONTINUE;
-    }
-  }
-
-
-  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
-    // We know we want to copy these into plugins/lib.
-    FileSystem fileSystem = FileSystems.getDefault();
-    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "server", "plugins", "lib");
-    // This needs to be a directory.
-    Assert.assertTrue(pluginsLibDirectory.toFile().isDirectory());
-    for (String oneJarPath : extraJarPaths) {
-      Path sourcePath = fileSystem.getPath(oneJarPath);
-      // This file must exist.
-      Assert.assertTrue(sourcePath.toFile().isFile());
-      Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
-      // This must not exist.
-      logger.output("Installing JAR: " + targetPath + "...");
-      Assert.assertFalse(targetPath.toFile().exists());
-      Files.copy(sourcePath, targetPath);
-      logger.output("Done");
     }
   }
 }
