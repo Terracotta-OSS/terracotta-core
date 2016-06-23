@@ -15,6 +15,7 @@
  */
 package org.terracotta.testing.master;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -105,6 +106,31 @@ public class FileHelpers {
     return targetDirectory.toAbsolutePath().toString();
   }
 
+  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
+    // We know we want to copy these into plugins/lib.
+    FileSystem fileSystem = FileSystems.getDefault();
+    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "server", "plugins", "lib");
+    // This needs to be a directory.
+    Assert.assertTrue(pluginsLibDirectory.toFile().isDirectory());
+    for (String oneJarPath : extraJarPaths) {
+      Path sourcePath = fileSystem.getPath(oneJarPath);
+      // This file must exist.
+      Assert.assertTrue(sourcePath.toFile().isFile());
+      Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
+      // This must not exist.
+      logger.output("Installing JAR: " + targetPath + "...");
+      Assert.assertFalse(targetPath.toFile().exists());
+      Files.copy(sourcePath, targetPath);
+      logger.output("Done");
+    }
+  }
+
+  public static void ensureDirectoryExists(ContextualLogger logger, String directoryPath) {
+    logger.output(" Ensure directory: " + directoryPath);
+    File asFile = new File(directoryPath);
+    ensureExistsRecursive(asFile);
+  }
+
 
   private static class DirectoryCopier implements FileVisitor<Path> {
     private final ContextualLogger logger;
@@ -159,22 +185,14 @@ public class FileHelpers {
   }
 
 
-  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
-    // We know we want to copy these into plugins/lib.
-    FileSystem fileSystem = FileSystems.getDefault();
-    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "server", "plugins", "lib");
-    // This needs to be a directory.
-    Assert.assertTrue(pluginsLibDirectory.toFile().isDirectory());
-    for (String oneJarPath : extraJarPaths) {
-      Path sourcePath = fileSystem.getPath(oneJarPath);
-      // This file must exist.
-      Assert.assertTrue(sourcePath.toFile().isFile());
-      Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
-      // This must not exist.
-      logger.output("Installing JAR: " + targetPath + "...");
-      Assert.assertFalse(targetPath.toFile().exists());
-      Files.copy(sourcePath, targetPath);
-      logger.output("Done");
+  private static void ensureExistsRecursive(File directoryToCreate) {
+    if (directoryToCreate.exists()) {
+      // This exists so it must be a directory.
+      Assert.assertTrue(directoryToCreate.isDirectory());
+    } else {
+      ensureExistsRecursive(directoryToCreate.getParentFile());
+      boolean didMake = directoryToCreate.mkdir();
+      Assert.assertTrue(didMake);
     }
   }
 }

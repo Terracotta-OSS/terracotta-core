@@ -15,6 +15,7 @@
  */
 package org.terracotta.testing.support;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -52,10 +53,12 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     notifier.fireTestStarted(testDescription);
     
     // Get the system properties we require.
+    String allTestParentDirectory = System.getProperty("kitTestDirectory");
+    String thisTestName = this.testCase.getName();
     EnvironmentOptions environmentOptions = new EnvironmentOptions();
     environmentOptions.clientClassPath = System.getProperty("java.class.path");
     environmentOptions.serverInstallDirectory = System.getProperty("kitInstallationPath");
-    environmentOptions.testParentDirectory = System.getProperty("kitTestDirectory");
+    environmentOptions.testParentDirectory = allTestParentDirectory + File.separator + thisTestName;
     Assert.assertTrue(environmentOptions.isValid());
     
     // Get the test master implementation.
