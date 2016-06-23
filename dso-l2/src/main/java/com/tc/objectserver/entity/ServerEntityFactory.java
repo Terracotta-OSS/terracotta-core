@@ -52,12 +52,12 @@ import org.terracotta.exception.EntityNotFoundException;
  * @author twu
  */
 public class ServerEntityFactory {
-  public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws EntityNotFoundException {
+  public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws ClassNotFoundException {
     return getService(typeName, Thread.currentThread().getContextClassLoader());
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends ServerEntityService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) throws EntityNotFoundException {
+  public static <T extends ServerEntityService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) throws ClassNotFoundException {
     List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
     for (Class<? extends ServerEntityService> serverService : serviceLoader) {
       try {
@@ -70,6 +70,6 @@ public class ServerEntityFactory {
       }
 
     }
-    throw new EntityNotFoundException(typeName, "Can't handle entity type");
+    throw new ClassNotFoundException(typeName);
   }
 }
