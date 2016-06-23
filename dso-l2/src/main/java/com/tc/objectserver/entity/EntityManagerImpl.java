@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.PermanentEntityException;
 
 
@@ -147,13 +148,17 @@ public class EntityManagerImpl implements EntityManager {
     return new ArrayList<>(entities.values());
   }
   
-  private ServerEntityService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException {
+  private ServerEntityService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
     ServerEntityService<EntityMessage, EntityResponse> service = entityServices.get(typeName);
     if (service == null) {
-      service = ServerEntityFactory.getService(typeName, this.creationLoader);
+      try {
+        service = ServerEntityFactory.getService(typeName, this.creationLoader);
+      } catch (ClassNotFoundException notfound) {
+        throw new EntityNotProvidedException(typeName, entityID.getEntityName());
+      }
       // getService only fails to resolve by throwing.
       Assert.assertNotNull(service);
       Object oldService = entityServices.putIfAbsent(typeName, service);

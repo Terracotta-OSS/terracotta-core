@@ -108,7 +108,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     if (endpoint == null) {
       Assert.assertNotNull(endpoint);
     }
-    return entityClientService.create(endpoint);
+    return (T)entityClientService.create(endpoint);
   }
 
   @Override
