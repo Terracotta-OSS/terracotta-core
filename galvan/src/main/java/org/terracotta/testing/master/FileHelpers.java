@@ -15,6 +15,7 @@
  */
 package org.terracotta.testing.master;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -124,6 +125,13 @@ public class FileHelpers {
     }
   }
 
+  public static void ensureDirectoryExists(ContextualLogger logger, String directoryPath) {
+    logger.output(" Ensure directory: " + directoryPath);
+    File asFile = new File(directoryPath);
+    ensureExistsRecursive(asFile);
+  }
+
+
   private static class DirectoryCopier implements FileVisitor<Path> {
     private final ContextualLogger logger;
     private final Path targetDirectory;
@@ -173,6 +181,18 @@ public class FileHelpers {
         this.currentTargetDirectory = this.currentTargetDirectory.getParent();
       }
       return FileVisitResult.CONTINUE;
+    }
+  }
+
+
+  private static void ensureExistsRecursive(File directoryToCreate) {
+    if (directoryToCreate.exists()) {
+      // This exists so it must be a directory.
+      Assert.assertTrue(directoryToCreate.isDirectory());
+    } else {
+      ensureExistsRecursive(directoryToCreate.getParentFile());
+      boolean didMake = directoryToCreate.mkdir();
+      Assert.assertTrue(didMake);
     }
   }
 }

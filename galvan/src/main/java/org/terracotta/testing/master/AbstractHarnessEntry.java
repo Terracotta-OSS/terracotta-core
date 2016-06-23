@@ -58,6 +58,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     
     // Create a copy of the server installation.
     ContextualLogger fileHelperLogger = verboseManager.createFileHelpersLogger();
+    FileHelpers.ensureDirectoryExists(fileHelperLogger, environmentOptions.testParentDirectory);
     FileHelpers.cleanDirectory(fileHelperLogger, environmentOptions.testParentDirectory);
     // Put together the config for the stripe.
     String testClassName = master.getTestClassName();
