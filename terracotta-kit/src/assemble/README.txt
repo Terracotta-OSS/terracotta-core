@@ -9,7 +9,7 @@ Contents
  Included in this kit are the following: 
    README.txt -- This file
    server -- Directory containing libraries, executables, and other supporting files for the Terracotta Server
-   plugins -- Directory containing libraries for the applications installed in the server
+   └─plugins -- Directory containing libraries for the applications installed in the server
    client -- Directory containing the runtime libraries for clients connecting to the Terracotta Server Array
    legal -- Directory containing the licenses associated with this distribution
 
