@@ -28,7 +28,9 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
 
-  static final String[]      OLD_PROPERTIES                                                 = {};
+  static final String[]      OLD_PROPERTIES                                                 = {
+    "l2.lockmanager.greedy.locks.enabled",
+  };
 
   /*********************************************************************************************************************
    * <code>
@@ -245,7 +247,6 @@ public interface TCPropertiesConsts {
    *                      are contending for them
    * </code>
    ********************************************************************************************************************/
-  public static final String L2_LOCKMANAGER_GREEDY_LOCKS_ENABLED                            = "l2.lockmanager.greedy.locks.enabled";
   public static final String L2_LOCKMANAGER_GREEDY_LEASE_ENABLED                            = "l2.lockmanager.greedy.lease.enabled";
   public static final String L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS                  = "l2.lockmanager.greedy.lease.leaseTimeInMillis";
 
