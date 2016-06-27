@@ -457,59 +457,64 @@ public class DistributedObjectClient implements TCClient {
       }, "Connection Establisher - " + uuid).start();    
   }
   
-  private synchronized void connectionMade() {
+  private void connectionMade() {
     connectionMade.attemptSet();
-    notifyAll();
+    synchronized (connectionMade) {
+      connectionMade.notifyAll();
+    }
   }
   
-  public synchronized boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
+  public boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
     long left = timeout > 0 ? units.toMillis(timeout) : Long.MAX_VALUE;
-    while (!connectionMade.isSet() && left > 0) {
-      long start = System.currentTimeMillis();
-      this.wait(units.toMillis(timeout));
-      left -= (System.currentTimeMillis() - start);
+    synchronized(connectionMade) {
+      while (!connectionMade.isSet() && left > 0) {
+        long start = System.currentTimeMillis();
+        connectionMade.wait(units.toMillis(timeout));
+        left -= (System.currentTimeMillis() - start);
+      }
     }
     return connectionMade.isSet();
   }
 
-  private synchronized void openChannel(String serverHost, int serverPort) throws InterruptedException {
-    while (!clientStopped.isSet()) {
-      try {
-        DSO_LOGGER.debug("Trying to open channel....");
-        final char[] pw;
-        if (config.getSecurityInfo().hasCredentials()) {
-          Assert.assertNotNull(securityManager);
-          pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), serverHost, serverPort);
-        } else {
-          pw = null;
+  private void openChannel(String serverHost, int serverPort) throws InterruptedException {
+    synchronized(clientStopped) {
+      while (!clientStopped.isSet()) {
+        try {
+          DSO_LOGGER.debug("Trying to open channel....");
+          final char[] pw;
+          if (config.getSecurityInfo().hasCredentials()) {
+            Assert.assertNotNull(securityManager);
+            pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), serverHost, serverPort);
+          } else {
+            pw = null;
+          }
+          this.channel.open(pw);
+          DSO_LOGGER.debug("Channel open");
+          break;
+        } catch (final TCTimeoutException tcte) {
+          CONSOLE_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
+          clientStopped.wait(5000);
+        } catch (final ConnectException e) {
+          CONSOLE_LOGGER.warn("Connection refused from server: " + e);
+          clientStopped.wait(5000);
+        } catch (final MaxConnectionsExceededException e) {
+          DSO_LOGGER.fatal(e.getMessage());
+          CONSOLE_LOGGER.fatal(e.getMessage());
+          throw new IllegalStateException(e.getMessage(), e);
+        } catch (final CommStackMismatchException e) {
+          DSO_LOGGER.fatal(e.getMessage());
+          CONSOLE_LOGGER.fatal(e.getMessage());
+          throw new IllegalStateException(e.getMessage(), e);
+        } catch (final IOException ioe) {
+          CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
+                              + ioe.getMessage());
+          clientStopped.wait(5000);
         }
-        this.channel.open(pw);
-        DSO_LOGGER.debug("Channel open");
-        break;
-      } catch (final TCTimeoutException tcte) {
-        CONSOLE_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
-        this.wait(5000);
-      } catch (final ConnectException e) {
-        CONSOLE_LOGGER.warn("Connection refused from server: " + e);
-        this.wait(5000);
-      } catch (final MaxConnectionsExceededException e) {
-        DSO_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal(e.getMessage());
-        throw new IllegalStateException(e.getMessage(), e);
-      } catch (final CommStackMismatchException e) {
-        DSO_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal(e.getMessage());
-        throw new IllegalStateException(e.getMessage(), e);
-      } catch (final IOException ioe) {
-        CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
-                            + ioe.getMessage());
-        this.wait(5000);
       }
     }
-
   }
 
-  private synchronized void waitForHandshake() {
+  private void waitForHandshake() {
     this.clientHandshakeManager.waitForHandshake();
     if (this.channel != null) {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
@@ -792,14 +797,13 @@ public class DistributedObjectClient implements TCClient {
 
   private void shutdown(boolean fromShutdownHook, boolean forceImmediate) {
     if (clientStopped.attemptSet()) {
+      synchronized (clientStopped) {
+        clientStopped.notifyAll();
+      }
       DSO_LOGGER.info("shuting down Terracotta Client hook=" + fromShutdownHook + " force=" + forceImmediate);
       shutdownClient(fromShutdownHook, forceImmediate);
     } else {
       DSO_LOGGER.info("Client already shutdown.");
-    }
-    synchronized (this) {
-//  notify in case the connection establisher is waiting for something
-      notifyAll();
     }
   }
 
