@@ -273,7 +273,7 @@ public class ServerProcess {
 
     private void killProcessUnix() throws InterruptedException, IOException {
       // We will look up our eyecatcher
-      Process ps = Runtime.getRuntime().exec("ps -aww -o pid,command");
+      Process ps = Runtime.getRuntime().exec("ps -eww -o pid,command");
       BufferedReader outputReader = new BufferedReader(new InputStreamReader(ps.getInputStream()));
       int result = ps.waitFor();
       Assert.assertTrue(0 == result);
