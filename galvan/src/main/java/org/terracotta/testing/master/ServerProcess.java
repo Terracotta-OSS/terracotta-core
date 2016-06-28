@@ -15,11 +15,14 @@
  */
 package org.terracotta.testing.master;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
@@ -47,9 +50,9 @@ public class ServerProcess {
   private final OutputStream stdoutLog;
   private final OutputStream stderrLog;
   private ServerState state;
-  private boolean isScriptReady;
   private final ExitWaiter exitWaiter;
   private final int debugPort;
+  private final String eyeCatcher;
 
   public ServerProcess(VerboseManager serverVerboseManager, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -68,6 +71,8 @@ public class ServerProcess {
     // We also pass in something to wait on its state to notify us, in the event of an unexpected crash, so that nobody keeps waiting, out here.
     this.exitWaiter = new ExitWaiter(stateManager, new ActivePassiveEventWaiter(ServerState.UNEXPECTED_CRASH));
     this.debugPort = debugPort;
+    // Create our eye-catcher for looking up sub-processes.
+    this.eyeCatcher = UUID.randomUUID().toString();
   }
 
   public ServerInstallation getUnderlyingInstallation() {
@@ -85,23 +90,13 @@ public class ServerProcess {
     Assert.assertNotNull(this.stderrLog);
     
     EventBus serverBus = new EventBus.Builder().id("server-bus").build();
-    String startedReadyName = "STARTED";
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
     Map<String, String> eventMap = new HashMap<String, String>();
-    eventMap.put("Server started as ", startedReadyName);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
     
     SimpleEventingStream outputStream = new SimpleEventingStream(serverBus, eventMap, this.stdoutLog);
-    serverBus.on(startedReadyName, new EventListener(){
-      @Override
-      public void onEvent(Event arg0) throws Throwable {
-        synchronized(ServerProcess.this) {
-          ServerProcess.this.isScriptReady = true;
-          ServerProcess.this.notifyAll();
-        }
-      }});
     serverBus.on(activeReadyName, new ActivePassiveEventWaiter(ServerState.ACTIVE));
     serverBus.on(passiveReadyName, new ActivePassiveEventWaiter(ServerState.PASSIVE));
     
@@ -130,7 +125,6 @@ public class ServerProcess {
     }
     
     // Start the inferior process.
-    this.isScriptReady = false;
     String startScript;
     if (TestHelpers.isWindows()){
       startScript = new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath();
@@ -138,28 +132,13 @@ public class ServerProcess {
       startScript = "server/bin/start-tc-server.sh";
     }
     AnyProcess process = AnyProcess.newBuilder()
-        .command(startScript, "-n", this.serverName)
+        .command(startScript, "-n", this.serverName, this.eyeCatcher)
         .workingDir(this.serverWorkingDirectory)
         .env("JAVA_HOME", javaHome)
         .env("JAVA_OPTS", javaOpts)
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
         .build();
-    // Wait for the server to enter started.
-    synchronized (this) {
-      if (TestHelpers.isWindows()){
-        //windows start script doesn't emit this event, so skip it.
-        this.isScriptReady = true;
-      }
-      while (!this.isScriptReady) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          // We can't recover from interruption here.
-          Assert.unexpected(e);
-        }
-      }
-    }
     // We will now hand off the process to the ExitWaiter.
     this.exitWaiter.startBackgroundWait(process);
     return process.getPid();
@@ -267,7 +246,11 @@ public class ServerProcess {
         //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
         killProcessWindows();
       }else {
-        this.process.destroy();
+        try {
+          killProcessUnix();
+        } catch (IOException e) {
+          Assert.unexpected(e);
+        }
       }
 
       // Wait until we get a return value.
@@ -285,6 +268,38 @@ public class ServerProcess {
         p.waitFor();
       }catch (IOException ex){
         Assert.unexpected(ex);
+      }
+    }
+
+    private void killProcessUnix() throws InterruptedException, IOException {
+      // We will look up our eyecatcher
+      Process ps = Runtime.getRuntime().exec("ps -aww -o pid,command");
+      BufferedReader outputReader = new BufferedReader(new InputStreamReader(ps.getInputStream()));
+      int result = ps.waitFor();
+      Assert.assertTrue(0 == result);
+      
+      String line = null;
+      String s = null;
+      while (null != (s = outputReader.readLine())) {
+        if ((-1 != s.indexOf("TCServerMain")) && (-1 != s.indexOf(ServerProcess.this.eyeCatcher))) {
+          Assert.assertTrue(null == line);
+          line = s;
+        }
+      }
+      // Note that it is possible that the line isn't there if the process already terminated.
+      if (null != line) {
+        String parts[] = line.split(" ");
+        int pid = 0;
+        for (int i = 0; i < parts.length; ++i) {
+          String part = parts[i];
+          if (part.length() > 0) {
+            pid = Integer.parseInt(part);
+            break;
+          }
+        }
+        Assert.assertTrue(0 != pid);
+        result = Runtime.getRuntime().exec("kill " + pid).waitFor();
+        Assert.assertTrue(0 == result);
       }
     }
   }
