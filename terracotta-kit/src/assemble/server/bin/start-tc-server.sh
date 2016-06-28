@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 
 # The contents of this file are subject to the Terracotta Public License Version
@@ -27,20 +27,6 @@ case "$1" in
     ;;
 esac
 
-# Install the signal handler so that SIGTERM (15) is relayed to the underlying JVM.
-PID=0
-function cleanup_TERM {
-    kill -TERM $PID
-}
-trap cleanup_TERM SIGTERM
-# Same thing for SIGINT (2).
-# NOTE:  The shell sets SIGINT of the inferior process to SIG_IGN (ignored) when starting
-# the process in the background (&) so we will actually commute the signal to SIGTERM
-# (since that is our intention, anyway).
-function cleanup_INT {
-    kill -TERM $PID
-}
-trap cleanup_INT SIGINT
 
 
 THIS_DIR=`dirname $0`
@@ -103,23 +89,8 @@ ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/server/lib/tc.jar:${PLUGIN_CLASSPATH}" \
-   com.tc.server.TCServerMain "$@" &
- PID=$!
- # We want to output the PID of the underlying process to STDOUT.
- echo "Server started as $PID"
- 
- # Wait may will sometimes fail with 127, so we need to filter that as not a real return value.
- # NOTE:  When using /bin/sh as the interpreter, wait has VERY different behavior:  it will only
- # return the correct value once and can sometimes incorrectly return with an invalid value so,
- # in that case, it must be called until the first time it DOES return 127, and then the value
- # returned in the previous call is the correct return value.  This is also platform-dependent
- # as different shells use to alias /bin/sh implement subtleties of sh differently.
- exitValue=127
- while [ $exitValue == 127 ]; do
-  # Redirect error so we don't see the message about not being a child shell.
-  wait $PID >& /dev/null
-  exitValue=$?
- done
+   com.tc.server.TCServerMain "$@"
+ exitValue=$?
  start=false;
 
  if test "$exitValue" = "11"; then
