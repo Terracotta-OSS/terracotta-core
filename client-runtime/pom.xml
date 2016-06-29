@@ -15,22 +15,22 @@
         <dependency>
             <groupId>org.terracotta</groupId>
             <artifactId>connection-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${terracotta-apis.version}</version>
         </dependency>
         <dependency>
             <groupId>org.terracotta.internal</groupId>
             <artifactId>dso-l1</artifactId>
-            <version>5.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.terracotta.internal</groupId>
             <artifactId>connection-loader</artifactId>
-            <version>5.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.terracotta.internal</groupId>
             <artifactId>connection-impl</artifactId>
-            <version>5.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
