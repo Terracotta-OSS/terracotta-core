@@ -23,6 +23,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
@@ -131,6 +133,10 @@ public class ServerProcess {
     }else {
       startScript = "server/bin/start-tc-server.sh";
     }
+    PidCapture capture = new PidCapture();
+    eventMap.put("PID is", "PID");
+    serverBus.on("PID", capture);
+    
     AnyProcess process = AnyProcess.newBuilder()
         .command(startScript, "-n", this.serverName, this.eyeCatcher)
         .workingDir(this.serverWorkingDirectory)
@@ -140,7 +146,11 @@ public class ServerProcess {
         .pipeStderr(this.stderrLog)
         .build();
     // We will now hand off the process to the ExitWaiter.
-    this.exitWaiter.startBackgroundWait(process);
+    long sPid = capture.waitPid();
+    if (sPid == 0) {
+      throw new RuntimeException("unable to find PID in scraped section " + capture.getDebuggingSection());
+    }
+    this.exitWaiter.startBackgroundWait(process, sPid);
     return process.getPid();
   }
 
@@ -183,10 +193,55 @@ public class ServerProcess {
       ServerProcess.this.enterState(stateToEnter);
     }
   }
+  
+  private class PidCapture implements EventListener {
+    
+    private long serverPid = -1;
+    private String section;
+
+    @Override
+    public void onEvent(Event event) throws Throwable {
+        String line = event.getData(String.class);
+        Matcher m = Pattern.compile("PID is ([0-9]*)").matcher(line);
+        if (m.find()) {
+          section = m.group();
+          try {
+            String pid = m.group(1);
+            setPid(Long.parseLong(pid));          
+          } catch (NumberFormatException format) {
+            setPid(0);          
+          }
+        } else {
+          setPid(0);          
+        }
+    }
+    
+    private synchronized void setPid(long pid) {
+      serverPid = pid;
+      this.notifyAll();
+    }
+    
+    public synchronized long waitPid() {
+      try {
+        while (this.serverPid < 0) {
+          this.wait();
+        }
+        return this.serverPid;
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
+    }
+    
+    public String getDebuggingSection() {
+      return section;
+    }
+    
+  }
 
   private class ExitWaiter extends Thread {
     private final ITestStateManager stateManager;
     private final ActivePassiveEventWaiter crashWaiter;
+    private long serverPid;
     private AnyProcess process;
     private boolean isCrashExpected;
     private int returnValue;
@@ -198,9 +253,10 @@ public class ServerProcess {
       this.returnValue = -1;
       this.didExit = false;
     }
-    public void startBackgroundWait(AnyProcess process) {
+    public void startBackgroundWait(AnyProcess process, long serverPid) {
       Assert.assertNull(this.process);
       this.process = process;
+      this.serverPid = serverPid;
       this.start();
     }
     @Override
@@ -249,7 +305,7 @@ public class ServerProcess {
         killProcessWindows();
       }else {
         try {
-          killProcessUnix();
+          killProcessUnix(serverPid);
         } catch (IOException e) {
           Assert.unexpected(e);
         }
@@ -279,8 +335,9 @@ public class ServerProcess {
         Assert.unexpected(ex);
       }
     }
-
-    private void killProcessUnix() throws InterruptedException, IOException {
+    
+    //  NOT currently used but may be valuable for some platforms
+    private int attemptPSScrape() throws InterruptedException, IOException {     
       // We will look up our eyecatcher
       harnessLogger.output("killing unix process");
       Process ps = startStandardProcess("ps", "-eww", "-o", "pid,command");
@@ -321,6 +378,15 @@ public class ServerProcess {
       } else {
         harnessLogger.output("did not find line; process not killed");
       }
+      return result;
+    }
+
+    private void killProcessUnix(long pid) throws InterruptedException, IOException {        
+      Process killProcess = startStandardProcess("kill", String.valueOf(pid));
+      // We don't care about the output but we want to make sure that the process can be terminated.
+      discardProcessOutput(killProcess);
+      int result = killProcess.waitFor();
+      Assert.assertTrue(0 == result);
     }
 
     private void discardProcessOutput(Process process) throws IOException {
