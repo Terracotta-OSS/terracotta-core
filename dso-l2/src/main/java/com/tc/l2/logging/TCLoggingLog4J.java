@@ -565,7 +565,7 @@ public class TCLoggingLog4J implements TCLoggingService {
     try {
       String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
       long pid = Long.parseLong(processName.split("@")[0]);
-      new TCLoggerImpl(TCLoggingLog4J.class.getName()).info("PID is " + pid);
+      console.info("PID is " + pid);
     } catch (Throwable t) {
       // ignore, not fatal if this doesn't work for some reason
     }
