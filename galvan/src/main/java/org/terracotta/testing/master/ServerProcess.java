@@ -301,7 +301,7 @@ public class ServerProcess {
         }
         Assert.assertTrue(0 != pid);
         
-        Process killProcess = startStandardProcess("kill", String.valueOf(pid));
+        Process killProcess = startStandardProcess("kill", "-9", String.valueOf(pid));
         // We don't care about the output but we want to make sure that the process can be terminated.
         discardProcessOutput(killProcess);
         result = killProcess.waitFor();
