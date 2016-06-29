@@ -26,11 +26,14 @@ limitations under the License.
 
   <groupId>org.terracotta</groupId>
   <artifactId>galvan-support</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <properties>
     <kitUnzipLocation>${project.build.directory}/test-kit</kitUnzipLocation>
+
+    <!-- External dependency versions for this module -->
+    <terracotta-apis.version>1.0.0.beta</terracotta-apis.version>
+    <terracotta-core.version>5.0.0-beta</terracotta-core.version>
   </properties>
 
   <dependencies>
@@ -42,22 +45,22 @@ limitations under the License.
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>ipc-eventbus</artifactId>
-      <version>1.0.1</version>
+      <version>${ipc-eventbus.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-test-lib</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
+      <version>${terracotta-core.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
@@ -97,7 +100,7 @@ limitations under the License.
                 <artifactItem>
                   <groupId>org.terracotta.internal</groupId>
                   <artifactId>terracotta-kit</artifactId>
-                  <version>5.0.0-SNAPSHOT</version>
+                  <version>${terracotta-core.version}</version>
                   <type>zip</type>
                   <outputDirectory>${kitUnzipLocation}</outputDirectory>
                 </artifactItem>
@@ -119,7 +122,7 @@ limitations under the License.
         </executions>
         <configuration>
           <systemPropertyVariables>
-            <kitInstallationPath>${kitUnzipLocation}/terracotta-5.0.0-SNAPSHOT</kitInstallationPath>
+            <kitInstallationPath>${kitUnzipLocation}/terracotta-${terracotta-core.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
           </systemPropertyVariables>
         </configuration>
