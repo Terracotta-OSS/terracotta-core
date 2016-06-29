@@ -386,7 +386,9 @@ public class ServerProcess {
       // We don't care about the output but we want to make sure that the process can be terminated.
       discardProcessOutput(killProcess);
       int result = killProcess.waitFor();
-      Assert.assertTrue(0 == result);
+      harnessLogger.output("Attempt to kill server process resulted in:" + result);
+// can't assert on this any longer.  The process may have already died for other reasons
+//      Assert.assertTrue(0 == result);
     }
 
     private void discardProcessOutput(Process process) throws IOException {
