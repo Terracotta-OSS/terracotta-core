@@ -26,7 +26,6 @@ limitations under the License.
 
   <groupId>org.terracotta</groupId>
   <artifactId>galvan</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -38,7 +37,7 @@ limitations under the License.
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>ipc-eventbus</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>${ipc-eventbus.version}</version>
     </dependency>
     <!-- ipc-eventbus needs it for getting sub process PID on windows -->
     <dependency>
