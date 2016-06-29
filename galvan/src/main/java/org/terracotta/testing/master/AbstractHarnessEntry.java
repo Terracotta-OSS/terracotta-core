@@ -23,13 +23,15 @@ import java.util.List;
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.common.PortChooser;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
 
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
-  public static final int SERVER_START_PORT = 9000;
-
+  public static final int SERVER_START_PORT = 9000;  // leave this here for legacy
+  private final PortChooser chooser = new PortChooser();
+  
   public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
     // Before anything, set the default exception handler - since we create threads to manage the sub-processes.
     Thread.setDefaultUncaughtExceptionHandler(new GalvanExceptionHandler());
@@ -44,6 +46,14 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       throw e;
     }
     return didPass;
+  }
+  
+  public int chooseRandomPort() {
+    return chooser.chooseRandomPort();
+  }
+  
+  public int chooseRandomPortRange(int number) {
+    return chooser.chooseRandomPorts(number);
   }
 
   private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
