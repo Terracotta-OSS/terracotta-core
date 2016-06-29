@@ -262,8 +262,10 @@ public class ServerProcess {
 
     private void killProcessWindows() throws InterruptedException {
       try {
-        ProcessBuilder processBuilder = new ProcessBuilder("taskkill", "/F", "/t", "/pid", String.valueOf(process.getPid()));
-        Process p = processBuilder.start();
+        Process p = startStandardProcess("taskkill", "/F", "/t", "/pid", String.valueOf(process.getPid()));
+        // We don't care about the output but we want to make sure that the process can be terminated.
+        discardProcessOutput(p);
+        
         //not checking exit code here..taskkill may faill if server process was crashed during the test.
         p.waitFor();
       }catch (IOException ex){
@@ -273,11 +275,8 @@ public class ServerProcess {
 
     private void killProcessUnix() throws InterruptedException, IOException {
       // We will look up our eyecatcher
-      Process ps = Runtime.getRuntime().exec("ps -eww -o pid,command");
+      Process ps = startStandardProcess("ps", "-eww", "-o", "pid,command");
       BufferedReader outputReader = new BufferedReader(new InputStreamReader(ps.getInputStream()));
-      int result = ps.waitFor();
-      Assert.assertTrue(0 == result);
-      
       String line = null;
       String s = null;
       while (null != (s = outputReader.readLine())) {
@@ -286,6 +285,9 @@ public class ServerProcess {
           line = s;
         }
       }
+      int result = ps.waitFor();
+      Assert.assertTrue(0 == result);
+      
       // Note that it is possible that the line isn't there if the process already terminated.
       if (null != line) {
         String parts[] = line.split(" ");
@@ -298,9 +300,26 @@ public class ServerProcess {
           }
         }
         Assert.assertTrue(0 != pid);
-        result = Runtime.getRuntime().exec("kill " + pid).waitFor();
+        
+        Process killProcess = startStandardProcess("kill", String.valueOf(pid));
+        // We don't care about the output but we want to make sure that the process can be terminated.
+        discardProcessOutput(killProcess);
+        result = killProcess.waitFor();
         Assert.assertTrue(0 == result);
       }
+    }
+
+    private void discardProcessOutput(Process process) throws IOException {
+      BufferedReader outputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      while (null != outputReader.readLine()) {
+        // Read until EOF.
+      }
+    }
+
+    private Process startStandardProcess(String... commandLine) throws IOException {
+      ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+      processBuilder.redirectErrorStream(true);
+      return processBuilder.start();
     }
   }
 }
