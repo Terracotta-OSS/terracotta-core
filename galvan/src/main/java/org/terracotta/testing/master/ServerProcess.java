@@ -208,6 +208,7 @@ public class ServerProcess {
       int returnValue = -1;
       try {
         returnValue = this.process.waitFor();
+        harnessLogger.output("server process died with rc=" + returnValue);
       } catch (java.util.concurrent.CancellationException e) {
         returnValue = this.process.exitValue();
       } catch (InterruptedException e) {
@@ -239,6 +240,7 @@ public class ServerProcess {
       }
     }
     public synchronized int bringDownServer() throws InterruptedException {
+      harnessLogger.output("bringing down server process");
       // Mark this as expected.
       this.isCrashExpected = true;
       // Destroy the process.
@@ -252,15 +254,19 @@ public class ServerProcess {
           Assert.unexpected(e);
         }
       }
+      harnessLogger.output("server process killed");
 
       // Wait until we get a return value.
+      harnessLogger.output("waiting for server process to get down");
       while (!this.didExit) {
         wait();
       }
+      harnessLogger.output("server process is down");
       return this.returnValue;
     }
 
     private void killProcessWindows() throws InterruptedException {
+      harnessLogger.output("killing windows process");
       try {
         Process p = startStandardProcess("taskkill", "/F", "/t", "/pid", String.valueOf(process.getPid()));
         // We don't care about the output but we want to make sure that the process can be terminated.
@@ -268,6 +274,7 @@ public class ServerProcess {
         
         //not checking exit code here..taskkill may faill if server process was crashed during the test.
         p.waitFor();
+        harnessLogger.output("killed server with PID " + process.getPid());
       }catch (IOException ex){
         Assert.unexpected(ex);
       }
@@ -275,11 +282,13 @@ public class ServerProcess {
 
     private void killProcessUnix() throws InterruptedException, IOException {
       // We will look up our eyecatcher
+      harnessLogger.output("killing unix process");
       Process ps = startStandardProcess("ps", "-eww", "-o", "pid,command");
       BufferedReader outputReader = new BufferedReader(new InputStreamReader(ps.getInputStream()));
       String line = null;
       String s = null;
       while (null != (s = outputReader.readLine())) {
+        harnessLogger.output(s);
         if ((-1 != s.indexOf("TCServerMain")) && (-1 != s.indexOf(ServerProcess.this.eyeCatcher))) {
           Assert.assertTrue(null == line);
           line = s;
@@ -287,9 +296,11 @@ public class ServerProcess {
       }
       int result = ps.waitFor();
       Assert.assertTrue(0 == result);
-      
+
       // Note that it is possible that the line isn't there if the process already terminated.
       if (null != line) {
+        harnessLogger.output("found line:\n" + line);
+
         String parts[] = line.split(" ");
         int pid = 0;
         for (int i = 0; i < parts.length; ++i) {
@@ -300,12 +311,15 @@ public class ServerProcess {
           }
         }
         Assert.assertTrue(0 != pid);
-        
+
         Process killProcess = startStandardProcess("kill", "-9", String.valueOf(pid));
         // We don't care about the output but we want to make sure that the process can be terminated.
         discardProcessOutput(killProcess);
         result = killProcess.waitFor();
         Assert.assertTrue(0 == result);
+        harnessLogger.output("killed server with PID " + pid);
+      } else {
+        harnessLogger.output("did not find line; process not killed");
       }
     }
 
