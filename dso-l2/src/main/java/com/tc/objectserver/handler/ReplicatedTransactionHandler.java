@@ -43,16 +43,20 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.exception.EntityException;
@@ -105,8 +109,73 @@ public class ReplicatedTransactionHandler {
       setLoopback(scxt.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class).getSink());
       requestPassiveSync();
     }
-    
-    
+
+    @Override
+    public void destroy() {
+      CountDownLatch latch = new CountDownLatch(1);
+      ServerEntityRequest req = new ServerEntityRequest() {
+        @Override
+        public ServerEntityAction getAction() {
+          return ServerEntityAction.NOOP;
+        }
+
+        @Override
+        public ClientID getNodeID() {
+          return ClientID.NULL_ID;
+        }
+
+        @Override
+        public TransactionID getTransaction() {
+          return TransactionID.NULL_ID;
+        }
+
+        @Override
+        public TransactionID getOldestTransactionOnClient() {
+          return TransactionID.NULL_ID;
+        }
+
+        @Override
+        public ClientDescriptor getSourceDescriptor() {
+          return new ClientDescriptorImpl(ClientID.NULL_ID, EntityDescriptor.NULL_ID);
+        }
+
+        @Override
+        public void complete() {
+          latch.countDown();
+       }
+
+        @Override
+        public void complete(byte[] value) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void failure(EntityException e) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void received() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void retired() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<NodeID> replicateTo(Set<NodeID> passives) {
+          return Collections.emptySet();
+        }
+      };
+      platform.addLifecycleRequest(req, new byte[0]);
+      try {
+        latch.await();
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
+    }    
   };
   
   private void setLoopback(Sink<ReplicationMessage> loop) {

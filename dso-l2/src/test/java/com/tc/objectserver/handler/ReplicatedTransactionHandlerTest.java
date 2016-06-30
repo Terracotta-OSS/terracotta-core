@@ -63,6 +63,8 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 
 public class ReplicatedTransactionHandlerTest {
@@ -74,6 +76,7 @@ public class ReplicatedTransactionHandlerTest {
   private ClientEntityStateManager clientEntityStateManager;
   private StateManager stateManager;
   private EntityManager entityManager;
+  private ManagedEntity platform;
   private GroupManager<AbstractGroupMessage> groupManager;
   
   private long rid = 0;
@@ -86,7 +89,13 @@ public class ReplicatedTransactionHandlerTest {
     this.stateManager = mock(StateManager.class);
     this.entityManager = mock(EntityManager.class);
     this.groupManager = mock(GroupManager.class);
-    when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(mock(ManagedEntity.class)));
+    this.platform = mock(ManagedEntity.class);
+    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
+      ((ServerEntityRequest)invocation.getArguments()[0]).complete();
+      return null;
+    }).when(platform).addLifecycleRequest(Matchers.any(ServerEntityRequest.class), Matchers.any(byte[].class));
+    
+    when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
     this.source = mock(ClientID.class);
     
@@ -163,6 +172,12 @@ public class ReplicatedTransactionHandlerTest {
     verify(entity).addInvokeRequest(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.eq(rand));
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
+  }
+  
+  @Test
+  public void testDestroy() throws Exception {
+    this.rth.getEventHandler().destroy();
+    verify(platform).addLifecycleRequest(Matchers.any(ServerEntityRequest.class), Matchers.any(byte[].class));
   }
   
   @Test
