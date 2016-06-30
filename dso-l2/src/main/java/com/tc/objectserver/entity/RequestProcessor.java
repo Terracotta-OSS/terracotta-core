@@ -162,9 +162,6 @@ public class RequestProcessor implements StateChangeListener {
       case NOOP:
         actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
-      case PROMOTE_ENTITY_TO_ACTIVE:
-        actionCode = ReplicationMessage.ReplicationType.NOOP;
-        break;
       case RELEASE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
         break;

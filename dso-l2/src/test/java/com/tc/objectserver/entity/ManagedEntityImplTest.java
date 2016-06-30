@@ -141,11 +141,7 @@ public class ManagedEntityImplTest {
     // The create is run in passive mode, which is not retired.
     verify(request, never()).retired();
     
-    ServerEntityRequest promotion = mockPromoteToActiveRequest();
-    managedEntity.addLifecycleRequest(promotion, null);
-    verify(promotion).complete();
-    // The promote is not retired, in our implementation
-    verify(promotion, never()).retired();
+    managedEntity.promoteEntity();
     
     // We expected to see this as a result of the promotion.
     verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg));
@@ -207,7 +203,7 @@ public class ManagedEntityImplTest {
   public void testGetEntityExists() throws Exception {    
     byte[] config = mockCreatePayload("foo");
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(),  config);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
 
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
@@ -278,7 +274,7 @@ public class ManagedEntityImplTest {
     });
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
 
     when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse() {});
@@ -328,7 +324,7 @@ public class ManagedEntityImplTest {
     });
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     
     Mockito.doAnswer((Answer<Object>) (invocation) -> {
       managedEntity.addInvokeRequest(mockNoopRequest(), null, null, ConcurrencyStrategy.UNIVERSAL_KEY);
@@ -361,7 +357,7 @@ public class ManagedEntityImplTest {
     
     managedEntity.addInvokeRequest(mgmtInvoke, null, payload, ConcurrencyStrategy.MANAGEMENT_KEY);
     
-    verify(loopback, times(3)).accept(Matchers.any(), Matchers.anyLong());
+    verify(loopback, times(2)).accept(Matchers.any(), Matchers.anyLong());
     verify(activeServerEntity, times(2)).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(mgmtInvoke).complete(any());
     verify(mgmtInvoke).retired();
@@ -425,7 +421,7 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), new byte[0]);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), new byte[0]);
+    managedEntity.promoteEntity();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
 
     Deque<Integer> queued = new LinkedList<>();
@@ -478,14 +474,14 @@ public class ManagedEntityImplTest {
       Assert.assertEquals(Integer.toString(check), queued.pop().toString());
     }
     Assert.assertEquals(index, 25);
-    verify(loopback, times(4)).accept(Matchers.any(), Matchers.any());
+    verify(loopback, times(3)).accept(Matchers.any(), Matchers.any());
     
   }
 
   @Test (expected = EntityUserException.class)
   public void testCodecException() throws Exception {
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     
     byte[] payload = { 0 };
     when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
@@ -539,7 +535,7 @@ public class ManagedEntityImplTest {
     verify(createRequest, never()).retired();
     
     // Get and release are only relevant on the active.
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     
     // Run the GET and verify that connected() call was received by the entity.
@@ -573,7 +569,7 @@ public class ManagedEntityImplTest {
     verify(activeServerEntity, never()).createNew();
     
     // Now, switch modes to active.
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     verify(activeServerEntity).loadExisting();
     
@@ -604,7 +600,7 @@ public class ManagedEntityImplTest {
   @Test
   public void testDestroy() throws Exception {
     managedEntity.addLifecycleRequest(mockCreateEntityRequest(), null);
-    managedEntity.addLifecycleRequest(mockPromoteToActiveRequest(), null);
+    managedEntity.promoteEntity();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     managedEntity.addLifecycleRequest(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY), null);
 
@@ -642,10 +638,6 @@ public class ManagedEntityImplTest {
     when(request.getSourceDescriptor()).thenReturn(new ClientDescriptorImpl(ClientID.NULL_ID, entityDescriptor));
     when(request.getAction()).thenReturn(ServerEntityAction.NOOP);
     return request;
-  }
-  
-  private ServerEntityRequest mockPromoteToActiveRequest() {
-    return mockRequestForAction(ServerEntityAction.PROMOTE_ENTITY_TO_ACTIVE);
   }
 
   private ServerEntityRequest mockRequestForAction(ServerEntityAction action) {
