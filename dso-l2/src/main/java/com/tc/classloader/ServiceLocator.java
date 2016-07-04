@@ -39,6 +39,15 @@ public class ServiceLocator {
 
   private static final String METAINFCONST = "META-INF/services/";
 
+  static {
+    try {
+      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
+      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   /**
    * Discover all the jar resources which have implementation of particular service
    *
