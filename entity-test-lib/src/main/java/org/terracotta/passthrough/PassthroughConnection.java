@@ -42,8 +42,6 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
-import com.google.common.base.Throwables;
-
 
 /**
  * The pass-through component which represents a client connected to the server.

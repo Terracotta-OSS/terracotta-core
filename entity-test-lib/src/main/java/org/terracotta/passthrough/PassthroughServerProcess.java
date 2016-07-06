@@ -252,14 +252,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
   
-  private void setStateStandbyReady(IMonitoringProducer tracker) {
-// Set state.
-    if (tracker != null ) {
-      long timestamp = System.currentTimeMillis();
-      tracker.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_PASSIVE, timestamp, (this.activeEntities != null) ? timestamp : -1));
-    }
-  }
-  
   private IPersistentStorage preparePersistentStorage(boolean shouldLoadStorage) {
     ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new ServiceConfiguration<IPersistentStorage>() {
       @Override
