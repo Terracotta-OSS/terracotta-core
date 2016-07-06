@@ -55,6 +55,12 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     // Get the system properties we require.
     String allTestParentDirectory = System.getProperty("kitTestDirectory");
     String thisTestName = this.testCase.getName();
+    // For some reason, this test name is sometimes null (part of Surefire so doesn't provide much data and can't really be
+    //  debugged).
+    if (null == thisTestName) {
+      thisTestName = this.testCase.getClass().getName();
+    }
+    Assert.assertNotNull(thisTestName);
     EnvironmentOptions environmentOptions = new EnvironmentOptions();
     environmentOptions.clientClassPath = System.getProperty("java.class.path");
     environmentOptions.serverInstallDirectory = System.getProperty("kitInstallationPath");

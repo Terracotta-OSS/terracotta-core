@@ -36,7 +36,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   private final List<ServerProcess> unknownServers = new Vector<ServerProcess>();
   // It is invalid to use a process control object which has already been shut down so keep that flag.
   private boolean isShutDown;
-  private Stack<ServerProcess> terminatedServers = new Stack();
+  private Stack<ServerProcess> terminatedServers = new Stack<ServerProcess>();
   
   public SynchronousProcessControl(ITestStateManager stateManager, ContextualLogger logger) {
     this.stateManager = stateManager;
@@ -111,13 +111,10 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     ServerInstallation underlyingInstallation = victim.getUnderlyingInstallation();
     underlyingInstallation.retireProcess(victim);
 
-    // Close its logs.
-    try {
-      underlyingInstallation.closeStandardLogFiles();
-    } catch (IOException e) {
-      // We don't expect this IOException on closing the logs.
-      Assert.unexpected(e);
-    }
+    // We will leave its logs open for the next time it starts (since we probably want to capture ALL the logs).
+    
+    // Record this as a terminated process.
+    terminatedServers.add(victim);
   }
 
   @Override
