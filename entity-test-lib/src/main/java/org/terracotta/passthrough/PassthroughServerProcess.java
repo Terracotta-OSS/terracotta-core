@@ -90,6 +90,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   // Currently, for simplicity, we will resolve entities by name.
   // Technically, these should be resolved by class+name.
   // Note that only ONE of the active or passive entities will be non-null.
+  // WARNING:  We may be missing some synchronization around access to activeEntities and passiveEntities due to the
+  //  interaction between normal message flow and passive server attachment (as they are mutually asynchronous).  This
+  //  is why create/destroy/attachPassive are synchronized since they all directly interact with this entry set.
   private Map<PassthroughEntityTuple, CreationData<?, ?>> activeEntities;
   private Map<PassthroughEntityTuple, CreationData<?, ?>> passiveEntities;
   private final List<ServiceProvider> serviceProviders;
@@ -635,7 +638,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   @Override
-  public void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException {
+  public synchronized void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     if (((null != this.activeEntities) && this.activeEntities.containsKey(entityTuple))
       || ((null != this.passiveEntities) && this.passiveEntities.containsKey(entityTuple))) {
@@ -680,7 +683,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
   
   @Override
-  public void destroy(String entityClassName, String entityName) throws EntityException {
+  public synchronized void destroy(String entityClassName, String entityName) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     // Look up the entity.
     CreationData<?, ?> entityData = null;
@@ -866,7 +869,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serviceProviders.add(serviceProvider);
   }
 
-  public void addDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
+  public synchronized void addDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
     // Make sure that we are active and they are passive.
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
@@ -906,6 +909,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       serverProcess.sendMessageToServerFromActive(wrapper, entityEnd.asSerializedBytes());
       wrapper.waitForComplete();
     }
+  }
+
+  public synchronized void removeDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
+    boolean didRemove = this.downstreamPassives.remove(serverProcess);
+    // We expect the passive to have been attached, if we are removing it.
+    Assert.assertTrue(didRemove);
   }
 
   public void promoteToActive() {

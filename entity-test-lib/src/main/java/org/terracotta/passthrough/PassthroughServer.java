@@ -19,7 +19,6 @@
 package org.terracotta.passthrough;
 
 import com.tc.classloader.BuiltinService;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,6 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.ServiceConfiguration;
 
 
 /**
@@ -194,6 +192,10 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
     this.serverProcess.addDownstreamPassiveServerProcess(passiveServer.serverProcess);
+  }
+
+  public void detachDownstreamPassive(PassthroughServer passiveServer) {
+    this.serverProcess.removeDownstreamPassiveServerProcess(passiveServer.serverProcess);
   }
 
   public void connectSavedClientsTo(PassthroughServer newActive) {
