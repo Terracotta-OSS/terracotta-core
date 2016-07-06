@@ -43,6 +43,21 @@ public class Directories {
   public static final String TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME = "tc.install-root.ignore-checks";
 
   /**
+   * Relative location for server lib directory under Terracotta installation directory
+   */
+  public static final String SERVER_LIB_DIR                                  = "server/lib";
+
+  /**
+   * Relative location for server plugin api directory under Terracotta installation directory
+   */
+  public static final String SERVER_PLUGIN_API_DIR                           = "server/plugins/api";
+
+  /**
+   * Relative location for server plugin lib directory under Terracotta installation directory
+   */
+  public static final String SERVER_PLUGIN_LIB_DIR                           = "server/plugins/lib";
+
+  /**
    * Get installation root directory.
    * 
    * @return Installation root directory or null if TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME is set and
@@ -77,15 +92,15 @@ public class Directories {
   }
 
   public static File getServerLibFolder() throws FileNotFoundException {
-    return new File(getInstallationRoot(), "server/lib");
+    return new File(getInstallationRoot(), SERVER_LIB_DIR);
   }
 
   public static File getServerPluginsApiDir() throws FileNotFoundException {
-    return new File(getInstallationRoot(), "plugins/api");
+    return new File(getInstallationRoot(), SERVER_PLUGIN_API_DIR);
   }
 
   public static File getServerPluginsLibDir() throws FileNotFoundException {
-    return new File(getInstallationRoot(), "plugins/lib");
+    return new File(getInstallationRoot(), SERVER_PLUGIN_LIB_DIR);
   }
 
 }
