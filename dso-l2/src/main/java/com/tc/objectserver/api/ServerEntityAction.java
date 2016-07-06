@@ -51,10 +51,6 @@ public enum ServerEntityAction {
    */
   INVOKE_ACTION,
   /**
-   * An internally-created action to communicate that an entity should be promoted from passive to active.
-   */
-  PROMOTE_ENTITY_TO_ACTIVE,
-  /**
    * Ask an entity to synchronize itself to a passive.
    */
   REQUEST_SYNC_ENTITY,

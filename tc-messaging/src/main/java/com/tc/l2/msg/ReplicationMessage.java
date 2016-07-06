@@ -36,10 +36,10 @@ import java.io.IOException;
  */
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
 //  message types  
-  public static final int INVALID               = 0; // Sent to replicate a request on the passive
+  public static final int INVALID               = 0; // Invalid message type
   public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
-  public static final int SYNC               = 2; // Sent to replicate a request on the passive
-  public static final int START                = 3; // response that the replicated action completed
+  public static final int SYNC               = 2; // Sent as part of a sync sequence
+  public static final int START                = 3; // start replication
 
   public enum ReplicationType {
     NOOP,

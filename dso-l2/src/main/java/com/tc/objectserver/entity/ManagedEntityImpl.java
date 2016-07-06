@@ -316,9 +316,6 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  all request queues are flushed because this action is on the MGMT_KEY
             destroyEntity(request);
             break;
-          case PROMOTE_ENTITY_TO_ACTIVE:
-            promoteEntity(request);
-            break;
           case RECEIVE_SYNC_ENTITY_START:
             receiveSyncEntityStart(request, payload);
             break;
