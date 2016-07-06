@@ -18,59 +18,66 @@
  */
 package org.terracotta.passthrough;
 
-import org.terracotta.connection.Connection;
-
 
 /**
  * Exposes methods to control or wait for servers within the cluster being tested.
- * It is provided as a generic interface, not specifically coupled to the passthrough classes, so that other test harnesses
- * can provide implementations in order to generalize test code for in-process or multi-process implementations.
+ * It is provided as a generic interface, not specifically coupled to any one cluster implementation, so that various test
+ * harnesses can interact with standard or partially mocked-out clusters while still remaining generic and portable.
  */
 public interface IClusterControl {
   /**
-   * Restarts the active server in the cluster.
+   * Waits for a server to become active. Returns immediately if there already is one. Behavior is undefined if no servers
+   * are running.
    * 
-   * @throws Exception A failure in the restart, defined by the implementation.
-   */
-  public void restartActive() throws Exception;
-
-  /**
-   * Waits for the active server in the cluster to come online and determine that it is active.
-   * 
-   * @throws Exception A failure waiting, defined by the implementation.
+   * @throws Exception Implementation-defined failure.
    */
   public void waitForActive() throws Exception;
 
   /**
-   * Terminates current active of this Stripe
+   * Waits until all running servers which are not active enter passive standby state. Returns immediately if they already
+   * are in this state. Returns immediately if there are no running servers in an unknown state.
+   * 
+   * @throws Exception Implementation-defined failure.
+   */
+  public void waitForRunningPassivesInStandby() throws Exception;
+
+  /**
+   * Starts a single server if there is one currently offline, from the initial configuration. If all servers are running,
+   * does nothing.
+   * 
+   * @throws Exception Implementation-defined failure.
+   */
+  public void startOneServer() throws Exception;
+
+  /**
+   * Starts all servers which are currently offline, from the initial configuration. If all servers are running, does
+   * nothing.
+   * 
+   * @throws Exception Implementation-defined failure.
+   */
+  public void startAllServers() throws Exception;
+
+  /**
+   * Forces the currently-active server to terminate, returning once it has. Behavior is undefined if there is no active
+   * server.
    *
-   * @throws Exception A failure in terminating the server, defined by the implementation
+   * @throws Exception Implementation-defined failure.
    */
   public void terminateActive() throws Exception;
 
   /**
-   * Starts the last terminated server
-   *
-   * @throws Exception A failure in starting, defined by the implementation
-   */
-  public void startLastTerminatedServer() throws Exception;
-
-  /**
-   * Waits for the active server in the cluster to come online and determine that it is passive.
+   * Forces a currently-passive server to terminate, returning once it has. If there are no running passive servers, does
+   * nothing.
    * 
-   * @throws Exception A failure waiting, defined by the implementation.
+   * @throws Exception Implementation-defined failure.
    */
-  public void waitForPassive() throws Exception;
+  public void terminateOnePassive() throws Exception;
 
   /**
-   * Creates a new connection to the active in the cluster.
+   * Forces all currently-running servers to terminate, returning once they have. If there are no running servers, does
+   * nothing.
    * 
-   * @return The Connection on which operations can now be performed.
+   * @throws Exception Implementation-defined failure.
    */
-  public Connection createConnectionToActive();
-
-  /**
-   * Shuts down the cluster, rendering any further calls on the receiver or any Connections undefined.
-   */
-  public void tearDown();
+  public void terminateAllServers() throws Exception;
 }
