@@ -21,11 +21,14 @@ package org.terracotta.passthrough;
 import java.util.Arrays;
 
 /**
- * Used for setting up IClusterControl instances to wrap test cluster configurations, based on the passthrough classes.
+ * Used for setting up PassthroughClusterControl instances to wrap test cluster configurations, based on the passthrough classes.
  * It describes a single stripe, consisting of a single active and an optional passive.  Services for providing server-side
  * functionality, server-side entities, or client-side entities, are registered via the given ServerInitializer callback,
  * allowing common initialization code to be invoked on each server in the stripe.
  * It can be used by arbitrary testing systems as it acts as a library, not a framework.
+ * 
+ * Note that PassthroughClusterControl is returned instead of IClusterControl so that the caller can take responsibility for the
+ * type-specific clean-up routines.
  */
 public class PassthroughTestHelpers {
   /**
@@ -35,7 +38,7 @@ public class PassthroughTestHelpers {
    * @param initializer The callback to handle initialization of the server.
    * @return A control object to use for interacting with the cluster.
    */
-  public static IClusterControl createActiveOnly(String stripeName, ServerInitializer initializer) {
+  public static PassthroughClusterControl createActiveOnly(String stripeName, ServerInitializer initializer) {
     return createMultiServerStripe(stripeName, 1, initializer);
   }
 
@@ -46,11 +49,19 @@ public class PassthroughTestHelpers {
    * @param initializer The callback to handle initialization of both servers, called on each.
    * @return A control object to use for interacting with the cluster.
    */
-  public static IClusterControl createActivePassive(String stripeName, ServerInitializer initializer) {
+  public static PassthroughClusterControl createActivePassive(String stripeName, ServerInitializer initializer) {
     return createMultiServerStripe(stripeName, 2, initializer);
   }
 
-  public static IClusterControl createMultiServerStripe(String stripeName, int numOfServers, ServerInitializer initializer) {
+  /**
+   * Creates a cluster consisting of any number of server, configured as a single stripe.
+   * 
+   * @param stripeName The unique name for this stripe.
+   * @param numOfServers The number of server to create in the stripe.
+   * @param initializer The callback to handle initialization of both servers, called on each.
+   * @return A control object to use for interacting with the cluster.
+   */
+  public static PassthroughClusterControl createMultiServerStripe(String stripeName, int numOfServers, ServerInitializer initializer) {
     PassthroughServer[] servers = new PassthroughServer[numOfServers];
     for(int i = 0; i < numOfServers; i++) {
       servers[i] = intializeServer(initializer);
