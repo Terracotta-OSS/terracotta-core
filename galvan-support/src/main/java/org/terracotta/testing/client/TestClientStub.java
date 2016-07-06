@@ -20,6 +20,8 @@ import java.net.URI;
 import java.util.Properties;
 
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.ICommonTest;
 import org.terracotta.passthrough.SimpleClientTestEnvironment;
 import org.terracotta.testing.common.Assert;
@@ -61,7 +63,14 @@ public class TestClientStub {
     ICommonTest test = interfaceClass.cast(instance);
     
     IPCClusterControl clusterControl = new IPCClusterControl(manager, new URI(connectUri), new Properties());
-    Connection connection = clusterControl.createConnectionToActive();
+    // Create the initial connection we want to use.
+    Connection connection = null;
+    try {
+      connection = ConnectionFactory.connect(URI.create(connectUri), new Properties());
+    } catch (ConnectionException e) {
+      // We may want to change this API, in the future, but it is only for tests so it is uncertain if we would do anything other than fail, in this scenario.
+      throw new RuntimeException("Unexpected exception when creating connection to cluster", e);
+    }
     
     // Get the environment (we will pass this in all cases but it is only useful for TEST modes).
     SimpleClientTestEnvironment env = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex);
