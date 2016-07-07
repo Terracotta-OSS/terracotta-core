@@ -56,7 +56,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
-        processControl.shutDown();
+        processControl.terminateAllServers();
       }});
     
     // The cluster is now running so install and run the clients.

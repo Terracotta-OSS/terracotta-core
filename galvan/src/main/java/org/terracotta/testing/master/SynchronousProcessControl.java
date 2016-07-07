@@ -118,7 +118,8 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public void startLastTerminatedServer() {
+  public void startOneServer() {
+    this.logger.output(">>> startOneServer");
     try {
       ServerProcess lastTerminatedServer = terminatedServers.pop();
 
@@ -136,11 +137,12 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     } catch (EmptyStackException e) {
       throw new RuntimeException("There are no terminated processes");
     }
+    this.logger.output("<<< startOneServer");
   }
 
   @Override
-  public synchronized void shutDown() {
-    this.logger.output(">>> shutDown");
+  public synchronized void terminateAllServers() {
+    this.logger.output(">>> terminateAllServers");
     verifyNotShutdown();
     // We don't care about any server states here.  Just walk all of them and stop everyone.
     // Set our state to shut down so that nobody can call this, again.
@@ -164,7 +166,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     }
     this.unknownServers.clear();
     
-    this.logger.output("<<< shutDown");
+    this.logger.output("<<< terminateAllServers");
   }
 
   @Override
@@ -177,12 +179,12 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public synchronized void waitForPassive() {
-    this.logger.output(">>> waitForPassive");
+  public synchronized void waitForRunningPassivesInStandby() {
+    this.logger.output(">>> waitForRunningPassivesInStandby");
     verifyNotShutdown();
     // We wait for passives by making sure that nothing is left in the unknown list.
     waitForAllUnknowns();
-    this.logger.output("<<< waitForPassive");
+    this.logger.output("<<< waitForRunningPassivesInStandby");
   }
 
   public void addServerAndStart(ServerInstallation installation) {

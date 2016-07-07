@@ -108,7 +108,7 @@ public class BasicExternalCluster extends Cluster {
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
-        cluster.stripeControl.shutDown();
+        cluster.stripeControl.terminateAllServers();
       }
     });
     cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
@@ -188,13 +188,24 @@ public class BasicExternalCluster extends Cluster {
   public IClusterControl getClusterControl() {
     return new IClusterControl() {
       @Override
-      public void restartActive() throws Exception {
-        cluster.stripeControl.restartActive();
+      public void waitForActive() throws Exception {
+        cluster.stripeControl.waitForActive();
       }
 
       @Override
-      public void waitForActive() throws Exception {
-        cluster.stripeControl.waitForActive();
+      public void waitForRunningPassivesInStandby() throws Exception {
+        cluster.stripeControl.waitForRunningPassivesInStandby();
+      }
+
+      @Override
+      public void startOneServer() throws Exception {
+        cluster.stripeControl.startOneServer();
+      }
+
+      @Override
+      public void startAllServers() throws Exception {
+        // TODO: Implement.
+        Assert.unimplemented();
       }
 
       @Override
@@ -203,27 +214,14 @@ public class BasicExternalCluster extends Cluster {
       }
 
       @Override
-      public void startLastTerminatedServer() throws Exception {
-        cluster.stripeControl.startLastTerminatedServer();
+      public void terminateOnePassive() throws Exception {
+        // TODO: Implement.
+        Assert.unimplemented();
       }
 
       @Override
-      public void waitForPassive() throws Exception {
-        cluster.stripeControl.waitForPassive();
-      }
-
-      @Override
-      public Connection createConnectionToActive() {
-        try {
-          return newConnection();
-        } catch (ConnectionException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-
-      @Override
-      public void tearDown() {
-        cluster.stripeControl.shutDown();
+      public void terminateAllServers() throws Exception {
+        cluster.stripeControl.terminateAllServers();
       }
     };
   }

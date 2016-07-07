@@ -48,17 +48,6 @@ public class ClientEventManager {
         processStdin.flush();
       }});
     
-    String restartActiveEventName = "Restart active";
-    eventMap.put(IPCMessageConstants.RESTART_ACTIVE_SYN, restartActiveEventName);
-    subBus.on(restartActiveEventName, new EventListener() {
-      @Override
-      public void onEvent(Event e) throws Throwable {
-        control.restartActive();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.RESTART_ACTIVE_ACK);
-        processStdin.flush();
-      }});
-
     String terminateActiveEventName = "Terminate active";
     eventMap.put(IPCMessageConstants.TERMINATE_ACTIVE_SYN, terminateActiveEventName);
     subBus.on(terminateActiveEventName, new EventListener() {
@@ -69,15 +58,15 @@ public class ClientEventManager {
         processStdin.println(IPCMessageConstants.TERMINATE_ACTIVE_ACK);
         processStdin.flush();
       }});
-
-    String startLastTerminatedServerEventName = "Start Last Terminated active";
-    eventMap.put(IPCMessageConstants.START_LAST_TERMINATED_ACTIVE_SYN, startLastTerminatedServerEventName);
-    subBus.on(startLastTerminatedServerEventName, new EventListener() {
+    
+    String startOneServerEventName = "Start one server";
+    eventMap.put(IPCMessageConstants.START_ONE_SERVER_SYN, startOneServerEventName);
+    subBus.on(startOneServerEventName, new EventListener() {
       @Override
       public void onEvent(Event e) throws Throwable {
-        control.startLastTerminatedServer();
+        control.startOneServer();
         // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.START_LAST_TERMINATED_ACTIVE_ACK);
+        processStdin.println(IPCMessageConstants.START_ONE_SERVER_ACK);
         processStdin.flush();
       }});
     
@@ -86,7 +75,7 @@ public class ClientEventManager {
     subBus.on(shutDownStripeEventName, new EventListener() {
       @Override
       public void onEvent(Event e) throws Throwable {
-        control.shutDown();
+        control.terminateAllServers();
         // We also want to send the ACK to the client.
         processStdin.println(IPCMessageConstants.SHUT_DOWN_STRIPE_ACK);
         processStdin.flush();
@@ -108,7 +97,7 @@ public class ClientEventManager {
     subBus.on(waitForPassiveEventName, new EventListener() {
       @Override
       public void onEvent(Event e) throws Throwable {
-        control.waitForPassive();
+        control.waitForRunningPassivesInStandby();
         // We also want to send the ACK to the client.
         processStdin.println(IPCMessageConstants.WAIT_FOR_PASSIVE_ACK);
         processStdin.flush();
