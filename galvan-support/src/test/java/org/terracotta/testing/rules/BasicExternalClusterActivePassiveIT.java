@@ -25,7 +25,8 @@ public class BasicExternalClusterActivePassiveIT {
 
   @Test
   public void testFailover() throws IOException, ConnectionException, Exception {
-    CLUSTER.getClusterControl().restartActive();
+    CLUSTER.getClusterControl().terminateActive();
+    CLUSTER.getClusterControl().startOneServer();
     CLUSTER.getClusterControl().waitForActive();
     
     Connection connection = CLUSTER.newConnection();
@@ -40,7 +41,8 @@ public class BasicExternalClusterActivePassiveIT {
   public void testFailoverWithLiveConnection() throws IOException, ConnectionException, Exception {
     Connection connection = CLUSTER.newConnection();
     try {
-      CLUSTER.getClusterControl().restartActive();
+      CLUSTER.getClusterControl().terminateActive();
+      CLUSTER.getClusterControl().startOneServer();
       CLUSTER.getClusterControl().waitForActive();
     } finally {
       connection.close();

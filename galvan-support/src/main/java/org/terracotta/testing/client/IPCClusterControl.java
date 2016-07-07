@@ -15,46 +15,15 @@
  */
 package org.terracotta.testing.client;
 
-import java.net.URI;
-import java.util.Properties;
-
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.passthrough.Assert;
 import org.terracotta.passthrough.IClusterControl;
 
 
 public class IPCClusterControl implements IClusterControl {
   private final ClientSideIPCManager ipcManager;
-  private final URI connectUri;
-  private final Properties connectionProperties;
 
-  public IPCClusterControl(ClientSideIPCManager ipcManager, URI connectUri, Properties connectionProperties) {
+  public IPCClusterControl(ClientSideIPCManager ipcManager) {
     this.ipcManager = ipcManager;
-    this.connectUri = connectUri;
-    this.connectionProperties = connectionProperties;
-  }
-
-  @Override
-  public Connection createConnectionToActive() {
-    Connection connection = null;
-    try {
-      connection = ConnectionFactory.connect(this.connectUri, this.connectionProperties);
-    } catch (ConnectionException e) {
-      // We may want to change this API, in the future, but it is only for tests so it is uncertain if we would do anything other than fail, in this scenario.
-      throw new RuntimeException("Unexpected exception when creating connection to cluster", e);
-    }
-    return connection;
-  }
-
-  @Override
-  public void restartActive() throws Exception {
-    ipcManager.restartActive();
-  }
-
-  @Override
-  public void tearDown() {
-    ipcManager.shutDownStripeAndWaitForTermination();
   }
 
   @Override
@@ -63,17 +32,34 @@ public class IPCClusterControl implements IClusterControl {
   }
 
   @Override
+  public void waitForRunningPassivesInStandby() throws Exception {
+    ipcManager.waitForPassive();
+  }
+
+  @Override
+  public void startOneServer() throws Exception {
+    ipcManager.startOneServer();
+  }
+
+  @Override
+  public void startAllServers() throws Exception {
+    // TODO:  Implement.
+    Assert.unimplemented();
+  }
+
+  @Override
   public void terminateActive() throws Exception {
     ipcManager.terminateActive();
   }
 
   @Override
-  public void startLastTerminatedServer() throws Exception {
-    ipcManager.startLastTerminatedServer();
+  public void terminateOnePassive() throws Exception {
+    // TODO:  Implement.
+    Assert.unimplemented();
   }
 
   @Override
-  public void waitForPassive() throws Exception {
-    ipcManager.waitForPassive();
+  public void terminateAllServers() {
+    ipcManager.shutDownStripeAndWaitForTermination();
   }
 }

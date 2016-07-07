@@ -62,7 +62,7 @@ public class TestClientStub {
     Class<ICommonTest> interfaceClass = ICommonTest.class;
     ICommonTest test = interfaceClass.cast(instance);
     
-    IPCClusterControl clusterControl = new IPCClusterControl(manager, new URI(connectUri), new Properties());
+    IPCClusterControl clusterControl = new IPCClusterControl(manager);
     // Create the initial connection we want to use.
     Connection connection = null;
     try {
