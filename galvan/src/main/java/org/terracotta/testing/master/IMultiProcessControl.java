@@ -30,11 +30,11 @@ public interface IMultiProcessControl {
 
   public void terminateActive();
 
-  public void startLastTerminatedServer();
+  public void startOneServer();
 
-  public void shutDown();
+  public void terminateAllServers();
 
   public void waitForActive();
 
-  public void waitForPassive();
+  public void waitForRunningPassivesInStandby();
 }

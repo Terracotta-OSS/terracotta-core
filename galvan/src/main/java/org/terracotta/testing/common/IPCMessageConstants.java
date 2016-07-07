@@ -31,17 +31,13 @@ public class IPCMessageConstants {
   public static final String SYNC_SYN = synFrom(SYNC);
   public static final String SYNC_ACK = ackFrom(SYNC);
 
-  public static final String RESTART_ACTIVE = "RESTART_ACTIVE";
-  public static final String RESTART_ACTIVE_SYN = synFrom(RESTART_ACTIVE);
-  public static final String RESTART_ACTIVE_ACK = ackFrom(RESTART_ACTIVE);
-
   public static final String TERMINATE_ACTIVE = "TERMINATE_ACTIVE";
   public static final String TERMINATE_ACTIVE_SYN = synFrom(TERMINATE_ACTIVE);
   public static final String TERMINATE_ACTIVE_ACK = ackFrom(TERMINATE_ACTIVE);
 
-  public static final String START_LAST_TERMINATED_ACTIVE = "START_LAST_TERMINATE_ACTIVE";
-  public static final String START_LAST_TERMINATED_ACTIVE_SYN = synFrom(START_LAST_TERMINATED_ACTIVE);
-  public static final String START_LAST_TERMINATED_ACTIVE_ACK = ackFrom(START_LAST_TERMINATED_ACTIVE);
+  public static final String START_ONE_SERVER = "START_ONE_SERVER";
+  public static final String START_ONE_SERVER_SYN = synFrom(START_ONE_SERVER);
+  public static final String START_ONE_SERVER_ACK = ackFrom(START_ONE_SERVER);
 
   public static final String SHUT_DOWN_STRIPE = "SHUT_DOWN_STRIPE";
   public static final String SHUT_DOWN_STRIPE_SYN = synFrom(SHUT_DOWN_STRIPE);

@@ -80,11 +80,7 @@ public class ClientSideIPCManager {
     sendAndWait(IPCMessageConstants.SYNC);
   }
 
-  public void restartActive() {
-    sendAndWait(IPCMessageConstants.RESTART_ACTIVE);
-  }
-
-  public void startLastTerminatedServer() { sendAndWait(IPCMessageConstants.START_LAST_TERMINATED_ACTIVE); }
+  public void startOneServer() { sendAndWait(IPCMessageConstants.START_ONE_SERVER); }
 
   public void terminateActive() { sendAndWait(IPCMessageConstants.TERMINATE_ACTIVE); }
 

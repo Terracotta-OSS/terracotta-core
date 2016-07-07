@@ -32,8 +32,8 @@ limitations under the License.
     <kitUnzipLocation>${project.build.directory}/test-kit</kitUnzipLocation>
 
     <!-- External dependency versions for this module -->
-    <terracotta-apis.version>1.0.0.beta</terracotta-apis.version>
-    <terracotta-core.version>5.0.0-beta2</terracotta-core.version>
+    <terracotta-apis.version>1.0.1.beta</terracotta-apis.version>
+    <terracotta-core.version>5.0.1-beta</terracotta-core.version>
   </properties>
 
   <dependencies>
