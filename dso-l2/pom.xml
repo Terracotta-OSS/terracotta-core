@@ -124,11 +124,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>test-entity-distribution</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
     </dependency>
     <dependency>

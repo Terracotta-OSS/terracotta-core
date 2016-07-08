@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.TestEntity;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -56,6 +55,7 @@ import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.stats.Stats;
@@ -135,7 +135,7 @@ public class ProcessTransactionHandlerTest {
   public void testLoadExisting() throws Exception {
     // Set up a believable collection of persistent entities.
     EntityData.Value data = new EntityData.Value();
-    data.className = "org.terracotta.TestEntity";
+    data.className = TestEntity.class.getCanonicalName();
     data.version = TestEntity.VERSION;
     data.consumerID = 1;
     data.entityName = "foo";
