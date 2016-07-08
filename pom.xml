@@ -28,12 +28,14 @@ limitations under the License.
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>1.8</java.version>
+    <java.version>1.6</java.version>
     <terracotta-os-snapshots-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</terracotta-os-snapshots-url>
     <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
 
     <!-- External dependency versions for the project -->
     <terracotta-apis.version>1.0.1.beta</terracotta-apis.version>
+    <guava.version>18.0</guava.version>
+    <junit.version>4.11</junit.version>
   </properties>
 
   <modules>
@@ -41,22 +43,6 @@ limitations under the License.
     <module>passthrough-server</module>
     <module>test-interfaces</module>
   </modules>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>18.0</version>
-      </dependency>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.11</version>
-        <scope>provided</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <build>
     <pluginManagement>

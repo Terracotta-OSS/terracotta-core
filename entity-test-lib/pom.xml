@@ -34,12 +34,12 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>entity-client-api</artifactId>
+      <artifactId>connection-api</artifactId>
       <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>entity-common-api</artifactId>
+      <artifactId>entity-client-api</artifactId>
       <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
@@ -53,17 +53,14 @@
       <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>monitoring-support</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
