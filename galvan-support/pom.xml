@@ -32,8 +32,8 @@ limitations under the License.
     <kitUnzipLocation>${project.build.directory}/test-kit</kitUnzipLocation>
 
     <!-- External dependency versions for this module -->
-    <terracotta-apis.version>1.0.1.beta</terracotta-apis.version>
-    <terracotta-core.version>5.0.1-beta</terracotta-core.version>
+    <tc-passthrough-testing.version>1.0.2.beta</tc-passthrough-testing.version>
+    <terracotta-core.version>5.0.2-beta</terracotta-core.version>
   </properties>
 
   <dependencies>
@@ -49,8 +49,13 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>entity-test-lib</artifactId>
-      <version>${terracotta-apis.version}</version>
+      <artifactId>test-interfaces</artifactId>
+      <version>${tc-passthrough-testing.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>passthrough-server</artifactId>
+      <version>${tc-passthrough-testing.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
