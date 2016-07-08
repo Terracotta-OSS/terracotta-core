@@ -33,7 +33,7 @@ limitations under the License.
     <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
 
     <!-- External dependency versions for the project -->
-    <terracotta-apis.version>1.0.1.beta</terracotta-apis.version>
+    <terracotta-apis.version>1.0-SNAPSHOT</terracotta-apis.version>
     <guava.version>18.0</guava.version>
     <junit.version>4.11</junit.version>
   </properties>
