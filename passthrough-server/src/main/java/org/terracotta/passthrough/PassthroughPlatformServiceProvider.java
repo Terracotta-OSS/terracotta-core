@@ -1,12 +1,9 @@
 package org.terracotta.passthrough;
 
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProvider;
 import org.terracotta.monitoring.PlatformService;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
