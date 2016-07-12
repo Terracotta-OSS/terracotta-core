@@ -61,12 +61,19 @@ public class BasicExternalCluster extends Cluster {
     if (stripeSize < 1) {
       throw new IllegalArgumentException("Must be at least one server in the cluster");
     }
+    if (serverJars == null) {
+      throw new NullPointerException("Server JARs list must be non-null");
+    }
     if (namespaceFragment == null) {
       throw new NullPointerException("Namespace fragment must be non-null");
     }
     if (serviceFragment == null) {
       throw new NullPointerException("Service fragment must be non-null");
     }
+    if (entityFragment == null) {
+      throw new NullPointerException("Entity fragment must be non-null");
+    }
+    
     clusterDirectory.mkdirs();
     this.clusterDirectory = clusterDirectory;
     this.stripeSize = stripeSize;
