@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 
 import com.tc.objectserver.api.ServerEntityAction;
@@ -279,8 +280,78 @@ public class RetirementManagerTest {
     Assert.assertEquals(1, toRetire.size());
     // request2 completion will retire request2 finally
     Assert.assertThat(toRetire, IsIterableContainingInOrder.contains(request2));
+  }
 
+  @Test
+  public void testRetirementWithMultiMessageDependency() throws Exception {
+    final int concurrencyKeyOne = 1;
+    final int concurrencyKeyTwo = 2;
+    List<ServerEntityRequest> toRetire;
 
+    ServerEntityRequest invokeRequest = makeRequest();
+    EntityMessage invokeMessage = mock(EntityMessage.class);
+    this.retirementManager.registerWithMessage(invokeRequest, invokeMessage, concurrencyKeyOne);
+
+    ServerEntityRequest deferRequest1 = makeRequest();
+    EntityMessage deferMessage1 = mock(EntityMessage.class);
+    // invokeRequest retirement deferred until deferRequest1 completes
+    this.retirementManager.deferRetirement(invokeMessage, deferMessage1);
+    this.retirementManager.registerWithMessage(deferRequest1, deferMessage1, concurrencyKeyOne);
+
+    ServerEntityRequest deferRequest2 = makeRequest();
+    EntityMessage deferMessage2 = mock(EntityMessage.class);
+    // invokeRequest retirement deferred until deferRequest2 completes
+    this.retirementManager.deferRetirement(invokeMessage, deferMessage2);
+    this.retirementManager.registerWithMessage(deferRequest2, deferMessage2, concurrencyKeyTwo);
+
+    toRetire = this.retirementManager.retireForCompletion(invokeMessage);
+    // invokeRequest completion shouldn't retire any requests as deferRequest1 and deferRequest2 are not completed yet
+    Assert.assertEquals(0, toRetire.size());
+
+    toRetire = this.retirementManager.retireForCompletion(deferMessage2);
+    // deferRequest2 completion should retire only deferRequest2 as invokeRequest deferred its retirement to as
+    // deferRequest2 as well, which is not completed yet
+    Assert.assertEquals(1, toRetire.size());
+    Assert.assertThat(toRetire, IsIterableContainingInOrder.contains(deferRequest2));
+
+    toRetire = this.retirementManager.retireForCompletion(deferMessage1);
+    Assert.assertEquals(2, toRetire.size());
+    // deferRequest2 completion will retire both invokeRequest and deferRequest2
+    Assert.assertThat(toRetire, IsIterableContainingInOrder.contains(invokeRequest, deferRequest1));
+  }
+
+  @Test
+  public void testRetirementWithUniversalKeys() throws Exception {
+    final int concurrencyKeyOne = 1;
+    List<ServerEntityRequest> toRetire;
+
+    ServerEntityRequest invokeRequest1 = makeRequest();
+    EntityMessage invokeMessage1 = mock(EntityMessage.class);
+    this.retirementManager.registerWithMessage(invokeRequest1, invokeMessage1, ConcurrencyStrategy.UNIVERSAL_KEY);
+
+    ServerEntityRequest invokeRequest2 = makeRequest();
+    EntityMessage invokeMessage2 = mock(EntityMessage.class);
+    this.retirementManager.registerWithMessage(invokeRequest2, invokeMessage2, ConcurrencyStrategy.UNIVERSAL_KEY);
+
+    ServerEntityRequest deferRequest = makeRequest();
+    EntityMessage deferMessage = mock(EntityMessage.class);
+    // invokeRequest2 retirement deferred until deferRequest completes
+    this.retirementManager.deferRetirement(invokeMessage2, deferMessage);
+    this.retirementManager.registerWithMessage(deferRequest, deferMessage, concurrencyKeyOne);
+
+    toRetire = this.retirementManager.retireForCompletion(invokeMessage2);
+    // invokeRequest2 completion shouldn't retire any requests as deferRequest is not completed yet
+    Assert.assertEquals(0, toRetire.size());
+
+    toRetire = this.retirementManager.retireForCompletion(deferMessage);
+    // deferRequest completion should retire both deferRequest and as invokeRequest2 as invokeRequest2
+    // runs on universal key
+    Assert.assertEquals(2, toRetire.size());
+    Assert.assertThat(toRetire, IsIterableContainingInOrder.contains(deferRequest, invokeRequest2));
+
+    toRetire = this.retirementManager.retireForCompletion(invokeMessage1);
+    Assert.assertEquals(1, toRetire.size());
+    Assert.assertThat(toRetire, IsIterableContainingInOrder.contains(invokeRequest1));
   }
 
   private ServerEntityRequest makeRequest() {
