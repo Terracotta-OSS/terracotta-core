@@ -129,7 +129,9 @@ public class ServerProcess {
     // Start the inferior process.
     String startScript;
     if (TestHelpers.isWindows()){
-      startScript = new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath();
+      //There are illegal characters "(" and ")" in folder names that cause the path to be truncated and the server won't start.
+      //So we need to wrap double quotes around startScript absolute file path.
+      startScript = "\"" + new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath() + "\"";
     }else {
       startScript = "server/bin/start-tc-server.sh";
     }
