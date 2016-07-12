@@ -17,28 +17,24 @@ package org.terracotta.testing.rules;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 
+
 /**
- *
- * @author GGIB
+ * A test to ensure that a cluster can be installed in a directory with problematic characters in its path ("("/")").
+ * This is to point out an issue with how a command invocation can fail, on Windows, if the path has strange
+ * characters.
+ * 
+ * The expected behavior is that the cluster will start, a connection will be successfully established, and it can
+ * be closed.  If there were a problem with the server start-up, the connection would fail.
  */
-public class BasicExternalClusterBadPathTest {
-
-  private static final String RESOURCE_CONFIG =
-      "<service xmlns:ohr='http://www.terracotta.org/config/offheap-resource' id=\"resources\">"
-          + "<ohr:offheap-resources>"
-          + "<ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>"
-          + "</ohr:offheap-resources>" +
-          "</service>\n";
-
+public class BasicExternalClusterBadPathIT {
   @ClassRule
-  private final Cluster cluster =
-      new BasicExternalCluster(new File("(build)/cluster"), 1, Collections.<File>emptyList(), "", RESOURCE_CONFIG, null);
+  public static final Cluster cluster = new BasicExternalCluster(new File("target/(build)/cluster"), 1);
 
   @Test
   public void parenthesisInPathTest() throws IOException, ConnectionException
@@ -50,5 +46,4 @@ public class BasicExternalClusterBadPathTest {
       connection.close();
     }
   }
-
 }
