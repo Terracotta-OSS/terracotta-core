@@ -30,7 +30,7 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.entity.SyncMessageCodec;
@@ -81,7 +81,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final InternalServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
-  private final ServerEntityService<EntityMessage, EntityResponse> factory;
+  private final EntityServerService<EntityMessage, EntityResponse> factory;
   // PTH sink so things can be injected into the stream
   private final BiConsumer<EntityID, Long> noopLoopback;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
@@ -106,7 +106,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private byte[] constructorInfo;
 
   ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
-                    RequestProcessor process, ServerEntityService<EntityMessage, EntityResponse> factory,
+                    RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState, boolean canDelete) {
     this.id = id;
     this.version = version;

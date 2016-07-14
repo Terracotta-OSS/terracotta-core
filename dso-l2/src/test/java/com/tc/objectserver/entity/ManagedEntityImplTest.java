@@ -26,7 +26,7 @@ import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -79,7 +79,7 @@ public class ManagedEntityImplTest {
   private ManagedEntityImpl managedEntity;
   private BiConsumer<EntityID, Long> loopback;
   private InternalServiceRegistry serviceRegistry;
-  private ServerEntityService<EntityMessage, EntityResponse> serverEntityService;
+  private EntityServerService<EntityMessage, EntityResponse> serverEntityService;
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   private RequestProcessor requestMulti;
@@ -123,8 +123,8 @@ public class ManagedEntityImplTest {
   }
   
   @SuppressWarnings("unchecked")
-  private ServerEntityService<EntityMessage, EntityResponse> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
-    ServerEntityService<EntityMessage, EntityResponse> entityService = mock(ServerEntityService.class);
+  private EntityServerService<EntityMessage, EntityResponse> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
+    EntityServerService<EntityMessage, EntityResponse> entityService = mock(EntityServerService.class);
     doReturn(activeServerEntity).when(entityService).createActiveEntity(any(ServiceRegistry.class), any(byte[].class));
     doReturn(passiveServerEntity).when(entityService).createPassiveEntity(any(ServiceRegistry.class), any(byte[].class));
     return entityService;

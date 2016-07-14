@@ -45,7 +45,7 @@ import com.tc.objectserver.impl.PermanentEntityParser;
 import java.util.ArrayList;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.EntityServerService;
 
 import java.util.List;
 import org.terracotta.entity.EntityMessage;
@@ -56,16 +56,16 @@ import org.terracotta.exception.EntityNotFoundException;
  * @author twu
  */
 public class ServerEntityFactory {
-  public static <T extends ServerEntityService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws ClassNotFoundException {
+  public static <T extends EntityServerService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws ClassNotFoundException {
     return getService(typeName, Thread.currentThread().getContextClassLoader());
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends ServerEntityService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) throws ClassNotFoundException {
-    List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
-    for (Class<? extends ServerEntityService> serverService : serviceLoader) {
+  public static <T extends EntityServerService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) throws ClassNotFoundException {
+    List<Class<? extends EntityServerService>> serviceLoader = ServiceLocator.getImplementations(EntityServerService.class, classLoader);
+    for (Class<? extends EntityServerService> serverService : serviceLoader) {
       try {
-        ServerEntityService instance = serverService.newInstance();
+        EntityServerService instance = serverService.newInstance();
         if (instance.handlesEntityType(typeName)) {
           return (T)instance;
         }
@@ -80,8 +80,8 @@ public class ServerEntityFactory {
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public static List<VoltronEntityMessage> getAnnotatedEntities(ClassLoader classLoader) {
     List<VoltronEntityMessage> msgs = new ArrayList<>();
-    List<Class<? extends ServerEntityService>> serviceLoader = ServiceLocator.getImplementations(ServerEntityService.class, classLoader);
-    for (Class<? extends ServerEntityService> serverService : serviceLoader) {
+    List<Class<? extends EntityServerService>> serviceLoader = ServiceLocator.getImplementations(EntityServerService.class, classLoader);
+    for (Class<? extends EntityServerService> serverService : serviceLoader) {
         if (serverService.isAnnotationPresent(PermanentEntity.class)) {
           PermanentEntity pe = serverService.getAnnotation(PermanentEntity.class);
           String type = pe.type();
