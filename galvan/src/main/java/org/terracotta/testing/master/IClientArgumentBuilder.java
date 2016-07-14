@@ -32,9 +32,10 @@ public interface IClientArgumentBuilder {
    * Creates the argument list for a "setup" client run.
    * 
    * @param connectUri The URI of the test stripe
+   * @param totalClientCount The total number of test clients which will run the test, concurrently
    * @return The list of arguments to pass to the client main
    */
-  public List<String> getArgumentsForSetupRun(String connectUri);
+  public List<String> getArgumentsForSetupRun(String connectUri, int totalClientCount);
 
   /**
    * Creates the argument list for a regular "test" client run.
@@ -50,7 +51,8 @@ public interface IClientArgumentBuilder {
    * Creates the argument list for a "destroy" client run.
    * 
    * @param connectUri The URI of the test stripe
+   * @param totalClientCount The total number of test clients which will run the test, concurrently
    * @return The list of arguments to pass to the client main
    */
-  public List<String> getArgumentsForDestroyRun(String connectUri);
+  public List<String> getArgumentsForDestroyRun(String connectUri, int totalClientCount);
 }
