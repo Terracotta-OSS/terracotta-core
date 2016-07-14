@@ -41,7 +41,7 @@ import org.terracotta.exception.EntityUserException;
  */
 public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse> implements ClientCommunicator {
 
-  private final ServerEntityService<M, R> service;
+  private final EntityServerService<M, R> service;
   private final FakeServiceRegistry serviceRegistry = new FakeServiceRegistry();
   private final Map<String, ActiveServerEntity<M, R>> activeMap = new HashMap<String, ActiveServerEntity<M, R>>();
   private final Map<String, PassiveServerEntity<M, R>> passiveMap = new HashMap<String, PassiveServerEntity<M, R>>();
@@ -53,7 +53,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private int nextClientID = 1;
   private int consumerID = 1;
 
-  public PassthroughStripe(ServerEntityService<M, R> service, Class<?> clazz) {
+  public PassthroughStripe(EntityServerService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
     this.service = service;
   }

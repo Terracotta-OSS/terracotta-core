@@ -27,7 +27,7 @@ import java.util.Vector;
 
 import org.junit.Assert;
 import org.terracotta.entity.EntityClientService;
-import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.EntityMessage;
@@ -54,7 +54,7 @@ public class PassthroughServer implements PassthroughDumper {
   private PassthroughConnection pseudoConnection;
   
   // We also track various information for the restart case.
-  private final List<ServerEntityService<?, ?>> savedServerEntityServices;
+  private final List<EntityServerService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final Map<Long, PassthroughConnection> savedClientConnections;
   
@@ -63,7 +63,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.nextConnectionID = 1;
     
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
-    this.savedServerEntityServices = new Vector<ServerEntityService<?, ?>>();
+    this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
     this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
   }
@@ -80,7 +80,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.groupPort = groupPort;
   }
    
-  public void registerServerEntityService(ServerEntityService<?, ?> service) {
+  public void registerServerEntityService(EntityServerService<?, ?> service) {
     Assert.assertFalse(this.hasStarted);
     this.savedServerEntityServices.add(service);
   }
@@ -145,7 +145,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, active);
 
     // Populate the server with its services.
-    for (ServerEntityService<?, ?> serverEntityService : this.savedServerEntityServices) {
+    for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
       this.serverProcess.registerEntityService(serverEntityService);
     }
     
