@@ -974,7 +974,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         // We don't have handling for this.
         Assert.unexpected(e);
       }
-      PlatformConnectedClient clientDescription = new PlatformConnectedClient(java.util.UUID.randomUUID().toString(), "", localHost, this.bindPort, localHost, CLIENT_PORT.getAndIncrement(), Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]));
+      String uuid = connection.getUUID();
+      Assert.assertTrue(null != uuid);
+      String connectionName = connection.getConnectionName();
+      Assert.assertTrue(null != connectionName);
+      PlatformConnectedClient clientDescription = new PlatformConnectedClient(uuid, connectionName, localHost, this.bindPort, localHost, CLIENT_PORT.getAndIncrement(), Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]));
       String nodeName = clientIdentifierForService(connectionID);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }

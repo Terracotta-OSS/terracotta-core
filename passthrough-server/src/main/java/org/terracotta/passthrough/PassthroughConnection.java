@@ -48,6 +48,10 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  * Internally, this runs a single thread to handle incoming ACKs, completions, and messages.
  */
 public class PassthroughConnection implements Connection {
+  // Information that we collect and only pass through for M&M reasons.
+  private final String connectionName;
+  private final String uuid;
+
   private final PassthroughConnectionState connectionState;
   
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
@@ -72,7 +76,10 @@ public class PassthroughConnection implements Connection {
   private Map<Long, PassthroughWait> waitersToResend;
 
 
-  public PassthroughConnection(String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
+  public PassthroughConnection(String connectionName, String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
+    this.connectionName = connectionName;
+    this.uuid = java.util.UUID.randomUUID().toString();
+    
     this.connectionState = new PassthroughConnectionState(serverProcess);
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
@@ -95,6 +102,20 @@ public class PassthroughConnection implements Connection {
     
     // Note:  This should probably not be in the constructor.
     this.clientThread.start();
+  }
+
+  /**
+   * @return The name, optionally set by the user via ConnectionPropertyNames.CONNECTION_NAME, in Properties.
+   */
+  public String getConnectionName() {
+    return this.connectionName;
+  }
+
+  /**
+   * @return The UUID assigned to the connection when it was first created.
+   */
+  public String getUUID() {
+    return this.uuid;
   }
 
   /**

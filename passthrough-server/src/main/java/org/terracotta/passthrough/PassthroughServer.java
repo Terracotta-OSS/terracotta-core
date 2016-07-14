@@ -90,7 +90,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.entityClientServices.add(service);
   }
 
-  public synchronized PassthroughConnection connectNewClient() {
+  public synchronized PassthroughConnection connectNewClient(String connectionName) {
     Assert.assertTrue(this.hasStarted);
     final long thisConnectionID = this.nextConnectionID;
     this.nextConnectionID += 1;
@@ -108,7 +108,7 @@ public class PassthroughServer implements PassthroughDumper {
       }
     };
     String readerThreadName = "Client connection " + thisConnectionID;
-    PassthroughConnection connection = new PassthroughConnection(readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
+    PassthroughConnection connection = new PassthroughConnection(connectionName, readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
     this.serverProcess.connectConnection(connection, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
     return connection;
@@ -125,7 +125,7 @@ public class PassthroughServer implements PassthroughDumper {
       }
     };
     String readerThreadName = "Pseudo-connection " + thisConnectionID;
-    return new PassthroughConnection(readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
+    return new PassthroughConnection("internal pseudo-connection", readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
   }
 
   public void start(boolean isActive, boolean shouldLoadStorage) {
