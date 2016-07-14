@@ -78,7 +78,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
     
     // Run the setup client, synchronously.
-    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri);
+    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clientsToCreate);
     ClientRunner setupClient = clientInstaller.installClient("client_setup", this.setupClientDebugPort, extraSetupArguments);
     int setupExitValue = runClientLifeCycle(setupClient);
     
@@ -125,7 +125,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       }
       
       // Run the destroy client, synchronously.
-      List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri);
+      List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clientsToCreate);
       ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, extraDestroyArguments);
       int destroyExitValue = runClientLifeCycle(destroyClient);
       destroyWasClean = (0 == destroyExitValue);
