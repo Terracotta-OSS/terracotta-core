@@ -147,7 +147,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     
     // If we didn't throw due to interruption, we fall through here.
     if (exception != null) {
-      throw this.exception;
+      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
     } else {
       return value;
     }
@@ -174,7 +174,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
       this.waitingThreads.remove(callingThread);
     }
     if (exception != null) {
-      throw this.exception;
+      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
     } else {
       return value;
     }
