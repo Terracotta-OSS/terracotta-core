@@ -38,8 +38,8 @@ public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
   }
 
   @Override
-  public List<String> getArgumentsForSetupRun(String connectUri) {
-    return buildList("SETUP", connectUri, 1, 0);
+  public List<String> getArgumentsForSetupRun(String connectUri, int totalClientCount) {
+    return buildList("SETUP", connectUri, totalClientCount, 0);
   }
 
   @Override
@@ -48,8 +48,8 @@ public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
   }
 
   @Override
-  public List<String> getArgumentsForDestroyRun(String connectUri) {
-    return buildList("DESTROY", connectUri, 1, 0);
+  public List<String> getArgumentsForDestroyRun(String connectUri, int totalClientCount) {
+    return buildList("DESTROY", connectUri, totalClientCount, 0);
   }
 
 
