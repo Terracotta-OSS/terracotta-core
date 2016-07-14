@@ -43,7 +43,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -83,7 +83,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   
   private final int processID;
   private boolean isRunning;
-  private final List<ServerEntityService<?, ?>> entityServices;
+  private final List<EntityServerService<?, ?>> entityServices;
   private Thread serverThread;
   private final List<PassthroughMessageContainer> messageQueue;
   private final PassthroughLockManager lockManager;
@@ -118,7 +118,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serverName = serverName;
     this.bindPort = bindPort;
     this.groupPort = groupPort;
-    this.entityServices = new Vector<ServerEntityService<?, ?>>();
+    this.entityServices = new Vector<EntityServerService<?, ?>>();
     this.messageQueue = new Vector<PassthroughMessageContainer>();
     this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
@@ -153,7 +153,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         // Create the registry for the entity.
         PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.builtInServiceProviders, container);
         // Construct the entity.
-        ServerEntityService<?, ?> service = null;
+        EntityServerService<?, ?> service = null;
         try {
           service = getServerEntityServiceForVersion(entityData.className, entityData.entityName, entityData.version);
         } catch (Exception e) {
@@ -290,7 +290,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
    * all method calls must go through the sendMessageToServer entry-point.
    * @param service
    */
-  public void registerEntityService(ServerEntityService<?, ?> service) {
+  public void registerEntityService(EntityServerService<?, ?> service) {
     this.entityServices.add(service);
   }
   
@@ -579,7 +579,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         CreationData<?, ?> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
         if (null != entityData) {
           ActiveServerEntity<?, ?> entity = entityData.getActive();
-          ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
+          EntityServerService<?, ?> service = getEntityServiceForClassName(entityClassName);
           long expectedVersion = service.getVersion();
           if (expectedVersion == version) {
             PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
@@ -646,7 +646,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     // Capture which consumerID we will use for this entity.
     long consumerID = this.nextConsumerID;
-    ServerEntityService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
+    EntityServerService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
     // This is an entity consumer so we use the deferred container.
     DeferredEntityContainer container = new DeferredEntityContainer();
     PassthroughServiceRegistry registry = getNextServiceRegistry(entityClassName, entityName, container);
@@ -847,9 +847,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return clientIdentifier + entityIdentifier;
   }
 
-  private ServerEntityService<?, ?> getEntityServiceForClassName(String entityClassName) {
-    ServerEntityService<?, ?> foundService = null;
-    for (ServerEntityService<?, ?> service : this.entityServices) {
+  private EntityServerService<?, ?> getEntityServiceForClassName(String entityClassName) {
+    EntityServerService<?, ?> foundService = null;
+    for (EntityServerService<?, ?> service : this.entityServices) {
       if (service.handlesEntityType(entityClassName)) {
         Assert.assertTrue(null == foundService);
         foundService = service;
@@ -1023,8 +1023,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.builtInServiceProviders, container);
   }
 
-  private ServerEntityService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
-    ServerEntityService<?, ?> service = getEntityServiceForClassName(entityClassName);
+  private EntityServerService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
+    EntityServerService<?, ?> service = getEntityServiceForClassName(entityClassName);
     if(service == null) {
       throw new EntityNotProvidedException(entityClassName, entityName);
     }
@@ -1035,7 +1035,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return service;
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> CommonServerEntity<M, R> createAndStoreEntity(String entityClassName, String entityName, long version, byte[] serializedConfiguration, PassthroughEntityTuple entityTuple, ServerEntityService<M, R> service, PassthroughServiceRegistry registry, long consumerID) {
+  private <M extends EntityMessage, R extends EntityResponse> CommonServerEntity<M, R> createAndStoreEntity(String entityClassName, String entityName, long version, byte[] serializedConfiguration, PassthroughEntityTuple entityTuple, EntityServerService<M, R> service, PassthroughServiceRegistry registry, long consumerID) {
     CommonServerEntity<M, R> newEntity = null;
     if (null != this.activeEntities) {
       CreationData<M, R> data = new CreationData<M, R>(entityClassName, entityName, version, serializedConfiguration, registry, service, true);
@@ -1065,14 +1065,14 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public final long version;
     public byte[] configuration;
     public final PassthroughServiceRegistry registry;
-    public final ServerEntityService<M, R> service;
+    public final EntityServerService<M, R> service;
     public CommonServerEntity<M, R> entityInstance;
     public final MessageCodec<M, R> messageCodec;
     public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
     public boolean isActive;
     
-    public CreationData(String entityClassName, String entityName, long version, byte[] configuration, PassthroughServiceRegistry registry, ServerEntityService<M, R> service, boolean isActive) {
+    public CreationData(String entityClassName, String entityName, long version, byte[] configuration, PassthroughServiceRegistry registry, EntityServerService<M, R> service, boolean isActive) {
       this.entityClassName = entityClassName;
       this.entityName = entityName;
       this.version = version;
