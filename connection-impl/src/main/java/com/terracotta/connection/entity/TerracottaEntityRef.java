@@ -19,6 +19,7 @@
 
 package com.terracotta.connection.entity;
 
+import com.tc.object.ExceptionUtils;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -92,6 +93,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       closeHook.run();
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
+      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
       if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
       } else if (e instanceof EntityVersionMismatchException) {
@@ -131,6 +133,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       } catch (EntityException e) {
         // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
         // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
+        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
         if (e instanceof EntityNotProvidedException) {
           throw (EntityNotProvidedException)e;
         } else if (e instanceof EntityAlreadyExistsException) {
@@ -160,6 +163,8 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       return entityClientService.deserializeConfiguration(
           this.entityManager.reconfigureEntity(entityID, this.version, Collections.singleton(VoltronEntityMessage.Acks.APPLIED), entityClientService.serializeConfiguration(configuration)).get()
       );
+    } catch (EntityException e) {
+      throw ExceptionUtils.addLocalStackTraceToEntityException(e);
     } catch (InterruptedException e) {
       // We don't expect an interruption here.
       throw new RuntimeException(e);
@@ -200,6 +205,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       } catch (EntityException e) {
         // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
         // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
+        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
         if (e instanceof EntityNotFoundException) {
           throw (EntityNotFoundException)e;
         } else {

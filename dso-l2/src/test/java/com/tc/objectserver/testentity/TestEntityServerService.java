@@ -25,12 +25,12 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 
 
-public class TestEntityServerService implements ServerEntityService<EntityMessage, EntityResponse> {
+public class TestEntityServerService implements EntityServerService<EntityMessage, EntityResponse> {
   @Override
   public long getVersion() {
     return TestEntity.VERSION;
