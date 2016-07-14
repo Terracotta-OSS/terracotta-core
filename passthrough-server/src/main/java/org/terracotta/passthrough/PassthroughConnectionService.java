@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
 
@@ -54,7 +55,11 @@ public class PassthroughConnectionService implements ConnectionService {
     String serverName = uri.getHost();
     PassthroughServer server = PassthroughServerRegistry.getSharedInstance().getServerForName(serverName);
     if (null != server) {
-      connection = server.connectNewClient();
+      String connectionName = properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME);
+      if (null == connectionName) {
+        connectionName = "";
+      }
+      connection = server.connectNewClient(connectionName);
     } else {
       throw new ConnectionException(new UnknownHostException(serverName));
     }
