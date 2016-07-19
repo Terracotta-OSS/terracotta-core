@@ -61,7 +61,11 @@ public class TestStateManager implements ITestStateManager {
   }
 
   @Override
-  public synchronized void addComponentToShutDown(IComponentManager componentManager) {
-    this.componentsToShutDown.add(componentManager);
+  public synchronized void addComponentToShutDown(IComponentManager componentManager, boolean shouldPrepend) {
+    if (shouldPrepend) {
+      this.componentsToShutDown.add(0, componentManager);
+    } else {
+      this.componentsToShutDown.add(componentManager);
+    }
   }
 }

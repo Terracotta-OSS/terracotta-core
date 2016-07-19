@@ -27,5 +27,11 @@ public interface ITestStateManager {
 
   public void testDidFail();
 
-  public void addComponentToShutDown(IComponentManager componentManager);
+  /**
+   * Registers a component which needs to be shut down when the test is complete.
+   * 
+   * @param componentManager The component to shut down.
+   * @param shouldPrepend True if this component should be shutdown "first", false if it can be shut down "last"
+   */
+  public void addComponentToShutDown(IComponentManager componentManager, boolean shouldPrepend);
 }

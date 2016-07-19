@@ -112,12 +112,13 @@ public class BasicExternalCluster extends Cluster {
         : 0;
 
     stateManager = new TestStateManager();
+    // Note that we want to shut down servers last.
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
         cluster.stripeControl.terminateAllServers();
       }
-    });
+    }, false);
     cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(),
         testParentDirectory.getAbsolutePath(),
