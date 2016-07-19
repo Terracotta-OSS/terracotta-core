@@ -39,7 +39,8 @@ public class CommonIdioms {
    */
   public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws InterruptedException, IOException, FileNotFoundException {
     InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri);
-    stateManager.addComponentToShutDown(manager);
+    // We want to shut down clients "first".
+    stateManager.addComponentToShutDown(manager, true);
     manager.start();
   }
 

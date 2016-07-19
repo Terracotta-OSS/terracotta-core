@@ -53,11 +53,12 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     Assert.assertTrue(null != connectUri);
     
     // Register to shut down the process control (the servers in the stripe) once the test has passed/failed.
+    // Note that we want to shut down servers last.
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
         processControl.terminateAllServers();
-      }});
+      }}, false);
     
     // The cluster is now running so install and run the clients.
     CommonIdioms.ClientsConfiguration clientsConfiguration = new CommonIdioms.ClientsConfiguration();
