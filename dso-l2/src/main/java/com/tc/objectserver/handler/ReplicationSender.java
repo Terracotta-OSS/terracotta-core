@@ -165,7 +165,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     }
     switch (msg.getReplicationType()) {
       case NOOP:
-      case DOES_EXIST:
       case RELEASE_ENTITY:
         return false;
       default:

@@ -368,9 +368,6 @@ public class ManagedEntityImpl implements ManagedEntity {
             break;
           case NOOP:
             break;
-          case DOES_EXIST:
-            // Never occur on this level.
-            throw new IllegalArgumentException("Unexpected request " + request);
           default:
             throw new IllegalArgumentException("Unknown request " + request);
         }

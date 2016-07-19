@@ -263,35 +263,27 @@ public class ReplicatedTransactionHandler {
       request.complete();
       // NOTE:  No retire on replicated message.
     } else {
-      // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
-      if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
-        // We don't actually care about the response.  We just need the question and answer to be recorded, at this point in time.
-        EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
-        request.complete();
-        // NOTE:  No retire on replicated message.
-      } else {
-        if (entity.isPresent()) {
-          if (request != null) {
-            ManagedEntity entityInstance = entity.get();
-            if (null != request.getAction()) switch (request.getAction()) {
-              case INVOKE_ACTION:
-              case NOOP:
-                // For now, we will assume that there can be no existing message (in the future, this might change if we
-                // move the deserialization earlier).
-                EntityMessage entityMessage = null;
-                entityInstance.addInvokeRequest(request, entityMessage, extendedData, rep.getConcurrency());
-                break;
-              default:
-                entityInstance.addLifecycleRequest(request, extendedData);
-                break;
-            }
+      if (entity.isPresent()) {
+        if (request != null) {
+          ManagedEntity entityInstance = entity.get();
+          if (null != request.getAction()) switch (request.getAction()) {
+            case INVOKE_ACTION:
+            case NOOP:
+              // For now, we will assume that there can be no existing message (in the future, this might change if we
+              // move the deserialization earlier).
+              EntityMessage entityMessage = null;
+              entityInstance.addInvokeRequest(request, entityMessage, extendedData, rep.getConcurrency());
+              break;
+            default:
+              entityInstance.addLifecycleRequest(request, extendedData);
+              break;
           }
-        } else {
+        }
+      } else {
 // must be syncing and this entity has not been sync'd yet.  just complete like 
 // we weren't here
-          request.complete();
-          // NOTE:  No retire on replicated message.
-        }
+        request.complete();
+        // NOTE:  No retire on replicated message.
       }
     }
   }
@@ -472,8 +464,6 @@ public class ReplicatedTransactionHandler {
       case SYNC_END:
       case NOOP:
         return ServerEntityAction.NOOP;
-      case DOES_EXIST:
-        return ServerEntityAction.DOES_EXIST;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
       case RECONFIGURE_ENTITY:

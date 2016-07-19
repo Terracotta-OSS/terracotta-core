@@ -70,7 +70,6 @@ public class EntityData {
     CREATE,
     DESTROY,
     RECONFIGURE,
-    DOES_EXIST,
   }
 
   public static class JournalEntry implements Serializable {

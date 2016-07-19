@@ -207,45 +207,29 @@ public class ProcessTransactionHandler {
       serverEntityRequest.failure(entityException);
       serverEntityRequest.retired();
     } else {
-      // If no exception has been fired, do any special handling required by the message type.
-      // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
-      if (ServerEntityAction.DOES_EXIST == action) {
-        // Call the common helper to check the current state of what entities exist or which ones did exist, the first time, if this is a re-send.
-        boolean doesExist = EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
-        if (doesExist) {
-          // Even though it may not currently exist, if this is a re-send, we will give whatever answer we gave, the first time.
-          serverEntityRequest.complete();
-          serverEntityRequest.retired();
-        } else {
-          // Even though the entity may currently exist, we will mimic the response we gave, initially.
-          serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
-          serverEntityRequest.retired();
-        }
-      } else {
-        // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-        if (null != entity) {
-          // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
-          if (ServerEntityAction.INVOKE_ACTION == action) {
-            try {
-              entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
-            } catch (EntityUserException e) {
-              serverEntityRequest.failure(e);
-              serverEntityRequest.retired();
-            }
-          } else if (ServerEntityAction.NOOP == action) {
-            try {
-              entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
-            } catch (EntityUserException e) {
-              serverEntityRequest.failure(e);
-              serverEntityRequest.retired();
-            }
-          } else {
-            entity.addLifecycleRequest(serverEntityRequest, extendedData);
+      // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
+      if (null != entity) {
+        // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
+        if (ServerEntityAction.INVOKE_ACTION == action) {
+          try {
+            entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
+          } catch (EntityUserException e) {
+            serverEntityRequest.failure(e);
+            serverEntityRequest.retired();
+          }
+        } else if (ServerEntityAction.NOOP == action) {
+          try {
+            entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
+          } catch (EntityUserException e) {
+            serverEntityRequest.failure(e);
+            serverEntityRequest.retired();
           }
         } else {
-          serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
-          serverEntityRequest.retired();
+          entity.addLifecycleRequest(serverEntityRequest, extendedData);
         }
+      } else {
+        serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
+        serverEntityRequest.retired();
       }
     }
   }
@@ -326,9 +310,6 @@ public class ProcessTransactionHandler {
         break;
       case RELEASE_ENTITY:
         action = ServerEntityAction.RELEASE_ENTITY;
-        break;
-      case DOES_EXIST:
-        action = ServerEntityAction.DOES_EXIST;
         break;
       case CREATE_ENTITY:
         action = ServerEntityAction.CREATE_ENTITY;

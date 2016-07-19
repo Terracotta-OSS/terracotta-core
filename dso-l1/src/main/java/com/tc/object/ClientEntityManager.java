@@ -40,15 +40,6 @@ import java.util.Set;
  * NOTE:  This interface assumes nothing about locking or access mode semantics so the caller must handle that.
  */
 public interface ClientEntityManager extends PrettyPrintable, RequestResponseHandler, ClientHandshakeCallback, InvocationHandler {
-  /**
-   * Checks if a given entity exists on the server without binding a client instance to it.
-   * 
-   * @param entityID the entity to check.
-   * @param version the version of the implementation to verify
-   * @return true if the entity exists.
-   */
-  // TODO:  Remove version once this check is implemented as a platform intrinsic instead of being a get+release.
-  boolean doesEntityExist(EntityID entityID, long version);
 
   /**
    * Find named entity, returning and end-point to access it.

@@ -126,26 +126,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     };
     return stages.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_SENDER_STAGE, InFlightMessage.class, handler, 1, ClientConfigurationContext.MAX_PENDING_REQUESTS).getSink();
   }
-  
-  @Override
-  public synchronized boolean doesEntityExist(EntityID entityID, long version) {
-    // We will synthesize a descriptor for this lookup.
-    EntityDescriptor lookupDescriptor = new EntityDescriptor(entityID, ClientInstanceID.NULL_ID, version);
-    Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
-    // A "DOES_EXIST" isn't replicated.
-    boolean requiresReplication = false;
-    byte[] payload = new byte[0];
-    NetworkVoltronEntityMessage message = createMessageWithDescriptor(lookupDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.DOES_EXIST);
-    boolean doesExist = false;
-    try {
-      synchronousWaitForResponse(message, requestedAcks);
-      // If we don't throw an exception, it means the entity exists.
-      doesExist = true;
-    } catch (EntityException e) {
-      // We will handle any of the exception types as meaning that it doesn't exist.
-    }
-    return doesExist;
-  }
 
   @SuppressWarnings("rawtypes")
   @Override

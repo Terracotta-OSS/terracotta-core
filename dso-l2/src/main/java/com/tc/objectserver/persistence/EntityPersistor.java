@@ -71,24 +71,14 @@ public class EntityPersistor {
   }
 
   public boolean containsEntity(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
-    boolean doesContain = false;
-    // First, check to see if this is something known to the journal.
-    EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
-    if (null != entry) {
-      // This is in the journal so just get our answer from there.
-      doesContain = entry.didFind;
-    } else {
-      // This is new so look up the answer and store it in the journal.
-      EntityData.Key key = new EntityData.Key();
-      key.className = id.getClassName();
-      key.entityName = id.getEntityName();
-      // Make sure that the EntityID makes sense.
-      Assert.assertNotNull(key.className);
-      Assert.assertNotNull(key.entityName);
-      doesContain = this.entities.containsKey(key);
-      addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DOES_EXIST, null, doesContain, null);
-    }
-    return doesContain;
+    // This is new so look up the answer and store it in the journal.
+    EntityData.Key key = new EntityData.Key();
+    key.className = id.getClassName();
+    key.entityName = id.getEntityName();
+    // Make sure that the EntityID makes sense.
+    Assert.assertNotNull(key.className);
+    Assert.assertNotNull(key.entityName);
+    return this.entities.containsKey(key);
   }
 
   /**
