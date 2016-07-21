@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManagerEventListener;
 
 
@@ -51,6 +52,7 @@ public interface ClientEntityStateManager extends DSOChannelManagerEventListener
    * NOTE:  This will assert if there are any remaining references.
    * 
    * @param entityDescriptor The entity.
+   * @return true if there are no references
    */
-  public void verifyNoReferences(EntityDescriptor entityDescriptor);
+  public boolean verifyNoReferences(EntityID entityDescriptor);
 }

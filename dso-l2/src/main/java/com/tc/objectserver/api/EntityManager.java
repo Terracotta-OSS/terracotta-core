@@ -44,14 +44,14 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier {
    * @param version the version of the entity on the calling client
    * @param consumerID the unique consumerID this entity uses when interacting with services
    */
-  void createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException;
-
+  ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException;
+ 
   /**
-   * Deletes an existing entity.
-   *
-   * @param id id of the entity to delete
+   * Once a ManagedEntity is destroyed it must be removed from the EntityManager manually. 
+   * @param id - EntityID
+   * @return true if the entity is removed
    */
-  void destroyEntity(EntityID id) throws EntityException;
+  boolean removeDestroyed(EntityID id);
 
   /**
    * Get the stub for the specified entity

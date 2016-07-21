@@ -85,15 +85,15 @@ public class ClientEntityStateManagerImplTest {
   @Test
   public void testVerifyNoReferences() throws Exception {
     // Verify that there are no references.
-    assertTrue(verifyNoReferences(new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertTrue(verifyNoReferences(new EntityID("foo", "bar")));
     // Add a reference.
     assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
     // Verify that there now are references.
-    assertFalse(verifyNoReferences(new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertFalse(verifyNoReferences(new EntityID("foo", "bar")));
     // Remove the reference.
     assertTrue(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
     // Verify that there are no references.
-    assertTrue(verifyNoReferences(new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertTrue(verifyNoReferences(new EntityID("foo", "bar")));
   }
 
   private boolean addReference(ClientID clientID, EntityDescriptor descriptor) {
@@ -120,16 +120,8 @@ public class ClientEntityStateManagerImplTest {
     return didSucceed;
   }
 
-  private boolean verifyNoReferences(EntityDescriptor descriptor) {
-    // This only fails by asserting.
-    boolean didSucceed = false;
-    try {
-      clientEntityStateManager.verifyNoReferences(descriptor);
-      didSucceed = true;
-    } catch (AssertionError e) {
-      didSucceed = false;
-    }
-    return didSucceed;
+  private boolean verifyNoReferences(EntityID eid) {
+    return clientEntityStateManager.verifyNoReferences(eid);
   }
 
   private Matcher<VoltronEntityMessage> hasClientAndEntityIDs(final ClientID clientID, final EntityID entityID) {

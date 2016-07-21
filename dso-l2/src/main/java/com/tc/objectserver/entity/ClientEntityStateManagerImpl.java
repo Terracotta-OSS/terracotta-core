@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import org.terracotta.entity.EntityMessage;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -29,8 +28,10 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import org.terracotta.entity.EntityMessage;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
@@ -56,9 +57,8 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   }
 
   @Override
-  public void verifyNoReferences(EntityDescriptor entityDescriptor) {
-    boolean doesContain = clientStates.containsValue(entityDescriptor);
-    Assert.assertFalse(doesContain);
+  public boolean verifyNoReferences(EntityID eid) {
+    return !clientStates.values().stream().anyMatch((ed)->ed.getEntityID().equals(eid));
   }
 
   @Override

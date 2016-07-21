@@ -19,71 +19,63 @@
 package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.util.Assert;
-
-import java.util.Optional;
+import com.tc.objectserver.api.ServerEntityRequest;
+import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.exception.EntityException;
 
 
 /**
- * Translated from Request in the entity package.  Provides payload transport through execution
- * and controls return of acks and completion to client.
  */
-public class ServerEntityRequestImpl extends AbstractServerEntityRequest {
-  private final EntityDescriptor descriptor;
-  protected final Optional<MessageChannel> returnChannel;
-  // We only track whether this is replicated to know that we should reject retire acks.
-  private final boolean isReplicatedMessage;
+public class ServerEntityRequestImpl implements ServerEntityRequest {
+  
+  private final ServerEntityAction action;
+  private final ClientID node;
+  private final TransactionID transaction;
+  private final TransactionID oldest;
+  private final Set<NodeID> replicates;
+  private final EntityDescriptor eid;
 
-  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel, boolean isReplicatedMessage) {
-    super(action, transaction, oldest, src, requiresReplication);
-    this.descriptor = descriptor;
-    this.returnChannel = returnChannel;
-    this.isReplicatedMessage = isReplicatedMessage;
+  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, Set<NodeID> replicates) {
+    this.eid = descriptor;
+    this.action = action;
+    this.node = node;
+    this.transaction = transaction;
+    this.oldest = oldest;
+    this.replicates = replicates;
   }
 
   @Override
-  public Optional<MessageChannel> getReturnChannel() {
-    return returnChannel;
+  public ServerEntityAction getAction() {
+    return action;
   }
 
   @Override
-  public synchronized void complete(byte[] value) {
-    if (isComplete()) throw new AssertionError("Double-sending response");
-    super.complete(value); //To change body of generated methods, choose Tools | Templates.
+  public ClientID getNodeID() {
+    return node;
   }
 
   @Override
-  public synchronized void complete() {
-    if (isComplete()) throw new AssertionError("Double-sending response");
-    super.complete(); //To change body of generated methods, choose Tools | Templates.
+  public TransactionID getTransaction() {
+    return transaction;
   }
 
   @Override
-  public synchronized void failure(EntityException e) {
-    if (isComplete()) throw new AssertionError("Double-sending response", e);
-    super.failure(e); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public synchronized void retired() {
-    // Replicated messages are never retired.
-    Assert.assertFalse(this.isReplicatedMessage);
-    // We can only send the retire, once.
-    if (isRetired()) {
-      throw new AssertionError("Double-sending retire");
-    }
-    super.retired();
+  public TransactionID getOldestTransactionOnClient() {
+    return oldest;
   }
 
   @Override
   public ClientDescriptor getSourceDescriptor() {
-    return new ClientDescriptorImpl(getNodeID(), this.descriptor);
+    return new ClientDescriptorImpl(node, eid);
   }
+
+  @Override
+  public Set<NodeID> replicateTo(Set<NodeID> passives) {
+    return replicates;
+  }
+
 }
