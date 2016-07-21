@@ -64,13 +64,13 @@ public class ElectionManagerImpl implements ElectionManager {
     return new AbstractEventHandler<ElectionContext> () {
       @Override
       public void handleEvent(ElectionContext context) throws EventHandlerException {
-          context.setWinner(runElection(context.getNode(), context.isNew(), context.getFactory()));
+          context.setWinner(runElection(context.getNode(), context.isNew(), context.getFactory(), context.getCurrentState()));
       }
     };
   }
 
   @Override
-  public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {
+  public synchronized boolean handleStartElectionRequest(L2StateMessage msg, State currentState) {
     Assert.assertEquals(L2StateMessage.START_ELECTION, msg.getType());
     if (state == ELECTION_IN_PROGRESS && (myVote.isANewCandidate() || !msg.getEnrollment().isANewCandidate())) {
       // Another node is also joining in the election process, Cast its vote and notify my vote
@@ -85,7 +85,7 @@ public class ElectionManagerImpl implements ElectionManager {
       if (sendResponse) {
         // This is either not a response to this node initiating election or a duplicate vote. Either case notify this
         // nodes vote
-        L2StateMessage response = createElectionStartedMessage(msg, myVote);
+        L2StateMessage response = L2StateMessage.createElectionStartedMessage(msg, myVote, currentState);
         logger.info("Casted vote from " + msg + " My Response : " + response);
         try {
           groupManager.sendTo(msg.messageFrom(), response);
@@ -103,7 +103,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   @Override
-  public synchronized void handleElectionAbort(L2StateMessage msg) {
+  public synchronized void handleElectionAbort(L2StateMessage msg, State currentState) {
     Assert.assertEquals(L2StateMessage.ABORT_ELECTION, msg.getType());
     debugInfo("Handling election abort");
     if (state == ELECTION_IN_PROGRESS) {
@@ -116,12 +116,12 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   @Override
-  public synchronized void handleElectionResultMessage(L2StateMessage msg) {
+  public synchronized void handleElectionResultMessage(L2StateMessage msg, State currentState) {
     Assert.assertEquals(L2StateMessage.ELECTION_RESULT, msg.getType());
     debugInfo("Handling election result");
     if (state == ELECTION_COMPLETE && !this.winner.equals(msg.getEnrollment())) {
       // conflict
-      L2StateMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, this.winner);
+      L2StateMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, this.winner, currentState);
       logger.warn("WARNING :: Election result conflict : Winner local = " + this.winner + " :  remote winner = "
                   + msg.getEnrollment());
       try {
@@ -134,7 +134,7 @@ public class ElectionManagerImpl implements ElectionManager {
       if (state == ELECTION_IN_PROGRESS) {
         basicAbort(msg);
       }
-      L2StateMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
+      L2StateMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), currentState);
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       try {
         groupManager.sendTo(msg.messageFrom(), resultAgreed);
@@ -153,9 +153,9 @@ public class ElectionManagerImpl implements ElectionManager {
    * This method is called by the winner of the election to announce to the world
    */
   @Override
-  public synchronized void declareWinner(NodeID myNodeId) {
+  public synchronized void declareWinner(NodeID myNodeId, State currentState) {
     Assert.assertEquals(winner.getNodeID(), myNodeId);
-    L2StateMessage msg = createElectionWonMessage(this.winner);
+    L2StateMessage msg = L2StateMessage.createElectionWonMessage(this.winner, currentState);
     debugInfo("Announcing as winner: " + myNodeId);
     this.groupManager.sendAll(msg);
     logger.info("Declared as Winner: Winner is : " + this.winner);
@@ -171,7 +171,7 @@ public class ElectionManagerImpl implements ElectionManager {
     notifyAll();
   }
 
-  private NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
+  private NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
     while (winnerID.isNull()) {
@@ -179,7 +179,7 @@ public class ElectionManagerImpl implements ElectionManager {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
-        winnerID = doElection(myNodeId, isNew, weightsFactory);
+        winnerID = doElection(myNodeId, isNew, weightsFactory, currentState);
       } catch (InterruptedException e) {
         logger.error("Interrupted during election : ", e);
         reset(null);
@@ -201,14 +201,14 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election Started : " + e);
   }
 
-  private NodeID doElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory)
+  private NodeID doElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState)
       throws GroupException, InterruptedException {
 
     // Step 1: publish to cluster NodeID, weight and election start
     Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew, weightsFactory);
     electionStarted(e);
 
-    L2StateMessage msg = createElectionStartedMessage(e);
+    L2StateMessage msg = L2StateMessage.createElectionStartedMessage(e, currentState);
     debugInfo("Sending my election vote to all members");
     groupManager.sendAll(msg);
 
@@ -223,7 +223,7 @@ public class ElectionManagerImpl implements ElectionManager {
       return lWinner.getNodeID();
     }
     // Step 4 : local host won the election, so notify world for acceptance
-    msg = createElectionResultMessage(e);
+    msg = L2StateMessage.createElectionResultMessage(e, currentState);
     debugInfo("Won election, announcing to world and waiting for response...");
     GroupResponse<L2StateMessage> responses = groupManager.sendAllAndWaitForResponse(msg);
     for (L2StateMessage response : responses.getResponses()) {
@@ -274,22 +274,6 @@ public class ElectionManagerImpl implements ElectionManager {
       wait(diff);
       diff = diff - (System.currentTimeMillis() - start);
     }
-  }
-
-  private L2StateMessage createElectionStartedMessage(Enrollment e) {
-    return L2StateMessage.createElectionStartedMessage(e);
-  }
-
-  private L2StateMessage createElectionWonMessage(Enrollment e) {
-    return L2StateMessage.createElectionWonMessage(e);
-  }
-
-  private L2StateMessage createElectionResultMessage(Enrollment e) {
-    return L2StateMessage.createElectionResultMessage(e);
-  }
-
-  private L2StateMessage createElectionStartedMessage(L2StateMessage msg, Enrollment e) {
-    return L2StateMessage.createElectionStartedMessage(msg, e);
   }
 
   @Override

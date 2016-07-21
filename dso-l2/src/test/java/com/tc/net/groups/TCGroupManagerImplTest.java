@@ -49,6 +49,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
+import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
@@ -457,7 +458,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private L2StateMessage createL2StateMessage() {
     long weights[] = new long[] { 1, 23, 44, 78 };
     Enrollment enroll = new Enrollment(new ServerID("test", UUID.getUUID().toString().getBytes()), true, weights);
-    L2StateMessage message = new L2StateMessage(L2StateMessage.START_ELECTION, enroll);
+    L2StateMessage message = new L2StateMessage(L2StateMessage.START_ELECTION, enroll, new State("Dummy"));
     return (message);
   }
 
@@ -839,7 +840,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       super.messageReceived(fromNode, msg);
       L2StateMessage message = (L2StateMessage) msg;
-      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(message, message.getEnrollment());
+      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(message, message.getEnrollment(), new State("dummy"));
       try {
         manager.sendTo(message.messageFrom(), resultAgreed);
       } catch (GroupException e) {
