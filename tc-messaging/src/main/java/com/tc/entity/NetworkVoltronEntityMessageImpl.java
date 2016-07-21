@@ -35,6 +35,9 @@ import com.tc.util.Assert;
 import java.io.IOException;
 
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 
 
 public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements NetworkVoltronEntityMessage {
@@ -45,6 +48,8 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private boolean requiresReplication;
   private byte[] extendedData;
   private TransactionID oldestTransactionPending;
+  private MessageCodecSupplier supplier;
+  private EntityMessage message;
 
   @Override
   public ClientID getSource() {
@@ -104,8 +109,12 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.extendedData = extendedData;
     this.oldestTransactionPending = oldestTransactionPending;
   }
-  
-  
+
+  @Override
+  public void setMessageCodecSupplier(MessageCodecSupplier supplier) {
+    this.supplier = supplier;
+  }
+
   public NetworkVoltronEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
@@ -150,12 +159,24 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.extendedData = getBytesArray();
     this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
+    
+    try {
+      if (this.type == Type.INVOKE_ACTION) {
+        MessageCodec<EntityMessage, EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor.getEntityID());
+        this.message = codec.decodeMessage(extendedData);
+      }
+    } catch (MessageCodecException exception) {
+/*  swallow it - this is an optimzation which does not handle the failure case.  
+    If this invocation does not succeed, a later stage will try and decode the message 
+    again.  When that fails the exception is handled and sent back to the client.
+      */
+    }
+    
     return true;
   }
 
   @Override
   public EntityMessage getEntityMessage() {
-    // Network messages don't contain an identity message.
-    return null;
+    return this.message;
   }
 }

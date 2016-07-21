@@ -21,7 +21,6 @@ package com.tc.objectserver.entity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumper;
-import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
@@ -40,8 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.PermanentEntityException;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -179,6 +179,24 @@ public class EntityManagerImpl implements EntityManager {
     }
     return service;
   }
+
+  @Override
+  public MessageCodec<EntityMessage, EntityResponse> getMessageCodec(EntityID eid) {
+    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
+    if (service != null) {
+      return service.getMessageCodec();
+    }
+    return null;
+  }
+
+  @Override
+  public SyncMessageCodec<EntityMessage> getSyncMessageCodec(EntityID eid) {
+    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
+    if (service != null) {
+      return service.getSyncMessageCodec();
+    }
+    return null;
+  }  
 
   @Override
   public String toString() {

@@ -16,37 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol.tcm;
+package com.tc.objectserver.entity;
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.net.protocol.tcm.HydrateContext;
+import com.tc.net.protocol.tcm.TCMessage;
 
-public class HydrateContext<T> implements MultiThreadedEventContext {
+/**
+ *
+ */
+public class VoltronHydrateContext extends HydrateContext {
 
-  private final Sink<T>      destSink;
-  private final TCMessage message;
-
-  public HydrateContext(TCMessage message, Sink<T> destSink) {
-    this.message = message;
-    this.destSink = destSink;
-  }
-
-  public Sink<T> getDestSink() {
-    return destSink;
-  }
-
-  public TCMessage getMessage() {
-    return message;
-  }
-
-  @Override
-  public Object getSchedulingKey() {
-    return message.getSourceNodeID();
+  public VoltronHydrateContext(TCMessage message, Sink<TCMessage> destSink) {
+    super(message, destSink);
   }
   
-  @Override
-  public boolean flush() {
-//  hydrate operations are independent and don't need a flush
-    return false;
-  }
 }
