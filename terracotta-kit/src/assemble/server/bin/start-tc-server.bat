@@ -100,7 +100,7 @@ REM todo do i still need to enable nullglob?
 REM $ENV{NULLGLOB} = 0;
 
 set CLASSPATH=%TC_INSTALL_DIR%\server\lib\tc.jar;%PLUGIN_CLASSPATH%
-set OPTS=%SERVER_OPT% -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
+set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 rem rmi.dgc.server.gcInterval is set as year to avoid system gc in case authentication is enabled
 rem users may change it accordingly
