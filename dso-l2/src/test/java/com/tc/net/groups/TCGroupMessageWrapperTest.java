@@ -48,6 +48,7 @@ import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.object.session.NullSessionManager;
+import com.tc.util.State;
 import com.tc.util.UUID;
 
 import java.util.Collections;
@@ -198,7 +199,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   public void testL2StateMessage() throws Exception {
     long weights[] = new long[] { 1, 23, 44, 78 };
     Enrollment enroll = new Enrollment(makeNodeID("test"), true, weights);
-    AbstractGroupMessage sendMesg = new L2StateMessage(L2StateMessage.START_ELECTION, enroll);
+    AbstractGroupMessage sendMesg = new L2StateMessage(L2StateMessage.START_ELECTION, enroll, new State("dummy"));
     sendGroupMessage(sendMesg);
   }
 

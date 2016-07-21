@@ -23,6 +23,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
 
+import com.tc.util.State;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,31 +71,31 @@ public class L2StateMessageTest {
 
   @Test
   public void testBasicSerialization() throws Exception {
-    L2StateMessage l2sm = L2StateMessage.createElectionStartedMessage(enrollment);
+    L2StateMessage l2sm = L2StateMessage.createElectionStartedMessage(enrollment, new State("dummy"));
     L2StateMessage l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createElectionResultMessage(enrollment);
+    l2sm = L2StateMessage.createElectionResultMessage(enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createElectionWonMessage(enrollment);
+    l2sm = L2StateMessage.createElectionWonMessage(enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createAbortElectionMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createElectionStartedMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createElectionStartedMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createResultConflictMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createResultConflictMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
 
-    l2sm = L2StateMessage.createResultAgreedMessage(l2StateMessage, enrollment);
+    l2sm = L2StateMessage.createResultAgreedMessage(l2StateMessage, enrollment, new State("dummy"));
     l2sm1 = writeAndRead(l2sm);
     validate(l2sm, l2sm1);
   }
