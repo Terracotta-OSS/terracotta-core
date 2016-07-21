@@ -20,6 +20,7 @@ package com.tc.l2.state;
 
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
@@ -27,6 +28,7 @@ import com.tc.util.State;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public interface StateManager {
 
@@ -63,4 +65,8 @@ public interface StateManager {
   public void handleClusterStateMessage(L2StateMessage clusterMsg);
 
   public NodeID getActiveNodeID();
+
+  public void handlePassiveInfoMessage(PassiveInfoMessage passiveInfoMessage);
+  
+  public Set<NodeID> getKnownPassiveStandByServers();
 }

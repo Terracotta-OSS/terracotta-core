@@ -25,6 +25,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TSAManagementEventPayload;
@@ -42,6 +43,9 @@ import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StateManagerImpl implements StateManager {
@@ -65,6 +69,7 @@ public class StateManagerImpl implements StateManager {
   private State               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+  private final Set<NodeID>            knownPassiveStandByServers = new HashSet<>();
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, 
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
@@ -283,6 +288,25 @@ public class StateManagerImpl implements StateManager {
   }
 
   @Override
+  public synchronized void handlePassiveInfoMessage(PassiveInfoMessage passiveInfoMessage) {
+    switch (passiveInfoMessage.getType()) {
+      case PassiveInfoMessage.PASSIVE_JOIN: {
+        knownPassiveStandByServers.add(passiveInfoMessage.getPassiveID());
+        break;
+      }
+      
+      case PassiveInfoMessage.PASSIVE_LEFT: {
+        knownPassiveStandByServers.remove(passiveInfoMessage.getPassiveID());
+        break;
+      }
+      
+      default:
+        throw new IllegalArgumentException("received unknown message type:" + passiveInfoMessage.getType());
+    }
+
+  }
+
+  @Override
   public boolean isActiveCoordinator() {
     return (state == ACTIVE_COORDINATOR);
   }
@@ -431,6 +455,11 @@ public class StateManagerImpl implements StateManager {
       logger.error(error);
       // throwing this exception will initiate a zap elsewhere
       throw new GroupException(error);
+    } else if ((!knownPassiveStandByServers.contains(nodeID) && response.getState().equals(PASSIVE_STANDBY))) {
+      final String errMesg = "A Terracotta server tried to join the mirror group as PASSIVE STANDBY but with dirty db, "
+        + " Zapping " +  nodeID + " to allow it to resync data from active";
+      logger.error(errMesg);
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB, errMesg);
     }
   }
 
@@ -458,6 +487,11 @@ public class StateManagerImpl implements StateManager {
     } else {
       debugInfo("Not starting election even though node left: " + disconnectedNode);
     }
+  }
+
+  @Override
+  public Set<NodeID> getKnownPassiveStandByServers() {
+    return Collections.unmodifiableSet(knownPassiveStandByServers);
   }
 
   private void sendOKResponse(NodeID fromNode, L2StateMessage msg) {

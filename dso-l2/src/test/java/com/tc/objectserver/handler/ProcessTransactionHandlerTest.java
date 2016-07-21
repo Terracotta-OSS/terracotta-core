@@ -22,6 +22,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
+import com.tc.l2.msg.PassiveInfoMessage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +88,11 @@ public class ProcessTransactionHandlerTest {
     when(this.terracottaServiceProviderRegistry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
-    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor);
+    Stage stageMock = mock(Stage.class);
+    when(stageMock.getSink()).thenReturn(mock(Sink.class));
+    StageManager stageManagerMock = mock(StageManager.class);
+    when(stageManagerMock.getStage(ServerConfigurationContext.PASSIVE_INFO_MESSAGE_SEND_STAGE, PassiveInfoMessage.class)).thenReturn(stageMock);
+    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, stageManagerMock);
     this.source = mock(ClientID.class);
     
     MessageChannel messageChannel = mock(MessageChannel.class);

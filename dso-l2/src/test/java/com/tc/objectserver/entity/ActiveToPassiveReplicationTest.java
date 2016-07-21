@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.ServerID;
@@ -70,7 +71,8 @@ public class ActiveToPassiveReplicationTest {
         return null;
       }
     }).when(replicate).addSingleThreaded(Matchers.any());
-    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, replicate);
+    Sink<PassiveInfoMessage> passiveInfoMessageSink = mock(Sink.class);
+    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, replicate, passiveInfoMessageSink);
   }
   
   @Test

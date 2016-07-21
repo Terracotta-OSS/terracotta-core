@@ -21,11 +21,14 @@ package com.tc.net.groups;
 
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import com.tc.util.State;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TestStateManager implements StateManager {
@@ -52,6 +55,16 @@ public class TestStateManager implements StateManager {
   @Override
   public NodeID getActiveNodeID() {
     return localNodeID;
+  }
+
+  @Override
+  public void handlePassiveInfoMessage(PassiveInfoMessage passiveInfoMessage) {
+    //no-op
+  }
+
+  @Override
+  public Set<NodeID> getKnownPassiveStandByServers() {
+    return Collections.emptySet();
   }
 
   @Override
