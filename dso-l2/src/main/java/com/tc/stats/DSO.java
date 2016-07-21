@@ -183,7 +183,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   @Override
   public LockMBean[] getLocks() {
-    return this.lockMgr.getAllLocks();
+    return (this.lockMgr != null) ? this.lockMgr.getAllLocks() : new LockMBean[0];
   }
 
   @Override

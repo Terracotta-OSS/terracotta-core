@@ -41,7 +41,9 @@ import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.SyncMessageCodec;
+import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.PermanentEntityException;
 
 
 public class EntityManagerImpl implements EntityManager {

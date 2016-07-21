@@ -279,27 +279,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       NetworkVoltronEntityMessage message = inFlight.getMessage();
 //  validate the locking on release and destroy on resends
-      if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY ||
-          message.getVoltronType() == VoltronEntityMessage.Type.DESTROY_ENTITY) {
-        logger.debug("Resending " + message.getVoltronType() + " on " + message.getEntityDescriptor().getEntityID());
-        boolean validated = false;
-        for (ClientServerExchangeLockContext cxt : handshakeMessage.getLockContexts()) {
-          if (cxt.getLockID().getLockType() == LockID.LockIDType.ENTITY) {
-            EntityID eid = message.getEntityDescriptor().getEntityID();
-            EntityLockID elock = (EntityLockID)cxt.getLockID();
-            if (elock.equals(new EntityLockID(eid.getClassName(), eid.getEntityName()))) {
-              if (message.getVoltronType() == VoltronEntityMessage.Type.RELEASE_ENTITY) {
-                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState().getLockLevel(), ServerLockLevel.READ);
-              } else {
-                Assert.assertEquals(eid + " " + handshakeMessage.getLockContexts(), cxt.getState().getLockLevel(), ServerLockLevel.WRITE);
-              }
-              validated = true;
-              break;
-            }
-          }
-        }
-        Assert.assertTrue(validated);
-      }
+
       ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
           message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData(), 
           message.getOldestTransactionOnClient());

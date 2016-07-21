@@ -24,6 +24,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.entity.MessageCodecSupplier;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;

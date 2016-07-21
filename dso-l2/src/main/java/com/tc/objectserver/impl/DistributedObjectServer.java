@@ -879,7 +879,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
+        ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
+        ServerConfigurationContext.REQUEST_LOCK_STAGE  
     );
   }
   
