@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
@@ -60,11 +61,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final ConcurrentHashMap<MessageID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
+  private final Sink<PassiveInfoMessage> passiveInfoMessageSink;
 
-  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, Sink<ReplicationEnvelope> replicate) {
+  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, 
+                                    Sink<ReplicationEnvelope> replicate, Sink<PassiveInfoMessage>
+                                      passiveInfoMessageSink) {
     this.entities = entities;
     this.replicate = replicate;
     this.passives = passives;
+    this.passiveInfoMessageSink = passiveInfoMessageSink;
   }
   
   @Override
@@ -119,7 +124,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private void executePassiveSync(final NodeID newNode) {
     passiveSyncPool.execute(new Runnable() {
       @Override
-      public void run() {    
+      public void run() {
+        passiveInfoMessageSink.addSingleThreaded(PassiveInfoMessage.createPassiveJoinedMessage(newNode));
         // start passive sync message
         logger.debug("starting sync for " + newNode);
         try {

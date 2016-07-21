@@ -18,11 +18,13 @@
  */
 package com.tc.l2.ha;
 
+import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerConfigImpl;
@@ -56,6 +58,7 @@ public class L2HACoordinator implements L2Coordinator {
   private ReplicatedClusterStateManager                     rClusterStateMgr;
 
   private final L2ConfigurationSetupManager                 configSetupManager;
+  private final Sink<PassiveInfoMessage>                    passiveInfoMessageSink;
 
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                          StageManager stageManager, StateManager stateManager, 
@@ -70,6 +73,7 @@ public class L2HACoordinator implements L2Coordinator {
     this.stateManager = stateManager;
     this.thisGroupID = thisGroupID;
     this.configSetupManager = configurationSetupManager;
+    this.passiveInfoMessageSink = stageManager.getStage(ServerConfigurationContext.PASSIVE_INFO_MESSAGE_SEND_STAGE, PassiveInfoMessage.class).getSink();
 
     init(stageManager, clusterStatePersistor,
         weightGeneratorFactory, stripeIDStateManager);
@@ -153,6 +157,7 @@ public class L2HACoordinator implements L2Coordinator {
   public void nodeLeft(NodeID nodeID) {
     warn(nodeID + " left the cluster");
     if (this.stateManager.isActiveCoordinator()) {
+      this.passiveInfoMessageSink.addSingleThreaded(PassiveInfoMessage.createPassiveLeftMessage(nodeID));
       this.rClusterStateMgr.fireNodeLeftEvent(nodeID);
     } else {
       this.stateManager.startElectionIfNecessary(nodeID);

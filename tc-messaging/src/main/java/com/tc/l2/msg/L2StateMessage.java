@@ -23,6 +23,7 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
+import com.tc.util.State;
 
 import java.io.IOException;
 
@@ -38,31 +39,36 @@ public class L2StateMessage extends AbstractGroupMessage {
   public static final int ELECTION_WON_ALREADY    = 6; // Sent to new nodes joining after the node wins an election and
 
   private Enrollment      enrollment;
+  private State           state;
 
   // To make serialization happy
   public L2StateMessage() {
     super(-1);
   }
 
-  public L2StateMessage(int type, Enrollment e) {
+  public L2StateMessage(int type, Enrollment e, State state) {
     super(type);
     this.enrollment = e;
+    this.state = state;
   }
 
-  public L2StateMessage(MessageID requestID, int type, Enrollment e) {
+  public L2StateMessage(MessageID requestID, int type, Enrollment e, State state) {
     super(type, requestID);
     this.enrollment = e;
+    this.state = state;
   }
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     this.enrollment = new Enrollment();
     this.enrollment.deserializeFrom(in);
+    this.state = new State(in.readString());
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     this.enrollment.serializeTo(out);
+    out.writeString(this.state.getName());
   }
 
 
@@ -70,9 +76,13 @@ public class L2StateMessage extends AbstractGroupMessage {
     return enrollment;
   }
 
+  public State getState() {
+    return state;
+  }
+
   @Override
   public String toString() {
-    return "L2StateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + "]";
+    return "L2StateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + ", " + state + "]";
   }
 
   private String getTypeString() {
@@ -96,35 +106,35 @@ public class L2StateMessage extends AbstractGroupMessage {
     }
   }
 
-  public static L2StateMessage createElectionStartedMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.START_ELECTION, e);
+  public static L2StateMessage createElectionStartedMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.START_ELECTION, e, state);
   }
 
-  public static L2StateMessage createElectionResultMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.ELECTION_RESULT, e);
+  public static L2StateMessage createElectionResultMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.ELECTION_RESULT, e, state);
   }
 
-  public static L2StateMessage createAbortElectionMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.ABORT_ELECTION, e);
+  public static L2StateMessage createAbortElectionMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.ABORT_ELECTION, e, state);
   }
 
-  public static L2StateMessage createElectionStartedMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.START_ELECTION, e);
+  public static L2StateMessage createElectionStartedMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.START_ELECTION, e, state);
   }
 
-  public static L2StateMessage createResultConflictMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_CONFLICT, e);
+  public static L2StateMessage createResultConflictMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_CONFLICT, e, state);
   }
 
-  public static L2StateMessage createResultAgreedMessage(L2StateMessage initiatingMsg, Enrollment e) {
-    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_AGREED, e);
+  public static L2StateMessage createResultAgreedMessage(L2StateMessage initiatingMsg, Enrollment e, State state) {
+    return new L2StateMessage(initiatingMsg.getMessageID(), L2StateMessage.RESULT_AGREED, e, state);
   }
 
-  public static L2StateMessage createElectionWonMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.ELECTION_WON, e);
+  public static L2StateMessage createElectionWonMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.ELECTION_WON, e, state);
   }
 
-  public static L2StateMessage createElectionWonAlreadyMessage(Enrollment e) {
-    return new L2StateMessage(L2StateMessage.ELECTION_WON_ALREADY, e);
+  public static L2StateMessage createElectionWonAlreadyMessage(Enrollment e, State state) {
+    return new L2StateMessage(L2StateMessage.ELECTION_WON_ALREADY, e, state);
   }
 }

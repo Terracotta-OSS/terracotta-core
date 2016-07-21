@@ -25,6 +25,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TSAManagementEventPayload;
@@ -42,6 +43,9 @@ import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StateManagerImpl implements StateManager {
@@ -65,6 +69,7 @@ public class StateManagerImpl implements StateManager {
   private State               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+  private final Set<NodeID>            knownPassiveStandByServers = new HashSet<>();
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, 
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
@@ -138,7 +143,7 @@ public class StateManagerImpl implements StateManager {
     boolean isNew = state == START_STATE && startState == null;
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, (nodeid)-> {
+      electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, state, (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
@@ -271,7 +276,7 @@ public class StateManagerImpl implements StateManager {
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
       fireStateChangedOperatorEvent();
-      electionMgr.declareWinner(getLocalNodeID());
+      electionMgr.declareWinner(getLocalNodeID(), state);
     } else {
       throw new AssertionError("Cant move to " + ACTIVE_COORDINATOR + " from " + state);
     }
@@ -280,6 +285,25 @@ public class StateManagerImpl implements StateManager {
   @Override
   public synchronized NodeID getActiveNodeID() {
     return activeNode;
+  }
+
+  @Override
+  public synchronized void handlePassiveInfoMessage(PassiveInfoMessage passiveInfoMessage) {
+    switch (passiveInfoMessage.getType()) {
+      case PassiveInfoMessage.PASSIVE_JOIN: {
+        knownPassiveStandByServers.add(passiveInfoMessage.getPassiveID());
+        break;
+      }
+      
+      case PassiveInfoMessage.PASSIVE_LEFT: {
+        knownPassiveStandByServers.remove(passiveInfoMessage.getPassiveID());
+        break;
+      }
+      
+      default:
+        throw new IllegalArgumentException("received unknown message type:" + passiveInfoMessage.getType());
+    }
+
   }
 
   @Override
@@ -363,7 +387,7 @@ public class StateManagerImpl implements StateManager {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
       Assert.assertFalse(ServerID.NULL_ID.equals(activeNode));
       // This wouldn't normally happen, but we agree - so ack
-      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment());
+      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state);
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
     } else if (state == ACTIVE_COORDINATOR || !activeNode.isNull()
@@ -377,14 +401,14 @@ public class StateManagerImpl implements StateManager {
       // Condition 3 :
       // We don't want new L2s to win an election when there are old L2s in PASSIVE states.
       AbstractGroupMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
+          .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
       warn("WARNING :: Active Node = " + activeNode + " , " + state
            + " received ELECTION_RESULT message from another node : " + msg + " : Forcing re-election "
            + resultConflict);
       groupManager.sendTo(msg.messageFrom(), resultConflict);
     } else {
       debugInfo("ElectionMgr handling election result msg: " + msg);
-      electionMgr.handleElectionResultMessage(msg);
+      electionMgr.handleElectionResultMessage(msg, state);
     }
   }
 
@@ -396,7 +420,7 @@ public class StateManagerImpl implements StateManager {
       groupManager.zapNode(clusterMsg.messageFrom(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
     } else {
       debugInfo("ElectionMgr handling election abort");
-      electionMgr.handleElectionAbort(clusterMsg);
+      electionMgr.handleElectionAbort(clusterMsg, state);
       moveToPassiveReady(clusterMsg.getEnrollment());
     }
   }
@@ -405,10 +429,10 @@ public class StateManagerImpl implements StateManager {
     if (state == ACTIVE_COORDINATOR) {
       // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
       AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
+          .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);      
-    } else if (!electionMgr.handleStartElectionRequest(msg)) {
+    } else if (!electionMgr.handleStartElectionRequest(msg, state)) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
       startElectionIfNecessary(ServerID.NULL_ID);
     }
@@ -420,7 +444,7 @@ public class StateManagerImpl implements StateManager {
     debugInfo("Publishing active state to nodeId: " + nodeID);
     Assert.assertTrue(isActiveCoordinator());
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(EnrollmentFactory
-        .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
+        .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validateResponse(nodeID, response);
   }
@@ -431,6 +455,11 @@ public class StateManagerImpl implements StateManager {
       logger.error(error);
       // throwing this exception will initiate a zap elsewhere
       throw new GroupException(error);
+    } else if ((!knownPassiveStandByServers.contains(nodeID) && response.getState().equals(PASSIVE_STANDBY))) {
+      final String errMesg = "A Terracotta server tried to join the mirror group as PASSIVE STANDBY but with dirty db, "
+        + " Zapping " +  nodeID + " to allow it to resync data from active";
+      logger.error(errMesg);
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB, errMesg);
     }
   }
 
@@ -460,9 +489,14 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
+  @Override
+  public Set<NodeID> getKnownPassiveStandByServers() {
+    return Collections.unmodifiableSet(knownPassiveStandByServers);
+  }
+
   private void sendOKResponse(NodeID fromNode, L2StateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment()));
+      groupManager.sendTo(fromNode, L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }
@@ -470,7 +504,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendNGResponse(NodeID fromNode, L2StateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, L2StateMessage.createResultConflictMessage(msg, msg.getEnrollment()));
+      groupManager.sendTo(fromNode, L2StateMessage.createResultConflictMessage(msg, msg.getEnrollment(), state));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }

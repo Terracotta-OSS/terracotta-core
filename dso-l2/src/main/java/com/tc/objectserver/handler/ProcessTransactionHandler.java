@@ -21,8 +21,11 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
+import com.tc.async.api.StageManager;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -59,6 +62,7 @@ import org.terracotta.exception.EntityUserException;
 public class ProcessTransactionHandler {
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
+  private final StageManager stageManager;
   
   private EntityManager entityManager;
   private DSOChannelManager dsoChannelManager;
@@ -113,9 +117,10 @@ public class ProcessTransactionHandler {
     this.entityManager = entityManager;
   }
 
-  public ProcessTransactionHandler(EntityPersistor entityPersistor, TransactionOrderPersistor transactionOrderPersistor) {
+  public ProcessTransactionHandler(EntityPersistor entityPersistor, TransactionOrderPersistor transactionOrderPersistor, StageManager stageManager) {
     this.entityPersistor = entityPersistor;
     this.transactionOrderPersistor = transactionOrderPersistor;
+    this.stageManager = stageManager;
     
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new Vector<>();
@@ -277,6 +282,10 @@ public class ProcessTransactionHandler {
     if (this.resendReplayList == null && this.resendNewList == null) {
       return;
     }
+    
+    Sink<PassiveInfoMessage> passiveInfoMessageSink = stageManager.getStage(ServerConfigurationContext.PASSIVE_INFO_MESSAGE_SEND_STAGE, PassiveInfoMessage.class).getSink();
+    passiveInfoMessageSink.addSingleThreaded(PassiveInfoMessage.createPassiveCleanupMessage());
+    
     // Clear the transaction order persistor since we are starting fresh.
     this.transactionOrderPersistor.clearAllRecords();
     

@@ -21,6 +21,8 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import com.tc.l2.handler.PassiveInfoMessageHandler;
+import com.tc.l2.msg.PassiveInfoMessage;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.LogBasedStateDumper;
 import com.tc.services.PlatformServiceProvider;
@@ -624,7 +626,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledCumulativeCounterConfig);
 
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
-    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor());
+    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor(), stageManager);
     final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
@@ -724,6 +726,32 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         this.persistor.getClusterStatePersistor());
     
     state.registerForStateChangeEvents(this.server);
+    
+    Stage<PassiveInfoMessage> passiveInfoMessageReceiveStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_INFO_MESSAGE_RECEIVE_STAGE, PassiveInfoMessage.class, new PassiveInfoMessageHandler(), 1, maxStageSize);
+    groupCommManager.routeMessages(PassiveInfoMessage.class, passiveInfoMessageReceiveStage.getSink());
+    Stage<PassiveInfoMessage> passiveInfoMessageSendStage = stageManager.createStage
+      (ServerConfigurationContext.PASSIVE_INFO_MESSAGE_SEND_STAGE, PassiveInfoMessage.class, new AbstractEventHandler<PassiveInfoMessage>() {
+        @Override
+        public void handleEvent(PassiveInfoMessage message) throws EventHandlerException {
+          switch (message.getType()) {
+            case PassiveInfoMessage.PASSIVE_JOIN: //fall-through 
+            case PassiveInfoMessage.PASSIVE_LEFT: {
+              groupCommManager.sendAll(message);
+              break;
+            }
+            case PassiveInfoMessage.PASSIVE_CLEANUP: {
+              Set<NodeID> passiveStandBys = state.getKnownPassiveStandByServers();
+              for(NodeID nodeID : passiveStandBys) {
+                if(!groupCommManager.isNodeConnected(nodeID)) {
+                  groupCommManager.sendAll(PassiveInfoMessage.createPassiveLeftMessage(nodeID));
+                }
+              }
+              break;
+            }
+            default: throw new IllegalArgumentException("got unexpected message type " + message.getType());
+          }
+        }
+      }, 1, maxStageSize);
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
                                                                   stageManager, state,
@@ -737,7 +765,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 // setup replication    
     final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(l2Coordinator.getReplicatedClusterStateManager().getPassives(), processTransactionHandler.getEntityList(), replicationDriver.getSink());
+    
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(l2Coordinator.getReplicatedClusterStateManager().getPassives(), processTransactionHandler.getEntityList(), replicationDriver
+      .getSink(), passiveInfoMessageSendStage.getSink());
     processor.setReplication(passives); 
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
@@ -878,7 +908,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
+        ServerConfigurationContext.PASSIVE_INFO_MESSAGE_SEND_STAGE,
+        ServerConfigurationContext.PASSIVE_INFO_MESSAGE_RECEIVE_STAGE
     );
   }
   
@@ -907,12 +939,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     control.addStageToState(StateManager.PASSIVE_SYNCING, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here. SYNC goes away
     control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_INFO_MESSAGE_RECEIVE_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_INFO_MESSAGE_SEND_STAGE);
     return control;
   }
   
