@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
@@ -36,6 +38,8 @@ import org.terracotta.persistence.KeyValueStorage;
  * Stores the information relating to the entities currently alive on the platform into persistent storage.
  */
 public class EntityPersistor {
+  private static final TCLogger LOGGER = TCLogging.getLogger(EntityPersistor.class);
+  
   private static final String ENTITIES_ALIVE = "entities_alive";
   private static final String JOURNAL_CONTAINER = "journal_container";
   private static final String COUNTERS = "counters";
@@ -71,24 +75,15 @@ public class EntityPersistor {
   }
 
   public boolean containsEntity(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
-    boolean doesContain = false;
-    // First, check to see if this is something known to the journal.
-    EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
-    if (null != entry) {
-      // This is in the journal so just get our answer from there.
-      doesContain = entry.didFind;
-    } else {
-      // This is new so look up the answer and store it in the journal.
-      EntityData.Key key = new EntityData.Key();
-      key.className = id.getClassName();
-      key.entityName = id.getEntityName();
-      // Make sure that the EntityID makes sense.
-      Assert.assertNotNull(key.className);
-      Assert.assertNotNull(key.entityName);
-      doesContain = this.entities.containsKey(key);
-      addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DOES_EXIST, null, doesContain, null);
-    }
-    return doesContain;
+    LOGGER.debug("containsEntity " + clientID + " " + transactionID + " " + id);
+    // This is new so look up the answer and store it in the journal.
+    EntityData.Key key = new EntityData.Key();
+    key.className = id.getClassName();
+    key.entityName = id.getEntityName();
+    // Make sure that the EntityID makes sense.
+    Assert.assertNotNull(key.className);
+    Assert.assertNotNull(key.entityName);
+    return this.entities.containsKey(key);
   }
 
   /**
@@ -98,6 +93,7 @@ public class EntityPersistor {
    */
   public boolean wasEntityCreatedInJournal(ClientID clientID, long transactionID) throws EntityException {
     boolean didSucceed = false;
+    LOGGER.debug("wasEntityCreatedInJournal " + clientID + " " + transactionID);
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
     if (null != entry) {
       if (null == entry.failure) {
@@ -110,10 +106,12 @@ public class EntityPersistor {
   }
 
   public void entityCreateFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+    LOGGER.debug("createFailed " + clientID + " " + transactionID, error);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, error);
   }
 
   public void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
+    LOGGER.debug("entityCreated " + clientID + " " + transactionID + " " + id + " " + version);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     
     // Record this in the journal - null error on success.
@@ -121,6 +119,7 @@ public class EntityPersistor {
   }
 
   public void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
+    LOGGER.debug("entityCreatedNoJournal " + id);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     // (Note that we don't store this into the journal - this is used for passive sync).
   }
@@ -131,6 +130,7 @@ public class EntityPersistor {
    * False is returned if this clientID and transactionID seem new.
    */
   public boolean wasEntityDestroyedInJournal(ClientID clientID, long transactionID) throws EntityException {
+    LOGGER.debug("wasEntityDestroyedInJournal " + clientID + " " + transactionID);
     boolean didSucceed = false;
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
     if (null != entry) {
@@ -144,10 +144,12 @@ public class EntityPersistor {
   }
 
   public void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+    LOGGER.debug("entityDestroyFailed " + clientID + " " + transactionID);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, false, error);
   }
 
   public void entityDestroyed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
+    LOGGER.debug("entityDestroyed " + clientID + " " + transactionID + " " + id);
     EntityData.Key key = new EntityData.Key();
     key.className = id.getClassName();
     key.entityName = id.getEntityName();
@@ -159,6 +161,7 @@ public class EntityPersistor {
   }
 
   public byte[] reconfiguredResultInJournal(ClientID clientID, long transactionID) throws EntityException {
+    LOGGER.debug("reconfiguredResultInJournal " + clientID + " " + transactionID);
     byte[] cachedResult = null;
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
     if (null != entry) {
@@ -173,6 +176,7 @@ public class EntityPersistor {
   }
 
   public void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+    LOGGER.debug("entityReconfigureFailed " + clientID + " " + transactionID);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, null, false, error);
   }
 
@@ -180,6 +184,7 @@ public class EntityPersistor {
    * @return The over-written configuration value.
    */
   public byte[] entityReconfigureSucceeded(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, byte[] configuration) {
+    LOGGER.debug("entityReconfigureSucceeded " + clientID + " " + transactionID);
     String className = id.getClassName();
     String entityName = id.getEntityName();
 

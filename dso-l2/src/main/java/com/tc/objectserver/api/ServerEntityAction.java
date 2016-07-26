@@ -37,10 +37,6 @@ public enum ServerEntityAction {
   /**
    * Same as Request.Type.
    */
-  DOES_EXIST,
-  /**
-   * Same as Request.Type.
-   */
   CREATE_ENTITY,
   /**
    * Same as Request.Type.

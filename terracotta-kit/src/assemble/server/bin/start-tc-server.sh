@@ -85,7 +85,7 @@ while "$start"
 do
 # the solaris 64-bit JVM has a bug that makes it fail to allocate more than 2GB of offheap when
 # the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
-${JAVA_COMMAND} -Xms2049m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
+${JAVA_COMMAND} -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\

@@ -19,15 +19,19 @@
 package com.tc.objectserver.api;
 
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodec;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
+import com.tc.objectserver.entity.ActivePassiveAckWaiter;
+import com.tc.objectserver.entity.MessagePayload;
+import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
+import java.util.function.Consumer;
 
 import org.terracotta.entity.StateDumpable;
+import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityUserException;
 
 
@@ -49,11 +53,8 @@ public interface ManagedEntity extends StateDumpable {
   * @param defaultKey default concurrency key if no concurrency strategy is installed
   * @throws EntityUserException A state-safe exception (MessageCodecException) was encountered while setting up the invoke.
   */ 
-  void addInvokeRequest(ServerEntityRequest request, EntityMessage entityMessage, byte[] extendedData, int defaultKey) throws EntityUserException;
-  
-  void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey);
-  
-  void addLifecycleRequest(ServerEntityRequest create, byte[] data);
+  SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception);
+    
   /**
    * Called to handle the reconnect for a specific client instance living on a specific node.
    * This is called after restart or fail-over to re-associate a formerly connected client with its server-side entities.
@@ -74,8 +75,10 @@ public interface ManagedEntity extends StateDumpable {
   void loadEntity(byte[] configuration);
   
   void promoteEntity();
+    
+  boolean isDestroyed();
   
-  boolean canDelete();
+  boolean isActive();
 
   /**
    * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this

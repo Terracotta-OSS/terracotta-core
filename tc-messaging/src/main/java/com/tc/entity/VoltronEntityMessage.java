@@ -37,10 +37,6 @@ public interface VoltronEntityMessage {
      */
     RELEASE_ENTITY,
     /**
-     * Used when checking if an entity exists but has no side-effects on the entity or client-entity references.
-     */
-    DOES_EXIST,
-    /**
      * Creates a new entity.  This doesn't create a reference from the caller to the entity, however.
      */
     CREATE_ENTITY,

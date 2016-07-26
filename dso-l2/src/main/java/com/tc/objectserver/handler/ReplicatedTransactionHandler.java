@@ -23,6 +23,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
+import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.state.StateManager;
@@ -45,7 +46,7 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.PlatformEntity;
-import com.tc.objectserver.entity.ServerEntityRequestImpl;
+import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
@@ -56,9 +57,11 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.BooleanSupplier;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 
@@ -107,7 +110,9 @@ public class ReplicatedTransactionHandler {
   //  when this spins up, send  request to active and ask for sync
       scxt.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(scxt.getL2Coordinator().getStateManager().getCurrentState());
       setLoopback(scxt.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class).getSink());
-      requestPassiveSync();
+      if (stateManager.getCurrentState().equals(StateManager.PASSIVE_UNINITIALIZED)) {
+        requestPassiveSync();
+      }
     }
 
     @Override
@@ -140,36 +145,12 @@ public class ReplicatedTransactionHandler {
         }
 
         @Override
-        public void complete() {
-          latch.countDown();
-       }
-
-        @Override
-        public void complete(byte[] value) {
-          throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void failure(EntityException e) {
-          throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void received() {
-          throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void retired() {
-          throw new UnsupportedOperationException();
-        }
-
-        @Override
         public Set<NodeID> replicateTo(Set<NodeID> passives) {
           return Collections.emptySet();
         }
       };
-      platform.addLifecycleRequest(req, new byte[0]);
+  //    MGMT_KEY because the request processor needs to be flushed
+      platform.addRequestMessage(req, new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY), (result)->latch.countDown(), null);
       try {
         latch.await();
       } catch (InterruptedException ie) {
@@ -213,11 +194,12 @@ public class ReplicatedTransactionHandler {
         throw new RuntimeException();
     }
   }
-  
+//  don't need to worry about resends here for lifecycle messages.  active will filer them  
   private void replicatedMessageReceived(ReplicationMessage rep) throws EntityException {
     ClientID sourceNodeID = rep.getSource();
     TransactionID transactionID = rep.getTransactionID();
     TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
+    EntityDescriptor descriptor = rep.getEntityDescriptor();
 
     // Send the RECEIVED ack before we run this.
     ackReceived(rep);
@@ -235,69 +217,88 @@ public class ReplicatedTransactionHandler {
     }
 
     long version = rep.getVersion();
-    EntityID entityID = rep.getEntityDescriptor().getEntityID();
+    EntityID entityID = descriptor.getEntityID();
     byte[] extendedData = rep.getExtendedData();
+    EntityMessage msg = null;
+    MessagePayload payload = null;
+    try {
+      if (rep.getReplicationType() == ReplicationMessage.ReplicationType.INVOKE_ACTION) {
+        msg = entityManager.getMessageCodec(entityID).decodeMessage(extendedData);
+      }
+    } catch (MessageCodecException codec) {
+      throw new RuntimeException(codec);
+    }
+    payload = new MessagePayload(extendedData, msg, rep.getConcurrency());
     ReplicationMessage.ReplicationType replicationType = rep.getReplicationType();
-    boolean didAlreadyHandle = false;
 
-    if (ReplicationMessage.ReplicationType.CREATE_ENTITY == replicationType) {
-      long consumerID = entityPersistor.getNextConsumerID();
-      // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-      didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, extendedData, !rep.getSource().isNull());
-    }
-    if (ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY == replicationType) {
-      byte[] cachedResult = EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, version, extendedData);
-      didAlreadyHandle = (null != cachedResult);
-    }
     // At this point, we can now look up the managed entity (used later).
     Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
-    if (ReplicationMessage.ReplicationType.DESTROY_ENTITY == replicationType) {
-      // Call the common helper to either destroy the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-      didAlreadyHandle = EntityExistenceHelpers.destroyEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
-    }
 
     // Create the request, since it is how we will generically return complete.
     ServerEntityRequest request = make(rep);
     // If we satisfied this as a known re-send, don't add the request to the entity.
-    if (didAlreadyHandle) {
-      request.complete();
-      // NOTE:  No retire on replicated message.
-    } else {
-      // Handle the DOES_EXIST, as a special case, since we don't tell the entity about it.
-      if (ReplicationMessage.ReplicationType.DOES_EXIST == replicationType) {
-        // We don't actually care about the response.  We just need the question and answer to be recorded, at this point in time.
-        EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
-        request.complete();
-        // NOTE:  No retire on replicated message.
-      } else {
-        if (entity.isPresent()) {
-          if (request != null) {
-            ManagedEntity entityInstance = entity.get();
-            if (null != request.getAction()) switch (request.getAction()) {
-              case INVOKE_ACTION:
-              case NOOP:
-                // For now, we will assume that there can be no existing message (in the future, this might change if we
-                // move the deserialization earlier).
-                EntityMessage entityMessage = null;
-                entityInstance.addInvokeRequest(request, entityMessage, extendedData, rep.getConcurrency());
-                break;
-              default:
-                entityInstance.addLifecycleRequest(request, extendedData);
-                break;
+    if (request.getAction() == ServerEntityAction.CREATE_ENTITY) {
+// The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
+      long consumerID = this.entityPersistor.getNextConsumerID();
+      try {
+        LOGGER.debug("entity create called " + entityID);
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull());
+        temp.addRequestMessage(request, payload, 
+          (result) -> {
+            if (!sourceNodeID.isNull()) {
+              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
+              acknowledge(rep);
+            } else {
+              entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, true, extendedData);
+              acknowledge(rep);
             }
-          }
-        } else {
-// must be syncing and this entity has not been sync'd yet.  just complete like 
-// we weren't here
-          request.complete();
-          // NOTE:  No retire on replicated message.
+          }, (exception) -> {
+            entityManager.removeDestroyed(entityID);
+            entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+            acknowledge(rep);
+          });
+      } catch (EntityException ee) {
+        acknowledge(rep);
+        if (!sourceNodeID.isNull()) {
+          entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         }
+      }
+    } else if (entity.isPresent()) {
+      ManagedEntity entityInstance = entity.get();
+      if (null != request.getAction()) switch (request.getAction()) {
+        case RECONFIGURE_ENTITY:  
+          entity.get().addRequestMessage(request, payload, 
+            (result)->{
+              entityPersistor.entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, version, result);
+              acknowledge(rep);
+            } , (exception) -> {
+              entityPersistor.entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+              acknowledge(rep);
+            });
+          break;
+        case DESTROY_ENTITY:
+          entityInstance.addRequestMessage(request, payload, 
+            (result)-> {
+              if (!entityManager.removeDestroyed(entityID)) {
+                throw new AssertionError();
+              }
+              entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID);
+              acknowledge(rep);
+            }, (exception) -> {
+              entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+              acknowledge(rep);
+            });
+          break;
+        default:
+          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep), (exception) -> acknowledge(rep));
+          break;
       }
     }
   }
   
   private void requestPassiveSync() {
     NodeID node = stateManager.getActiveNodeID();
+    Assert.assertTrue(entityManager.getAll().stream().allMatch((e)->e.getID().equals(PlatformEntity.PLATFORM_ID)));
     moveToPassiveUnitialized(node);
     try {
       LOGGER.info("Requesting Passive Sync from " + node);
@@ -310,12 +311,16 @@ public class ReplicatedTransactionHandler {
   private void syncMessageReceived(ReplicationMessage sync) {
     EntityID eid = sync.getEntityDescriptor().getEntityID();
     long version = sync.getVersion();
+    
+    ackReceived(sync);
+    beforeSyncAction(sync);
+    
     if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN && !eid.equals(EntityID.NULL_ID)) {
       try {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
  //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
-          this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency() == 0);
+          ManagedEntity temp = this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency() == 0);          
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
           this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !sync.getSource().isNull(), sync.getExtendedData());
         }
@@ -328,15 +333,30 @@ public class ReplicatedTransactionHandler {
     try {
       Optional<ManagedEntity> entity = entityManager.getEntity(eid, version);
       if (entity.isPresent()) {
-        entity.get().addSyncRequest(make(sync), sync.getExtendedData(), sync.getConcurrency());
+        EntityMessage msg = null;
+        try {
+          if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
+              msg = this.entityManager.getSyncMessageCodec(eid).decode(sync.getConcurrency(), sync.getExtendedData());
+          }
+        } catch (MessageCodecException codec) {
+          throw new RuntimeException(codec);
+        }
+        MessagePayload payload = new MessagePayload(sync.getExtendedData(), msg, sync.getConcurrency());
+        entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync), (exception)->acknowledge(sync));
         if (sync.getReplicationType() != ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
-          entity.get().addSyncRequest(makeNoop(eid, version), new byte[0], ConcurrencyStrategy.MANAGEMENT_KEY);
+          entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
         if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
-          platform.addSyncRequest(make(sync), sync.getExtendedData(), ConcurrencyStrategy.MANAGEMENT_KEY);
+          MessagePayload payload = new MessagePayload(sync.getExtendedData(), null, sync.getConcurrency());
+          platform.addRequestMessage(make(sync), payload, (result)-> {
+            if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_END) {
+              moveToPassiveStandBy();
+            }
+            acknowledge(sync);
+          }, (exception)->acknowledge(sync));
         }
       }
     } catch (EntityException ee) {
@@ -397,43 +417,41 @@ public class ReplicatedTransactionHandler {
   private ServerEntityRequest makeNoop(EntityID eid, long version) {
     // Anything created within this class represents a replicated message.
     boolean isReplicatedMessage = true;
-    return new ServerEntityRequestImpl(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, true, Optional.empty(), isReplicatedMessage);
+    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, true, Optional.empty(), isReplicatedMessage);
   }
       
-  private ServerEntityRequestImpl make(ReplicationMessage rep) {
+  private ServerEntityRequest make(ReplicationMessage rep) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Making " + rep);
     }
+
+    return new BasicServerEntityRequest(decodeReplicationType(rep.getReplicationType()), rep.getSource(),  
+      rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getEntityDescriptor());
+  }
+  
+  private void beforeSyncAction(ReplicationMessage rep) {
     EntityID eid = rep.getEntityDescriptor().getEntityID();
-    
     switch (rep.getReplicationType()) {
       case SYNC_BEGIN:
         start();
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
+        break;
       case SYNC_END:
         finish();
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->{moveToPassiveStandBy();acknowledge(rep);});
+        break;
       case SYNC_ENTITY_BEGIN:
         start(eid);
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));      
+        break;
       case SYNC_ENTITY_END:
         finish(eid);
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));      
+        break;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
         start(eid, rep.getConcurrency());
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
+        break;
       case SYNC_ENTITY_CONCURRENCY_END:
-        finish(eid, rep.getConcurrency());
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
+        finish(eid, rep.getConcurrency());// finish inline so messages are requeued from the proper sync
+        break;
       default:
-        return new ServerEntityRequestWithCompletion(rep.getEntityDescriptor(), decodeReplicationType(rep.getReplicationType()), 
-          rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getSource(), false, ()->acknowledge(rep));
+        break;
     }
   }
 
@@ -472,8 +490,6 @@ public class ReplicatedTransactionHandler {
       case SYNC_END:
       case NOOP:
         return ServerEntityAction.NOOP;
-      case DOES_EXIST:
-        return ServerEntityAction.DOES_EXIST;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
       case RECONFIGURE_ENTITY:
@@ -517,6 +533,7 @@ public class ReplicatedTransactionHandler {
     private void startEntity(EntityID eid) {
       Assert.assertNull(syncing);
       syncing = eid;
+      LOGGER.debug("Starting " + eid);
     }
     
     private boolean destroyed(EntityID eid) {
@@ -528,6 +545,7 @@ public class ReplicatedTransactionHandler {
       syncdEntities.add(eid);
       syncdKeys.clear();
       syncing = null;
+      LOGGER.debug("Ending " + eid);
     }
     
     private void startConcurrency(EntityID eid, int concurrency) {
@@ -636,33 +654,50 @@ public class ReplicatedTransactionHandler {
       return false;
     }
   }  
-  
-  private static class ServerEntityRequestWithCompletion extends ServerEntityRequestImpl {
-    
-    private final Runnable onComplete;
+ 
+  public static class BasicServerEntityRequest implements ServerEntityRequest {
+    private final ServerEntityAction action;
+    private final ClientID source;
+    private final TransactionID transaction;
+    private final TransactionID oldest;
+    private final EntityDescriptor descriptor;
 
-    public ServerEntityRequestWithCompletion(EntityDescriptor descriptor, ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Runnable onComplete) {
-      // Anything created within this class represents a replicated message.
-      super(descriptor, action, transaction, oldest, src, requiresReplication, Optional.empty(), true);
-      this.onComplete = onComplete;
+    public BasicServerEntityRequest(ServerEntityAction action, ClientID source, TransactionID transaction, TransactionID oldest, EntityDescriptor descriptor) {
+      this.action = action;
+      this.source = source;
+      this.transaction = transaction;
+      this.oldest = oldest;
+      this.descriptor = descriptor;
     }
 
     @Override
-    public synchronized void complete() {
-      super.complete();
-      completion();
+    public ServerEntityAction getAction() {
+      return action;
     }
 
     @Override
-    public synchronized void complete(byte[] value) {
-      super.complete(value); //To change body of generated methods, choose Tools | Templates.
-      completion();
-   }
-    
-    private void completion() {
-      if (onComplete != null) {
-        onComplete.run();
-      }
+    public ClientID getNodeID() {
+      return source;
+    }
+
+    @Override
+    public TransactionID getTransaction() {
+      return transaction;
+    }
+
+    @Override
+    public TransactionID getOldestTransactionOnClient() {
+      return oldest;
+    }
+
+    @Override
+    public ClientDescriptor getSourceDescriptor() {
+      return new ClientDescriptorImpl(getNodeID(), this.descriptor);
+    }
+
+    @Override
+    public Set<NodeID> replicateTo(Set<NodeID> passives) {
+      return Collections.emptySet();
     }
   }
 }

@@ -19,15 +19,18 @@
 
 package com.tc.objectserver.api;
 
+import com.tc.entity.MessageCodecSupplier;
 import com.tc.object.EntityID;
 import java.util.Collection;
 
 import java.util.Optional;
+import org.terracotta.entity.EntityMessage;
 
 import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityException;
 
-public interface EntityManager extends StateDumpable {
+public interface EntityManager extends StateDumpable, MessageCodecSupplier {
 
   /**
    * The entity manager normally starts in a "passive" state but will be notified that it should become active when the server becomes active.
@@ -41,14 +44,14 @@ public interface EntityManager extends StateDumpable {
    * @param version the version of the entity on the calling client
    * @param consumerID the unique consumerID this entity uses when interacting with services
    */
-  void createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException;
-
+  ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException;
+ 
   /**
-   * Deletes an existing entity.
-   *
-   * @param id id of the entity to delete
+   * Once a ManagedEntity is destroyed it must be removed from the EntityManager manually. 
+   * @param id - EntityID
+   * @return true if the entity is removed
    */
-  void destroyEntity(EntityID id) throws EntityException;
+  boolean removeDestroyed(EntityID id);
 
   /**
    * Get the stub for the specified entity
@@ -79,4 +82,6 @@ public interface EntityManager extends StateDumpable {
    * @return the classloader used to create all entities
    */
   ClassLoader getEntityLoader();
+  
+  SyncMessageCodec<EntityMessage> getSyncMessageCodec(EntityID eid);
 }

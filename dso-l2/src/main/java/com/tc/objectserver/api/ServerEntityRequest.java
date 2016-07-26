@@ -43,16 +43,6 @@ public interface ServerEntityRequest {
    * The descriptor referring to the specific client-side object instance which issued the request.
    */
   ClientDescriptor getSourceDescriptor();
-
-  void complete();
-
-  void complete(byte[] value);
-
-  void failure(EntityException e);
-
-  void received();
-
-  void retired();
 /**
  * Provide the nodes which need to be replicated to for this request
  * @param passives current set of passive nodes

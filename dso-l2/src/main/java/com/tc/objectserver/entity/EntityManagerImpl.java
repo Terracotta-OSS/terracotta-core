@@ -21,7 +21,6 @@ package com.tc.objectserver.entity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumper;
-import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
@@ -40,6 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.SyncMessageCodec;
+import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.PermanentEntityException;
 
@@ -98,14 +100,13 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
+  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     ManagedEntity temp = new ManagedEntityImpl(id, version, noopLoopback, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
-    if (entities.putIfAbsent(id, temp) != null) {
-      throw new EntityAlreadyExistsException(id.getClassName(), id.getEntityName());
-    }
+    ManagedEntity exists = entities.putIfAbsent(id, temp);
+    return exists != null ? exists : temp;
   }
 
   @Override
@@ -120,14 +121,15 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void destroyEntity(EntityID id) throws EntityException {
+  public boolean removeDestroyed(EntityID id) {
+    boolean removed = false;
     ManagedEntity e = entities.get(id);
-    if (e != null && !e.canDelete()) {
-      throw new PermanentEntityException(id.getClassName(), id.getEntityName());
+    if (e != null && e.isDestroyed()) {
+      if (entities.remove(id) != null) {
+        removed = true;
+      }
     }
-    if (entities.remove(id) == null) {
-      throw new EntityNotFoundException(id.getClassName(), id.getEntityName());
-    }
+    return removed;
   }
 
   @Override
@@ -179,6 +181,24 @@ public class EntityManagerImpl implements EntityManager {
     }
     return service;
   }
+
+  @Override
+  public MessageCodec<EntityMessage, EntityResponse> getMessageCodec(EntityID eid) {
+    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
+    if (service != null) {
+      return service.getMessageCodec();
+    }
+    return null;
+  }
+
+  @Override
+  public SyncMessageCodec<EntityMessage> getSyncMessageCodec(EntityID eid) {
+    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
+    if (service != null) {
+      return service.getSyncMessageCodec();
+    }
+    return null;
+  }  
 
   @Override
   public String toString() {

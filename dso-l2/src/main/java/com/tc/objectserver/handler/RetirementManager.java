@@ -18,20 +18,20 @@
  */
 package com.tc.objectserver.handler;
 
+import com.tc.objectserver.api.Retiree;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 
-import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.util.Assert;
+import java.util.ArrayList;
 
 
 /**
@@ -58,11 +58,13 @@ public class RetirementManager {
     this.waitingForDeferredRegistration = new HashMap<EntityMessage, LogicalSequence>();
     this.mostRecentRegisteredToKey = new HashMap<Integer, LogicalSequence>();
   }
+  
+  public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
+    this.currentlyRunning.get(invokeMessage).updateWithRetiree(response);
+  }
 
-  public synchronized void registerWithMessage(ServerEntityRequest request, EntityMessage invokeMessage, int concurrencyKey) {
-    Assert.assertTrue(ServerEntityAction.INVOKE_ACTION == request.getAction());
-    
-    LogicalSequence newWrapper = new LogicalSequence(request, invokeMessage);
+  public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey) {    
+    LogicalSequence newWrapper = new LogicalSequence(invokeMessage);
     // if concurrencyKey is UNIVERSAL_KEY, then current request doesn't need to wait for other requests running on
     // UNIVERSAL_KEY
     if(concurrencyKey != ConcurrencyStrategy.UNIVERSAL_KEY) {
@@ -93,8 +95,8 @@ public class RetirementManager {
    * @param completedMessage
    * @return
    */
-  public synchronized List<ServerEntityRequest> retireForCompletion(EntityMessage completedMessage) {
-    List<ServerEntityRequest> toRetire = new Vector<ServerEntityRequest>();
+  public synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
+    List<Retiree> toRetire = new ArrayList<>();
     
     LogicalSequence completedRequest = this.currentlyRunning.remove(completedMessage);
     Assert.assertNotNull(completedRequest);
@@ -105,7 +107,7 @@ public class RetirementManager {
     return toRetire;
   }
 
-  private void traverseDependencyGraph(List<ServerEntityRequest> toRetire, LogicalSequence completedRequest) {
+  private void traverseDependencyGraph(List<Retiree> toRetire, LogicalSequence completedRequest) {
     Stack<LogicalSequence> requestStack = new Stack();
     requestStack.add(completedRequest);
 
@@ -118,7 +120,7 @@ public class RetirementManager {
         // See if we are still waiting for anyone.
         if (!currentRequest.isWaitingForExplicitDefer() && !currentRequest.isWaitingForPreviousInKey) {
           // We can retire.
-          toRetire.add(currentRequest.request);
+          toRetire.add(currentRequest.response);
           currentRequest.isRetired = true;
 
           // since current request is retired, we can unblock next request on same concurrency key if any
@@ -152,8 +154,8 @@ public class RetirementManager {
 
 
   private static class LogicalSequence {
-    // The request
-    public final ServerEntityRequest request;
+    // The thing to be retired
+    public Retiree response;
     // Corresponding entity message
     public final EntityMessage entityMessage;
     // The next message in the same key, which we will notify to retire when we retire.
@@ -169,9 +171,12 @@ public class RetirementManager {
 
     private Set<EntityMessage> entityMessagesDeferringRetirement = new HashSet<>();
     
-    public LogicalSequence(ServerEntityRequest request, EntityMessage entityMessage) {
-      this.request = request;
+    public LogicalSequence(EntityMessage entityMessage) {
       this.entityMessage = entityMessage;
+    }
+    
+    public void updateWithRetiree(Retiree response) {
+      this.response = response;
     }
 
     public void retirementDeferredBy(EntityMessage entityMessage) {

@@ -19,6 +19,7 @@
 
 package com.terracotta.connection.entity;
 
+import com.tc.exception.EntityReferencedException;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -43,6 +44,9 @@ import com.tc.util.Assert;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import org.mockito.Mockito;
+import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.EntityResponse;
 
 
 public class TerracottaEntityRefTest {
@@ -54,7 +58,6 @@ public class TerracottaEntityRefTest {
   public void testFetch() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
-    MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     Entity testEntity = mock(Entity.class);
     when(mockEntityClientService.create(any(EntityClientEndpoint.class))).thenReturn(testEntity);
@@ -64,9 +67,8 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     Entity entity1 = testRef.fetchEntity();
-    verify(mockMaintenanceModeService).readLockEntity(Entity.class, "TEST");
     verify(mockClientEntityManager).fetchEntity(eq(new EntityDescriptor(new EntityID(Entity.class.getName(), "TEST"), new ClientInstanceID(1), version)), any(MessageCodec.class), any(Runnable.class));
     Assert.assertNotNull(entity1);
     Assert.assertEquals(testEntity, entity1);
@@ -83,19 +85,15 @@ public class TerracottaEntityRefTest {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
     when(mockClientEntityManager.destroyEntity(any(EntityID.class), any(Long.class), any(Set.class))).thenReturn(mock(InvokeFuture.class));
-    MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
-    when(mockMaintenanceModeService.tryEnterMaintenanceMode(any(Class.class), any(String.class))).thenReturn(true);
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
     boolean didDestroy = testRef.tryDestroy();
     Assert.assertTrue(didDestroy);
-    // We also want to verify that the unlock was called.
-    verify(mockMaintenanceModeService).exitMaintenanceMode(any(Class.class), any(String.class));
   }
 
   @Test
@@ -106,20 +104,19 @@ public class TerracottaEntityRefTest {
   public void testTryDestroyFailure() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
-    MaintenanceModeService mockMaintenanceModeService = mock(MaintenanceModeService.class);
-    when(mockMaintenanceModeService.tryEnterMaintenanceMode(any(Class.class), any(String.class))).thenReturn(false);
+    InvokeFuture fut = mock(InvokeFuture.class);
+    when(fut.get()).thenThrow(EntityReferencedException.class);
+    when(mockClientEntityManager.destroyEntity(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(Set.class))).thenReturn(fut);
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, mockMaintenanceModeService, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
     boolean didDestroy = testRef.tryDestroy();
     Assert.assertFalse(didDestroy);
     // We should never have asked for the destroy to happen.
-    verify(mockClientEntityManager, never()).destroyEntity(any(EntityID.class), any(Long.class), any(Set.class));
-    // We also want to verify that the unlock was NOT called since the lock was never acquired.
-    verify(mockMaintenanceModeService, never()).exitMaintenanceMode(any(Class.class), any(String.class));
+    verify(mockClientEntityManager).destroyEntity(any(EntityID.class), any(Long.class), any(Set.class));
   }
 }

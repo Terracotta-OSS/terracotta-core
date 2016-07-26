@@ -241,6 +241,7 @@ import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.entity.ServerEntityFactory;
+import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
@@ -670,7 +671,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, voltronMessageSink, hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
@@ -878,7 +879,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
+        ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
+        ServerConfigurationContext.REQUEST_LOCK_STAGE  
     );
   }
   

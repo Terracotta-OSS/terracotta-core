@@ -64,7 +64,7 @@ public class ServerEntityRequestImplTest {
 
   @Test
   public void testCompleteInvoke() throws Exception {
-    ServerEntityRequest serverEntityRequest = buildInvoke();
+    ServerEntityRequestResponse serverEntityRequest = buildInvoke();
     
     byte[] value = new byte[0];
     serverEntityRequest.complete(value);
@@ -78,7 +78,7 @@ public class ServerEntityRequestImplTest {
   public void testCompleteCreate() throws Exception {
     boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
 
     serverEntityRequest.complete();
     serverEntityRequest.retired();
@@ -89,7 +89,7 @@ public class ServerEntityRequestImplTest {
 
   @Test
   public void testRequestedAcks() throws Exception {
-    ServerEntityRequest serverEntityRequest = buildInvoke();
+    ServerEntityRequestResponse serverEntityRequest = buildInvoke();
     
     verify(requestAckMessage, never()).send();
     serverEntityRequest.received();
@@ -106,9 +106,9 @@ public class ServerEntityRequestImplTest {
     return channel;
   }
 
-  private ServerEntityRequest buildInvoke() {
+  private ServerEntityRequestResponse buildInvoke() {
     boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    return new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
+    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
   }
 }

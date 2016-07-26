@@ -27,12 +27,16 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.StateDumper;
+import org.terracotta.exception.EntityException;
 
 
 public class PlatformEntity implements ManagedEntity {
@@ -59,41 +63,30 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void addInvokeRequest(ServerEntityRequest request, EntityMessage entityMessage, byte[] payload, int defaultKey) {
+  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Consumer<byte[]> complete, Consumer<EntityException> exception) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    Assert.assertNull(entityMessage);
-    processor.scheduleRequest(descriptor, request, payload, ()-> {
-      request.complete();
-      if (this.isActive) {
-        request.retired();
+    ActivePassiveAckWaiter waiter = processor.scheduleRequest(descriptor, request, payload, ()-> {complete.accept(payload.getRawPayload());}, payload.getConcurrency());    
+    return new SimpleCompletion() {
+      @Override
+      public void waitForCompletion() {
+        try {
+          waiter.waitForCompleted();
+        } catch (InterruptedException ie) {
+          throw new RuntimeException(ie);
+        }
       }
-    }, ConcurrencyStrategy.UNIVERSAL_KEY);
+    };
   }
-  
+
   @Override
-  public boolean canDelete() {
+  public boolean isDestroyed() {
     return false;
   }
 
   @Override
-  public void addSyncRequest(ServerEntityRequest sync, byte[] payload, int concurrencyKey) {
-    processor.scheduleRequest(descriptor, sync, payload, ()-> {
-      sync.complete();
-      if (this.isActive) {
-        sync.retired();
-      }
-    }, ConcurrencyStrategy.MANAGEMENT_KEY);
-  }
-
-  @Override
-  public void addLifecycleRequest(ServerEntityRequest create, byte[] arg) {
-    processor.scheduleRequest(descriptor, create, arg, ()-> {
-      create.complete();
-      if (this.isActive) {
-        create.retired();
-      }
-    }, ConcurrencyStrategy.MANAGEMENT_KEY);
+  public boolean isActive() {
+    return isActive;
   }
 
   @Override

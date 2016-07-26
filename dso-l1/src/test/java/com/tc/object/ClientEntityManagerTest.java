@@ -24,6 +24,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.entity.MessageCodecSupplier;
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -544,6 +545,12 @@ public class ClientEntityManagerTest extends TestCase {
     public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
       this.transactionID = transactionID;
     }
+
+    @Override
+    public void setMessageCodecSupplier(MessageCodecSupplier supplier) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     @Override
     public EntityMessage getEntityMessage() {
       throw new UnsupportedOperationException();

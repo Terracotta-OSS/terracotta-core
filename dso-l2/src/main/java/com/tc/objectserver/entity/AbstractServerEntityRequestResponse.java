@@ -26,8 +26,10 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.util.Assert;
 import java.util.Collections;
 
@@ -37,7 +39,7 @@ import java.util.Set;
 import org.terracotta.exception.EntityException;
 
 
-public abstract class AbstractServerEntityRequest implements ServerEntityRequest {
+public abstract class AbstractServerEntityRequestResponse implements ServerEntityRequest, ServerEntityResponse, Retiree {
   private final ServerEntityAction action;
   private final TransactionID transaction;
   private final TransactionID oldest;
@@ -47,7 +49,7 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
   private boolean isComplete = false;
   private boolean isRetired = false;
 
-  public AbstractServerEntityRequest(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
+  public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
     this.action = action;
     this.transaction = transaction;
     this.oldest = oldest;
@@ -117,7 +119,6 @@ public abstract class AbstractServerEntityRequest implements ServerEntityRequest
         case CREATE_ENTITY:
         case DESTROY_ENTITY:
         case RELEASE_ENTITY:
-        case DOES_EXIST:
         case FETCH_ENTITY:
           // In these cases, we just return an empty success to acknowledge that they completed.
           actionResponse.setSuccess(transaction, new byte[0]);

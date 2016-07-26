@@ -29,7 +29,6 @@ import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
 import com.tc.object.locks.ClientLockManager;
-import com.terracotta.connection.entity.MaintenanceModeService;
 import com.terracotta.connection.entity.TerracottaEntityRef;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class TerracottaConnection implements Connection {
   private final ClientEntityManager entityManager;
-  private final MaintenanceModeService maintenanceModeService;
   private final Runnable shutdown;
   private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> cachedEntityServices = new ConcurrentHashMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
   private final AtomicLong  clientIds = new AtomicLong(1); // initialize to 1 because zero client is a special case for uninitialized
@@ -48,7 +46,6 @@ public class TerracottaConnection implements Connection {
 
   public TerracottaConnection(ClientEntityManager entityManager, ClientLockManager clientLockManager, Runnable shutdown) {
     this.entityManager = entityManager;
-    this.maintenanceModeService = new MaintenanceModeService(clientLockManager);
     this.shutdown = shutdown;
   }
 
@@ -61,7 +58,7 @@ public class TerracottaConnection implements Connection {
       // We failed to find a provider for this class.
       throw new EntityNotProvidedException(cls.getName(), name);
     }
-    return new TerracottaEntityRef<T, C>(this.entityManager, this.maintenanceModeService, cls, version, name, service, clientIds);
+    return new TerracottaEntityRef<T, C>(this.entityManager, cls, version, name, service, clientIds);
   }
 
   private <T extends Entity> EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse> getEntityService(Class<T> entityClass) {

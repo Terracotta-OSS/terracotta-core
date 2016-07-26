@@ -43,7 +43,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 
   public enum ReplicationType {
     NOOP,
-    DOES_EXIST,
     CREATE_ENTITY,
     RECONFIGURE_ENTITY,
     INVOKE_ACTION,

@@ -91,7 +91,6 @@ public class ReplicationSenderTest {
     switch (type) {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
-      case DOES_EXIST:
       case INVOKE_ACTION:
       case NOOP:
       case RECONFIGURE_ENTITY:

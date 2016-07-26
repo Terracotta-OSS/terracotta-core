@@ -210,7 +210,12 @@ public class StateManagerImpl implements StateManager {
     logger.debug("moving to passive ready " + state + " " + winningEnrollment);
     if (state == START_STATE) {
       setActiveNodeID(winningEnrollment.getNodeID());
-      state = PASSIVE_UNINITIALIZED;
+      state = (startState == null) ? PASSIVE_UNINITIALIZED : startState;
+      if (!state.equals(PASSIVE_STANDBY) && !state.equals(PASSIVE_UNINITIALIZED)) {
+// TODO:  make sure this is the proper way to handle this.
+        logger.fatal("Passive only partially synced when active disappeared.  Restarting");
+        throw new ZapDirtyDbServerNodeException("Passive only partially synced when active disappeared.  Restarting"); 
+      }
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
       stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state));

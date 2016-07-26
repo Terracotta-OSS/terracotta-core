@@ -23,6 +23,8 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -35,9 +37,11 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.entity.ServerEntityRequestImpl;
+import com.tc.objectserver.entity.MessagePayload;
+import com.tc.objectserver.api.Retiree;
+import com.tc.objectserver.api.ServerEntityResponse;
+import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
@@ -49,14 +53,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
-import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodecException;
+import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 
 
 public class ProcessTransactionHandler {
+  private static final TCLogger LOGGER = TCLogging.getLogger(ProcessTransactionHandler.class);
+  
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
   
@@ -80,11 +87,12 @@ public class ProcessTransactionHandler {
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
       EntityMessage entityMessage = message.getEntityMessage();
       byte[] extendedData = message.getExtendedData();
+
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, entityMessage, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage), transactionID, doesRequireReplication, oldestTransactionOnClient);
     }
 
     @Override
@@ -133,49 +141,15 @@ public class ProcessTransactionHandler {
   }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
-  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, EntityMessage entityMessage, byte[] extendedData, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
+  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
-    ManagedEntity entity = null;
-    boolean didAlreadyHandle = false;
-    byte[] cachedAlreadyHandledResult = null;
-    EntityException entityException = null;
-    try {
-      // The create/destroy cases are passed to the entityManager.
-      if (ServerEntityAction.CREATE_ENTITY == action) {
-        long clientSideVersion = descriptor.getClientSideVersion();
-        long consumerID = this.entityPersistor.getNextConsumerID();
-        // Call the common helper to either create the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-        didAlreadyHandle = EntityExistenceHelpers.createEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, consumerID, extendedData, !sourceNodeID.isNull());
-      }
-      if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
-        long clientSideVersion = descriptor.getClientSideVersion();
-        cachedAlreadyHandledResult = EntityExistenceHelpers.reconfigureEntityReturnCachedResult(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, clientSideVersion, extendedData);
-        if (null != cachedAlreadyHandledResult) {
-          didAlreadyHandle = true;
-        }
-      }
-      // At this point, we can now look up the actual managed entity.
-      Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
-      if (optionalEntity.isPresent()) {
-        entity = optionalEntity.get();
-      }
-      if (ServerEntityAction.DESTROY_ENTITY == action) {
-        // Call the common helper to either destroy the entity on our behalf or succeed/fail, as last time, if this is a re-send.
-        didAlreadyHandle = EntityExistenceHelpers.destroyEntityReturnWasCached(this.entityPersistor, this.entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
-      }
-    } catch (EntityException e) {
-      entityException = e;
-    } catch (Throwable t) {
-      // Wrap the exception.
-      throw Assert.failure("Unexpected exception in entity - CRASHING", t);
-    }
     
     // This is active-side processing so this is never a replicated message.
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequest serverEntityRequest = new ServerEntityRequestImpl(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID), isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID), isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -191,65 +165,99 @@ public class ProcessTransactionHandler {
       }
     }
     serverEntityRequest.received();
-    if (didAlreadyHandle) {
-      // First, handle the case where we want to short-circuit a success which was satisfied as a known re-send.
-      if (null == cachedAlreadyHandledResult) {
-        // This means the result has no return value;
-        serverEntityRequest.complete();
-        serverEntityRequest.retired();
-      } else {
-        // Pass back the cached result.
-        serverEntityRequest.complete(cachedAlreadyHandledResult);
-        serverEntityRequest.retired();
+    if (ServerEntityAction.CREATE_ENTITY == action) {
+      // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
+      long consumerID = this.entityPersistor.getNextConsumerID();
+      serverEntityRequest.setAutoRetire();
+      try {
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull());
+        temp.addRequestMessage(serverEntityRequest, entityMessage,
+          (result) -> {
+            if (!sourceNodeID.isNull()) {
+              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true, entityMessage.getRawPayload());
+              serverEntityRequest.complete();
+            } else {
+              entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, true, entityMessage.getRawPayload());
+              serverEntityRequest.complete();
+            }
+          }, (exception) -> {
+            entityManager.removeDestroyed(entityID);
+            entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+            serverEntityRequest.failure(exception);
+          });
+      } catch (EntityException ee) {
+        entityManager.removeDestroyed(entityID);
+        if (!sourceNodeID.isNull()) {
+          entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
+        }
+        serverEntityRequest.failure(ee);
       }
-    } else if (null != entityException) {
-      // Either this was an error found in the record of a re-send or a fail-fast scenario.
-      serverEntityRequest.failure(entityException);
-      serverEntityRequest.retired();
     } else {
-      // If no exception has been fired, do any special handling required by the message type.
-      // NOTE:  We need to handle DOES_EXIST calls, specially, since they might have been re-sent.  It also doesn't interact with the entity so we don't want to add an invoke for it.
-      if (ServerEntityAction.DOES_EXIST == action) {
-        // Call the common helper to check the current state of what entities exist or which ones did exist, the first time, if this is a re-send.
-        boolean doesExist = EntityExistenceHelpers.doesExist(this.entityPersistor, sourceNodeID, transactionID, oldestTransactionOnClient, entityID);
-        if (doesExist) {
-          // Even though it may not currently exist, if this is a re-send, we will give whatever answer we gave, the first time.
-          serverEntityRequest.complete();
-          serverEntityRequest.retired();
+      ManagedEntity entity = null;
+      try {
+        // At this point, we can now look up the actual managed entity.
+        Optional<ManagedEntity> optionalEntity = entityManager.getEntity(entityID, descriptor.getClientSideVersion());
+        if (optionalEntity.isPresent()) {
+          entity = optionalEntity.get();
         } else {
-          // Even though the entity may currently exist, we will mimic the response we gave, initially.
-          serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
-          serverEntityRequest.retired();
+          LOGGER.debug("entity not found " + serverEntityRequest.getAction() + " " + entityID.getClassName() + ", " + entityID.getEntityName());
+          throw new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName());
         }
-      } else {
-        // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-        if (null != entity) {
-          // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
-          if (ServerEntityAction.INVOKE_ACTION == action) {
-            try {
-              entity.addInvokeRequest(serverEntityRequest, entityMessage, extendedData, ConcurrencyStrategy.MANAGEMENT_KEY);
-            } catch (EntityUserException e) {
-              serverEntityRequest.failure(e);
-              serverEntityRequest.retired();
-            }
-          } else if (ServerEntityAction.NOOP == action) {
-            try {
-              entity.addInvokeRequest(serverEntityRequest, null, extendedData, ConcurrencyStrategy.UNIVERSAL_KEY);
-            } catch (EntityUserException e) {
-              serverEntityRequest.failure(e);
-              serverEntityRequest.retired();
-            }
-          } else {
-            entity.addLifecycleRequest(serverEntityRequest, extendedData);
+        // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
+        if (ServerEntityAction.INVOKE_ACTION == action) {
+          ManagedEntity locked = entity;
+          try {
+            EntityMessage message = entityMessage.decodeRawMessage(entity.getCodec());
+            locked.addRequestMessage(serverEntityRequest, entityMessage, (result)-> {
+              serverEntityRequest.complete(result);
+              locked.getRetirementManager().updateWithRetiree(message, serverEntityRequest);
+              List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
+              for (Retiree toRetire : readyToRetire) {
+                toRetire.retired();
+              }
+            }, (fail)-> {
+              serverEntityRequest.failure(fail);
+              locked.getRetirementManager().updateWithRetiree(message, serverEntityRequest);
+              List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
+              for (Retiree toRetire : readyToRetire) {
+                toRetire.retired();
+              }
+            });
+          } catch (MessageCodecException codec) {
+            serverEntityRequest.failure(new EntityUserException(locked.getID().getClassName(), locked.getID().getEntityName(), codec));
+            serverEntityRequest.retired();
           }
+        } else if (ServerEntityAction.RECONFIGURE_ENTITY == action) {
+          serverEntityRequest.setAutoRetire();
+          entity.addRequestMessage(serverEntityRequest, entityMessage,
+            (result)-> {
+              EntityExistenceHelpers.recordReconfigureEntity(entityPersistor, entityManager, serverEntityRequest.getNodeID(), serverEntityRequest.getTransaction(), serverEntityRequest.getOldestTransactionOnClient(), descriptor.getEntityID(), descriptor.getClientSideVersion(), entityMessage.getRawPayload(), null);
+              serverEntityRequest.complete(result);
+            }, (exception) -> {  
+              EntityExistenceHelpers.recordReconfigureEntity(entityPersistor, entityManager, serverEntityRequest.getNodeID(), serverEntityRequest.getTransaction(), serverEntityRequest.getOldestTransactionOnClient(), descriptor.getEntityID(), descriptor.getClientSideVersion(), entityMessage.getRawPayload(), exception);
+              serverEntityRequest.failure(exception);
+            });
+        }  else if (ServerEntityAction.DESTROY_ENTITY == action) {
+          serverEntityRequest.setAutoRetire();
+          entity.addRequestMessage(serverEntityRequest, entityMessage,
+            (result) -> {
+              EntityExistenceHelpers.recordDestroyEntity(entityPersistor, entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, null);
+              serverEntityRequest.complete();
+            }, (exception) -> {
+              EntityExistenceHelpers.recordDestroyEntity(entityPersistor, entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, exception);
+              serverEntityRequest.failure(exception);
+            });
         } else {
-          serverEntityRequest.failure(new EntityNotFoundException(entityID.getClassName(), entityID.getEntityName()));
-          serverEntityRequest.retired();
-        }
+          serverEntityRequest.setAutoRetire();
+          entity.addRequestMessage(serverEntityRequest, entityMessage, serverEntityRequest::complete, serverEntityRequest::failure);
+        }  
+      } catch (EntityException ee) {
+        serverEntityRequest.failure(ee);
+        serverEntityRequest.retired();
       }
     }
   }
-
+  
   public void loadExistingEntities() {
     for(EntityData.Value entityValue : this.entityPersistor.loadEntityData()) {
       Assert.assertTrue(entityValue.version > 0);
@@ -267,13 +275,53 @@ public class ProcessTransactionHandler {
   public void handleResentMessage(ResendVoltronEntityMessage resentMessage) {
     int index = this.transactionOrderPersistor.getIndexToReplay(resentMessage.getSource(), resentMessage.getTransactionID());
     if (index >= 0) {
-      this.resendReplayList.insert(index, resentMessage);
+      boolean cached = false;
+      byte[] result = null;
+      if (resentMessage.getVoltronType() == VoltronEntityMessage.Type.CREATE_ENTITY ||
+          resentMessage.getVoltronType() == VoltronEntityMessage.Type.DESTROY_ENTITY || 
+          resentMessage.getVoltronType() == VoltronEntityMessage.Type.RECONFIGURE_ENTITY) {
+        try {
+          switch (resentMessage.getVoltronType()) {
+            case CREATE_ENTITY:
+              cached = entityPersistor.wasEntityCreatedInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+              break;
+            case DESTROY_ENTITY:
+              cached = entityPersistor.wasEntityDestroyedInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+              break;
+            case RECONFIGURE_ENTITY:
+              result = entityPersistor.reconfiguredResultInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+              if (result != null) {
+                cached = true;
+              }
+              break;
+          }
+        } catch (EntityException ee) {
+          ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
+          response.received();
+          response.failure(ee);
+          response.retired();
+          cached = true;
+        }
+      }
+      if (!cached) {
+        this.resendReplayList.insert(index, resentMessage);
+      } else {
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
+        response.received();
+        if (result != null) {
+          response.complete(result);
+        } else {
+          response.complete();
+        }
+        response.retired();
+      }          
     } else {
       this.resendNewList.add(resentMessage);
     }
   }
   
   private void processAllResends() {
+ //   TODO:  investigate the need to fold FETCH and RELEASE resends on top of each other
     if (this.resendReplayList == null && this.resendNewList == null) {
       return;
     }
@@ -310,11 +358,12 @@ public class ProcessTransactionHandler {
     EntityMessage entityMessage = message.getEntityMessage();
     Assert.assertNull(entityMessage);
     byte[] extendedData = message.getExtendedData();
+
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, entityMessage, extendedData, transactionID, doesRequireReplication, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage), transactionID, doesRequireReplication, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
@@ -326,9 +375,6 @@ public class ProcessTransactionHandler {
         break;
       case RELEASE_ENTITY:
         action = ServerEntityAction.RELEASE_ENTITY;
-        break;
-      case DOES_EXIST:
-        action = ServerEntityAction.DOES_EXIST;
         break;
       case CREATE_ENTITY:
         action = ServerEntityAction.CREATE_ENTITY;

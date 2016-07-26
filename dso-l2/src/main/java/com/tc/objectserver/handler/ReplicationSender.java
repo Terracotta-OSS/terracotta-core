@@ -165,7 +165,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     }
     switch (msg.getReplicationType()) {
       case NOOP:
-      case DOES_EXIST:
       case RELEASE_ENTITY:
         return false;
       default:
@@ -250,6 +249,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               destroyed.remove(eid);
               return true;
             } else if (eid.equals(syncingID)) {
+              logger.debug("skipping create due to syncing id " + syncingID);
 //  this entity is being or has been replicated, don't create it on the passive
               return false;
             } else {

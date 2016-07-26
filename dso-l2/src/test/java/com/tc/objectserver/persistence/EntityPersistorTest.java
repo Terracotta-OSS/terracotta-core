@@ -170,7 +170,6 @@ public class EntityPersistorTest extends TCTestCase {
     // Observe that re-issuing these commands yields the same results, even if they would be interpreted differently, if not part of the journal.
     Assert.assertTrue(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy2));
     Assert.assertTrue(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy1));
-    Assert.assertTrue(this.entityPersistor.containsEntity(this.client, doesExist2, oldestTransactionOnClient, id));
   }
 
   /**

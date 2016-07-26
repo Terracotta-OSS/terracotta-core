@@ -59,32 +59,8 @@ public class RequestProcessor implements StateChangeListener {
     return passives.passives();
   }
 
-  public Future<Void> scheduleSync(PassiveSyncMessage msg, NodeID passive) {
-    ActivePassiveAckWaiter waiter = passives.replicateMessage(msg, Collections.singleton(passive));
-    // We currently don't expose the waiter to the higher levels so just emulate the waitForCompleted behaviour with a Future<Void>.
-    return new Future<Void>() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        throw new UnsupportedOperationException("Cannot cancel sync");
-      }
-      @Override
-      public boolean isCancelled() {
-        return false;
-      }
-      @Override
-      public boolean isDone() {
-        return waiter.isCompleted();
-      }
-      @Override
-      public Void get() throws InterruptedException, ExecutionException {
-        waiter.waitForCompleted();
-        return null;
-      }
-      @Override
-      public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        throw new UnsupportedOperationException("No timed get()");
-      }
-    };
+  public ActivePassiveAckWaiter scheduleSync(PassiveSyncMessage msg, NodeID passive) {
+    return passives.replicateMessage(msg, Collections.singleton(passive));
   }
   
   public void setReplication(PassiveReplicationBroker passives) {
@@ -98,52 +74,22 @@ public class RequestProcessor implements StateChangeListener {
   }
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
-  public synchronized Future<Void> scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, byte[] payload, Runnable call, int concurrencyKey) {
+  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
+            request.getTransaction(), request.getOldestTransactionOnClient(), payload.getRawPayload(), concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);
-    return new Future<Void>() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        return false;
-      }
-
-      @Override
-      public boolean isCancelled() {
-        return false;
-      }
-
-      @Override
-      public boolean isDone() {
-        return entityRequest.isDone();
-      }
-
-      @Override
-      public Void get() throws InterruptedException, ExecutionException {
-        entityRequest.waitForCompletion(0, TimeUnit.MILLISECONDS);
-        return null;
-      }
-
-      @Override
-      public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        entityRequest.waitForCompletion(timeout, unit);
-        return null;
-      }
-    };
+    return token;
   }
   
   private static ReplicationMessage createReplicationMessage(EntityDescriptor id, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
     ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
     switch (type) {
-      case DOES_EXIST:
-        actionCode = ReplicationMessage.ReplicationType.DOES_EXIST;
-        break;
       case CREATE_ENTITY:
         actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
         break;
@@ -180,7 +126,7 @@ public class RequestProcessor implements StateChangeListener {
     return ReplicationMessage.createReplicatedMessage(id, src, tid, oldest, actionCode, payload, concurrency);
   }
   
-  private static class EntityRequest implements MultiThreadedEventContext, Runnable {
+  public static class EntityRequest implements MultiThreadedEventContext, Runnable {
     private final EntityDescriptor entity;
     private final Runnable invoke;
     private final ActivePassiveAckWaiter replicationWaiter;
@@ -240,17 +186,11 @@ public class RequestProcessor implements StateChangeListener {
       return done;
     }
     
-    public synchronized void waitForCompletion(long timeout, TimeUnit units) {
-      boolean interrupted = false;
-      while (!done) {
-        try {
-          this.wait(units.toMillis(timeout));
-        } catch (InterruptedException ie) {
-          interrupted = true;
-        }
-      }
-      if (interrupted) {
-        Thread.currentThread().interrupt();
+    public void waitForPassives() {
+      try {
+        this.replicationWaiter.waitForCompleted();
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
       }
     }
   }
