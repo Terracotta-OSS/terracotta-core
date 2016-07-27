@@ -372,51 +372,6 @@ public class ServerProcess {
         Assert.unexpected(ex);
       }
     }
-    
-    //  NOT currently used but may be valuable for some platforms
-    private int attemptPSScrape() throws InterruptedException, IOException {     
-      // We will look up our eyecatcher
-      harnessLogger.output("killing unix process");
-      Process ps = startStandardProcess("ps", "-eww", "-o", "pid,command");
-      BufferedReader outputReader = new BufferedReader(new InputStreamReader(ps.getInputStream()));
-      String line = null;
-      String s = null;
-      while (null != (s = outputReader.readLine())) {
-        harnessLogger.output(s);
-        if ((-1 != s.indexOf("TCServerMain")) && (-1 != s.indexOf(ServerProcess.this.eyeCatcher))) {
-          Assert.assertTrue(null == line);
-          line = s;
-        }
-      }
-      int result = ps.waitFor();
-      Assert.assertTrue(0 == result);
-
-      // Note that it is possible that the line isn't there if the process already terminated.
-      if (null != line) {
-        harnessLogger.output("found line:\n" + line);
-
-        String parts[] = line.split(" ");
-        int pid = 0;
-        for (int i = 0; i < parts.length; ++i) {
-          String part = parts[i];
-          if (part.length() > 0) {
-            pid = Integer.parseInt(part);
-            break;
-          }
-        }
-        Assert.assertTrue(0 != pid);
-
-        Process killProcess = startStandardProcess("kill", "-9", String.valueOf(pid));
-        // We don't care about the output but we want to make sure that the process can be terminated.
-        discardProcessOutput(killProcess);
-        result = killProcess.waitFor();
-        Assert.assertTrue(0 == result);
-        harnessLogger.output("killed server with PID " + pid);
-      } else {
-        harnessLogger.output("did not find line; process not killed");
-      }
-      return result;
-    }
 
     private void killProcessUnix(long pid) throws InterruptedException, IOException {        
       Process killProcess = startStandardProcess("kill", String.valueOf(pid));
