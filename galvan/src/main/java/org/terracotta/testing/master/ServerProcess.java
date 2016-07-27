@@ -119,6 +119,9 @@ public class ServerProcess {
     if (null == javaOpts) {
       javaOpts = "";
     }
+    // Note that we currently want to scale down our heap to 128M since our tests are simple.
+    // TODO:  Find a way to expose this to the test being run.
+    javaOpts += " -Xms128m -Xms128m";
     if (this.debugPort > 0) {
       // Set up the client to block while waiting for connection.
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;

@@ -185,6 +185,10 @@ public class ClientRunner extends Thread {
   private String[] buildCommandLine(String debugArg) {
     List<String> fullCommandLine = new Vector<String>();
     fullCommandLine.add("java");
+    // Note that we will currently set the clients at 64m.
+    // TODO:  Find a way to expose the heap sizing options to the test configuration.
+    fullCommandLine.add("-Xms64m");
+    fullCommandLine.add("-Xmx64m");
     if (null != debugArg) {
       fullCommandLine.add("-Xdebug");
       fullCommandLine.add(debugArg);
