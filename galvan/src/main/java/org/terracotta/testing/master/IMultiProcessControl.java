@@ -26,8 +26,6 @@ package org.terracotta.testing.master;
 public interface IMultiProcessControl {
   public void synchronizeClient();
 
-  public void restartActive();
-
   public void terminateActive();
 
   public void startOneServer();

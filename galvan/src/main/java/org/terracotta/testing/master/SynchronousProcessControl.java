@@ -52,42 +52,6 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public synchronized void restartActive() {
-    this.logger.output(">>> restartActive");
-    verifyNotShutdown();
-    // First, make sure that there is an active.
-    internalWaitForActive();
-    // We MUST now have an active.
-    Assert.assertTrue(null != this.activeServer);
-    
-    // Remove the active.
-    ServerProcess victim = this.activeServer;
-    this.activeServer = null;
-    // Stop it.
-    try {
-      int ret = victim.stop();
-      this.logger.output("Stopped server, for restart, returning: " + ret);
-    } catch (InterruptedException e) {
-      // We can't leave a consistent state if interrupted at this point.
-      Assert.unexpected(e);
-    }
-    // Return the process to its installation and get a new one.
-    ServerInstallation underlyingInstallation = victim.getUnderlyingInstallation();
-    underlyingInstallation.retireProcess(victim);
-    victim = null;
-    ServerProcess freshProcess = underlyingInstallation.createNewProcess(this.stateManager);
-    
-    // Start it.
-    long pid = freshProcess.start();
-    this.logger.output("Server restarted with PID: " + pid);
-    // Enqueue it onto the unknown list.
-    this.unknownServers.add(freshProcess);
-    
-    // At this point, we don't know the active server.
-    this.logger.output("<<< restartActive");
-  }
-
-  @Override
   public void terminateActive() {
     this.logger.output(">>> terminateActive");
     verifyNotShutdown();
