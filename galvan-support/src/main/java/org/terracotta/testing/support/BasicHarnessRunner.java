@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.support;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.terracotta.testing.api.ITestMaster;
@@ -32,7 +31,7 @@ public class BasicHarnessRunner extends AbstractHarnessRunner<BasicTestClusterCo
   }
 
   @Override
-  protected boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<BasicTestClusterConfiguration> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
+  protected boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<BasicTestClusterConfiguration> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, InterruptedException {
     BasicHarnessEntry harness = new BasicHarnessEntry();
     return harness.runTestHarness(environmentOptions, masterClass, debugOptions, verboseManager);
   }

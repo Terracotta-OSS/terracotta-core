@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
@@ -26,7 +25,7 @@ import org.terracotta.testing.logging.VerboseManager;
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
   @Override
-  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
+  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, InterruptedException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
