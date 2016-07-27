@@ -60,4 +60,9 @@ public class SimpleEventingStream extends OutputStream {
     }
     this.nextConsumer.write(b);
   }
+
+  @Override
+  public void close() throws IOException {
+    this.nextConsumer.close();
+  }
 }
