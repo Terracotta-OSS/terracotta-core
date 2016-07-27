@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
@@ -32,7 +31,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   public static final int SERVER_START_PORT = 9000;  // leave this here for legacy
   private final PortChooser chooser = new PortChooser();
   
-  public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
+  public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, InterruptedException {
     // Before anything, set the default exception handler - since we create threads to manage the sub-processes.
     Thread.setDefaultUncaughtExceptionHandler(new GalvanExceptionHandler());
     
@@ -56,7 +55,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     return chooser.chooseRandomPorts(number);
   }
 
-  private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
+  private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, InterruptedException {
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
     
@@ -112,7 +111,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
   }
 
   // Run the one configuration.
-  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, InterruptedException;
 
 
   /**

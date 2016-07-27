@@ -16,7 +16,6 @@
 package org.terracotta.testing.support;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.junit.runner.Description;
@@ -95,8 +94,6 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
         // This was a failure without any other information so just create a generic exception.
         error = new Exception("Test failed without exception");
       }
-    } catch (FileNotFoundException e) {
-      error = e;
     } catch (IOException e) {
       error = e;
     } catch (InterruptedException e) {
@@ -127,5 +124,5 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     return result;
   }
 
-  protected abstract boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException;
+  protected abstract boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, InterruptedException;
 }
