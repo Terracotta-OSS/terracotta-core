@@ -32,8 +32,6 @@ public class ServerInstallation {
   private final String serverName;
   private final File serverWorkingDirectory;
   private final int debugPort;
-  private FileOutputStream stdoutLog;
-  private FileOutputStream stderrLog;
   private boolean configWritten;
   private ServerProcess outstandingProcess;
 
@@ -58,22 +56,6 @@ public class ServerInstallation {
     this.configWritten = true;
   }
 
-  public void openStandardLogFiles() throws FileNotFoundException {
-    Assert.assertNull(this.stdoutLog);
-    Assert.assertNull(this.stderrLog);
-    
-    // We want to create an output log file for both STDOUT and STDERR.
-    this.stdoutLog = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"));
-    this.stderrLog = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"));
-  }
-
-  public void closeStandardLogFiles() throws IOException {
-    this.stdoutLog.close();
-    this.stdoutLog = null;
-    this.stderrLog.close();
-    this.stderrLog = null;
-  }
-
   /**
    * @param stateManager The state manager the inferior process can use to interact with the harness
    * 
@@ -82,15 +64,19 @@ public class ServerInstallation {
   public ServerProcess createNewProcess(ITestStateManager stateManager) {
     // Assert that the config has been written to the installation (so it is complete).
     Assert.assertTrue(this.configWritten);
-    // Assert that the log files have been opened.
-    Assert.assertNotNull(this.stdoutLog);
     // Assert that there isn't already a process running in this location.
     Assert.assertNull(this.outstandingProcess);
     
     // Create the VerboseManager for the instance.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + this.serverName + "]");
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(serverVerboseManager, stateManager, this, this.serverName, this.serverWorkingDirectory, this.stdoutLog, this.stderrLog, this.debugPort);
+    ServerProcess process = new ServerProcess(serverVerboseManager, stateManager, this, this.serverName, this.serverWorkingDirectory, this.debugPort);
+    try {
+      process.openLogs();
+    } catch (FileNotFoundException e) {
+      // Temporary - will be moved elsewhere during refactoring.
+      Assert.unexpected(e);
+    }
     this.outstandingProcess = process;
     return process;
   }
@@ -98,5 +84,6 @@ public class ServerInstallation {
   public void retireProcess(ServerProcess process) {
     Assert.assertTrue(this.outstandingProcess == process);
     this.outstandingProcess = null;
+    process.closeLogs();
   }
 }

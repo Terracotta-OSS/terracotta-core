@@ -17,6 +17,8 @@ package org.terracotta.testing.master;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -46,26 +48,25 @@ public class ServerProcess {
     PASSIVE,
   };
   private final ContextualLogger harnessLogger;
+  private final ContextualLogger serverLogger;
   private final ServerInstallation underlyingInstallation;
   private final String serverName;
   private final File serverWorkingDirectory;
-  private final OutputStream stdoutLog;
-  private final OutputStream stderrLog;
+  private OutputStream stdoutLog;
+  private OutputStream stderrLog;
   private ServerState state;
   private final ExitWaiter exitWaiter;
   private final int debugPort;
   private final String eyeCatcher;
 
-  public ServerProcess(VerboseManager serverVerboseManager, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, OutputStream stdoutLog, OutputStream stderrLog, int debugPort) {
+  public ServerProcess(VerboseManager serverVerboseManager, ITestStateManager stateManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, int debugPort) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = serverVerboseManager.createHarnessLogger();
-    ContextualLogger serverLogger = serverVerboseManager.createServerLogger();
+    this.serverLogger = serverVerboseManager.createServerLogger();
     
     this.underlyingInstallation = underlyingInstallation;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
-    this.stdoutLog = new VerboseOutputStream(stdoutLog, serverLogger, false);
-    this.stderrLog = new VerboseOutputStream(stderrLog, serverLogger, true);
     // Start in the unknown state and we will wait for the stream scraping to determine our actual state.
     this.state = ServerState.UNKNOWN;
     // Because a server can crash at any time, not just when we are expecting it to, we need a thread to wait on this operation and notify stateManager if the
@@ -79,6 +80,37 @@ public class ServerProcess {
 
   public ServerInstallation getUnderlyingInstallation() {
     return this.underlyingInstallation;
+  }
+
+  public void openLogs() throws FileNotFoundException {
+    Assert.assertNull(this.stdoutLog);
+    Assert.assertNull(this.stderrLog);
+    
+    // rawOut closed by stdoutLog
+    @SuppressWarnings("resource")
+    FileOutputStream rawOut = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"));
+    // rawErr closed by stderrLog
+    @SuppressWarnings("resource")
+    FileOutputStream rawErr = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"));
+    // We also want to stream output going to these files to the server's logger.
+    this.stdoutLog = new VerboseOutputStream(rawOut, this.serverLogger, false);
+    this.stderrLog = new VerboseOutputStream(rawErr, this.serverLogger, true);
+
+  }
+
+  public void closeLogs() {
+    Assert.assertNotNull(this.stdoutLog);
+    Assert.assertNotNull(this.stderrLog);
+    
+    try {
+      this.stdoutLog.close();
+      this.stdoutLog = null;
+      this.stderrLog.close();
+      this.stderrLog = null;
+    } catch (IOException e) {
+      // Not expected in this framework.
+      Assert.unexpected(e);
+    }
   }
 
   /**

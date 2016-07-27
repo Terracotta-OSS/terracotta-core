@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.IOException;
 import java.util.EmptyStackException;
 import java.util.List;
 import java.util.Stack;
@@ -179,14 +178,6 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     // Retire it.
     ServerInstallation underlyingInstallation = server.getUnderlyingInstallation();
     underlyingInstallation.retireProcess(server);
-    
-    // Close its logs.
-    try {
-      underlyingInstallation.closeStandardLogFiles();
-    } catch (IOException e) {
-      // We don't expect this IOException on closing the logs.
-      Assert.unexpected(e);
-    }
   }
 
   private void internalWaitForActive() {

@@ -51,7 +51,6 @@ public class StripeInstaller {
     String installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
     FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
     ServerInstallation installation = new ServerInstallation(this.stripeVerboseManager, serverName, new File(installPath), debugPort);
-    installation.openStandardLogFiles();
     this.installedServers.add(installation);
   }
   
