@@ -135,41 +135,14 @@ public class ServerProcess {
     serverBus.on(passiveReadyName, new ActivePassiveEventWaiter(ServerState.PASSIVE));
     
     // Check to see if we need to explicitly set the JAVA_HOME environment variable or it if already exists.
-    String javaHome = System.getenv("JAVA_HOME");
-    if (null == javaHome) {
-      // Use the existing JRE path from the java.home in the current JVM instance as the JAVA_HOME.
-      javaHome = System.getProperty("java.home");
-      // This better exist.
-      Assert.assertNotNull(javaHome);
-      // Log that we did this.
-      this.harnessLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
-    }
+    String javaHome = getJavaHome();
     
     // Put together any additional options we wanted to pass to the VM under the start script.
-    // We want to bootstrap the variable with whatever is in our current environment.
-    String javaOpts = System.getenv("JAVA_OPTS");
-    if (null == javaOpts) {
-      javaOpts = "";
-    }
-    // Note that we currently want to scale down our heap to 128M since our tests are simple.
-    // TODO:  Find a way to expose this to the test being run.
-    javaOpts += " -Xms128m -Xms128m";
-    if (this.debugPort > 0) {
-      // Set up the client to block while waiting for connection.
-      javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + this.debugPort;
-      // Log that debug is enabled.
-      this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + this.debugPort);
-    }
+    String javaArguments = getJavaArguments(this.debugPort);
     
-    // Start the inferior process.
-    String startScript;
-    if (TestHelpers.isWindows()){
-      //There are illegal characters "(" and ")" in folder names that cause the path to be truncated and the server won't start.
-      //So we need to wrap double quotes around startScript absolute file path.
-      startScript = "\"" + new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath() + "\"";
-    }else {
-      startScript = "server/bin/start-tc-server.sh";
-    }
+    // Get the command to invoke the script.
+    String startScript = getStartScriptCommand();
+    
     PidCapture capture = new PidCapture();
     eventMap.put("PID is", "PID");
     serverBus.on("PID", capture);
@@ -178,7 +151,7 @@ public class ServerProcess {
         .command(startScript, "-n", this.serverName, this.eyeCatcher)
         .workingDir(this.serverWorkingDirectory)
         .env("JAVA_HOME", javaHome)
-        .env("JAVA_OPTS", javaOpts)
+        .env("JAVA_OPTS", javaArguments)
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
         .build();
@@ -189,6 +162,49 @@ public class ServerProcess {
     }
     this.exitWaiter.startBackgroundWait(process, sPid);
     return process.getPid();
+  }
+
+  private String getStartScriptCommand() {
+    String startScript;
+    if (TestHelpers.isWindows()){
+      //There are illegal characters "(" and ")" in folder names that cause the path to be truncated and the server won't start.
+      //So we need to wrap double quotes around startScript absolute file path.
+      startScript = "\"" + new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath() + "\"";
+    }else {
+      startScript = "server/bin/start-tc-server.sh";
+    }
+    return startScript;
+  }
+
+  private String getJavaArguments(int debugPort) {
+    // We want to bootstrap the variable with whatever is in our current environment.
+    String javaOpts = System.getenv("JAVA_OPTS");
+    if (null == javaOpts) {
+      javaOpts = "";
+    }
+    // Note that we currently want to scale down our heap to 128M since our tests are simple.
+    // TODO:  Find a way to expose this to the test being run.
+    javaOpts += " -Xms128m -Xms128m";
+    if (debugPort > 0) {
+      // Set up the client to block while waiting for connection.
+      javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + debugPort;
+      // Log that debug is enabled.
+      this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + debugPort);
+    }
+    return javaOpts;
+  }
+
+  private String getJavaHome() {
+    String javaHome = System.getenv("JAVA_HOME");
+    if (null == javaHome) {
+      // Use the existing JRE path from the java.home in the current JVM instance as the JAVA_HOME.
+      javaHome = System.getProperty("java.home");
+      // This better exist.
+      Assert.assertNotNull(javaHome);
+      // Log that we did this.
+      this.harnessLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
+    }
+    return javaHome;
   }
 
   /**
