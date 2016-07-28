@@ -37,7 +37,7 @@ public class CommonIdioms {
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
   public static void installAndRunClients(IGalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws IOException {
-    InterruptableClientManager manager = new InterruptableClientManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri);
+    ClientSubProcessManager manager = new ClientSubProcessManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri);
     manager.start();
   }
 

@@ -24,12 +24,15 @@ import org.terracotta.testing.logging.VerboseManager;
 
 
 /**
- * A class which just contains the common logic of the process of running the client-side setup/tearDown/test logic for a
- * run.  It runs this task in a background thread and exposes an interruption mechanism, in case the test needs to be forced
- * to stop.
- * It extends Thread since it is just an additional helper to coordinate external interruption.
+ * This class contains the logic for how the test runs client processes in the usual sequence:
+ * -1 setup client
+ * -n test clients
+ * -1 destroy client
+ * An internal thread is used to manage the progression from one to another, instead of relying on purely asynchronous
+ *  machinery to describe where the test is, in that sequence.
+ * The client process states are managed within the given IGalvanStateInterlock, however.
  */
-public class InterruptableClientManager extends Thread {
+public class ClientSubProcessManager extends Thread {
   private final IGalvanStateInterlock stateInterlock;
   private final ITestStateManager stateManager;
   private final VerboseManager verboseManager;
@@ -43,7 +46,7 @@ public class InterruptableClientManager extends Thread {
   private final IClientArgumentBuilder clientArgumentBuilder;
   private final String connectUri;
 
-  public InterruptableClientManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri) {
+  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.verboseManager = verboseManager;
