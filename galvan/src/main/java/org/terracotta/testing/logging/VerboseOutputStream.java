@@ -49,4 +49,9 @@ public class VerboseOutputStream extends OutputStream {
     }
     this.nextStream.write(b);
   }
+
+  @Override
+  public void close() throws IOException {
+    this.nextStream.close();
+  }
 }

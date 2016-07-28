@@ -118,6 +118,7 @@ public class TestClientStub {
   private static class ClientExceptionHandler implements UncaughtExceptionHandler {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
+      System.err.println("UNCAUGHT TEST CLIENT EXCEPTION!  TERMINATING CLIENT!");
       // Log the error.
       e.printStackTrace();
       // We will return non-zero (99 will do) to flag the error.

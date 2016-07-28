@@ -41,12 +41,13 @@ public class BasicHarnessMain {
         e.printStackTrace();
         System.exit(1);
       }
-      BasicHarnessEntry harness = new BasicHarnessEntry();
-      boolean wasCompleteSuccess = harness.runTestHarness(environmentOptions, master, debugOptions, verboseManager);
-      if (wasCompleteSuccess) {
+      try {
+        BasicHarnessEntry harness = new BasicHarnessEntry();
+        harness.runTestHarness(environmentOptions, master, debugOptions, verboseManager);
         System.out.println("TEST RUN SUCCESSFUL!");
-      } else {
-        System.out.println("TEST FAILED!");
+      } catch (GalvanFailureException e) {
+        System.out.println("TEST FAILED! " + e.getLocalizedMessage());
+        e.printStackTrace();
         System.exit(2);
       }
     } else {

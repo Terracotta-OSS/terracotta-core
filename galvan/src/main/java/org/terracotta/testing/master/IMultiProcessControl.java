@@ -22,19 +22,18 @@ package org.terracotta.testing.master;
  * Note that an implementation must expect that it will be called on different threads and is expected to act as a
  * heavy-weight interlock, forcing all calls into it to serialize so that there are never concerns of interactions between
  * calls from different clients.
+ * NOTE:  These methods will throw GalvanFailureException if the test has already failed.
  */
 public interface IMultiProcessControl {
-  public void synchronizeClient();
+  public void synchronizeClient() throws GalvanFailureException;
 
-  public void restartActive();
+  public void terminateActive() throws GalvanFailureException;
 
-  public void terminateActive();
+  public void startOneServer() throws GalvanFailureException;
 
-  public void startOneServer();
+  public void terminateAllServers() throws GalvanFailureException;
 
-  public void terminateAllServers();
+  public void waitForActive() throws GalvanFailureException;
 
-  public void waitForActive();
-
-  public void waitForRunningPassivesInStandby();
+  public void waitForRunningPassivesInStandby() throws GalvanFailureException;
 }

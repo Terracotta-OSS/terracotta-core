@@ -1,8 +1,5 @@
 package org.terracotta.testing.master;
 
-import java.util.List;
-import java.util.Vector;
-
 import org.terracotta.testing.common.Assert;
 
 
@@ -15,57 +12,60 @@ import org.terracotta.testing.common.Assert;
  * Note that this will only be notified of those state changes which mark the test as either a pass or a fail, not any
  * expected activities, within a test.  For example, it will not be notified that a server terminated due to a client asking
  * it to restart, via the expected paths.  Therefore, there is no need to worry about those states, here.
+ * 
+ * NOTE:  This is typically used as the single wait/notify monitor in galvan, as it represents the highest-level
+ * synchronization object (it is passed in from the outside), so other components of the synchronization mechanism often
+ * use it to coordinate synchronization across the framework.
  */
-public class TestStateManager implements ITestStateManager {
-  private final List<IComponentManager> componentsToShutDown = new Vector<IComponentManager>();
-  private boolean didTestPass;
-  private boolean didTestFail;
+public class TestStateManager implements ITestWaiter, ITestStateManager {
+  // ----- TEST STATE -----
+  // The test either either running, did pass, or did set a failure exception (which is typically just a description
+  //  of where the failure was observed).
+  private boolean testDidPass;
+  private GalvanFailureException testFailureException;
 
-  /**
-   * Waits until the test completes, as either a pass or a fail, blocking the calling thread.
-   * 
-   * @return True if the test passed, false if it failed.
-   */
-  public synchronized boolean waitForFinish() {
-    // We expect that at least some asynchronous components have been registered.  While not required, missing them would
-    // imply that there is a bug or inconsistent change within the current implementation so it seems worth checking.
-    Assert.assertFalse(this.componentsToShutDown.isEmpty());
-    
-    while (!this.didTestPass && !this.didTestFail) {
+
+  @Override
+  public synchronized void waitForFinish() throws GalvanFailureException {
+    while (!this.testDidPass && (null == this.testFailureException)) {
       try {
         this.wait();
       } catch (InterruptedException e) {
-        // We don't expect this thread to be interrupted, as it is the top-most point in the test.
+        // We aren't expecting this, in these tests (as anyone could set our state to failed in order to force a failure).
         Assert.unexpected(e);
       }
     }
-    
-    // Shut down all components.
-    for (IComponentManager component : this.componentsToShutDown) {
-      component.forceTerminateComponent();
+    if (null != this.testFailureException) {
+      throw this.testFailureException;
     }
-    // If we set both pass and fail, this is still a fail.
-    return !this.didTestFail;
+    Assert.assertTrue(this.testDidPass);
   }
 
   @Override
-  public synchronized void testDidPass() {
-    this.didTestPass = true;
-    notifyAll();
-  }
-
-  @Override
-  public synchronized void testDidFail() {
-    this.didTestFail = true;
-    notifyAll();
-  }
-
-  @Override
-  public synchronized void addComponentToShutDown(IComponentManager componentManager, boolean shouldPrepend) {
-    if (shouldPrepend) {
-      this.componentsToShutDown.add(0, componentManager);
-    } else {
-      this.componentsToShutDown.add(componentManager);
+  public synchronized boolean checkDidPass() throws GalvanFailureException {
+    if (null != this.testFailureException) {
+      throw this.testFailureException;
     }
+    return this.testDidPass;
+  }
+
+  @Override
+  public synchronized void setTestDidPassIfNotFailed() {
+    Assert.assertFalse(this.testDidPass);
+    if (null == this.testFailureException) {
+      this.testDidPass = true;
+    }
+    this.notifyAll();
+  }
+
+  @Override
+  public synchronized void testDidFail(GalvanFailureException failureDescription) {
+    // We can't fail after passing.
+    Assert.assertFalse(this.testDidPass);
+    // Note that it is possible to failure multiple times but we only want to store the first exception.
+    if (null == this.testFailureException) {
+      this.testFailureException = failureDescription;
+    }
+    this.notifyAll();
   }
 }

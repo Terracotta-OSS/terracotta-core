@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
@@ -29,23 +28,21 @@ import org.terracotta.testing.logging.VerboseManager;
 
 
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
-  public static final int SERVER_START_PORT = 9000;  // leave this here for legacy
   private final PortChooser chooser = new PortChooser();
   
-  public boolean runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
+  public void runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, GalvanFailureException {
     // Before anything, set the default exception handler - since we create threads to manage the sub-processes.
     Thread.setDefaultUncaughtExceptionHandler(new GalvanExceptionHandler());
     
-    boolean didPass = false;
     // We wrap the actual call in a try-catch since the normal SureFire runner discards all exception data and we want to
     // see our assertion failures.
     try {
-      didPass = internalRunTestHarness(environmentOptions, master, debugOptions, verboseManager);
+      // Note that we will throw GalvanFailureException, on failure.
+      internalRunTestHarness(environmentOptions, master, debugOptions, verboseManager);
     } catch (AssertionError e) {
       e.printStackTrace();
       throw e;
     }
-    return didPass;
   }
   
   public int chooseRandomPort() {
@@ -56,7 +53,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     return chooser.chooseRandomPorts(number);
   }
 
-  private boolean internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, FileNotFoundException, InterruptedException {
+  private void internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, GalvanFailureException {
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
     
@@ -80,10 +77,8 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     String serviceFragment = master.getServiceConfigXMLSnippet();
     String entityFragment = master.getEntityConfigXMLSnippet();
     List<C> runConfigurations = master.getRunConfigurations();
-    boolean wasCompleteSuccess = true;
     int clientsToCreate = master.getClientsToStart();
     for (C runConfiguration : runConfigurations) {
-      TestStateManager stateManager = new TestStateManager();
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
       String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
@@ -101,30 +96,33 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.serviceFragment = serviceFragment;
       harnessOptions.entityFragment = entityFragment;
       
-      runOneConfiguration(stateManager, verboseManager, debugOptions, harnessOptions, runConfiguration);
-      boolean runWasSuccess = stateManager.waitForFinish();
-      if (!runWasSuccess) {
-        wasCompleteSuccess = false;
-        break;
-      }
+      // NOTE:  runOneConfiguration() throws GalvanFailureException on failure.
+      runOneConfiguration(verboseManager, debugOptions, harnessOptions, runConfiguration);
     }
-    return wasCompleteSuccess;
   }
 
-  // Run the one configuration.
-  protected abstract void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, FileNotFoundException, InterruptedException;
+  /**
+   * Runs a single test configuration.
+   * 
+   * @param verboseManager A description of the verbose options for the framework and test run.
+   * @param debugOptions The options for any sub-processes which should wait for debugger connections.
+   * @param commonHarnessOptions Information describing the resources the harness needs to create sub-processes.
+   * @param runConfiguration The description of the configuration to run.
+   * @throws IOException An error in the test run.
+   * @throws GalvanFailureException A failure in the test run.
+   */
+  protected abstract void runOneConfiguration(VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, GalvanFailureException;
 
 
   /**
-   * For now, this exception handler is going to be very heavy-weight:  uncaught exception terminates the process with exit
-   * code 99.
-   * In the future, we may want a gentler way of communicating these errors or to potentially mask the uncaught handler with
-   * per-thread handlers which can use their context to better report the error.
+   * We install a default uncaught exception handler but we should only ever end up here as a result of a bug in Galvan, proper.
+   * We bring down the entire harness process, but could leave stale sub-processes running.
    */
   private static class GalvanExceptionHandler implements UncaughtExceptionHandler {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
       // Log the error.
+      System.err.println("XXXXX FATAL GALVAN EXCEPTION IN HARNESS!  TERMINATING PROCESS!  WARNING:  Stale java processes may remain!");
       e.printStackTrace();
       // Bring down the process.
       System.exit(99);

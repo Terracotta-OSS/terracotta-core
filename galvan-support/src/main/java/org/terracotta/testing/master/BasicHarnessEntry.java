@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
@@ -26,7 +25,7 @@ import org.terracotta.testing.logging.VerboseManager;
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
   @Override
-  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, FileNotFoundException, InterruptedException {
+  protected void runOneConfiguration(VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, GalvanFailureException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
@@ -45,20 +44,14 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
     stripeConfiguration.stripeName = "stripe" + 0;
     
-    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(stateManager, verboseManager, stripeConfiguration);
+    TestStateManager stateManager = new TestStateManager();
+    GalvanStateInterlock interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+    ReadyStripe oneStripe = CommonIdioms.setupConfigureAndStartStripe(interlock, stateManager, verboseManager, stripeConfiguration);
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;
     Assert.assertTrue(null != processControl);
     Assert.assertTrue(null != connectUri);
-    
-    // Register to shut down the process control (the servers in the stripe) once the test has passed/failed.
-    // Note that we want to shut down servers last.
-    stateManager.addComponentToShutDown(new IComponentManager() {
-      @Override
-      public void forceTerminateComponent() {
-        processControl.terminateAllServers();
-      }}, false);
     
     // The cluster is now running so install and run the clients.
     CommonIdioms.ClientsConfiguration clientsConfiguration = new CommonIdioms.ClientsConfiguration();
@@ -70,6 +63,13 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
     clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
-    CommonIdioms.installAndRunClients(stateManager, verboseManager, clientsConfiguration, processControl);
+    CommonIdioms.installAndRunClients(interlock, stateManager, verboseManager, clientsConfiguration, processControl);
+    // NOTE:  waitForFinish() throws GalvanFailureException on failure.
+    try {
+      stateManager.waitForFinish();
+    } finally {
+      // No matter what happened, shut down the test.
+      interlock.forceShutdown();
+    }
   }
 }
