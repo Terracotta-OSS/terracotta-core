@@ -216,8 +216,7 @@ public class BasicExternalCluster extends Cluster {
 
       @Override
       public void startAllServers() throws Exception {
-        // TODO: Implement.
-        Assert.unimplemented();
+        cluster.stripeControl.startAllServers();
       }
 
       @Override
@@ -227,8 +226,7 @@ public class BasicExternalCluster extends Cluster {
 
       @Override
       public void terminateOnePassive() throws Exception {
-        // TODO: Implement.
-        Assert.unimplemented();
+        cluster.stripeControl.terminateOnePassive();
       }
 
       @Override
