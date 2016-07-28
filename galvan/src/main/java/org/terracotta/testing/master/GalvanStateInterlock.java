@@ -186,12 +186,12 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void serverBecameActive(ServerProcess server) {
     synchronized (this.sharedLockState) {
       this.logger.output("serverBecameActive: " + server);
-      Assert.assertNull(this.activeServer);
+      localAssert(null == this.activeServer, server);
       boolean didRemove = this.unknownRunningServers.remove(server);
       if (!didRemove) {
         didRemove = this.passiveServers.remove(server);
       }
-      Assert.assertTrue(didRemove);
+      localAssert(didRemove, server);
       this.activeServer = server;
       this.sharedLockState.notifyAll();
     }
@@ -202,7 +202,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("serverBecamePassive: " + server);
       boolean didRemove = this.unknownRunningServers.remove(server);
-      Assert.assertTrue(didRemove);
+      localAssert(didRemove, server);
       this.passiveServers.add(server);
       this.sharedLockState.notifyAll();
     }
@@ -233,7 +233,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("serverDidStartup: " + server);
       boolean didRemove = this.terminatedServers.remove(server);
-      Assert.assertTrue(didRemove);
+      localAssert(didRemove, server);
       this.unknownRunningServers.add(server);
       this.sharedLockState.notifyAll();
     }
@@ -307,5 +307,22 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
         + "\n\tTerminated: " + this.terminatedServers
         + "\n\tClients: " + this.runningClients
         ;
+  }
+
+  /**
+   * A diagnostic helper function which is likely only temporary.
+   * Increases the amount of data output when a failing assertion is triggered, directly to STDERR.
+   * This is done since the outstanding Galvan bugs appear to only be intermittent and happen at high concurrency levels so
+   *  this allows us to get a better snapshot of what happened.
+   * 
+   * @param clause The assertion value (output triggers on false).
+   * @param server The server we were trying to add/remove/change at the time.
+   */
+  private void localAssert(boolean clause, ServerProcess server) {
+    if (!clause) {
+      System.err.println("FAIL USING " + server);
+      System.err.println(toString());
+    }
+    Assert.assertTrue(clause);
   }
 }
