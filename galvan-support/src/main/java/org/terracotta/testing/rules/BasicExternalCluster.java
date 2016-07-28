@@ -21,7 +21,7 @@ import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.GalvanFailureException;
-import org.terracotta.testing.master.IComponentManager;
+import org.terracotta.testing.master.GalvanStateInterlock;
 import org.terracotta.testing.master.ReadyStripe;
 import org.terracotta.testing.master.TestStateManager;
 
@@ -42,6 +42,7 @@ public class BasicExternalCluster extends Cluster {
 
   private String displayName;
   private ReadyStripe cluster;
+  private GalvanStateInterlock interlock;
   private TestStateManager stateManager;
   // Note that the clientThread is actually the main thread of the JUnit runner.
   private final Thread clientThread;
@@ -113,19 +114,8 @@ public class BasicExternalCluster extends Cluster {
         : 0;
 
     stateManager = new TestStateManager();
-    // Note that we want to shut down servers last.
-    stateManager.addComponentToShutDown(new IComponentManager() {
-      @Override
-      public void forceTerminateComponent() {
-        try {
-          cluster.stripeControl.terminateAllServers();
-        } catch (GalvanFailureException e) {
-          // TODO:  This is just a stop-gap during refactoring.  We don't expect failure here.
-          Assert.unexpected(e);
-        }
-      }
-    }, false);
-    cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
+    interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+    cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(),
         testParentDirectory.getAbsolutePath(),
         stripeSize, serverPort, serverDebugStartPort, 0, false,
@@ -148,6 +138,8 @@ public class BasicExternalCluster extends Cluster {
         } catch (GalvanFailureException e) {
           didPass = false;
         }
+        // Whether we passed or failed, bring everything down.
+        interlock.forceShutdown();
         setSafeForRun(false);
         if (!didPass) {
           // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
