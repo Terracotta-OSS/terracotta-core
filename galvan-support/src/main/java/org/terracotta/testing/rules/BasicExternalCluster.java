@@ -20,6 +20,7 @@ import org.terracotta.passthrough.Assert;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.testing.master.GalvanFailureException;
 import org.terracotta.testing.master.IComponentManager;
 import org.terracotta.testing.master.ReadyStripe;
 import org.terracotta.testing.master.TestStateManager;
@@ -116,7 +117,12 @@ public class BasicExternalCluster extends Cluster {
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
-        cluster.stripeControl.terminateAllServers();
+        try {
+          cluster.stripeControl.terminateAllServers();
+        } catch (GalvanFailureException e) {
+          // TODO:  This is just a stop-gap during refactoring.  We don't expect failure here.
+          Assert.unexpected(e);
+        }
       }
     }, false);
     cluster = ReadyStripe.configureAndStartStripe(stateManager, displayVerboseManager,
@@ -135,7 +141,13 @@ public class BasicExternalCluster extends Cluster {
       @Override
       public void run() {
         setSafeForRun(true);
-        boolean didPass = stateManager.waitForFinish();
+        boolean didPass = false;
+        try {
+          stateManager.waitForFinish();
+          didPass = true;
+        } catch (GalvanFailureException e) {
+          didPass = false;
+        }
         setSafeForRun(false);
         if (!didPass) {
           // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
@@ -157,7 +169,7 @@ public class BasicExternalCluster extends Cluster {
 
   @Override
   protected void after() {
-    stateManager.testDidPass();
+    stateManager.setTestDidPassIfNotFailed();
     // NOTE:  The waitForFinish is called by the shepherding thread so we just join on it having done that.
     try {
       this.shepherdingThread.join();
