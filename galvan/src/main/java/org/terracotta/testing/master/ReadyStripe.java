@@ -26,7 +26,7 @@ import org.terracotta.testing.logging.VerboseManager;
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
-  public static ReadyStripe configureAndStartStripe(ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException {
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException {
     ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -38,7 +38,7 @@ public class ReadyStripe {
       configBuilder.setRestartable();
     }
     // Create the stripe installer.
-    StripeInstaller installer = new StripeInstaller(stripeVerboseManager, testParentDirectory, serverInstallDirectory, extraJarPaths);
+    StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, testParentDirectory, serverInstallDirectory, extraJarPaths);
     // Configure and install each server in the stripe.
     for (int i = 0; i < serversToCreate; ++i) {
       String serverName = "testServer" + (i + serverStartNumber);
@@ -54,7 +54,7 @@ public class ReadyStripe {
     
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
-    SynchronousProcessControl processControl = new SynchronousProcessControl(stateManager, processControlLogger);
+    SynchronousProcessControl processControl = new SynchronousProcessControl(interlock, processControlLogger);
     // Register the stripe into it and start up the server in the stripe.
     installer.startServers(processControl);
     String connectUri = configBuilder.buildUri();

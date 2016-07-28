@@ -1,8 +1,5 @@
 package org.terracotta.testing.master;
 
-import java.util.List;
-import java.util.Vector;
-
 import org.terracotta.testing.common.Assert;
 
 
@@ -15,9 +12,12 @@ import org.terracotta.testing.common.Assert;
  * Note that this will only be notified of those state changes which mark the test as either a pass or a fail, not any
  * expected activities, within a test.  For example, it will not be notified that a server terminated due to a client asking
  * it to restart, via the expected paths.  Therefore, there is no need to worry about those states, here.
+ * 
+ * NOTE:  This is typically used as the single wait/notify monitor in galvan, as it represents the highest-level
+ * synchronization object (it is passed in from the outside), so other components of the synchronization mechanism often
+ * use it to coordinate synchronization across the framework.
  */
 public class TestStateManager implements ITestWaiter, ITestStateManager {
-  private final List<IComponentManager> componentsToShutDown = new Vector<IComponentManager>();
   // ----- TEST STATE -----
   // The test either either running, did pass, or did set a failure exception (which is typically just a description
   //  of where the failure was observed).
@@ -34,11 +34,6 @@ public class TestStateManager implements ITestWaiter, ITestStateManager {
         // We aren't expecting this, in these tests (as anyone could set our state to failed in order to force a failure).
         Assert.unexpected(e);
       }
-    }
-    
-    // Shut down all components.
-    for (IComponentManager component : this.componentsToShutDown) {
-      component.forceTerminateComponent();
     }
     if (null != this.testFailureException) {
       throw this.testFailureException;
@@ -72,14 +67,5 @@ public class TestStateManager implements ITestWaiter, ITestStateManager {
       this.testFailureException = failureDescription;
     }
     this.notifyAll();
-  }
-
-  @Override
-  public synchronized void addComponentToShutDown(IComponentManager componentManager, boolean shouldPrepend) {
-    if (shouldPrepend) {
-      this.componentsToShutDown.add(0, componentManager);
-    } else {
-      this.componentsToShutDown.add(componentManager);
-    }
   }
 }

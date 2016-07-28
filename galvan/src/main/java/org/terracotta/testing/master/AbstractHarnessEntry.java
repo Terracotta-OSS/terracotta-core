@@ -79,7 +79,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     List<C> runConfigurations = master.getRunConfigurations();
     int clientsToCreate = master.getClientsToStart();
     for (C runConfiguration : runConfigurations) {
-      TestStateManager stateManager = new TestStateManager();
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
       String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
@@ -98,14 +97,13 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.entityFragment = entityFragment;
       
       // NOTE:  runOneConfiguration() throws GalvanFailureException on failure.
-      runOneConfiguration(stateManager, verboseManager, debugOptions, harnessOptions, runConfiguration);
+      runOneConfiguration(verboseManager, debugOptions, harnessOptions, runConfiguration);
     }
   }
 
   /**
    * Runs a single test configuration.
    * 
-   * @param stateManager The test pass/fail state.
    * @param verboseManager A description of the verbose options for the framework and test run.
    * @param debugOptions The options for any sub-processes which should wait for debugger connections.
    * @param commonHarnessOptions Information describing the resources the harness needs to create sub-processes.
@@ -113,7 +111,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
    * @throws IOException An error in the test run.
    * @throws GalvanFailureException A failure in the test run.
    */
-  protected abstract void runOneConfiguration(TestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, GalvanFailureException;
+  protected abstract void runOneConfiguration(VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, GalvanFailureException;
 
 
   /**

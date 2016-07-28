@@ -17,7 +17,6 @@ package org.terracotta.testing.master;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -30,7 +29,8 @@ import org.terracotta.testing.logging.VerboseManager;
  * to stop.
  * It extends Thread since it is just an additional helper to coordinate external interruption.
  */
-public class InterruptableClientManager extends Thread implements IComponentManager {
+public class InterruptableClientManager extends Thread {
+  private final IGalvanStateInterlock stateInterlock;
   private final ITestStateManager stateManager;
   private final VerboseManager verboseManager;
   private final IMultiProcessControl processControl;
@@ -42,10 +42,9 @@ public class InterruptableClientManager extends Thread implements IComponentMana
   private final int clientsToCreate;
   private final IClientArgumentBuilder clientArgumentBuilder;
   private final String connectUri;
-  
-  private boolean interruptRequested;
 
-  public InterruptableClientManager(ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri) {
+  public InterruptableClientManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri) {
+    this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.verboseManager = verboseManager;
     this.processControl = processControl;
@@ -63,14 +62,6 @@ public class InterruptableClientManager extends Thread implements IComponentMana
   }
 
   @Override
-  public void forceTerminateComponent() {
-    // We need to set that an interrupt is requested in order for our asserts, within, to trigger.
-    this.interruptRequested = true;
-    // We now interrupt the thread, which should cause it to shut everything down, forcefully, and fail out.
-    this.interrupt();
-  }
-
-  @Override
   public void run() {
     VerboseManager clientsVerboseManager = this.verboseManager.createComponentManager("[Clients]");
     ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, this.testParentDirectory, this.clientClassPath, this.clientArgumentBuilder.getMainClassName());
@@ -80,61 +71,49 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     // Run the setup client, synchronously.
     List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clientsToCreate);
     ClientRunner setupClient = clientInstaller.installClient("client_setup", this.setupClientDebugPort, extraSetupArguments);
-    int setupExitValue = runClientLifeCycle(setupClient);
+    boolean setupWasClean = runClientLifeCycle(setupClient);
     
-    boolean setupWasClean = (0 == setupExitValue);
     boolean didRunCleanly = true;
     boolean destroyWasClean = true;
     String errorMessage = null;
     if (setupWasClean) {
       ClientRunner[] concurrentTests = installTestClients(this.testClientDebugPortStart, this.clientsToCreate, clientInstaller);
-      try {
-        // Create a listener.
-        ClientListener listener = new ClientListener();
-        // Start them.
-        for (ClientRunner oneClient : concurrentTests) {
-          oneClient.setListener(listener);
-          try {
-            oneClient.openStandardLogFiles();
-          } catch (IOException e) {
-            // We don't expect this here.
-            Assert.unexpected(e);
-          }
-          oneClient.start();
+      
+      // Create a listener.
+      ClientListener listener = new ClientListener(this.stateInterlock, this.stateManager);
+      // Start them.
+      for (ClientRunner oneClient : concurrentTests) {
+        oneClient.setListener(listener);
+        try {
+          oneClient.openStandardLogFiles();
+        } catch (IOException e) {
+          // We don't expect this here.
+          Assert.unexpected(e);
         }
-        // Now, wait for them to finish.
-        int pendingResults = concurrentTests.length;
-        // Run until we get all the results or a test reported failure.
-        // (we need to eagerly kill all processes if any test exited with an error since someone may be waiting for it)
-        while ((pendingResults > 0) && didRunCleanly) {
-          int result = listener.waitForNextResult();
-          didRunCleanly &= (0 == result);
-          pendingResults -= 1;
-        }
-        
-        shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
-      } catch (InterruptedException e) {
-        // We can only be interrupted if an interruption is expected.
-        Assert.assertTrue(this.interruptRequested);
-        // Mark this as a failure so we fall out.
-        didRunCleanly = false;
-        // Terminate and clean up.
-        shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
+        this.stateInterlock.registerRunningClient(oneClient);
+        oneClient.start();
       }
-      if (!didRunCleanly) {
-        errorMessage = "ERROR encountered in test client.  Destroy will be attempted but this is a failure";
+      // Now, wait for them to finish.
+      try {
+        this.stateInterlock.waitForClientTermination();
+      } catch (Exception e) {
+        didRunCleanly = false;
       }
       
-      // Run the destroy client, synchronously.
-      List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clientsToCreate);
-      ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, extraDestroyArguments);
-      int destroyExitValue = runClientLifeCycle(destroyClient);
-      destroyWasClean = (0 == destroyExitValue);
-      if (!destroyWasClean) {
-        errorMessage = "ERROR encountered in destroy.  This is a failure";
+      shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
+      if (didRunCleanly) {
+        // Run the destroy client, synchronously.
+        List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clientsToCreate);
+        ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, extraDestroyArguments);
+        destroyWasClean = runClientLifeCycle(destroyClient);
+        if (!destroyWasClean) {
+          errorMessage = "ERROR encountered in destroy client.  This is a failure";
+        }
+      } else {
+        errorMessage = "ERROR encountered in test client.  This is a failure";
       }
     } else {
-      errorMessage = "FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!";
+      errorMessage = "ERROR encountered in setup client.  This is a failure";
     }
     if (setupWasClean && didRunCleanly && destroyWasClean) {
       this.stateManager.setTestDidPassIfNotFailed();
@@ -169,30 +148,19 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     }
   }
 
-  private int runClientLifeCycle(ClientRunner synchronousClient) {
+  private boolean runClientLifeCycle(ClientRunner synchronousClient) {
     try {
       synchronousClient.openStandardLogFiles();
     } catch (IOException e) {
       // We don't expect this here.
       Assert.unexpected(e);
     }
-    int setupExitValue = -1;
+    boolean clientDidPass = false;
     try {
-      setupExitValue = runClientSynchronous(synchronousClient);
+      clientDidPass = runClientSynchronous(synchronousClient);
     } catch (InterruptedException e) {
-      // We can only be interrupted if an interruption is expected.
-      Assert.assertTrue(this.interruptRequested);
-      // Terminate the client.
-      synchronousClient.forceTerminate();
-      // We may need to join after requesting the termination.
-      try {
-        synchronousClient.join();
-      } catch (InterruptedException e1) {
-        // We don't expect an interruption within the interruption.
-        Assert.unexpected(e1);
-      }
-      // Mark this as a failure so we fall out.
-      setupExitValue = -1;
+      // We don't expect interrupts, here.
+      Assert.unexpected(e);
     }
     try {
       synchronousClient.closeStandardLogFiles();
@@ -200,16 +168,22 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       // We don't expect this here.
       Assert.unexpected(e);
     }
-    return setupExitValue;
+    return clientDidPass;
   }
 
-  private int runClientSynchronous(ClientRunner client) throws InterruptedException {
-    ClientListener listener = new ClientListener();
+  private boolean runClientSynchronous(ClientRunner client) throws InterruptedException {
+    ClientListener listener = new ClientListener(this.stateInterlock, this.stateManager);
     client.setListener(listener);
+    this.stateInterlock.registerRunningClient(client);
     client.start();
-    int result = listener.waitForNextResult();
+    boolean didFailEarly = false;
+    try {
+      this.stateInterlock.waitForClientTermination();
+    } catch (Exception e) {
+      didFailEarly = true;
+    }
     client.join();
-    return result;
+    return !didFailEarly;
   }
 
   private ClientRunner[] installTestClients(int testClientDebugPortStart, int clientsToCreate, ClientInstaller clientInstaller) {
@@ -230,19 +204,22 @@ public class InterruptableClientManager extends Thread implements IComponentMana
 
 
   private static class ClientListener implements ClientRunner.Listener {
-    private final List<Integer> results = new Vector<Integer>();
+    private final IGalvanStateInterlock interlock;
+    private final ITestStateManager stateManager;
     
-    public synchronized int waitForNextResult() throws InterruptedException {
-      while (this.results.isEmpty()) {
-        wait();
-      }
-      return this.results.remove(0);
+    public ClientListener(IGalvanStateInterlock interlock, ITestStateManager stateManager) {
+      this.interlock = interlock;
+      this.stateManager = stateManager;
     }
     
     @Override
-    public synchronized void clientDidTerminate(ClientRunner clientRunner, int theResult) {
-      this.results.add(theResult);
-      notifyAll();
+    public void clientDidTerminate(ClientRunner clientRunner, int theResult) {
+      // NOTE:  We need to set the fail state before we terminate the client or the waiting thread may see the clients finish before it sees the error.
+      if (0 != theResult) {
+        // We want to force the test into failure.
+        this.stateManager.testDidFail(new GalvanFailureException("Client returned: " + theResult));
+      }
+      this.interlock.clientDidTerminate(clientRunner);
     }
   }
 }

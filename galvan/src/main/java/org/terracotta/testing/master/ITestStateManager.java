@@ -17,8 +17,9 @@ package org.terracotta.testing.master;
 
 
 /**
- * This interface exposes the abstract ability for different parts of the harness to register for shutdown treatment but
- * also set the state of entire test run to pass or fail.
+ * Given that any part of the test may need to notify that the harness has failed, and the parts which pass may not be
+ * aware of these other components, this interface allows abstract write-only interaction with the state of the running
+ * test.
  * Note that the test will be considered a failure if any single part fails, no matter whether or not the pass was set.
  * This means that an unexpected server crash, after the test passed, would still count as a failure.
  */
@@ -34,12 +35,4 @@ public interface ITestStateManager {
    * @param failureDescription The description of the test failure
    */
   public void testDidFail(GalvanFailureException failureDescription);
-
-  /**
-   * Registers a component which needs to be shut down when the test is complete.
-   * 
-   * @param componentManager The component to shut down.
-   * @param shouldPrepend True if this component should be shutdown "first", false if it can be shut down "last"
-   */
-  public void addComponentToShutDown(IComponentManager componentManager, boolean shouldPrepend);
 }

@@ -27,19 +27,17 @@ import org.terracotta.testing.logging.VerboseManager;
  * It exists purely to avoid duplication.
  */
 public class CommonIdioms {
-  public static ReadyStripe setupConfigureAndStartStripe(ITestStateManager stateManager, VerboseManager verboseManager, StripeConfiguration stripeConfiguration) throws IOException {
+  public static ReadyStripe setupConfigureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager, StripeConfiguration stripeConfiguration) throws IOException {
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfiguration.stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(stripeConfiguration.testParentDirectory, stripeConfiguration.stripeName);
-    return ReadyStripe.configureAndStartStripe(stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.isRestartable, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment);
+    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.isRestartable, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment);
   }
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
-  public static void installAndRunClients(ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws IOException {
-    InterruptableClientManager manager = new InterruptableClientManager(stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri);
-    // We want to shut down clients "first".
-    stateManager.addComponentToShutDown(manager, true);
+  public static void installAndRunClients(IGalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws IOException {
+    InterruptableClientManager manager = new InterruptableClientManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri);
     manager.start();
   }
 

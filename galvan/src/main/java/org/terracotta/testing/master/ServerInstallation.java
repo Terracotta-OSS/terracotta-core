@@ -16,7 +16,6 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -28,14 +27,18 @@ import org.terracotta.testing.logging.VerboseManager;
  * The physical representation of a server installation, on disk.  Server processes can be started from the installation.
  */
 public class ServerInstallation {
+  private final GalvanStateInterlock stateInterlock;
+  private final ITestStateManager stateManager;
   private final VerboseManager stripeVerboseManager;
   private final String serverName;
   private final File serverWorkingDirectory;
   private final int debugPort;
   private boolean configWritten;
-  private ServerProcess outstandingProcess;
+  private boolean hasCreatedProcess;
 
-  public ServerInstallation(VerboseManager stripeVerboseManager, String serverName, File serverWorkingDirectory, int debugPort) {
+  public ServerInstallation(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverName, File serverWorkingDirectory, int debugPort) {
+    this.stateInterlock = stateInterlock;
+    this.stateManager = stateManager;
     this.stripeVerboseManager = stripeVerboseManager;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
@@ -57,33 +60,19 @@ public class ServerInstallation {
   }
 
   /**
-   * @param stateManager The state manager the inferior process can use to interact with the harness
-   * 
    * @return A new ServerProcess which has not yet been started.
    */
-  public ServerProcess createNewProcess(ITestStateManager stateManager) {
+  public ServerProcess createNewProcess() {
     // Assert that the config has been written to the installation (so it is complete).
     Assert.assertTrue(this.configWritten);
     // Assert that there isn't already a process running in this location.
-    Assert.assertNull(this.outstandingProcess);
+    Assert.assertFalse(this.hasCreatedProcess);
     
     // Create the VerboseManager for the instance.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + this.serverName + "]");
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(serverVerboseManager, stateManager, this, this.serverName, this.serverWorkingDirectory, this.debugPort);
-    try {
-      process.openLogs();
-    } catch (FileNotFoundException e) {
-      // Temporary - will be moved elsewhere during refactoring.
-      Assert.unexpected(e);
-    }
-    this.outstandingProcess = process;
+    ServerProcess process = new ServerProcess(this.stateInterlock, this.stateManager, serverVerboseManager, this, this.serverName, this.serverWorkingDirectory, this.debugPort);
+    this.hasCreatedProcess = true;
     return process;
-  }
-
-  public void retireProcess(ServerProcess process) {
-    Assert.assertTrue(this.outstandingProcess == process);
-    this.outstandingProcess = null;
-    process.closeLogs();
   }
 }
