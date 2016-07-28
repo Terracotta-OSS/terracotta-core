@@ -28,7 +28,6 @@ import org.terracotta.testing.logging.VerboseManager;
 
 
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
-  public static final int SERVER_START_PORT = 9000;  // leave this here for legacy
   private final PortChooser chooser = new PortChooser();
   
   public void runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, GalvanFailureException {
@@ -118,15 +117,14 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
 
 
   /**
-   * For now, this exception handler is going to be very heavy-weight:  uncaught exception terminates the process with exit
-   * code 99.
-   * In the future, we may want a gentler way of communicating these errors or to potentially mask the uncaught handler with
-   * per-thread handlers which can use their context to better report the error.
+   * We install a default uncaught exception handler but we should only ever end up here as a result of a bug in Galvan, proper.
+   * We bring down the entire harness process, but could leave stale sub-processes running.
    */
   private static class GalvanExceptionHandler implements UncaughtExceptionHandler {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
       // Log the error.
+      System.err.println("XXXXX FATAL GALVAN EXCEPTION IN HARNESS!  TERMINATING PROCESS!  WARNING:  Stale java processes may remain!");
       e.printStackTrace();
       // Bring down the process.
       System.exit(99);
