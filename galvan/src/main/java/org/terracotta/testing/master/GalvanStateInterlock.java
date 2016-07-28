@@ -34,6 +34,7 @@ import org.terracotta.testing.logging.ContextualLogger;
 public class GalvanStateInterlock implements IGalvanStateInterlock {
   private final ContextualLogger logger;
   private final ITestWaiter sharedLockState;
+  private boolean isShuttingDown;
 
 
   // ----- SERVER STATE -----
@@ -62,6 +63,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void registerNewServer(ServerProcess newServer) {
     synchronized (this.sharedLockState) {
+      // No new registration during shutdown.
+      Assert.assertFalse(this.isShuttingDown);
       this.logger.output("registerNewServer: " + newServer);
       Assert.assertFalse(this.terminatedServers.contains(newServer));
       this.terminatedServers.add(newServer);
@@ -71,6 +74,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void registerRunningClient(ClientRunner runningClient) {
     synchronized (this.sharedLockState) {
+      // No new registration during shutdown.
+      Assert.assertFalse(this.isShuttingDown);
       this.logger.output("registerRunningClient: " + runningClient);
       Assert.assertFalse(this.runningClients.contains(runningClient));
       this.runningClients.add(runningClient);
@@ -235,6 +240,11 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       boolean didRemove = this.terminatedServers.remove(server);
       localAssert(didRemove, server);
       this.unknownRunningServers.add(server);
+      // Check if this server is a late arrival - explicit termination, in that case.
+      if (this.isShuttingDown) {
+        this.logger.output("explicit stop of late arrival: " + server);
+        safeStop(server);
+      }
       this.sharedLockState.notifyAll();
     }
   }
@@ -255,6 +265,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void forceShutdown() {
     synchronized (this.sharedLockState) {
       this.logger.output("> forceShutdown");
+      // Set the flag that we are shutting down.  That way, any servers which were concurrently coming online can be stopped when they check in.
+      this.isShuttingDown = true;
       // Force shut-down all clients, all passives, and the active.
       // (note that we won't modify the collections here, just walk them - we are synchronized)
       for (ClientRunner client : this.runningClients) {
