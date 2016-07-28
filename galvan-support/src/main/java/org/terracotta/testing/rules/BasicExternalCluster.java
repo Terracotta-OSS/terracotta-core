@@ -39,6 +39,7 @@ public class BasicExternalCluster extends Cluster {
   private final String namespaceFragment;
   private final String serviceFragment;
   private final String entityFragment;
+  private final boolean isRestartable;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -53,10 +54,14 @@ public class BasicExternalCluster extends Cluster {
   private boolean isSafe;
 
   public BasicExternalCluster(File clusterDirectory, int stripeSize) {
-    this(clusterDirectory, stripeSize, emptyList(), "", "", "");
+    this(clusterDirectory, stripeSize, emptyList(), "", "", "", false);
   }
 
   public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment) {
+    this(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment, false);
+  }
+
+  public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment, boolean isRestartable) {
     if (clusterDirectory == null) {
       throw new NullPointerException("Cluster directory must be non-null");
     }
@@ -83,6 +88,7 @@ public class BasicExternalCluster extends Cluster {
     this.serviceFragment = serviceFragment;
     this.entityFragment = entityFragment;
     this.serverJars = serverJars;
+    this.isRestartable = isRestartable;
     
     this.clientThread = Thread.currentThread();
   }
@@ -118,7 +124,7 @@ public class BasicExternalCluster extends Cluster {
     cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(),
         testParentDirectory.getAbsolutePath(),
-        stripeSize, serverPort, serverDebugStartPort, 0, false,
+        stripeSize, serverPort, serverDebugStartPort, 0, this.isRestartable,
         serverJarPaths, namespaceFragment, serviceFragment, entityFragment);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
