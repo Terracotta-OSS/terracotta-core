@@ -192,10 +192,12 @@ public class ServerProcess {
     String pidEventName = "PID";
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
+    String zapEventName = "ZAP";
     Map<String, String> eventMap = new HashMap<String, String>();
     eventMap.put("PID is", pidEventName);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
+    eventMap.put("Restarting the server", zapEventName);
     
     // We will attach the event stream to the stdout.
     SimpleEventingStream outputStream = new SimpleEventingStream(serverBus, eventMap, stdout);
@@ -226,6 +228,11 @@ public class ServerProcess {
       public void onEvent(Event event) throws Throwable {
         ServerProcess.this.didBecomeActive(false);
       }});
+    serverBus.on(zapEventName, new EventListener() {
+      @Override
+      public void onEvent(Event event) throws Throwable {
+        ServerProcess.this.instanceWasZapped();
+      }});
     return outputStream;
   }
 
@@ -240,6 +247,16 @@ public class ServerProcess {
     } else {
       this.stateInterlock.serverBecamePassive(this);
     }
+  }
+
+  /**
+   * Called by the inline EventListener when the instance goes down for a restart due to ZAP.
+   * This is really just a special case of a shut-down (we accept it, even if we weren't expecting it).
+   */
+  private synchronized void instanceWasZapped() {
+    this.harnessLogger.output("Server restarted due to ZAP");
+    this.pid = 0;
+    this.stateInterlock.serverWasZapped(this);
   }
 
   /**
@@ -263,6 +280,7 @@ public class ServerProcess {
     GalvanFailureException failureException = null;
     if (this.pid > 0) {
       // Ok, tell the interlock.
+      this.pid = 0;
       this.stateInterlock.serverDidShutdown(this);
     } else {
       // This is a fast-failure so report the test failure.
