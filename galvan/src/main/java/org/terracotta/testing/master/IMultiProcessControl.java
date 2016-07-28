@@ -29,7 +29,11 @@ public interface IMultiProcessControl {
 
   public void terminateActive() throws GalvanFailureException;
 
+  public void terminateOnePassive() throws GalvanFailureException;
+
   public void startOneServer() throws GalvanFailureException;
+
+  public void startAllServers() throws GalvanFailureException;
 
   public void terminateAllServers() throws GalvanFailureException;
 

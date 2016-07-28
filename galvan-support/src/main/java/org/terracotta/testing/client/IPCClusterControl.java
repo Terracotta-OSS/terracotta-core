@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.client;
 
-import org.terracotta.passthrough.Assert;
 import org.terracotta.passthrough.IClusterControl;
 
 
@@ -43,8 +42,7 @@ public class IPCClusterControl implements IClusterControl {
 
   @Override
   public void startAllServers() throws Exception {
-    // TODO:  Implement.
-    Assert.unimplemented();
+    ipcManager.startAllServers();
   }
 
   @Override
@@ -54,8 +52,7 @@ public class IPCClusterControl implements IClusterControl {
 
   @Override
   public void terminateOnePassive() throws Exception {
-    // TODO:  Implement.
-    Assert.unimplemented();
+    ipcManager.terminateOnePassive();
   }
 
   @Override

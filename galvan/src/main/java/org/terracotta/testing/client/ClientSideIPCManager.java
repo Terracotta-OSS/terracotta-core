@@ -82,7 +82,15 @@ public class ClientSideIPCManager {
 
   public void startOneServer() { sendAndWait(IPCMessageConstants.START_ONE_SERVER); }
 
+  public void startAllServers() {
+    sendAndWait(IPCMessageConstants.START_ALL_SERVERS);
+  }
+
   public void terminateActive() { sendAndWait(IPCMessageConstants.TERMINATE_ACTIVE); }
+
+  public void terminateOnePassive() {
+    sendAndWait(IPCMessageConstants.TERMINATE_ONE_PASSIVE);
+  }
 
   public void shutDownStripeAndWaitForTermination() {
     sendAndWait(IPCMessageConstants.SHUT_DOWN_STRIPE);
