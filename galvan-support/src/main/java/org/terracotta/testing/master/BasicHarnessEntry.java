@@ -25,7 +25,7 @@ import org.terracotta.testing.logging.VerboseManager;
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
   @Override
-  protected void runOneConfiguration(ITestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, InterruptedException {
+  protected void runOneConfiguration(TestStateManager stateManager, VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions harnessOptions, BasicTestClusterConfiguration runConfiguration) throws IOException, GalvanFailureException {
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
@@ -56,7 +56,12 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stateManager.addComponentToShutDown(new IComponentManager() {
       @Override
       public void forceTerminateComponent() {
-        processControl.terminateAllServers();
+        try {
+          processControl.terminateAllServers();
+        } catch (GalvanFailureException e) {
+          // TODO:  This is just a stop-gap during refactoring.  We don't expect failure here.
+          Assert.unexpected(e);
+        }
       }}, false);
     
     // The cluster is now running so install and run the clients.
@@ -70,5 +75,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
     clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
     CommonIdioms.installAndRunClients(stateManager, verboseManager, clientsConfiguration, processControl);
+    // NOTE:  waitForFinish() throws GalvanFailureException on failure.
+    stateManager.waitForFinish();
   }
 }

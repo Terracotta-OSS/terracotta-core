@@ -43,7 +43,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public synchronized void synchronizeClient() {
+  public synchronized void synchronizeClient() throws GalvanFailureException {
     this.logger.output(">>> synchronizeClient");
     verifyNotShutdown();
     // Do nothing - this is just for demonstration purposes.
@@ -51,7 +51,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public void terminateActive() {
+  public void terminateActive() throws GalvanFailureException {
     this.logger.output(">>> terminateActive");
     verifyNotShutdown();
     // First, make sure that there is an active.
@@ -81,7 +81,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public void startOneServer() {
+  public void startOneServer() throws GalvanFailureException {
     this.logger.output(">>> startOneServer");
     try {
       ServerProcess lastTerminatedServer = terminatedServers.pop();
@@ -104,7 +104,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public synchronized void terminateAllServers() {
+  public synchronized void terminateAllServers() throws GalvanFailureException {
     this.logger.output(">>> terminateAllServers");
     verifyNotShutdown();
     // We don't care about any server states here.  Just walk all of them and stop everyone.
@@ -133,7 +133,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public synchronized void waitForActive() {
+  public synchronized void waitForActive() throws GalvanFailureException {
     this.logger.output(">>> waitForActive");
     verifyNotShutdown();
     internalWaitForActive();
@@ -142,7 +142,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
-  public synchronized void waitForRunningPassivesInStandby() {
+  public synchronized void waitForRunningPassivesInStandby() throws GalvanFailureException {
     this.logger.output(">>> waitForRunningPassivesInStandby");
     verifyNotShutdown();
     // We wait for passives by making sure that nothing is left in the unknown list.
@@ -180,7 +180,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     underlyingInstallation.retireProcess(server);
   }
 
-  private void internalWaitForActive() {
+  private void internalWaitForActive() throws GalvanFailureException {
     if (null == this.activeServer) {
       // First, walk the unknown servers.
       waitForAllUnknowns();
@@ -207,7 +207,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
         if (null == this.activeServer) {
           // If there is no active at this point, it probably means that there is something seriously wrong with the
           // server, such that it crashed while we were waiting for it to start.
-          throw new IllegalStateException("Active process did not appear");
+          throw new GalvanFailureException("Active process did not appear");
         }
       }
     }

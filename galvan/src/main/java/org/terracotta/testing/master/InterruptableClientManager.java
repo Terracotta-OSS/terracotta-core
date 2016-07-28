@@ -85,6 +85,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
     boolean setupWasClean = (0 == setupExitValue);
     boolean didRunCleanly = true;
     boolean destroyWasClean = true;
+    String errorMessage = null;
     if (setupWasClean) {
       ClientRunner[] concurrentTests = installTestClients(this.testClientDebugPortStart, this.clientsToCreate, clientInstaller);
       try {
@@ -121,7 +122,7 @@ public class InterruptableClientManager extends Thread implements IComponentMana
         shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
       }
       if (!didRunCleanly) {
-        harnessLogger.error("ERROR encountered in test client.  Destroy will be attempted but this is a failure");
+        errorMessage = "ERROR encountered in test client.  Destroy will be attempted but this is a failure";
       }
       
       // Run the destroy client, synchronously.
@@ -130,15 +131,16 @@ public class InterruptableClientManager extends Thread implements IComponentMana
       int destroyExitValue = runClientLifeCycle(destroyClient);
       destroyWasClean = (0 == destroyExitValue);
       if (!destroyWasClean) {
-        harnessLogger.error("ERROR encountered in destroy.  This is a failure");
+        errorMessage = "ERROR encountered in destroy.  This is a failure";
       }
     } else {
-      harnessLogger.error("FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!");
+      errorMessage = "FATAL ERROR IN SETUP CLIENT!  Exit code " + setupExitValue + ".  NOT running tests!";
     }
     if (setupWasClean && didRunCleanly && destroyWasClean) {
-      this.stateManager.testDidPass();
+      this.stateManager.setTestDidPassIfNotFailed();
     } else {
-      this.stateManager.testDidFail();
+      harnessLogger.error(errorMessage);
+      this.stateManager.testDidFail(new GalvanFailureException(errorMessage));
     }
   }
 

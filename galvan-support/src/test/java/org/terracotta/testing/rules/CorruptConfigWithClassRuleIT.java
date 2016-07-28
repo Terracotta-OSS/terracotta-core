@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.testing.master.GalvanFailureException;
 
 
 /**
@@ -35,8 +36,9 @@ public class CorruptConfigWithClassRuleIT {
     }
   }
 
-  // We expect IllegalStateException when the active fails to come up while we are waiting for it.
-  @Test(expected=IllegalStateException.class)
+  // We expect GalvanFailureException when the active fails to come up while we are waiting for it, since this is a kind of
+  //  test failure scenario.
+  @Test(expected=GalvanFailureException.class)
   public void testWaitForActiveCrash() throws Exception {
     CLUSTER.getClusterControl().waitForActive();
   }

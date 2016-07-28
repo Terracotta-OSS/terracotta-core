@@ -345,7 +345,7 @@ public class ServerProcess {
         }
       }
       if (shouldSendFailure) {
-        this.stateManager.testDidFail();
+        this.stateManager.testDidFail(new GalvanFailureException("Unexpected server crash"));
       }
     }
     public synchronized int bringDownServer() throws InterruptedException {

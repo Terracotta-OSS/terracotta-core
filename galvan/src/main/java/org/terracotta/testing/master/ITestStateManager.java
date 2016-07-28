@@ -23,9 +23,17 @@ package org.terracotta.testing.master;
  * This means that an unexpected server crash, after the test passed, would still count as a failure.
  */
 public interface ITestStateManager {
-  public void testDidPass();
+  /**
+   * Notify that the test did complete.  If no error was so far set, this will mark it as passed.
+   */
+  public void setTestDidPassIfNotFailed();
 
-  public void testDidFail();
+  /**
+   * Notify that the test failed.  This will over-write any previous setting that the test had failed but will not
+   *  over-write an existing failure (since we typically want to see the first cause of failure, not the last).
+   * @param failureDescription The description of the test failure
+   */
+  public void testDidFail(GalvanFailureException failureDescription);
 
   /**
    * Registers a component which needs to be shut down when the test is complete.

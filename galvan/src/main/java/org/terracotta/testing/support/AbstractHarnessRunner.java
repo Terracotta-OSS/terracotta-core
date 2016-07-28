@@ -29,6 +29,7 @@ import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.DebugOptions;
 import org.terracotta.testing.master.EnvironmentOptions;
+import org.terracotta.testing.master.GalvanFailureException;
 
 
 public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration> extends Runner {
@@ -53,6 +54,7 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     
     // Get the system properties we require.
     String allTestParentDirectory = System.getProperty("kitTestDirectory");
+    Assert.assertNotNull(allTestParentDirectory);
     String thisTestName = this.testCase.getName();
     // For some reason, this test name is sometimes null (part of Surefire so doesn't provide much data and can't really be
     //  debugged).
@@ -87,16 +89,10 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     // We will only succeed or fail.
     Throwable error = null;
     try {
-      boolean wasCompleteSuccess = runTest(environmentOptions, masterClass, debugOptions, verboseManager);
-      if (wasCompleteSuccess) {
-        error = null;
-      } else {
-        // This was a failure without any other information so just create a generic exception.
-        error = new Exception("Test failed without exception");
-      }
-    } catch (IOException e) {
+      runTest(environmentOptions, masterClass, debugOptions, verboseManager);
+    } catch (GalvanFailureException e) {
       error = e;
-    } catch (InterruptedException e) {
+    } catch (IOException e) {
       error = e;
     }
     // Determine how to handle the result.
@@ -124,5 +120,15 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     return result;
   }
 
-  protected abstract boolean runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, InterruptedException;
+  /**
+   * Runs the test described by masterClass in an environment described by environmentOptions.  Throws an exception on failure/error and returns nothing on success.
+   * 
+   * @param environmentOptions Description of how to configure the test environment
+   * @param masterClass Class describing the test to run
+   * @param debugOptions Options to allow specific sub-processes to wait for debugger connections
+   * @param verboseManager Controls the output produced by the different parts of the test or framework.
+   * @throws IOException (test error) There was an error setting up the test environment
+   * @throws GalvanFailureException (test failure) The test failed
+   */
+  protected abstract void runTest(EnvironmentOptions environmentOptions, ITestMaster<C> masterClass, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, GalvanFailureException;
 }
