@@ -296,4 +296,16 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       Assert.unexpected(e);
     }
   }
+
+
+  @Override
+  public String toString() {
+    return super.toString()
+        + "\n\tActive: " + this.activeServer
+        + "\n\tPassives: " + this.passiveServers
+        + "\n\tUnknown: " + this.unknownRunningServers
+        + "\n\tTerminated: " + this.terminatedServers
+        + "\n\tClients: " + this.runningClients
+        ;
+  }
 }
