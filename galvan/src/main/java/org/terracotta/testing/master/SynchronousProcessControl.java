@@ -63,6 +63,23 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
+  public synchronized void terminateOnePassive() throws GalvanFailureException {
+    this.logger.output(">>> terminateOnePassive");
+    
+    // Pick an arbitrary passive.
+    ServerProcess onePassive = this.stateInterlock.getOnePassiveServer();
+    // It is acceptable to call this in the case where there is no passive.  That is a "do nothing" situation.
+    if (null != onePassive) {
+      // Stop the server
+      safeStop(onePassive);
+      // Wait until the server has gone down.
+      this.stateInterlock.waitForServerTermination(onePassive);
+    }
+    
+    this.logger.output("<<< terminateOnePassive");
+  }
+
+  @Override
   public synchronized void startOneServer() throws GalvanFailureException {
     this.logger.output(">>> startOneServer");
     ServerProcess server = this.stateInterlock.getOneTerminatedServer();
@@ -74,6 +91,23 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     this.stateInterlock.waitForServerRunning(server);
     
     this.logger.output("<<< startOneServer");
+  }
+
+  @Override
+  public synchronized void startAllServers() throws GalvanFailureException {
+    this.logger.output(">>> startAllServers");
+    ServerProcess server = this.stateInterlock.getOneTerminatedServer();
+    while (null != server) {
+      safeStart(server);
+      
+      // Wait for it to start up (since we need to grab a different one in the next call).
+      this.stateInterlock.waitForServerRunning(server);
+      ServerProcess nextServer = this.stateInterlock.getOneTerminatedServer();
+      // Ensure that we don't somehow get the same instance (since we just watched it come online).
+      Assert.assertTrue(server != nextServer);
+      server = nextServer;
+    }
+    this.logger.output("<<< startAllServers");
   }
 
   @Override

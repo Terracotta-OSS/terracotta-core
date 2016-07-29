@@ -59,6 +59,17 @@ public class ClientEventManager {
         processStdin.flush();
       }});
     
+    String terminateOnePassiveEventName = "Terminate one passive";
+    eventMap.put(IPCMessageConstants.TERMINATE_ONE_PASSIVE_SYN, terminateOnePassiveEventName);
+    subBus.on(terminateOnePassiveEventName, new EventListener() {
+      @Override
+      public void onEvent(Event e) throws Throwable {
+        control.terminateOnePassive();
+        // We also want to send the ACK to the client.
+        processStdin.println(IPCMessageConstants.TERMINATE_ONE_PASSIVE_ACK);
+        processStdin.flush();
+      }});
+    
     String startOneServerEventName = "Start one server";
     eventMap.put(IPCMessageConstants.START_ONE_SERVER_SYN, startOneServerEventName);
     subBus.on(startOneServerEventName, new EventListener() {
@@ -67,6 +78,17 @@ public class ClientEventManager {
         control.startOneServer();
         // We also want to send the ACK to the client.
         processStdin.println(IPCMessageConstants.START_ONE_SERVER_ACK);
+        processStdin.flush();
+      }});
+    
+    String startAllServersEventName = "Start all servers";
+    eventMap.put(IPCMessageConstants.START_ALL_SERVERS_SYN, startAllServersEventName);
+    subBus.on(startAllServersEventName, new EventListener() {
+      @Override
+      public void onEvent(Event e) throws Throwable {
+        control.startAllServers();
+        // We also want to send the ACK to the client.
+        processStdin.println(IPCMessageConstants.START_ALL_SERVERS_ACK);
         processStdin.flush();
       }});
     

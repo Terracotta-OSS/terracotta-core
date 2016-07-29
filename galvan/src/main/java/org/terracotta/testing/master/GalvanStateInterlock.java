@@ -34,6 +34,7 @@ import org.terracotta.testing.logging.ContextualLogger;
 public class GalvanStateInterlock implements IGalvanStateInterlock {
   private final ContextualLogger logger;
   private final ITestWaiter sharedLockState;
+  private boolean isShuttingDown;
 
 
   // ----- SERVER STATE -----
@@ -45,6 +46,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   private final List<ServerProcess> unknownRunningServers = new Vector<ServerProcess>();
   // A server which has returned an exit status, or hasn't yet become running, is a terminated server.
   private final List<ServerProcess> terminatedServers = new Vector<ServerProcess>();
+  // A server which we tried to start up but it restarted itself for a zap.  These are distinct from terminatedServers since they haven't actually started up and found their PIDs, but they also have already been started so we can't "start()" them, again.
+  private final List<ServerProcess> zappedServers = new Vector<ServerProcess>();
 
 
   // ----- CLIENT STATE -----
@@ -62,6 +65,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void registerNewServer(ServerProcess newServer) {
     synchronized (this.sharedLockState) {
+      // No new registration during shutdown.
+      Assert.assertFalse(this.isShuttingDown);
       this.logger.output("registerNewServer: " + newServer);
       Assert.assertFalse(this.terminatedServers.contains(newServer));
       this.terminatedServers.add(newServer);
@@ -71,6 +76,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void registerRunningClient(ClientRunner runningClient) {
     synchronized (this.sharedLockState) {
+      // No new registration during shutdown.
+      Assert.assertFalse(this.isShuttingDown);
       this.logger.output("registerRunningClient: " + runningClient);
       Assert.assertFalse(this.runningClients.contains(runningClient));
       this.runningClients.add(runningClient);
@@ -106,7 +113,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForServerRunning: " + startingUpServer);
       // Wait until it is no longer terminated (whether it is unknown, active, or passive).
-      while (!this.sharedLockState.checkDidPass() && this.terminatedServers.contains(startingUpServer)) {
+      while (!this.sharedLockState.checkDidPass() && (this.terminatedServers.contains(startingUpServer) || this.zappedServers.contains(startingUpServer))) {
         safeWait();
       }
       this.logger.output("< waitForServerRunning: " + startingUpServer);
@@ -128,7 +135,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void waitForAllServerReady() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForAllServerReady");
-      while (!this.sharedLockState.checkDidPass() && !this.unknownRunningServers.isEmpty()) {
+      while (!this.sharedLockState.checkDidPass() && (!this.unknownRunningServers.isEmpty() || !this.zappedServers.isEmpty())) {
         safeWait();
       }
       this.logger.output("< waitForAllServerReady");
@@ -186,12 +193,12 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void serverBecameActive(ServerProcess server) {
     synchronized (this.sharedLockState) {
       this.logger.output("serverBecameActive: " + server);
-      Assert.assertNull(this.activeServer);
+      localAssert(null == this.activeServer, server);
       boolean didRemove = this.unknownRunningServers.remove(server);
       if (!didRemove) {
         didRemove = this.passiveServers.remove(server);
       }
-      Assert.assertTrue(didRemove);
+      localAssert(didRemove, server);
       this.activeServer = server;
       this.sharedLockState.notifyAll();
     }
@@ -202,7 +209,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("serverBecamePassive: " + server);
       boolean didRemove = this.unknownRunningServers.remove(server);
-      Assert.assertTrue(didRemove);
+      localAssert(didRemove, server);
       this.passiveServers.add(server);
       this.sharedLockState.notifyAll();
     }
@@ -233,8 +240,28 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("serverDidStartup: " + server);
       boolean didRemove = this.terminatedServers.remove(server);
-      Assert.assertTrue(didRemove);
+      if (!didRemove) {
+        // See if this server was zapped (since that is effectively a special case of terminated).
+        didRemove = this.zappedServers.remove(server);
+      }
+      localAssert(didRemove, server);
       this.unknownRunningServers.add(server);
+      // Check if this server is a late arrival - explicit termination, in that case.
+      if (this.isShuttingDown) {
+        this.logger.output("explicit stop of late arrival: " + server);
+        safeStop(server);
+      }
+      this.sharedLockState.notifyAll();
+    }
+  }
+
+  @Override
+  public void serverWasZapped(ServerProcess server) {
+    synchronized (this.sharedLockState) {
+      this.logger.output("serverWasZapped: " + server);
+      boolean didRemove = this.unknownRunningServers.remove(server);
+      localAssert(didRemove, server);
+      this.zappedServers.add(server);
       this.sharedLockState.notifyAll();
     }
   }
@@ -255,6 +282,8 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void forceShutdown() {
     synchronized (this.sharedLockState) {
       this.logger.output("> forceShutdown");
+      // Set the flag that we are shutting down.  That way, any servers which were concurrently coming online can be stopped when they check in.
+      this.isShuttingDown = true;
       // Force shut-down all clients, all passives, and the active.
       // (note that we won't modify the collections here, just walk them - we are synchronized)
       for (ClientRunner client : this.runningClients) {
@@ -295,5 +324,35 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       // Not expected in this usage - we are shutting down.
       Assert.unexpected(e);
     }
+  }
+
+
+  @Override
+  public String toString() {
+    return super.toString()
+        + "\n\tActive: " + this.activeServer
+        + "\n\tPassives: " + this.passiveServers
+        + "\n\tUnknown: " + this.unknownRunningServers
+        + "\n\tTerminated: " + this.terminatedServers
+        + "\n\tZapped: " + this.zappedServers
+        + "\n\tClients: " + this.runningClients
+        ;
+  }
+
+  /**
+   * A diagnostic helper function which is likely only temporary.
+   * Increases the amount of data output when a failing assertion is triggered, directly to STDERR.
+   * This is done since the outstanding Galvan bugs appear to only be intermittent and happen at high concurrency levels so
+   *  this allows us to get a better snapshot of what happened.
+   * 
+   * @param clause The assertion value (output triggers on false).
+   * @param server The server we were trying to add/remove/change at the time.
+   */
+  private void localAssert(boolean clause, ServerProcess server) {
+    if (!clause) {
+      System.err.println("FAIL USING " + server);
+      System.err.println(toString());
+    }
+    Assert.assertTrue(clause);
   }
 }

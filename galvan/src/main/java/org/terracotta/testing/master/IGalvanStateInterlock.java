@@ -131,6 +131,13 @@ public interface IGalvanStateInterlock {
    */
   public void serverDidStartup(ServerProcess server);
   /**
+   * Similar to serverDidShutdown() but different in that zapped servers have technically already been "started".
+   * This server will send us a serverDidStartup() message once it has finished restarting, with a new PID.
+   * 
+   * @param server The zapped server.
+   */
+  public void serverWasZapped(ServerProcess server);
+  /**
    * Notifies the interlock that the given client terminated.  Note that it must have already been registered with the
    *  interlock.
    * 
