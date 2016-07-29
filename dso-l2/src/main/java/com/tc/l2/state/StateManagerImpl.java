@@ -453,7 +453,11 @@ public class StateManagerImpl implements StateManager {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
       }
-      if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {
+      if (state == PASSIVE_SYNCING && syncdTo.equals(disconnectedNode)) {
+        //  need to zap and start over.  The active being synced to is gone.
+        logger.fatal("Passive only partially synced when active disappeared.  Restarting");
+        throw new ZapDirtyDbServerNodeException("Passive only partially synced when active disappeared.  Restarting"); 
+      } else if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;
       }
     }
