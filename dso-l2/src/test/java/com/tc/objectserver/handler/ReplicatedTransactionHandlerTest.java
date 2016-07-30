@@ -98,7 +98,6 @@ public class ReplicatedTransactionHandlerTest {
       ((Consumer)invocation.getArguments()[2]).accept(null);
       return null;
     }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-    when(entityManager.getMessageCodec(Mockito.any())).thenReturn(mock(MessageCodec.class));
     when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
     this.source = mock(ClientID.class);
@@ -131,6 +130,7 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.getEntityDescriptor()).thenReturn(descriptor);
     when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(msg.getExtendedData()).thenReturn(new byte[0]);
+    when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     Mockito.doAnswer(invocation->{
       Consumer consumer = (Consumer)invocation.getArguments()[2];
@@ -149,7 +149,7 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
 //  verify there was an attempt to decode the invoke message
     verify(msg).getExtendedData();
-    verify(entityManager).getMessageCodec(eid);
+    verify(entity).getCodec();
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
   }  
@@ -171,6 +171,7 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.getEntityDescriptor()).thenReturn(descriptor);
     when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getMessageCodec(Matchers.any())).thenReturn(codec);
     Mockito.doAnswer(invocation->{
       Consumer consumer = (Consumer)invocation.getArguments()[2];
@@ -204,6 +205,7 @@ public class ReplicatedTransactionHandlerTest {
     SyncMessageCodec sync = mock(SyncMessageCodec.class);
     when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.of(entity));
     when(this.entityManager.getMessageCodec(Matchers.eq(eid))).thenReturn(codec);
+    when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getSyncMessageCodec(Matchers.eq(eid))).thenReturn(sync);
     
     Mockito.doAnswer(invocation->{
