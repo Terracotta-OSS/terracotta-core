@@ -219,16 +219,7 @@ public class ReplicatedTransactionHandler {
     long version = rep.getVersion();
     EntityID entityID = descriptor.getEntityID();
     byte[] extendedData = rep.getExtendedData();
-    EntityMessage msg = null;
-    MessagePayload payload = null;
-    try {
-      if (rep.getReplicationType() == ReplicationMessage.ReplicationType.INVOKE_ACTION) {
-        msg = entityManager.getMessageCodec(entityID).decodeMessage(extendedData);
-      }
-    } catch (MessageCodecException codec) {
-      throw new RuntimeException(codec);
-    }
-    payload = new MessagePayload(extendedData, msg, rep.getConcurrency());
+
     ReplicationMessage.ReplicationType replicationType = rep.getReplicationType();
 
     // At this point, we can now look up the managed entity (used later).
@@ -243,7 +234,7 @@ public class ReplicatedTransactionHandler {
       try {
         LOGGER.debug("entity create called " + entityID);
         ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull());
-        temp.addRequestMessage(request, payload, 
+        temp.addRequestMessage(request, new MessagePayload(extendedData, null), 
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
@@ -265,6 +256,15 @@ public class ReplicatedTransactionHandler {
       }
     } else if (entity.isPresent()) {
       ManagedEntity entityInstance = entity.get();
+      EntityMessage msg = null;
+      try {
+        if (rep.getReplicationType() == ReplicationMessage.ReplicationType.INVOKE_ACTION) {
+          msg = entityInstance.getCodec().decodeMessage(extendedData);
+        }
+      } catch (MessageCodecException codec) {
+        throw new RuntimeException(codec);
+      }
+      MessagePayload payload = new MessagePayload(extendedData, msg, rep.getConcurrency());
       if (null != request.getAction()) switch (request.getAction()) {
         case RECONFIGURE_ENTITY:  
           entity.get().addRequestMessage(request, payload, 
