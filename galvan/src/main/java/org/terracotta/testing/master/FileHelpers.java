@@ -131,6 +131,14 @@ public class FileHelpers {
     ensureExistsRecursive(asFile);
   }
 
+  public static void touchEmptyFile(ContextualLogger logger, String parentDirectoryPath, String fileName) throws IOException {
+    File newFile = new File(parentDirectoryPath, fileName);
+    logger.output("Creating empty file: " + newFile.getAbsolutePath());
+    boolean didCreate = newFile.createNewFile();
+    // This helper has no notion of failure to create (without exception).
+    Assert.assertTrue(didCreate);
+  }
+
 
   private static class DirectoryCopier implements FileVisitor<Path> {
     private final ContextualLogger logger;
