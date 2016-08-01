@@ -46,6 +46,7 @@ public class ServerProcess {
   private final ContextualLogger harnessLogger;
   private final ContextualLogger serverLogger;
   private final String serverName;
+  private final int heapInM;
   private final int debugPort;
   private final File serverWorkingDirectory;
   private final String eyeCatcher;
@@ -60,7 +61,7 @@ public class ServerProcess {
   private OutputStream outputStream;
   private OutputStream errorStream;
 
-  public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, int debugPort) {
+  public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, int heapInM, int debugPort) {
     this.stateInterlock = stateInterlock; 
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -68,6 +69,9 @@ public class ServerProcess {
     this.serverLogger = serverVerboseManager.createServerLogger();
     
     this.serverName = serverName;
+    // We need to specify a positive integer as the heap size.
+    Assert.assertTrue(heapInM > 0);
+    this.heapInM = heapInM;
     this.debugPort = debugPort;
     this.serverWorkingDirectory = serverWorkingDirectory;
     // Create our eye-catcher for looking up sub-processes.
@@ -161,9 +165,7 @@ public class ServerProcess {
     if (null == javaOpts) {
       javaOpts = "";
     }
-    // Note that we currently want to scale down our heap to 128M since our tests are simple.
-    // TODO:  Find a way to expose this to the test being run.
-    javaOpts += " -Xms128m -Xms128m";
+    javaOpts += " -Xms" + this.heapInM + "m -Xmx" + this.heapInM + "m";
     if (debugPort > 0) {
       // Set up the client to block while waiting for connection.
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + debugPort;
