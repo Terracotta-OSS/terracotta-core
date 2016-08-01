@@ -51,10 +51,17 @@ public class StripeInstaller {
   }
   
   public void installNewServer(String serverName, int debugPort) throws IOException {
+    // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
+    // Create the logger for the intallation.
     ContextualLogger fileHelperLogger = this.stripeVerboseManager.createFileHelpersLogger();
+    // Create a copy of the server for this installation.
     String installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
+    // Copy the extra jars this test needs into the new installation.
     FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
+    // Create the empty Log4J properties file to force the server to use the expected appender so we know the shape of text to read as events.
+    FileHelpers.touchEmptyFile(fileHelperLogger, installPath, ".tc.dev.log4j.properties");
+    // Create the object representing this single installation and add it to the list for this stripe.
     ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), debugPort);
     this.installedServers.add(installation);
   }
