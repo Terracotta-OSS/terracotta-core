@@ -33,6 +33,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stripeConfiguration.kitOriginPath = harnessOptions.kitOriginPath;
     stripeConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
     stripeConfiguration.serversToCreate = serversToCreate;
+    stripeConfiguration.serverHeapInM = harnessOptions.serverHeapInM;
     stripeConfiguration.serverStartPort = chooseRandomPort();
     stripeConfiguration.serverDebugPortStart = debugOptions.serverDebugPortStart;
     stripeConfiguration.serverStartNumber = 0;
