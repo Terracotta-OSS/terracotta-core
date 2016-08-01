@@ -136,10 +136,19 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String clientClassPath;
     public int clientsToCreate;
     public String testClassName;
+    public int serverHeapInM;
     public boolean isRestartable;
     public List<String> extraJarPaths;
     public String namespaceFragment;
     public String serviceFragment;
     public String entityFragment;
+    
+    /**
+     * This constructor only exists to set convenient defaults.
+     */
+    public CommonHarnessOptions() {
+      // By default, we will configure a server with a 128M heap.
+      this.serverHeapInM = 128;
+    }
   }
 }

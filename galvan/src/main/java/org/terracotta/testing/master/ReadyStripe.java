@@ -26,7 +26,7 @@ import org.terracotta.testing.logging.VerboseManager;
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
-  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException {
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String testParentDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException {
     ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -47,7 +47,7 @@ public class ReadyStripe {
           ? (serverDebugPortStart + i)
           : 0;
       configBuilder.addServer(serverName);
-      installer.installNewServer(serverName, debugPort);
+      installer.installNewServer(serverName, heapInM, debugPort);
     }
     // The config is built and stripe has been installed so write the config to the stripe.
     installer.installConfig(configBuilder.buildConfig());

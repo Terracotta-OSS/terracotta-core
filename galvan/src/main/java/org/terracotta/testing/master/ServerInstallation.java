@@ -32,16 +32,18 @@ public class ServerInstallation {
   private final VerboseManager stripeVerboseManager;
   private final String serverName;
   private final File serverWorkingDirectory;
+  private final int heapInM;
   private final int debugPort;
   private boolean configWritten;
   private boolean hasCreatedProcess;
 
-  public ServerInstallation(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverName, File serverWorkingDirectory, int debugPort) {
+  public ServerInstallation(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverName, File serverWorkingDirectory, int heapInM, int debugPort) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.stripeVerboseManager = stripeVerboseManager;
     this.serverName = serverName;
     this.serverWorkingDirectory = serverWorkingDirectory;
+    this.heapInM = heapInM;
     this.debugPort = debugPort;
   }
 
@@ -71,7 +73,7 @@ public class ServerInstallation {
     // Create the VerboseManager for the instance.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + this.serverName + "]");
     // Create the process and check it out.
-    ServerProcess process = new ServerProcess(this.stateInterlock, this.stateManager, serverVerboseManager, this, this.serverName, this.serverWorkingDirectory, this.debugPort);
+    ServerProcess process = new ServerProcess(this.stateInterlock, this.stateManager, serverVerboseManager, this, this.serverName, this.serverWorkingDirectory, this.heapInM, this.debugPort);
     this.hasCreatedProcess = true;
     return process;
   }

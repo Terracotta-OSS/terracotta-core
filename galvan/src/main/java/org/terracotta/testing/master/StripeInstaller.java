@@ -50,7 +50,7 @@ public class StripeInstaller {
     this.installedServers = new Vector<ServerInstallation>();
   }
   
-  public void installNewServer(String serverName, int debugPort) throws IOException {
+  public void installNewServer(String serverName, int heapInM, int debugPort) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // Create the logger for the intallation.
@@ -62,7 +62,7 @@ public class StripeInstaller {
     // Create the empty Log4J properties file to force the server to use the expected appender so we know the shape of text to read as events.
     FileHelpers.touchEmptyFile(fileHelperLogger, installPath, ".tc.dev.log4j.properties");
     // Create the object representing this single installation and add it to the list for this stripe.
-    ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), debugPort);
+    ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), heapInM, debugPort);
     this.installedServers.add(installation);
   }
   

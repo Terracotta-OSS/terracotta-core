@@ -120,11 +120,13 @@ public class BasicExternalCluster extends Cluster {
         : 0;
 
     stateManager = new TestStateManager();
+    // By default, we will use 128M heap size.
+    int heapInM = 128;
     interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
     cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(),
         testParentDirectory.getAbsolutePath(),
-        stripeSize, serverPort, serverDebugStartPort, 0, this.isRestartable,
+        stripeSize, heapInM, serverPort, serverDebugStartPort, 0, this.isRestartable,
         serverJarPaths, namespaceFragment, serviceFragment, entityFragment);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
