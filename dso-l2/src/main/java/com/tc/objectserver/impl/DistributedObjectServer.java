@@ -123,6 +123,7 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
@@ -698,15 +699,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(new DSOChannelManagerEventListener() {
       @Override
       public void channelCreated(MessageChannel channel) {
+        ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          eventCollector.clientDidConnect(channel, new ClientID(channel.getChannelID().toLong()));
+          eventCollector.clientDidConnect(channel, cid);
         }
       }
 
       @Override
       public void channelRemoved(MessageChannel channel) {
-        if (l2Coordinator.getStateManager().isActiveCoordinator() && clientHandshakeManager.isStarted()) {
-          eventCollector.clientDidDisconnect(channel, new ClientID(channel.getChannelID().toLong()));
+        ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
+        if (l2Coordinator.getStateManager().isActiveCoordinator() && clientHandshakeManager.isStarted() && channelManager.isActiveID(cid)) {
+          eventCollector.clientDidDisconnect(channel, cid);
         }
       }
     });
