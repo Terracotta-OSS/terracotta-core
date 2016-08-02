@@ -214,8 +214,8 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
     @Override
     public void channelRemoved(MessageChannel channel) {
-      activeChannels.remove(getClientIDFor(channel.getChannelID()));
       fireChannelRemovedEvent(channel);
+      activeChannels.remove(getClientIDFor(channel.getChannelID()));
     }
 
   }
