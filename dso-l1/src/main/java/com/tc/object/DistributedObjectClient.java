@@ -394,21 +394,6 @@ public class DistributedObjectClient implements TCClient {
     this.tcMemManager.checkGarbageCollectors();
 
     this.threadIDManager = new ThreadIDManagerImpl(this.threadIDMap);
-    // Setup the lock manager
-    this.lockManager = this.clientBuilder
-        .createLockManager(this.channel,
-                           new ClientIDLogger(this.channel, TCLogging
-                               .getLogger(ClientLockManager.class)), sessionManager, this.channel
-                               .getLockRequestMessageFactory(), this.threadIDManager,
-            new ClientLockManagerConfigImpl(tcProperties.getPropertiesFor(TCPropertiesConsts.L1_LOCK_MANAGER_CATEGORY)),
-            this.taskRunner);
-    final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
-    this.dumpHandler.registerForDump(lockDumpAdapter);
-
-    // Create the SEDA stages
-    final Stage<Void> lockResponse = this.communicationStageManager.createStage(ClientConfigurationContext.LOCK_RESPONSE_STAGE, Void.class, new LockResponseHandler<Void>(sessionManager), 1, maxSize);
-
     final Stage<HydrateContext> hydrateStage = this.communicationStageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), 1, maxSize);
 
     // By design this stage needs to be single threaded. If it wasn't then cluster membership messages could get
@@ -419,7 +404,6 @@ public class DistributedObjectClient implements TCClient {
 
     final Stage<Void> clusterMembershipEventStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE, Void.class, new ClusterMembershipEventsHandler<Void>(cluster), 1, maxSize);
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
-    clientHandshakeCallbacks.add(this.lockManager);
     clientHandshakeCallbacks.add(this.clientEntityManager);
     final ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = this.clientBuilder
@@ -439,7 +423,7 @@ public class DistributedObjectClient implements TCClient {
     // DO NOT create any stages after this call
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList());
 
-    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), lockResponse.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), serverMessageStage.getSink());
+    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), serverMessageStage.getSink());
     new Thread(threadGroup, new Runnable() {
         public void run() {
           while (!clientStopped.isSet()) {
@@ -527,10 +511,6 @@ public class DistributedObjectClient implements TCClient {
   private Map<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMapping() {
     final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<TCMessageType, Class<? extends TCMessage>>();
 
-    messageTypeClassMapping.put(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
@@ -551,12 +531,9 @@ public class DistributedObjectClient implements TCClient {
     return messageTypeClassMapping;
   }
 
-  private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<HydrateContext> hydrateSink, Sink<Void> lockResponseSink,
+  private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<HydrateContext> hydrateSink,
                                         Sink<PauseContext> pauseSink,
                                         Sink<Void> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<Void> serverEntityMessageSink) {
-    messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.LOCK_RECALL_MESSAGE, lockResponseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterMembershipEventSink, hydrateSink);
@@ -565,10 +542,6 @@ public class DistributedObjectClient implements TCClient {
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_MESSAGE, serverEntityMessageSink, hydrateSink);
     DSO_LOGGER.debug("Added message routing types.");
-  }
-
-  public ClientLockManager getLockManager() {
-    return this.lockManager;
   }
 
   public ClientEntityManager getEntityManager() {

@@ -93,7 +93,7 @@ public class TerracottaConnectionService implements ConnectionService {
       throw new ConnectionException(ie);
     }
 
-    return new TerracottaConnection(client.getClientEntityManager(), client.getClientLockManager(), new Runnable() {
+    return new TerracottaConnection(client.getClientEntityManager(), new Runnable() {
         public void run() {
           client.shutdown();
           }

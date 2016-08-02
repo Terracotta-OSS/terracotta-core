@@ -44,7 +44,7 @@ public class TerracottaConnection implements Connection {
 
   private boolean isShutdown = false;
 
-  public TerracottaConnection(ClientEntityManager entityManager, ClientLockManager clientLockManager, Runnable shutdown) {
+  public TerracottaConnection(ClientEntityManager entityManager, Runnable shutdown) {
     this.entityManager = entityManager;
     this.shutdown = shutdown;
   }

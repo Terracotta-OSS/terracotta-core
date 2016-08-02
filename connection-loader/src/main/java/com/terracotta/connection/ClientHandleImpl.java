@@ -20,9 +20,6 @@ package com.terracotta.connection;
 
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.locks.ClientLockManager;
-
-import java.util.Set;
 
 
 public class ClientHandleImpl implements ClientHandle {
@@ -41,10 +38,5 @@ public class ClientHandleImpl implements ClientHandle {
   @Override
   public ClientEntityManager getClientEntityManager() {
     return client.getEntityManager();
-  }
-  
-  @Override
-  public ClientLockManager getClientLockManager() {
-    return client.getLockManager();
   }
 }
