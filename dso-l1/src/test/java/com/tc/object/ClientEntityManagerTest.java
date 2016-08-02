@@ -531,7 +531,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public Type getVoltronType() {
-      throw new UnsupportedOperationException();
+      return Type.INVOKE_ACTION;
     }
     @Override
     public byte[] getExtendedData() {
