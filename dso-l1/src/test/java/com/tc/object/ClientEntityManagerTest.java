@@ -355,7 +355,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> waiter = this.manager.createEntity(entityID, version, Collections.<Acks>emptySet(), config);
+    InvokeFuture<byte[]> waiter = this.manager.createEntity(entityID, version, config);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     waiter.get();
   }

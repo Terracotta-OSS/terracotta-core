@@ -100,10 +100,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                              ThreadIDManager threadManager,
                                              ClientLockManagerConfig config,
                                              TaskRunner taskRunner) {
-    final RemoteLockManager remoteLockManager = new RemoteLockManagerImpl(channel, lockRequestMessageFactory,
-        taskRunner);
-    return new ClientLockManagerImpl(clientIDLogger, sessionManager, channel, remoteLockManager, threadManager, config,
-        taskRunner);
+    return null;
   }
 
   @Override

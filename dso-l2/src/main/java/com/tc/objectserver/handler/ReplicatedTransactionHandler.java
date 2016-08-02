@@ -323,6 +323,8 @@ public class ReplicatedTransactionHandler {
           ManagedEntity temp = this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency() == 0);          
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
           this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !sync.getSource().isNull(), sync.getExtendedData());
+        } else {
+          Assert.fail("this entity should not be here");
         }
       } catch (EntityException exception) {
 //  TODO: this needs to be controlled.  

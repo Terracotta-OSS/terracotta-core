@@ -98,9 +98,4 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   public ClientEntityManager getClientEntityManager() {
     return clientHandle.getClientEntityManager();
   }
-  
-  @Override
-  public ClientLockManager getClientLockManager() {
-    return clientHandle.getClientLockManager();
-  }
 }

@@ -19,7 +19,6 @@
 package com.terracotta.connection;
 
 import com.tc.object.ClientEntityManager;
-import com.tc.object.locks.ClientLockManager;
 
 
 public interface ClientHandle {
@@ -31,10 +30,4 @@ public interface ClientHandle {
    * @return The client entity manager for end-points managed by this client.
    */
   ClientEntityManager getClientEntityManager();
-  
-  /**
-   * Required for TerracottaConnectionService Connection instantiation.
-   * @return The client lock manager for end-points managed by this client.
-   */
-  ClientLockManager getClientLockManager();
 }
