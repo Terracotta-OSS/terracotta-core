@@ -198,7 +198,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     this.pendingAcks.remove(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
       this.getCanComplete = true;
-      notifyAll();
     }
+    notifyAll();
   }
 }
