@@ -62,6 +62,8 @@ import java.util.Random;
 import java.util.function.Consumer;
 import org.junit.Test;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -131,7 +133,11 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(msg.getExtendedData()).thenReturn(new byte[0]);
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
-    when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
+    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+      when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+      return entity;
+    });
     Mockito.doAnswer(invocation->{
       Consumer consumer = (Consumer)invocation.getArguments()[2];
       if (consumer != null) {
@@ -203,7 +209,11 @@ public class ReplicatedTransactionHandlerTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     MessageCodec codec = mock(MessageCodec.class);
     SyncMessageCodec sync = mock(SyncMessageCodec.class);
-    when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.of(entity));
+    when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.empty());
+    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+      when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+      return entity;
+    });
     when(this.entityManager.getMessageCodec(Matchers.eq(eid))).thenReturn(codec);
     when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getSyncMessageCodec(Matchers.eq(eid))).thenReturn(sync);
