@@ -25,12 +25,10 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityException;
 
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.request.RequestResponseHandler;
 import com.tc.text.PrettyPrintable;
 
-import java.util.Set;
 
 
 /**
@@ -59,9 +57,9 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    */
   void handleMessage(EntityDescriptor entityDescriptor, byte[] message);
 
-  InvokeFuture<byte[]> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
+  InvokeFuture<byte[]> createEntity(EntityID entityID, long version, byte[] config);
   
-  InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks);
+  InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version);
 
-  InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config);
+  InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, byte[] config);
 }

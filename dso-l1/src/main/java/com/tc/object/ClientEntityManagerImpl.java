@@ -47,10 +47,6 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
-import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.locks.EntityLockID;
-import com.tc.object.locks.LockID;
-import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
@@ -59,6 +55,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
+import java.util.Collections;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -116,6 +113,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           }
           if (doSend) {
             first.send();
+//  when encountering a send for anything other than an invoke, wait here before sending anything else
+//  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
+//  make sure those complete before sending any new invokes or lifecycle messages
+            if (first.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
+              first.waitForAcks();
+            }
           } else {
             throwClosedExceptionOnMessage(first);
           }
@@ -151,35 +154,39 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public InvokeFuture<byte[]> createEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config) {
+  public InvokeFuture<byte[]> createEntity(EntityID entityID, long version, byte[] config) {
     // A create needs to be replicated.
     boolean requiresReplication = true;
-    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
+    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
     // Only invoke calls can wait for retire so don't wait in this path.
     boolean shouldBlockGetOnRetire = false;
-    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
+    return createInFlightMessageAfterAcks(message, lifecycleAcks(), shouldBlockGetOnRetire);
   }
 
   @Override
-  public InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, byte[] config) {
+  public InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, byte[] config) {
     // A create needs to be replicated.
     boolean requiresReplication = true;
-    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.RECONFIGURE_ENTITY);
+    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.RECONFIGURE_ENTITY);
     // Only invoke calls can wait for retire so don't wait in this path.
     boolean shouldBlockGetOnRetire = false;
-    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
+    return createInFlightMessageAfterAcks(message, lifecycleAcks(), shouldBlockGetOnRetire);
+  }
+  
+  private Set<VoltronEntityMessage.Acks> lifecycleAcks() {
+    return Collections.singleton(VoltronEntityMessage.Acks.RETIRED);
   }
   
   @Override
-  public InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks) {
+  public InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version) {
     // A destroy needs to be replicated.
     boolean requiresReplication = true;
     // A destroy call has no extended data.
     byte[] emtpyExtendedData = new byte[0];
-    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
+    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
     // Only invoke calls can wait for retire so don't wait in this path.
     boolean shouldBlockGetOnRetire = false;
-    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
+    return createInFlightMessageAfterAcks(message, lifecycleAcks(), shouldBlockGetOnRetire);
   }
 
   @Override
@@ -421,7 +428,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return inFlight;
   }
 
-  private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type) {
+  private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type) {
     // We have no client instance for a create but the request currently requires a full descriptor.
     EntityDescriptor entityDescriptor = new EntityDescriptor(entityID, ClientInstanceID.NULL_ID, version);
     return createMessageWithDescriptor(entityDescriptor, requiresReplication, config, type);

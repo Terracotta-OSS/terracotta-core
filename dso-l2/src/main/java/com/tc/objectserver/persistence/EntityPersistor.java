@@ -117,6 +117,10 @@ public class EntityPersistor {
     // Record this in the journal - null error on success.
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, null);
   }
+  
+  public void entityCreatedJustInJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version) {
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, null);
+  }
 
   public void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreatedNoJournal " + id);

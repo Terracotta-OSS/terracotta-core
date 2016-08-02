@@ -40,7 +40,6 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
-import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -49,13 +48,12 @@ import com.tc.util.Assert;
 import com.tc.util.SparseList;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Vector;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
@@ -126,7 +124,7 @@ public class ProcessTransactionHandler {
     this.transactionOrderPersistor = transactionOrderPersistor;
     
     this.resendReplayList = new SparseList<>();
-    this.resendNewList = new Vector<>();
+    this.resendNewList = new LinkedList<>();
   }
   
   public Iterable<ManagedEntity> getEntityList() {
@@ -330,17 +328,66 @@ public class ProcessTransactionHandler {
     
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {
-      executeResend(message);
+      if (!checkIfEntityCreatedBySync(message)) {
+        executeResend(message);
+      }
     }
     this.resendReplayList = null;
     
     // Replay all the new messages found during resends.
     for (ResendVoltronEntityMessage message : this.resendNewList) {
-      executeResend(message);
+      if (!checkIfEntityCreatedBySync(message)) {
+        executeResend(message);
+      }
     }
+//  remove tracking for any resent create journal entries
+    entityPersistor.removeTrackingForClient(ClientID.NULL_ID);
+    
     this.resendNewList = null;
   }
 
+  /**
+   * Unfortunately this check needs to happen on all resent messages.  Entities can 
+   * either be created by the sync process or by a request from a client.  If a resent 
+   * create request comes in, check here to see if the entity already exists and if it 
+   * was created by sync (the absence of a journal entry means that sync created the entity).
+   * If sync created the entity, this must mean that the resent create must have succeeded on the
+   * active before it went down and the passive sync'd the entity.  If that is the case, 
+   * assume that the first create encountered created the entity.
+   * @param message
+   * @return 
+   */
+  private boolean checkIfEntityCreatedBySync(ResendVoltronEntityMessage message) {
+    if (message.getVoltronType() == VoltronEntityMessage.Type.CREATE_ENTITY) {
+      ClientID cid = message.getSource();
+      TransactionID tid = message.getTransactionID();
+      TransactionID old = message.getOldestTransactionOnClient();
+      EntityDescriptor eid = message.getEntityDescriptor();
+      try {
+//  use NULL client ID and zero transaction so other resends know this create has been adopted
+        if (!entityPersistor.wasEntityCreatedInJournal(ClientID.NULL_ID, 0L) && entityPersistor.containsEntity(cid, tid.toLong(), old.toLong(), eid.getEntityID())) {
+//  resent create.  The only way this happens is if sync created the entity
+//  tell the client first to retire the message before adoption
+          ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, tid, old, cid, true, safeGetChannel(cid), false);
+          response.received();
+          response.complete();
+          response.retired();
+//  'mark' the entity as adopted for the rest of the resends.  Do it in this order in case the 
+//   server is restartable.  The adopting create will not resend in this case and every subsequent 
+//   resent create on this entity will need to be run
+          entityPersistor.entityCreatedJustInJournal(ClientID.NULL_ID, 0L, 0L, eid.getEntityID(), eid.getClientSideVersion());
+          return true;
+        }
+      } catch (EntityException ee) {
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, tid, old, cid, true, safeGetChannel(cid), false);
+        response.received();
+        response.failure(ee);
+        response.retired();
+        return true;
+      }
+    }
+    return false;
+  }
 
   private Optional<MessageChannel> safeGetChannel(NodeID id) {
     try {

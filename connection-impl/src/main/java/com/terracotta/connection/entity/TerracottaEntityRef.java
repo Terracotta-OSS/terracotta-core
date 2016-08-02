@@ -113,7 +113,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException {
     EntityID entityID = getEntityID();
     try {
-      this.entityManager.createEntity(entityID, this.version, Collections.singleton(VoltronEntityMessage.Acks.APPLIED), entityClientService.serializeConfiguration(configuration)).get();
+      this.entityManager.createEntity(entityID, this.version, entityClientService.serializeConfiguration(configuration)).get();
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
@@ -139,7 +139,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     EntityID entityID = getEntityID();
     try {
       return entityClientService.deserializeConfiguration(
-          this.entityManager.reconfigureEntity(entityID, this.version, Collections.singleton(VoltronEntityMessage.Acks.APPLIED), entityClientService.serializeConfiguration(configuration)).get()
+          this.entityManager.reconfigureEntity(entityID, this.version, entityClientService.serializeConfiguration(configuration)).get()
       );
     } catch (EntityException e) {
       throw ExceptionUtils.addLocalStackTraceToEntityException(e);
@@ -174,7 +174,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
 
   private boolean destroyEntity() throws EntityNotFoundException, InterruptedException {
     EntityID entityID = getEntityID();
-    InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version, Collections.<VoltronEntityMessage.Acks>emptySet());
+    InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version);
     boolean success = false;
     
     try {

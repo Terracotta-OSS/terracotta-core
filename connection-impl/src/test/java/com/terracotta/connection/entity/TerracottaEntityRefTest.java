@@ -84,7 +84,7 @@ public class TerracottaEntityRefTest {
   public void testTryDestroySuccess() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
-    when(mockClientEntityManager.destroyEntity(any(EntityID.class), any(Long.class), any(Set.class))).thenReturn(mock(InvokeFuture.class));
+    when(mockClientEntityManager.destroyEntity(any(EntityID.class), any(Long.class))).thenReturn(mock(InvokeFuture.class));
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.
@@ -106,7 +106,7 @@ public class TerracottaEntityRefTest {
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
     InvokeFuture fut = mock(InvokeFuture.class);
     when(fut.get()).thenThrow(EntityReferencedException.class);
-    when(mockClientEntityManager.destroyEntity(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(Set.class))).thenReturn(fut);
+    when(mockClientEntityManager.destroyEntity(Mockito.any(EntityID.class), Mockito.anyLong())).thenReturn(fut);
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.
@@ -117,6 +117,6 @@ public class TerracottaEntityRefTest {
     boolean didDestroy = testRef.tryDestroy();
     Assert.assertFalse(didDestroy);
     // We should never have asked for the destroy to happen.
-    verify(mockClientEntityManager).destroyEntity(any(EntityID.class), any(Long.class), any(Set.class));
+    verify(mockClientEntityManager).destroyEntity(any(EntityID.class), any(Long.class));
   }
 }
