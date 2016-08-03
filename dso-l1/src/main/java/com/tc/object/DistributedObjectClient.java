@@ -73,13 +73,10 @@ import com.tc.object.context.PauseContext;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMembershipEventsHandler;
-import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.ClientLockManagerConfigImpl;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
@@ -88,8 +85,6 @@ import com.tc.object.msg.InvokeRegisteredServiceMessage;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
-import com.tc.object.msg.LockRequestMessage;
-import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.request.RequestReceiveHandler;
 import com.tc.object.servermessage.ServerMessageReceiveHandler;
 import com.tc.object.session.SessionManager;
@@ -114,12 +109,6 @@ import com.tc.util.UUID;
 import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.TaskRunner;
-import com.tc.util.runtime.LockInfoByThreadID;
-import com.tc.util.runtime.LockState;
-import com.tc.util.runtime.ThreadIDManager;
-import com.tc.util.runtime.ThreadIDManagerImpl;
-import com.tc.util.runtime.ThreadIDMap;
-import com.tc.util.runtime.ThreadIDMapImpl;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tcclient.cluster.ClusterInternal;
@@ -152,7 +141,6 @@ public class DistributedObjectClient implements TCClient {
   private final ClientConfig                         config;
   private final ClusterInternal                      cluster;
   private final TCThreadGroup                        threadGroup;
-  private final ThreadIDMap                          threadIDMap;
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
   private final ProductID                            productId;
@@ -163,7 +151,6 @@ public class DistributedObjectClient implements TCClient {
   private ClientHandshakeManager                     clientHandshakeManager;
 
   private CounterManager                             counterManager;
-  private ThreadIDManager                            threadIDManager;
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
   private TCMemoryManagerImpl                        tcMemManager;
 
@@ -204,7 +191,6 @@ public class DistributedObjectClient implements TCClient {
     this.connectionComponents = connectionComponents;
     this.cluster = cluster;
     this.threadGroup = threadGroup;
-    this.threadIDMap = new ThreadIDMapImpl();
     this.clientBuilder = createClientBuilder();
     this.uuid = uuid;
     this.name = name;
@@ -220,36 +206,6 @@ public class DistributedObjectClient implements TCClient {
 
   protected ClientBuilder createClientBuilder() {
     return new StandardClientBuilder();
-  }
-
-  @Override
-  public ThreadIDMap getThreadIDMap() {
-    return this.threadIDMap;
-  }
-
-  @Override
-  public void addAllLocksTo(LockInfoByThreadID lockInfo) {
-    if (this.lockManager != null) {
-      for (final ClientServerExchangeLockContext c : this.lockManager.getAllLockContexts()) {
-        switch (c.getState().getType()) {
-          case GREEDY_HOLDER:
-          case HOLDER:
-            lockInfo.addLock(LockState.HOLDING, c.getThreadID(), c.getLockID().toString());
-            break;
-          case WAITER:
-            lockInfo.addLock(LockState.WAITING_ON, c.getThreadID(), c.getLockID().toString());
-            break;
-          case TRY_PENDING:
-          case PENDING:
-            lockInfo.addLock(LockState.WAITING_TO, c.getThreadID(), c.getLockID().toString());
-            break;
-          default:
-            throw new AssertionError(c.getState().getType());
-        }
-      }
-    } else {
-      DSO_LOGGER.error("LockManager not initialised still. LockInfo for threads cannot be updated");
-    }
   }
 
   private void validateSecurityConfig() {
@@ -393,7 +349,6 @@ public class DistributedObjectClient implements TCClient {
     // CDV-1181 warn if using CMS
     this.tcMemManager.checkGarbageCollectors();
 
-    this.threadIDManager = new ThreadIDManagerImpl(this.threadIDMap);
     final Stage<HydrateContext> hydrateStage = this.communicationStageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), 1, maxSize);
 
     // By design this stage needs to be single threaded. If it wasn't then cluster membership messages could get

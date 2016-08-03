@@ -61,7 +61,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   private final String                         rawConfigText;
   private final JVMMemoryManager               manager;
   private final TCClient                       client;
-  private final LockInfoDumpHandler            lockInfoDumpHandler;
 
   public L1Info(TCClient client, String rawConfigText) throws NotCompliantMBeanException {
     super(L1InfoMBean.class, true);
@@ -71,7 +70,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.manager = TCRuntime.getJVMMemoryManager();
     this.rawConfigText = rawConfigText;
     this.client = client;
-    this.lockInfoDumpHandler = client;
     this.nextSequenceNumber = 1;
   }
 
@@ -92,7 +90,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.buildID = productInfo.buildID();
     this.rawConfigText = null;
     this.manager = TCRuntime.getJVMMemoryManager();
-    this.lockInfoDumpHandler = lockInfoDumpHandler;
     this.client = null;
     this.nextSequenceNumber = 1;
   }
@@ -227,18 +224,14 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
 
   @Override
   public String takeThreadDump(long requestMillis) {
-    LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
-    this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
-    String text = ThreadDumpUtil.getThreadDump(lockInfo, this.lockInfoDumpHandler.getThreadIDMap());
+    String text = ThreadDumpUtil.getThreadDump();
     logger.info(text);
     return text;
   }
 
   @Override
   public byte[] takeCompressedThreadDump(long requestMillis) {
-    LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
-    this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
-    return ThreadDumpUtil.getCompressedThreadDump(lockInfo, this.lockInfoDumpHandler.getThreadIDMap());
+    return ThreadDumpUtil.getCompressedThreadDump();
   }
 
   @Override

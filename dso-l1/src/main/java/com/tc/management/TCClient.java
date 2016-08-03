@@ -21,7 +21,7 @@ package com.tc.management;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.management.beans.TCDumper;
 
-public interface TCClient extends TCDumper, LockInfoDumpHandler {
+public interface TCClient extends TCDumper {
 
   public String[] processArguments();
 

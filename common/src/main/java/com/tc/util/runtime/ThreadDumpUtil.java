@@ -45,10 +45,6 @@ public class ThreadDumpUtil {
   protected static volatile ThreadGroup rootThreadGroup;
 
   public static byte[] getCompressedThreadDump() {
-    return getCompressedThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
-  }
-
-  public static byte[] getCompressedThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
     ByteArrayOutputStream bOutStream = new ByteArrayOutputStream(ZIP_BUFFER_INITIAL_SIZE);
     ZipOutputStream zout = new ZipOutputStream(bOutStream);
     ZipEntry zEntry = new ZipEntry(ZIP_BUFFER_NAME);
@@ -59,7 +55,7 @@ public class ThreadDumpUtil {
       return null;
     }
 
-    String threadDump = getThreadDump(lockInfo, threadIDMap);
+    String threadDump = getThreadDump();
     logger.info(threadDump);
 
     try {
@@ -133,10 +129,6 @@ public class ThreadDumpUtil {
   }
 
   public static String getThreadDump() {
-    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
-  }
-
-  public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
     final StringBuilder sb = new StringBuilder(100 * 1024);
     sb.append(new Date().toString());
     sb.append('\n');
@@ -172,7 +164,6 @@ public class ThreadDumpUtil {
             }
           }
         }
-        sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(threadInfo.getThreadId())));
         if (!threadMXBean.isObjectMonitorUsageSupported() && threadMXBean.isSynchronizerUsageSupported()) {
           sb.append(threadLockedSynchronizers(threadInfo));
         }

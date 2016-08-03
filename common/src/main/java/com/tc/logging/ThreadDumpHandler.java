@@ -38,6 +38,6 @@ public class ThreadDumpHandler implements CallbackOnExitHandler {
     LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
     ThreadIDMap threadIDMap = this.lockInfoDumpHandler.getThreadIDMap();
     lockInfoDumpHandler.addAllLocksTo(lockInfo);
-    logger.error(ThreadDumpUtil.getThreadDump(lockInfo, threadIDMap));
+    logger.error(ThreadDumpUtil.getThreadDump());
   }
 }
