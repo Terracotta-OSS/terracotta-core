@@ -18,7 +18,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
@@ -41,15 +40,10 @@ import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.context.PauseContext;
-import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
-import com.tc.object.locks.ClientLockManagerImpl;
-import com.tc.object.locks.RemoteLockManager;
-import com.tc.object.locks.RemoteLockManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionManager;
@@ -59,7 +53,6 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tcclient.cluster.ClusterInternalEventsGun;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class StandardClientBuilder implements ClientBuilder {
@@ -105,14 +98,14 @@ public class StandardClientBuilder implements ClientBuilder {
 
   @Override
   public ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
-                                                             ClientHandshakeMessageFactory chmf, Sink<PauseContext> pauseSink,
+                                                             ClientHandshakeMessageFactory chmf, 
                                                              SessionManager sessionManager,
                                                              ClusterInternalEventsGun clusterEventsGun, 
                                                              String uuid, 
                                                              String name, 
                                                              String clientVersion,
-                                                             Collection<ClientHandshakeCallback> callbacks) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, callbacks);
+                                                             ClientEntityManager entity) {
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
   }
 
   @Override

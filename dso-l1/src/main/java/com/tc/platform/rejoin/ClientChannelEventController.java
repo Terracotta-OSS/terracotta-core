@@ -18,7 +18,6 @@
  */
 package com.tc.platform.rejoin;
 
-import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -27,7 +26,6 @@ import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.util.CallStackTrace;
 
@@ -38,30 +36,20 @@ public class ClientChannelEventController {
   private static final TCLogger         LOGGER   = TCLogging.getLogger(ClientChannelEventController.class);
 
   private final ClientHandshakeManager clientHandshakeManager;
-  private final Sink<PauseContext> pauseSink;
   private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
   private final ClientMessageChannel channel;
 
   /**
    * Creates the event controller and connects it to the given channel.
    */
-  public static void connectChannelEventListener(ClientMessageChannel channel, Sink<PauseContext> pauseSink, ClientHandshakeManager clientHandshakeManager) {
-    ClientChannelEventController controller = new ClientChannelEventController(channel, pauseSink, clientHandshakeManager);
+  public static void connectChannelEventListener(ClientMessageChannel channel, ClientHandshakeManager clientHandshakeManager) {
+    ClientChannelEventController controller = new ClientChannelEventController(channel, clientHandshakeManager);
     channel.addListener(new ChannelEventListenerImpl(controller));
   }
   
-  private ClientChannelEventController(ClientMessageChannel channel, Sink<PauseContext> pauseSink, ClientHandshakeManager clientHandshakeManager) {
-    this.pauseSink = pauseSink;
+  private ClientChannelEventController(ClientMessageChannel channel, ClientHandshakeManager clientHandshakeManager) {
     this.clientHandshakeManager = clientHandshakeManager;
     this.channel = channel;
-  }
-
-  private void pause() {
-    this.pauseSink.addSingleThreaded(new PauseContext(true));
-  }
-
-  private void unpause() {
-    this.pauseSink.addSingleThreaded(new PauseContext(false));
   }
 
   public void shutdown() {
@@ -69,22 +57,26 @@ public class ClientChannelEventController {
   }
 
   private void channelOpened(ChannelEvent event) {
-    // no-op
+    LOGGER.debug("channel opened:" + event.getChannelID());
   }
 
   private void channelConnected(ChannelEvent event) {
-    unpause();
+    LOGGER.debug("channel connected:" + event.getChannelID());
+    this.clientHandshakeManager.connected();
   }
 
   private void channelDisconnected(ChannelEvent event) {
-    pause();
+    LOGGER.debug("channel disconnected:" + event.getChannelID());
+    this.clientHandshakeManager.disconnected();
   }
 
   private void channelClosed(ChannelEvent event) {
+    LOGGER.debug("channel closed:" + event.getChannelID());
     requestDisconnect();
   }
 
   private void channelReconnectionRejected() {
+    LOGGER.debug("channel rejected");
     requestDisconnect();
   }
 
