@@ -59,7 +59,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
     clientsConfiguration.clientClassPath = harnessOptions.clientClassPath;
     clientsConfiguration.clientsToCreate = harnessOptions.clientsToCreate;
-    clientsConfiguration.clientArgumentBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName);
+    clientsConfiguration.clientArgumentBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName, harnessOptions.errorClassName);
     clientsConfiguration.connectUri = connectUri;
     clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
