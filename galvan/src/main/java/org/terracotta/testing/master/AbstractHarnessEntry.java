@@ -90,6 +90,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.clientClassPath = environmentOptions.clientClassPath;
       harnessOptions.clientsToCreate = clientsToCreate;
       harnessOptions.testClassName = testClassName;
+      harnessOptions.errorClassName = master.getClientErrorHandlerClassName();
       harnessOptions.isRestartable = isRestartable;
       harnessOptions.extraJarPaths = extraJarPaths;
       harnessOptions.namespaceFragment = namespaceFragment;
@@ -136,6 +137,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String clientClassPath;
     public int clientsToCreate;
     public String testClassName;
+    public String errorClassName;
     public int serverHeapInM;
     public boolean isRestartable;
     public List<String> extraJarPaths;

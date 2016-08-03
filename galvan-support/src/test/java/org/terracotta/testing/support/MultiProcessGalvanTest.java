@@ -52,6 +52,12 @@ public abstract class MultiProcessGalvanTest extends BasicHarnessTest implements
   }
 
   @Override
+  public String getClientErrorHandlerClassName() {
+    // This implementation doesn't have a client error handler.
+    return null;
+  }
+
+  @Override
   public boolean isRestartable() {
     return false;
   }

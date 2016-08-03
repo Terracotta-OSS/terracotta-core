@@ -32,6 +32,13 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
 
   public String getTestClassName();
 
+  /**
+   * The error class must implement IClientErrorHandler but is optional so null can be returned here.
+   * 
+   * @return The name of the IClientErrorHandler implementation to use in the client.  Null if none desired.
+   */
+  public String getClientErrorHandlerClassName();
+
   public int getClientsToStart();
 
   public boolean isRestartable();
