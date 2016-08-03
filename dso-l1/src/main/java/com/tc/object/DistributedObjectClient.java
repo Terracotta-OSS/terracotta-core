@@ -358,17 +358,15 @@ public class DistributedObjectClient implements TCClient {
     final Sink<PauseContext> pauseSink = pauseStage.getSink();
 
     final Stage<Void> clusterMembershipEventStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE, Void.class, new ClusterMembershipEventsHandler<Void>(cluster), 1, maxSize);
-    final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
-    clientHandshakeCallbacks.add(this.clientEntityManager);
+
     final ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(new ClientIDLogger(this.channel, TCLogging
                                           .getLogger(ClientHandshakeManagerImpl.class)), this.channel
-                                          .getClientHandshakeMessageFactory(), pauseSink, sessionManager,
-                                      cluster, this.uuid, this.name, pInfo.version(), Collections
-                                          .unmodifiableCollection(clientHandshakeCallbacks));
+                                          .getClientHandshakeMessageFactory(), sessionManager,
+                                      cluster, this.uuid, this.name, pInfo.version(), this.clientEntityManager);
 
-    ClientChannelEventController.connectChannelEventListener(channel, pauseSink, clientHandshakeManager);
+    ClientChannelEventController.connectChannelEventListener(channel, clientHandshakeManager);
 
     this.shutdownManager = new ClientShutdownManager(this, connectionComponents);
 

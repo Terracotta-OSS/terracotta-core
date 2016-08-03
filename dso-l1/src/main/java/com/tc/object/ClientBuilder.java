@@ -18,7 +18,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
@@ -36,8 +35,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.context.PauseContext;
-import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
@@ -50,7 +47,6 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tcclient.cluster.ClusterInternalEventsGun;
 
-import java.util.Collection;
 import java.util.Map;
 
 public interface ClientBuilder {
@@ -78,13 +74,13 @@ public interface ClientBuilder {
                                       TaskRunner taskRunner);
 
   ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
-                                                      ClientHandshakeMessageFactory chmf, Sink<PauseContext> pauseSink,
+                                                      ClientHandshakeMessageFactory chmf,
                                                       SessionManager sessionManager,
                                                       ClusterInternalEventsGun clusterEventsGun,
                                                       String uuid,
                                                       String name,
                                                       String clientVersion,
-                                                      Collection<ClientHandshakeCallback> callbacks);
+                                                      ClientEntityManager entity);
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 

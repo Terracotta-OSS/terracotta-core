@@ -33,10 +33,17 @@ import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
 import com.tcclient.cluster.ClusterInternalEventsGun;
 
-import java.util.Collection;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
+/**
+ * This class has been changed to be heavily synchronized. This is in attempt to 
+ * address a rare bug where handshake is not initiated properly because the state 
+ * of the handshake manager is not properly protected.  The problem is that callbacks 
+ * are made from within synchronized blocks as well, also to insure state is preserved 
+ * during the entire stretch of the call.  This can be dangerous as the callback sites may 
+ * lead to synchronization of their own, making this code prone to deadlocks.
+ * 
+ * TODO:  Constrain callback code to include as little synchronization as is safe.
+ * @author 
+ */
 public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private enum State {
     PAUSED, STARTING, RUNNING
@@ -44,7 +51,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private static final TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
-  private final Collection<ClientHandshakeCallback> callBacks;
+  private final ClientHandshakeCallback callBacks;
   private final ClientHandshakeMessageFactory chmf;
   private final TCLogger logger;
   private final SessionManager sessionManager;
@@ -58,13 +65,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private volatile boolean serverIsPersistent = false;
   private volatile boolean isShutdown = false;
 
-  private final Lock lock = new ReentrantLock();
   private final ClusterInternalEventsGun clusterEventsGun;
 
   public ClientHandshakeManagerImpl(TCLogger logger, ClientHandshakeMessageFactory chmf,
                                     SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
                                     String uuid, String name, String clientVersion,
-                                    Collection<ClientHandshakeCallback> callbacks) {
+                                    ClientHandshakeCallback entities) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
@@ -72,7 +78,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.uuid = uuid;
     this.name = name;
     this.clientVersion = clientVersion;
-    this.callBacks = callbacks;
+    this.callBacks = entities;
     this.state = State.PAUSED;
     this.disconnected = true;
     pauseCallbacks();
@@ -100,14 +106,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private void initiateHandshake() {
     this.logger.debug("Initiating handshake...");
     ClientHandshakeMessage handshakeMessage;
-    lock.lock();
-    try {
-      changeToStarting();
-      handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient());
-      notifyCallbackOnHandshake(handshakeMessage);
-    } finally {
-      lock.unlock();
-    }
+
+    changeToStarting();
+    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient());
+    notifyCallbackOnHandshake(handshakeMessage);
+
     this.logger.info("Sending handshake message");
     handshakeMessage.send();
   }
@@ -125,25 +128,23 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public void disconnected() {
+  public synchronized void disconnected() {
     // We ignore the disconnected call if we are shutting down.
     if (!checkShutdown()) {
-      lock.lock();
-      try {
-        boolean isPaused = changeToPaused();
-        if (isPaused) {
-          pauseCallbacks();
-          this.sessionManager.newSession();
-          this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
-        }
-      } finally {
-        lock.unlock();
+      boolean isPaused = changeToPaused();
+
+      if (isPaused) {
+      // A thread might be waiting for us to change whether or not we are disconnected.
+        notifyAll();
+        pauseCallbacks();
+        this.sessionManager.newSession();
+        this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
       }
     }
   }
 
   @Override
-  public void connected() {
+  public synchronized void connected() {
     this.logger.info("Connected: Unpausing from " + getState());
     if (getState() != State.PAUSED) {
       this.logger.warn("Ignoring unpause while " + getState());
@@ -159,20 +160,17 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
         handshakeAck.getServerVersion());
   }
 
-  protected void acknowledgeHandshake(boolean persistentServer, ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
+  protected synchronized void acknowledgeHandshake(boolean persistentServer, ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
     this.logger.info("Received Handshake ack");
     if (getState() != State.STARTING) {
       this.logger.warn("Ignoring handshake acknowledgement while " + getState());
     } else {
       checkClientServerVersionCompatibility(serverVersion);
       this.serverIsPersistent = persistentServer;
-      lock.lock();
-      try {
-        changeToRunning();
-        unpauseCallbacks();
-      } finally {
-        lock.unlock();
-      }
+
+      changeToRunning();
+      notifyAll();
+      unpauseCallbacks();
 
       clusterEventsGun.fireThisNodeJoined(thisNodeId, clusterMembers);
     }
@@ -192,27 +190,19 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private void shutdownCallbacks(boolean fromShutdownHook) {
     // Now that the handshake manager has concluded that it is entering into a shutdown state, anyone else wishing to use it
     // needs to be notified that they cannot.
-    for (ClientHandshakeCallback c : this.callBacks) {
-      c.shutdown(fromShutdownHook);
-    }
+    this.callBacks.shutdown(fromShutdownHook);
   }
 
   private void pauseCallbacks() {
-    for (ClientHandshakeCallback c : this.callBacks) {
-      c.pause();
-    }
+    this.callBacks.pause();
   }
 
   private void notifyCallbackOnHandshake(ClientHandshakeMessage handshakeMessage) {
-    for (ClientHandshakeCallback c : this.callBacks) {
-      c.initializeHandshake(handshakeMessage);
-    }
+    this.callBacks.initializeHandshake(handshakeMessage);
   }
 
   private void unpauseCallbacks() {
-    for (ClientHandshakeCallback c : this.callBacks) {
-      c.unpause();
-    }
+    this.callBacks.unpause();
   }
 
   @Override
@@ -238,7 +228,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   // returns true if PAUSED else return false if already PAUSED
-  private synchronized boolean changeToPaused() {
+  private boolean changeToPaused() {
     final State old = this.state;
     boolean didChangeToPaused = false;
     if (old != State.PAUSED) {
@@ -249,8 +239,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
       if (old == State.RUNNING) {
         this.disconnected = true;
-        // A thread might be waiting for us to change whether or not we are disconnected.
-        notifyAll();
       }
 
       this.clusterEventsGun.fireOperationsDisabled();
@@ -258,20 +246,19 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     return didChangeToPaused;
   }
 
-  private synchronized void changeToStarting() {
+  private void changeToStarting() {
     Assert.assertEquals(state, State.PAUSED);
     state = State.STARTING;
   }
 
-  private synchronized void changeToRunning() {
+  private void changeToRunning() {
     Assert.assertEquals(state, State.STARTING);
     state = State.RUNNING;
 
     this.disconnected = false;
-    notifyAll();
   }
 
-  private synchronized State getState() {
+  private State getState() {
     return this.state;
   }
 }
