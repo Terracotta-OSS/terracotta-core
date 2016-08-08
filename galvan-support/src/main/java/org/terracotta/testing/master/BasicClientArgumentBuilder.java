@@ -26,10 +26,12 @@ import org.terracotta.testing.client.TestClientStub;
  */
 public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
   private final String testClassName;
+  private final String errorClassName;
 
 
-  public BasicClientArgumentBuilder(String testClassName) {
+  public BasicClientArgumentBuilder(String testClassName, String errorClassName) {
     this.testClassName = testClassName;
+    this.errorClassName = errorClassName;
   }
 
   @Override
@@ -65,6 +67,10 @@ public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
     args.add(Integer.toString(totalClientCount));
     args.add("--thisClientIndex");
     args.add(Integer.toString(thisClientIndex));
+    if (null != this.errorClassName) {
+      args.add("--errorClass");
+      args.add(this.errorClassName);
+    }
     return args;
   }
 }

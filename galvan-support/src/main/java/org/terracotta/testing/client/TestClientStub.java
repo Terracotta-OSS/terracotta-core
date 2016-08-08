@@ -22,12 +22,18 @@ import java.util.Properties;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.ICommonTest;
 import org.terracotta.passthrough.SimpleClientTestEnvironment;
+import org.terracotta.testing.api.IClientErrorHandler;
 import org.terracotta.testing.common.Assert;
 
 
 public class TestClientStub {
+  private static IClientTestEnvironment testEnvironment;
+  private static IClientErrorHandler errorHandler;
+
+
   /**
    * Arguments are always passed as pairs ("--identifier value") with the following identifiers (all mandatory):
    * --task: SETUP, TEST, or DESTROY
@@ -35,6 +41,7 @@ public class TestClientStub {
    * --connectUri:  <the cluster URI used in the test>
    * --totalClientCount:  <number of clients running the test>
    * --thisClientIndex:  <the 0-indexed number of this client instance>
+   * [--errorClass]:  An optional argument, specifies the name of the failure handler class
    */
   public static void main(String[] args) throws Throwable {
     // Before anything, set the default exception handler.
@@ -46,6 +53,20 @@ public class TestClientStub {
     String connectUri = readArgString(args, "--connectUri");
     int totalClientCount = readArgInt(args, "--totalClientCount");
     int thisClientIndex = readArgInt(args, "--thisClientIndex");
+    String errorClassName = readArgStringOrNull(args, "--errorClass");
+    
+    // First thing, we want to see if we were given an error class, since it will handle any errors we encounter through
+    //  the test.
+    // Note that this is technically optional.
+    if (null != errorClassName) {
+      Class<?> testClass = Thread.currentThread().getContextClassLoader().loadClass(errorClassName);
+      Object instance = testClass.getConstructors()[0].newInstance();
+      Class<IClientErrorHandler> interfaceClass = IClientErrorHandler.class;
+      TestClientStub.errorHandler = interfaceClass.cast(instance);
+    }
+    
+    // Get the environment (we will pass this in all cases but it is only useful for TEST modes).
+    TestClientStub.testEnvironment = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex);
     
     boolean isSetup = task.equals("SETUP");
     boolean isTest = task.equals("TEST");
@@ -72,17 +93,14 @@ public class TestClientStub {
       throw new RuntimeException("Unexpected exception when creating connection to cluster", e);
     }
     
-    // Get the environment (we will pass this in all cases but it is only useful for TEST modes).
-    SimpleClientTestEnvironment env = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex);
-    
     if (isSetup) {
-      test.runSetup(env, clusterControl, connection);
+      test.runSetup(TestClientStub.testEnvironment, clusterControl, connection);
     }
     if (isTest) {
-      test.runTest(env, clusterControl, connection);
+      test.runTest(TestClientStub.testEnvironment, clusterControl, connection);
     }
     if (isDestroy) {
-      test.runDestroy(env, clusterControl, connection);
+      test.runDestroy(TestClientStub.testEnvironment, clusterControl, connection);
     }
     connection.close();
     manager.sendShutDownAndWait();
@@ -102,6 +120,13 @@ public class TestClientStub {
   }
 
   private static String readArgString(String[] args, String identifier) {
+    String value = readArgStringOrNull(args, identifier);
+    // This isn't expected to fail since this arg is required.
+    Assert.assertNotNull(value);
+    return value;
+  }
+
+  private static String readArgStringOrNull(String[] args, String identifier) {
     String value = null;
     for (int i = 0; i < (args.length-1); ++i) {
       if (identifier.equals(args[i])) {
@@ -109,18 +134,28 @@ public class TestClientStub {
         break;
       }
     }
-    // This isn't expected to fail since our arg list is well-defined.
-    Assert.assertNotNull(value);
     return value;
   }
 
 
   private static class ClientExceptionHandler implements UncaughtExceptionHandler {
     @Override
-    public void uncaughtException(Thread t, Throwable e) {
+    public void uncaughtException(Thread thread, Throwable e) {
       System.err.println("UNCAUGHT TEST CLIENT EXCEPTION!  TERMINATING CLIENT!");
       // Log the error.
       e.printStackTrace();
+      // If we have an error handler, ask it what it wants to do.
+      if (null != TestClientStub.errorHandler) {
+        // Explicitly handle any failure, here, since we are in the handler.
+        try {
+          TestClientStub.errorHandler.handleError(TestClientStub.testEnvironment, e);
+        } catch (Throwable t) {
+          System.err.println("UNCAUGHT EXCEPTION IN HANDLER: " + t.getLocalizedMessage());
+          t.printStackTrace();
+        }
+      } else {
+        System.err.println("NOTE:  No client-side error handler installed in test");
+      }
       // We will return non-zero (99 will do) to flag the error.
       System.exit(99);
     }
