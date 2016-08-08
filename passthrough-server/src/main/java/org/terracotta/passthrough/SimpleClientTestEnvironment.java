@@ -19,6 +19,7 @@
 package org.terracotta.passthrough;
 
 
+
 /**
  * The simplest implementation of IClientTestEnvironment:  all data is passed in as read-only, at construction time.
  */
@@ -26,11 +27,17 @@ public class SimpleClientTestEnvironment implements IClientTestEnvironment {
   private final String clusterUri;
   private final int totalClientCount;
   private final int thisClientIndex;
+  private final IClusterInfo clusterInfo;
 
   public SimpleClientTestEnvironment(String clusterUri, int totalClientCount, int thisClientIndex) {
+    this(clusterUri, totalClientCount, thisClientIndex, null);
+  }
+
+  public SimpleClientTestEnvironment(String clusterUri, int totalClientCount, int thisClientIndex, IClusterInfo clusterInfo) {
     this.clusterUri = clusterUri;
     this.totalClientCount = totalClientCount;
     this.thisClientIndex = thisClientIndex;
+    this.clusterInfo = clusterInfo;
   }
 
   @Override
@@ -46,5 +53,10 @@ public class SimpleClientTestEnvironment implements IClientTestEnvironment {
   @Override
   public int getThisClientIndex() {
     return this.thisClientIndex;
+  }
+
+  @Override
+  public IClusterInfo getClusterInfo() {
+    return this.clusterInfo;
   }
 }

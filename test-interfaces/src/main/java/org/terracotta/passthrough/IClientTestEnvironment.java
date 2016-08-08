@@ -37,4 +37,9 @@ public interface IClientTestEnvironment {
    * @return The 0-indexed value uniquely specifying this client (always >= 0, < getTotalClientCount()).
    */
   public int getThisClientIndex();
+
+  /**
+   * @return {@link IClusterInfo} which provides information about connecting cluster
+   */
+  public IClusterInfo getClusterInfo();
 }
