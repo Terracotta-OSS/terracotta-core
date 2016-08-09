@@ -35,7 +35,7 @@ public interface IClientArgumentBuilder {
    * @param totalClientCount The total number of test clients which will run the test, concurrently
    * @return The list of arguments to pass to the client main
    */
-  public List<String> getArgumentsForSetupRun(String connectUri, int totalClientCount);
+  public List<String> getArgumentsForSetupRun(String connectUri, ClusterInfo clusterInfo, int totalClientCount);
 
   /**
    * Creates the argument list for a regular "test" client run.
@@ -45,7 +45,7 @@ public interface IClientArgumentBuilder {
    * @param thisClientIndex The index number of this client, within the set of concurrent test clients
    * @return The list of arguments to pass to the client main
    */
-  public List<String> getArgumentsForTestRun(String connectUri, int totalClientCount, int thisClientIndex);
+  public List<String> getArgumentsForTestRun(String connectUri, ClusterInfo clusterInfo, int totalClientCount, int thisClientIndex);
 
   /**
    * Creates the argument list for a "destroy" client run.
@@ -54,5 +54,5 @@ public interface IClientArgumentBuilder {
    * @param totalClientCount The total number of test clients which will run the test, concurrently
    * @return The list of arguments to pass to the client main
    */
-  public List<String> getArgumentsForDestroyRun(String connectUri, int totalClientCount);
+  public List<String> getArgumentsForDestroyRun(String connectUri, ClusterInfo clusterInfo, int totalClientCount);
 }

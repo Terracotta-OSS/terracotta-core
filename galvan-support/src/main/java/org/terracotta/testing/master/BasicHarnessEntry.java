@@ -51,6 +51,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     // We just want to unwrap this, directly.
     IMultiProcessControl processControl = oneStripe.stripeControl;
     String connectUri = oneStripe.stripeUri;
+    ClusterInfo clusterInfo = oneStripe.clusterInfo;
     Assert.assertTrue(null != processControl);
     Assert.assertTrue(null != connectUri);
     
@@ -61,6 +62,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.clientsToCreate = harnessOptions.clientsToCreate;
     clientsConfiguration.clientArgumentBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName, harnessOptions.errorClassName);
     clientsConfiguration.connectUri = connectUri;
+    clientsConfiguration.clusterInfo = clusterInfo;
     clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
     clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;

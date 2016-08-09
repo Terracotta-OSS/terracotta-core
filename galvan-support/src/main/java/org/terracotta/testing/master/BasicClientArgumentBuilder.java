@@ -40,22 +40,22 @@ public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
   }
 
   @Override
-  public List<String> getArgumentsForSetupRun(String connectUri, int totalClientCount) {
-    return buildList("SETUP", connectUri, totalClientCount, 0);
+  public List<String> getArgumentsForSetupRun(String connectUri, ClusterInfo clusterInfo, int totalClientCount) {
+    return buildList("SETUP", connectUri, clusterInfo, totalClientCount, 0);
   }
 
   @Override
-  public List<String> getArgumentsForTestRun(String connectUri, int totalClientCount, int thisClientIndex) {
-    return buildList("TEST", connectUri, totalClientCount, thisClientIndex);
+  public List<String> getArgumentsForTestRun(String connectUri, ClusterInfo clusterInfo, int totalClientCount, int thisClientIndex) {
+    return buildList("TEST", connectUri, clusterInfo, totalClientCount, thisClientIndex);
   }
 
   @Override
-  public List<String> getArgumentsForDestroyRun(String connectUri, int totalClientCount) {
-    return buildList("DESTROY", connectUri, totalClientCount, 0);
+  public List<String> getArgumentsForDestroyRun(String connectUri, ClusterInfo clusterInfo, int totalClientCount) {
+    return buildList("DESTROY", connectUri, clusterInfo, totalClientCount, 0);
   }
 
 
-  private List<String> buildList(String task, String connectUri, int totalClientCount, int thisClientIndex) {
+  private List<String> buildList(String task, String connectUri, ClusterInfo clusterInfo, int totalClientCount, int thisClientIndex) {
     List<String> args = new Vector<String>();
     args.add("--task");
     args.add(task);
@@ -67,6 +67,8 @@ public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
     args.add(Integer.toString(totalClientCount));
     args.add("--thisClientIndex");
     args.add(Integer.toString(thisClientIndex));
+    args.add("--clusterInfo");
+    args.add(clusterInfo.encode());
     if (null != this.errorClassName) {
       args.add("--errorClass");
       args.add(this.errorClassName);

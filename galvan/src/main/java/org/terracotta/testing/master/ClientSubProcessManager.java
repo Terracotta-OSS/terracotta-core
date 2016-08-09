@@ -45,8 +45,9 @@ public class ClientSubProcessManager extends Thread {
   private final int clientsToCreate;
   private final IClientArgumentBuilder clientArgumentBuilder;
   private final String connectUri;
+  private final ClusterInfo clusterInfo;
 
-  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri) {
+  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri, ClusterInfo clusterInfo) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.verboseManager = verboseManager;
@@ -62,6 +63,7 @@ public class ClientSubProcessManager extends Thread {
     this.clientsToCreate = clientsToCreate;
     this.clientArgumentBuilder = clientArgumentBuilder;
     this.connectUri = connectUri;
+    this.clusterInfo = clusterInfo;
   }
 
   @Override
@@ -72,7 +74,7 @@ public class ClientSubProcessManager extends Thread {
     ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
     
     // Run the setup client, synchronously.
-    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clientsToCreate);
+    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clusterInfo, this.clientsToCreate);
     ClientRunner setupClient = clientInstaller.installClient("client_setup", this.setupClientDebugPort, extraSetupArguments);
     boolean setupWasClean = runClientLifeCycle(setupClient);
     
@@ -106,7 +108,7 @@ public class ClientSubProcessManager extends Thread {
       shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
       if (didRunCleanly) {
         // Run the destroy client, synchronously.
-        List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clientsToCreate);
+        List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clusterInfo, this.clientsToCreate);
         ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, extraDestroyArguments);
         destroyWasClean = runClientLifeCycle(destroyClient);
         if (!destroyWasClean) {
@@ -199,7 +201,7 @@ public class ClientSubProcessManager extends Thread {
       int debugPort = (0 != testClientDebugPortStart)
           ? (testClientDebugPortStart + i)
           : 0;
-      List<String> extraArguments = this.clientArgumentBuilder.getArgumentsForTestRun(this.connectUri, clientsToCreate, i);
+      List<String> extraArguments = this.clientArgumentBuilder.getArgumentsForTestRun(this.connectUri, this.clusterInfo, clientsToCreate, i);
       testClients[i] = clientInstaller.installClient(clientName, debugPort, extraArguments);
     }
     return testClients;
