@@ -16,12 +16,19 @@
 package org.terracotta.testing.client;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.terracotta.passthrough.IClientTestEnvironment;
+import org.terracotta.passthrough.IClusterInfo;
 import org.terracotta.passthrough.ICommonTest;
+import org.terracotta.passthrough.IServerInfo;
 import org.terracotta.passthrough.SimpleClientTestEnvironment;
 import org.terracotta.testing.api.IClientErrorHandler;
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.master.ClusterInfo;
+import org.terracotta.testing.master.ServerInfo;
 
 
 public class TestClientStub {
@@ -46,6 +53,7 @@ public class TestClientStub {
     String task = readArgString(args, "--task");
     String testClassName = readArgString(args, "--testClass");
     String connectUri = readArgString(args, "--connectUri");
+    String clusterInfo = readArgString(args, "--clusterInfo");
     int totalClientCount = readArgInt(args, "--totalClientCount");
     int thisClientIndex = readArgInt(args, "--thisClientIndex");
     String errorClassName = readArgStringOrNull(args, "--errorClass");
@@ -61,7 +69,7 @@ public class TestClientStub {
     }
     
     // Get the environment (we will pass this in all cases but it is only useful for TEST modes).
-    TestClientStub.testEnvironment = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex);
+    TestClientStub.testEnvironment = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex, getClusterInfo(clusterInfo));
     
     boolean isSetup = task.equals("SETUP");
     boolean isTest = task.equals("TEST");
@@ -79,7 +87,6 @@ public class TestClientStub {
     ICommonTest test = interfaceClass.cast(instance);
     
     IPCClusterControl clusterControl = new IPCClusterControl(manager);
-    
     if (isSetup) {
       test.runSetup(TestClientStub.testEnvironment, clusterControl);
     }
@@ -121,6 +128,59 @@ public class TestClientStub {
       }
     }
     return value;
+  }
+
+  private static IClusterInfo getClusterInfo(String encoded) {
+    ClusterInfo clusterInfo = ClusterInfo.decode(encoded);
+    return new IClusterInfo() {
+
+      @Override
+      public IServerInfo getServerInfo(String s) {
+        ServerInfo serverInfo = clusterInfo.getServerInfo(s);
+        return new IServerInfo() {
+          @Override
+          public String getName() {
+            return serverInfo.getName();
+          }
+
+          @Override
+          public int getServerPort() {
+            return serverInfo.getServerPort();
+          }
+
+          @Override
+          public int getGroupPort() {
+            return serverInfo.getGroupPort();
+          }
+        };
+      }
+
+      @Override
+      public Collection<IServerInfo> getServersInfo() {
+        List<IServerInfo> serverInfos = new ArrayList<>();
+
+        for(ServerInfo serverInfo : clusterInfo.getServersInfo()) {
+          final ServerInfo thisServerInfo = serverInfo;
+          serverInfos.add(new IServerInfo() {
+            @Override
+            public String getName() {
+              return thisServerInfo.getName();
+            }
+
+            @Override
+            public int getServerPort() {
+              return thisServerInfo.getServerPort();
+            }
+
+            @Override
+            public int getGroupPort() {
+              return thisServerInfo.getGroupPort();
+            }
+          });
+        }
+        return serverInfos;
+      }
+    };
   }
 
 
