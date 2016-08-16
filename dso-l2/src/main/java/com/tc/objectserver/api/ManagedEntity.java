@@ -79,6 +79,8 @@ public interface ManagedEntity extends StateDumpable {
   boolean isDestroyed();
   
   boolean isActive();
+  
+  boolean isRemoveable();
 
   /**
    * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this
