@@ -64,6 +64,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
@@ -315,6 +316,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
   
   private void throwClosedExceptionOnMessage(InFlightMessage msg) {
+    msg.received();
     msg.setResult(null, new EntityException(
         msg.getMessage().getEntityDescriptor().getEntityID().getClassName(),
         msg.getMessage().getEntityDescriptor().getEntityID().getEntityName(),
@@ -352,6 +354,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
                              + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(resolvedEndpoint)) + "] ");
       }
       this.objectStoreMap.put(entityDescriptor, resolvedEndpoint);
+    } catch (EntityNotFoundException notfound) {
+      throw notfound;
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
       internalRelease(entityDescriptor, null);

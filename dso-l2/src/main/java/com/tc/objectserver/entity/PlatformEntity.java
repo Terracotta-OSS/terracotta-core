@@ -90,6 +90,11 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
+  public boolean isRemoveable() {
+    return false;
+  }
+
+  @Override
   public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
   // never reconnect
   }

@@ -179,12 +179,10 @@ public class ProcessTransactionHandler {
               serverEntityRequest.complete();
             }
           }, (exception) -> {
-            entityManager.removeDestroyed(entityID);
             entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             serverEntityRequest.failure(exception);
           });
       } catch (EntityException ee) {
-        entityManager.removeDestroyed(entityID);
         if (!sourceNodeID.isNull()) {
           entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         }
@@ -246,6 +244,10 @@ public class ProcessTransactionHandler {
               serverEntityRequest.failure(exception);
             });
         } else {
+          if (ServerEntityAction.NOOP == action && entity.isRemoveable()) {
+            LOGGER.debug("removing " + entity.getID());
+            entityManager.removeDestroyed(entity.getID());
+          }
           serverEntityRequest.setAutoRetire();
           entity.addRequestMessage(serverEntityRequest, entityMessage, serverEntityRequest::complete, serverEntityRequest::failure);
         }  
@@ -291,6 +293,11 @@ public class ProcessTransactionHandler {
               if (result != null) {
                 cached = true;
               }
+              break;
+            case FETCH_ENTITY:
+            case RELEASE_ENTITY:
+//  these associations are tricky but since the client rebuilds the associations it knows about 
+// prior to the execution of these messages, re-applying should be fine.
               break;
           }
         } catch (EntityException ee) {

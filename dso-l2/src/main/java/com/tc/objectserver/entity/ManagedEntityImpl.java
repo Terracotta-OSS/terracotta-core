@@ -22,7 +22,6 @@ import com.tc.exception.EntityReferencedException;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.MessageChannel;
 
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ActiveServerEntity;
@@ -55,9 +54,7 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -71,9 +68,7 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 import java.util.function.Consumer;
 import static com.tc.util.Assert.assertNotNull;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.terracotta.exception.PermanentEntityException;
 
 
@@ -349,14 +344,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         read.unlock();
       }
   }
-  
-  private void checkExists(ResultCapture response) {
-    if (!this.isDestroyed) {
-      response.complete();
-    } else {
-      response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
-    }
-  }
 
   /**
    * Runs on a concurrent thread from RequestProcessor (meaning that this could be invoked concurrently on the same entity)
@@ -461,19 +448,32 @@ public class ManagedEntityImpl implements ManagedEntity {
   public boolean isActive() {
     return this.isInActiveState;
   }
+  
+  @Override
+  public boolean isRemoveable() {
+    return this.isDestroyed && runnables.isEmpty() && runnables.deferCleared;
+  }
 
   private void destroyEntity(ServerEntityRequest request, ResultCapture response) {
     CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
         ? activeServerEntity
         : passiveServerEntity;
-    if (null != commonServerEntity) {
-      ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
-      EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
+    ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
+    EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
+    if (this.isDestroyed) {
+      response.failure(new EntityNotFoundException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));        
+    } else if (null != commonServerEntity) {
       // We want to ensure that nobody somehow has a reference to this entity.
       if (!this.canDelete) {
         response.failure(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));
       } else if (clientEntityStateManager.verifyNoReferences(entityDescriptor.getEntityID())) {
+        Assert.assertFalse(this.isDestroyed);
         commonServerEntity.destroy();
+        if (this.isInActiveState) {
+          this.activeServerEntity = null;
+        } else {
+          this.passiveServerEntity = null;
+        }
         this.isDestroyed = true;
         eventCollector.entityWasDestroyed(id);    
         response.complete();
@@ -883,6 +883,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         return queue.pop();
       }
       return null;
+    }
+    
+    boolean isEmpty() {
+      return queue.isEmpty();
     }
     
     boolean activate() {

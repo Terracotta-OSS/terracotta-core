@@ -66,8 +66,6 @@ public class EntityExistenceHelpers {
         entityPersistor.entityCreated(clientID, transactionID, oldestTransactionOnClient, entityID, version, consumerID, canDelete, configuration);
       } else {
         entityPersistor.entityCreateFailed(clientID, transactionID, oldestTransactionOnClient, exception);
-//  entityManager is holding a shell that is not valid, remove it
-        entityManager.removeDestroyed(entityID);
       }
     }
   }
@@ -95,7 +93,6 @@ public class EntityExistenceHelpers {
     
       // Record the success.
     if (exception == null) {
-      entityManager.removeDestroyed(entityID);
       entityPersistor.entityDestroyed(clientID, transactionID, oldestTransactionOnClient, entityID);
     } else {
       entityPersistor.entityDestroyFailed(clientID, transactionID, oldestTransactionOnClient, exception);

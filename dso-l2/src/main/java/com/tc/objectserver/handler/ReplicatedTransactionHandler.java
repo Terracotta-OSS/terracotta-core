@@ -57,7 +57,6 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.BooleanSupplier;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
@@ -244,7 +243,6 @@ public class ReplicatedTransactionHandler {
               acknowledge(rep);
             }
           }, (exception) -> {
-            entityManager.removeDestroyed(entityID);
             entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             acknowledge(rep);
           });
@@ -279,9 +277,6 @@ public class ReplicatedTransactionHandler {
         case DESTROY_ENTITY:
           entityInstance.addRequestMessage(request, payload, 
             (result)-> {
-              if (!entityManager.removeDestroyed(entityID)) {
-                throw new AssertionError();
-              }
               entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID);
               acknowledge(rep);
             }, (exception) -> {
@@ -289,10 +284,20 @@ public class ReplicatedTransactionHandler {
               acknowledge(rep);
             });
           break;
+        case NOOP:
+          if (entityInstance.isRemoveable()) {
+            LOGGER.debug("removing " + entityInstance.getID());
+            entityManager.removeDestroyed(entityInstance.getID());
+          }
+          //  fall-through to default
         default:
           entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep), (exception) -> acknowledge(rep));
           break;
       }
+    } else {
+ //  fail, just ack
+      LOGGER.debug("entity not found:" + rep);
+      acknowledge(rep);
     }
   }
   
