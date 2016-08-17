@@ -166,13 +166,6 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     return path;
   }
   
-  private String[] makeClientPath(ClientID node, String...slot) {
-    String[] path = Arrays.copyOf(PlatformMonitoringConstants.CLIENTS_PATH, PlatformMonitoringConstants.CLIENTS_PATH.length + 1 + slot.length);
-    path[PlatformMonitoringConstants.CLIENTS_PATH.length] = clientIdentifierForService(node);
-    System.arraycopy(slot, 0, path, PlatformMonitoringConstants.CLIENTS_PATH.length + 1, slot.length);
-    return path;
-  }
-  
   @Override
   public synchronized void clientDidConnect(MessageChannel channel, ClientID client) {
     // Ensure that this client isn't already connected.
