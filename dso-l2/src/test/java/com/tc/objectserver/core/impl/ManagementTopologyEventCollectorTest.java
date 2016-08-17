@@ -18,8 +18,14 @@
  */
 package com.tc.objectserver.core.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+
 import com.tc.net.TCSocketAddress;
-import com.tc.stats.Client;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +43,9 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
+import org.terracotta.monitoring.PlatformEntity;
+import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.monitoring.ServerState;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -233,5 +242,81 @@ public class ManagementTopologyEventCollectorTest {
     ArgumentCaptor<PlatformClientFetchedEntity> argumentCaptor = ArgumentCaptor.forClass(PlatformClientFetchedEntity.class);
     verify(monitoringProducer).addNode(any(), any(), argumentCaptor.capture());
     Assert.assertEquals(clientDescriptor, argumentCaptor.getValue().clientDescriptor);
+  }
+
+  @Test
+  public void testApiTypeSerialization() throws Exception {
+    // Note that we don't currently put unit tests in the API project (although it is worth considering, for cases such as
+    //  this) so we will put some simple tests to ensure that the monitoring types correctly serialize/deserialize.
+    
+    // Create some objects.
+    String clientIdentifier = "clientIdentifier";
+    String entityIdentifier = "entityIdentifier";
+    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+    PlatformClientFetchedEntity originalFetchedEntity = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
+    
+    String uuid = "uuid";
+    String name = "name";
+    InetAddress localAddress = InetAddress.getLocalHost();
+    int localPort = 1;
+    InetAddress remoteAddress = InetAddress.getLoopbackAddress();
+    int remotePort = 2;
+    long clientPID = 3;
+    PlatformConnectedClient originalConnectedClient = new PlatformConnectedClient(uuid, name, localAddress, localPort, remoteAddress, remotePort, clientPID);
+    
+    String typeName = "typeName";
+    String entityName = "entityName";
+    boolean isActive = false;
+    PlatformEntity originalEntity = new PlatformEntity(typeName, entityName, isActive);
+    
+    String serverName = "serverName";
+    String host = "host";
+    String hostAddress = "hostAddress";
+    String bindAddress = "bindAddress";
+    int bindPort = 1;
+    int groupPort = 2;
+    String version = "version";
+    String build = "build";
+    long startTime = 3;
+    PlatformServer originalServer = new PlatformServer(serverName, host, hostAddress, bindAddress, bindPort, groupPort, version, build, startTime);
+    
+    String state = "state";
+    long timestamp = 1;
+    long activate = 2;
+    ServerState originalState = new ServerState(state, timestamp, activate);
+    
+    
+    // Serialize them to a byte[].
+    ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+    ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput);
+    objectOutput.writeObject(originalFetchedEntity);
+    objectOutput.writeObject(originalConnectedClient);
+    objectOutput.writeObject(originalEntity);
+    objectOutput.writeObject(originalServer);
+    objectOutput.writeObject(originalState);
+    objectOutput.close();
+    byteOutput.close();
+    byte[] buffer = byteOutput.toByteArray();
+    
+    // Deserialize them back into objects.
+    ByteArrayInputStream byteInput = new ByteArrayInputStream(buffer);
+    ObjectInputStream objectInput = new ObjectInputStream(byteInput);
+    PlatformClientFetchedEntity readFetchedEntity = (PlatformClientFetchedEntity)objectInput.readObject();
+    PlatformConnectedClient readConnectedClient = (PlatformConnectedClient)objectInput.readObject();
+    PlatformEntity readEntity = (PlatformEntity)objectInput.readObject();
+    PlatformServer readServer = (PlatformServer)objectInput.readObject();
+    ServerState readState = (ServerState)objectInput.readObject();
+    objectInput.close();
+    byteInput.close();
+    
+    // Verify that they are still equal.
+    // Note that we expect that the read fetched entity will NOT equal the original, until we null the clientDescriptor.
+    Assert.assertNotEquals(originalFetchedEntity, readFetchedEntity);
+    originalFetchedEntity.clientDescriptor = null;
+    Assert.assertEquals(originalFetchedEntity, readFetchedEntity);
+    Assert.assertEquals(originalConnectedClient, readConnectedClient);
+    Assert.assertEquals(originalEntity, readEntity);
+    Assert.assertEquals(originalServer, readServer);
+    Assert.assertEquals(originalState, readState);
   }
 }
