@@ -73,7 +73,7 @@ public interface MessageChannel extends ChannelIDProvider {
   // ////////////////////////////////
   public boolean isConnected();
 
-  public void send(TCNetworkMessage message);
+  public void send(TCNetworkMessage message) throws IOException;
 
   public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 

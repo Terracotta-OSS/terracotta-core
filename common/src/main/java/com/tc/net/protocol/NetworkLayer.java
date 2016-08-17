@@ -75,7 +75,7 @@ public interface NetworkLayer {
 
   public NetworkLayer getReceiveLayer();
 
-  public void send(TCNetworkMessage message);
+  public void send(TCNetworkMessage message) throws IOException;
 
   public void receive(TCByteBuffer[] msgData);
 

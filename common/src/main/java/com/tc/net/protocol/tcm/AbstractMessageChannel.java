@@ -28,6 +28,7 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
+import java.io.IOException;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -170,7 +171,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public void send(final TCNetworkMessage message) {
+  public void send(final TCNetworkMessage message) throws IOException {
     if (logger.isDebugEnabled()) {
       final Runnable logMsg = new Runnable() {
         @Override

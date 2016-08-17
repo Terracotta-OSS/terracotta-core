@@ -33,6 +33,7 @@ import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.util.Assert;
+import java.io.IOException;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -408,7 +409,11 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
 
     private void sendMessage(WireProtocolMessage message) {
-      transport.sendToConnection(message);
+      try {
+        transport.sendToConnection(message);
+      } catch (IOException ioe) {
+        logger.warn("trouble sending message", ioe);
+      }
     }
   }
 

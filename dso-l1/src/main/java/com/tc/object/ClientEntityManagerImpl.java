@@ -113,14 +113,18 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
             }
           }
           if (doSend) {
-            first.send();
+              if (first.send()) {
 //  when encountering a send for anything other than an invoke, wait here before sending anything else
 //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
 //  make sure those complete before sending any new invokes or lifecycle messages
-            if (first.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
-              first.waitForAcks();
-            }
+                if (first.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
+                  first.waitForAcks();
+                }
+              } else {
+                logger.warn("message not sent.  Make sure resend happens " + first);
+              }
           } else {
+            requestTickets.release();
             throwClosedExceptionOnMessage(first);
           }
         } catch (InterruptedException ie) {
@@ -488,8 +492,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public void send() {
-
+    public boolean send() {
+      return true;
     }
 
     @Override

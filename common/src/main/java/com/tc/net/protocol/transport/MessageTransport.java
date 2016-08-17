@@ -22,6 +22,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
+import java.io.IOException;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public interface MessageTransport extends NetworkLayer {
 
   public void receiveTransportMessage(WireProtocolMessage message);
 
-  public void sendToConnection(TCNetworkMessage message);
+  public void sendToConnection(TCNetworkMessage message) throws IOException;
 
   public void setAllowConnectionReplace(boolean allow);
 

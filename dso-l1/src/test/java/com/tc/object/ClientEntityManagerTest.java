@@ -481,7 +481,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     boolean sent = false;
     @Override
-    public void send() {
+    public boolean send() {
       assertFalse(sent);
       sent = true;
       if (this.autoComplete) {
@@ -496,7 +496,9 @@ public class ClientEntityManagerTest extends TestCase {
         }
         this.clientEntityManager.retired(this.transactionID);
       }
+      return sent;
     }
+    
     @Override
     public MessageChannel getChannel() {
       throw new UnsupportedOperationException();

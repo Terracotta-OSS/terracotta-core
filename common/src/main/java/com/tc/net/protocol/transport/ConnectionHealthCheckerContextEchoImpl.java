@@ -20,6 +20,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import java.io.IOException;
 
 /**
  * ECHO HealthChecker Context. On receiving a PING probe, it sends back the PING_REPLY.
@@ -41,7 +42,12 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
     if (message.isPing()) {
       HealthCheckerProbeMessage pingReplyMessage = this.messageFactory.createPingReply(transport.getConnectionId(),
                                                                                        transport.getConnection());
-      this.transport.send(pingReplyMessage);
+      try {
+        this.transport.send(pingReplyMessage);
+      } catch (IOException ioe) {
+        logger.warn("trouble ping", ioe);
+        return false;
+      }
       return true;
     } else if (message.isTimeCheck()) {
       // Just ignore time checks since we're just doing an echo only implementation

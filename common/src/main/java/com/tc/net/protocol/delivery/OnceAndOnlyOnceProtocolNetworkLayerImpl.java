@@ -418,7 +418,12 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     // this method doesn't do anything at the moment, but it is a good spot to plug in things you might want to do
     // every message flowing down from the layer (like logging for example)
     if (this.sendLayer.isConnected()) {
-      this.sendLayer.send(msg);
+      try {
+        this.sendLayer.send(msg);
+      } catch (IOException ioe) {
+        logger.warn("trouble sending", ioe);
+        return false;
+      }
       return (true);
     } else {
       return (false);

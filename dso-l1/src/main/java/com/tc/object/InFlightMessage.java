@@ -81,12 +81,12 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     return this.message.getTransactionID();
   }
 
-  public void send() {
+  public boolean send() {
     Assert.assertFalse(this.isSent);
     this.isSent = true;
-    this.message.send();
+    return this.message.send();
   }
-
+  
   public synchronized void waitForAcks() {
     boolean interrupted = false;
     while (!this.pendingAcks.isEmpty()) {

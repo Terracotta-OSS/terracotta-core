@@ -301,8 +301,12 @@ public class ClientMessageTransport extends MessageTransportBase {
       TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection(),
                                                                     stackLayerFlags, this.callbackPort);
       // send syn message
-      this.sendToConnection(syn);
-      this.status.synSent();
+      try {
+        this.sendToConnection(syn);
+        this.status.synSent();
+      } catch (IOException ioe) {
+        logger.warn("trouble syn", ioe);
+      }
     }
   }
 
@@ -315,7 +319,11 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
       TransportHandshakeMessage ack = this.messageFactory.createAck(this.connectionId, getConnection());
       // send ack message
-      this.sendToConnection(ack);
+      try {
+        this.sendToConnection(ack);
+      } catch (IOException ioe) {
+        throw new TransportHandshakeException(ioe);
+      }
       this.status.established();
     }
     fireTransportConnectedEvent();
@@ -324,19 +332,22 @@ public class ClientMessageTransport extends MessageTransportBase {
   protected void openConnection(TCConnection connection) throws TCTimeoutException, TransportHandshakeException,
       MaxConnectionsExceededException, CommStackMismatchException {
     Assert.eval(!isConnected());
-    wireNewConnection(connection);
-    try {
-      handshakeConnection(connection);
-    } catch (TCTimeoutException e) {
-      clearConnection();
-      this.status.reset();
-      throw e;
-    } catch (ReconnectionRejectedException e) {
-      throw new TCRuntimeException("Should not happen here: " + e);
-    } catch (TransportHandshakeException e) {
-      clearConnection();
-      this.status.reset();
-      throw e;
+    if (wireNewConnection(connection)) {
+      try {
+        handshakeConnection();
+      } catch (TCTimeoutException e) {
+        clearConnection();
+        this.status.reset();
+        throw e;
+      } catch (ReconnectionRejectedException e) {
+        throw new TCRuntimeException("Should not happen here: " + e);
+      } catch (TransportHandshakeException e) {
+        clearConnection();
+        this.status.reset();
+        throw e;
+      }
+    } else {
+      throw new TransportHandshakeException("connection closed");
     }
   }
 
@@ -349,16 +360,17 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
 
     Assert.eval(!isConnected());
-    wireNewConnection(connection);
-    try {
-      handshakeConnection(connection);
-    } catch (Exception t) {
-      this.status.reset();
-      throw t;
+    if (wireNewConnection(connection)) {
+      try {
+        handshakeConnection();
+      } catch (Exception t) {
+        this.status.reset();
+        throw t;
+      }
     }
   }
 
-  private void handshakeConnection(TCConnection connection) throws TCTimeoutException, MaxConnectionsExceededException,
+  private void handshakeConnection() throws TCTimeoutException, MaxConnectionsExceededException,
       TransportHandshakeException, CommStackMismatchException, ReconnectionRejectedException {
     HandshakeResult result = handShake();
     handleHandshakeError(result);
