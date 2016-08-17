@@ -43,6 +43,7 @@ import org.terracotta.exception.EntityUserException;
 public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements VoltronEntityAppliedResponse {
   private TransactionID transactionID;
   private boolean isSuccess;
+  private boolean isRetire;
   private byte[] successResponse;
   private EntityException failureException;
   
@@ -52,7 +53,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   }
   
   @Override
-  public void setSuccess(TransactionID transactionID, byte[] response) {
+  public void setSuccess(TransactionID transactionID, byte[] response, boolean retire) {
     Assert.assertNull(this.transactionID);
     Assert.assertNull(this.successResponse);
     Assert.assertNull(this.failureException);
@@ -61,11 +62,12 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     
     this.transactionID = transactionID;
     this.isSuccess = true;
+    this.isRetire = retire;
     this.successResponse = response;
   }
   
   @Override
-  public void setFailure(TransactionID transactionID, EntityException exception) {
+  public void setFailure(TransactionID transactionID, EntityException exception, boolean retire) {
     Assert.assertNull(this.transactionID);
     Assert.assertNull(this.successResponse);
     Assert.assertNull(this.failureException);
@@ -74,6 +76,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     
     this.transactionID = transactionID;
     this.isSuccess = false;
+    this.isRetire = retire;
     this.failureException= exception;
   }
   
@@ -95,6 +98,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     outputStream.writeLong(this.transactionID.toLong());
     
     outputStream.writeBoolean(this.isSuccess);
+    outputStream.writeBoolean(this.isRetire);
     
     if (this.isSuccess) {
       Assert.assertNotNull(this.successResponse);
@@ -130,6 +134,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     this.transactionID = new TransactionID(getLongValue());
     
     this.isSuccess = getBooleanValue();
+    this.isRetire = getBooleanValue();
     if (this.isSuccess) {
       this.successResponse = getBytesArray();
     } else {
@@ -161,5 +166,10 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   @Override
   public EntityException getFailureException() {
     return this.failureException;
+  }
+  
+  @Override 
+  public boolean alsoRetire() {
+    return this.isRetire;
   }
 }

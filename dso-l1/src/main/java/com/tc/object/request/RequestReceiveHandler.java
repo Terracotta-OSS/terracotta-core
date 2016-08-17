@@ -51,12 +51,15 @@ public class RequestReceiveHandler extends AbstractEventHandler<VoltronEntityRes
           } else {
             this.handler.complete(transactionID, appliedResponse.getSuccessValue());
           }
+          if (appliedResponse.alsoRetire()) {
+            this.handler.retired(transactionID);
+          }
           break;
         case RECEIVED:
           this.handler.received(transactionID);
           break;
-          default:
-            Assert.fail();
+        default:
+          Assert.fail();
       }
     }
   }

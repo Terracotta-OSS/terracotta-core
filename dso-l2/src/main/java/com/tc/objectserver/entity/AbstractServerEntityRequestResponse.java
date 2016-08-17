@@ -31,6 +31,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.util.Assert;
+import java.io.IOException;
 import java.util.Collections;
 
 import java.util.Optional;
@@ -48,6 +49,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   
   private boolean isComplete = false;
   private boolean isRetired = false;
+  private boolean alsoRetire = false;
 
   public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
     this.action = action;
@@ -59,6 +61,10 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   
   public abstract Optional<MessageChannel> getReturnChannel();
 
+  public void autoRetire(boolean auto) {
+    this.alsoRetire = auto;
+  }
+  
   @Override
   public TransactionID getTransaction() {
     if (transaction == null) {
@@ -95,7 +101,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
     if (isComplete()) throw new AssertionError("Error after successful complete");
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
-      message.setFailure(transaction, e);
+      message.setFailure(transaction, e, alsoRetire);
       message.send();
     });
     this.isComplete = true;
@@ -121,8 +127,9 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
         case RELEASE_ENTITY:
         case FETCH_ENTITY:
           // In these cases, we just return an empty success to acknowledge that they completed.
-          actionResponse.setSuccess(transaction, new byte[0]);
+          actionResponse.setSuccess(transaction, new byte[0], alsoRetire);
           actionResponse.send();
+
           break;
         default:
           // Unknown action completion type.
@@ -141,7 +148,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
         case FETCH_ENTITY:
         case RECONFIGURE_ENTITY:
           VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
-          actionResponse.setSuccess(transaction, value);
+          actionResponse.setSuccess(transaction, value, alsoRetire);
           actionResponse.send();
           break;
         default:
@@ -155,7 +162,6 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   @Override
   public synchronized void retired() {
     Assert.assertTrue("Double-retire", !isRetired());
-    Assert.assertTrue("Retiring incomplete", isComplete());
     
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityRetiredResponse response = (VoltronEntityRetiredResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE);
