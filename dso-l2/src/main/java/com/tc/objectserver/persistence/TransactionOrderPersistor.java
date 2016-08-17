@@ -27,8 +27,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Vector;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 
 
 /**
@@ -42,9 +42,9 @@ public class TransactionOrderPersistor {
   private static final String LIST_KEY = "list_container:key";
   private static final String LOCAL_VARIABLES = "local_variables";
   private static final String RECEIVED_TRANSACTION_COUNT = "local_variables:received_transaction_count";
-
-  private final KeyValueStorage<NodeID, List<ClientTransaction>> clientLocals;
-  private final KeyValueStorage<String, List<ClientTransaction>> listContainer;
+//  must be a LinkedHashSet to preserve entry order.  Using set for constant time removal
+  private final KeyValueStorage<NodeID, LinkedHashSet<ClientTransaction>> clientLocals;
+  private final KeyValueStorage<String, LinkedHashSet<ClientTransaction>> listContainer;
   private final KeyValueStorage<String, Long> localVariables;
   
 
@@ -53,13 +53,10 @@ public class TransactionOrderPersistor {
   public TransactionOrderPersistor(IPersistentStorage storageManager) {
     // In the future, we probably want a different storage approach since storing the information, this way, doesn't
     // work well with the type system (Lists inside KeyValueStorage) and will perform terribly.
-    this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, NodeID.class, (Class)List.class);
-    this.listContainer = storageManager.getKeyValueStorage(LIST_CONTAINER, String.class, (Class)List.class);
+    this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, NodeID.class, (Class)LinkedHashSet.class);
+    this.listContainer = storageManager.getKeyValueStorage(LIST_CONTAINER, String.class, (Class)LinkedHashSet.class);
     if (!this.listContainer.containsKey(LIST_KEY)) {
-      this.listContainer.put(LIST_KEY, new Vector<>());
-    } else {
-      // TAB-6411 : Add additional checks to track down an intermittent bug.
-      Assert.assertTrue(this.listContainer.get(LIST_KEY) instanceof Vector);
+      this.listContainer.put(LIST_KEY, new LinkedHashSet<>());
     }
     this.localVariables = storageManager.getKeyValueStorage(LOCAL_VARIABLES, String.class, (Class)Long.class);
     if (!this.localVariables.containsKey(RECEIVED_TRANSACTION_COUNT)) {
@@ -82,9 +79,9 @@ public class TransactionOrderPersistor {
     }
     
     // Get the local list for this client.
-    List<ClientTransaction> localList = clientLocals.get(source);
+    LinkedHashSet<ClientTransaction> localList = clientLocals.get(source);
     if (null == localList) {
-      localList = new Vector<>();
+      localList = new LinkedHashSet<>();
       clientLocals.put(source, localList);
     }
     
@@ -97,20 +94,26 @@ public class TransactionOrderPersistor {
     transaction.id = transactionID;
     
     // Make sure that this transaction isn't already in this list.
-    if (localList.contains(transaction)) {
+//    if (localList.contains(transaction)) {
 //      throw new IllegalArgumentException("Transaction already exists for this client");
 // hitting this during replication.  is it possible for the same transaction to be added twice?  TODO: confirm
-      return;
-    }
+//      return;
+//    }
     
-    List<ClientTransaction> globalList = this.listContainer.get(LIST_KEY);
+    LinkedHashSet<ClientTransaction> globalList = this.listContainer.get(LIST_KEY);
     // TAB-6411 : Add additional checks to track down an intermittent bug.
     Assert.assertNotNull(globalList);
-    Assert.assertTrue(globalList instanceof Vector);
+    Assert.assertTrue(globalList instanceof LinkedHashSet);
     // Remove anything the client no longer cares about.
-    while ((localList.size() > 0) && (-1 == localList.get(0).id.compareTo(oldestTransactionOnClient))) {
-      ClientTransaction removed = localList.remove(0);
-      globalList.remove(removed);
+    Iterator<ClientTransaction> walk = localList.iterator();
+    while (walk.hasNext()) {
+      ClientTransaction next = walk.next();
+      if (-1 == next.id.compareTo(oldestTransactionOnClient)) {
+        walk.remove();
+        globalList.remove(next);
+      } else {
+        break;
+      }
     }
     
     // Create this new pair and add it to the global list.
@@ -128,7 +131,7 @@ public class TransactionOrderPersistor {
     clientLocals.remove(source);
     
     // Strip any references to this client from the global list.
-    List<ClientTransaction> newGlobalList = new Vector<>();
+    LinkedHashSet<ClientTransaction> newGlobalList = new LinkedHashSet<>();
     for (ClientTransaction transaction : this.listContainer.get(LIST_KEY)) {
       if (!source.equals(transaction.client)) {
         newGlobalList.add(transaction);
@@ -166,7 +169,7 @@ public class TransactionOrderPersistor {
   public int getIndexToReplay(NodeID source, TransactionID transactionID) {
     int index = -1;
     
-    List<ClientTransaction> globalList = this.listContainer.get(LIST_KEY);
+    LinkedHashSet<ClientTransaction> globalList = this.listContainer.get(LIST_KEY);
     int seek = 0;
     for (ClientTransaction transaction : globalList) {
       if (source.equals(transaction.client) && transactionID.equals(transaction.id)) {
@@ -184,7 +187,7 @@ public class TransactionOrderPersistor {
   public void clearAllRecords() {
     this.clientLocals.clear();
     this.listContainer.clear();
-    this.listContainer.put(LIST_KEY, new Vector<>());
+    this.listContainer.put(LIST_KEY, new LinkedHashSet<>());
   }
 
   /**
