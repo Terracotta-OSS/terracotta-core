@@ -35,6 +35,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
   public static final String             MANAGEMENT_STAGE                            = "management_stage";
   public static final String             VOLTRON_ENTITY_RESPONSE_STAGE                      = "request_ack_stage";
+  public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
   public static final String             SERVER_ENTITY_MESSAGE_STAGE                 = "server_entity_message_stage";
   public static final String             SERVER_ENTITY_MESSAGE_SENDER_STAGE                 = "server_entity_message_sender_stage";
 

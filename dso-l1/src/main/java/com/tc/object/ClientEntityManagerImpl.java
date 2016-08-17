@@ -22,6 +22,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
+import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
@@ -34,8 +35,10 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
+import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -51,6 +54,7 @@ import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.stats.Stats;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
@@ -58,6 +62,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -99,7 +104,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
   
   private Sink<InFlightMessage> createSendStage(StageManager stages) {
-    EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
+    final EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
       @Override
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
         try {
@@ -132,7 +137,70 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         }
       }
     };
-    return stages.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_SENDER_STAGE, InFlightMessage.class, handler, 1, ClientConfigurationContext.MAX_PENDING_REQUESTS).getSink();
+    return makeDirectSink(handler);
+  }
+  
+  private <T> Sink<T> makeDirectSink(final EventHandler<T> handler) {
+    return new Sink<T>() {
+      @Override
+      public void addSingleThreaded(T context) {
+        try {
+          handler.handleEvent(context);
+        } catch (EventHandlerException ee) {
+          throw new RuntimeException(ee);
+        }
+      }
+
+      @Override
+      public void addMultiThreaded(T context) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public void addSpecialized(SpecializedEventContext specialized) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public int size() {
+        return 0;
+      }
+
+      @Override
+      public void clear() {
+
+      }
+
+      @Override
+      public void setClosed(boolean closed) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public void enableStatsCollection(boolean enable) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public boolean isStatsCollectionEnabled() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public Stats getStats(long frequency) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public Stats getStatsAndReset(long frequency) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public void resetStats() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+    };
   }
 
   @SuppressWarnings("rawtypes")
@@ -214,10 +282,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public void received(TransactionID id) {
     // Note that this call comes the platform, potentially concurrently with complete()/failure().
     InFlightMessage inFlight = inFlightMessages.get(id);
-    if (inFlight == null) {
-      throw new RuntimeException("Got an ack for an unknown transaction id " + id);
+    if (inFlight != null) {
+      inFlight.received();
+    } else {
+   // resend result
     }
-    inFlight.received();
   }
 
   @Override
@@ -233,7 +302,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.setResult(value, null);
     } else {
-      throw new IllegalArgumentException("Got an unknown transaction id ack " + id);
+   // resend result
     }
   }
 
@@ -244,7 +313,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.setResult(null, error);
     } else {
-      throw new IllegalArgumentException("Got an unknown transaction id that failed with error.", error);
+   // resend result
     }
   }
 
@@ -252,10 +321,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public void retired(TransactionID id) {
     // We only retire the InFlightMessage from our mapping and release the request ticket once we get the retired ACK.
     InFlightMessage inFlight = inFlightMessages.remove(id);
-    if (inFlight == null) {
-      throw new IllegalArgumentException("Got an unknown transaction id in retirement: " + id);
+    if (inFlight != null) {
+      inFlight.retired();
+    } else {
+   // resend result
     }
-    inFlight.retired();
     requestTickets.release();
   }
 
@@ -283,9 +353,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     
     Stage<VoltronEntityResponse> responder = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class);
-    logger.debug("size of request acks at resend " + responder.getSink().size());
+    Stage<VoltronEntityMultiResponse> responderMulti = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class);
     FlushResponse flush = new FlushResponse();
     responder.getSink().addSingleThreaded(flush);
+    flush.waitForAccess();
+    flush = new FlushResponse();
+    responderMulti.getSink().addSingleThreaded(flush);
     flush.waitForAccess();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
@@ -317,6 +390,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     // And then drop them.
     this.objectStoreMap.clear();
+    notifyAll();
   }
   
   private void throwClosedExceptionOnMessage(InFlightMessage msg) {
@@ -461,7 +535,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return message;
   }
   
-  private static class FlushResponse implements VoltronEntityResponse {
+  private static class FlushResponse implements VoltronEntityResponse, VoltronEntityMultiResponse {
     private boolean accessed = false;
     
     @Override
@@ -519,6 +593,38 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     @Override
     public int getTotalLength() {
       return 0;
+    }
+
+    @Override
+    public synchronized TransactionID[] getReceivedTransactions() {
+      accessed = true;
+      notifyAll();
+      return new TransactionID[0];
+    }
+
+    @Override
+    public TransactionID[] getRetiredTransactions() {
+      return new TransactionID[0];
+    }
+
+    @Override
+    public Map<TransactionID, byte[]> getResults() {
+      return Collections.emptyMap();
+    }
+
+    @Override
+    public boolean addReceived(TransactionID tid) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean addRetired(TransactionID tid) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean addResult(TransactionID tid, byte[] result) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
     public synchronized void waitForAccess() {

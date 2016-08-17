@@ -305,7 +305,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Lock read = reconnectAccessLock.readLock();
       if (logger.isDebugEnabled()) {
-        logger.debug("Invoking lifecycle " + request.getAction() + " on " + getID());
+        logger.debug("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
       }
       try {
         read.lock();
@@ -485,7 +485,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void reconfigureEntity(ResultCapture reconfigureEntityRequest, byte[] constructorInfo) {
     byte[] oldconfig = this.constructorInfo;
-    if (this.activeServerEntity == null && this.passiveServerEntity == null) {
+    if (this.isDestroyed || (this.activeServerEntity == null && this.passiveServerEntity == null)) {
       reconfigureEntityRequest.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
       return;
     }

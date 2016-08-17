@@ -31,7 +31,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String APPLY_COMPLETE_STAGE                               = "apply_complete_stage";
   public final static String BROADCAST_CHANGES_STAGE                            = "broadcast_changes_stage";
   public final static String MANAGED_ROOT_REQUEST_STAGE                         = "send_managed_object_stage";
-  public final static String RESPOND_TO_OBJECT_REQUEST_STAGE                    = "respond_to_request_stage";
+  public final static String RESPOND_TO_REQUEST_STAGE                           = "respond_to_request_stage";
   public final static String MANAGED_OBJECT_REQUEST_STAGE                       = "managed_object_request_stage";
   public final static String VOLTRON_MESSAGE_STAGE                              = "voltron_message_stage";
   public final static String SYNC_WRITE_TXN_RECVD_STAGE                         = "sync_write_transaction_recvd_stage";
