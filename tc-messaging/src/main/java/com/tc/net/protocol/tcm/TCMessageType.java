@@ -18,12 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.exception.TCRuntimeException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -37,69 +34,27 @@ public final class TCMessageType {
   // NOTE: Never recycle these numbers, always add a new constant
   // //////////////////////////////////////////////
   public static final int           TYPE_PING_MESSAGE                                 = 1;
-  // public static final int TYPE_PONG_MESSAGE = 2;
-  // public static final int           TYPE_REQUEST_ROOT_MESSAGE                         = 8;
-  public static final int           TYPE_LOCK_REQUEST_MESSAGE                         = 9;
-//  public static final int           TYPE_COMMIT_TRANSACTION_MESSAGE                   = 10;
-  // public static final int           TYPE_REQUEST_ROOT_RESPONSE_MESSAGE                = 11;
-//  public static final int           TYPE_REQUEST_MANAGED_OBJECT_MESSAGE               = 12;
-//  public static final int           TYPE_REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE      = 13;
-//  public static final int           TYPE_BROADCAST_TRANSACTION_MESSAGE                = 14;
-//  public static final int           TYPE_OBJECT_ID_BATCH_REQUEST_MESSAGE              = 18;
-//  public static final int           TYPE_OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE     = 19;
-//  public static final int           TYPE_ACKNOWLEDGE_TRANSACTION_MESSAGE              = 24;
-  public static final int           TYPE_LOCK_RESPONSE_MESSAGE                        = 26;
-  public static final int           TYPE_CLIENT_HANDSHAKE_MESSAGE                     = 28;
-//  public static final int           TYPE_BATCH_TRANSACTION_ACK_MESSAGE                = 29;
-  public static final int           TYPE_CLIENT_HANDSHAKE_ACK_MESSAGE                 = 30;
-  // public static final int TYPE_CONFIG_PUSH_MESSAGE = 31;
-  // public static final int TYPE_OVERRIDE_APPLICATION_CONFIG_MESSAGE = 32;
-  public static final int           TYPE_LOCK_RECALL_MESSAGE                          = 33;
-  // public static final int TYPE_JMX_MESSAGE = 34;
-  public static final int           TYPE_LOCK_QUERY_RESPONSE_MESSAGE                  = 35;
-  // public static final int TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE = 37;
-  // public static final int TYPE_MEMORY_DATA_STORE_RESPONSE_MESSAGE = 38;
-  public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 39;
-//  public static final int           TYPE_CLIENT_JMX_READY_MESSAGE                     = 40;
-//  public static final int           TYPE_OBJECTS_NOT_FOUND_RESPONSE_MESSAGE           = 41;
-  // public static final int TYPE_BENCH_MESSAGE = 42;
-  // public static final int TYPE_LOCK_STAT_MESSAGE = 43;
-  // public static final int TYPE_LOCK_STATISTICS_RESPONSE_MESSAGE = 44;
-//  public static final int           TYPE_COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE   = 45;
-  public static final int           TYPE_GROUP_WRAPPER_MESSAGE                        = 46;
-  public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                      = 47;
-  // public static final int           TYPE_NODES_WITH_OBJECTS_MESSAGE                   = 48;
-  // public static final int           TYPE_NODES_WITH_OBJECTS_RESPONSE_MESSAGE          = 49;
-  // public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_MESSAGE             = 50;
-  // public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE    = 51;
-  // public static final int           TYPE_NODE_META_DATA_MESSAGE                       = 52;
-  // public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE              = 53;
-  // public static final int TYPE_STRIPE_ID_MAP_MESSAGE = 54;
-//  public static final int           TYPE_SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE      = 55;
-  // public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
-  // public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
-//  public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
-  public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 70;
-//  public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
-  public static final int           TYPE_LIST_REGISTERED_SERVICES_MESSAGE             = 80;
-  public static final int           TYPE_LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE    = 81;
-  public static final int           TYPE_INVOKE_REGISTERED_SERVICE_MESSAGE            = 82;
-  public static final int           TYPE_INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE   = 83;
-//  public static final int           TYPE_REQUEST_BATCH_MESSAGE                        = 84;
-//  public static final int           TYPE_REQUEST_RESPONSE_MESSAGE                     = 85;
-  public static final int           TYPE_VOLTRON_ENTITY_RECEIVED_RESPONSE                          = 86;
-//  public static final int           TYPE_GET_ENTITY_RESPONSE_MESSAGE                  = 87;
-  public static final int           TYPE_SERVER_ENTITY_MESSAGE                        = 88;
-  public static final int           TYPE_SERVER_ENTITY_RESPONSE_MESSAGE               = 89;
-  public static final int           TYPE_VOLTRON_ENTITY_MESSAGE                       = 90;
-  public static final int           TYPE_VOLTRON_ENTITY_APPLIED_RESPONSE              = 91;
-  public static final int           TYPE_VOLTRON_ENTITY_RETIRED_RESPONSE              = 92;
+  public static final int           TYPE_CLIENT_HANDSHAKE_MESSAGE                     = 2;
+  public static final int           TYPE_CLIENT_HANDSHAKE_ACK_MESSAGE                 = 3;
+  public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 6;
+  public static final int           TYPE_GROUP_WRAPPER_MESSAGE                        = 7;
+  public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                      = 8;
+  public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 9;
+  public static final int           TYPE_LIST_REGISTERED_SERVICES_MESSAGE             = 10;
+  public static final int           TYPE_LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE    = 11;
+  public static final int           TYPE_INVOKE_REGISTERED_SERVICE_MESSAGE            = 12;
+  public static final int           TYPE_INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE   = 13;
+  public static final int           TYPE_VOLTRON_ENTITY_RECEIVED_RESPONSE                          = 14;
+  public static final int           TYPE_SERVER_ENTITY_MESSAGE                        = 15;
+  public static final int           TYPE_SERVER_ENTITY_RESPONSE_MESSAGE               = 16;
+  public static final int           TYPE_VOLTRON_ENTITY_MESSAGE                       = 17;
+  public static final int           TYPE_VOLTRON_ENTITY_APPLIED_RESPONSE              = 18;
+  public static final int           TYPE_VOLTRON_ENTITY_RETIRED_RESPONSE              = 19;
+  public static final int           TYPE_VOLTRON_ENTITY_MULTI_RESPONSE              = 20;
+  public static final int           TYPE_NOOP_MESSAGE              = 21;
+  public static final int           TYPE_LAST_MESSAGE_DO_NOT_USE              = 22;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
-  public static final TCMessageType LOCK_REQUEST_MESSAGE                              = new TCMessageType();
-  public static final TCMessageType LOCK_RECALL_MESSAGE                               = new TCMessageType();
-  public static final TCMessageType LOCK_RESPONSE_MESSAGE                             = new TCMessageType();
-  public static final TCMessageType LOCK_QUERY_RESPONSE_MESSAGE                       = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
@@ -116,9 +71,12 @@ public final class TCMessageType {
   public static final TCMessageType VOLTRON_ENTITY_MESSAGE                            = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_APPLIED_RESPONSE                   = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_RETIRED_RESPONSE                   = new TCMessageType();
+  public static final TCMessageType VOLTRON_ENTITY_MULTI_RESPONSE                   = new TCMessageType();
+  public static final TCMessageType NOOP_MESSAGE                   = new TCMessageType();  
+  public static final TCMessageType LAST_MESSAGE_DO_NOT_USE                   = new TCMessageType();  // this one must always be the last
 
   public static TCMessageType getInstance(int i) {
-    return typeMap.get(i);
+    return typeArray[i-1];
   }
 
   public int getType() {
@@ -140,6 +98,7 @@ public final class TCMessageType {
   //
   // //////////////////////////////////////////////////////
   private static final Map<Integer, TCMessageType> typeMap    = new HashMap<Integer, TCMessageType>();
+  private static final TCMessageType[] typeArray    = safeInit();
   private static final String            typePrefix = "TYPE_";
 
   private int                            type;
@@ -262,36 +221,19 @@ public final class TCMessageType {
       throw new RuntimeException("TCMessageType: Unused integer constants (please remove): " + unused);
     }
 
-    final TCMessageType[] rv = typeMap.values().toArray(new TCMessageType[0]);
-    
-    Arrays.sort(rv, new Comparator<TCMessageType>() {
-      @Override
-      public int compare(TCMessageType o1, TCMessageType o2) {
-        final int i1 = o1.getType();
-        final int i2 = o2.getType();
-
-        if (i1 < i2) {
-          return -1;
-        } else if (i1 == i2) {
-          return 0;
-        } else if (i1 > i2) {
-          return 1;
-        } else {
-          throw new RuntimeException("internal error");
-        }
-      }
-    });
+    final TCMessageType[] rv = new TCMessageType[TYPE_LAST_MESSAGE_DO_NOT_USE];
+    for (TCMessageType tc : typeMap.values()) {
+      rv[tc.getType()-1] = tc;
+    }
 
     return rv;
   }
   
-  static {
+  private static TCMessageType[] safeInit() {
     try {
-      init();
-    } catch (final Exception e) {
-      e.printStackTrace();
-      throw new TCRuntimeException(e);
+      return init();
+    } catch (Exception i) {
+      throw new RuntimeException(i);
     }
   }
-
 }
