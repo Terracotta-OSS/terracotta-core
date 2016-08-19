@@ -5,7 +5,6 @@
  */
 package org.terracotta.testing.support;
 
-import org.terracotta.connection.Connection;
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.IClusterControl;
 
@@ -35,7 +34,7 @@ public class CorruptServerConfigIT extends MultiProcessGalvanTest {
   }
 
   @Override
-  public void runTest(IClientTestEnvironment env, IClusterControl control, Connection connection) throws Throwable {
+  public void runTest(IClientTestEnvironment env, IClusterControl control) throws Throwable {
     int clientIndex = env.getThisClientIndex();
     System.out.println("Running in client: " + clientIndex);
   }

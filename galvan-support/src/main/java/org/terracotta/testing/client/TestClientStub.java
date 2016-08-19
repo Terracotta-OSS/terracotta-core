@@ -16,12 +16,7 @@
 package org.terracotta.testing.client;
 
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.net.URI;
-import java.util.Properties;
 
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.ICommonTest;
 import org.terracotta.passthrough.SimpleClientTestEnvironment;
@@ -84,25 +79,16 @@ public class TestClientStub {
     ICommonTest test = interfaceClass.cast(instance);
     
     IPCClusterControl clusterControl = new IPCClusterControl(manager);
-    // Create the initial connection we want to use.
-    Connection connection = null;
-    try {
-      connection = ConnectionFactory.connect(URI.create(connectUri), new Properties());
-    } catch (ConnectionException e) {
-      // We may want to change this API, in the future, but it is only for tests so it is uncertain if we would do anything other than fail, in this scenario.
-      throw new RuntimeException("Unexpected exception when creating connection to cluster", e);
-    }
     
     if (isSetup) {
-      test.runSetup(TestClientStub.testEnvironment, clusterControl, connection);
+      test.runSetup(TestClientStub.testEnvironment, clusterControl);
     }
     if (isTest) {
-      test.runTest(TestClientStub.testEnvironment, clusterControl, connection);
+      test.runTest(TestClientStub.testEnvironment, clusterControl);
     }
     if (isDestroy) {
-      test.runDestroy(TestClientStub.testEnvironment, clusterControl, connection);
+      test.runDestroy(TestClientStub.testEnvironment, clusterControl);
     }
-    connection.close();
     manager.sendShutDownAndWait();
     
     // Note that this explicit exit seems to be required when attached to an active-active cluster.

@@ -8,7 +8,6 @@ package org.terracotta.testing.support;
 import java.util.Collections;
 import java.util.List;
 
-import org.terracotta.connection.Connection;
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.ICommonTest;
@@ -74,12 +73,12 @@ public abstract class MultiProcessGalvanTest extends BasicHarnessTest implements
   }
 
   @Override
-  public void runSetup(IClientTestEnvironment env, IClusterControl control, Connection connection) {
+  public void runSetup(IClientTestEnvironment env, IClusterControl control) {
     // These tests generally don't care about this.
   }
 
   @Override
-  public void runDestroy(IClientTestEnvironment env, IClusterControl control, Connection connection) {
+  public void runDestroy(IClientTestEnvironment env, IClusterControl control) {
     // These tests generally don't care about this.
   }
 }
