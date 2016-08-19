@@ -37,104 +37,59 @@ public class ClientEventManager {
     Map<String, String> eventMap = new HashMap<String, String>();
     
     // We might want to register one handler for all events, instead of handling the cases this way.
-    String syncEventName = "Client Sync";
-    eventMap.put(IPCMessageConstants.SYNC_SYN, syncEventName);
-    subBus.on(syncEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.SYNC, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.synchronizeClient();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.SYNC_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String terminateActiveEventName = "Terminate active";
-    eventMap.put(IPCMessageConstants.TERMINATE_ACTIVE_SYN, terminateActiveEventName);
-    subBus.on(terminateActiveEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.TERMINATE_ACTIVE, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.terminateActive();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.TERMINATE_ACTIVE_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String terminateOnePassiveEventName = "Terminate one passive";
-    eventMap.put(IPCMessageConstants.TERMINATE_ONE_PASSIVE_SYN, terminateOnePassiveEventName);
-    subBus.on(terminateOnePassiveEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.TERMINATE_ONE_PASSIVE, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.terminateOnePassive();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.TERMINATE_ONE_PASSIVE_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String startOneServerEventName = "Start one server";
-    eventMap.put(IPCMessageConstants.START_ONE_SERVER_SYN, startOneServerEventName);
-    subBus.on(startOneServerEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.START_ONE_SERVER, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.startOneServer();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.START_ONE_SERVER_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String startAllServersEventName = "Start all servers";
-    eventMap.put(IPCMessageConstants.START_ALL_SERVERS_SYN, startAllServersEventName);
-    subBus.on(startAllServersEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.START_ALL_SERVERS, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.startAllServers();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.START_ALL_SERVERS_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String shutDownStripeEventName = "Shut down stripe";
-    eventMap.put(IPCMessageConstants.SHUT_DOWN_STRIPE_SYN, shutDownStripeEventName);
-    subBus.on(shutDownStripeEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.SHUT_DOWN_STRIPE, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.terminateAllServers();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.SHUT_DOWN_STRIPE_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String waitForActiveEventName = "Wait for active";
-    eventMap.put(IPCMessageConstants.WAIT_FOR_ACTIVE_SYN, waitForActiveEventName);
-    subBus.on(waitForActiveEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.WAIT_FOR_ACTIVE, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.waitForActive();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.WAIT_FOR_ACTIVE_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String waitForPassiveEventName = "Wait for passive";
-    eventMap.put(IPCMessageConstants.WAIT_FOR_PASSIVE_SYN, waitForPassiveEventName);
-    subBus.on(waitForPassiveEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.WAIT_FOR_PASSIVE, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.waitForRunningPassivesInStandby();
-        // We also want to send the ACK to the client.
-        processStdin.println(IPCMessageConstants.WAIT_FOR_PASSIVE_ACK);
-        processStdin.flush();
-      }});
+      }}, processStdin);
     
-    String shutDownClientEventName = "Client shut down";
-    eventMap.put(IPCMessageConstants.CLIENT_SHUT_DOWN_SYN, shutDownClientEventName);
-    subBus.on(shutDownClientEventName, new EventListener() {
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.CLIENT_SHUT_DOWN, new ControlCaller() {
       @Override
-      public void onEvent(Event e) throws Throwable {
-        // We want to ACK to the client so they know that they can shut down.
-        processStdin.println(IPCMessageConstants.CLIENT_SHUT_DOWN_ACK);
-        // Then we need to close the stream in order to avoid broken pipe exceptions.
-        processStdin.close();
-      }});
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
+        // We do nothing - just acknowledge this.
+      }}, processStdin);
     
     this.eventingStream = new SimpleEventingStream(subBus, eventMap, dataSink);
   }
@@ -144,5 +99,24 @@ public class ClientEventManager {
    */
   public OutputStream getEventingStream() {
     return this.eventingStream;
+  }
+
+
+  private void installEventHandler(EventBus subBus, Map<String, String> eventMap, final IMultiProcessControl control, String eventNameBase, ControlCaller call, final PrintStream processStdin) {
+    eventMap.put(IPCMessageConstants.synFrom(eventNameBase), eventNameBase);
+    subBus.on(eventNameBase, new EventListener() {
+      @Override
+      public void onEvent(Event e) throws Throwable {
+        String responseToSend = IPCMessageConstants.ackFrom(eventNameBase);
+        call.runWithControl(control);
+        
+        // We also want to send the ACK to the client.
+        processStdin.println(responseToSend);
+        processStdin.flush();
+      }});
+  }
+
+  private static interface ControlCaller {
+    void runWithControl(IMultiProcessControl control) throws Throwable;
   }
 }
