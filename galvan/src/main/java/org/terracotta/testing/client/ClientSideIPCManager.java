@@ -36,6 +36,7 @@ public class ClientSideIPCManager {
   private final Thread streamProcessor;
   private String nextEventString;
   private boolean didGetEvent;
+  private boolean didObserveFatalError;
 
   public ClientSideIPCManager(final InputStream inputStream, PrintStream outputStream) {
     this.outputStream = outputStream;
@@ -70,6 +71,11 @@ public class ClientSideIPCManager {
       if (-1 != index) {
         // We found the line so we want to set the flag, clear the event string, and notify.
         this.didGetEvent = true;
+        this.nextEventString = null;
+        notifyAll();
+      } else if (-1 != line.indexOf(IPCMessageConstants.FATAL_CLUSTER_ACK)) {
+        // This is the fatal error which can be observed in place of any other ACK.
+        this.didObserveFatalError = true;
         this.nextEventString = null;
         notifyAll();
       }
@@ -118,7 +124,7 @@ public class ClientSideIPCManager {
     this.outputStream.println(IPCMessageConstants.synFrom(eventName));
     this.outputStream.flush();
     // Wait for the ack.
-    while (!this.didGetEvent) {
+    while (!this.didGetEvent && !this.didObserveFatalError) {
       try {
         wait();
       } catch (InterruptedException e) {
@@ -126,5 +132,7 @@ public class ClientSideIPCManager {
         Assert.unexpected(e);
       }
     }
+    // We will just assert that there wasn't an error.  This will bring down the client in the case where there was.
+    Assert.assertFalse(this.didObserveFatalError);
   }
 }

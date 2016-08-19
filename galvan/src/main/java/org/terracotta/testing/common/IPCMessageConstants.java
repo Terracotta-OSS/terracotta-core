@@ -62,4 +62,15 @@ public class IPCMessageConstants {
   public static final String CLIENT_SHUT_DOWN = "CLIENT_SHUT_DOWN";
   public static final String CLIENT_SHUT_DOWN_SYN = synFrom(CLIENT_SHUT_DOWN);
   public static final String CLIENT_SHUT_DOWN_ACK = ackFrom(CLIENT_SHUT_DOWN);
+
+  /**
+   * This is a special case in that it is not a response from a specific client-originating message.
+   * Instead, this message can be passed back to the client, in the place of any other *_ACK in the case where a fatal
+   *  error was realized by the harness while processing the corresponding *_SYN message.
+   * NOTE:  It is unlikely that the *_SYN _caused_ the error.  Typically, the error is observed here simply because it is
+   *  the first time this client has contacted the harness since the actual problem occurred.  This also means that the
+   *  harness is about to realize the problem, itself, and forcefully terminate the client process.  The cleanest way to
+   *  handle this is for the client to terminate itself so that the harness can more quickly come down gracefully.
+   */
+  public static final String FATAL_CLUSTER_ACK = "FATAL_CLUSTER_ACK";
 }

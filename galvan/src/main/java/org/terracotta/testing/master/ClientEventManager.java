@@ -106,10 +106,14 @@ public class ClientEventManager {
     eventMap.put(IPCMessageConstants.synFrom(eventNameBase), eventNameBase);
     subBus.on(eventNameBase, new EventListener() {
       @Override
-      public void onEvent(Event e) throws Throwable {
+      public void onEvent(Event e) {
         String responseToSend = IPCMessageConstants.ackFrom(eventNameBase);
-        call.runWithControl(control);
-        
+        try {
+          call.runWithControl(control);
+        } catch (Throwable t) {
+          System.err.println("WARNING:  Client being sent FATAL ack (while processing " + eventNameBase + ") due to internal error: " + t);
+          responseToSend = IPCMessageConstants.FATAL_CLUSTER_ACK;
+        }
         // We also want to send the ACK to the client.
         processStdin.println(responseToSend);
         processStdin.flush();
