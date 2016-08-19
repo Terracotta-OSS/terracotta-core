@@ -6,7 +6,6 @@
 package org.terracotta.testing.support;
 
 import org.junit.Assert;
-import org.terracotta.connection.Connection;
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.IClusterControl;
 
@@ -23,21 +22,21 @@ public class SimpleClientStartUpIT extends MultiProcessGalvanTest {
   }
 
   @Override
-  public void runSetup(IClientTestEnvironment env, IClusterControl control, Connection connection) {
+  public void runSetup(IClientTestEnvironment env, IClusterControl control) {
     // Just verify that the client counts are expected.
     Assert.assertTrue(CLIENT_COUNT == env.getTotalClientCount());
     Assert.assertTrue(0 == env.getThisClientIndex());
   }
 
   @Override
-  public void runDestroy(IClientTestEnvironment env, IClusterControl control, Connection connection) {
+  public void runDestroy(IClientTestEnvironment env, IClusterControl control) {
     // These tests generally don't care about this.
     Assert.assertTrue(CLIENT_COUNT == env.getTotalClientCount());
     Assert.assertTrue(0 == env.getThisClientIndex());
   }
 
   @Override
-  public void runTest(IClientTestEnvironment env, IClusterControl control, Connection connection) throws Throwable {
+  public void runTest(IClientTestEnvironment env, IClusterControl control) throws Throwable {
     int clientIndex = env.getThisClientIndex();
     Assert.assertTrue(clientIndex >= 0);
     Assert.assertTrue(clientIndex < CLIENT_COUNT);
