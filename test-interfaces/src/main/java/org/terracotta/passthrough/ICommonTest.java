@@ -18,8 +18,6 @@
  */
 package org.terracotta.passthrough;
 
-import org.terracotta.connection.Connection;
-
 
 /**
  * This interface describes the common shape the user code within a single system test.
@@ -32,19 +30,19 @@ public interface ICommonTest {
    * Called at the beginning of a test run, by a single thread or process, to prepare the server state for the test before
    * multiple threads or processes are started to run it.
    */
-  public void runSetup(IClientTestEnvironment env, IClusterControl control, Connection connection);
+  public void runSetup(IClientTestEnvironment env, IClusterControl control) throws Throwable;
 
   /**
    * Called at the end of a test run, by a single thread or process, to clean up the server state now that the test has
    * completed.
    */
-  public void runDestroy(IClientTestEnvironment env, IClusterControl control, Connection connection);
+  public void runDestroy(IClientTestEnvironment env, IClusterControl control) throws Throwable;
 
   /**
    * Runs the actual test.  Note that this call is expected to have no side-effects within the receiver, as it may be called
    * by multiple threads or processes, concurrently.
-   * The control or connection are the only ways side-effects should be realized (as the test obviously needs to interact
-   * with the server and may way to control the cluster).
+   * The control is the only way side-effects should be realized (as the test obviously needs to interact with the server
+   * and may way to control the cluster).
    */
-  public void runTest(IClientTestEnvironment env, IClusterControl control, Connection connection) throws Throwable;
+  public void runTest(IClientTestEnvironment env, IClusterControl control) throws Throwable;
 }
