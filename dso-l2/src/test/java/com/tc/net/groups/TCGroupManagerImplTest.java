@@ -19,17 +19,18 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBuffer;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -38,9 +39,12 @@ import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
+import com.tc.object.session.SessionID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -629,16 +633,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private TCGroupHandshakeMessage mockHandshakeMessage(MessageChannel messageChannel, String version, long[] weights) {
-    TCGroupHandshakeMessage tcGroupHandshakeMessage = mock(TCGroupHandshakeMessage.class);
-    when(tcGroupHandshakeMessage.getNodeID()).thenReturn(new ServerID("test", new byte[20]));
-    when(tcGroupHandshakeMessage.getVersion()).thenReturn(version);
-    when(tcGroupHandshakeMessage.getWeights()).thenReturn(weights);
-    when(tcGroupHandshakeMessage.getChannel()).thenReturn(messageChannel);
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), new TCByteBufferOutputStream(), messageChannel, TCMessageType.GROUP_HANDSHAKE_MESSAGE));
+    tcGroupHandshakeMessage.initializeNodeID(new ServerID("test", new byte[20]), version, weights);
     return tcGroupHandshakeMessage;
   }
 
   private MessageChannel mockMessageChannel() {
-    final TCGroupHandshakeMessage tcGroupHandshakeMessage = mock(TCGroupHandshakeMessage.class, RETURNS_MOCKS.get());
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.GROUP_HANDSHAKE_MESSAGE));
+
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getAttachment(anyString())).thenReturn(null);
     when(channel.createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE)).thenReturn(tcGroupHandshakeMessage);

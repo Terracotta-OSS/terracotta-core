@@ -37,6 +37,10 @@ public abstract class L2DebugLogging {
   public static enum LogLevel {
     ERROR, WARN, INFO, DEBUG;
   }
+  
+  public static boolean isDebugLogging() {
+    return ENABLED;
+  }
 
   public static void log(TCLogger log, LogLevel level, String message, Throwable throwable) {
     if (!ENABLED) return;
