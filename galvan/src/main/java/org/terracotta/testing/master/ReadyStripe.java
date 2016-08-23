@@ -58,15 +58,18 @@ public class ReadyStripe {
     // Register the stripe into it and start up the server in the stripe.
     installer.startServers(processControl);
     String connectUri = configBuilder.buildUri();
-    return new ReadyStripe(processControl, connectUri);
+    ClusterInfo clusterInfo = configBuilder.getClusterInfo();
+    return new ReadyStripe(processControl, connectUri, clusterInfo);
   }
   
   
   public final IMultiProcessControl stripeControl;
   public final String stripeUri;
+  public final ClusterInfo clusterInfo;
   
-  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri) {
+  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo) {
     this.stripeControl = stripeControl;
     this.stripeUri = stripeUri;
+    this.clusterInfo = clusterInfo;
   }
 }

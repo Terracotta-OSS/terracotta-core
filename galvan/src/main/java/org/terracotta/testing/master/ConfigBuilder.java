@@ -15,7 +15,10 @@
  */
 package org.terracotta.testing.master;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
@@ -30,6 +33,8 @@ public class ConfigBuilder {
   private final ContextualLogger logger;
   private final int startPort;
   private final List<String> serverNames;
+  private final List<Integer> tsaServerPorts;
+  private final List<Integer> tsaGroupPorts;
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
   private String entityXMLSnippet;
@@ -39,6 +44,8 @@ public class ConfigBuilder {
     this.logger = logger;
     this.startPort = startPort;
     this.serverNames = new Vector<String>();
+    this.tsaServerPorts = new Vector<Integer>();
+    this.tsaGroupPorts = new Vector<Integer>();
   }
 
   public ConfigBuilder addServer(String serverName) {
@@ -89,6 +96,8 @@ public class ConfigBuilder {
     for (String serverName : this.serverNames) {
       int port = nextPort;
       int groupPort = nextPort + 1;
+      this.tsaServerPorts.add(port);
+      this.tsaGroupPorts.add(groupPort);
       nextPort += 2;
       String oneServer = 
             "    <server host=\"localhost\" name=\"" + serverName + "\">\n"
@@ -124,4 +133,16 @@ public class ConfigBuilder {
     this.logger.output("Stripe URI: " + connectUri);
     return connectUri;
   }
+
+  public ClusterInfo getClusterInfo() {
+    Map<String, ServerInfo> servers = new HashMap<>();
+
+    for(int i = 0; i < tsaServerPorts.size(); i++) {
+      String serverName = serverNames.get(i);
+      servers.put(serverName, new ServerInfo(serverName, tsaServerPorts.get(i), tsaGroupPorts.get(i)));
+    }
+
+    return new ClusterInfo(servers);
+  }
+
 }
