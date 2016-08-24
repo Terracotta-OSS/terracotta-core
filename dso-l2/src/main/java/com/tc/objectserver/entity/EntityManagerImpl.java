@@ -91,12 +91,13 @@ public class EntityManagerImpl implements EntityManager {
     
     // Set the state of the manager.
     this.shouldCreateActiveEntities = true;
-    processorPipeline.enterActiveState();
     // We can promote directly because this method is only called from PTH initialize 
     //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
     for (ManagedEntity entity : this.entities.values()) {
       entity.promoteEntity();
     }
+//  only enter active state after all the entities have promoted to active
+    processorPipeline.enterActiveState();
   }
 
   @Override
