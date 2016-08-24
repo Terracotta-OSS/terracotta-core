@@ -86,7 +86,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private final List<EntityServerService<?, ?>> entityServices;
   private Thread serverThread;
   private final List<PassthroughMessageContainer> messageQueue;
-  private final PassthroughLockManager lockManager;
   // Currently, for simplicity, we will resolve entities by name.
   // Technically, these should be resolved by class+name.
   // Note that only ONE of the active or passive entities will be non-null.
@@ -120,7 +119,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.groupPort = groupPort;
     this.entityServices = new Vector<EntityServerService<?, ?>>();
     this.messageQueue = new Vector<PassthroughMessageContainer>();
-    this.lockManager = new PassthroughLockManager();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<?, ?>>());
     this.serviceProviders = new Vector<ServiceProvider>();
@@ -565,52 +563,42 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   @Override
   public void fetch(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName, final long version, final IFetchResult onFetch) {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    // We need to get the read lock before the fetch so we wrap the actual fetch in the onAcquire.
-    // Note that this could technically be a little simpler by getting the lock after the fetch but this keeps the semantic
-    // ordering we would need if the process were to be made multi-threaded or re-factored.
-    Runnable onAcquire = new Runnable() {
-      @Override
-      public void run() {
-        // Fetch the entity now that we have the read lock on the name.
-        byte[] config = null;
-        EntityException error = null;
-        // Fetch should never be replicated and only handled on the active.
-        Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
-        CreationData<?, ?> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
-        if (null != entityData) {
-          ActiveServerEntity<?, ?> entity = entityData.getActive();
-          EntityServerService<?, ?> service = getEntityServiceForClassName(entityClassName);
-          long expectedVersion = service.getVersion();
-          if (expectedVersion == version) {
-            PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-            config = entityData.configuration;
-            
-            if (null != PassthroughServerProcess.this.serviceInterface) {
-              // Record that this entity has been fetched by this client.
-              String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
-              String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
-              PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
-              String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
-              PassthroughServerProcess.this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
-            }
+    // Fetch the entity now that we have the read lock on the name.
+    byte[] config = null;
+    EntityException error = null;
+    // Fetch should never be replicated and only handled on the active.
+    Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
+    CreationData<?, ?> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
+    PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
+    if (null != entityData && entityData.reference(clientDescriptor)) {
+      ActiveServerEntity<?, ?> entity = entityData.getActive();
+      EntityServerService<?, ?> service = getEntityServiceForClassName(entityClassName);
+      long expectedVersion = service.getVersion();
+      if (expectedVersion == version) {
+        config = entityData.configuration;
+
+        if (null != PassthroughServerProcess.this.serviceInterface) {
+          // Record that this entity has been fetched by this client.
+          String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
+          String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+          PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
+          String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
+          PassthroughServerProcess.this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
+        }
 //  connected call must happen after a possible modification to monitoring tree.  
-            entity.connected(clientDescriptor);
-          } else {
-            error = new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
-          }
-        } else {
-          error = new EntityNotFoundException(entityClassName, entityName);
-        }
-        // Release the lock if there was a failure.
-        if (null != error) {
-          lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
-        }
-        onFetch.onFetchComplete(config, error);
+        entity.connected(clientDescriptor);
+      } else {
+        error = new EntityVersionMismatchException(entityClassName, entityName, expectedVersion, version);
       }
-      
-    };
-    // The onAcquire callback will fetch the entity asynchronously.
-    this.lockManager.acquireReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID, onAcquire);
+    } else {
+      error = new EntityNotFoundException(entityClassName, entityName);
+    }
+// Release the reference if there was a failure.
+    if (entityData != null && error != null) {
+      entityData.release(clientDescriptor);
+    }
+    
+    onFetch.onFetchComplete(config, error);
   }
 
   @Override
@@ -623,7 +611,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       ActiveServerEntity<?, ?> entity = data.getActive();
       PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
       entity.disconnected(clientDescriptor);
-      this.lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
+      data.release(clientDescriptor);
       
       if (null != PassthroughServerProcess.this.serviceInterface) {
         // Record that this entity has been released by this client.
@@ -632,6 +620,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
         PassthroughServerProcess.this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
       }
+
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
@@ -640,9 +629,15 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   @Override
   public synchronized void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    if (((null != this.activeEntities) && this.activeEntities.containsKey(entityTuple))
-      || ((null != this.passiveEntities) && this.passiveEntities.containsKey(entityTuple))) {
-      throw new EntityAlreadyExistsException(entityClassName, entityName);
+    if (this.activeEntities != null) {
+      CreationData<?, ?> shell = this.activeEntities.get(entityTuple);
+      if (shell != null && !shell.isDestroyed) {
+        throw new EntityAlreadyExistsException(entityClassName, entityName);
+      }
+    } else {
+      if (this.passiveEntities.containsKey(entityTuple)) {
+        throw new EntityAlreadyExistsException(entityClassName, entityName);
+      }
     }
     // Capture which consumerID we will use for this entity.
     long consumerID = this.nextConsumerID;
@@ -683,81 +678,47 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
   
   @Override
-  public synchronized void destroy(String entityClassName, String entityName) throws EntityException {
+  public synchronized boolean destroy(String entityClassName, String entityName) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    // Look up the entity.
+    boolean success = false;
+// Look up the entity.
     CreationData<?, ?> entityData = null;
     if (null != this.activeEntities) {
-      entityData = this.activeEntities.remove(entityTuple);
+      entityData = this.activeEntities.get(entityTuple);
     } else {
       entityData = this.passiveEntities.remove(entityTuple);
     }
     // If we found it, destroy it.  Otherwise, throw that we didn't find it.
-    if (null != entityData) {
-      entityData.entityInstance.destroy();
+    if (null != entityData && !entityData.isDestroyed) {
+      success = entityData.destroy();
+      if (success && null != this.activeEntities) {
+        Assert.assertTrue(this.activeEntities.remove(entityTuple, entityData));
+      }
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }
-    
-    if (null != this.serviceInterface) {
+
+    if (success && null != this.serviceInterface) {
       // Record that we destroyed the entity.
       String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
       this.serviceInterface.removeNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier);
     }
-  }
-
-  @Override
-  public void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire) {
-    PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    this.lockManager.acquireWriteLock(entityTuple, sender.getClientOriginID(), onAcquire);
-  }
-
-  @Override
-  public boolean tryAcquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName) {
-    PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    return this.lockManager.tryAcquireWriteLock(entityTuple, sender.getClientOriginID());
-  }
-
-  @Override
-  public void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName) {
-    PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    this.lockManager.releaseWriteLock(entityTuple, sender.getClientOriginID());
-  }
-
-  @Override
-  public void restoreWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire) {
-    PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    this.lockManager.restoreWriteLock(entityTuple, sender.getClientOriginID(), onAcquire);
+    return success;
   }
 
   @Override
   public void reconnect(final IMessageSenderWrapper sender, final long clientInstanceID, final String entityClassName, final String entityName, final byte[] extendedData) {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    
-    // We need to get the lock, but we can't fail or wait, during the reconnect, so we handle that internally.
-    // NOTE:  This use of "didRun" is a somewhat ugly way to avoid creating an entirely new Runnable class so we could ask
-    // for the result but we are only using this in an assert, within this method, so it does maintain clarity.
-    final boolean[] didRun = new boolean[1];
-    Runnable onAcquire = new Runnable() {
-      @Override
-      public void run() {
-        // Fetch the entity now that we have the read lock on the name.
-        // Fetch should never be replicated and only handled on the active.
-        Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
-        CreationData<?, ?> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
-        if (null != entityData) {
-          PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-          entityData.reconnect(clientDescriptor, extendedData);
-          didRun[0] = true;
-        } else {
-          Assert.unexpected(new Exception("Entity not found in reconnect"));
-          lockManager.releaseReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID);
-        }
-      }
-    };
-    // The onAcquire callback will fetch the entity asynchronously.
-    this.lockManager.acquireReadLock(entityTuple, sender.getClientOriginID(), clientInstanceID, onAcquire);
-    Assert.assertTrue(didRun[0]);
+    // Fetch the entity now that we have the read lock on the name.
+    // Fetch should never be replicated and only handled on the active.
+    Assert.assertTrue(null != PassthroughServerProcess.this.activeEntities);
+    CreationData<?, ?> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
+    if (null != entityData) {
+      PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
+      entityData.reconnect(clientInstanceID, clientDescriptor, extendedData);
+    } else {
+      Assert.unexpected(new Exception("Entity not found in reconnect"));
+    }
   }
 
   @Override
@@ -1071,6 +1032,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
     public boolean isActive;
+    public boolean isDestroyed = false;
+    public Map<ClientDescriptor, Integer> references = new HashMap<ClientDescriptor, Integer>();
     
     public CreationData(String entityClassName, String entityName, long version, byte[] configuration, PassthroughServiceRegistry registry, EntityServerService<M, R> service, boolean isActive) {
       this.entityClassName = entityClassName;
@@ -1086,6 +1049,37 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.isActive = isActive;
     }
     
+    synchronized boolean reference(ClientDescriptor cid) {
+      Assert.assertTrue(isActive);
+      if (!isDestroyed) {
+        Integer current = references.putIfAbsent(cid, 1);
+        if (current != null) {
+          throw new AssertionError(current);
+        }
+      }
+      return !isDestroyed;
+    }
+    
+    synchronized boolean release(ClientDescriptor cid) {
+      Assert.assertTrue(isActive);
+      Integer current = references.remove(cid);
+      if (current == null) {
+        return false;
+      } else if (current == 1) {
+        return true;
+      } else {
+        throw new AssertionError("makes no sense");
+      }
+    }
+    
+    synchronized boolean destroy() {
+      if (!isDestroyed && (!isActive || references.isEmpty())) {
+          this.entityInstance.destroy();
+        isDestroyed = true;
+      }
+      return isDestroyed;
+    }
+    
     byte[] reconfigure(byte[] data) {
       try {
         this.entityInstance = isActive ? service.createActiveEntity(registry, data) : service.createPassiveEntity(registry, data);
@@ -1097,7 +1091,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
     }
 
-    void reconnect(ClientDescriptor clientDescriptor, byte[] data) {
+    synchronized void reconnect(long clientid, ClientDescriptor clientDescriptor, byte[] data) {
+      Assert.assertTrue(isActive);
+      this.reference(clientDescriptor);
       getActive().connected(clientDescriptor);
       getActive().handleReconnect(clientDescriptor, data);
     }

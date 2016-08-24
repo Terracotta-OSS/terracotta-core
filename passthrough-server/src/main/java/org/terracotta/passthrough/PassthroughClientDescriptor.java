@@ -53,4 +53,9 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
     }
     return isEqual;
   }
+
+  @Override
+  public String toString() {
+    return "PassthroughClientDescriptor{" + "server=" + server + ", sender=" + sender + ", clientInstanceID=" + clientInstanceID + '}';
+  }
 }

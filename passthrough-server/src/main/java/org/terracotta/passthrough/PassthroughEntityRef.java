@@ -90,35 +90,25 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     if (null != this.service) {
       // NOTE:  We use a try-lock so that we can emulate the "fast fail" semantics now desired for create() - failure to acquire the lock
       // assumes that the entity already exists.
-      boolean didLock = tryWriteLock();
-      if (didLock) {
-        try {
-          byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-          PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
-          PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
-          received.blockGetOnRetire();
-          try {
-            received.get();
-          } catch (EntityException e) {
-            // Check that this is the correct type.
-            if (e instanceof EntityNotProvidedException) {
-              throw (EntityNotProvidedException) e;
-            } else if (e instanceof EntityAlreadyExistsException) {
-              throw (EntityAlreadyExistsException) e;
-            } else if (e instanceof EntityVersionMismatchException) {
-              throw (EntityVersionMismatchException) e;
-            } else {
-              Assert.unexpected(e);
-            }
-          } catch (InterruptedException e) {
-            Assert.unexpected(e);
-          }
-        } finally {
-          releaseWriteLock();
+      byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
+      PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
+      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
+      received.blockGetOnRetire();
+      try {
+        received.get();
+      } catch (EntityException e) {
+        // Check that this is the correct type.
+        if (e instanceof EntityNotProvidedException) {
+          throw (EntityNotProvidedException) e;
+        } else if (e instanceof EntityAlreadyExistsException) {
+          throw (EntityAlreadyExistsException) e;
+        } else if (e instanceof EntityVersionMismatchException) {
+          throw (EntityVersionMismatchException) e;
+        } else {
+          Assert.unexpected(e);
         }
-      } else {
-        // We couldn't get the lock so we assume that the entity exists.
-        throw new EntityAlreadyExistsException(this.clazz.getCanonicalName(), this.name);
+      } catch (InterruptedException e) {
+        Assert.unexpected(e);
       }
     } else {
       throw new EntityNotProvidedException(this.clazz.getName(), this.name);
@@ -159,89 +149,16 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }  
 
   @Override
-  public void destroy() throws EntityNotProvidedException, EntityNotFoundException {
-    getWriteLock();
-    try {
-      destroyLockedEntity();
-    } finally {
-      releaseWriteLock();
-    }
+  public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException {
+    return destroyEntity();
   }
 
-  @Override
-  public boolean tryDestroy() throws EntityNotProvidedException, EntityNotFoundException {
-    boolean didLock = tryWriteLock();
-    if (didLock) {
-      try {
-        destroyLockedEntity();
-      } finally {
-        releaseWriteLock();
-      }
-    }
-    return didLock;
-  }
-
-  private void getWriteLock() {
-    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockAcquireMessage(this.clazz.getCanonicalName(), this.name);
-    try {
-      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage);
-      received.blockGetOnRetire();
-      received.get();
-      // Notify the connection that we have this write lock since it will need it if we reconnect.
-      PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(this.clazz.getCanonicalName(), this.name);
-      this.passthroughConnection.didAcquireWriteLock(entityTuple);
-    } catch (InterruptedException e) {
-      Assert.unexpected(e);
-    } catch (EntityException e) {
-      Assert.unexpected(e);
-    }
-  }
-
-  private boolean tryWriteLock() {
-    boolean didLock = false;
-    PassthroughMessage tryLockMessage = PassthroughMessageCodec.createWriteLockTryAcquireMessage(this.clazz.getCanonicalName(), this.name);
-    try {
-      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(tryLockMessage);
-      received.blockGetOnRetire();
-      byte[] response = received.get();
-      // We just send back a byte:  0x1 for success, 0x0 for failure.
-      Assert.assertTrue(1 == response.length);
-      didLock = (0 != response[0]);
-      if (didLock) {
-        // Notify the connection that we have this write lock since it will need it if we reconnect.
-        PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(this.clazz.getCanonicalName(), this.name);
-        this.passthroughConnection.didAcquireWriteLock(entityTuple);
-      }
-    } catch (InterruptedException e) {
-      Assert.unexpected(e);
-    } catch (EntityException e) {
-      Assert.unexpected(e);
-    }
-    return didLock;
-  }
-
-  private void releaseWriteLock() {
-    PassthroughMessage lockMessage = PassthroughMessageCodec.createWriteLockReleaseMessage(this.clazz.getCanonicalName(), this.name);
-    try {
-      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(lockMessage);
-      received.blockGetOnRetire();
-      received.get();
-      // Notify the connection that we released this write lock so it isn't requested on reconnect.
-      PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(this.clazz.getCanonicalName(), this.name);
-      this.passthroughConnection.didReleaseWriteLock(entityTuple);
-    } catch (InterruptedException e) {
-      Assert.unexpected(e);
-    } catch (EntityException e) {
-      Assert.unexpected(e);
-    }
-  }
-
-  private void destroyLockedEntity() throws EntityNotProvidedException, EntityNotFoundException {
+  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException {
     PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz.getCanonicalName(), this.name);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
     received.blockGetOnRetire();
     try {
-      received.get();
+      return received.get()[0] != 0;
     } catch (EntityException e) {
       // Check that this is the correct type.
       if (e instanceof EntityNotProvidedException) {
@@ -254,5 +171,6 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
+    return false;
   }
 }
