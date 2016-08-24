@@ -39,7 +39,6 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   protected final Optional<MessageChannel> returnChannel;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
-  private boolean autoRetire = false;
 
   public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
       TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel, boolean isReplicatedMessage) {
@@ -62,31 +61,22 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
     } else {
       super.complete(value); //To change body of generated methods, choose Tools | Templates.
     }
-    autoRetire();
   }
 
   @Override
   public synchronized void complete() {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction());
     super.complete(); //To change body of generated methods, choose Tools | Templates.
-    autoRetire();
   }
 
   @Override
   public synchronized void failure(EntityException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
     super.failure(e); //To change body of generated methods, choose Tools | Templates.
-    autoRetire();
   }
 
   public void setAutoRetire() {
-    this.autoRetire = true;
-  }
-
-  private void autoRetire() {
-    if (autoRetire) {
-      this.retired();
-    }
+    super.autoRetire(true);
   }
 
   @Override

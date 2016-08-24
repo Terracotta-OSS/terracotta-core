@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private final Map<TCMessageType, GeneratedMessageFactory> factories = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
+  private final GeneratedMessageFactory[] fArray = new GeneratedMessageFactory[TCMessageType.TYPE_NOOP_MESSAGE];
   private final MessageMonitor  monitor;
   private final SessionProvider sessionProvider;
 
@@ -60,9 +60,10 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   @Override
   public void addClassMapping(TCMessageType type, GeneratedMessageFactory messageFactory) {
     if ((type == null) || (messageFactory == null)) { throw new IllegalArgumentException(); }
-    if (this.factories.put(type, messageFactory) != null) { throw new IllegalStateException(
-                                                                                            "message already has class mapping: "
-                                                                                                + type); }
+    if (fArray[type.getType()-1] != null)  { 
+      throw new IllegalStateException("message already has class mapping: "+ type); 
+    }
+    fArray[type.getType()-1] = messageFactory;
   }
 
   @Override
@@ -72,9 +73,8 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     // This strange synchronization is for things like system tests that will end up using the same
     // message class, but with different TCMessageFactoryImpl instances
     synchronized (msgClass.getName().intern()) {
-      final GeneratedMessageFactory factory = this.factories.get(type);
-      if (factory == null) {
-        this.factories.put(type, new GeneratedMessageFactoryImpl(msgClass));
+      if (fArray[type.getType()-1] == null) {
+        fArray[type.getType()-1] = new GeneratedMessageFactoryImpl(msgClass);
       } else {
         throw new IllegalStateException("message already has class mapping: " + type);
       }
@@ -82,7 +82,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   }
 
   private GeneratedMessageFactory lookupFactory(TCMessageType type) {
-    final GeneratedMessageFactory factory = this.factories.get(type);
+    final GeneratedMessageFactory factory = fArray[type.getType()-1];
     if (factory == null) { throw new RuntimeException("No factory for type " + type); }
     return factory;
   }

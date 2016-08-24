@@ -22,6 +22,8 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
@@ -38,6 +40,7 @@ import java.io.IOException;
  */
 public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
 
+  private static final TCLogger LOGGER = TCLogging.getLogger(TCMessageImpl.class);
   private final MessageMonitor          monitor;
   private final SetOnceFlag             processed         = new SetOnceFlag();
   private final SetOnceFlag             isSent            = new SetOnceFlag();
@@ -375,14 +378,20 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * @see com.tc.net.protocol.tcm.ApplicationMessage#send()
    */
   @Override
-  public void send() {
+  public boolean send() {
     if (isSent.attemptSet()) {
       dehydrate();
-      basicSend();
+      try {
+        basicSend();
+        return true;
+      } catch (IOException ioe) {
+        LOGGER.warn("message not sent", ioe);
+      }
     }
+    return false;
   }
 
-  private void basicSend() {
+  private void basicSend() throws IOException {
     channel.send(this);
     monitor.newOutgoingMessage(this);
   }
@@ -390,7 +399,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /*
    * send with payload from a dehydrated message
    */
-  public void cloneAndSend(TCMessageImpl message) {
+  public void cloneAndSend(TCMessageImpl message) throws IOException {
     if (isSent.attemptSet()) {
       dehydrate(message.getPayload());
       basicSend();

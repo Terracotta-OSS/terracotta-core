@@ -32,6 +32,7 @@ import com.tc.util.Util;
 import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
 import com.tcclient.cluster.ClusterInternalEventsGun;
+import java.io.IOException;
 
 /**
  * This class has been changed to be heavily synchronized. This is in attempt to 
@@ -112,7 +113,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     notifyCallbackOnHandshake(handshakeMessage);
 
     this.logger.info("Sending handshake message");
-    handshakeMessage.send();
+    Assert.assertTrue(handshakeMessage.send());
   }
 
   protected boolean isEnterpriseClient() {

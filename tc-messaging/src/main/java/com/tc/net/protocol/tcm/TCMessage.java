@@ -37,7 +37,7 @@ public interface TCMessage {
 
   public void dehydrate();
 
-  public void send();
+  public boolean send();
 
   public MessageChannel getChannel();
 

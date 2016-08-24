@@ -51,20 +51,20 @@ public class RespondToRequestLockHandler extends AbstractEventHandler<LockRespon
       LockResponseMessage responseMessage = null;
 
       if (lrc.isLockAward()) {
-        responseMessage = createMessage(lrc, TCMessageType.LOCK_RESPONSE_MESSAGE);
+        responseMessage = createMessage(lrc, TCMessageType.NOOP_MESSAGE);
         responseMessage.initializeAward(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockNotAwarded()) {
-        responseMessage = createMessage(lrc, TCMessageType.LOCK_RESPONSE_MESSAGE);
+        responseMessage = createMessage(lrc, TCMessageType.NOOP_MESSAGE);
         responseMessage.initializeRefuse(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockRecall()) {
-        responseMessage = createMessage(lrc, TCMessageType.LOCK_RECALL_MESSAGE);
+        responseMessage = createMessage(lrc, TCMessageType.NOOP_MESSAGE);
         responseMessage.initializeRecallWithTimeout(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc
             .getAwardLeaseTime());
       } else if (lrc.isLockWaitTimeout()) {
-        responseMessage = createMessage(lrc, TCMessageType.LOCK_RESPONSE_MESSAGE);
+        responseMessage = createMessage(lrc, TCMessageType.NOOP_MESSAGE);
         responseMessage.initializeWaitTimeout(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockInfo()) {
-        responseMessage = createMessage(lrc, TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE);
+        responseMessage = createMessage(lrc, TCMessageType.NOOP_MESSAGE);
         responseMessage.initializeLockInfo(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
 
         Collection<ClientServerExchangeLockContext> list = lrc.getGlobalLockInfo();

@@ -51,6 +51,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.FlightControl;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -67,7 +68,6 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 import java.util.function.Consumer;
-import static com.tc.util.Assert.assertNotNull;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.exception.PermanentEntityException;
 
@@ -102,6 +102,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
   private final ReadWriteLock reconnectAccessLock = new ReentrantReadWriteLock();
+  private final FlightControl syncingThreads = new FlightControl();
+  private final FlightControl reconfiguringInflight = new FlightControl();
   // NOTE:  This may be removed in the future if we change how we access the config from the ServerEntityService but
   //  it presently holds the config we used when we first created passiveServerEntity (if it isn't null).  It is used
   //  when we promote to an active.
@@ -184,6 +186,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void processLifecycleEntity(ServerEntityRequest create, MessagePayload data, ResultCapture resp) {
+    if (this.isInActiveState && create.getAction() == ServerEntityAction.RECONFIGURE_ENTITY) {
+//  this is the process transaction handler thread adding a reconfigure to the message flow of this entity.  
+//  before it can proceed, need to make sure any syncs are completed so the concurrency strategy is not changed out from 
+//  under it.
+      waitForSyncToFinish();
+    }
     scheduleInOrder(getEntityDescriptorForSource(create.getSourceDescriptor()), create, resp, data , ()-> {
       invokeLifecycleOperation(create, data, resp);
     }, ConcurrencyStrategy.MANAGEMENT_KEY);
@@ -304,45 +312,48 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Lock read = reconnectAccessLock.readLock();
-      if (logger.isDebugEnabled()) {
-        logger.debug("Invoking lifecycle " + request.getAction() + " on " + getID());
-      }
-      try {
-        read.lock();
-        switch (request.getAction()) {
-          case CREATE_ENTITY:
-            createEntity(resp, payload.getRawPayload());
-            break;
-          case FETCH_ENTITY:
-            getEntity(request, resp);
-            break;
-          case RELEASE_ENTITY:
-            releaseEntity(request, resp);
-            break;
-          case RECONFIGURE_ENTITY:
-            reconfigureEntity(resp, payload.getRawPayload());
-            break;
-          case DESTROY_ENTITY:
+    if (logger.isDebugEnabled()) {
+      logger.debug("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
+    }
+    read.lock();
+    try {
+      switch (request.getAction()) {
+        case CREATE_ENTITY:
+          createEntity(resp, payload.getRawPayload());
+          break;
+        case FETCH_ENTITY:
+          getEntity(request, resp);
+          break;
+        case RELEASE_ENTITY:
+          releaseEntity(request, resp);
+          break;
+        case RECONFIGURE_ENTITY:
+          reconfigureEntity(resp, payload.getRawPayload());
+          break;
+        case DESTROY_ENTITY:
 //  all request queues are flushed because this action is on the MGMT_KEY
-            destroyEntity(request, resp);
-            break;
-          case RECEIVE_SYNC_ENTITY_START:
-            receiveSyncEntityStart(resp, payload.getRawPayload());
-            break;
-          case RECEIVE_SYNC_ENTITY_END:
-            receiveSyncEntityEnd(resp);
-            break;
-          default:
-            throw new IllegalArgumentException("Unknown request " + request);
-        }
-      } catch (Exception e) {
-        // Wrap this exception.
-        EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
-        logger.error("caught exception during invoke ", wrapper);
-        throw new RuntimeException(wrapper);
-      } finally {
-        read.unlock();
+          destroyEntity(request, resp);
+          break;
+        case RECEIVE_SYNC_ENTITY_START:
+          receiveSyncEntityStart(resp, payload.getRawPayload());
+          break;
+        case RECEIVE_SYNC_ENTITY_END:
+          receiveSyncEntityEnd(resp);
+          break;
+        default:
+          throw new IllegalArgumentException("Unknown request " + request);
       }
+    } catch (Exception e) {
+      // Wrap this exception.
+      EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+      logger.error("caught exception during invoke ", wrapper);
+      throw new RuntimeException(wrapper);
+    } finally {
+      read.unlock();
+      if (request.getAction() == ServerEntityAction.RECONFIGURE_ENTITY) {
+        reconfigureFinished();
+      }
+    }
   }
 
   /**
@@ -485,7 +496,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void reconfigureEntity(ResultCapture reconfigureEntityRequest, byte[] constructorInfo) {
     byte[] oldconfig = this.constructorInfo;
-    if (this.activeServerEntity == null && this.passiveServerEntity == null) {
+    if (this.isDestroyed || (this.activeServerEntity == null && this.passiveServerEntity == null)) {
       reconfigureEntityRequest.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
       return;
     }
@@ -554,44 +565,44 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private void performSync(ResultCapture response, Set<NodeID> passives, int concurrencyKey) {
-    if (this.isInActiveState) {
-      if (null == this.activeServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity.");
-      } else {
-        // Create the channel which will send the payloads over the wire.
-        PassiveSynchronizationChannel<EntityMessage> syncChannel = new PassiveSynchronizationChannel<EntityMessage>() {
-          @Override
-//  TODO:  what should be done about exception handling?
-          public void synchronizeToPassive(EntityMessage payload) {
-            for (NodeID passive : passives) {
-              try {
-                byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
-                executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).waitForCompleted();
-              } catch (EntityUserException | InterruptedException eu) {
-              // TODO: do something reasoned here
-                throw new RuntimeException(eu);
+    if (!this.isDestroyed) {
+      if (this.isInActiveState) {
+        if (null == this.activeServerEntity) {
+          throw new IllegalStateException("Actions on a non-existent entity.");
+        } else {
+          // Create the channel which will send the payloads over the wire.
+          PassiveSynchronizationChannel<EntityMessage> syncChannel = new PassiveSynchronizationChannel<EntityMessage>() {
+            @Override
+  //  TODO:  what should be done about exception handling?
+            public void synchronizeToPassive(EntityMessage payload) {
+              for (NodeID passive : passives) {
+                try {
+                  byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
+                  executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).waitForCompleted();
+                } catch (EntityUserException | InterruptedException eu) {
+                // TODO: do something reasoned here
+                  throw new RuntimeException(eu);
+                }
               }
             }
-          }};
-//  start is handled by the sync request that triggered this action
-        this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
-        for (NodeID passive : passives) {
-          try {
-            executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive).waitForCompleted();
-          } catch (InterruptedException ie) {
-          // TODO: do something reasoned here
-            throw new RuntimeException(ie);
-          }
+          };
+        //  start is handled by the sync request that triggered this action
+          this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         }
-        response.complete();
-      }
-    } else {
-      if (null == this.passiveServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-//  doing nothing for sync
+        throw new IllegalStateException("syncing a passive entity");
       }
     }
+//  whether the entity is destroyed or not, if arrived here. end sync needs to be called
+    for (NodeID passive : passives) {
+      try {
+        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive).waitForCompleted();
+      } catch (InterruptedException ie) {
+      // TODO: do something reasoned here
+        throw new RuntimeException(ie);
+      }
+    }
+    response.complete();
   }
   
   private void performAction(ServerEntityRequest wrappedRequest, ResultCapture response, EntityMessage message) {
@@ -711,25 +722,24 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   @Override
   public void sync(NodeID passive) {
-    if (!this.isDestroyed) {
-      try {
-    // wait for future is ok, occuring on sync executor thread
-        executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo, canDelete), passive).waitForCompleted();
-    // iterate through all the concurrency keys of an entity
-        EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
-    //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
-        PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
+    try {
+  // wait for future is ok, occuring on sync executor thread
+      executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo, canDelete), passive).waitForCompleted();
+  // iterate through all the concurrency keys of an entity
+      EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
+  //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
+      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
-        BarrierCompletion opComplete = new BarrierCompletion();
-        this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
-            assertNotNull(this.activeServerEntity);
-            assertNotNull(concurrencyStrategy);
-            opComplete.complete();
-          }, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
-        //  wait for completed above waits for acknowledgment from the passive
-        //  waitForCompletion below waits for completion of the local request processor
-        opComplete.waitForCompletion();
-        
+      BarrierCompletion opComplete = new BarrierCompletion();
+      this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
+          Assert.assertTrue(this.isInActiveState);
+          opComplete.complete();
+        }, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
+      //  wait for completed above waits for acknowledgment from the passive
+      //  waitForCompletion below waits for completion of the local request processor
+      opComplete.waitForCompletion();
+      waitForReconfigureToFinish();
+      try {
         for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {
           // We don't actually use the message in the direct strategy so this is safe.
           //  don't care about the result
@@ -739,14 +749,52 @@ public class ManagedEntityImpl implements ManagedEntity {
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
         }
-    //  end passive sync for an entity
-    // wait for future is ok, occuring on sync executor thread
-        executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
-      } catch (InterruptedException e) {
-        throw new AssertionError("sync failed", e);
+      } finally {
+        syncFinished();
       }
+  //  end passive sync for an entity
+  // wait for future is ok, occuring on sync executor thread
+      executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
+    } catch (InterruptedException e) {
+      throw new AssertionError("sync failed", e);
     }
   }  
+  /**
+   * sync and reconfigure MUST be exclusive events from each other. 
+   * this method is called by sync before stepping the concurrency keys
+   */
+  private void waitForReconfigureToFinish() {
+ // synchronize on reconfigure to prevent deadlock
+    synchronized (reconfiguringInflight) {
+      reconfiguringInflight.waitForOperationsToComplete();
+      syncingThreads.startOperation();
+    }
+  }
+  /**
+   * sync and reconfigure MUST be exclusive events from each other. 
+   * this method is called before reconfigure is scheduled
+   */  
+  private void waitForSyncToFinish() {
+ // synchronize on reconfigure to prevent deadlock
+    synchronized (reconfiguringInflight) {
+      syncingThreads.waitForOperationsToComplete();
+      reconfiguringInflight.startOperation();
+    }
+  }
+  /**
+   * sync and reconfigure MUST be exclusive events from each other. 
+   * sync is finished stepping the keys
+   */
+  private void syncFinished() {
+    syncingThreads.finishOperation();
+  }
+  /**
+   * sync and reconfigure MUST be exclusive events from each other. 
+   * reconfigure has completed
+   */
+  private void reconfigureFinished() {
+    reconfiguringInflight.finishOperation();
+  }
 
   private void loadExisting(byte[] constructorInfo) {
     this.constructorInfo = constructorInfo;

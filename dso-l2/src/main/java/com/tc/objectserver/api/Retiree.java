@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.object.tx.TransactionID;
+
 /**
  * Interface for active entities to communicate to a client that a Entity Request can 
  * be retired of the client.  This interface needs to be associated with a request from a 
@@ -27,4 +29,5 @@ package com.tc.objectserver.api;
  */
 public interface Retiree {
   void retired(); 
+  TransactionID getTransaction();
 }

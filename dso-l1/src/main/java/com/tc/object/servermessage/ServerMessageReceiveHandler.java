@@ -29,6 +29,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.EntityDescriptor;
+import com.tc.util.Assert;
 
 
 public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
@@ -48,7 +49,7 @@ public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
     if (responseId != null) {
       ServerEntityResponseMessage response = (ServerEntityResponseMessage) clientMessageChannel.createMessage(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE);
       response.setResponseId(responseId);
-      response.send();
+      Assert.assertTrue(response.send());
     };
   }
 

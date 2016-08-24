@@ -28,6 +28,8 @@ import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.ServerEntityMessageImpl;
 import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
+import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.entity.VoltronEntityMultiResponseImpl;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
@@ -73,7 +75,6 @@ import com.tc.object.context.PauseContext;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMembershipEventsHandler;
-import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.locks.ClientLockManager;
@@ -85,6 +86,7 @@ import com.tc.object.msg.InvokeRegisteredServiceMessage;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
+import com.tc.object.request.MultiRequestReceiveHandler;
 import com.tc.object.request.RequestReceiveHandler;
 import com.tc.object.servermessage.ServerMessageReceiveHandler;
 import com.tc.object.session.SessionManager;
@@ -326,8 +328,9 @@ public class DistributedObjectClient implements TCClient {
 
     this.clientEntityManager = this.clientBuilder.createClientEntityManager(this.channel, this.communicationStageManager);
     RequestReceiveHandler receivingHandler = new RequestReceiveHandler(this.clientEntityManager);
+    MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityResponse> entityResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class, receivingHandler, 1, maxSize);
-
+    Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
     Stage<Void> serverMessageStage = this.communicationStageManager.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_STAGE, Void.class, new ServerMessageReceiveHandler<Void>(channel), 1, maxSize);
 
     TerracottaOperatorEventLogging.setNodeNameProvider(new ClientNameProvider(this.cluster));
@@ -376,7 +379,7 @@ public class DistributedObjectClient implements TCClient {
     // DO NOT create any stages after this call
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList());
 
-    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), serverMessageStage.getSink());
+    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), multiResponseStage.getSink(), serverMessageStage.getSink());
     new Thread(threadGroup, new Runnable() {
         public void run() {
           while (!clientStopped.isSet()) {
@@ -479,6 +482,7 @@ public class DistributedObjectClient implements TCClient {
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
+    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
     return messageTypeClassMapping;
@@ -486,13 +490,14 @@ public class DistributedObjectClient implements TCClient {
 
   private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<HydrateContext> hydrateSink,
                                         Sink<PauseContext> pauseSink,
-                                        Sink<Void> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<Void> serverEntityMessageSink) {
+                                        Sink<Void> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<VoltronEntityMultiResponse> multiSink, Sink<Void> serverEntityMessageSink) {
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterMembershipEventSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, responseSink, hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, multiSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_MESSAGE, serverEntityMessageSink, hydrateSink);
     DSO_LOGGER.debug("Added message routing types.");
   }

@@ -21,16 +21,23 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.entity.ResendVoltronEntityMessage;
+import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
@@ -46,12 +53,15 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
@@ -71,7 +81,29 @@ public class ProcessTransactionHandler {
   // Data required for handling transaction resends.
   private SparseList<ResendVoltronEntityMessage> resendReplayList;
   private List<ResendVoltronEntityMessage> resendNewList;
-
+  
+  private Sink<TCMessage> multiSend;
+  private ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
+  
+  private void sendMultiResponse(VoltronEntityMultiResponse response) {
+    multiSend.addSingleThreaded(response);
+  }
+  
+  private final AbstractEventHandler<TCMessage> multiSender = new AbstractEventHandler<TCMessage>() {
+    @Override
+    public void handleEvent(TCMessage context) throws EventHandlerException {
+      invokeReturn.remove((ClientID)context.getDestinationNodeID(), context);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("sending " + context);
+      }
+      Assert.assertTrue(context.send());
+      
+    }
+  };
+  public AbstractEventHandler<TCMessage> getMultiResponseSender() {
+    return multiSender;
+  }
+  
   private final AbstractEventHandler<VoltronEntityMessage> voltronHandler = new AbstractEventHandler<VoltronEntityMessage>() {
     @Override
     public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
@@ -100,6 +132,10 @@ public class ProcessTransactionHandler {
       
       server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentState());
       server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
+      
+      Stage<TCMessage> mss = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
+      multiSend = mss.getSink();
+      
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       entityManager.enterActiveState();
     }
@@ -137,6 +173,22 @@ public class ProcessTransactionHandler {
       }
     };
   }
+  
+  private void addSequentially(MessageChannel channel, Predicate<VoltronEntityMultiResponse> adder) {
+    VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+    ClientID target = (ClientID)((DSOMessageBase)vmr).getDestinationNodeID();
+    boolean handled = false;
+    while (!handled) {
+      TCMessage old = invokeReturn.putIfAbsent(target, vmr);
+      if (old instanceof VoltronEntityMultiResponse) {
+        handled = adder.test((VoltronEntityMultiResponse)old);
+      } else {
+        handled = adder.test(vmr);
+        Assert.assertTrue(handled);
+        sendMultiResponse(vmr);
+      }
+    }
+  }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
   private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
@@ -162,7 +214,9 @@ public class ProcessTransactionHandler {
         this.entityPersistor.removeTrackingForClient(sourceNodeID);
       }
     }
-    serverEntityRequest.received();
+    if (ServerEntityAction.INVOKE_ACTION != action) {
+      serverEntityRequest.received();
+    }
     if (ServerEntityAction.CREATE_ENTITY == action) {
       // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
       long consumerID = this.entityPersistor.getNextConsumerID();
@@ -203,21 +257,59 @@ public class ProcessTransactionHandler {
         if (ServerEntityAction.INVOKE_ACTION == action) {
           ManagedEntity locked = entity;
           try {
+            safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+              VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+              addSequentially(channel, addto->addto.addReceived(transactionID));
+            });
+            
             EntityMessage message = entityMessage.decodeRawMessage(entity.getCodec());
             locked.addRequestMessage(serverEntityRequest, entityMessage, (result)-> {
-              serverEntityRequest.complete(result);
-              locked.getRetirementManager().updateWithRetiree(message, serverEntityRequest);
-              List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
-              for (Retiree toRetire : readyToRetire) {
-                toRetire.retired();
-              }
+              safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+                addSequentially(channel, addTo->addTo.addResult(transactionID, result));
+                List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
+                for (Retiree toRetire : readyToRetire) {
+                  if (toRetire == null) continue;
+                  addSequentially(channel, addTo->addTo.addRetired(toRetire.getTransaction()));
+                }
+              });
+              locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
+                @Override
+                public void retired() {
+                  safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+                    addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
+                  });
+                }
+
+                @Override
+                public TransactionID getTransaction() {
+                  return serverEntityRequest.getTransaction();
+                }
+              });
             }, (fail)-> {
-              serverEntityRequest.failure(fail);
-              locked.getRetirementManager().updateWithRetiree(message, serverEntityRequest);
-              List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
-              for (Retiree toRetire : readyToRetire) {
-                toRetire.retired();
-              }
+              safeGetChannel(sourceNodeID).ifPresent(channel -> {
+                VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
+                failMessage.setFailure(transactionID, fail, false);
+                invokeReturn.put(sourceNodeID, failMessage);
+                multiSend.addSingleThreaded(failMessage);
+                List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
+                for (Retiree toRetire : readyToRetire) {
+                  if (toRetire == null) continue;
+                  toRetire.retired();
+                }
+              });              
+              locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
+                @Override
+                public void retired() {
+                  safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+                    addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
+                  });
+                }
+
+                @Override
+                public TransactionID getTransaction() {
+                  return serverEntityRequest.getTransaction();
+                }
+              });
             });
           } catch (MessageCodecException codec) {
             serverEntityRequest.failure(new EntityUserException(locked.getID().getClassName(), locked.getID().getEntityName(), codec));
@@ -451,5 +543,11 @@ public class ProcessTransactionHandler {
         break;
     }
     return action;
+  }
+  
+  private static class Result {
+    ClientID client;
+    TransactionID tid;
+    byte[] result;
   }
 }

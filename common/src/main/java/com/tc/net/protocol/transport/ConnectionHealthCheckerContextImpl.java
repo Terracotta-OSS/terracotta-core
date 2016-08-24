@@ -28,6 +28,7 @@ import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.net.protocol.transport.HealthCheckerSocketConnect.SocketConnectStartStatus;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.io.IOException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -222,7 +223,11 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   @Override
   public synchronized void checkTime() {
     if (currentState.equals(START) || currentState.equals(ALIVE)) {
-      sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionId(), transport.getConnection()));
+      try {
+        sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionId(), transport.getConnection()));
+      } catch (IOException ioe) {
+        logger.warn("probe problem", ioe);
+      }
     }
   }
 
@@ -249,7 +254,12 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         if (logger.isDebugEnabled()) {
           logger.debug("Sending PING Probe to IDLE " + remoteNodeDesc);
         }
-        sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
+        try {
+          sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
+        } catch (IOException ioe) {
+          logger.warn("probe problem", ioe);
+          return false;
+        }
         pingProbeSentCount.incrementAndGet();
         probeReplyNotRecievedCount.incrementAndGet();
         changeState(AWAIT_PINGREPLY);
@@ -296,7 +306,12 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   public synchronized boolean receiveProbe(HealthCheckerProbeMessage message) {
     if (message.isPing()) {
       // Echo back but no change in this health checker state
-      sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionId(), transport.getConnection()));
+      try {
+        sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionId(), transport.getConnection()));
+      } catch (IOException ioe) {
+        logger.warn("probe problem", ioe);
+        return false;
+      }
     } else if (message.isPingReply()) {
       // The peer is alive
       if (probeReplyNotRecievedCount.get() > 0) probeReplyNotRecievedCount.decrementAndGet();
@@ -327,7 +342,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         message.getSource().getRemoteAddress()));
   }
 
-  private void sendProbeMessage(HealthCheckerProbeMessage message) {
+  private void sendProbeMessage(HealthCheckerProbeMessage message) throws IOException {
     this.transport.send(message);
   }
 

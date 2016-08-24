@@ -19,18 +19,21 @@
 
 package com.tc.entity;
 
-import org.terracotta.exception.EntityException;
-
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
+import java.util.Map;
 
 
-public interface VoltronEntityAppliedResponse extends VoltronEntityResponse {
-  // Read-only interface for the receiver.
-  byte[] getSuccessValue();
-  EntityException getFailureException();
-  
-  // Writable interface for the sender.
-  public void setSuccess(TransactionID transactionID, byte[] response, boolean retire);
-  public void setFailure(TransactionID transactionID, EntityException exception, boolean retire);
-  public boolean alsoRetire();
+/**
+ * The generic super-interface for the entity response types since SEDA requires that each thread only process one type of message.
+ * This means that the caller needs to down-cast to the specific sub-type, cased on getAckType.
+ * In the future, it would be ideal to remove this in favor of a different SEDA implementation.
+ */
+public interface VoltronEntityMultiResponse extends TCMessage {
+  TransactionID[] getReceivedTransactions();
+  TransactionID[] getRetiredTransactions();
+  Map<TransactionID, byte[]> getResults();
+  boolean addReceived(TransactionID tid);
+  boolean addRetired(TransactionID tid);
+  boolean addResult(TransactionID tid, byte[] result);
 }

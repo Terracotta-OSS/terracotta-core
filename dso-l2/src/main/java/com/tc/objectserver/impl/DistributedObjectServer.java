@@ -46,6 +46,8 @@ import com.tc.entity.ServerEntityResponseMessage;
 import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.entity.VoltronEntityMultiResponseImpl;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.exception.TCRuntimeException;
@@ -157,7 +159,6 @@ import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.msg.LockRequestMessage;
-import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerImpl;
@@ -629,6 +630,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor());
     final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
+    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
     
     // We can now initialize the internal managers used by the processTransactionHandler.
@@ -670,7 +672,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
-    messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NOOP_MESSAGE, requestLock.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
@@ -879,6 +881,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  exclude from startup specific stages that are controlled by the stage controller. 
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
+        ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
@@ -917,6 +920,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  active to start
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE);
     return control;
@@ -987,10 +991,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private HashMap<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMappings() {
     HashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
-    messageTypeClassMapping.put(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
@@ -1005,6 +1005,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
+    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
     return messageTypeClassMapping;

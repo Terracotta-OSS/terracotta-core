@@ -60,7 +60,13 @@ public class RetirementManager {
   }
   
   public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
-    this.currentlyRunning.get(invokeMessage).updateWithRetiree(response);
+    LogicalSequence seq = this.currentlyRunning.get(invokeMessage);
+    if (seq == null) {
+//  already gone.  retire directly
+      response.retired();
+    } else {
+      seq.updateWithRetiree(response);
+    }
   }
 
   public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey) {    

@@ -23,6 +23,7 @@ import com.tc.entity.ServerEntityMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityDescriptor;
+import com.tc.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +46,11 @@ public class ClientAccount {
       waitingResponse.put(responseId, responseWaiter);
       ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
       message.setMessage(entityDescriptor, payload, responseId++);
-      message.send();
+      if (!message.send()) {
+        if (waitingResponse.remove(responseId, responseWaiter)) {
+          responseWaiter.done();
+        }
+      }
     }
     return responseWaiter;
   }
@@ -54,7 +59,9 @@ public class ClientAccount {
     if (open) {
       ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
       message.setMessage(entityDescriptor, payload);
-      message.send();
+      if (!message.send()) {
+//  message not delivered.  This call is only best efforts so ignore.        
+      }
     }
   }
 

@@ -64,8 +64,9 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   private final Set<ResendVoltronEntityMessage> resendMessageSet = new HashSet<ResendVoltronEntityMessage>();
 
   @Override
-  public void send() {
+  public boolean send() {
     this.sendCalls.put(new Object());
+    return true;
   }
 
   @Override

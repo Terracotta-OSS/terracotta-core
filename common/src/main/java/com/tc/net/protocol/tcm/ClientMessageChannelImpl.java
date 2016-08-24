@@ -35,8 +35,6 @@ import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.LockRequestMessage;
-import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.security.PwProvider;
@@ -48,7 +46,7 @@ import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
 
 
-public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, LockRequestMessageFactory, ClientHandshakeMessageFactory {
+public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
   private static final TCLogger           logger           = TCLogging.getLogger(ClientMessageChannel.class);
   
   private int                             connectAttemptCount;
@@ -161,7 +159,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
    * Session message filter. To drop old session msgs when session changed.
    */
   @Override
-  public void send(TCNetworkMessage message) {
+  public void send(TCNetworkMessage message) throws IOException {
 // used to do session filtering here.  This wreaks havoc on upper layers to silently drop 
 // messages on the floor.  send everything through
     super.send(message);
@@ -192,16 +190,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
     //
-  }
-
-  @Override
-  public LockRequestMessage newLockRequestMessage() {
-    return (LockRequestMessage) createMessage(TCMessageType.LOCK_REQUEST_MESSAGE);
-  }
-
-  @Override
-  public LockRequestMessageFactory getLockRequestMessageFactory() {
-    return this;
   }
 
   @Override

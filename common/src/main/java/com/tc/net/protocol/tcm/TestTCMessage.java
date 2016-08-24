@@ -50,8 +50,8 @@ public class TestTCMessage implements TCMessage {
   }
 
   @Override
-  public void send() {
-    return;
+  public boolean send() {
+    return true;
   }
 
   @Override

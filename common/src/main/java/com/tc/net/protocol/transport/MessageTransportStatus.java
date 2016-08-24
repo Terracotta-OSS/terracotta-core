@@ -23,81 +23,86 @@ import com.tc.util.Assert;
 
 class MessageTransportStatus {
   private MessageTransportState state;
-  private TCLogger              logger;
+  private final TCLogger              logger;
 
   MessageTransportStatus(MessageTransportState initialState, TCLogger logger) {
     this.state = initialState;
     this.logger = logger;
   }
 
-  synchronized void reset() {
-    state = MessageTransportState.STATE_START;
+  void reset() {
+    stateChange(MessageTransportState.STATE_START);
   }
 
-  private void stateChange(MessageTransportState newState) {
+  private synchronized void stateChange(MessageTransportState newState) {
 
     if (logger.isDebugEnabled()) {
       logger.debug("Changing from " + state.toString() + " to " + newState.toString());
     }
 
     if (isEnd()) {
-      Assert.eval("Transport StateChange from END state not allowed", newState != MessageTransportState.STATE_END);
+      Assert.eval("Transport StateChange from END state not allowed", newState == MessageTransportState.STATE_START || newState != MessageTransportState.STATE_END);
       logger.warn("Unexpected Transport StateChange attempt. Changing from " + state.toString() + " to "
                   + newState.toString(), new Throwable());
     }
     state = newState;
+    notifyAll();
   }
 
-  synchronized void synSent() {
+  void synSent() {
     stateChange(MessageTransportState.STATE_SYN_SENT);
   }
 
-  synchronized void synAckError() {
+  void synAckError() {
     stateChange(MessageTransportState.STATE_SYN_ACK_ERROR);
   }
 
-  synchronized void established() {
+  void established() {
     stateChange(MessageTransportState.STATE_ESTABLISHED);
   }
 
-  synchronized void closed() {
+  void closed() {
     stateChange(MessageTransportState.STATE_CLOSED);
   }
 
-  synchronized void disconnect() {
+  void disconnect() {
     stateChange(MessageTransportState.STATE_DISCONNECTED);
   }
 
-  synchronized void end() {
+  void end() {
     stateChange(MessageTransportState.STATE_END);
   }
-
-  synchronized boolean isStart() {
-    return this.state.equals(MessageTransportState.STATE_START);
+  
+  private synchronized boolean checkState(MessageTransportState check) {
+    return this.state.equals(check);
   }
 
-  public boolean isRestart() {
-    return this.state.equals(MessageTransportState.STATE_RESTART);
+  boolean isStart() {
+    return checkState(MessageTransportState.STATE_START);
   }
 
-  synchronized boolean isSynSent() {
-    return this.state.equals(MessageTransportState.STATE_SYN_SENT);
+  boolean isRestart() {
+    return checkState(MessageTransportState.STATE_RESTART);
   }
 
-  synchronized boolean isEstablished() {
-    return this.state.equals(MessageTransportState.STATE_ESTABLISHED);
+  boolean isSynSent() {
+    return checkState(MessageTransportState.STATE_SYN_SENT);
+  }
+
+  boolean isEstablished() {
+    return checkState(MessageTransportState.STATE_ESTABLISHED);
   }
   
-  synchronized boolean isDisconnected() {
-    return this.state.equals(MessageTransportState.STATE_DISCONNECTED);
+  boolean isDisconnected() {
+    return checkState(MessageTransportState.STATE_DISCONNECTED);
   }
   
-  synchronized boolean isClosed() {
-    return this.state.equals(MessageTransportState.STATE_CLOSED);
+  boolean isClosed() {
+    return checkState(MessageTransportState.STATE_CLOSED);
   }
 
   synchronized boolean isEnd() {
-    return this.state.equals(MessageTransportState.STATE_END);
+    return checkState(MessageTransportState.STATE_END);
   }
 
   @Override

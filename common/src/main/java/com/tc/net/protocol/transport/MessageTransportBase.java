@@ -30,6 +30,7 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
+import java.io.IOException;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -177,30 +178,22 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public final void send(TCNetworkMessage message) {
-    // synchronized (isOpen) {
-    // Assert.eval("Can't send on an unopen transport [" +
-    // Thread.currentThread().getName() + "]", isOpen.get());
-    // }
-
-    synchronized (status) {
-      if (!status.isEstablished()) {
-        getLogger().warn("Ignoring message sent to non-established transport: " + message);
-        return;
-      }
-
+  public final void send(TCNetworkMessage message) throws IOException {
+    if (status.isEstablished()) {
       sendToConnection(message);
+    } else {
+      throw new IOException("connection not established");
     }
   }
 
   // Do not override this method. Not a final method, as a test class is deriving it
   @Override
-  public void sendToConnection(TCNetworkMessage message) {
+  public void sendToConnection(TCNetworkMessage message) throws IOException {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
     if (!status.isClosed()) {
       connection.putMessage(message);
     } else {
-      getLogger().warn("Couldn't send message status: " + status);
+      throw new IOException("Couldn't send message status: " + status);
     }
   }
 
@@ -356,7 +349,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
-  protected void wireNewConnection(TCConnection conn) {
+  protected boolean wireNewConnection(TCConnection conn) {
     getLogger().info("Attaching new connection: " + conn);
 
     synchronized (status) {
@@ -364,9 +357,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         getLogger().warn("Connection stack is already closed. " + this.status + "; Conn: " + conn);
         conn.removeListener(this);
         conn.asynchClose();
+        return false;
       } else {
         setConnection(conn);
         this.status.reset();
+        return true;
       }
     }
 

@@ -304,7 +304,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   public void receivedHandshake(TCGroupHandshakeMessage msg) {
-    debugInfo("Received group handshake message from " + msg.getChannel());
+    if (isDebugLogging()) {
+      debugInfo("Received group handshake message from " + msg.getChannel());
+    }
 
     MessageChannel channel = msg.getChannel();
     Assert.assertNotNull(channel);
@@ -377,7 +379,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private void fireNodeEvent(TCGroupMember member, boolean joined) {
     ServerID newNode = member.getPeerNodeID();
     member.setReady(joined);
-    debugInfo("fireNodeEvent: joined = " + joined + ", node = " + newNode + ", channel: " + member.getChannel());
+    if (isDebugLogging()) {
+      debugInfo("fireNodeEvent: joined = " + joined + ", node = " + newNode + ", channel: " + member.getChannel());
+    }
     for (GroupEventsListener listener : groupListeners) {
       if (joined) {
         listener.nodeJoined(newNode);
@@ -401,7 +405,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       member.setTCGroupManager(this);
       membersAdd(member);
     }
-    debugInfo(getNodeID() + " added " + member);
+    if (isDebugLogging()) {
+      debugInfo(getNodeID() + " added " + member);
+    }
     return true;
   }
 
@@ -411,7 +417,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (!alreadyJoined.compareAndSet(false, true)) { throw new GroupException("Already Joined"); }
 
     // discover must be started before listener thread to avoid missing nodeJoined group events.
-    debugInfo("Starting discover... thisNode: " + thisNode + ", otherNodes: " + Arrays.asList(nodesStore.getAllNodes()));
+    if (isDebugLogging()) {
+      debugInfo("Starting discover... thisNode: " + thisNode + ", otherNodes: " + Arrays.asList(nodesStore.getAllNodes()));
+    }
 //    discover = new TCGroupMemberDiscoveryStatic(this, thisNode);
     discover.setupNodes(thisNode, nodesStore.getAllNodes());
     discover.start();
@@ -450,7 +458,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public void closeMember(TCGroupMember member) {
     Assert.assertNotNull(member);
-    debugInfo("Closing member: " + member);
+    if (isDebugLogging()) {
+      debugInfo("Closing member: " + member);
+    }
     if (isStopped.get()) {
       shutdownMember(member);
       return;
@@ -464,7 +474,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       notifyAnyPendingRequests(member);
     }
     shutdownMember(member);
-    debugInfo(getNodeID() + " removed " + member);
+    if (isDebugLogging()) {
+      debugInfo(getNodeID() + " removed " + member);
+    }
   }
 
   private void shutdownMember(TCGroupMember member) {
@@ -497,13 +509,17 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     for (TCGroupMember m : members.values()) {
       if (!nodeIDs.contains(m.getPeerNodeID())) {
         if (debug) {
-          debugInfo("Not sending msg to " + m.getPeerNodeID() + ", " + msg + ", channel: " + m.getChannel());
+          if (isDebugLogging()) {
+            debugInfo("Not sending msg to " + m.getPeerNodeID() + ", " + msg + ", channel: " + m.getChannel());
+          }
         }
         continue;
       }
       if (m.isReady()) {
         if (debug) {
-          debugInfo("Sending msg to " + m.getPeerNodeID() + ", " + msg + ", channel: " + m.getChannel());
+          if (isDebugLogging()) {
+            debugInfo("Sending msg to " + m.getPeerNodeID() + ", " + msg + ", channel: " + m.getChannel());
+          }
         }
         m.sendIgnoreNotReady(msg);
       } else {
@@ -517,7 +533,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     TCGroupMember member = getMember(node);
     if (member != null && member.isReady()) {
       if (msg instanceof L2StateMessage) {
-        debugInfo("Sending msg to " + node + ", msg: " + msg + ", channel: " + member.getChannel());
+        if (isDebugLogging()) {
+          debugInfo("Sending msg to " + node + ", msg: " + msg + ", channel: " + member.getChannel());
+        }
       }
       member.send(msg);
     } else {
@@ -527,7 +545,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public AbstractGroupMessage sendToAndWaitForResponse(NodeID nodeID, AbstractGroupMessage msg) throws GroupException {
-    debugInfo("Sending to " + nodeID + " and Waiting for Response : " + msg.getMessageID());
+    if (isDebugLogging()) {
+      debugInfo("Sending to " + nodeID + " and Waiting for Response : " + msg.getMessageID());
+    }
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
     TCGroupMember m = getMember(nodeID);
@@ -553,7 +573,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public GroupResponse<AbstractGroupMessage> sendAllAndWaitForResponse(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) throws GroupException {
-    debugInfo("Sending to ALL and Waiting for Response : " + msg.getMessageID());
+    if (isDebugLogging()) {
+      debugInfo("Sending to ALL and Waiting for Response : " + msg.getMessageID());
+    }
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
     GroupResponse<AbstractGroupMessage> old = pendingRequests.put(msgID, groupResponse);
@@ -867,7 +889,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       for (TCGroupMember m : manager.getMembers()) {
         if (!nodeIDs.contains(m.getPeerNodeID())) {
           if (debug) {
-            debugInfo("Not sending msg to " + m.getPeerNodeID() + ", msg: " + msg + ", channel: " + m.getChannel());
+            if (isDebugLogging()) {
+              debugInfo("Not sending msg to " + m.getPeerNodeID() + ", msg: " + msg + ", channel: " + m.getChannel());
+            }
           }
           continue;
         }
@@ -875,7 +899,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           Assert.assertNotNull(m.getPeerNodeID());
           waitFor.add(m.getPeerNodeID());
           if (debug) {
-            debugInfo("Sending msg to " + m.getPeerNodeID() + ", msg: " + msg + ", channel: " + m.getChannel());
+            if (isDebugLogging()) {
+              debugInfo("Sending msg to " + m.getPeerNodeID() + ", msg: " + msg + ", channel: " + m.getChannel());
+            }
           }
           m.sendIgnoreNotReady(msg);
         } else {
@@ -892,7 +918,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         throw new AssertionError(message);
       }
       if (gmsg instanceof L2StateMessage) {
-        debugInfo("Received msg from: " + nodeID + ", msg: " + gmsg);
+        if (isDebugLogging()) {
+          debugInfo("Received msg from: " + nodeID + ", msg: " + gmsg);
+        }
       }
       responses.add(gmsg);
       notifyAll();
@@ -934,7 +962,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     TCGroupHandshakeStateMachine stateMachine = (TCGroupHandshakeStateMachine) channel
         .getAttachment(HANDSHAKE_STATE_MACHINE_TAG);
     if (stateMachine == null) {
-      debugInfo("Creating handshake state machine for channel: " + channel);
+      if (isDebugLogging()) {
+        debugInfo("Creating handshake state machine for channel: " + channel);
+      }
       stateMachine = new TCGroupHandshakeStateMachine(this, channel, getNodeID(), weightGeneratorFactory, version);
       channel.addAttachment(HANDSHAKE_STATE_MACHINE_TAG, stateMachine, false);
       channel.addListener(new HandshakeChannelEventListener(stateMachine));
@@ -1018,8 +1048,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     }
 
     public void execute(TCGroupHandshakeMessage msg) {
-      debugInfo("[TCGroupHandshakeStateMachine]: Executing state machine, currentState=" + current + ", msg: " + msg
+      if (isDebugLogging()) {
+        debugInfo("[TCGroupHandshakeStateMachine]: Executing state machine, currentState=" + current + ", msg: " + msg
                 + ", channel: " + channel);
+      }
       current.execute(msg);
     }
 
@@ -1041,18 +1073,24 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     protected void switchToState(HandshakeState state) {
       Assert.assertNotNull(state);
-      debugInfo("[TCGroupHandshakeStateMachine]: Attempting to switch state (" + current + "->" + state + "): "
+      if (isDebugLogging()) {
+        debugInfo("[TCGroupHandshakeStateMachine]: Attempting to switch state (" + current + "->" + state + "): "
                 + stateInfo(state));
+      }
       synchronized (this) {
         if (current == STATE_FAILURE) {
-          debugWarn("Ignored switching to " + state + " as current is " + current + ", " + stateInfo(state));
+          if (isDebugLogging()) {
+            debugWarn("Ignored switching to " + state + " as current is " + current + ", " + stateInfo(state));
+          }
           return;
         }
         this.current = state;
         waitForStateTransitionToComplete();
         stateTransitionInProgress = true;
       }
-      debugInfo("[TCGroupHandshakeStateMachine]: Entering state: " + state + ", for channel: " + channel);
+      if (isDebugLogging()) {
+        debugInfo("[TCGroupHandshakeStateMachine]: Entering state: " + state + ", for channel: " + channel);
+      }
       state.enter();
       notifyStateTransitionComplete();
     }
@@ -1100,7 +1138,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       cancelTimerTask();
       synchronized (this) {
         if (current == STATE_SUCCESS) {
-          debugInfo("Handshake successed. Ignore timeout " + stateInfo(current));
+          if (isDebugLogging()) {
+            debugInfo("Handshake successed. Ignore timeout " + stateInfo(current));
+          }
           return;
         }
         logger.warn("Group member handshake timeout. " + stateInfo(current));
@@ -1110,8 +1150,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     void disconnected() {
       synchronized (this) {
-        debugWarn("[TCGroupHandshakeStateMachine]: Group member handshake disconnected. " + stateInfo(current)
+        if (isDebugLogging()) {
+          debugWarn("[TCGroupHandshakeStateMachine]: Group member handshake disconnected. " + stateInfo(current)
                 + ", for channel: " + channel);
+        }
       }
       switchToState(STATE_FAILURE);
     }
@@ -1190,7 +1232,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         TCGroupHandshakeMessage msg = (TCGroupHandshakeMessage) channel
             .createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE);
         msg.initializeNodeID(localNodeID, version, weightGeneratorFactory.generateWeightSequence());
-        debugInfo("Sending group nodeID message to " + channel);
+        if (isDebugLogging()) {
+          debugInfo("Sending group nodeID message to " + channel);
+        }
         msg.send();
       }
 
@@ -1220,13 +1264,17 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       public void enter() {
         createMember();
         if (member.isHighPriorityNode()) {
-          debugInfo("Try-Add-Member: Adding high priority member: " + member);
+          if (isDebugLogging()) {
+            debugInfo("Try-Add-Member: Adding high priority member: " + member);
+          }
           member.memberAddingInProcess();
           boolean isAdded = manager.tryAddMember(member);
           if (!isAdded) member.abortMemberAdding();
           signalToJoin(isAdded);
         } else {
-          debugInfo("Try-Add-Member ignoring member as not high priority: " + member);
+          if (isDebugLogging()) {
+            debugInfo("Try-Add-Member ignoring member as not high priority: " + member);
+          }
         }
       }
 
@@ -1234,7 +1282,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       public void execute(TCGroupHandshakeMessage msg) {
         boolean isOkToJoin = msg.isOkMessage();
         if (!member.isHighPriorityNode()) {
-          debugInfo("Try-Add-Member: Adding not-high priority member: " + member);
+          if (isDebugLogging()) {
+            debugInfo("Try-Add-Member: Adding not-high priority member: " + member);
+          }
           if (isOkToJoin) {
             isOkToJoin = manager.tryAddMember(member);
             if (isOkToJoin) {
@@ -1245,7 +1295,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           }
           signalToJoin(isOkToJoin);
         } else {
-          debugInfo("Try-Add-Member not adding member as its highPriority: " + member);
+          if (isDebugLogging()) {
+            debugInfo("Try-Add-Member not adding member as its highPriority: " + member);
+          }
         }
         if (isOkToJoin) switchToState(STATE_ACK_OK);
         else switchToState(STATE_FAILURE);
@@ -1262,10 +1314,14 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         TCGroupHandshakeMessage msg = (TCGroupHandshakeMessage) channel
             .createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE);
         if (ok) {
-          debugInfo("Send ok message to " + member);
+          if (isDebugLogging()) {
+            debugInfo("Send ok message to " + member);
+          }
           msg.initializeOk();
         } else {
-          debugInfo("Send deny message to " + member);
+          if (isDebugLogging()) {
+            debugInfo("Send deny message to " + member);
+          }
           msg.initializeDeny();
         }
         msg.send();
@@ -1297,7 +1353,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       private void ackOk() {
         TCGroupHandshakeMessage msg = (TCGroupHandshakeMessage) channel
             .createMessage(TCMessageType.GROUP_HANDSHAKE_MESSAGE);
-        debugInfo("Send ack message to " + member);
+        if (isDebugLogging()) {
+          debugInfo("Send ack message to " + member);
+        }
         msg.initializeAck();
         msg.send();
       }
@@ -1364,6 +1422,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   private static void debugInfo(String message) {
     L2DebugLogging.log(logger, LogLevel.INFO, message, null);
+  }
+  
+  private static boolean isDebugLogging() {
+    return L2DebugLogging.isDebugLogging();
   }
 
   private static void debugWarn(String message) {

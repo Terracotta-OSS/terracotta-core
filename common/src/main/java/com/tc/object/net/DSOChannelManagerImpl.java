@@ -142,7 +142,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
         ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion);
-        ackMsg.send();
+        if (!ackMsg.send()) {
+          logger.warn("Not sending handshake message to disconnected client: " + clientID);
+        }
       }
       fireChannelCreatedEvent(channel);
     } catch (NoSuchChannelException nsce) {
@@ -156,7 +158,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       ClientHandshakeRefusedMessage handshakeRefuseMsg = newClientHandshakeRefusedMessage(clientID);
       synchronized (activeChannels) {
         handshakeRefuseMsg.initialize(message);
-        handshakeRefuseMsg.send();
+        if (!handshakeRefuseMsg.send()) {
+          logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+        }
       }
     } catch (NoSuchChannelException nsce) {
       logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);

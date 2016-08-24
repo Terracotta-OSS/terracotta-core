@@ -216,7 +216,9 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   protected void sendMessage(LockRequestMessage msg) {
-    msg.send();
+    if(!msg.send()) {
+      logger.warn("message not sent");
+    }
   }
 
   private class BatchRecallCommitsTask implements Runnable {
