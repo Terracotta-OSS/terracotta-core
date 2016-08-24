@@ -92,7 +92,7 @@ public class TerracottaEntityRefTest {
 // clientids start at 1
     TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
-    boolean didDestroy = testRef.tryDestroy();
+    boolean didDestroy = testRef.destroy();
     Assert.assertTrue(didDestroy);
   }
 
@@ -114,7 +114,7 @@ public class TerracottaEntityRefTest {
 // clientids start at 1
     TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
-    boolean didDestroy = testRef.tryDestroy();
+    boolean didDestroy = testRef.destroy();
     Assert.assertFalse(didDestroy);
     // We should never have asked for the destroy to happen.
     verify(mockClientEntityManager).destroyEntity(any(EntityID.class), any(Long.class));
