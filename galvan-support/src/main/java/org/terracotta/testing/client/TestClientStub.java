@@ -43,6 +43,8 @@ public class TestClientStub {
    * --connectUri:  <the cluster URI used in the test>
    * --totalClientCount:  <number of clients running the test>
    * --thisClientIndex:  <the 0-indexed number of this client instance>
+   * --numberOfStripes:  <number of stripes in this environment>
+   * --numberOfServersPerStripe:  <number of servers in each stripe in this environment>
    * [--errorClass]:  An optional argument, specifies the name of the failure handler class
    */
   public static void main(String[] args) throws Throwable {
@@ -56,6 +58,8 @@ public class TestClientStub {
     String clusterInfo = readArgString(args, "--clusterInfo");
     int totalClientCount = readArgInt(args, "--totalClientCount");
     int thisClientIndex = readArgInt(args, "--thisClientIndex");
+    int numberOfStripes = readArgInt(args, "--numberOfStripes");
+    int numberOfServersPerStripe = readArgInt(args, "--numberOfServersPerStripe");
     String errorClassName = readArgStringOrNull(args, "--errorClass");
     
     // First thing, we want to see if we were given an error class, since it will handle any errors we encounter through
@@ -69,7 +73,7 @@ public class TestClientStub {
     }
     
     // Get the environment (we will pass this in all cases but it is only useful for TEST modes).
-    TestClientStub.testEnvironment = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex, getClusterInfo(clusterInfo));
+    TestClientStub.testEnvironment = new SimpleClientTestEnvironment(connectUri, totalClientCount, thisClientIndex, getClusterInfo(clusterInfo), numberOfStripes, numberOfServersPerStripe);
     
     boolean isSetup = task.equals("SETUP");
     boolean isTest = task.equals("TEST");
