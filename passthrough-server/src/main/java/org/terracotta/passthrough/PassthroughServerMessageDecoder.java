@@ -170,19 +170,19 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         byte[] response = null;
         EntityException error = null;
         
-        boolean didAlreadyHandle = false;
         try {
           // There is no response on successful create.
-          didAlreadyHandle = this.lifeCycleMessageHandler.didAlreadyHandle(clientOriginID, transactionID);
+          response = this.lifeCycleMessageHandler.didAlreadyHandleResult(clientOriginID, transactionID);
         } catch (EntityException e) {
           error = e;
-          didAlreadyHandle = true;
         }
         
-        if (!didAlreadyHandle) {
+        if (response == null && error == null) {
           try {
             // There is no response on successful delete.
-            this.messageHandler.destroy(entityClassName, entityName);
+            boolean did = this.messageHandler.destroy(entityClassName, entityName);
+            response = new byte[1];
+            response[0] = did ? (byte)1 : 0;
           } catch (EntityException e) {
             error = e;
           } catch (RuntimeException e) {
@@ -193,11 +193,12 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
           // Record the result in order to handle future re-sends.
           if (null == error) {
             // No special result.
-            this.lifeCycleMessageHandler.successInMessage(clientOriginID, transactionID, oldestTransactionID, null);
+            this.lifeCycleMessageHandler.successInMessage(clientOriginID, transactionID, oldestTransactionID, response);
           } else {
             this.lifeCycleMessageHandler.failureInMessage(clientOriginID, transactionID, oldestTransactionID, error);
           }
         }
+        Assert.assertTrue(response != null || error != null);
         sendCompleteResponse(sender, transactionID, response, error);
         break;
       }
@@ -291,95 +292,6 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         // Not invoked on server.
         Assert.unreachable();
         break;
-      case LOCK_ACQUIRE: {
-        // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
-        // "clientInstanceIDs" for maintenance mode refs).
-        String entityClassName = input.readUTF();
-        String entityName = input.readUTF();
-        Runnable onAcquire = new Runnable() {
-          @Override
-          public void run() {
-            // We will just send an empty response, with no error, on acquire.
-            byte[] response = new byte[0];
-            EntityException error = null;
-            sendCompleteResponse(sender, transactionID, response, error);
-          }
-        };
-        try {
-          this.messageHandler.acquireWriteLock(sender, entityClassName, entityName, onAcquire);
-        } catch (RuntimeException e) {
-          // Just wrap this as a user exception since it was unexpected.
-          EntityException error = new EntityUserException(entityClassName, entityName, e);
-          // An unexpected exception is the only case where we send the response at this level.
-          sendCompleteResponse(sender, transactionID, null, error);
-        }
-        break;
-      }
-      case LOCK_TRY_ACQUIRE: {
-        // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
-        // "clientInstanceIDs" for maintenance mode refs).
-        String entityClassName = input.readUTF();
-        String entityName = input.readUTF();
-        try {
-          boolean didAcquire = this.messageHandler.tryAcquireWriteLock(sender, entityClassName, entityName);
-          // We send a single byte as the response:  0x1 means success, 0x0 means failure.
-          byte[] response = new byte[1];
-          response[0] = (byte)(didAcquire ? 0x1 : 0x0);
-          EntityException error = null;
-          sendCompleteResponse(sender, transactionID, response, error);
-        } catch (RuntimeException e) {
-          // Just wrap this as a user exception since it was unexpected.
-          EntityException error = new EntityUserException(entityClassName, entityName, e);
-          // An unexpected exception is the only case where we send the response at this level.
-          sendCompleteResponse(sender, transactionID, null, error);
-        }
-        break;
-      }
-      case LOCK_RELEASE:
-      case DROP_LOCK: {
-        // This is used for the maintenance write-lock.  It is made for the connection, on the entity name (as there aren't
-        // "clientInstanceIDs" for maintenance mode refs).
-        String entityClassName = input.readUTF();
-        String entityName = input.readUTF();
-        byte[] response = null;
-        EntityException error = null;
-        try {
-          this.messageHandler.releaseWriteLock(sender, entityClassName, entityName);
-          response = new byte[0];
-        } catch (RuntimeException e) {
-          // Just wrap this as a user exception since it was unexpected.
-          error = new EntityUserException(entityClassName, entityName, e);
-        }
-        sendCompleteResponse(sender, transactionID, response, error);
-        break;
-      }
-      case LOCK_RESTORE: {
-        // This is called to reestablish a maintenance write-lock on reconnect.
-        // It only has the class and entity name for the locked entity.
-        String entityClassName = input.readUTF();
-        String entityName = input.readUTF();
-        Runnable onAcquire = new Runnable() {
-          @Override
-          public void run() {
-            // We will just send an empty response, with no error, on restore.
-            byte[] response = new byte[0];
-            EntityException error = null;
-            sendCompleteResponse(sender, transactionID, response, error);
-          }
-        };
-        try {
-          // We still use the same "onAcquire" runnable approach used by the other methods, just for consistency, since this
-          // call can't fail or block.  Success is REQUIRED since we are only receiving this on reconnect of a client which
-          // already knew that it had the lock so a disagreement here would mean that there is a serious bug.
-          this.messageHandler.restoreWriteLock(sender, entityClassName, entityName, onAcquire);
-        } catch (RuntimeException e) {
-          // Just wrap this as a user exception since it was unexpected.
-          EntityException error = new EntityUserException(entityClassName, entityName, e);
-          // An unexpected exception is the only case where we send the response at this level.
-          sendCompleteResponse(sender, transactionID, null, error);
-        }
-        break;
-      }
       case RECONNECT: {
         String entityClassName = input.readUTF();
         String entityName = input.readUTF();
@@ -528,14 +440,10 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   public static interface MessageHandler {
     void create(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException;
     byte[] reconfigure(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException;
-    void destroy(String entityClassName, String entityName) throws EntityException;
+    boolean destroy(String entityClassName, String entityName) throws EntityException;
     void fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version, IFetchResult onFetch);
     void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws EntityException;
     byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws EntityException;
-    void acquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
-    boolean tryAcquireWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
-    void releaseWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName);
-    void restoreWriteLock(IMessageSenderWrapper sender, String entityClassName, String entityName, Runnable onAcquire);
     void reconnect(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] extendedData);
     void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException;
     void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException;

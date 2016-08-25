@@ -57,7 +57,6 @@ public class PassthroughConnection implements Connection {
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
   private long nextClientEndpointID;
   private final Map<Long, PassthroughEntityClientEndpoint<?, ?>> localEndpoints;
-  private final Set<PassthroughEntityTuple> writeLockedEntities;
   private final Runnable onClose;
   private final long uniqueConnectionID;
   
@@ -84,7 +83,6 @@ public class PassthroughConnection implements Connection {
     this.entityClientServices = entityClientServices;
     this.nextClientEndpointID = 1;
     this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint<?, ?>>();
-    this.writeLockedEntities = new HashSet<PassthroughEntityTuple>();
     this.onClose = onClose;
     this.uniqueConnectionID = uniqueConnectionID;
     
@@ -345,13 +343,6 @@ public class PassthroughConnection implements Connection {
           // Send the message.
           sendUnexpectedCloseMessage(releaseMessage);
         }
-        
-        // We also need to drop all locks.
-        for (PassthroughEntityTuple lockedEntity : this.writeLockedEntities) {
-          PassthroughMessage message = PassthroughMessageCodec.createDropWriteLockMessage(lockedEntity.entityClassName, lockedEntity.entityName);
-          // Send the message.
-          sendUnexpectedCloseMessage(message);
-        }
       } catch (IllegalStateException e) {
         // Ignore this - it just means the server is shut down so we don't need to send them any messages.
       }
@@ -377,7 +368,6 @@ public class PassthroughConnection implements Connection {
       
       // We might as well drop the references from our tracking, also, since they can't reasonably be used.
       this.localEndpoints.clear();
-      this.writeLockedEntities.clear();
     } else {
       throw new IllegalStateException("Connection already closed");
     }
@@ -420,7 +410,7 @@ public class PassthroughConnection implements Connection {
     return selected;
   }
 
-  public long getNewInstanceID() {
+  public synchronized long getNewInstanceID() {
     long thisClientEndpointID = this.nextClientEndpointID;
     this.nextClientEndpointID += 1;
     return thisClientEndpointID;
@@ -486,19 +476,6 @@ public class PassthroughConnection implements Connection {
     Assert.assertTrue(null == this.waitersToResend);
     this.waitersToResend = this.connectionState.enterReconnectState(serverProcess);
     
-    // Tell the server about our exclusive lock states (since this isn't replicated or persisted).
-    for (PassthroughEntityTuple lockedEntity : this.writeLockedEntities) {
-      PassthroughMessage message = PassthroughMessageCodec.createWriteLockRestoreMessage(lockedEntity.entityClassName, lockedEntity.entityName);
-      // Send the message directly to the new process, waiting for all acks.
-      boolean shouldWaitForSent = true;
-      boolean shouldWaitForReceived = true;
-      boolean shouldWaitForCompleted = true;
-      boolean shouldWaitForRetired = true;
-      boolean forceGetToBlockOnRetire = true;
-      PassthroughWait waiter = this.connectionState.sendAsReconnect(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
-      waiter.waitForAck();
-    }
-    
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
       byte[] extendedData = endpoint.getExtendedReconnectData();
@@ -536,18 +513,6 @@ public class PassthroughConnection implements Connection {
 
   public void disconnect() {
     this.connectionState.enterDisconnectedState();
-  }
-
-  public void didAcquireWriteLock(PassthroughEntityTuple entityTuple) {
-    boolean isNew = this.writeLockedEntities.add(entityTuple);
-    // We can't have duplicate entries.
-    Assert.assertTrue(isNew);
-  }
-
-  public void didReleaseWriteLock(PassthroughEntityTuple entityTuple) {
-    boolean wasRemoved = this.writeLockedEntities.remove(entityTuple);
-    // We can't fail to remove.
-    Assert.assertTrue(wasRemoved);
   }
 
   private static class ServerToClientMessageRecord {
