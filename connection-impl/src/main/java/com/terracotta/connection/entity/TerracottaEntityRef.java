@@ -150,24 +150,10 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
   
   @Override
-  public void destroy() throws EntityNotFoundException {
-    try {
-      boolean destroyed = destroyEntity();
-      while (!destroyed) {
-        TimeUnit.SECONDS.sleep(5);
-        destroyed = destroyEntity();
-      } 
-    } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
-    }
-  }
-
-  @Override
-  public boolean tryDestroy() throws EntityNotFoundException {
+  public boolean destroy() throws EntityNotFoundException {
     try {
       return destroyEntity();
     } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
       return false;
     }
   }
