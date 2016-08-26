@@ -19,15 +19,9 @@
 package org.terracotta.passthrough;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
 
 
-/**
- */
 public class PassthroughReferenceManager {
   private final Map<Long, PassthroughEntityTuple> references;
 
@@ -41,7 +35,12 @@ public class PassthroughReferenceManager {
   }
 
   public synchronized boolean drop(PassthroughEntityTuple entityTuple, long clientOriginID) {
-    return references.remove(clientOriginID, entityTuple);
+    boolean didRemove = false;
+    if (entityTuple.equals(references.get(clientOriginID))) {
+      references.remove(clientOriginID);
+      didRemove = true;
+    }
+    return didRemove;
   }
   
   public synchronized boolean isReferenced(PassthroughEntityTuple entityTuple) {
