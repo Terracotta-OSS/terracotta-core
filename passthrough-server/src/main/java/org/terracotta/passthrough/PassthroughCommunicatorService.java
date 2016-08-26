@@ -26,7 +26,7 @@ import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
+import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 
 
 /**

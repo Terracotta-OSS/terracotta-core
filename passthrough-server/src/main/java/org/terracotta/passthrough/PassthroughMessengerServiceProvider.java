@@ -26,7 +26,7 @@ import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 
 
-public class PassthroughMessengerServiceProvider implements PassthroughBuiltInServiceProvider {
+public class PassthroughMessengerServiceProvider implements PassthroughImplementationProvidedServiceProvider {
   private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughConnection pseudoConnection;
   

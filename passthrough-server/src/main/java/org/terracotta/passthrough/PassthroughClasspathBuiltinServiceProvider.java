@@ -23,7 +23,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 
 
-public class PassthroughClasspathBuiltinServiceProvider implements PassthroughBuiltInServiceProvider {
+public class PassthroughClasspathBuiltinServiceProvider implements PassthroughImplementationProvidedServiceProvider {
   private final ServiceProvider delegate;
   
   public PassthroughClasspathBuiltinServiceProvider(ServiceProvider provider) {
