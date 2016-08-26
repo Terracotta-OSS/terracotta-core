@@ -21,7 +21,6 @@ package com.tc.services;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.StateDumpable;
 
 
@@ -57,7 +56,7 @@ public interface TerracottaServiceProviderRegistry extends StateDumpable {
    *
    * @param serviceProvider platform service provider
    */
-  void registerBuiltin(BuiltInServiceProvider serviceProvider);
+  void registerImplementationProvided(ImplementationProvidedServiceProvider serviceProvider);
 
   /**
    * Creates a entity level service registry which has list of service instances managed by the service providers

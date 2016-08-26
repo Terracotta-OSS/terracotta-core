@@ -28,6 +28,7 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -105,8 +106,11 @@ public class ServerClientHandshakeManagerTest {
     assertFalse(this.manager.isStarted());
     
     // We should see the server start after it gets this handshake since it was waiting for one connection.
-    ClientHandshakeMessage message = mock(ClientHandshakeMessage.class);
-    this.manager.notifyClientConnect(message);
+    ClientHandshakeMessage handshake = mock(ClientHandshakeMessage.class);
+    // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
+    MessageChannel messageChannel = mock(MessageChannel.class);
+    when(handshake.getChannel()).thenReturn(messageChannel);
+    this.manager.notifyClientConnect(handshake);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
     
@@ -138,6 +142,9 @@ public class ServerClientHandshakeManagerTest {
     
     // We should see this first message go through to the transaction handler but not start the server.
     ClientHandshakeMessage message1 = mock(ClientHandshakeMessage.class);
+    // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
+    MessageChannel messageChannel1 = mock(MessageChannel.class);
+    when(message1.getChannel()).thenReturn(messageChannel1);
     ResendVoltronEntityMessage resend = mock(ResendVoltronEntityMessage.class);
     when(message1.getSourceNodeID()).thenReturn(client1);
     when(message1.getResendMessages()).thenReturn(Collections.singleton(resend));
@@ -149,6 +156,9 @@ public class ServerClientHandshakeManagerTest {
     
     // This second message will now start the server.
     ClientHandshakeMessage message2 = mock(ClientHandshakeMessage.class);
+    // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
+    MessageChannel messageChannel2 = mock(MessageChannel.class);
+    when(message2.getChannel()).thenReturn(messageChannel2);
     when(message2.getSourceNodeID()).thenReturn(client2);
     this.manager.notifyClientConnect(message2);
     assertFalse(this.manager.isStarting());

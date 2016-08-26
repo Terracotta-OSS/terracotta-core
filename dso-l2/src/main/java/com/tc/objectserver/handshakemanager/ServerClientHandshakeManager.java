@@ -19,7 +19,6 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Stage;
-import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
@@ -106,6 +105,8 @@ public class ServerClientHandshakeManager {
     final ClientID clientID = (ClientID) handshake.getSourceNodeID();
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
+      handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
+          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
 
       Collection<ClientServerExchangeLockContext> lockContexts = handshake.getLockContexts();
       if (this.state == State.STARTED) {
@@ -116,8 +117,6 @@ public class ServerClientHandshakeManager {
             throw new ClientHandshakeException("Client " + clientID + " connected after startup should have no existing wait contexts.");
           }
         }
-        handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
-            new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {
         // This is a client reconnecting after a restart.

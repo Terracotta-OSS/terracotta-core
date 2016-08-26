@@ -46,7 +46,6 @@ import com.tc.entity.ServerEntityResponseMessage;
 import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityMultiResponseImpl;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
@@ -125,7 +124,6 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
@@ -584,11 +582,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(channelStats);
 
     CommunicatorService communicatorService = new CommunicatorService(channelManager);
-    serviceRegistry.registerBuiltin(communicatorService);
+    serviceRegistry.registerImplementationProvided(communicatorService);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
 
     PlatformServiceProvider platformServiceProvider = new PlatformServiceProvider(this);
-    serviceRegistry.registerBuiltin(platformServiceProvider);
+    serviceRegistry.registerImplementationProvided(platformServiceProvider);
 
     // Creating a stage here so that the sink can be passed
     final Stage<LockResponseContext> respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, LockResponseContext.class, new RespondToRequestLockHandler(), 1, maxStageSize);
@@ -656,7 +654,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(voltronMessageSink);
-    this.serviceRegistry.registerBuiltin(messengerProvider);
+    this.serviceRegistry.registerImplementationProvided(messengerProvider);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
     if (restartable) {

@@ -27,8 +27,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.objectserver.api.ManagedEntity;
-import java.util.Collection;
 
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +42,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   // We need to hold on to the configuration when we are initialized so we can give it to services registered later as
   //  built-ins.
   private final Set<ServiceProvider> serviceProviders = new HashSet<>();
-  private final Set<BuiltInServiceProvider> builtInServiceProviders = new HashSet<>();
+  private final Set<ImplementationProvidedServiceProvider> implementationProvidedServiceProviders = new HashSet<>();
 
   @Override
   public void initialize(String serverName, TcConfiguration configuration, ClassLoader loader) {
@@ -76,7 +74,8 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         } else {
           ServiceProvider service = clazz.newInstance();
     //  there is no config for builtins
-          registerBuiltin(new WrappingBuiltinServiceProvider(service));
+          service.initialize(null);
+          registerNewServiceProvider(service);
         }
       } catch (IllegalAccessException | InstantiationException i) {
         logger.error("caught exception while initializing service " + clazz, i);
@@ -90,14 +89,14 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
 
   @Override
-  public  void registerBuiltin(BuiltInServiceProvider service) {
-    logger.info("Registering built-in service " + service);
-    builtInServiceProviders.add(service);
+  public  void registerImplementationProvided(ImplementationProvidedServiceProvider service) {
+    logger.info("Registering implementation-provided service " + service);
+    implementationProvidedServiceProviders.add(service);
   }
 
   @Override
   public DelegatingServiceRegistry subRegistry(long consumerID) {
-    return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), builtInServiceProviders.toArray(new BuiltInServiceProvider[builtInServiceProviders.size()]));
+    return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), implementationProvidedServiceProviders.toArray(new ImplementationProvidedServiceProvider[implementationProvidedServiceProviders.size()]));
   }
 
   @Override
@@ -121,7 +120,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
       }
     }
 
-    for(BuiltInServiceProvider builtInServiceProvider : builtInServiceProviders) {
+    for(ImplementationProvidedServiceProvider builtInServiceProvider : implementationProvidedServiceProviders) {
       try {
         builtInServiceProvider.clear();
       } catch (ServiceProviderCleanupException e) {
@@ -145,39 +144,12 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
       }
     }
 
-    for (BuiltInServiceProvider builtInServiceProvider : builtInServiceProviders) {
+    for (ImplementationProvidedServiceProvider implementationProvidedServiceProvider : implementationProvidedServiceProviders) {
       // ServiceProviders can optionally implement StateDumpable, so we do a instanceof check before calling dump state
       // method
-      if(builtInServiceProvider instanceof StateDumpable) {
-        ((StateDumpable) builtInServiceProvider).dumpStateTo(stateDumper.subStateDumper(builtInServiceProvider
-          .getClass()
-                                                                                    .getName()));
+      if(implementationProvidedServiceProvider instanceof StateDumpable) {
+        ((StateDumpable) implementationProvidedServiceProvider).dumpStateTo(stateDumper.subStateDumper(implementationProvidedServiceProvider.getClass().getName()));
       }
     }
-  }
-  
-  private class WrappingBuiltinServiceProvider implements BuiltInServiceProvider {
-    
-    private final ServiceProvider delegate;
-
-    public WrappingBuiltinServiceProvider(ServiceProvider delegate) {
-      this.delegate = delegate;
-    }
-
-    @Override
-    public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
-      return delegate.getService(consumerID, configuration);
-    }
-
-    @Override
-    public Collection<Class<?>> getProvidedServiceTypes() {
-      return delegate.getProvidedServiceTypes();
-    }
-
-    @Override
-    public void clear() throws ServiceProviderCleanupException {
-      delegate.clear();
-    }
-    
   }
 }

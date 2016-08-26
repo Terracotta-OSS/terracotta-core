@@ -33,7 +33,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 
 
-public class CommunicatorService implements BuiltInServiceProvider, DSOChannelManagerEventListener {
+public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
 
   public CommunicatorService(DSOChannelManager dsoChannelManager) {

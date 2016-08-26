@@ -34,11 +34,11 @@ import java.util.Map;
 public class DelegatingServiceRegistry implements InternalServiceRegistry {
   private final long consumerID;
   private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
-  private final Map<Class<?>, List<BuiltInServiceProvider>> builtInServiceProviderMap;
+  private final Map<Class<?>, List<ImplementationProvidedServiceProvider>> implementationProvidedServiceProviderMap;
   // Both the registry and the entity refer to each other so this is late-bound.
   private ManagedEntity owningEntity;
 
-  public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers, BuiltInServiceProvider[] builtInProviders) {
+  public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers, ImplementationProvidedServiceProvider[] implementationProvidedProviders) {
     this.consumerID = consumerID;
     
     Map<Class<?>, List<ServiceProvider>> tempProviders = new HashMap<>();
@@ -54,10 +54,10 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
     }
     serviceProviderMap = ImmutableMap.copyOf(tempProviders);
     
-    Map<Class<?>, List<BuiltInServiceProvider>> tempBuiltInProviders = new HashMap<>();
-    for(BuiltInServiceProvider provider : builtInProviders) {
+    Map<Class<?>, List<ImplementationProvidedServiceProvider>> tempBuiltInProviders = new HashMap<>();
+    for(ImplementationProvidedServiceProvider provider : implementationProvidedProviders) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
-        List<BuiltInServiceProvider> listForType = tempBuiltInProviders.get(serviceType);
+        List<ImplementationProvidedServiceProvider> listForType = tempBuiltInProviders.get(serviceType);
         if (null == listForType) {
           listForType = new LinkedList<>();
           tempBuiltInProviders.put(serviceType, listForType);
@@ -65,7 +65,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         listForType.add(provider);
       }
     }
-    builtInServiceProviderMap = ImmutableMap.copyOf(tempBuiltInProviders);
+    implementationProvidedServiceProviderMap = ImmutableMap.copyOf(tempBuiltInProviders);
   }
 
   @Override
@@ -88,10 +88,10 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
   }
 
   private <T> T getBuiltInService(ServiceConfiguration<T> configuration) {
-    List<BuiltInServiceProvider> serviceProviders = builtInServiceProviderMap.get(configuration.getServiceType());
+    List<ImplementationProvidedServiceProvider> serviceProviders = implementationProvidedServiceProviderMap.get(configuration.getServiceType());
     T service = null;
     if (null != serviceProviders) {
-      for (BuiltInServiceProvider provider : serviceProviders) {
+      for (ImplementationProvidedServiceProvider provider : serviceProviders) {
         T oneService = provider.getService(this.consumerID, this.owningEntity, configuration);
         if (null != oneService) {
           // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.

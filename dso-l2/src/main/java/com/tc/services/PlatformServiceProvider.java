@@ -9,10 +9,8 @@ import org.terracotta.monitoring.PlatformService;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author vmad
- */
-public class PlatformServiceProvider implements BuiltInServiceProvider {
+
+public class PlatformServiceProvider implements ImplementationProvidedServiceProvider {
 
     private final PlatformServiceImpl platformService;
 
