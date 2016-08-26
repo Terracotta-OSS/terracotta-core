@@ -694,7 +694,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (null != entityData && !entityData.isDestroyed) {
       success = entityData.destroy();
       if (success && null != this.activeEntities) {
-        Assert.assertTrue(this.activeEntities.remove(entityTuple, entityData));
+        boolean didRemove = false;
+        if (entityData.equals(this.activeEntities.get(entityTuple))) {
+          this.activeEntities.remove(entityTuple);
+          didRemove = true;
+        }
+        Assert.assertTrue(didRemove);
       }
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
@@ -1054,7 +1059,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     synchronized boolean reference(ClientDescriptor cid) {
       Assert.assertTrue(isActive);
       if (!isDestroyed) {
-        Integer current = references.putIfAbsent(cid, 1);
+        Integer current = references.get(cid);
+        if (null == current) {
+          references.put(cid, 1);
+        }
         if (current != null) {
           throw new AssertionError(current);
         }
