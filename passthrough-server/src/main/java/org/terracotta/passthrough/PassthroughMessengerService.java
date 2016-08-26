@@ -22,7 +22,7 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
+import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 
 
 public class PassthroughMessengerService implements IEntityMessenger {

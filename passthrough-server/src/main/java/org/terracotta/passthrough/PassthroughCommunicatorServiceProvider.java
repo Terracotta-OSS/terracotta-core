@@ -30,7 +30,7 @@ import org.terracotta.entity.ServiceConfiguration;
  * The provider of PassthroughCommunicatorService, to server-side entities.  It has no meaningful implementation beyond
  * providing that.
  */
-public class PassthroughCommunicatorServiceProvider implements PassthroughBuiltInServiceProvider {
+public class PassthroughCommunicatorServiceProvider implements PassthroughImplementationProvidedServiceProvider {
   @Override
   public <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
     return configuration.getServiceType().cast(new PassthroughCommunicatorService(container));

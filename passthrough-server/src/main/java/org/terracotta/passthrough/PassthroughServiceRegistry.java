@@ -25,7 +25,7 @@ import java.util.Map;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
+import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -38,10 +38,10 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   private final String entityName;
   private final long consumerID;
   private final Map<Class<?>, ServiceProvider> serviceProviderMap;
-  private final Map<Class<?>, PassthroughBuiltInServiceProvider> builtInServiceProviderMap;
+  private final Map<Class<?>, PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   private final DeferredEntityContainer owningEntityContainer;
   
-  public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughBuiltInServiceProvider> builtInServiceProviders, DeferredEntityContainer container) {
+  public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders, DeferredEntityContainer container) {
     this.entityClassName = entityClassName;
     this.entityName = entityName;
     this.consumerID = consumerID;
@@ -56,15 +56,15 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     }
     this.serviceProviderMap = ImmutableMap.copyOf(tempProviders);
     
-    Map<Class<?>, PassthroughBuiltInServiceProvider> tempBuiltIn = new HashMap<Class<?>, PassthroughBuiltInServiceProvider>();
-    for(PassthroughBuiltInServiceProvider provider : builtInServiceProviders) {
+    Map<Class<?>, PassthroughImplementationProvidedServiceProvider> tempInternalProviders = new HashMap<Class<?>, PassthroughImplementationProvidedServiceProvider>();
+    for(PassthroughImplementationProvidedServiceProvider provider : implementationProvidedServiceProviders) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
         // We currently have no way of handling multiple providers.
-        Assert.assertTrue(null == tempBuiltIn.get(serviceType));
-        tempBuiltIn.put(serviceType, provider);
+        Assert.assertTrue(null == tempInternalProviders.get(serviceType));
+        tempInternalProviders.put(serviceType, provider);
       }
     }
-    this.builtInServiceProviderMap = ImmutableMap.copyOf(tempBuiltIn);
+    this.implementationProvidedServiceProviders = ImmutableMap.copyOf(tempInternalProviders);
     
     this.owningEntityContainer = container;
   }
@@ -83,7 +83,7 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   }
 
   private <T> T getBuiltIn(ServiceConfiguration<T> configuration) {
-    PassthroughBuiltInServiceProvider provider = this.builtInServiceProviderMap.get(configuration.getServiceType());
+    PassthroughImplementationProvidedServiceProvider provider = this.implementationProvidedServiceProviders.get(configuration.getServiceType());
     T service = null;
     if (null != provider) {
       service = provider.getService(this.entityClassName, this.entityName, this.consumerID, this.owningEntityContainer, configuration);

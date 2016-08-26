@@ -61,7 +61,7 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
-import org.terracotta.passthrough.PassthroughBuiltInServiceProvider.DeferredEntityContainer;
+import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
@@ -94,8 +94,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   //  is why create/destroy/attachPassive are synchronized since they all directly interact with this entry set.
   private Map<PassthroughEntityTuple, CreationData<?, ?>> activeEntities;
   private Map<PassthroughEntityTuple, CreationData<?, ?>> passiveEntities;
+  // The service providers offered by the user.
   private final List<ServiceProvider> serviceProviders;
-  private final List<PassthroughBuiltInServiceProvider> builtInServiceProviders;
+  // The service providers offered by the server's implementation.
+  private final List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   private Set<PassthroughServerProcess> downstreamPassives = new HashSet<PassthroughServerProcess>();
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
@@ -122,7 +124,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<?, ?>>());
     this.serviceProviders = new Vector<ServiceProvider>();
-    this.builtInServiceProviders = new Vector<PassthroughBuiltInServiceProvider>();
+    this.implementationProvidedServiceProviders = new Vector<PassthroughImplementationProvidedServiceProvider>();
     // Consumer IDs start at 0 since that is the one the platform gives itself.
     this.nextConsumerID = 0;
     this.processID = processIdGen.incrementAndGet();
@@ -149,7 +151,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         DeferredEntityContainer container = new DeferredEntityContainer();
         EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
         // Create the registry for the entity.
-        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.builtInServiceProviders, container);
+        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
         // Construct the entity.
         EntityServerService<?, ?> service = null;
         try {
@@ -819,8 +821,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return foundService;
   }
 
-  public void registerBuiltInServiceProvider(PassthroughBuiltInServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
-    this.builtInServiceProviders.add(serviceProvider);
+  public void registerImplementationProvidedServiceProvider(PassthroughImplementationProvidedServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    this.implementationProvidedServiceProviders.add(serviceProvider);
   }
 
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
@@ -981,7 +983,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private PassthroughServiceRegistry getNextServiceRegistry(String entityClassName, String entityName, DeferredEntityContainer container) {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
-    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.builtInServiceProviders, container);
+    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
   }
 
   private EntityServerService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {

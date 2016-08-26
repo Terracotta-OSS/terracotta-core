@@ -7,10 +7,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author vmad
- */
-public class PassthroughPlatformServiceProvider implements PassthroughBuiltInServiceProvider {
+
+public class PassthroughPlatformServiceProvider implements PassthroughImplementationProvidedServiceProvider {
     private final PassthroughPlatformService passthroughPlatformService;
 
     public PassthroughPlatformServiceProvider(PassthroughDumper passthroughDumper) {

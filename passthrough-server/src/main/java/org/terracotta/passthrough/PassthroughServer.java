@@ -258,11 +258,11 @@ public class PassthroughServer implements PassthroughDumper {
 
   private void registerBuiltInServices(PassthroughConnection pseudoConnection) {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
-    this.serverProcess.registerBuiltInServiceProvider(communicatorServiceProvider, null);
+    this.serverProcess.registerImplementationProvidedServiceProvider(communicatorServiceProvider, null);
     PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess, pseudoConnection);
-    this.serverProcess.registerBuiltInServiceProvider(messengerServiceProvider, null);
+    this.serverProcess.registerImplementationProvidedServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
-    this.serverProcess.registerBuiltInServiceProvider(passthroughPlatformServiceProvider, null);
+    this.serverProcess.registerImplementationProvidedServiceProvider(passthroughPlatformServiceProvider, null);
   }
   
   private void findClasspathBuiltinServices() {
@@ -271,7 +271,9 @@ public class PassthroughServer implements PassthroughDumper {
         if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
           System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
         } else {
-          this.serverProcess.registerBuiltInServiceProvider(new PassthroughClasspathBuiltinServiceProvider(provider), null);
+          // We want to initialize built-in providers with a null configuration.
+          provider.initialize(null);
+          this.serverProcess.registerServiceProvider(provider, null);
         }
       }
   }

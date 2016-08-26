@@ -25,7 +25,11 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceConfiguration;
 
 
-public interface PassthroughBuiltInServiceProvider {
+/**
+ * The interface exposed by the purely-internal services.  That is, those which are not provided by users but are part
+ * of the server implementation.
+ */
+public interface PassthroughImplementationProvidedServiceProvider {
   /**
    * Get an instance of service from the provider for the entity with the corresponding class, name, and consumerID.
    *
