@@ -22,7 +22,6 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
 import com.tc.object.EntityID;
@@ -41,9 +40,7 @@ import java.util.function.BiConsumer;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.PermanentEntityException;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -104,7 +101,7 @@ public class EntityManagerImpl implements EntityManager {
   public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, version, noopLoopback, serviceRegistry.subRegistry(consumerID),
+    ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
     ManagedEntity exists = entities.putIfAbsent(id, temp);
     return exists != null ? exists : temp;
@@ -114,7 +111,7 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }    

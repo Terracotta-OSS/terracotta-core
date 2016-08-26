@@ -104,13 +104,14 @@ public class ManagementTopologyEventCollectorTest {
   @Test
   public void testCreatePromoteDestroy() throws Exception {
     EntityID id = mock(EntityID.class);
+    long consumerID = 1;
     // Note that we start in passive state.
     boolean isActive = false;
     
     // We should fail to create an entity as active.
     boolean didSucceed = false;
     try {
-      this.collector.entityWasCreated(id, true);
+      this.collector.entityWasCreated(id, consumerID, true);
       didSucceed = true;
     } catch (AssertionError e) {
       // Expected.
@@ -118,11 +119,11 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertFalse(didSucceed);
     
     // Create it as passive.
-    this.collector.entityWasCreated(id, isActive);
+    this.collector.entityWasCreated(id, consumerID, isActive);
     // We should fail to create it a second time.
     didSucceed = false;
     try {
-      this.collector.entityWasCreated(id, isActive);
+      this.collector.entityWasCreated(id, consumerID, isActive);
       didSucceed = true;
     } catch (AssertionError e) {
       // Expected.
@@ -134,7 +135,7 @@ public class ManagementTopologyEventCollectorTest {
     isActive = true;
     
     // Promote the entity to active.
-    this.collector.entityWasReloaded(id, isActive);
+    this.collector.entityWasReloaded(id, consumerID, isActive);
     
     // Now, destroy the entity.
     this.collector.entityWasDestroyed(id);
@@ -153,6 +154,7 @@ public class ManagementTopologyEventCollectorTest {
   @Test
   public void testFetchReleaseActiveEntity() throws Exception {
     EntityID id = mock(EntityID.class);
+    long consumerID = 1;
     MessageChannel channel = mock(MessageChannel.class);
     ClientID client = mock(ClientID.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
@@ -162,7 +164,7 @@ public class ManagementTopologyEventCollectorTest {
     boolean isActive = true;
     
     // Create the entity.
-    this.collector.entityWasCreated(id, isActive);
+    this.collector.entityWasCreated(id, consumerID, isActive);
     
     // Connect the client.
     this.collector.clientDidConnect(channel, client);
@@ -266,8 +268,9 @@ public class ManagementTopologyEventCollectorTest {
     
     String typeName = "typeName";
     String entityName = "entityName";
+    long consumerID = 1;
     boolean isActive = false;
-    PlatformEntity originalEntity = new PlatformEntity(typeName, entityName, isActive);
+    PlatformEntity originalEntity = new PlatformEntity(typeName, entityName, consumerID, isActive);
     
     String serverName = "serverName";
     String host = "host";

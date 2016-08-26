@@ -76,9 +76,10 @@ public interface ITopologyEventCollector {
    * Called when an entity is explicitly created in response to a request from a client.
    * 
    * @param id The unique identifier for this entity.
+   * @param consumerID The unique consumerID associated with this entity for its interaction with services.
    * @param isActive Whether or not it was created in active mode.
    */
-  public void entityWasCreated(EntityID id, boolean isActive);
+  public void entityWasCreated(EntityID id, long consumerID, boolean isActive);
 
   /**
    * Called when an entity is explicitly destroyed in response to a request from a client.
@@ -92,9 +93,10 @@ public interface ITopologyEventCollector {
    * of passive to active (which is potentially in-memory, only, as the server process remains).
    * 
    * @param id The unique identifier for this entity.
+   * @param consumerID The unique consumerID associated with this entity for its interaction with services.
    * @param isActive Whether or not it was created in active mode.
    */
-  public void entityWasReloaded(EntityID id, boolean isActive);
+  public void entityWasReloaded(EntityID id, long consumerID, boolean isActive);
 
   /**
    * Called when a given client successfully fetches a specific entity.  Note that the same client can fetch a given entity

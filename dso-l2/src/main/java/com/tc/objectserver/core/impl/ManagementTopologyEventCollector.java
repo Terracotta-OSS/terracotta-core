@@ -206,12 +206,12 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void entityWasCreated(EntityID id, boolean isActive) {
+  public synchronized void entityWasCreated(EntityID id, long consumerID, boolean isActive) {
     // Ensure that this is the expected state.
     Assert.assertTrue(isActive == this.isActiveState);
     // Ensure that this entity didn't already exist.
     Assert.assertFalse(this.entities.contains(id));
-    addEntityToTracking(id, isActive);
+    addEntityToTracking(id, consumerID, isActive);
   }
 
   @Override
@@ -223,13 +223,13 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void entityWasReloaded(EntityID id, boolean isActive) {
+  public synchronized void entityWasReloaded(EntityID id, long consumerID, boolean isActive) {
     // Ensure that this is the expected state.
     // NOTE:  We currently can't verify the isActiveState since the reload path sets it _after_ the entities are reloaded.
     // Note that this could happen due to promotion or reloading from restart so we can't know if it already is in our set.
     if (!this.entities.contains(id)) {
       // Seems to be new so add it to the set.
-      addEntityToTracking(id, isActive);
+      addEntityToTracking(id, consumerID, isActive);
     }
   }
 
@@ -304,14 +304,14 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
 
-  private void addEntityToTracking(EntityID id, boolean isActive) {
+  private void addEntityToTracking(EntityID id, long consumerID, boolean isActive) {
     this.entities.add(id);
     
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       String entityClassName = id.getClassName();
       String entityName = id.getEntityName();
-      PlatformEntity record = new PlatformEntity(entityClassName, entityName, isActive);
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
       String entityIdentifier = entityIdentifierForService(id);
       this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }

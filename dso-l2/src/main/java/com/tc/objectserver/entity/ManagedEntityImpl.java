@@ -80,6 +80,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private final EntityID id;
   private final long version;
+  private final long consumerID;
   private final InternalServiceRegistry registry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
@@ -109,12 +110,13 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
+  ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState, boolean canDelete) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
+    this.consumerID = consumerID;
     this.noopLoopback = loopback;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
@@ -526,7 +528,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     //  instance so make that call.
     entityToCreate.loadExisting();
     // Fire the event that the entity was created.
-    this.eventCollector.entityWasReloaded(this.getID(), this.isInActiveState);
+    this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
   
   private void createEntity(ResultCapture response, byte[] constructorInfo) {
@@ -557,7 +559,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     this.isDestroyed = false;
-    eventCollector.entityWasCreated(id, isInActiveState);    
+    eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
     response.complete();
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
@@ -714,7 +716,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.activeServerEntity.loadExisting();
       this.passiveServerEntity = null;
       // Fire the event that the entity was reloaded.
-      this.eventCollector.entityWasReloaded(this.getID(), true);
+      this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
     } else {
       throw new IllegalStateException("no entity to promote");
     }
@@ -821,7 +823,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.isDestroyed = false;
     entityToLoad.loadExisting();
     // Fire the event that the entity was reloaded.
-    this.eventCollector.entityWasReloaded(this.getID(), this.isInActiveState);
+    this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
 
   private static class PassiveSyncServerEntityRequest implements ServerEntityRequest {
