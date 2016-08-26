@@ -271,7 +271,9 @@ public class PassthroughServer implements PassthroughDumper {
         if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
           System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
         } else {
-          this.serverProcess.registerImplementationProvidedServiceProvider(new PassthroughClasspathBuiltinServiceProvider(provider), null);
+          // We want to initialize built-in providers with a null configuration.
+          provider.initialize(null);
+          this.serverProcess.registerServiceProvider(provider, null);
         }
       }
   }
