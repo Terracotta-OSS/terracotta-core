@@ -58,7 +58,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.mockito.Matchers;
@@ -84,6 +83,7 @@ public class ManagedEntityImplTest {
   private EntityID entityID;
   private ClientInstanceID clientInstanceID;
   private long version;
+  private long consumerID;
   private ManagedEntityImpl managedEntity;
   private BiConsumer<EntityID, Long> loopback;
   private InternalServiceRegistry serviceRegistry;
@@ -115,6 +115,7 @@ public class ManagedEntityImplTest {
     entityID = new EntityID(TestEntity.class.getName(), "foo");
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
+    consumerID = 1;
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     serviceRegistry = mock(InternalServiceRegistry.class);
     
@@ -128,7 +129,7 @@ public class ManagedEntityImplTest {
     eventCollector = mock(ITopologyEventCollector.class);
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
     Mockito.doAnswer(new Answer<Object>() {
       @Override
@@ -236,7 +237,7 @@ public class ManagedEntityImplTest {
       }
     });
     // create a ManagedEntity which is in active state
-    ManagedEntityImpl activeEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true, true);
+    ManagedEntityImpl activeEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true, true);
     // We want to pretend that we are the expected thread.
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     ServerEntityRequest request = mockCreateEntityRequest();
@@ -251,7 +252,7 @@ public class ManagedEntityImplTest {
   public void testGetEntityMissing() throws Exception {
     TestingResponse response = mockResponse();
     // create a ManagedEntity which is in active state
-    ManagedEntityImpl managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true, true);
+    ManagedEntityImpl managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, true, true);
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     
     com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
@@ -338,7 +339,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
     TestingResponse resp = mockResponse();
     managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.EMPTY,  resp::complete, resp::failure);
     resp.waitFor();
@@ -401,7 +402,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
     managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.EMPTY,  response::complete, response::failure);
     response.waitFor();
     managedEntity.promoteEntity();
@@ -501,7 +502,7 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     TestingResponse response = mockResponse();
-    managedEntity = new ManagedEntityImpl(entityID, version, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
     managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.EMPTY, response::complete, response::failure);
     response.waitFor();
     managedEntity.promoteEntity();
