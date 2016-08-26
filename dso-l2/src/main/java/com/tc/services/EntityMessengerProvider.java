@@ -34,7 +34,7 @@ import com.tc.objectserver.api.ManagedEntity;
  * The built-in provider of IEntityMessenger services.
  * These messages are fed into the general VoltronEntityMessage sink, provided by the server implementation.
  */
-public class EntityMessengerProvider implements BuiltInServiceProvider {
+public class EntityMessengerProvider implements ImplementationProvidedServiceProvider {
   private final Sink<VoltronEntityMessage> messageSink;
 
   public EntityMessengerProvider(Sink<VoltronEntityMessage> messageSink) {
