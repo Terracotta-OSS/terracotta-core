@@ -27,8 +27,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.objectserver.api.ManagedEntity;
-import java.util.Collection;
 
 import java.util.HashSet;
 import java.util.List;
@@ -76,7 +74,8 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         } else {
           ServiceProvider service = clazz.newInstance();
     //  there is no config for builtins
-          registerImplementationProvided(new WrappingBuiltinServiceProvider(service));
+          service.initialize(null);
+          registerNewServiceProvider(service);
         }
       } catch (IllegalAccessException | InstantiationException i) {
         logger.error("caught exception while initializing service " + clazz, i);
@@ -152,30 +151,5 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         ((StateDumpable) implementationProvidedServiceProvider).dumpStateTo(stateDumper.subStateDumper(implementationProvidedServiceProvider.getClass().getName()));
       }
     }
-  }
-  
-  private class WrappingBuiltinServiceProvider implements ImplementationProvidedServiceProvider {
-    
-    private final ServiceProvider delegate;
-
-    public WrappingBuiltinServiceProvider(ServiceProvider delegate) {
-      this.delegate = delegate;
-    }
-
-    @Override
-    public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
-      return delegate.getService(consumerID, configuration);
-    }
-
-    @Override
-    public Collection<Class<?>> getProvidedServiceTypes() {
-      return delegate.getProvidedServiceTypes();
-    }
-
-    @Override
-    public void clear() throws ServiceProviderCleanupException {
-      delegate.clear();
-    }
-    
   }
 }
