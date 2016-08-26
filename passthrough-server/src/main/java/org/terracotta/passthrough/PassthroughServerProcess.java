@@ -666,7 +666,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (null != this.serviceInterface) {
       // Record this new entity.
       boolean isActive = (null != this.activeEntities);
-      PlatformEntity record = new PlatformEntity(entityClassName, entityName, isActive);
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
       String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
       this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
