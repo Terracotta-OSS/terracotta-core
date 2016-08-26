@@ -222,7 +222,7 @@ public class DistributedObjectClient implements TCClient {
 
       @Override
       public boolean getReconnectEnabled() {
-        return true;
+        return false;
       }
 
       @Override
