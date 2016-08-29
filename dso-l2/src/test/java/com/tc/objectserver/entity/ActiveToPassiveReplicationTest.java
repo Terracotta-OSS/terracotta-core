@@ -24,6 +24,7 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.ServerID;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +71,7 @@ public class ActiveToPassiveReplicationTest {
         return null;
       }
     }).when(replicate).addSingleThreaded(Matchers.any());
-    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, replicate);
+    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, mock(EntityPersistor.class), replicate);
   }
   
   @Test

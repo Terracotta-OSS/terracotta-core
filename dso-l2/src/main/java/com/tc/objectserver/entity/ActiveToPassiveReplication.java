@@ -31,7 +31,11 @@ import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
+import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Collections;
 
 import java.util.HashSet;
@@ -60,11 +64,13 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final ConcurrentHashMap<MessageID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
+  private final EntityPersistor persistor;
 
-  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, Sink<ReplicationEnvelope> replicate) {
+  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, EntityPersistor persistor, Sink<ReplicationEnvelope> replicate) {
     this.entities = entities;
     this.replicate = replicate;
     this.passives = passives;
+    this.persistor = persistor;
   }
   
   @Override
@@ -131,12 +137,25 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           }
       //  passive sync done message.  causes passive to go into passive standby mode
           logger.debug("ending sync " + newNode);
-          replicateMessage(PassiveSyncMessage.createEndSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
+          replicateMessage(PassiveSyncMessage.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
         } catch (InterruptedException e) {
           throw new AssertionError("error during passive sync", e);
         }
       }
     });
+  }
+  
+  private byte[] replicateEntityPersistor() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    try {
+      ObjectOutputStream data = new ObjectOutputStream(out);
+      persistor.serialize(data);
+      data.close();
+      return out.toByteArray();
+    } catch (IOException ioe) {
+      
+    }
+    return null;
   }
 
   public void ackReceived(GroupMessage msg) {

@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumper;
@@ -44,6 +46,7 @@ import org.terracotta.exception.EntityNotProvidedException;
 
 
 public class EntityManagerImpl implements EntityManager {
+  private static final TCLogger LOGGER = TCLogging.getLogger(EntityManagerImpl.class);
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
@@ -104,6 +107,9 @@ public class EntityManagerImpl implements EntityManager {
     ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
         clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
     ManagedEntity exists = entities.putIfAbsent(id, temp);
+    if (exists == null) {
+      LOGGER.debug("created " + id);
+    }
     return exists != null ? exists : temp;
   }
 
@@ -126,6 +132,9 @@ public class EntityManagerImpl implements EntityManager {
       if (entities.remove(id) != null) {
         removed = true;
       }
+    }
+    if (removed) {
+      LOGGER.debug("removed " + id);
     }
     return removed;
   }

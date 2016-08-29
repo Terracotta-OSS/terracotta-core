@@ -109,7 +109,7 @@ public class RequestProcessor implements StateChangeListener {
         actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case RELEASE_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
+        actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case REQUEST_SYNC_ENTITY:
 //  this marks the start of entity sync for a concurrency key.  practically, this means that

@@ -50,6 +50,9 @@ import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -354,12 +357,19 @@ public class ReplicatedTransactionHandler {
           entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
-        if (!eid.equals(EntityID.NULL_ID)) {
+        if (sync.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+          acknowledge(sync);
+        } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
           MessagePayload payload = new MessagePayload(sync.getExtendedData(), null, sync.getConcurrency());
           platform.addRequestMessage(make(sync), payload, (result)-> {
             if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_END) {
+              try {
+                entityPersistor.layer(new ObjectInputStream(new ByteArrayInputStream(payload.getRawPayload())));
+              } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+              }
               moveToPassiveStandBy();
             }
             acknowledge(sync);
@@ -503,8 +513,6 @@ public class ReplicatedTransactionHandler {
         return ServerEntityAction.RECONFIGURE_ENTITY;
       case INVOKE_ACTION:
         return ServerEntityAction.INVOKE_ACTION;
-      case RELEASE_ENTITY:
-        return ServerEntityAction.RELEASE_ENTITY;
       case DESTROY_ENTITY:
         return ServerEntityAction.DESTROY_ENTITY;
       case SYNC_ENTITY_BEGIN:

@@ -53,8 +53,8 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -365,44 +365,32 @@ public class ProcessTransactionHandler {
   }
 
   public void handleResentMessage(ResendVoltronEntityMessage resentMessage) {
-    int index = this.transactionOrderPersistor.getIndexToReplay(resentMessage.getSource(), resentMessage.getTransactionID());
-    if (index >= 0) {
-      boolean cached = false;
-      byte[] result = null;
-      if (resentMessage.getVoltronType() == VoltronEntityMessage.Type.CREATE_ENTITY ||
-          resentMessage.getVoltronType() == VoltronEntityMessage.Type.DESTROY_ENTITY || 
-          resentMessage.getVoltronType() == VoltronEntityMessage.Type.RECONFIGURE_ENTITY) {
-        try {
-          switch (resentMessage.getVoltronType()) {
-            case CREATE_ENTITY:
-              cached = entityPersistor.wasEntityCreatedInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
-              break;
-            case DESTROY_ENTITY:
-              cached = entityPersistor.wasEntityDestroyedInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
-              break;
-            case RECONFIGURE_ENTITY:
-              result = entityPersistor.reconfiguredResultInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
-              if (result != null) {
-                cached = true;
-              }
-              break;
-            case FETCH_ENTITY:
-            case RELEASE_ENTITY:
-//  these associations are tricky but since the client rebuilds the associations it knows about 
-// prior to the execution of these messages, re-applying should be fine.
-              break;
+    boolean cached = false;
+    byte[] result = null;
+    int index = -1;
+    try {
+      switch (resentMessage.getVoltronType()) {
+        case CREATE_ENTITY:
+          cached = entityPersistor.wasEntityCreatedInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+          break;
+        case DESTROY_ENTITY:
+          cached = entityPersistor.wasEntityDestroyedInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+          break;
+        case RECONFIGURE_ENTITY:
+          result = entityPersistor.reconfiguredResultInJournal(resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+          if (result != null) {
+            cached = true;
           }
-        } catch (EntityException ee) {
-          ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
-          response.received();
-          response.failure(ee);
-          response.retired();
-          cached = true;
-        }
+          break;
+        case FETCH_ENTITY:
+        case RELEASE_ENTITY:
+//  are not replicated
+          break;
+        default:
+          index = this.transactionOrderPersistor.getIndexToReplay(resentMessage.getSource(), resentMessage.getTransactionID());
+          break;
       }
-      if (!cached) {
-        this.resendReplayList.insert(index, resentMessage);
-      } else {
+      if (cached) {
         ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
         response.received();
         if (result != null) {
@@ -411,9 +399,16 @@ public class ProcessTransactionHandler {
           response.complete();
         }
         response.retired();
-      }          
-    } else {
-      this.resendNewList.add(resentMessage);
+      } else if (index >= 0) {
+        this.resendReplayList.insert(index, resentMessage);     
+      } else {
+        this.resendNewList.add(resentMessage);
+      }
+    } catch (EntityException ee) {
+      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
+      response.received();
+      response.failure(ee);
+      response.retired();
     }
   }
   
@@ -427,65 +422,18 @@ public class ProcessTransactionHandler {
     
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {
-      if (!checkIfEntityCreatedBySync(message)) {
-        executeResend(message);
-      }
+      executeResend(message);
     }
     this.resendReplayList = null;
     
     // Replay all the new messages found during resends.
     for (ResendVoltronEntityMessage message : this.resendNewList) {
-      if (!checkIfEntityCreatedBySync(message)) {
-        executeResend(message);
-      }
+      executeResend(message);
     }
 //  remove tracking for any resent create journal entries
     entityPersistor.removeTrackingForClient(ClientID.NULL_ID);
     
     this.resendNewList = null;
-  }
-
-  /**
-   * Unfortunately this check needs to happen on all resent messages.  Entities can 
-   * either be created by the sync process or by a request from a client.  If a resent 
-   * create request comes in, check here to see if the entity already exists and if it 
-   * was created by sync (the absence of a journal entry means that sync created the entity).
-   * If sync created the entity, this must mean that the resent create must have succeeded on the
-   * active before it went down and the passive sync'd the entity.  If that is the case, 
-   * assume that the first create encountered created the entity.
-   * @param message
-   * @return 
-   */
-  private boolean checkIfEntityCreatedBySync(ResendVoltronEntityMessage message) {
-    if (message.getVoltronType() == VoltronEntityMessage.Type.CREATE_ENTITY) {
-      ClientID cid = message.getSource();
-      TransactionID tid = message.getTransactionID();
-      TransactionID old = message.getOldestTransactionOnClient();
-      EntityDescriptor eid = message.getEntityDescriptor();
-      try {
-//  use NULL client ID and zero transaction so other resends know this create has been adopted
-        if (!entityPersistor.wasEntityCreatedInJournal(ClientID.NULL_ID, 0L) && entityPersistor.containsEntity(cid, tid.toLong(), old.toLong(), eid.getEntityID())) {
-//  resent create.  The only way this happens is if sync created the entity
-//  tell the client first to retire the message before adoption
-          ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, tid, old, cid, true, safeGetChannel(cid), false);
-          response.received();
-          response.complete();
-          response.retired();
-//  'mark' the entity as adopted for the rest of the resends.  Do it in this order in case the 
-//   server is restartable.  The adopting create will not resend in this case and every subsequent 
-//   resent create on this entity will need to be run
-          entityPersistor.entityCreatedJustInJournal(ClientID.NULL_ID, 0L, 0L, eid.getEntityID(), eid.getClientSideVersion());
-          return true;
-        }
-      } catch (EntityException ee) {
-        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, tid, old, cid, true, safeGetChannel(cid), false);
-        response.received();
-        response.failure(ee);
-        response.retired();
-        return true;
-      }
-    }
-    return false;
   }
 
   private Optional<MessageChannel> safeGetChannel(NodeID id) {

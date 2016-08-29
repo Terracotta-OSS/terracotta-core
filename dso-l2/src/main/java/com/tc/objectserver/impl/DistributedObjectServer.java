@@ -741,7 +741,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 // setup replication    
     final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(l2Coordinator.getReplicatedClusterStateManager().getPassives(), processTransactionHandler.getEntityList(), replicationDriver.getSink());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(l2Coordinator.getReplicatedClusterStateManager().getPassives(), processTransactionHandler.getEntityList(), this.persistor.getEntityPersistor(), replicationDriver.getSink());
     processor.setReplication(passives); 
 //  routing for passive to receive replication    
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
@@ -958,10 +958,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
+        final Set<ConnectionID> existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
+        persistor.getEntityPersistor().setState(sce.getCurrentState(), existingConnections);
         if (sce.movedToActive()) {
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
-            startL1Listener();
+            startL1Listener(existingConnections);
           } catch (IOException ioe) {
             throw new RuntimeException(ioe);
           }
@@ -1068,8 +1070,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
   }
 
-  public void startL1Listener() throws IOException {
-    final Set<ConnectionID> existingConnections = Collections.unmodifiableSet(this.connectionIdFactory.loadConnectionIDs());
+  public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
     this.context.getClientHandshakeManager().setStarting(existingConnections);
     this.l1Listener.start(existingConnections);
     if (!existingConnections.isEmpty()) {

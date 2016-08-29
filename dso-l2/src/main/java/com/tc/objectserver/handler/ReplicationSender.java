@@ -33,10 +33,12 @@ import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCU
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_END;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -85,8 +87,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       }   
 // filter out messages based on sync state.
       if (filterMessage(syncing, nodeid, msg)) {
-        context.release();
-        return;
+//  if a message is filtered, it is turned to a NOOP so ordering can be preserved 
+//  on the passive for possible resends
+        msg.setNoop();
       }
 //  sending message on to passive, additional filtering may happen on the other side.
 //  the only messages that are relevant before passive sync starts are create messages
@@ -165,8 +168,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     }
     switch (msg.getReplicationType()) {
       case NOOP:
-      case RELEASE_ENTITY:
-        return false;
+//  this is a special case noop that gets replicated to the passive to communicate that
+//  the client has gone away and persistors should do cleanup
+        return !msg.getSource().isNull();
       default:
         return true;
     }
@@ -300,7 +304,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               return false;
             }
           case NOOP:
-          case RELEASE_ENTITY:
             return false;
           default:
             throw new AssertionError("unknown replication message:" + msg);

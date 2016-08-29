@@ -80,9 +80,12 @@ public class EntityData {
     public long transactionID;
     // reconfigureResponse is only used to store the result of RECONFIGURE.
     public byte[] reconfigureResponse;
-    // didFind is only used to store the result of DOES_EXIST.
-    public boolean didFind;
     // The exception in CREATE/DESTROY is saved here, null on success.
     public EntityException failure;
+
+    @Override
+    public String toString() {
+      return "JournalEntry{" + "operation=" + operation + ", transactionID=" + transactionID + '}';
+    }
   }
 }

@@ -21,12 +21,19 @@ package com.tc.objectserver.persistence;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
 import com.tc.util.Assert;
+import com.tc.util.State;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import org.terracotta.exception.EntityException;
@@ -60,7 +67,7 @@ public class EntityPersistor {
     }
   }
 
-  public void clear() {
+  public synchronized void clear() {
     this.entities.clear();
     this.entityLifeJournal.clear();
     this.counters.clear();
@@ -107,7 +114,7 @@ public class EntityPersistor {
 
   public void entityCreateFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("createFailed " + clientID + " " + transactionID, error);
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, error);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, error);
   }
 
   public void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
@@ -115,13 +122,17 @@ public class EntityPersistor {
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     
     // Record this in the journal - null error on success.
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, null);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, null);
   }
   
   public void entityCreatedJustInJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version) {
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, false, null);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, null);
   }
-
+  
+  public void entityDestroyedJustInJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version) {
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, null);
+  }
+  
   public void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreatedNoJournal " + id);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
@@ -149,7 +160,7 @@ public class EntityPersistor {
 
   public void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("entityDestroyFailed " + clientID + " " + transactionID);
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, false, error);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, error);
   }
 
   public void entityDestroyed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
@@ -161,7 +172,7 @@ public class EntityPersistor {
     this.entities.remove(key);
     
     // Record this in the journal - null error on success.
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, false, null);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, null);
   }
 
   public byte[] reconfiguredResultInJournal(ClientID clientID, long transactionID) throws EntityException {
@@ -181,7 +192,7 @@ public class EntityPersistor {
 
   public void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("entityReconfigureFailed " + clientID + " " + transactionID);
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, null, false, error);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, null, error);
   }
 
   /**
@@ -205,7 +216,7 @@ public class EntityPersistor {
     this.entities.put(key, val);
     
     // Record this in the journal.
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, previousConfiguration, false, null);
+    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, previousConfiguration, null);
     
     // Return what we over-wrote.
     return previousConfiguration;
@@ -217,7 +228,7 @@ public class EntityPersistor {
     return consumerID;
   }
 
-  public void removeTrackingForClient(ClientID sourceNodeID) {
+  public synchronized void removeTrackingForClient(ClientID sourceNodeID) {
     this.entityLifeJournal.remove(sourceNodeID);
   }
 
@@ -233,7 +244,7 @@ public class EntityPersistor {
     return newList;
   }
 
-  private void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, boolean didFind, EntityException error) {
+  private synchronized void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, EntityException error) {
     List<EntityData.JournalEntry> rawJournal = this.entityLifeJournal.get(clientID);
     // Note that this may be the first time we encountered this client.
     if (null == rawJournal) {
@@ -243,16 +254,17 @@ public class EntityPersistor {
     JournalEntry newEntry = new JournalEntry();
     newEntry.operation = operation;
     newEntry.transactionID = transactionID;
-    newEntry.didFind = didFind;
     newEntry.failure = error;
+    newEntry.reconfigureResponse = reconfigureResult;
     clientJournal.add(newEntry);
     this.entityLifeJournal.put(clientID, clientJournal);
   }
 
-  private JournalEntry getEntryForTransaction(ClientID clientID, long transactionID) {
+  private synchronized JournalEntry getEntryForTransaction(ClientID clientID, long transactionID) {
     JournalEntry foundEntry = null;
     List<EntityData.JournalEntry> clientJournal =  this.entityLifeJournal.get(clientID);
     // Note that we may not know anything about this client.
+    LOGGER.debug("checking " + clientID + " " + clientJournal);
     if (null != clientJournal) {
       for (JournalEntry entry : clientJournal) {
         if (entry.transactionID == transactionID) {
@@ -279,5 +291,56 @@ public class EntityPersistor {
     value.entityName = entityName;
     value.configuration = configuration;
     this.entities.put(key, value);
+  }
+  
+  public synchronized void setState(State state, Set<ConnectionID> connectedClients) {
+    Set<ClientID> clients = new HashSet<>();
+    for (ConnectionID c : connectedClients) {
+      clients.add(new ClientID(c.getChannelID()));
+    }
+    clients.removeAll(this.entityLifeJournal.keySet());
+    for (ClientID c : clients) {
+      this.entityLifeJournal.removeAll(clients);
+    }
+  }
+  
+  public synchronized void serialize(ObjectOutput bucket) throws IOException {
+    Set<ClientID> locals = this.entityLifeJournal.keySet();
+    int size = locals.size();
+    bucket.writeInt(size);
+    for (ClientID local : locals) {
+      bucket.writeObject(local);
+      bucket.writeObject(this.entityLifeJournal.get(local));
+    }
+  }  
+  
+  public synchronized void layer(ObjectInput bucket) throws IOException {
+    try {
+      int size = bucket.readInt();
+      LOGGER.debug("log size " + size);
+      for (int x=0;x<size;x++) {
+        ClientID key = (ClientID)bucket.readObject();
+        List<EntityData.JournalEntry> journal = (List<EntityData.JournalEntry>)bucket.readObject();
+        List<EntityData.JournalEntry> check = (List<EntityData.JournalEntry>)this.entityLifeJournal.get(key);
+        if (check == null) {
+          this.entityLifeJournal.put(key, journal);
+          LOGGER.debug(key + " putting " + journal);
+        } else {
+          int pos = 0;
+          for (JournalEntry je : journal) {
+            while (pos < check.size() && check.get(pos).transactionID < je.transactionID) {
+              pos += 1;
+            }
+            if (pos == check.size() || check.get(pos).transactionID != je.transactionID) {
+              check.add(pos, je);
+            }
+          }
+          LOGGER.debug(key + " layering " + journal + " " + check);
+          this.entityLifeJournal.put(key, check);
+        }
+      }
+    } catch (ClassNotFoundException cnf) {
+      throw new IOException(cnf);
+    }
   }
 }

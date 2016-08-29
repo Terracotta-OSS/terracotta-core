@@ -24,6 +24,7 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -46,7 +47,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     CREATE_ENTITY,
     RECONFIGURE_ENTITY,
     INVOKE_ACTION,
-    RELEASE_ENTITY,
     DESTROY_ENTITY,
     
     SYNC_BEGIN,
@@ -128,6 +128,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
   public void setReplicationID(long rid) {
     this.rid = rid;
+  }
+  
+  public void setNoop() {
+    this.action = ReplicationType.NOOP;
   }
 
   @Override
