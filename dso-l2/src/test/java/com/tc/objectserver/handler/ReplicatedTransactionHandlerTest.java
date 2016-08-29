@@ -152,7 +152,7 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(msg);
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, rand));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityMessage(eid, 1));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
 //  verify there was an attempt to decode the invoke message
     verify(msg).getExtendedData();
     verify(entity).getCodec();
@@ -188,7 +188,7 @@ public class ReplicatedTransactionHandlerTest {
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage());
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
     this.loopbackSink.addSingleThreaded(msg);
     verify(msg).getExtendedData();
     verify(msg).getConcurrency();  // make sure RTH is pulling the concurrency from the message
@@ -313,7 +313,7 @@ public class ReplicatedTransactionHandlerTest {
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(6).array(), 4));
     send(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, 4)); 
     send(PassiveSyncMessage.createEndEntityMessage(eid, VERSION));
-    send(PassiveSyncMessage.createEndSyncMessage());
+    send(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
   }
 
   private long send(ReplicationMessage msg) throws EventHandlerException {
