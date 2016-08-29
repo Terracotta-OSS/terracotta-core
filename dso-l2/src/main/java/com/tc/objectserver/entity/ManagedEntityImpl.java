@@ -708,17 +708,19 @@ public class ManagedEntityImpl implements ManagedEntity {
     // Can't enter active state twice.
     Assert.assertFalse(this.isInActiveState);
     Assert.assertNull(this.activeServerEntity);
-    
-    this.isInActiveState = true;
-    if (null != this.passiveServerEntity) {
-      this.activeServerEntity = factory.createActiveEntity(this.registry, this.constructorInfo);
-      this.concurrencyStrategy = factory.getConcurrencyStrategy(this.constructorInfo);
-      this.activeServerEntity.loadExisting();
-      this.passiveServerEntity = null;
-      // Fire the event that the entity was reloaded.
-      this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
-    } else {
-      throw new IllegalStateException("no entity to promote");
+//  checking destroyed here should be fine.  no other threads should be touching during promote
+    if (!this.isDestroyed) {
+      this.isInActiveState = true;
+      if (null != this.passiveServerEntity) {
+        this.activeServerEntity = factory.createActiveEntity(this.registry, this.constructorInfo);
+        this.concurrencyStrategy = factory.getConcurrencyStrategy(this.constructorInfo);
+        this.activeServerEntity.loadExisting();
+        this.passiveServerEntity = null;
+        // Fire the event that the entity was reloaded.
+        this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
+      } else {
+        throw new IllegalStateException("no entity to promote");
+      }
     }
   }
   
