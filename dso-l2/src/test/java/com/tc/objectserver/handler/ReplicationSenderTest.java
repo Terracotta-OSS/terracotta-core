@@ -230,14 +230,16 @@ public class ReplicationSenderTest {
   private void validateCollector(Collection<ReplicationMessage> valid) {
     Iterator<ReplicationMessage> next = valid.iterator();
     collector.stream().forEach(cmsg->{
-      ReplicationMessage vmsg = next.next();
-      if (vmsg.getReplicationType() != ReplicationType.SYNC_BEGIN &&
-          vmsg.getReplicationType() != ReplicationType.SYNC_END) {
-        Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getEntityID(), cmsg.getMessage().getEntityID());
+      if (cmsg.getMessage().getReplicationType() != ReplicationType.NOOP) {
+        ReplicationMessage vmsg = next.next();
+        if (vmsg.getReplicationType() != ReplicationType.SYNC_BEGIN &&
+            vmsg.getReplicationType() != ReplicationType.SYNC_END) {
+          Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getEntityID(), cmsg.getMessage().getEntityID());
+        }
+        Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getReplicationType(), cmsg.getMessage().getReplicationType());
+        Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getConcurrency(), cmsg.getMessage().getConcurrency());
+        System.err.println(vmsg.getReplicationType() + " on " + vmsg.getEntityID());
       }
-      Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getReplicationType(), cmsg.getMessage().getReplicationType());
-      Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getConcurrency(), cmsg.getMessage().getConcurrency());
-      System.err.println(vmsg.getReplicationType() + " on " + vmsg.getEntityID());
     });
   }
   

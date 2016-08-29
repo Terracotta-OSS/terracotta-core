@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 
 import static org.mockito.Mockito.mock;
+import org.terracotta.exception.EntityNotFoundException;
 
 
 public class EntityPersistorTest extends TCTestCase {
@@ -214,7 +215,7 @@ public class EntityPersistorTest extends TCTestCase {
     this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     // Synthesize a failure (double-create).
     long create2 = 2;
-    EntityException error = mock(EntityException.class);
+    EntityException error = new EntityNotFoundException("class", "name");
     this.entityPersistor.entityCreateFailed(this.client, create2, oldestTransactionOnClient, error);
     // Destroy the entity.
     long destroy1 = 3;
