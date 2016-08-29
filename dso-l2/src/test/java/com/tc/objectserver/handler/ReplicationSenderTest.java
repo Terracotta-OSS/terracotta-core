@@ -94,7 +94,6 @@ public class ReplicationSenderTest {
       case INVOKE_ACTION:
       case NOOP:
       case RECONFIGURE_ENTITY:
-      case RELEASE_ENTITY:
         return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], 0);
       case SYNC_BEGIN:
         return PassiveSyncMessage.createStartSyncMessage();
