@@ -50,7 +50,8 @@ public class ReadyStripe {
       installer.installNewServer(serverName, heapInM, debugPort);
     }
     // The config is built and stripe has been installed so write the config to the stripe.
-    installer.installConfig(configBuilder.buildConfig());
+    String configText = configBuilder.buildConfig();
+    installer.installConfig(configText);
     
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
@@ -59,17 +60,19 @@ public class ReadyStripe {
     installer.startServers(processControl);
     String connectUri = configBuilder.buildUri();
     ClusterInfo clusterInfo = configBuilder.getClusterInfo();
-    return new ReadyStripe(processControl, connectUri, clusterInfo);
+    return new ReadyStripe(processControl, connectUri, clusterInfo, configText);
   }
   
   
   public final IMultiProcessControl stripeControl;
   public final String stripeUri;
   public final ClusterInfo clusterInfo;
+  public final String configText;
   
-  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo) {
+  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo, String configText) {
     this.stripeControl = stripeControl;
     this.stripeUri = stripeUri;
     this.clusterInfo = clusterInfo;
+    this.configText = configText;
   }
 }
