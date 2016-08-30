@@ -72,7 +72,12 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     boolean isRestartable = master.isRestartable();
     // Note that we want to uniquify the JAR list since different packaging options might result in the test config
     // redundantly specifying JARs.
-    List<String> extraJarPaths = CommonIdioms.uniquifyList(master.getExtraServerJarPaths());
+    // First, however, make sure that there are no nulls in the list (since that implies we failed to look something up).
+    List<String> extraServerJarPaths = master.getExtraServerJarPaths();
+    for (String path : extraServerJarPaths) {
+      Assert.assertNotNull(path);
+    }
+    List<String> extraJarPaths = CommonIdioms.uniquifyList(extraServerJarPaths);
     String namespaceFragment = master.getConfigNamespaceSnippet();
     String serviceFragment = master.getServiceConfigXMLSnippet();
     String entityFragment = master.getEntityConfigXMLSnippet();
