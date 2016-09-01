@@ -25,6 +25,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -35,7 +36,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
 public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshakeMessage> {
-
+  
   protected static final String        OPEN_SOURCE                = "Opensource";
   protected static final String        ENTERPRISE                 = "Enterprise";
   public static final String           LAGS                       = "lags";
@@ -49,9 +50,13 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
 
   private ServerClientHandshakeManager handshakeManager;
   private final String                 serverName;
+  private final EntityManager          entityManager;
+  private final ProcessTransactionHandler transactionHandler;
 
-  public ClientHandshakeHandler(String serverName) {
+  public ClientHandshakeHandler(String serverName, EntityManager entityManager, ProcessTransactionHandler transactionHandler) {
     this.serverName = serverName;
+    this.entityManager = entityManager;
+    this.transactionHandler = transactionHandler;
   }
 
   @Override
@@ -60,7 +65,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
       NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
       checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
       checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
-      this.handshakeManager.notifyClientConnect(clientMsg);
+      this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
     } catch (ClientHandshakeException e) {
       getLogger().error("Handshake Error : ", e);
       MessageChannel c = clientMsg.getChannel();

@@ -19,6 +19,7 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
@@ -37,10 +38,10 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.locks.LockManager;
 import com.tc.util.Assert;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,10 +64,7 @@ public class ServerClientHandshakeManager {
 
   private final Timer                    timer;
   private final ReconnectTimerTask       reconnectTimerTask;
-  private final LockManager              lockManager;
-  private final EntityManager entityManager;
-  private final ProcessTransactionHandler transactionHandler;
-  private final Stage<VoltronEntityMessage> messageStage;
+  private final StageManager             stageManager;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
   private final TCLogger                 logger;
@@ -75,17 +73,12 @@ public class ServerClientHandshakeManager {
   private final TCLogger                 consoleLogger;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
-                                      LockManager lockManager, EntityManager entityManager, 
-                                      ProcessTransactionHandler transactionHandler,
-                                      Stage<VoltronEntityMessage> messageStage, 
+                                      StageManager stageManager, 
                                       Timer timer, long reconnectTimeout,
                                       boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.lockManager = lockManager;
-    this.entityManager = entityManager;
-    this.transactionHandler = transactionHandler;
-    this.messageStage = messageStage;
+    this.stageManager = stageManager;
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
     this.persistent = persistent;
@@ -101,7 +94,7 @@ public class ServerClientHandshakeManager {
     return this.state == State.STARTED;
   }
 
-  public void notifyClientConnect(ClientHandshakeMessage handshake) throws ClientHandshakeException {
+  public void notifyClientConnect(ClientHandshakeMessage handshake, EntityManager entityManager, ProcessTransactionHandler transactionHandler) throws ClientHandshakeException {
     final ClientID clientID = (ClientID) handshake.getSourceNodeID();
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
@@ -122,7 +115,6 @@ public class ServerClientHandshakeManager {
         // This is a client reconnecting after a restart.
         
         this.channelManager.makeChannelActiveNoAck(handshake.getChannel());
-        this.lockManager.reestablishState(clientID, lockContexts);
         
         // Find any client-entity references and ensure that we account for them.
         for(ClientEntityReferenceContext referenceContext : handshake.getReconnectReferences()) {
@@ -130,7 +122,7 @@ public class ServerClientHandshakeManager {
           long version = referenceContext.getEntityVersion();
           Optional<ManagedEntity> entity = null;
           try {
-            entity = this.entityManager.getEntity(entityID, version);
+            entity = entityManager.getEntity(entityID, version);
           } catch (EntityException e) {
             // We don't expect to fail at this point.
             // TODO:  Determine if we have a meaningful way to handle this error.
@@ -156,7 +148,7 @@ public class ServerClientHandshakeManager {
         
         // Find any resent messages and re-apply them in the transaction handler.
         for (ResendVoltronEntityMessage resentMessage : handshake.getResendMessages()) {
-          this.transactionHandler.handleResentMessage(resentMessage);
+          transactionHandler.handleResentMessage(resentMessage);
         }
 
         // Now that we have processed everything from this resend, see if it was the last one.
@@ -204,7 +196,6 @@ public class ServerClientHandshakeManager {
   // Should be called from within the sync block
   private void start() {
     this.logger.info("Starting TSA services...");
-    this.lockManager.start();
     final Set<NodeID> cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
     // It is important to start all the managers before sending the ack to the clients
     for (NodeID nid : cids) {
@@ -212,15 +203,15 @@ public class ServerClientHandshakeManager {
       sendAckMessageFor(clientID);
     }
     this.state = State.STARTED;
-    messageStage.unpause();
+    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).unpause();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    this.messageStage.getSink().addSingleThreaded(new NoopEntityMessage(EntityDescriptor.NULL_ID));
+    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new NoopEntityMessage(EntityDescriptor.NULL_ID));
   }
 
   public synchronized void setStarting(Set<ConnectionID> existingConnections) {
     assertInit();
-    messageStage.pause();
+    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).pause();
     this.state = State.STARTING;
     if (existingConnections.isEmpty()) {
       start();

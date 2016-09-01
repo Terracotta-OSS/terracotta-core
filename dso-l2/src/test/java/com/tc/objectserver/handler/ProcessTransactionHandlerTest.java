@@ -30,6 +30,8 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -42,10 +44,13 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
@@ -85,7 +90,6 @@ public class ProcessTransactionHandlerTest {
     when(this.terracottaServiceProviderRegistry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
-    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor);
     this.source = mock(ClientID.class);
     
     MessageChannel messageChannel = mock(MessageChannel.class);
@@ -97,10 +101,10 @@ public class ProcessTransactionHandlerTest {
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
     when(channelManager.getActiveChannel(Matchers.eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
     
-    this.loopbackSink = new ForwardingSink(this.processTransactionHandler.getVoltronMessageHandler());
+    StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();
     
-    this.clientEntityStateManager = new ClientEntityStateManagerImpl(loopbackSink);
+    this.clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, mock(ManagementTopologyEventCollector.class), mock(DSOChannelManagerEventListener.class));
     this.eventCollector = mock(ITopologyEventCollector.class);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
@@ -109,7 +113,14 @@ public class ProcessTransactionHandlerTest {
     EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     entityManager.enterActiveState();
     channelManager.addEventListener(clientEntityStateManager);
-    processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
+
+    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager);
+
+    this.loopbackSink = new ForwardingSink(this.processTransactionHandler.getVoltronMessageHandler());
+    Stage mockStage = mock(Stage.class);
+    when(mockStage.getSink()).thenReturn(this.loopbackSink);
+    when(stageManager.getStage(any(), any())).thenReturn(mockStage);
+
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
   

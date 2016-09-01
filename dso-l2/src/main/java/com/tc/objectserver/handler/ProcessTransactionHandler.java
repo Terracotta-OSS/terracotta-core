@@ -75,8 +75,8 @@ public class ProcessTransactionHandler {
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
   
-  private EntityManager entityManager;
-  private DSOChannelManager dsoChannelManager;
+  private final EntityManager entityManager;
+  private final DSOChannelManager dsoChannelManager;
   
   // Data required for handling transaction resends.
   private SparseList<ResendVoltronEntityMessage> resendReplayList;
@@ -144,20 +144,11 @@ public class ProcessTransactionHandler {
     return this.voltronHandler;
   }
 
-  /**
-   * There is an ordering problem in how this object is constructed (there is a dependency loop) so this
-   * allows us to inject the components which are built "on top of" the ProcessTransactionHandler.
-   */
-  public void setLateBoundComponents(DSOChannelManager dsoManager, EntityManager entityManager) {
-    Assert.assertNull(this.dsoChannelManager);
-    Assert.assertNull(this.entityManager);
-    this.dsoChannelManager = dsoManager;
-    this.entityManager = entityManager;
-  }
-
-  public ProcessTransactionHandler(EntityPersistor entityPersistor, TransactionOrderPersistor transactionOrderPersistor) {
+  public ProcessTransactionHandler(EntityPersistor entityPersistor, TransactionOrderPersistor transactionOrderPersistor, DSOChannelManager channelManager, EntityManager entityManager) {
     this.entityPersistor = entityPersistor;
     this.transactionOrderPersistor = transactionOrderPersistor;
+    this.dsoChannelManager = channelManager;
+    this.entityManager = entityManager;
     
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new LinkedList<>();
