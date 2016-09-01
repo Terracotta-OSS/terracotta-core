@@ -153,7 +153,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private Stage<TCGroupMessageWrapper> receiveGroupMessageStage;
   private Stage<TCGroupHandshakeMessage> handshakeMessageStage;
   private Stage<DiscoveryStateMachine> discoveryStage;
-  private TCProperties                                      l2Properties;
 
   /*
    * Setup a communication manager which can establish channel from either sides.
@@ -231,7 +230,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private void init(TCSocketAddress socketAddress) {
 
     TCProperties tcProperties = TCPropertiesImpl.getProperties();
-    l2Properties = tcProperties.getPropertiesFor(TCPropertiesConsts.L2_CATEGORY);
 
     createTCGroupManagerStages();
     final NetworkStackHarnessFactory networkStackHarnessFactory = getNetworkStackHarnessFactory();
@@ -456,7 +454,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   }
 
-  public void closeMember(TCGroupMember member) {
+  private void closeMember(TCGroupMember member) {
     Assert.assertNotNull(member);
     if (isDebugLogging()) {
       debugInfo("Closing member: " + member);
