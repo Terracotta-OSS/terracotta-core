@@ -28,16 +28,16 @@ public class SimpleClientTestEnvironment implements IClientTestEnvironment {
   private final int totalClientCount;
   private final int thisClientIndex;
   private final IClusterInfo clusterInfo;
+  private final int numberOfStripes;
+  private final int numberOfServersPerStripe;
 
-  public SimpleClientTestEnvironment(String clusterUri, int totalClientCount, int thisClientIndex) {
-    this(clusterUri, totalClientCount, thisClientIndex, null);
-  }
-
-  public SimpleClientTestEnvironment(String clusterUri, int totalClientCount, int thisClientIndex, IClusterInfo clusterInfo) {
+  public SimpleClientTestEnvironment(String clusterUri, int totalClientCount, int thisClientIndex, IClusterInfo clusterInfo, int numberOfStripes, int numberOfServersPerStripe) {
     this.clusterUri = clusterUri;
     this.totalClientCount = totalClientCount;
     this.thisClientIndex = thisClientIndex;
     this.clusterInfo = clusterInfo;
+    this.numberOfStripes = numberOfStripes;
+    this.numberOfServersPerStripe = numberOfServersPerStripe;
   }
 
   @Override
@@ -58,5 +58,15 @@ public class SimpleClientTestEnvironment implements IClientTestEnvironment {
   @Override
   public IClusterInfo getClusterInfo() {
     return this.clusterInfo;
+  }
+
+  @Override
+  public int getNumberOfStripes() {
+    return this.numberOfStripes;
+  }
+
+  @Override
+  public int getNumberOfServersPerStripe() {
+    return this.numberOfServersPerStripe;
   }
 }
