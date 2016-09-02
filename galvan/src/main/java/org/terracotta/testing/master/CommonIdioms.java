@@ -37,7 +37,7 @@ public class CommonIdioms {
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
   public static void installAndRunClients(IGalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws IOException {
-    ClientSubProcessManager manager = new ClientSubProcessManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri, clientsConfiguration.clusterInfo);
+    ClientSubProcessManager manager = new ClientSubProcessManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri, clientsConfiguration.clusterInfo, clientsConfiguration.numberOfStripes, clientsConfiguration.numberOfServersPerStripe);
     manager.start();
   }
 
@@ -77,6 +77,8 @@ public class CommonIdioms {
   /**
    * This class is essentially a struct containing the data which describes how the client for a test are to be
    * configured and how they should be run.
+   * Additionally, it also provides much of the environment description and other meta-data which tests can use
+   * to calibrate themselves.
    * It exists to give context to the parameters in CommonIdioms.
    */
   public static class ClientsConfiguration {
@@ -85,6 +87,8 @@ public class CommonIdioms {
     public int clientsToCreate;
     public IClientArgumentBuilder clientArgumentBuilder;
     public String connectUri;
+    public int numberOfStripes;
+    public int numberOfServersPerStripe;
     
     // Debug options specific to clients.
     public int setupClientDebugPort;

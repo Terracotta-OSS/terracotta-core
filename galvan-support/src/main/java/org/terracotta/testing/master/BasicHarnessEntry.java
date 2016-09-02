@@ -63,6 +63,9 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.clientArgumentBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName, harnessOptions.errorClassName);
     clientsConfiguration.connectUri = connectUri;
     clientsConfiguration.clusterInfo = clusterInfo;
+    // The basic harness can only run single-stripe tests.
+    clientsConfiguration.numberOfStripes = 1;
+    clientsConfiguration.numberOfServersPerStripe = runConfiguration.serversInStripe;
     clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
     clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
