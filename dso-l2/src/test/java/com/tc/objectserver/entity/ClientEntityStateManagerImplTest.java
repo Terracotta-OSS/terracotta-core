@@ -18,22 +18,29 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tc.async.api.Sink;
+import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import org.mockito.Matchers;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -42,13 +49,21 @@ import static org.mockito.Mockito.when;
 
 public class ClientEntityStateManagerImplTest {
   private ClientEntityStateManager clientEntityStateManager;
-  private Sink<VoltronEntityMessage> requestSink;
+  private ManagementTopologyEventCollector collector;
+  private Sink requestSink;
+  private Stage requestStage;
+  private StageManager stageManager;
 
   @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     requestSink = mock(Sink.class);
-    clientEntityStateManager = new ClientEntityStateManagerImpl(requestSink);
+    requestStage = mock(Stage.class);
+    when(requestStage.getSink()).thenReturn(requestSink);
+    stageManager = mock(StageManager.class);
+    when(stageManager.getStage(any(), any())).thenReturn(requestStage);
+    collector = mock(ManagementTopologyEventCollector.class);
+    clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, collector, mock(DSOChannelManagerEventListener.class));
   }
 
   @Test
@@ -80,6 +95,7 @@ public class ClientEntityStateManagerImplTest {
     clientEntityStateManager.channelRemoved(messageChannel);
 
     verify(requestSink).addSingleThreaded(argThat(hasClientAndEntityIDs(clientID, entityID)));
+    verify(collector).expectedReleases(Matchers.eq(clientID), Matchers.eq(Arrays.asList(new EntityDescriptor(entityID, clientInstanceID, version))));
   }
 
   @Test

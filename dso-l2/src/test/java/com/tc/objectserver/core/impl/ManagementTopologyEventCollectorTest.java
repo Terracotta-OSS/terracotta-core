@@ -34,9 +34,13 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.UUID;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.terracotta.entity.ClientDescriptor;
@@ -48,10 +52,12 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import static org.mockito.Matchers.any;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 
 public class ManagementTopologyEventCollectorTest {
@@ -321,5 +327,54 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertEquals(originalEntity, readEntity);
     Assert.assertEquals(originalServer, readServer);
     Assert.assertEquals(originalState, readState);
+  }
+  
+  @Test
+  public void testClientEventOrdering() throws Exception {
+    IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
+    when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
+    this.collector = new ManagementTopologyEventCollector(selfID, monitoringProducer);
+    this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, 0);
+    ClientID cid = mock(ClientID.class);
+    when(cid.toLong()).thenReturn(1L);
+    
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)).thenReturn(mock(ClientHandshakeMonitoringInfo.class));
+    when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 1));
+    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 2));
+    
+//  TEST with 10 entities fetched
+    int counts[] = {0,10,1};
+    for (int count : counts) {
+      reset(monitoringProducer);
+      System.out.println("testing " + count + " fetched entities");
+      this.collector.clientDidConnect(channel, cid);
+      EntityID[] entities = new EntityID[count];
+      for (int x=0;x<count;x++) {
+        entities[x] = new EntityID("testClass", "test " + x);
+      }
+
+      for (EntityID eid : entities) {
+        this.collector.entityWasCreated(eid, 1, true);
+      }
+      for (EntityID eid : entities) {
+        ClientDescriptor descriptor = mock(ClientDescriptor.class);
+        this.collector.clientDidFetchEntity(cid, eid, descriptor);
+      }
+  //  simulate ClientEntityStateManger detecting a client disconnect
+      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1)).collect(Collectors.toList()));
+  //  now disconnect the client
+      this.collector.clientDidDisconnect(channel, cid);
+      for (EntityID eid : entities) {
+        verify(monitoringProducer, Mockito.never()).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
+        this.collector.clientDidReleaseEntity(cid, eid);
+        verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq(Long.toString(1L) + eid.getClassName() + eid.getEntityName()));
+      }
+      verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));
+      
+      for (EntityID eid : entities) {
+        this.collector.entityWasDestroyed(eid);
+      }
+    }
   }
 }

@@ -23,23 +23,33 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.tc.async.api.Sink;
+import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.util.Assert;
+import java.util.ArrayList;
+import java.util.List;
 import org.terracotta.entity.EntityMessage;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   private final Multimap<ClientID, EntityDescriptor> clientStates = Multimaps.synchronizedMultimap(HashMultimap.create());
-  private final Sink<VoltronEntityMessage> voltronSink;
+  private final StageManager stageManager;
+  private final ManagementTopologyEventCollector collector;
+  private final DSOChannelManagerEventListener clientChain;
 
-  public ClientEntityStateManagerImpl(Sink<VoltronEntityMessage> voltronSink) {
-    this.voltronSink = voltronSink;
+  public ClientEntityStateManagerImpl(StageManager stageManager, ManagementTopologyEventCollector collector, DSOChannelManagerEventListener chain) {
+    this.stageManager = stageManager;
+    this.collector = collector;
+    this.clientChain = chain;
   }
 
   @Override
@@ -63,7 +73,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
 
   @Override
   public void channelCreated(MessageChannel channel) {
-    // ignore it until something actually happens
+    clientChain.channelCreated(channel);
   }
 
   @Override
@@ -71,10 +81,15 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
     NodeID node = channel.getRemoteNodeID();
     // We know that this is a remote client so make the down-cast.
     ClientID client = (ClientID) node;
+    
+    List<EntityDescriptor> list = new ArrayList(this.clientStates.get(client));
+    collector.expectedReleases(client, list);
+    Sink<VoltronEntityMessage> remover = stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
     // Note that we will clean these up when the removal request comes through so leave the clientStates unchanged, for now.
-    for (EntityDescriptor oneInstance : this.clientStates.get(client)) {
-      this.voltronSink.addSingleThreaded(new RemovalMessage(client, oneInstance));
+    for (EntityDescriptor oneInstance : list) {
+      remover.addSingleThreaded(new RemovalMessage(client, oneInstance));
     }
+    clientChain.channelRemoved(channel);
   }
 
   private static class RemovalMessage implements VoltronEntityMessage {

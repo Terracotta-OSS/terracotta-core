@@ -624,33 +624,65 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCumulativeCounter globalServerMapGetSnapshotRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
 
-    // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
-    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor());
-    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
-    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
-    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize);
-    final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
-    
-    // We can now initialize the internal managers used by the processTransactionHandler.
-    final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
-    ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(voltronMessageSink);
-
     // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
     IMonitoringProducer serviceInterface = platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>(){
       @Override
       public Class<IMonitoringProducer> getServiceType() {
         return IMonitoringProducer.class;
       }});
+    
+    long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
+    logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
+    reconnectTimeout *= 1000;
+    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
+                                                                                                 TCLogging
+                                                                                                     .getLogger(ServerClientHandshakeManager.class),
+                                                                                                 channelManager,
+                                                                                                 stageManager,
+                                                                                                 new Timer(
+                                                                                                           "Reconnect timer",
+                                                                                                           true),
+                                                                                                 reconnectTimeout,
+                                                                                                 restartable,
+                                                                                                 consoleLogger);
+    
+    
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(this.getServerNodeID(), serviceInterface);
+    ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, eventCollector, 
+      new DSOChannelManagerEventListener() {
+        @Override
+        public void channelCreated(MessageChannel channel) {
+          ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
+          if (l2Coordinator.getStateManager().isActiveCoordinator()) {
+            eventCollector.clientDidConnect(channel, cid);
+          }
+        }
+
+        @Override
+        public void channelRemoved(MessageChannel channel) {
+          ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
+          if (l2Coordinator.getStateManager().isActiveCoordinator() && clientHandshakeManager.isStarted() && channelManager.isActiveID(cid)) {
+            eventCollector.clientDidDisconnect(channel, cid);
+          }
+        }
+      });
 // add this server to the tree of servers
     eventCollector.serverDidJoinGroup(this.getServerNodeID(), server.getL2Identifier(), host, 
         bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(),
         pInfo.buildVersion(), pInfo.buildID());
 
+    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
+    final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
+
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
+    
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     channelManager.addEventListener(clientEntityStateManager);
-    processTransactionHandler.setLateBoundComponents(channelManager, entityManager);
+    // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
+    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor(), channelManager, entityManager);
+    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
+    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize);
+    final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
     
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(voltronMessageSink);
@@ -666,7 +698,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class, channelLifeCycleHandler, 1, maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
 
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(), 1, maxStageSize);
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
@@ -675,45 +707,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
 
-    long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
-
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
-    reconnectTimeout *= 1000;
-    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                                 TCLogging
-                                                                                                     .getLogger(ServerClientHandshakeManager.class),
-                                                                                                 channelManager,
-                                                                                                 this.lockManager,
-                                                                                                 entityManager,
-                                                                                                 processTransactionHandler,
-                                                                                                 processTransactionStage_voltron,
-                                                                                                 new Timer(
-                                                                                                           "Reconnect timer",
-                                                                                                           true),
-                                                                                                 reconnectTimeout,
-                                                                                                 restartable,
-                                                                                                 consoleLogger);
-    channelManager.addEventListener(new DSOChannelManagerEventListener() {
-      @Override
-      public void channelCreated(MessageChannel channel) {
-        ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
-        if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          eventCollector.clientDidConnect(channel, cid);
-        }
-      }
-
-      @Override
-      public void channelRemoved(MessageChannel channel) {
-        ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
-        if (l2Coordinator.getStateManager().isActiveCoordinator() && clientHandshakeManager.isStarted() && channelManager.isActiveID(cid)) {
-          eventCollector.clientDidDisconnect(channel, cid);
-        }
-      }
-    });
-    
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory);
@@ -1206,8 +1202,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     throw new UnsupportedOperationException();
   }
 
-  protected ClientHandshakeHandler createHandShakeHandler() {
-    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName());
+  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler) {
+    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName(), entities, processTransactionHandler);
   }
 
   // for tests only

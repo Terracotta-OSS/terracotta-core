@@ -38,6 +38,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
@@ -46,6 +47,7 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Collection;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
@@ -61,6 +63,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final Set<EntityID> entities;
   private final Map<NodeID, PlatformServer> servers;
   private final Map<FetchTuple, Integer> fetchPairCounts;
+  private final Map<ClientID, Collection<EntityDescriptor>> incomingReleases;
   private boolean isActiveState;
     
   private final ServerID thisNode;
@@ -74,6 +77,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.entities = new HashSet<EntityID>();
     this.fetchPairCounts = new HashMap<FetchTuple, Integer>();
     this.servers = new HashMap<NodeID, PlatformServer>();
+    this.incomingReleases = new HashMap<>();
     this.isActiveState = false;
     
     // Do our initial configuration of the service.
@@ -199,7 +203,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.connectedClients.remove(client);
     
     // Remove it from the monitoring interface.
-    if (null != this.serviceInterface) {
+    if (null != this.serviceInterface && !incomingReleases.containsKey(client)) {
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
     }
@@ -273,8 +277,26 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
       this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
     }
+    
+    if (incomingReleases.containsKey(client)) {
+      Collection<EntityDescriptor> expected = incomingReleases.get(client);
+      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(id)));
+      if (expected.isEmpty()) {
+        incomingReleases.remove(client);
+        // Remove it from the monitoring interface.
+        if (null != this.serviceInterface) {
+          String nodeName = clientIdentifierForService(client);
+          this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
+        }
+      }
+    }    
   }
   
+  public synchronized void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
+    if (null != serviceInterface && !releases.isEmpty()) {
+      incomingReleases.put(cid, releases);
+    }
+  }
   
   private static class FetchTuple {
     private final ClientID client;

@@ -21,6 +21,7 @@ package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +36,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.locks.LockManager;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
 
 public class ServerClientHandshakeManagerTest {
   private DSOChannelManager channelManager;
-  private LockManager lockManager;
+  private EntityManager entityManager;
   private ProcessTransactionHandler transactionHandler;
   private ServerClientHandshakeManager manager;
   private Stage voltronStage;
@@ -63,9 +63,8 @@ public class ServerClientHandshakeManagerTest {
   public void setUp() throws Exception {
     TCLogger logger = mock(TCLogger.class);
     this.channelManager = mock(DSOChannelManager.class);
-    this.lockManager = mock(LockManager.class);
-    EntityManager entityManager = mock(EntityManager.class);
     this.transactionHandler = mock(ProcessTransactionHandler.class);
+    StageManager stageManager = mock(StageManager.class);
     Timer timer = mock(Timer.class);
     long reconnectTimeout = 1000;
     boolean persistent = true;
@@ -73,7 +72,8 @@ public class ServerClientHandshakeManagerTest {
     voltronStage = mock(Stage.class);
     voltronSink = mock(Sink.class);
     when(voltronStage.getSink()).thenReturn(voltronSink);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, this.lockManager, entityManager, this.transactionHandler, voltronStage, timer, reconnectTimeout, persistent, consoleLogger);
+    when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
+    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, stageManager, timer, reconnectTimeout, persistent, consoleLogger);
   }
 
   @Test
@@ -110,11 +110,10 @@ public class ServerClientHandshakeManagerTest {
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(handshake.getChannel()).thenReturn(messageChannel);
-    this.manager.notifyClientConnect(handshake);
+    this.manager.notifyClientConnect(handshake, entityManager, transactionHandler);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
     
-    verify(this.lockManager).start();
     verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
   }
 
@@ -148,9 +147,8 @@ public class ServerClientHandshakeManagerTest {
     ResendVoltronEntityMessage resend = mock(ResendVoltronEntityMessage.class);
     when(message1.getSourceNodeID()).thenReturn(client1);
     when(message1.getResendMessages()).thenReturn(Collections.singleton(resend));
-    this.manager.notifyClientConnect(message1);
+    this.manager.notifyClientConnect(message1, entityManager, transactionHandler);
     assertFalse(this.manager.isStarted());
-    verify(this.lockManager, never()).start();
     verify(this.transactionHandler).handleResentMessage(resend);
     verify(this.voltronSink, never()).addSingleThreaded(any(NoopEntityMessage.class));
     
@@ -160,10 +158,9 @@ public class ServerClientHandshakeManagerTest {
     MessageChannel messageChannel2 = mock(MessageChannel.class);
     when(message2.getChannel()).thenReturn(messageChannel2);
     when(message2.getSourceNodeID()).thenReturn(client2);
-    this.manager.notifyClientConnect(message2);
+    this.manager.notifyClientConnect(message2, entityManager, transactionHandler);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
-    verify(this.lockManager).start();
     verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
   }
 
