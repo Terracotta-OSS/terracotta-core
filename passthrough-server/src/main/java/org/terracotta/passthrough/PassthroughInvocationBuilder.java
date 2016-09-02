@@ -58,6 +58,9 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
     this.clientInstanceID = clientInstanceID;
     this.messageCodec = messageCodec;
     
+    // We want to replicate, by default.
+    this.shouldReplicate = true;
+    
     // By default, get() will block on RETIRED.
     this.shouldBlockGetUntilRetire = true;
   }
