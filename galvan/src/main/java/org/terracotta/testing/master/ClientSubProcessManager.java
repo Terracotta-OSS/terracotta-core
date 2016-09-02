@@ -46,8 +46,16 @@ public class ClientSubProcessManager extends Thread {
   private final IClientArgumentBuilder clientArgumentBuilder;
   private final String connectUri;
   private final ClusterInfo clusterInfo;
+  private final int numberOfStripes;
+  private final int numberOfServersPerStripe;
 
-  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri, ClusterInfo clusterInfo) {
+  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri, ClusterInfo clusterInfo, int numberOfStripes, int numberOfServersPerStripe) {
+    Assert.assertTrue(clientsToCreate > 0);
+    Assert.assertTrue(connectUri.length() > 0);
+    Assert.assertNotNull(clusterInfo);
+    Assert.assertTrue(numberOfStripes > 0);
+    Assert.assertTrue(numberOfServersPerStripe > 0);
+    
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     this.verboseManager = verboseManager;
@@ -64,6 +72,8 @@ public class ClientSubProcessManager extends Thread {
     this.clientArgumentBuilder = clientArgumentBuilder;
     this.connectUri = connectUri;
     this.clusterInfo = clusterInfo;
+    this.numberOfStripes = numberOfStripes;
+    this.numberOfServersPerStripe = numberOfServersPerStripe;
   }
 
   @Override
@@ -74,7 +84,7 @@ public class ClientSubProcessManager extends Thread {
     ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
     
     // Run the setup client, synchronously.
-    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clusterInfo, this.clientsToCreate);
+    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, this.clientsToCreate);
     ClientRunner setupClient = clientInstaller.installClient("client_setup", this.setupClientDebugPort, extraSetupArguments);
     boolean setupWasClean = runClientLifeCycle(setupClient);
     
@@ -108,7 +118,7 @@ public class ClientSubProcessManager extends Thread {
       shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
       if (didRunCleanly) {
         // Run the destroy client, synchronously.
-        List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clusterInfo, this.clientsToCreate);
+        List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, this.clientsToCreate);
         ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, extraDestroyArguments);
         destroyWasClean = runClientLifeCycle(destroyClient);
         if (!destroyWasClean) {
@@ -201,7 +211,7 @@ public class ClientSubProcessManager extends Thread {
       int debugPort = (0 != testClientDebugPortStart)
           ? (testClientDebugPortStart + i)
           : 0;
-      List<String> extraArguments = this.clientArgumentBuilder.getArgumentsForTestRun(this.connectUri, this.clusterInfo, clientsToCreate, i);
+      List<String> extraArguments = this.clientArgumentBuilder.getArgumentsForTestRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, clientsToCreate, i);
       testClients[i] = clientInstaller.installClient(clientName, debugPort, extraArguments);
     }
     return testClients;
