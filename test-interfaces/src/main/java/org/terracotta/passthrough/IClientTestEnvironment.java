@@ -42,4 +42,14 @@ public interface IClientTestEnvironment {
    * @return {@link IClusterInfo} which provides information about connecting cluster
    */
   public IClusterInfo getClusterInfo();
+
+  /**
+   * @return The number of stripes in the current environment (always > 0).
+   */
+  public int getNumberOfStripes();
+
+  /**
+   * @return The number of servers within a given stripe in the current environment (always > 0).
+   */
+  public int getNumberOfServersPerStripe();
 }
