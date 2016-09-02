@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
 import org.terracotta.entity.EntityClientService;
@@ -40,6 +41,11 @@ import org.terracotta.entity.EntityResponse;
  * downstream passives attached to it.
  */
 public class PassthroughServer implements PassthroughDumper {
+  // Each connection needs a unique ID for internal tracking purposes but the ID is expected to be global, across all server
+  //  instances, so we will statically assign them.
+  private static final AtomicLong nextConnectionID = new AtomicLong(0L);
+
+
   private String serverName;
   private int bindPort;
   private int groupPort;
@@ -49,8 +55,6 @@ public class PassthroughServer implements PassthroughDumper {
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
-  // Note that we don't currently use the connection ID outside of this class but it is convenient and may be exposed outside, later.
-  private long nextConnectionID;
   private PassthroughConnection pseudoConnection;
   
   // We also track various information for the restart case.
@@ -60,7 +64,6 @@ public class PassthroughServer implements PassthroughDumper {
   
   public PassthroughServer() {
     this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
-    this.nextConnectionID = 1;
     
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
     this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
@@ -92,8 +95,7 @@ public class PassthroughServer implements PassthroughDumper {
 
   public synchronized PassthroughConnection connectNewClient(String connectionName) {
     Assert.assertTrue(this.hasStarted);
-    final long thisConnectionID = this.nextConnectionID;
-    this.nextConnectionID += 1;
+    final long thisConnectionID = nextConnectionID.incrementAndGet();
     // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
     Runnable onClose = new Runnable() {
       @Override
@@ -115,8 +117,7 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   private PassthroughConnection internalConnectNewPseudoConnection() {
-    final long thisConnectionID = this.nextConnectionID;
-    this.nextConnectionID += 1;
+    final long thisConnectionID = nextConnectionID.incrementAndGet();
     // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
     Runnable onClose = new Runnable() {
       @Override
