@@ -98,4 +98,9 @@ public class DummyStateManager implements StateManager {
     return localNodeID;
   }
 
+  @Override
+  public void cleanupKnownServers() {
+    // no cleanup needed
+  }
+
 }

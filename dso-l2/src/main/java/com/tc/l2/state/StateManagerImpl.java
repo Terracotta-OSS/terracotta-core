@@ -42,6 +42,8 @@ import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StateManagerImpl implements StateManager {
@@ -66,6 +68,12 @@ public class StateManagerImpl implements StateManager {
   private final ElectionGate                      elections  = new ElectionGate();
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
+  // Known servers from previous election
+  Set<NodeID> prevKnownServers = new HashSet<>();
+
+  // Known servers from current election
+  Set<NodeID> currKnownServers = new HashSet<>();
+
   public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, 
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
                           StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory,
@@ -85,7 +93,13 @@ public class StateManagerImpl implements StateManager {
   }
   
   private boolean electionStarted() {
-    return elections.electionStarted();
+    boolean isElectionStarted = elections.electionStarted();
+    if(isElectionStarted) {
+      prevKnownServers.clear();
+      prevKnownServers.addAll(currKnownServers);
+      currKnownServers.clear();
+    }
+    return isElectionStarted;
   }
   
   private boolean electionFinished() {
@@ -276,6 +290,10 @@ public class StateManagerImpl implements StateManager {
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
       fireStateChangedOperatorEvent();
+      // we are moving from passive standby to active state with a new election but we need to use previous election
+      // known servers list as they are in sync in with previous active
+      currKnownServers.clear();
+      currKnownServers.addAll(prevKnownServers);
       electionMgr.declareWinner(getLocalNodeID(), state);
     } else {
       throw new AssertionError("Cant move to " + ACTIVE_COORDINATOR + " from " + state);
@@ -285,6 +303,20 @@ public class StateManagerImpl implements StateManager {
   @Override
   public synchronized NodeID getActiveNodeID() {
     return activeNode;
+  }
+
+  /**
+   * This will be called just before we start processing resends, so any server joins
+   * after this call will be out of sync with this active, so we need to remove all
+   * servers which are not connected yet
+   */
+  @Override
+  public void cleanupKnownServers() {
+    for(NodeID nodeID : currKnownServers) {
+      if(!groupManager.isNodeConnected(nodeID)) {
+        currKnownServers.remove(nodeID);
+      }
+    }
   }
 
   @Override
@@ -412,10 +444,13 @@ public class StateManagerImpl implements StateManager {
       AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
-      groupManager.sendTo(msg.messageFrom(), abortMsg);      
-    } else if (!electionMgr.handleStartElectionRequest(msg, state)) {
+      groupManager.sendTo(msg.messageFrom(), abortMsg);
+    } else {
+      currKnownServers.add(msg.getEnrollment().getNodeID());
+      if (!electionMgr.handleStartElectionRequest(msg, state)) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
-      startElectionIfNecessary(ServerID.NULL_ID);
+        startElectionIfNecessary(ServerID.NULL_ID);
+      }
     }
   }
 
@@ -430,18 +465,29 @@ public class StateManagerImpl implements StateManager {
     validateResponse(nodeID, response);
   }
 
+  //used in testing
+  public void addKnownServersList(Set<NodeID> nodeIDs) {
+    currKnownServers.addAll(nodeIDs);
+  }
+
   private void validateResponse(NodeID nodeID, L2StateMessage response) throws GroupException {
     if (response == null || response.getType() != L2StateMessage.RESULT_AGREED) {
       String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Active State";
       logger.error(error);
       // throwing this exception will initiate a zap elsewhere
       throw new GroupException(error);
+    } else if (response.getState().equals(PASSIVE_STANDBY) && !currKnownServers.contains(nodeID)) {
+      final String errMesg = "A Terracotta server tried to join the mirror group as PASSIVE STANDBY but with dirty db, "
+        + " Zapping " +  nodeID + " to allow it to resync data from active";
+      logger.error(errMesg);
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB, errMesg);
     }
   }
 
   @Override
   public void startElectionIfNecessary(NodeID disconnectedNode) {
     Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
+    currKnownServers.remove(disconnectedNode);
     boolean elect = false;
     if (!initiated) {
 //  election has never been initiated.  do not participate

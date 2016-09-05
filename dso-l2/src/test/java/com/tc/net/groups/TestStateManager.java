@@ -55,6 +55,11 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
+  public void cleanupKnownServers() {
+
+  }
+
+  @Override
   public void handleClusterStateMessage(L2StateMessage clusterMsg) {
     throw new UnsupportedOperationException();
   }
