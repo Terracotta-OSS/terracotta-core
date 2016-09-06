@@ -37,7 +37,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
@@ -166,17 +165,23 @@ public class ProcessTransactionHandler {
   }
   
   private void addSequentially(MessageChannel channel, Predicate<VoltronEntityMultiResponse> adder) {
-    VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
-    ClientID target = (ClientID)((DSOMessageBase)vmr).getDestinationNodeID();
+    ClientID target = (ClientID)channel.getRemoteNodeID();
     boolean handled = false;
     while (!handled) {
-      TCMessage old = invokeReturn.putIfAbsent(target, vmr);
+      TCMessage old = invokeReturn.get(target);
       if (old instanceof VoltronEntityMultiResponse) {
         handled = adder.test((VoltronEntityMultiResponse)old);
-      } else {
-        handled = adder.test(vmr);
-        Assert.assertTrue(handled);
-        sendMultiResponse(vmr);
+      }
+      if (!handled) {
+        VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+        old = invokeReturn.putIfAbsent(target, vmr);
+        if (old instanceof VoltronEntityMultiResponse) {
+          handled = adder.test((VoltronEntityMultiResponse)old);
+        } else {
+          handled = adder.test(vmr);
+          Assert.assertTrue(handled);
+          sendMultiResponse(vmr);
+        }
       }
     }
   }
@@ -190,7 +195,8 @@ public class ProcessTransactionHandler {
     // This is active-side processing so this is never a replicated message.
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeGetChannel(sourceNodeID), isReplicatedMessage);
+    Optional<MessageChannel> safeChannel = safeGetChannel(sourceNodeID);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeChannel, isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -248,14 +254,13 @@ public class ProcessTransactionHandler {
         if (ServerEntityAction.INVOKE_ACTION == action) {
           ManagedEntity locked = entity;
           try {
-            safeGetChannel(sourceNodeID).ifPresent((channel)-> {
-              VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+            safeChannel.ifPresent((channel)-> {
               addSequentially(channel, addto->addto.addReceived(transactionID));
             });
             
             EntityMessage message = entityMessage.decodeRawMessage(entity.getCodec());
             locked.addRequestMessage(serverEntityRequest, entityMessage, (result)-> {
-              safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+              safeChannel.ifPresent((channel)-> {
                 addSequentially(channel, addTo->addTo.addResult(transactionID, result));
                 List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
                 for (Retiree toRetire : readyToRetire) {
@@ -266,7 +271,7 @@ public class ProcessTransactionHandler {
               locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
                 @Override
                 public void retired() {
-                  safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+                  safeChannel.ifPresent((channel)-> {
                     addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
                   });
                 }
@@ -277,7 +282,7 @@ public class ProcessTransactionHandler {
                 }
               });
             }, (fail)-> {
-              safeGetChannel(sourceNodeID).ifPresent(channel -> {
+              safeChannel.ifPresent(channel -> {
                 VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
                 failMessage.setFailure(transactionID, fail, false);
                 invokeReturn.put(sourceNodeID, failMessage);
@@ -291,7 +296,7 @@ public class ProcessTransactionHandler {
               locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
                 @Override
                 public void retired() {
-                  safeGetChannel(sourceNodeID).ifPresent((channel)-> {
+                  safeChannel.ifPresent((channel)-> {
                     addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
                   });
                 }

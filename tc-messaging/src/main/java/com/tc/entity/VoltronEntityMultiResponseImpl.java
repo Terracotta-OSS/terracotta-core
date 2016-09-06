@@ -76,7 +76,7 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   public synchronized boolean addReceived(TransactionID tid) {
     if (!isSealed()) {
       if (receivedIDs == null) {
-        receivedIDs = new ArrayList<TransactionID>();
+        receivedIDs = new ArrayList<TransactionID>(16);
       }
       receivedIDs.add(tid);
       return true;
@@ -88,7 +88,7 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   public synchronized boolean addRetired(TransactionID tid) {
     if (!isSealed()) {
       if (retiredIDs == null) {
-        retiredIDs = new ArrayList<TransactionID>();
+        retiredIDs = new ArrayList<TransactionID>(16);
       }
       retiredIDs.add(tid);
       return true;
