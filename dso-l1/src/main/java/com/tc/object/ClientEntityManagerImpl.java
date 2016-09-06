@@ -35,7 +35,6 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
-import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;

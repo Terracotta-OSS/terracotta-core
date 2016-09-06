@@ -249,7 +249,6 @@ public class ProcessTransactionHandler {
           ManagedEntity locked = entity;
           try {
             safeGetChannel(sourceNodeID).ifPresent((channel)-> {
-              VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
               addSequentially(channel, addto->addto.addReceived(transactionID));
             });
             

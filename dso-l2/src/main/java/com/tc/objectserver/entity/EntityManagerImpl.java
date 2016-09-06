@@ -142,7 +142,8 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
     Assert.assertNotNull(id);
-    if (EntityID.NULL_ID.equals(id)) {
+    if (EntityID.NULL_ID == id) {
+//  just do instance check, believe it or not, equality check is expensive due to frequency called
 //  short circuit for null entity, it's never here
       return Optional.empty();
     }
