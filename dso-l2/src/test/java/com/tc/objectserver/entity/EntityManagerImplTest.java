@@ -38,6 +38,7 @@ import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
 import java.util.Collections;
+import java.util.Optional;
 
 import static java.util.Optional.empty;
 import java.util.Set;
@@ -94,6 +95,21 @@ public class EntityManagerImplTest {
     ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
     ManagedEntity second = entityManager.createEntity(id, version, consumerID, true);
     Assert.assertEquals(entity, second);
+  }
+  
+  @Test
+  public void testNullEntityChecks() throws Exception {
+    Optional<ManagedEntity> check = entityManager.getEntity(EntityID.NULL_ID, 0);
+    Assert.assertFalse(check.isPresent());
+    ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
+    check = entityManager.getEntity(id, version);
+    Assert.assertTrue(check.isPresent());
+    check = entityManager.getEntity(id, 0);
+    //  make sure zero versions go to empty
+    Assert.assertFalse(check.isPresent());
+    //  make sure null goes to empty
+    check = entityManager.getEntity(EntityID.NULL_ID, 1);
+    Assert.assertFalse(check.isPresent());
   }
 
   @Test
