@@ -184,6 +184,7 @@ public class ReplicatedTransactionHandler {
         break;
       case ReplicationMessage.SYNC:
         if (!state.destroyed(rep.getEntityID())) {
+          LOGGER.debug("Sync:" + rep);
           syncMessageReceived(rep);
         } else {
           acknowledge(rep);

@@ -142,15 +142,15 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
     Assert.assertNotNull(id);
-    if (EntityID.NULL_ID == id) {
+    if (EntityID.NULL_ID == id || version == 0) {
 //  just do instance check, believe it or not, equality check is expensive due to frequency called
 //  short circuit for null entity, it's never here
       return Optional.empty();
     }
-    // Valid entity versions start at 1.
-    Assert.assertTrue(version > 0);
     ManagedEntity entity = entities.get(id);
     if (entity != null) {
+      // Valid entity versions start at 1.
+      Assert.assertTrue(version > 0);
       //  check the provided version against the version of the entity
       if (entity.getVersion() != version) {
         throw new EntityVersionMismatchException(id.getClassName(), id.getEntityName(), entity.getVersion(), version);
