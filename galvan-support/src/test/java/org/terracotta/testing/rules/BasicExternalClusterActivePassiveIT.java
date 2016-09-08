@@ -8,7 +8,6 @@ package org.terracotta.testing.rules;
 import java.io.File;
 import java.io.IOException;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
@@ -17,7 +16,6 @@ import org.terracotta.connection.ConnectionException;
  *
  * @author cdennis
  */
-@Ignore
 public class BasicExternalClusterActivePassiveIT {
 
   @ClassRule
