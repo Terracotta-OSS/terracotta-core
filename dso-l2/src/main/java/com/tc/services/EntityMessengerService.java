@@ -46,6 +46,9 @@ public class EntityMessengerService implements IEntityMessenger {
 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+    Assert.assertNotNull(messageSink);
+    Assert.assertNotNull(owningEntity);
+    
     this.messageSink = messageSink;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
     this.retirementManager = owningEntity.getRetirementManager();

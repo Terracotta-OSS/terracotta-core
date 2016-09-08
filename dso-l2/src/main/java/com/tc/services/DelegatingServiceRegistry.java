@@ -70,9 +70,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
-    // It is possible that there is no owning entity (if this is a synthetic consumer) but that means no access to
-    // built-in services.
-    T builtInService = (null != this.owningEntity) ? getBuiltInService(configuration) : null;
+    T builtInService = getBuiltInService(configuration);
     T externalService = getExternalService(configuration);
     // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
     Assert.assertFalse((null != builtInService) && (null != externalService));

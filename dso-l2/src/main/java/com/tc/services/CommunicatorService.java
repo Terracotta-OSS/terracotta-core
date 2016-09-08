@@ -23,6 +23,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.util.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +64,8 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
+    // This service can't be used for fake entities (this is a bug, not a usage error, since the only fake entities are internal).
+    Assert.assertNotNull(owningEntity);
     EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts, owningEntity);
     return configuration.getServiceType().cast(service);
   }

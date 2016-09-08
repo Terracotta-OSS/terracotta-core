@@ -23,6 +23,7 @@ import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
+import com.tc.util.Assert;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
@@ -40,6 +41,9 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
   
 
   public EntityClientCommunicatorService(ConcurrentMap<NodeID, ClientAccount> clientAccounts, ManagedEntity owningEntity) {
+    Assert.assertNotNull(clientAccounts);
+    Assert.assertNotNull(owningEntity);
+    
     this.clientAccounts = clientAccounts;
     this.owningEntity = owningEntity;
   }

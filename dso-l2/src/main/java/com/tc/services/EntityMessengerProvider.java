@@ -28,6 +28,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.util.Assert;
 
 
 /**
@@ -43,6 +44,8 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
+    // This service can't be used for fake entities (this is a bug, not a usage error, since the only fake entities are internal).
+    Assert.assertNotNull(owningEntity);
     return configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
   }
 
