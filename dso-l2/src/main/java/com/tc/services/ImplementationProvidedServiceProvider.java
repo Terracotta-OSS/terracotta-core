@@ -67,4 +67,11 @@ public interface ImplementationProvidedServiceProvider {
    * @throws ServiceProviderCleanupException if there are any failures
    */
   void clear() throws ServiceProviderCleanupException;
+
+  /**
+   * Called to notify the provider that this server has become active, in case it needs to change state to account for this.
+   * Before this method is called, the provider should assume that the server is in a passive (or at least "not active")
+   * state.
+   */
+  void serverDidBecomeActive();
 }

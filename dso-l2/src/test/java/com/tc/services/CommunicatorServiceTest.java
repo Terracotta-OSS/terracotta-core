@@ -94,7 +94,10 @@ public class CommunicatorServiceTest {
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
 
-    communicatorService = new CommunicatorService(dsoChannelManager);
+    communicatorService = new CommunicatorService();
+    communicatorService.setChannelManager(dsoChannelManager);
+    // Note that we can only serve this service if in active mode.
+    communicatorService.serverDidBecomeActive();
     communicatorService.channelCreated(messageChannel);
   }
 

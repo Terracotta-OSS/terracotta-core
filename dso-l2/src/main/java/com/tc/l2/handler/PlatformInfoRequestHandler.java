@@ -105,11 +105,11 @@ public class PlatformInfoRequestHandler {
     String name = TCServerMain.getServer().getL2Identifier();
     String version = ProductInfo.getInstance().version();
     String build = ProductInfo.getInstance().buildID();
-    groupManager.sendTo(dest, new PlatformInfoRequest(name, version, build, TCServerMain.getServer().getStartTime(), msg));
+    groupManager.sendTo(dest, PlatformInfoRequest.createServerInfoMessage(name, version, build, TCServerMain.getServer().getStartTime(), msg));
   }
   
   
   private void collectAndSendStateInfo(NodeID dest, MessageID msg) throws GroupException {
-    groupManager.sendTo(dest, new PlatformInfoRequest(TCServerMain.getServer().getState().getName(), TCServerMain.getServer().getActivateTime(), msg));
+    groupManager.sendTo(dest, PlatformInfoRequest.createServerStateMessage(TCServerMain.getServer().getState().getName(), TCServerMain.getServer().getActivateTime(), msg));
   }  
 }

@@ -468,6 +468,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
 
+    serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
+
+    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
+    this.serviceRegistry.registerImplementationProvided(messengerProvider);
+    
+    final CommunicatorService communicatorService = new CommunicatorService();
+    serviceRegistry.registerImplementationProvided(communicatorService);
+    
+    // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
+    
     // The platform gets the reserved consumerID 0.
     long platformConsumerID = 0;
     ServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
@@ -500,7 +510,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                      this.persistor
                                                                                          .getClusterStatePersistor()));
 
-    ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
 
     final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
     final int stageWorkerThreadCount = L2Utils.getOptimalStageWorkerThreads();
@@ -540,6 +549,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // CDV-1181 warn if using CMS
     tcMemManager.checkGarbageCollectors();
 
+    ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
     final int serverPort = l2DSOConfig.tsaPort().getValue();
@@ -581,12 +591,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    CommunicatorService communicatorService = new CommunicatorService(channelManager);
-    serviceRegistry.registerImplementationProvided(communicatorService);
+    // Attach the communicator service to the channel manager.
+    communicatorService.setChannelManager(channelManager);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
-
-    PlatformServiceProvider platformServiceProvider = new PlatformServiceProvider(this);
-    serviceRegistry.registerImplementationProvided(platformServiceProvider);
 
     // Creating a stage here so that the sink can be passed
     final Stage<LockResponseContext> respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, LockResponseContext.class, new RespondToRequestLockHandler(), 1, maxStageSize);
@@ -685,8 +692,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
     
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
-    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(voltronMessageSink);
-    this.serviceRegistry.registerImplementationProvided(messengerProvider);
+    messengerProvider.setMessageSink(voltronMessageSink);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
     if (restartable) {
@@ -782,10 +788,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     createPlatformInformationStages(stageManager, maxStageSize, eventCollector);
     
-    // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
-    //  and passive.
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents(processor);
-    
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
@@ -856,14 +858,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Coordinator.getStateManager().registerForStateChangeEvents((StateChangedEvent sce) -> {
       if (sce.movedToActive()) {
         server.updateActivateTime();
-        PlatformInfoRequest req = new PlatformInfoRequest();
-        req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+        PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest(PlatformInfoRequest.RequestType.SERVER_INFO);
 //  due to the broadcast nature of this call, it is possible to get multiple 
 //  responses from the same server.  The underlying collector must tolerate this
         groupCommManager.sendAll(req);  //  request info from all the other servers
       } else {
         try {
-          groupCommManager.sendTo(l2Coordinator.getStateManager().getActiveNodeID(), new PlatformInfoRequest(sce.getCurrentState().getName(), -1, MessageID.NULL_ID));
+          groupCommManager.sendTo(l2Coordinator.getStateManager().getActiveNodeID(), PlatformInfoRequest.createServerStateMessage(sce.getCurrentState().getName(), -1, MessageID.NULL_ID));
         } catch (GroupException ge) {
          //  IGNORE
         }
@@ -928,8 +929,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeJoined(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerJoined((ServerID)nodeID);
-          PlatformInfoRequest req = new PlatformInfoRequest(PlatformInfoRequest.REQUEST);
-          req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+          PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest(PlatformInfoRequest.RequestType.SERVER_INFO);
           try {
             groupCommManager.sendTo(nodeID, req);
  // monitor will be updated when the remote server responds with it's info

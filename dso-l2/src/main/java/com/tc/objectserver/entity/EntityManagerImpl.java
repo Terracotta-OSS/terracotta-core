@@ -89,6 +89,9 @@ public class EntityManagerImpl implements EntityManager {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
     
+    // Tell our implementation-provided services to become active (since they might have modes of operation).
+    this.serviceRegistry.notifyServerDidBecomeActive();
+    
     // Set the state of the manager.
     this.shouldCreateActiveEntities = true;
     // We can promote directly because this method is only called from PTH initialize 
