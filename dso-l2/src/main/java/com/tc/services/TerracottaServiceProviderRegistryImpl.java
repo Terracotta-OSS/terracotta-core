@@ -31,7 +31,6 @@ import com.tc.logging.TCLogging;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.entity.StateDumper;
 
@@ -97,17 +96,6 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   @Override
   public DelegatingServiceRegistry subRegistry(long consumerID) {
     return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), implementationProvidedServiceProviders.toArray(new ImplementationProvidedServiceProvider[implementationProvidedServiceProviders.size()]));
-  }
-
-  @Override
-  public <T> T getService(long consumerId, ServiceConfiguration<T> config) {
-    for(ServiceProvider provider : serviceProviders) {
-        T s = provider.getService(consumerId, config);
-        if (s != null) {
-          return s;
-        }
-    }
-    return null;
   }
 
   @Override

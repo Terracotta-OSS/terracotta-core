@@ -20,7 +20,6 @@ package com.tc.services;
 
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.StateDumpable;
 
 
@@ -65,17 +64,6 @@ public interface TerracottaServiceProviderRegistry extends StateDumpable {
    * @return Service registry which will be used by entities.
    */
   InternalServiceRegistry subRegistry(long consumerID);
-
-  /**
-   * Returns an instance of service provider given an a class. This method is not to be used by entities but by platform
-   * to provision resources for it.
-   *
-   * @param consumerId
-   * @param config service provider type
-   * @param <T> service type
-   * @return instance of service
-   */
-  <T> T getService(long consumerId, ServiceConfiguration<T> config);
 
   void clearServiceProvidersState();
 }
