@@ -36,10 +36,8 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 
 public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
-
-  public CommunicatorService(DSOChannelManager dsoChannelManager) {
-    dsoChannelManager.addEventListener(this);
-  }
+  // We have late-bound logic so make sure that is called.
+  private boolean wasInitialized;
 
   @Override
   public void channelCreated(MessageChannel channel) {
@@ -64,6 +62,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
+    Assert.assertTrue(this.wasInitialized);
     // This service can't be used for fake entities (this is a bug, not a usage error, since the only fake entities are internal).
     Assert.assertNotNull(owningEntity);
     EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts, owningEntity);
@@ -83,5 +82,10 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
   @Override
   public void clear() throws ServiceProviderCleanupException {
     // nothing to do
+  }
+
+  public void setChannelManager(DSOChannelManager dsoChannelManager) {
+    dsoChannelManager.addEventListener(this);
+    this.wasInitialized = true;
   }
 }

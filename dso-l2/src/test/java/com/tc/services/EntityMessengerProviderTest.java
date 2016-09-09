@@ -63,7 +63,8 @@ public class EntityMessengerProviderTest {
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     
     // Build the test subject.
-    this.entityMessengerProvider = new EntityMessengerProvider(this.messageSink);
+    this.entityMessengerProvider = new EntityMessengerProvider();
+    this.entityMessengerProvider.setMessageSink(this.messageSink);
   }
 
   @Test

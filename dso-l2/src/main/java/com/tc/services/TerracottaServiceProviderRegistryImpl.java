@@ -27,6 +27,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.Assert;
 
 import java.util.HashSet;
 import java.util.List;
@@ -43,9 +44,13 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private final Set<ServiceProvider> serviceProviders = new HashSet<>();
   private final Set<ImplementationProvidedServiceProvider> implementationProvidedServiceProviders = new HashSet<>();
 
+  // In order to prevent ordering errors during start-up, we will set a flag when we hand out sub-registries and make sure that we haven't done that when registering a service.
+  private boolean hasCreatedSubRegistries;
+
   @Override
   public void initialize(String serverName, TcConfiguration configuration, ClassLoader loader) {
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations().get(serverName);
+    Assert.assertFalse(this.hasCreatedSubRegistries);
     loadClasspathBuiltins(loader);
     if(serviceProviderConfigurationList != null) {
       for (ServiceProviderConfiguration config : serviceProviderConfigurationList) {
@@ -84,17 +89,20 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public  void registerExternal(ServiceProvider service) {
+    Assert.assertFalse(this.hasCreatedSubRegistries);
     registerNewServiceProvider(service);
   }
 
   @Override
   public  void registerImplementationProvided(ImplementationProvidedServiceProvider service) {
+    Assert.assertFalse(this.hasCreatedSubRegistries);
     logger.info("Registering implementation-provided service " + service);
     implementationProvidedServiceProviders.add(service);
   }
 
   @Override
   public DelegatingServiceRegistry subRegistry(long consumerID) {
+    this.hasCreatedSubRegistries = true;
     return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), implementationProvidedServiceProviders.toArray(new ImplementationProvidedServiceProvider[implementationProvidedServiceProviders.size()]));
   }
 

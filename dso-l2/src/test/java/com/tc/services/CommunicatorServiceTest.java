@@ -94,7 +94,8 @@ public class CommunicatorServiceTest {
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
 
-    communicatorService = new CommunicatorService(dsoChannelManager);
+    communicatorService = new CommunicatorService();
+    communicatorService.setChannelManager(dsoChannelManager);
     communicatorService.channelCreated(messageChannel);
   }
 

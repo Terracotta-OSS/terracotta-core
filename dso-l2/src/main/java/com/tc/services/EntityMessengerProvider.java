@@ -36,14 +36,11 @@ import com.tc.util.Assert;
  * These messages are fed into the general VoltronEntityMessage sink, provided by the server implementation.
  */
 public class EntityMessengerProvider implements ImplementationProvidedServiceProvider {
-  private final Sink<VoltronEntityMessage> messageSink;
-
-  public EntityMessengerProvider(Sink<VoltronEntityMessage> messageSink) {
-    this.messageSink = messageSink;
-  }
+  private Sink<VoltronEntityMessage> messageSink;
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
+    Assert.assertNotNull(this.messageSink);
     // This service can't be used for fake entities (this is a bug, not a usage error, since the only fake entities are internal).
     Assert.assertNotNull(owningEntity);
     return configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
@@ -57,5 +54,10 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
   @Override
   public void clear() throws ServiceProviderCleanupException {
     // Do nothing.
+  }
+
+  public void setMessageSink(Sink<VoltronEntityMessage> messageSink) {
+    Assert.assertNotNull(messageSink);
+    this.messageSink = messageSink;
   }
 }
