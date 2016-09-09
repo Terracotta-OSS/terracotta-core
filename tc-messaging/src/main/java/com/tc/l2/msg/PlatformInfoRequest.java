@@ -24,11 +24,51 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import java.io.IOException;
 
-/**
- *
- */
+
 public class PlatformInfoRequest extends AbstractGroupMessage {
+  // Factory methods.
+  /**
+   * Called by the active when a new passive joins the cluster or when an active is selected, in order to ask all the
+   *  passives for their information.
+   * 
+   * @param type Always SERVER_INFO, for now.
+   * @return The message instance.
+   */
+  public static PlatformInfoRequest createEmptyRequest(RequestType type) {
+    PlatformInfoRequest request = new PlatformInfoRequest(REQUEST);
+    request.setRequestType(type);
+    return request;
+  }
+
+  /**
+   * Called by a server to create a message to send back another server which has requested its state.
+   * 
+   * @param state The server state name.
+   * @param active The millisecond time when the server became active.
+   * @param requestID The ID of the message which requested the state.
+   * @return The message instance.
+   */
+  public static PlatformInfoRequest createServerStateMessage(String state, long activate, MessageID requestID) {
+    return new PlatformInfoRequest(state, activate, requestID);
+  }
+
+  /**
+   * Called by a server to create a message to send back another server which has requested its info.
+   * 
+   * @param name The name of the server.
+   * @param version The version of the server.
+   * @param buildid The build ID of the server.
+   * @param startTime The millisecond time when the server came online.
+   * @param requestID The ID of the message which requested the state.
+   * @return The message instance.
+   */
+  public static PlatformInfoRequest createServerInfoMessage(String name, String version, String buildid, long startTime, MessageID requestID) {
+    return new PlatformInfoRequest(name, version, buildid, startTime, requestID);
+  }
+
+
 //  message types  
+  public static final int ERROR               = -1; 
   public static final int REQUEST               = 0; 
   public static final int SERVER_INFO               = 1; 
   public static final int SERVER_STATE               = 2; 
@@ -48,21 +88,23 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     SERVER_INFO;
   }
 
+
+  // Must be public for serialization initializer.
   public PlatformInfoRequest() {
-    this(REQUEST);
+    this(ERROR);
   }
   
-  public PlatformInfoRequest(int type) {
+  private PlatformInfoRequest(int type) {
     super(type);
   }
   
-  public PlatformInfoRequest(String state, long activate, MessageID requestID) {
+  private PlatformInfoRequest(String state, long activate, MessageID requestID) {
     this(SERVER_STATE, requestID);
     this.state = state;
     this.activateTime = activate;
   }  
   
-  public PlatformInfoRequest(String name, String version, String buildid, long startTime, MessageID requestID) {
+  private PlatformInfoRequest(String name, String version, String buildid, long startTime, MessageID requestID) {
     this(SERVER_INFO, requestID);
     this.name = name;
     this.build = buildid;
@@ -74,7 +116,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     super(type, requestID);
   }
   
-  public void setRequestType(RequestType type) {
+  private void setRequestType(RequestType type) {
     requestType = type;
   }
 

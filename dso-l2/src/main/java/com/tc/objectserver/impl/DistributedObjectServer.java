@@ -852,14 +852,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Coordinator.getStateManager().registerForStateChangeEvents((StateChangedEvent sce) -> {
       if (sce.movedToActive()) {
         server.updateActivateTime();
-        PlatformInfoRequest req = new PlatformInfoRequest();
-        req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+        PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest(PlatformInfoRequest.RequestType.SERVER_INFO);
 //  due to the broadcast nature of this call, it is possible to get multiple 
 //  responses from the same server.  The underlying collector must tolerate this
         groupCommManager.sendAll(req);  //  request info from all the other servers
       } else {
         try {
-          groupCommManager.sendTo(l2Coordinator.getStateManager().getActiveNodeID(), new PlatformInfoRequest(sce.getCurrentState().getName(), -1, MessageID.NULL_ID));
+          groupCommManager.sendTo(l2Coordinator.getStateManager().getActiveNodeID(), PlatformInfoRequest.createServerStateMessage(sce.getCurrentState().getName(), -1, MessageID.NULL_ID));
         } catch (GroupException ge) {
          //  IGNORE
         }
@@ -924,8 +923,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeJoined(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerJoined((ServerID)nodeID);
-          PlatformInfoRequest req = new PlatformInfoRequest(PlatformInfoRequest.REQUEST);
-          req.setRequestType(PlatformInfoRequest.RequestType.SERVER_INFO);
+          PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest(PlatformInfoRequest.RequestType.SERVER_INFO);
           try {
             groupCommManager.sendTo(nodeID, req);
  // monitor will be updated when the remote server responds with it's info
