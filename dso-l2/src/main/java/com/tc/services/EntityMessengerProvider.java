@@ -37,13 +37,18 @@ import com.tc.util.Assert;
  */
 public class EntityMessengerProvider implements ImplementationProvidedServiceProvider {
   private Sink<VoltronEntityMessage> messageSink;
+  private boolean serverIsActive;
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
     Assert.assertNotNull(this.messageSink);
     // This service can't be used for fake entities (this is a bug, not a usage error, since the only fake entities are internal).
     Assert.assertNotNull(owningEntity);
-    return configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
+    T service = null;
+    if (this.serverIsActive) {
+      service = configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
+    }
+    return service;
   }
 
   @Override
@@ -54,6 +59,13 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
   @Override
   public void clear() throws ServiceProviderCleanupException {
     // Do nothing.
+  }
+
+  @Override
+  public void serverDidBecomeActive() {
+    Assert.assertNotNull(this.messageSink);
+    // The entity messenger service is only enabled when we are active.
+    this.serverIsActive = true;
   }
 
   public void setMessageSink(Sink<VoltronEntityMessage> messageSink) {

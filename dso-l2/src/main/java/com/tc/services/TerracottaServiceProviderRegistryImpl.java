@@ -125,6 +125,13 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     }
   }
 
+  @Override
+  public void notifyServerDidBecomeActive() {
+    for(ImplementationProvidedServiceProvider builtInServiceProvider : implementationProvidedServiceProviders) {
+      builtInServiceProvider.serverDidBecomeActive();
+    }
+  }
+
   private void registerNewServiceProvider(ServiceProvider service) {
     logger.info("Initializing " + service);
     serviceProviders.add(service);

@@ -96,6 +96,8 @@ public class CommunicatorServiceTest {
 
     communicatorService = new CommunicatorService();
     communicatorService.setChannelManager(dsoChannelManager);
+    // Note that we can only serve this service if in active mode.
+    communicatorService.serverDidBecomeActive();
     communicatorService.channelCreated(messageChannel);
   }
 

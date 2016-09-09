@@ -33,4 +33,9 @@ public class PlatformServiceProvider implements ImplementationProvidedServicePro
     public void clear() throws ServiceProviderCleanupException {
         //no-op
     }
+
+    @Override
+    public void serverDidBecomeActive() {
+      // The platform service works the same way whether active or passive - ignore.
+    }
 }

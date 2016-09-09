@@ -66,4 +66,11 @@ public interface TerracottaServiceProviderRegistry extends StateDumpable {
   InternalServiceRegistry subRegistry(long consumerID);
 
   void clearServiceProvidersState();
+
+  /**
+   * Normally, a server starts up in a non-active state.  The distinction between active or non-active (passive, but the
+   * other intermediary states are treated the same way) is important for some of our implementation-provided services
+   * (externally-provided services aren't exposed to this) so we notify them all of that change of state, here.
+   */
+  void notifyServerDidBecomeActive();
 }

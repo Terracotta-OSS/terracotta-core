@@ -36,6 +36,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 
 public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
+  private boolean serverIsActive;
   // We have late-bound logic so make sure that is called.
   private boolean wasInitialized;
 
@@ -65,8 +66,12 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
     Assert.assertTrue(this.wasInitialized);
     // This service can't be used for fake entities (this is a bug, not a usage error, since the only fake entities are internal).
     Assert.assertNotNull(owningEntity);
-    EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts, owningEntity);
-    return configuration.getServiceType().cast(service);
+    T serviceToReturn = null;
+    if (this.serverIsActive) {
+      EntityClientCommunicatorService service = new EntityClientCommunicatorService(clientAccounts, owningEntity);
+      serviceToReturn = configuration.getServiceType().cast(service);
+    }
+    return serviceToReturn;
   }
 
   @Override
@@ -82,6 +87,13 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
   @Override
   public void clear() throws ServiceProviderCleanupException {
     // nothing to do
+  }
+
+  @Override
+  public void serverDidBecomeActive() {
+    Assert.assertTrue(this.wasInitialized);
+    // The client communicator service is only enabled when we are active.
+    this.serverIsActive = true;
   }
 
   public void setChannelManager(DSOChannelManager dsoChannelManager) {
