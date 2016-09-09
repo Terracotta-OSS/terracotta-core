@@ -782,10 +782,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     createPlatformInformationStages(stageManager, maxStageSize, eventCollector);
     
-    // The ProcessTransactionHandler also needs the L2 state events since it needs to change entity types between active
-    //  and passive.
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents(processor);
-    
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,

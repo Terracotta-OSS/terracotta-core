@@ -20,10 +20,8 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.state.StateChangeListener;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
@@ -33,14 +31,10 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class RequestProcessor implements StateChangeListener {
+public class RequestProcessor {
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
   private boolean isActive = false;
@@ -68,10 +62,6 @@ public class RequestProcessor implements StateChangeListener {
     this.passives = passives;
   }
 
-  @Override
-  public void l2StateChanged(StateChangedEvent sce) {
-//  do nothing
-  }
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
   public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, int concurrencyKey) {
