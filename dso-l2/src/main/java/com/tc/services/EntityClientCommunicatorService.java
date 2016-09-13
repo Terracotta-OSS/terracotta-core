@@ -18,7 +18,6 @@
  */
 package com.tc.services;
 
-import com.google.common.util.concurrent.Futures;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
 import com.tc.objectserver.api.ManagedEntity;
@@ -32,7 +31,10 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 public class EntityClientCommunicatorService implements ClientCommunicator {
@@ -70,7 +72,32 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
       byte[] payload = serialize(this.owningEntity.getCodec(), message);
       return clientAccount.send(entityDescriptor, payload);
     } else {
-      return Futures.immediateFuture(null);
+      return new Future<Void>() {
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+          return false;
+        }
+
+        @Override
+        public boolean isCancelled() {
+          return false;
+        }
+
+        @Override
+        public boolean isDone() {
+          return true;
+        }
+
+        @Override
+        public Void get() throws InterruptedException, ExecutionException {
+          return null;
+        }
+
+        @Override
+        public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+          return null;
+        }
+      };
     }
   }
 

@@ -20,7 +20,10 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.config.HaConfig;
 import com.tc.entity.VoltronEntityMessage;
@@ -32,11 +35,13 @@ import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.entity.NoopEntityMessage;
 
 
 public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEventContext> implements DSOChannelManagerEventListener {
@@ -48,6 +53,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   private Sink<NodeStateEventContext> channelSink;
   private Sink<HydrateContext> hydrateSink;
   private Sink<VoltronEntityMessage> processTransactionSink;
+  private Sink<Runnable> requestProcessorSink;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager,
                                  DSOChannelManager channelManager, HaConfig haConfig) {
@@ -123,6 +129,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     channelSink = scc.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class).getSink();
     hydrateSink = scc.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class).getSink();
     processTransactionSink = scc.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+    requestProcessorSink = scc.getStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class).getSink();
   }
 
   @Override
@@ -139,8 +146,48 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     // esp. hydrate stage and process transaction stage. This goo is for that.
     final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE, clientID, channel.getProductId());
     NodeID inBandSchedulerKey = channel.getRemoteNodeID();
-    InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
-    InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
-    hydrateSink.addSpecialized(context2);
+    SpecializedEventContext sec = new SpecializedEventContext() {
+      @Override
+      public void execute() throws EventHandlerException {
+        requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(disconnectEvent));
+      }
+
+      @Override
+      public Object getSchedulingKey() {
+        return 0;
+      }
+
+      @Override
+      public boolean flush() {
+        return true;
+      }
+    };
+    
+    InBandMoveToNextSink<VoltronEntityMessage> context3 = new InBandMoveToNextSink<>(null, sec, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
+    hydrateSink.addSpecialized(context3);
+  }  
+  
+  private class FlushThenDisconnect implements MultiThreadedEventContext, Runnable {
+    
+    private final NodeStateEventContext nodeState;
+
+    public FlushThenDisconnect(NodeStateEventContext nodeState) {
+      this.nodeState = nodeState;
+    }
+
+    @Override
+    public Object getSchedulingKey() {
+      return 0;
+    }
+
+    @Override
+    public boolean flush() {
+      return true;
+    }
+
+    @Override
+    public void run() {
+      channelSink.addMultiThreaded(nodeState);
+    }
   }
 }

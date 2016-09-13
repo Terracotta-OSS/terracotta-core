@@ -18,9 +18,9 @@
  */
 package com.tc.services;
 
-import com.google.common.collect.ImmutableMap;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import java.util.Collections;
 
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -52,7 +52,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         listForType.add(provider);
       }
     }
-    serviceProviderMap = ImmutableMap.copyOf(tempProviders);
+    serviceProviderMap = Collections.unmodifiableMap(tempProviders);
     
     Map<Class<?>, List<ImplementationProvidedServiceProvider>> tempBuiltInProviders = new HashMap<>();
     for(ImplementationProvidedServiceProvider provider : implementationProvidedProviders) {
@@ -65,7 +65,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         listForType.add(provider);
       }
     }
-    implementationProvidedServiceProviderMap = ImmutableMap.copyOf(tempBuiltInProviders);
+    implementationProvidedServiceProviderMap = Collections.unmodifiableMap(tempBuiltInProviders);
   }
 
   @Override

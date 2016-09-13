@@ -18,7 +18,6 @@
  */
 package com.tc.net.groups;
 
-import com.google.common.base.Throwables;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -61,7 +60,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       throwableHandler.throwIfNecessary();
       stages.shutdown();
     } catch (Throwable throwable) {
-      throw Throwables.propagate(throwable);
+      throw new Exception(throwable);
     }
   }
 
@@ -231,8 +230,9 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     managers[0].waitForDeclaredActive();
     for (int i = 1; i < virtuals; ++i) {
       groupMgr[i].join(allNodes[i], nodeStore);
-      managers[i].moveToPassiveStandbyState();
       managers[i].startElection();
+      managers[i].waitForDeclaredActive();
+      managers[i].moveToPassiveStandbyState();
     }
 
     // verification
@@ -324,6 +324,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       System.out.println("*** moveNodeToPassiveStandby -> " + toBePassiveNode);
       for (int i=0;i<virtuals;i++) {
         if (ids[i].equals(toBePassiveNode)) {
+          managers[i].waitForDeclaredActive();
           managers[i].moveToPassiveStandbyState();
           --nodesNeedToMoveToPassive;
         }

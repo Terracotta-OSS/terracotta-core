@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.impl;
 
-import com.google.common.eventbus.Subscribe;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
@@ -90,7 +89,6 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
-  @Subscribe
   public void writeOperationEvent(Events.WriteOperationCountChangeEvent event) {
     try {
       MessageChannel channel = channelManager.getActiveChannel(event.getSource());
