@@ -674,7 +674,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return Collections.unmodifiableCollection(members.values());
   }
 //  FOR TESTING ONLY
-  void setDiscover(TCGroupMemberDiscovery discover) {
+  public void setDiscover(TCGroupMemberDiscovery discover) {
     this.discover = discover;
   }
 
