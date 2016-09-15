@@ -18,7 +18,6 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
@@ -35,7 +34,7 @@ import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.objectserver.context.NodeStateEventContext;
+import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -53,7 +52,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
   private final StateManager    stateManager;
-  private final Sink<NodeStateEventContext>            channelLifeCycleSink;
+  private final ChannelLifeCycleHandler clm;
 
   private boolean               isActive = false;
 
@@ -61,11 +60,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
                                            ClusterState clusterState, ConnectionIDFactory factory,
-                                           Sink<NodeStateEventContext> channelLifeCycleSink) {
+                                           ChannelLifeCycleHandler clm) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.state = clusterState;
-    this.channelLifeCycleSink = channelLifeCycleSink;
+    this.clm = clm;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
     factory.registerForConnectionIDEvents(this);
   }
@@ -191,17 +190,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
     if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
       // Not really needed, but just in case
-      NodeID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      channelLifeCycleSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, nodeID, msg.getConnectionID().getProductId()));
+      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
+      clm.clientCreated(nodeID, msg.getConnectionID().getProductId());
     } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
-      // this is needed to clean up some data structures internally
-      // NOTE :: It is ok to add this event context directly to the channel life cycle handler (and not wrap around a
-      // InBandMoveToNextSink like in active) because there are no stages before the transactions are added to
-      // server transaction manager.
-      // XXX::FIXME:: The above statement is true only when this event is fixed to be fired from active after all txns
-      // are acked in the active.
-      NodeID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      channelLifeCycleSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID, msg.getConnectionID().getProductId()));
+      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
+      clm.clientDropped(nodeID, msg.getConnectionID().getProductId());
     }
   }
 
@@ -224,7 +217,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   @Override
   public void fireNodeLeftEvent(NodeID nodeID) {
     // this is needed to clean up some data structures internally
-    channelLifeCycleSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID, null));
+    if (nodeID instanceof ClientID) {
+      clm.clientDropped((ClientID)nodeID, null);
+    }
   }
 
   @Override

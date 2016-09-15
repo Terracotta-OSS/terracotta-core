@@ -163,7 +163,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -700,12 +699,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     final Stage<LockRequestMessage> requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE, LockRequestMessage.class, new RequestLockUnLockHandler(), 1, maxStageSize);
-    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, channelManager, this.haConfig);
-    stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class, channelLifeCycleHandler, 1, maxStageSize);
-    channelManager.addEventListener(channelLifeCycleHandler);
 
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
+
+    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, stageManager, channelManager, this.haConfig);
+    channelManager.addEventListener(channelLifeCycleHandler);
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.NOOP_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -737,7 +736,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                   this.persistor.getClusterStatePersistor(),
                                                                   this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
-                                                                  this.stripeIDStateManager);
+                                                                  this.stripeIDStateManager,
+                                                                  channelLifeCycleHandler);
 
     connectServerStateToReplicatedState(state, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
