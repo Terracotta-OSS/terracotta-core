@@ -472,7 +472,8 @@ public class PassthroughConnection implements Connection {
    */
   public void startReconnect(PassthroughServerProcess serverProcess) {
     Assert.assertTrue(null == this.waitersToResend);
-    this.waitersToResend = this.connectionState.enterReconnectState(serverProcess);
+    // Duplicate the map to avoid ConcurrentModificationException.
+    this.waitersToResend = new HashMap<Long, PassthroughWait>(this.connectionState.enterReconnectState(serverProcess));
     
     // Tell all of our still-open end-points to reconnect to the server.
     for (PassthroughEntityClientEndpoint<?, ?> endpoint : this.localEndpoints.values()) {
