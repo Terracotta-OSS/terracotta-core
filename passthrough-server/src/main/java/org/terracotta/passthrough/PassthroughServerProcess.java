@@ -23,7 +23,6 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -112,6 +111,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   
   // We need to hold onto any registered monitoring services to report client connection/disconnection events.
   private IMonitoringProducer serviceInterface;
+  private PlatformServer serverInfo;
   
   // Special flag used to change behavior when we are receiving re-sends:  we don't want to run them until we seem them all.
   private boolean isHandlingResends;
@@ -195,8 +195,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.ENTITIES_ROOT_NAME, null);
       // Create the root of the client-entity fetch subtree.
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.FETCHED_ROOT_NAME, null);
-      // Create the initial server state.
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.SERVERS_ROOT_NAME, null);
     }
     // And start the server thread.
     startServerThreadRunning();
@@ -224,36 +222,37 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.retirementManager.setServerThread(null);
     }
     this.isRunning = true;
+    // We want to now set the server info for this instance.
+    this.serverInfo = new PlatformServer(
+        getSafeServerName(), //  server name
+        "localhost", // hostname
+        "127.0.0.1", // hostAddress
+        "0.0.0.0", // bindAddress
+        bindPort, //  bindPort but just fake with processID
+        groupPort, // groupPort
+        "Version Passthrough 5.0.0-SNAPSHOT", //  version
+        "Build ID - " + new Random().nextInt(), // build
+        System.currentTimeMillis() // start time
+    );
 //  set instance
     if (null != this.serviceInterface) {
       String stateValue = (null != this.activeEntities) ? PlatformMonitoringConstants.SERVER_STATE_ACTIVE : PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
-      String server = serverIdentifierForService(this);
-      PlatformServer serverObj = new PlatformServer(
-          serverName == null ? "server" + processID : serverName, //  server name
-          "localhost", // hostname
-          "127.0.0.1", // hostAddress
-          "0.0.0.0", // bindAddress
-          bindPort, //  bindPort but just fake with processID
-          groupPort, // groupPort
-          "Version Passthrough 5.0.0-SNAPSHOT", //  version
-          "Build ID - " + new Random().nextInt(), // build
-          System.currentTimeMillis() // start time
-      );
-      
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.SERVERS_PATH, server);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.SERVERS_PATH, server, serverObj);
 // Set state.
       long timestamp = System.currentTimeMillis();
-      this.serviceInterface.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, timestamp, (this.activeEntities != null) ? timestamp : -1));
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, timestamp, (this.activeEntities != null) ? timestamp : -1));
     }
     this.serverThread.start();
+  }
+
+  private String getSafeServerName() {
+    return serverName == null ? "server" + processID : serverName;
   }
   
   private void setStateSynchronizing(IMonitoringProducer tracker) {
 // Set state.
     if (tracker != null) {
       long timestamp = System.currentTimeMillis();
-      tracker.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING, timestamp, (this.activeEntities != null) ? timestamp : -1));
+      tracker.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING, timestamp, (this.activeEntities != null) ? timestamp : -1));
     }
   }
   
@@ -305,7 +304,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.isRunning = false;
       // Set our state.
       if (null != this.serviceInterface) {
-        this.serviceInterface.removeNode(PlatformMonitoringConstants.SERVERS_PATH, serverIdentifierForService(this));
+        this.serviceInterface.removeNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME);
       }
       this.notifyAll();
     }
@@ -906,9 +905,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
 //  show promotion in monitoring    
     if (this.serviceInterface != null) {
-      this.serviceInterface.removeNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME);
       long timestamp = System.currentTimeMillis();
-      this.serviceInterface.addNode(makeServerPath(this), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_ACTIVE, timestamp, timestamp));
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_ACTIVE, timestamp, timestamp));
     }
     
     // Clear our passives.
@@ -920,16 +918,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return new CreationData<M, R>(data.entityClassName, data.entityName, data.version, data.configuration, data.registry, data.service, true);
   }
 
-  private String[] makeServerPath(Object node, String...slot) {
-    String[] path = Arrays.copyOf(PlatformMonitoringConstants.SERVERS_PATH, PlatformMonitoringConstants.SERVERS_PATH.length + 1 + slot.length);
-    path[PlatformMonitoringConstants.SERVERS_PATH.length] = serverIdentifierForService(node);
-    System.arraycopy(slot, 0, path, PlatformMonitoringConstants.SERVERS_PATH.length + 1, slot.length);
-    return path;
-  }
-
-  private String serverIdentifierForService(Object id) {
-    return Integer.toHexString(System.identityHashCode(id));
-  }    
   /**
    * Called when a new connection has been established to this server.
    * 
@@ -987,6 +975,21 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.isHandlingResends = false;
       this.notifyAll();
     }
+  }
+
+  /**
+   * This is only used to support internal service implementations which are, themselves, built on top of external service implementations.
+   * The internal IMonitoringProducer implementation works this way, consuming the externally-provided IStripeMonitoring implementation.
+   * 
+   * @return A service registry for the described internal consumer.
+   */
+  public PassthroughServiceRegistry createServiceRegistryForInternalConsumer(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
+    this.serviceProvidersReadOnly = true;
+    return new PassthroughServiceRegistry(entityClassName, entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
+  }
+
+  public PlatformServer getServerInfo() {
+    return this.serverInfo;
   }
 
   private PassthroughServiceRegistry getNextServiceRegistry(String entityClassName, String entityName, DeferredEntityContainer container) {
