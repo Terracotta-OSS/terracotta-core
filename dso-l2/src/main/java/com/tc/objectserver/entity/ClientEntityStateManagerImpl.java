@@ -78,13 +78,15 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
     Set<EntityDescriptor> refs = clientStates.get(clientID);
     logger.debug("Removing reference:" + clientID + " " + entityDescriptor.getEntityID());
-
-    boolean didRemove = refs.remove(entityDescriptor);
-    // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
-    Assert.assertTrue(didRemove);
-    if (refs.isEmpty() && this.clientGC.contains(clientID)) {
-      this.clientGC.remove(clientID);
-      this.clientStates.remove(clientID);
+    boolean didRemove = false;
+    if (refs != null) {
+      didRemove = refs.remove(entityDescriptor);
+      // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
+      Assert.assertTrue(didRemove);
+      if (refs.isEmpty() && this.clientGC.contains(clientID)) {
+        this.clientGC.remove(clientID);
+        this.clientStates.remove(clientID);
+      }
     }
     return didRemove;
   }

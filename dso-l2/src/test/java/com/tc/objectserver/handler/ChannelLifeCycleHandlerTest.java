@@ -54,11 +54,11 @@ public class ChannelLifeCycleHandlerTest {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     HaConfig haConfig = mock(HaConfig.class);
     this.eventCollector = mock(ITopologyEventCollector.class);
-    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager, haConfig);
     ServerConfigurationContext context = mock(ServerConfigurationContext.class);
     Stage<HydrateContext> stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));
-    when(context.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
+    when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
+    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager, haConfig);
   }
 
   @After
