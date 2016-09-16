@@ -42,10 +42,8 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
-import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import org.terracotta.monitoring.PlatformServer;
@@ -98,15 +96,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
 //  from multiple pathways.  It is possible to get duplicate information and 
 //  this method must tolerate that
   @Override
-  public synchronized void serverDidJoinGroup(ServerID node, String serverName, String hostname, 
-      String bindAddress, int bindPort, int groupPort, String version, String build) {
-    String hostAddress = "";
-    try {
-      hostAddress = java.net.InetAddress.getByName(hostname).getHostAddress();
-    } catch (UnknownHostException unknown) {
-      // ignore
-    }
-    PlatformServer server = new PlatformServer(serverName, hostname, hostAddress, bindAddress, bindPort, groupPort, version, build, TCServerMain.getServer().getStartTime()); 
+  public synchronized void serverDidJoinGroup(ServerID node, PlatformServer server) {
     if (this.servers.put(node, server) == null) {
       LOGGER.debug("adding NODE:" + Arrays.toString(PlatformMonitoringConstants.SERVERS_PATH) + " NAME:" + serverIdentifierForService(node) + " VALUE:" + server);
       if (null != this.serviceInterface) {

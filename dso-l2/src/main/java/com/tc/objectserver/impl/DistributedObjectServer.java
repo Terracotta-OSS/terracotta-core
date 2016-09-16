@@ -27,6 +27,7 @@ import com.tc.services.PlatformServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -195,6 +196,7 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
+import com.tc.server.TCServerMain;
 import com.tc.services.CommunicatorResponseHandler;
 import com.tc.services.CommunicatorService;
 import com.tc.services.EntityMessengerProvider;
@@ -225,6 +227,7 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -475,6 +478,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final CommunicatorService communicatorService = new CommunicatorService();
     serviceRegistry.registerImplementationProvided(communicatorService);
     
+    // We want to register our IMonitoringProducer shim.
+    // (note that it requires a PlatformServer instance of THIS server).
+    String hostAddress = "";
+    try {
+      hostAddress = java.net.InetAddress.getByName(host).getHostAddress();
+    } catch (UnknownHostException unknown) {
+      // ignore
+    }
+    final int serverPort = l2DSOConfig.tsaPort().getValue();
+    final ProductInfo pInfo = ProductInfo.getInstance();
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
     
     // The platform gets the reserved consumerID 0.
@@ -551,8 +566,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
-    final int serverPort = l2DSOConfig.tsaPort().getValue();
-
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(sessionManager,
                                                                 new TCSocketAddress(dsoBind, serverPort), true,
@@ -562,7 +575,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
 
-    final ProductInfo pInfo = ProductInfo.getInstance();
     final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(),
                                                                        this.communicationsManager
                                                                            .getConnectionManager(), pInfo.version());
@@ -673,9 +685,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         }
       });
 // add this server to the tree of servers
-    eventCollector.serverDidJoinGroup(this.getServerNodeID(), server.getL2Identifier(), host, 
-        bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(),
-        pInfo.buildVersion(), pInfo.buildID());
+    eventCollector.serverDidJoinGroup(this.getServerNodeID(), thisServer);
 
     final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();

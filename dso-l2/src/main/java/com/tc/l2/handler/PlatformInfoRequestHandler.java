@@ -18,6 +18,10 @@
  */
 package com.tc.l2.handler;
 
+import java.net.UnknownHostException;
+
+import org.terracotta.monitoring.PlatformServer;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -90,8 +94,15 @@ public class PlatformInfoRequestHandler {
         // workaround for CDV-584
         bindAddress = TCSocketAddress.WILDCARD_IP;
       }
-      remoteEvents.serverDidJoinGroup((ServerID)msg.messageFrom(), msg.getName(), config.host(), bindAddress, 
-          config.tsaPort().getValue(), config.tsaGroupPort().getValue(), msg.getVersion(), msg.getBuild());
+      String hostname = config.host();
+      String hostAddress = "";
+      try {
+        hostAddress = java.net.InetAddress.getByName(hostname).getHostAddress();
+      } catch (UnknownHostException unknown) {
+        // ignore
+      }
+      PlatformServer server = new PlatformServer(msg.getName(), hostname, hostAddress, bindAddress, config.tsaPort().getValue(), config.tsaGroupPort().getValue(), msg.getVersion(), msg.getBuild(), msg.getStartTime());
+      remoteEvents.serverDidJoinGroup((ServerID)msg.messageFrom(), server);
     } catch (ConfigurationSetupException set) {
 
     }

@@ -24,6 +24,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.util.State;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.monitoring.PlatformServer;
 
 
 /**
@@ -35,12 +36,9 @@ public interface ITopologyEventCollector {
    * Called when the server first joins the group
    * 
    * @param node  - The nodeid of the server
-   * @param serverName  - The name of the server in the config
-   * @param host - user supplied hostname
-   * @param bindAddress - The address to which this server listens for connections
-   * @param bindPort - The port that is bound to this connection 0 for active, remote port for passive
+   * @param server - The server description
    */
-  public void serverDidJoinGroup(ServerID node, String serverName, String host, String bindAddress, int bindPort, int groupPort, String version, String build);
+  public void serverDidJoinGroup(ServerID node, PlatformServer server);
   /**
    * Called when the server first joins the group
    * 
