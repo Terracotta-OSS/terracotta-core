@@ -18,10 +18,10 @@
  */
 package com.tc.net.utils;
 
-import com.google.common.base.Preconditions;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -84,10 +84,10 @@ public class L2Utils {
    */
   public static int calculateOptimalThreadsCount(int cpus, long wait, long compute,
                                                  double targetUtilization) {
-    Preconditions.checkArgument(compute > 0);
-    Preconditions.checkArgument(wait >= 0);
-    Preconditions.checkArgument(cpus > 0);
-    Preconditions.checkArgument(targetUtilization > 0 && targetUtilization <= 1);
+    Assert.assertTrue(compute > 0);
+    Assert.assertTrue(wait >= 0);
+    Assert.assertTrue(cpus > 0);
+    Assert.assertTrue(targetUtilization > 0 && targetUtilization <= 1);
 
     final BigDecimal cpusCount = new BigDecimal(cpus);
     final BigDecimal waitTime = new BigDecimal(wait);

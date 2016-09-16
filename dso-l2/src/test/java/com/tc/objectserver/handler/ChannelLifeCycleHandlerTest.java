@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -48,16 +49,16 @@ public class ChannelLifeCycleHandlerTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
+    StageManager stageManager = mock(StageManager.class);
     CommunicationsManager commsManager = mock(CommunicationsManager.class);
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     HaConfig haConfig = mock(HaConfig.class);
     this.eventCollector = mock(ITopologyEventCollector.class);
-    this.handler = new ChannelLifeCycleHandler(commsManager, channelManager, haConfig);
+    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager, haConfig);
     ServerConfigurationContext context = mock(ServerConfigurationContext.class);
     Stage<HydrateContext> stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(context.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
-    this.handler.initialize(context);
   }
 
   @After

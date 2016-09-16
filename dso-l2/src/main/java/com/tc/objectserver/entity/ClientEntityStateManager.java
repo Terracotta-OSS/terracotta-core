@@ -36,7 +36,7 @@ public interface ClientEntityStateManager extends DSOChannelManagerEventListener
    * @param clientID The client.
    * @param entityDescriptor The entity.
    */
-  public void addReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor);
 
   /**
    * Removes a reference from clientID to the entity described by entityDescriptor.
@@ -45,7 +45,7 @@ public interface ClientEntityStateManager extends DSOChannelManagerEventListener
    * @param clientID The client.
    * @param entityDescriptor The entity.
    */
-  public void removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
 
   /**
    * Verifies that no clients have a reference to the entity described by entityDescriptor.

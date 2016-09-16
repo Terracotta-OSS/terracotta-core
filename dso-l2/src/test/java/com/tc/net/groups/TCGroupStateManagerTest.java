@@ -18,7 +18,6 @@
  */
 package com.tc.net.groups;
 
-import com.google.common.base.Throwables;
 import com.tc.async.api.Sink;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
@@ -63,7 +62,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       throwableHandler.throwIfNecessary();
       stages.shutdown();
     } catch (Throwable throwable) {
-      throw Throwables.propagate(throwable);
+      throw new Exception(throwable);
     }
   }
 
@@ -302,7 +301,6 @@ public class TCGroupStateManagerTest extends TCTestCase {
     // verification: first node must be active
     int activeCount = 0;
     for (int i = 0; i < nodes; ++i) {
-      managers[i].waitForDeclaredActive();
       boolean active = managers[i].isActiveCoordinator();
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + managers[i].getCurrentState());

@@ -45,6 +45,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
+import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
@@ -120,11 +121,11 @@ public class StandardServerBuilder implements ServerBuilder {
                                              ClusterStatePersistor clusterStatePersistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              L2ConfigurationSetupManager configurationSetupManager,
-                                             StripeIDStateManager stripeStateManager) {
+                                             StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm) {
     return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
         groupCommsManager, clusterStatePersistor,
         weightGeneratorFactory, configurationSetupManager,
-        haConfig.getThisGroupID(), stripeStateManager);
+        haConfig.getThisGroupID(), stripeStateManager, clm);
   }
 
   @Override

@@ -18,14 +18,18 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.async.api.SpecializedEventContext;
+import com.tc.async.api.StageManager;
 import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.config.HaConfig;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -35,42 +39,27 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 
-public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEventContext> implements DSOChannelManagerEventListener {
+public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
   private final HaConfig                haConfig;
 
-  private TCLogger                      logger;
-  private Sink<NodeStateEventContext> channelSink;
-  private Sink<HydrateContext> hydrateSink;
-  private Sink<VoltronEntityMessage> processTransactionSink;
+  private static final TCLogger         logger = TCLogging.getLogger(ChannelLifeCycleHandler.class);
+  private final Sink<HydrateContext> hydrateSink;
+  private final Sink<VoltronEntityMessage> processTransactionSink;
+  private final Sink<Runnable> requestProcessorSink;
 
-  public ChannelLifeCycleHandler(CommunicationsManager commsManager,
+  public ChannelLifeCycleHandler(CommunicationsManager commsManager, StageManager stageManager, 
                                  DSOChannelManager channelManager, HaConfig haConfig) {
     this.commsManager = commsManager;
     this.channelMgr = channelManager;
     this.haConfig = haConfig;
-  }
-
-  @Override
-  public void handleEvent(NodeStateEventContext event) {
-    switch (event.getType()) {
-      case NodeStateEventContext.CREATE: {
-        nodeConnected(event.getNodeID(), event.getProductId());
-        break;
-      }
-      case NodeStateEventContext.REMOVE: {
-        nodeDisconnected(event.getNodeID(), event.getProductId());
-        break;
-      }
-      default: {
-        throw new AssertionError("unknown event: " + event.getType());
-      }
-    }
+    hydrateSink = stageManager.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class).getSink();
+    processTransactionSink = stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+    requestProcessorSink = stageManager.getStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class).getSink();
   }
 
   /**
@@ -116,19 +105,39 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
   }
 
   @Override
-  public void initialize(ConfigurationContext context) {
-    super.initialize(context);
-    ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    this.logger = scc.getLogger(ChannelLifeCycleHandler.class);
-    channelSink = scc.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, NodeStateEventContext.class).getSink();
-    hydrateSink = scc.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class).getSink();
-    processTransactionSink = scc.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
-  }
-
-  @Override
   public void channelCreated(MessageChannel channel) {
     ClientID clientID = new ClientID(channel.getChannelID().toLong());
-    channelSink.addMultiThreaded(new NodeStateEventContext(NodeStateEventContext.CREATE, clientID, channel.getProductId()));
+    clientCreated(clientID, channel.getProductId());
+  }
+  
+  public void clientCreated(ClientID client, ProductID product) {
+    nodeConnected(client, product);
+  }
+  
+  public void clientDropped(ClientID clientID, ProductID product) {
+    // Note that the remote node ID always refers to a client, in this path.
+    // We want all the messages in the system from this client to reach its destinations before processing this request.
+    // esp. hydrate stage and process transaction stage. This goo is for that.
+    NodeID inBandSchedulerKey = clientID;
+    SpecializedEventContext sec = new SpecializedEventContext() {
+      @Override
+      public void execute() throws EventHandlerException {
+        requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(clientID, product));
+      }
+
+      @Override
+      public Object getSchedulingKey() {
+        return 0;
+      }
+
+      @Override
+      public boolean flush() {
+        return true;
+      }
+    };
+    
+    InBandMoveToNextSink<VoltronEntityMessage> context3 = new InBandMoveToNextSink<>(null, sec, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
+    hydrateSink.addSpecialized(context3);
   }
 
   @Override
@@ -136,11 +145,56 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler<NodeStateEvent
     // Note that the remote node ID always refers to a client, in this path.
     ClientID clientID = (ClientID) channel.getRemoteNodeID();
     // We want all the messages in the system from this client to reach its destinations before processing this request.
-    // esp. hydrate stage and process transaction stage. This goo is for that.
-    final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE, clientID, channel.getProductId());
+    // esp. hydrate stage and process transaction stage. 
+    // this will only get fired on the active as this is a client removal.
+    // the chain is hydrate stage -> process transaction handler -> request processor (flushed) -> deliver event to 
+    // disconnect node.  This is done so that all messages issued by the client have fully run their course 
+    // before an attempt is made to remove references.
     NodeID inBandSchedulerKey = channel.getRemoteNodeID();
-    InBandMoveToNextSink<NodeStateEventContext> context1 = new InBandMoveToNextSink<>(disconnectEvent, null, channelSink, inBandSchedulerKey, false); // single threaded so no need to flush
-    InBandMoveToNextSink<VoltronEntityMessage> context2 = new InBandMoveToNextSink<>(null, context1, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
-    hydrateSink.addSpecialized(context2);
+    SpecializedEventContext sec = new SpecializedEventContext() {
+      @Override
+      public void execute() throws EventHandlerException {
+        requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(clientID, channel.getProductId()));
+      }
+
+      @Override
+      public Object getSchedulingKey() {
+        return 0;
+      }
+
+      @Override
+      public boolean flush() {
+        return true;
+      }
+    };
+    
+    InBandMoveToNextSink<VoltronEntityMessage> context3 = new InBandMoveToNextSink<>(null, sec, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
+    hydrateSink.addSpecialized(context3);
+  }  
+  
+  private class FlushThenDisconnect implements MultiThreadedEventContext, Runnable {
+    
+    private final ClientID clientID;
+    private final ProductID product;
+
+    public FlushThenDisconnect(ClientID client, ProductID product) {
+      this.clientID = client;
+      this.product = product;
+    }
+
+    @Override
+    public Object getSchedulingKey() {
+      return 0;
+    }
+
+    @Override
+    public boolean flush() {
+      return true;
+    }
+
+    @Override
+    public void run() {
+      nodeDisconnected(clientID, product);
+    }
   }
 }

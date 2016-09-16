@@ -74,17 +74,17 @@ public class L2UtilsTest {
     assertEquals(84, L2Utils.calculateOptimalThreadsCount(80, 30, 70, 0.75));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = AssertionError.class)
   public void testShouldThrowIAEOnInvalidUtilization() {
     L2Utils.calculateOptimalThreadsCount(4, 30, 70, 0.0);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = AssertionError.class)
   public void testShouldThrowIAEOnInvalidCpusCount() {
     L2Utils.calculateOptimalThreadsCount(0, 30, 70, 1.0);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = AssertionError.class)
   public void testShouldThrowIAEOnInvalidCompute() {
     L2Utils.calculateOptimalThreadsCount(4, 30, 0, 1.0);
   }

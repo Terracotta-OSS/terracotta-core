@@ -45,6 +45,7 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
@@ -83,7 +84,7 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                       ClusterStatePersistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,
-                                      StripeIDStateManager stripeStateManager);
+                                      StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
 

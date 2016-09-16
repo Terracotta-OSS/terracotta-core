@@ -36,6 +36,7 @@ import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -64,6 +65,9 @@ public class ClientEntityStateManagerImplTest {
     when(stageManager.getStage(any(), any())).thenReturn(requestStage);
     collector = mock(ManagementTopologyEventCollector.class);
     clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, collector, mock(DSOChannelManagerEventListener.class));
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getRemoteNodeID()).thenReturn(new ClientID(1));
+    clientEntityStateManager.channelCreated(channel);
   }
 
   @Test
@@ -95,7 +99,7 @@ public class ClientEntityStateManagerImplTest {
     clientEntityStateManager.channelRemoved(messageChannel);
 
     verify(requestSink).addSingleThreaded(argThat(hasClientAndEntityIDs(clientID, entityID)));
-    verify(collector).expectedReleases(Matchers.eq(clientID), Matchers.eq(Arrays.asList(new EntityDescriptor(entityID, clientInstanceID, version))));
+    verify(collector).expectedReleases(Matchers.eq(clientID), argThat(collectionMatcher(Arrays.asList(new EntityDescriptor(entityID, clientInstanceID, version)))));
   }
 
   @Test
@@ -125,19 +129,26 @@ public class ClientEntityStateManagerImplTest {
   }
 
   private boolean removeReference(ClientID clientID, EntityDescriptor descriptor) {
-    // This only fails by asserting.
-    boolean didSucceed = false;
-    try {
-      clientEntityStateManager.removeReference(clientID, descriptor);
-      didSucceed = true;
-    } catch (AssertionError e) {
-      didSucceed = false;
-    }
-    return didSucceed;
+    return clientEntityStateManager.removeReference(clientID, descriptor);
   }
 
   private boolean verifyNoReferences(EntityID eid) {
     return clientEntityStateManager.verifyNoReferences(eid);
+  }
+  
+  private Matcher<Collection<EntityDescriptor>> collectionMatcher(Collection<EntityDescriptor> list) {
+    return new BaseMatcher<Collection<EntityDescriptor>>() {
+      @Override
+      public boolean matches(Object item) {
+        Collection<EntityDescriptor> c = (Collection)item;
+        return list.size() == c.size() && list.containsAll(c);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Collection with (" + list + ")");
+      }
+    };
   }
 
   private Matcher<VoltronEntityMessage> hasClientAndEntityIDs(final ClientID clientID, final EntityID entityID) {

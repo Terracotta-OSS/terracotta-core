@@ -19,12 +19,11 @@
 package com.tc.objectserver.entity;
 
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -36,15 +35,20 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.util.Assert;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import org.terracotta.entity.EntityMessage;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
-  private final Multimap<ClientID, EntityDescriptor> clientStates = Multimaps.synchronizedMultimap(HashMultimap.create());
+  private final Map<ClientID, Set<EntityDescriptor>> clientStates = new ConcurrentHashMap<>();
+  private final Set<ClientID> clientGC = new CopyOnWriteArraySet<>();
   private final StageManager stageManager;
   private final ManagementTopologyEventCollector collector;
   private final DSOChannelManagerEventListener clientChain;
+  private static final TCLogger logger    = TCLogging.getLogger(ClientEntityStateManagerImpl.class);
 
   public ClientEntityStateManagerImpl(StageManager stageManager, ManagementTopologyEventCollector collector, DSOChannelManagerEventListener chain) {
     this.stageManager = stageManager;
@@ -53,22 +57,41 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   }
 
   @Override
-  public void addReference(ClientID clientID, EntityDescriptor entityDescriptor) {
-    boolean didAdd = clientStates.put(clientID, entityDescriptor);
+  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor) {
+    Set<EntityDescriptor> led = clientStates.get(clientID);
+    if (led == null) {
+      led = new CopyOnWriteArraySet<>();
+      Set<EntityDescriptor> check = clientStates.putIfAbsent(clientID, led);
+      if (check != null) {
+        led = check;
+      }
+    }
+    Assert.assertNotNull(led);
+    boolean didAdd = led.add(entityDescriptor);
+    logger.debug("Adding reference:" + clientID + " " + entityDescriptor.getEntityID());
     // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
     Assert.assertTrue(didAdd);
+    return didAdd;
   }
 
   @Override
-  public void removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
-    boolean didRemove = clientStates.remove(clientID, entityDescriptor);
+  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
+    Set<EntityDescriptor> refs = clientStates.get(clientID);
+    logger.debug("Removing reference:" + clientID + " " + entityDescriptor.getEntityID());
+
+    boolean didRemove = refs.remove(entityDescriptor);
     // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
     Assert.assertTrue(didRemove);
+    if (refs.isEmpty() && this.clientGC.contains(clientID)) {
+      this.clientGC.remove(clientID);
+      this.clientStates.remove(clientID);
+    }
+    return didRemove;
   }
 
   @Override
   public boolean verifyNoReferences(EntityID eid) {
-    return !clientStates.values().stream().anyMatch((ed)->ed.getEntityID().equals(eid));
+    return !clientStates.values().stream().anyMatch((led)->led.stream().anyMatch(ed->ed.getEntityID().equals(eid)));
   }
 
   @Override
@@ -82,13 +105,26 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
     // We know that this is a remote client so make the down-cast.
     ClientID client = (ClientID) node;
     
-    List<EntityDescriptor> list = new ArrayList(this.clientStates.get(client));
-    collector.expectedReleases(client, list);
-    Sink<VoltronEntityMessage> remover = stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
-    // Note that we will clean these up when the removal request comes through so leave the clientStates unchanged, for now.
-    for (EntityDescriptor oneInstance : list) {
-      remover.addSingleThreaded(new RemovalMessage(client, oneInstance));
+    Set<EntityDescriptor> list = this.clientStates.get(client);
+    if (list != null) {
+      collector.expectedReleases(client, new ArrayList(list));
+      Sink<VoltronEntityMessage> remover = stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+
+      if (!list.isEmpty()) {
+        this.clientGC.add(client);
+        logger.debug("list has: " + client + " " + list);
+      } else {
+        this.clientStates.remove(client);
+        logger.debug("list empty: removing " + client);
+      }
+      // Note that we will clean these up when the removal request comes through so leave the clientStates unchanged, for now.
+      // there is a possible race here.  If a client issues a release then immediately disconnects, this cleanup may cause a double 
+      // release.  For now account for this in the removeReference method.  Look for a better solution
+      for (EntityDescriptor oneInstance : list) {
+        remover.addSingleThreaded(new RemovalMessage(client, oneInstance));
+      }
     }
+
     clientChain.channelRemoved(channel);
   }
 

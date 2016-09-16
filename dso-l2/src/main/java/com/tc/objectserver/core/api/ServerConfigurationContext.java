@@ -38,7 +38,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String TRANSACTION_LOOKUP_STAGE                           = "transaction_lookup_stage";
   public final static String RESPOND_TO_LOCK_REQUEST_STAGE                      = "respond_to_lock_request_stage";
   public final static String REQUEST_LOCK_STAGE                                 = "request_lock_stage";
-  public final static String CHANNEL_LIFE_CYCLE_STAGE                           = "channel_life_cycle_stage";
   public final static String TRANSACTION_ACKNOWLEDGEMENT_STAGE                  = "transaction_acknowledgement_stage";
   public final static String CLIENT_HANDSHAKE_STAGE                             = "client_handshake_stage";
   public final static String CONFIG_MESSAGE_STAGE                               = "config_message_stage";
