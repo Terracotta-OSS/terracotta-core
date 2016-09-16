@@ -71,9 +71,7 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
 
   @Override
   public <T> T getService(ServiceConfiguration<T> configuration) {
-    // It is possible that there is no owning entity (if this is a synthetic consumer) but that means no access to
-    // built-in services.
-    T builtInService = (null != this.owningEntityContainer) ? getBuiltIn(configuration) : null;
+    T builtInService = getBuiltIn(configuration);
     T externalService = getExternal(configuration);
     // We need at most one match.
     Assert.assertTrue((null == builtInService) || (null == externalService));

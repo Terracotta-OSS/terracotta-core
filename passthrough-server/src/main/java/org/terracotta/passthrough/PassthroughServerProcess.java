@@ -98,6 +98,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private final List<ServiceProvider> serviceProviders;
   // The service providers offered by the server's implementation.
   private final List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
+  // Note that we will set the service provider collections into a read-only mode as we try to create a registry over them, to catch bugs.
+  private boolean serviceProvidersReadOnly;
   private Set<PassthroughServerProcess> downstreamPassives = new HashSet<PassthroughServerProcess>();
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
@@ -827,10 +829,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public void registerImplementationProvidedServiceProvider(PassthroughImplementationProvidedServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    Assert.assertTrue(!this.serviceProvidersReadOnly);
     this.implementationProvidedServiceProviders.add(serviceProvider);
   }
 
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    Assert.assertTrue(!this.serviceProvidersReadOnly);
     // We run the initializer right away.
     boolean didInitialize = serviceProvider.initialize(providerConfiguration);
     Assert.assertTrue(didInitialize);
@@ -988,6 +992,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private PassthroughServiceRegistry getNextServiceRegistry(String entityClassName, String entityName, DeferredEntityContainer container) {
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
+    this.serviceProvidersReadOnly = true;
     return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
   }
 
