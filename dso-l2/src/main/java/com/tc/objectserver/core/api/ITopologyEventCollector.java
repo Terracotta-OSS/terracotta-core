@@ -19,12 +19,10 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.net.ClientID;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityID;
 import com.tc.util.State;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.monitoring.PlatformServer;
 
 
 /**
@@ -33,25 +31,11 @@ import org.terracotta.monitoring.PlatformServer;
  */
 public interface ITopologyEventCollector {
   /**
-   * Called when the server first joins the group
-   * 
-   * @param node  - The nodeid of the server
-   * @param server - The server description
-   */
-  public void serverDidJoinGroup(ServerID node, PlatformServer server);
-  /**
-   * Called when the server first joins the group
-   * 
-   * @param node  - The nodeid of server
-   */
-  public void serverDidLeaveGroup(ServerID node);
-  /**
    * Called when the server first enters the given state.
    * 
-   * @param node node id of the server changing state
    * @param state The new server state now set.
    */
-  public void serverDidEnterState(ServerID node, State state, long activateTime);
+  public void serverDidEnterState(State state, long activateTime);
 
   /**
    * Called when a client connects for the first time.  Note that this won't be called if the connection is deemed to be a

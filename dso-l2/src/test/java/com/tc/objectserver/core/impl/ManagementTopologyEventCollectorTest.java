@@ -32,7 +32,6 @@ import org.junit.Test;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -62,14 +61,10 @@ import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 public class ManagementTopologyEventCollectorTest {
   private ManagementTopologyEventCollector collector;
-  private ServerID selfID;
 
   @Before
   public void setUp() throws Exception {
-    this.selfID = mock(ServerID.class);
-    this.collector = new ManagementTopologyEventCollector(selfID, null);
-    when(selfID.getUID()).thenReturn("TEST".getBytes());
-    when(selfID.getName()).thenReturn("localhost:0000");
+    this.collector = new ManagementTopologyEventCollector(null);
   }
 
   @Test
@@ -137,7 +132,7 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertFalse(didSucceed);
     long timestamp = System.currentTimeMillis();
     // Now, change state of the server to active.
-    this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, timestamp);
+    this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, timestamp);
     isActive = true;
     
     // Promote the entity to active.
@@ -166,7 +161,7 @@ public class ManagementTopologyEventCollectorTest {
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
     
     // Put us into the active state.
-    this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
+    this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
     boolean isActive = true;
     
     // Create the entity.
@@ -206,7 +201,7 @@ public class ManagementTopologyEventCollectorTest {
   public void testClientPIDInclusion() throws Exception {
     IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
     when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
-    this.collector = new ManagementTopologyEventCollector(selfID, monitoringProducer);
+    this.collector = new ManagementTopologyEventCollector(monitoringProducer);
 
     // reset monitoringProducer.addNode(...) invocation counts
     reset(monitoringProducer);
@@ -236,7 +231,7 @@ public class ManagementTopologyEventCollectorTest {
   public void testClientDescriptorInclusion() throws Exception {
     IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
     when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
-    this.collector = new ManagementTopologyEventCollector(selfID, monitoringProducer);
+    this.collector = new ManagementTopologyEventCollector(monitoringProducer);
 
     // reset monitoringProducer.addNode(...) invocation counts
     reset(monitoringProducer);
@@ -333,8 +328,8 @@ public class ManagementTopologyEventCollectorTest {
   public void testClientEventOrdering() throws Exception {
     IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
     when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
-    this.collector = new ManagementTopologyEventCollector(selfID, monitoringProducer);
-    this.collector.serverDidEnterState(selfID, StateManager.ACTIVE_COORDINATOR, 0);
+    this.collector = new ManagementTopologyEventCollector(monitoringProducer);
+    this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
     ClientID cid = mock(ClientID.class);
     when(cid.toLong()).thenReturn(1L);
     

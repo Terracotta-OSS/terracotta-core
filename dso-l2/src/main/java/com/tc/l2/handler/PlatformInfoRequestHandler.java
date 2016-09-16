@@ -18,39 +18,40 @@
  */
 package com.tc.l2.handler;
 
-import java.net.UnknownHostException;
+import java.io.Serializable;
 
 import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.msg.PlatformInfoRequest;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.MessageID;
-import com.tc.object.config.schema.L2Config;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.server.TCServerMain;
+import com.tc.services.LocalMonitoringProducer;
+import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
-import com.tc.util.State;
 
 
 public class PlatformInfoRequestHandler {
-  
-  private final GroupManager<AbstractGroupMessage> groupManager;
-  private final ITopologyEventCollector remoteEvents;
+  private static final TCLogger LOGGER = TCLogging.getLogger(PlatformInfoRequestHandler.class);
 
-  public PlatformInfoRequestHandler(GroupManager<AbstractGroupMessage> groupManager, ITopologyEventCollector remoteEvents) {
+  private final GroupManager<AbstractGroupMessage> groupManager;
+  private final LocalMonitoringProducer monitoringSupport;
+
+  public PlatformInfoRequestHandler(GroupManager<AbstractGroupMessage> groupManager, LocalMonitoringProducer monitoringSupport) {
+    Assert.assertNotNull(groupManager);
+    Assert.assertNotNull(monitoringSupport);
     this.groupManager = groupManager;
-    this.remoteEvents = remoteEvents;
+    this.monitoringSupport = monitoringSupport;
   }
-  
+
   public EventHandler<PlatformInfoRequest> getEventHandler() {
     return new AbstractEventHandler<PlatformInfoRequest>() {
       @Override
@@ -60,67 +61,63 @@ public class PlatformInfoRequestHandler {
             case PlatformInfoRequest.REQUEST:
               handleRequestEvent(context);
               break;
-            case PlatformInfoRequest.SERVER_INFO:
+            case PlatformInfoRequest.RESPONSE_INFO:
               handleServerInfo(context);
               break;
-            case PlatformInfoRequest.SERVER_STATE:
-              handleServerState(context);
+            case PlatformInfoRequest.RESPONSE_ADD:
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteAdd((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName(), context.getNodeValue());
+              break;
+            case PlatformInfoRequest.RESPONSE_REMOVE:
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteRemove((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName());
               break;
             default:
               break;
           }
         } catch (GroupException g) {
-// Ignore
+          // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
+          LOGGER.error(g.getLocalizedMessage());
         }
       }
     };
   }
-  
-  private void handleRequestEvent(PlatformInfoRequest context) throws GroupException {
-    switch(context.getRequestType()) {
-      case SERVER_INFO:
-        collectAndSendServerInfo(context.messageFrom(), context.getMessageID());
-        collectAndSendStateInfo(context.messageFrom(), context.getMessageID());
-        break;
-      default:
-    }
-  }
-  
-  private void handleServerInfo(PlatformInfoRequest msg) throws GroupException {
-    try {
-      L2Config config = TCServerMain.getSetupManager().dsoL2ConfigFor(msg.getName());
-      String bindAddress = config.tsaPort().getBind();
-      if (bindAddress == null) {
-        // workaround for CDV-584
-        bindAddress = TCSocketAddress.WILDCARD_IP;
-      }
-      String hostname = config.host();
-      String hostAddress = "";
-      try {
-        hostAddress = java.net.InetAddress.getByName(hostname).getHostAddress();
-      } catch (UnknownHostException unknown) {
-        // ignore
-      }
-      PlatformServer server = new PlatformServer(msg.getName(), hostname, hostAddress, bindAddress, config.tsaPort().getValue(), config.tsaGroupPort().getValue(), msg.getVersion(), msg.getBuild(), msg.getStartTime());
-      remoteEvents.serverDidJoinGroup((ServerID)msg.messageFrom(), server);
-    } catch (ConfigurationSetupException set) {
 
-    }
-  }  
-  
-  private void handleServerState(PlatformInfoRequest msg) throws GroupException {
-    remoteEvents.serverDidEnterState((ServerID)msg.messageFrom(), new State(msg.getState()), msg.getActivateTime());
-  }  
-  
-  private void collectAndSendServerInfo(NodeID dest, MessageID msg) throws GroupException {
-    String name = TCServerMain.getServer().getL2Identifier();
-    String version = ProductInfo.getInstance().version();
-    String build = ProductInfo.getInstance().buildID();
-    groupManager.sendTo(dest, PlatformInfoRequest.createServerInfoMessage(name, version, build, TCServerMain.getServer().getStartTime(), msg));
+
+  private void handleRequestEvent(PlatformInfoRequest context) throws GroupException {
+    NodeID requester = context.messageFrom();
+    
+    // First, we want to send the server info so that the other side knows who we are.
+    PlatformInfoRequest serverInfo = PlatformInfoRequest.createServerInfoMessage(this.monitoringSupport.getLocalServerInfo());
+    this.groupManager.sendTo(requester, serverInfo);
+    
+    // Now, send all the data in the cache.
+    LocalMonitoringProducer.ActivePipeWrapper pipeWrapper = new LocalMonitoringProducer.ActivePipeWrapper() {
+      @Override
+      public void addNode(long consumerID, String[] parents, String name, Serializable value) {
+        PlatformInfoRequest message = PlatformInfoRequest.createAddNode(consumerID, parents, name, value);
+        try {
+          groupManager.sendTo(requester, message);
+        } catch (GroupException e) {
+          // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
+          LOGGER.error(e.getLocalizedMessage());
+        }
+      }
+      @Override
+      public void removeNode(long consumerID, String[] parents, String name) {
+        PlatformInfoRequest message = PlatformInfoRequest.createRemoveNode(consumerID, parents, name);
+        try {
+          groupManager.sendTo(requester, message);
+        } catch (GroupException e) {
+          // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
+          LOGGER.error(e.getLocalizedMessage());
+        }
+      }
+    };
+    this.monitoringSupport.sendToNewActive(pipeWrapper);
   }
-  
-  
-  private void collectAndSendStateInfo(NodeID dest, MessageID msg) throws GroupException {
-    groupManager.sendTo(dest, PlatformInfoRequest.createServerStateMessage(TCServerMain.getServer().getState().getName(), TCServerMain.getServer().getActivateTime(), msg));
-  }  
+
+  private void handleServerInfo(PlatformInfoRequest msg) throws GroupException {
+    ServerID sender = (ServerID)msg.messageFrom();
+    PlatformServer platformServer = msg.getServerInfo();
+    this.monitoringSupport.serverDidJoinStripe(sender, platformServer);
+  }
 }
