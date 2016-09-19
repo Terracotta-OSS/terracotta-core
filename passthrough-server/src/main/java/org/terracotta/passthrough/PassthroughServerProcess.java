@@ -361,13 +361,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
 
-  public synchronized void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, byte[] serializedMessage) {
+  public synchronized void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, PassthroughMessage passthroughMessage) {
     // Can only happen while running.
     Assert.assertTrue(this.isRunning);
     // This can only be called on the active server.
     Assert.assertTrue(null != this.activeEntities);
     // We must be given a message.
-    Assert.assertTrue(null != serializedMessage);
+    Assert.assertTrue(null != passthroughMessage);
     // This entry-point is only used in the cases where the message already exists.
     Assert.assertTrue(null != newMessage);
     // When handling re-sends, we are effectively paused so this shouldn't happen.
@@ -400,7 +400,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         return -1;
       }
     };
-    container.message = serializedMessage;
+    container.message = passthroughMessage.asSerializedBytes();
     this.messageQueue.add(container);
     this.notifyAll();
   }
