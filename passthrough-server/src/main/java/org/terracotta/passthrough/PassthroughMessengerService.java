@@ -66,6 +66,10 @@ public class PassthroughMessengerService implements IEntityMessenger {
     @SuppressWarnings("unchecked")
     MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
     byte[] serializedMessage = codec.encodeMessage(newMessageToSchedule);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, serializedMessage);
+    // We use the invalid instance 0 since this is not a connected client.
+    long clientInstanceID = 0;
+    boolean shouldReplicateToPassives = true;
+    PassthroughMessage passthroughMessage = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, clientInstanceID, serializedMessage, shouldReplicateToPassives);
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, passthroughMessage);
   }
 }
