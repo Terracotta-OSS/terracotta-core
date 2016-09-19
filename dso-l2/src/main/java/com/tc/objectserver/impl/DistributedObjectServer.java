@@ -27,6 +27,7 @@ import com.tc.services.PlatformServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -117,7 +118,6 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.MessageID;
 import com.tc.net.groups.Node;
 import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -164,7 +164,6 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -195,9 +194,11 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
+import com.tc.server.TCServerMain;
 import com.tc.services.CommunicatorResponseHandler;
 import com.tc.services.CommunicatorService;
 import com.tc.services.EntityMessengerProvider;
+import com.tc.services.LocalMonitoringProducer;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
@@ -225,6 +226,7 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -475,6 +477,21 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final CommunicatorService communicatorService = new CommunicatorService();
     serviceRegistry.registerImplementationProvided(communicatorService);
     
+    // We want to register our IMonitoringProducer shim.
+    // (note that it requires a PlatformServer instance of THIS server).
+    String hostAddress = "";
+    try {
+      hostAddress = java.net.InetAddress.getByName(host).getHostAddress();
+    } catch (UnknownHostException unknown) {
+      // ignore
+    }
+    final int serverPort = l2DSOConfig.tsaPort().getValue();
+    final ProductInfo pInfo = ProductInfo.getInstance();
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    
+    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer);
+    this.serviceRegistry.registerImplementationProvided(monitoringShimService);
+    
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
     
     // The platform gets the reserved consumerID 0.
@@ -551,8 +568,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
-    final int serverPort = l2DSOConfig.tsaPort().getValue();
-
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(sessionManager,
                                                                 new TCSocketAddress(dsoBind, serverPort), true,
@@ -562,7 +577,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
 
-    final ProductInfo pInfo = ProductInfo.getInstance();
     final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(),
                                                                        this.communicationsManager
                                                                            .getConnectionManager(), pInfo.version());
@@ -653,7 +667,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  consoleLogger);
     
     
-    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(this.getServerNodeID(), serviceInterface);
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, eventCollector, 
       new DSOChannelManagerEventListener() {
         @Override
@@ -672,10 +686,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
           }
         }
       });
-// add this server to the tree of servers
-    eventCollector.serverDidJoinGroup(this.getServerNodeID(), server.getL2Identifier(), host, 
-        bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(),
-        pInfo.buildVersion(), pInfo.buildID());
 
     final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
@@ -721,7 +731,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
 
-    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(this.getServerNodeID(), createStageController(), eventCollector), 1, maxStageSize);
+    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
         new StateManagerConfigImpl(configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs()),
@@ -776,7 +786,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     GroupEventsDispatchHandler dispatchHandler = new GroupEventsDispatchHandler();
     dispatchHandler.addListener(this.l2Coordinator);  
     dispatchHandler.addListener(passives);
-    dispatchHandler.addListener(connectPassiveOperatorEvents(haConfig.getNodesStore(), eventCollector));
+    dispatchHandler.addListener(connectPassiveOperatorEvents(haConfig.getNodesStore(), monitoringShimService));
     Stage<GroupEvent> groupEvents = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE, GroupEvent.class, dispatchHandler, 1, maxStageSize);
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically    
@@ -786,7 +796,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.routeMessages(PassiveSyncMessage.class, replication);
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
-    createPlatformInformationStages(stageManager, maxStageSize, eventCollector);
+    createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
     
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
@@ -850,24 +860,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     setLoggerOnExit();
   }
   
-  private void createPlatformInformationStages(StageManager stageManager, int maxStageSize, ITopologyEventCollector eventCollector) {
+  private void createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
     Stage<PlatformInfoRequest> stage = stageManager.createStage(ServerConfigurationContext.PLATFORM_INFORMATION_REQUEST, 
-        PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, eventCollector).getEventHandler(), 1, maxStageSize);
+        PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, monitoringSupport).getEventHandler(), 1, maxStageSize);
     groupCommManager.routeMessages(PlatformInfoRequest.class, stage.getSink());
 //  publish state change events to everyone in the stripe
     this.l2Coordinator.getStateManager().registerForStateChangeEvents((StateChangedEvent sce) -> {
       if (sce.movedToActive()) {
         server.updateActivateTime();
-        PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest(PlatformInfoRequest.RequestType.SERVER_INFO);
+        PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
 //  due to the broadcast nature of this call, it is possible to get multiple 
 //  responses from the same server.  The underlying collector must tolerate this
         groupCommManager.sendAll(req);  //  request info from all the other servers
-      } else {
-        try {
-          groupCommManager.sendTo(l2Coordinator.getStateManager().getActiveNodeID(), PlatformInfoRequest.createServerStateMessage(sce.getCurrentState().getName(), -1, MessageID.NULL_ID));
-        } catch (GroupException ge) {
-         //  IGNORE
-        }
       }
     });
   }
@@ -921,7 +925,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return control;
   }
   
-  private GroupEventsListener connectPassiveOperatorEvents(NodesStore nodesStore, ManagementTopologyEventCollector monitor) {
+  private GroupEventsListener connectPassiveOperatorEvents(NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
     OperatorEventsPassiveServerConnectionListener delegate = new OperatorEventsPassiveServerConnectionListener(nodesStore);
     return new GroupEventsListener() {
 
@@ -929,7 +933,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeJoined(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerJoined((ServerID)nodeID);
-          PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest(PlatformInfoRequest.RequestType.SERVER_INFO);
+          PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
           try {
             groupCommManager.sendTo(nodeID, req);
  // monitor will be updated when the remote server responds with it's info
@@ -943,7 +947,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeLeft(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerLeft((ServerID)nodeID);
-          monitor.serverDidLeaveGroup((ServerID)nodeID);
+          monitoringShimService.serverDidLeaveStripe((ServerID)nodeID);
         }
       }
     };

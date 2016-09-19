@@ -31,24 +31,16 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
-import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Collection;
-import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 
@@ -61,22 +53,15 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
-  private final Map<NodeID, PlatformServer> servers;
   private final Map<FetchTuple, Integer> fetchPairCounts;
   private final Map<ClientID, Collection<EntityDescriptor>> incomingReleases;
   private boolean isActiveState;
-    
-  private final ServerID thisNode;
 
-  private static final TCLogger LOGGER = TCLogging.getLogger(ManagementTopologyEventCollector.class);
-
-  public ManagementTopologyEventCollector(ServerID self, IMonitoringProducer serviceInterface) {
-    this.thisNode = self;
+  public ManagementTopologyEventCollector(IMonitoringProducer serviceInterface) {
     this.serviceInterface = serviceInterface;
     this.connectedClients = new HashSet<ClientID>();
     this.entities = new HashSet<EntityID>();
     this.fetchPairCounts = new HashMap<FetchTuple, Integer>();
-    this.servers = new HashMap<NodeID, PlatformServer>();
     this.incomingReleases = new HashMap<>();
     this.isActiveState = false;
     
@@ -90,56 +75,17 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.ENTITIES_ROOT_NAME, null);
       // Create the root of the client-entity fetch subtree.
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.FETCHED_ROOT_NAME, null);
-      // Create the initial server state.
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.SERVERS_ROOT_NAME, null);
     }
   }
-//  server information is communicated in a broadcast fashion
-//  from multiple pathways.  It is possible to get duplicate information and 
-//  this method must tolerate that
-  @Override
-  public synchronized void serverDidJoinGroup(ServerID node, String serverName, String hostname, 
-      String bindAddress, int bindPort, int groupPort, String version, String build) {
-    String hostAddress = "";
-    try {
-      hostAddress = java.net.InetAddress.getByName(hostname).getHostAddress();
-    } catch (UnknownHostException unknown) {
-      // ignore
-    }
-    PlatformServer server = new PlatformServer(serverName, hostname, hostAddress, bindAddress, bindPort, groupPort, version, build, TCServerMain.getServer().getStartTime()); 
-    if (this.servers.put(node, server) == null) {
-      LOGGER.debug("adding NODE:" + Arrays.toString(PlatformMonitoringConstants.SERVERS_PATH) + " NAME:" + serverIdentifierForService(node) + " VALUE:" + server);
-      if (null != this.serviceInterface) {
-        this.serviceInterface.addNode(PlatformMonitoringConstants.SERVERS_PATH, serverIdentifierForService(node), server);
-      }
-    } else {
-      LOGGER.debug("adding an already existing server node:" + node);
-    }
-  }
-//  server information is communicated in a broadcast fashion
-//  from multiple pathways.  It is possible to get duplicate information and 
-//  this method must tolerate that
-  @Override
-  public synchronized void serverDidLeaveGroup(ServerID node) {
-    if (this.servers.remove(node) != null) {
-      LOGGER.debug("removing NODE:" + Arrays.toString(PlatformMonitoringConstants.SERVERS_PATH) + " NAME:" + serverIdentifierForService(node));
-      if (this.serviceInterface != null) {
-        this.serviceInterface.removeNode(PlatformMonitoringConstants.SERVERS_PATH, serverIdentifierForService(node));
-      }
-    } else {
-      LOGGER.info("removing non-existent server node " + node);
-    }
-  }
+
 /**
  * it is possible for a server to update it's state multiple times without 
  *  actually changing state.  this and underlying methods must tolerate that
  */
   @Override
-  public synchronized void serverDidEnterState(ServerID node, State state, long activateTime) {
+  public synchronized void serverDidEnterState(State state, long activateTime) {
     // We track whether or not we are in an active state to ensure that entities are created/loaded in the expected state.
-    if (node.equals(thisNode)) {
-      this.isActiveState = StateManager.ACTIVE_COORDINATOR.getName().equals(state.getName());
-    }
+    this.isActiveState = StateManager.ACTIVE_COORDINATOR.getName().equals(state.getName());
     boolean syncing = false;
     boolean standby = false;
     if (!this.isActiveState) {
@@ -155,21 +101,12 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
             (syncing) ? PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING : 
                         PlatformMonitoringConstants.SERVER_STATE_UNINITIALIZED;
     
-    LOGGER.debug("state NODE:" + serverIdentifierForService(node) + " announcing state " + stateValue);
     // Set this in the monitoring interface.
     if (null != this.serviceInterface) {
-      this.serviceInterface.removeNode(makeServerPath(node), PlatformMonitoringConstants.STATE_NODE_NAME);
-      this.serviceInterface.addNode(makeServerPath(node), PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, System.currentTimeMillis(), activateTime));
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, System.currentTimeMillis(), activateTime));
     }
   }
 
-  private String[] makeServerPath(ServerID node, String...slot) {
-    String[] path = Arrays.copyOf(PlatformMonitoringConstants.SERVERS_PATH, PlatformMonitoringConstants.SERVERS_PATH.length + 1 + slot.length);
-    path[PlatformMonitoringConstants.SERVERS_PATH.length] = serverIdentifierForService(node);
-    System.arraycopy(slot, 0, path, PlatformMonitoringConstants.SERVERS_PATH.length + 1, slot.length);
-    return path;
-  }
-  
   @Override
   public synchronized void clientDidConnect(MessageChannel channel, ClientID client) {
     // Ensure that this client isn't already connected.
@@ -351,18 +288,6 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
 
   private String clientIdentifierForService(ClientID id) {
     return "" + id.toLong();
-  }
-
-  private String serverIdentifierForService(ServerID id) {
-    return uidToString(id.getUID()) + "(" + id.getName() + ")";
-  }  
-  
-  private String uidToString(byte[] id) {
-    StringBuilder convert = new StringBuilder();
-    for (byte b : id) {
-      convert.append(Integer.toHexString(0xff & b));
-    }
-    return convert.toString();
   }
 
   private String entityIdentifierForService(EntityID id) {

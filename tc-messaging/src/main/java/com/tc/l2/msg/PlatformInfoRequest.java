@@ -21,8 +21,16 @@ package com.tc.l2.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
+import com.tc.util.Assert;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+import org.terracotta.monitoring.PlatformServer;
 
 
 public class PlatformInfoRequest extends AbstractGroupMessage {
@@ -31,154 +39,202 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
    * Called by the active when a new passive joins the cluster or when an active is selected, in order to ask all the
    *  passives for their information.
    * 
-   * @param type Always SERVER_INFO, for now.
    * @return The message instance.
    */
-  public static PlatformInfoRequest createEmptyRequest(RequestType type) {
-    PlatformInfoRequest request = new PlatformInfoRequest(REQUEST);
-    request.setRequestType(type);
-    return request;
+  public static PlatformInfoRequest createEmptyRequest() {
+    return new PlatformInfoRequest(REQUEST, -1, null, null, null, null);
   }
 
-  /**
-   * Called by a server to create a message to send back another server which has requested its state.
-   * 
-   * @param state The server state name.
-   * @param active The millisecond time when the server became active.
-   * @param requestID The ID of the message which requested the state.
-   * @return The message instance.
-   */
-  public static PlatformInfoRequest createServerStateMessage(String state, long activate, MessageID requestID) {
-    return new PlatformInfoRequest(state, activate, requestID);
+  public static PlatformInfoRequest createAddNode(long consumerID, String[] parents, String name, Serializable value) {
+    return new PlatformInfoRequest(RESPONSE_ADD, consumerID, parents, name, value, null);
   }
 
-  /**
-   * Called by a server to create a message to send back another server which has requested its info.
-   * 
-   * @param name The name of the server.
-   * @param version The version of the server.
-   * @param buildid The build ID of the server.
-   * @param startTime The millisecond time when the server came online.
-   * @param requestID The ID of the message which requested the state.
-   * @return The message instance.
-   */
-  public static PlatformInfoRequest createServerInfoMessage(String name, String version, String buildid, long startTime, MessageID requestID) {
-    return new PlatformInfoRequest(name, version, buildid, startTime, requestID);
+  public static PlatformInfoRequest createRemoveNode(long consumerID, String[] parents, String name) {
+    return new PlatformInfoRequest(RESPONSE_REMOVE, consumerID, parents, name, null, null);
+  }
+
+  public static PlatformInfoRequest createServerInfoMessage(PlatformServer serverInfo) {
+    return new PlatformInfoRequest(RESPONSE_INFO, -1, null, null, null, serverInfo);
   }
 
 
 //  message types  
-  public static final int ERROR               = -1; 
-  public static final int REQUEST               = 0; 
-  public static final int SERVER_INFO               = 1; 
-  public static final int SERVER_STATE               = 2; 
+  public static final int ERROR               = 0;
+  public static final int REQUEST               = 1;
+  public static final int RESPONSE_INFO               = 2;
+  public static final int RESPONSE_ADD               = 3;
+  public static final int RESPONSE_REMOVE               = 4;
   
-  private RequestType requestType;
+  // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
+  private long changeConsumerID;
+  private String[] nodeParents;
+  private String nodeName;
+  private Serializable nodeValue;
   
-  private String name;
-  private String version;
-  private String build;
-  
-  private String state;
-    
-  private long startTime;
-  private long activateTime;
-  
-  public enum RequestType {
-    SERVER_INFO;
-  }
+  // Info related only to RESPONSE_INFO.
+  private PlatformServer serverInfo;
 
 
   // Must be public for serialization initializer.
   public PlatformInfoRequest() {
-    this(ERROR);
+    super(ERROR);
   }
-  
-  private PlatformInfoRequest(int type) {
+
+  private PlatformInfoRequest(int type, long changeConsumerID, String[] nodeParents, String nodeName, Serializable nodeValue, PlatformServer serverInfo) {
     super(type);
-  }
-  
-  private PlatformInfoRequest(String state, long activate, MessageID requestID) {
-    this(SERVER_STATE, requestID);
-    this.state = state;
-    this.activateTime = activate;
-  }  
-  
-  private PlatformInfoRequest(String name, String version, String buildid, long startTime, MessageID requestID) {
-    this(SERVER_INFO, requestID);
-    this.name = name;
-    this.build = buildid;
-    this.version = version;
-    this.startTime = startTime;
-  }
-
-  private PlatformInfoRequest(int type, MessageID requestID) {
-    super(type, requestID);
-  }
-  
-  private void setRequestType(RequestType type) {
-    requestType = type;
-  }
-
-  public RequestType getRequestType() {
-    return requestType;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public String getBuild() {
-    return build;
-  }
-  
-  public String getName() {
-    return name;
-  }
-
-  public String getState() {
-    return state;
-  }
-
-  public long getStartTime() {
-    return startTime;
-  }
-
-  public long getActivateTime() {
-    return activateTime;
+    // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
+    this.changeConsumerID = changeConsumerID;
+    this.nodeParents = nodeParents;
+    this.nodeName = nodeName;
+    this.nodeValue = nodeValue;
+    
+    // Info related only to RESPONSE_INFO.
+    this.serverInfo = serverInfo;
   }
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    if (getType() == REQUEST) {
-      requestType = RequestType.values()[in.readInt()];
-    } else if (getType() == SERVER_INFO) {
-      this.name = in.readString();
-      this.version = in.readString();
-      this.build = in.readString();
-      this.startTime = in.readLong();
-    } else if (getType() == SERVER_STATE) {
-      this.state = in.readString();
-      this.activateTime = in.readLong();
+    switch (getType()) {
+    case REQUEST:
+      // No additional data.
+      break;
+    case RESPONSE_INFO: {
+      // Only the serverInfo.
+      int valueSize = in.readInt();
+      Assert.assertTrue(valueSize > 0);
+      byte[] valueArray = new byte[valueSize];
+      in.readFully(valueArray);
+      this.serverInfo = (PlatformServer) deserialize(valueArray);
+      break;
+    }
+    case RESPONSE_ADD: {
+      // All fields but serverInfo.
+      this.changeConsumerID = in.readLong();
+      int parentCount = in.readInt();
+      this.nodeParents = new String[parentCount];
+      for (int i = 0; i < parentCount; ++i) {
+        this.nodeParents[i] = in.readString();
+      }
+      this.nodeName = in.readString();
+      int valueSize = in.readInt();
+      if (valueSize > 0) {
+        byte[] valueArray = new byte[valueSize];
+        in.readFully(valueArray);
+        this.nodeValue = deserialize(valueArray);
+      } else {
+        this.nodeValue = null;
+      }
+      break;
+    }
+    case RESPONSE_REMOVE: {
+      // All fields except nodeValue or serverInfo.
+      this.changeConsumerID = in.readLong();
+      int parentCount = in.readInt();
+      this.nodeParents = new String[parentCount];
+      for (int i = 0; i < parentCount; ++i) {
+        this.nodeParents[i] = in.readString();
+      }
+      this.nodeName = in.readString();
+      break;
+    }
+    default:
+      Assert.fail();
     }
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    if (getType() == REQUEST) {
-      if (requestType != null) {
-        out.writeInt(requestType.ordinal());
-      } else {
-        out.writeInt(-1);
-      }
-    } else if (getType() == SERVER_INFO) {
-      out.writeString(name);
-      out.writeString(version);
-      out.writeString(build);
-      out.writeLong(startTime);
-    } else if (getType() == SERVER_STATE) {
-      out.writeString(state);
-      out.writeLong(activateTime);
+    switch (getType()) {
+    case REQUEST:
+      // No additional data.
+      break;
+    case RESPONSE_INFO: {
+      // Only the serverInfo.
+      byte[] serializedValue = serialize(this.serverInfo);
+      out.writeInt(serializedValue.length);
+      out.write(serializedValue);
+      break;
     }
+    case RESPONSE_ADD: {
+      // All fields but serverInfo.
+      out.writeLong(this.changeConsumerID);
+      out.writeInt(nodeParents.length);
+      for (int i = 0; i < nodeParents.length; ++i) {
+        out.writeString(this.nodeParents[i]);
+      }
+      out.writeString(this.nodeName);
+      if (null != this.nodeValue) {
+        byte[] serializedValue = serialize(this.nodeValue);
+        out.writeInt(serializedValue.length);
+        out.write(serializedValue);
+      } else {
+        out.writeInt(0);
+      }
+      break;
+    }
+    case RESPONSE_REMOVE: {
+      // All fields except nodeValue or serverInfo.
+      out.writeLong(this.changeConsumerID);
+      out.writeInt(nodeParents.length);
+      for (int i = 0; i < nodeParents.length; ++i) {
+        out.writeString(this.nodeParents[i]);
+      }
+      out.writeString(this.nodeName);
+      break;
+    }
+    default:
+      Assert.fail();
+    }
+  }
+
+  public long getConsumerID() {
+    return this.changeConsumerID;
+  }
+
+  public String[] getParents() {
+    return this.nodeParents;
+  }
+
+  public String getNodeName() {
+    return this.nodeName;
+  }
+
+  public Serializable getNodeValue() {
+    return this.nodeValue;
+  }
+
+  public PlatformServer getServerInfo() {
+    return this.serverInfo;
+  }
+
+  private byte[] serialize(Serializable value) {
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    byte[] result = null;
+    try {
+      ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+      objectStream.writeObject(value);
+      objectStream.close();
+      result = byteStream.toByteArray();
+    } catch (IOException e) {
+      // We don't expect to fail to serialize monitoring data.
+      Assert.fail();
+    }
+    return result;
+  }
+
+  private Serializable deserialize(byte[] valueArray) {
+    ByteArrayInputStream byteStream = new ByteArrayInputStream(valueArray);
+    Serializable object = null;
+    try {
+      ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+      object = (Serializable) objectStream.readObject();
+    } catch (IOException e) {
+      // We don't expect to fail to deserialize monitoring data.
+      Assert.fail();
+    } catch (ClassNotFoundException e) {
+      // We don't expect to fail to deserialize monitoring data.
+      Assert.fail();
+    }
+    return object;
   }
 }

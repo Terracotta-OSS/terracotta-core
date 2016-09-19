@@ -61,5 +61,14 @@
       <version>${terracotta-apis.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <!-- NOTE:  We added this dependency so that PlatformInfoRequest can use the appropriate type in its signature, only.
+           It may be worth using a different approach in the future.
+      -->
+      <groupId>org.terracotta</groupId>
+      <artifactId>monitoring-support</artifactId>
+      <version>${terracotta-apis.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>
