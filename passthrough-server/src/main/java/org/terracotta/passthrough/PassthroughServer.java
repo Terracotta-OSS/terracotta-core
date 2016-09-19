@@ -56,6 +56,7 @@ public class PassthroughServer implements PassthroughDumper {
   private boolean hasStarted;
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
   private PassthroughConnection pseudoConnection;
+  private PassthroughMonitoringProducer monitoringProducer;
   
   // We also track various information for the restart case.
   private final List<EntityServerService<?, ?>> savedServerEntityServices;
@@ -140,6 +141,11 @@ public class PassthroughServer implements PassthroughDumper {
     this.hasStarted = true;
     bootstrapProcess(this.isActive);
     this.serverProcess.start(shouldLoadStorage);
+    
+    // If we are active, tell the monitoring system.
+    if (this.isActive) {
+      this.monitoringProducer.didBecomeActive(this.serverProcess.getServerInfo());
+    }
   }
   
   private void bootstrapProcess(boolean active) {
@@ -243,6 +249,8 @@ public class PassthroughServer implements PassthroughDumper {
   public void promoteToActive() {
     this.isActive = true;
     this.serverProcess.shutdown();
+    // Tell the monitoring producer that we became active.
+    this.monitoringProducer.didBecomeActive(this.serverProcess.getServerInfo());
     this.serverProcess.promoteToActive();
     this.serverProcess.resumeMessageProcessing();
   }
@@ -264,6 +272,8 @@ public class PassthroughServer implements PassthroughDumper {
     this.serverProcess.registerImplementationProvidedServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
     this.serverProcess.registerImplementationProvidedServiceProvider(passthroughPlatformServiceProvider, null);
+    this.monitoringProducer = new PassthroughMonitoringProducer(this.serverProcess);
+    this.serverProcess.registerImplementationProvidedServiceProvider(this.monitoringProducer, null);
   }
   
   private void findClasspathBuiltinServices() {
