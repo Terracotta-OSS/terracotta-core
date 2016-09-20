@@ -29,9 +29,12 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+import org.terracotta.entity.ActiveOnlyEntityMessage;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.Execution;
 
 
 public class RequestProcessor {
@@ -67,10 +70,23 @@ public class RequestProcessor {
   public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
-    ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
-        ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), payload.getRawPayload(), concurrencyKey), replicateTo)
-        : NoReplicationBroker.NOOP_WAITER;
+    ServerEntityAction action = request.getAction();
+    ActivePassiveAckWaiter token = NoReplicationBroker.NOOP_WAITER;
+//  check requiresReplication for backwards compatibility.  The default behavior is to replicate
+    if (payload.requiresReplication() && !replicateTo.isEmpty()) {
+      if (isActive && action == ServerEntityAction.INVOKE_ACTION) {
+        Execution[] whereToExec = payload.getEntityMessage().getClass().getAnnotationsByType(Execution.class);
+        if (payload.getEntityMessage() instanceof ActiveOnlyEntityMessage ||
+          (whereToExec != null && Arrays.asList(whereToExec).stream().noneMatch(e->Arrays.asList(e.value()).contains(Execution.ServerState.PASSIVE)))) {
+      // convert this action to a NOOP if it is not supposed to run on the passive.  Converting to NOOP preserves the transaction's 
+      //  place in line but does not execute
+          action = ServerEntityAction.NOOP;
+        }
+      }
+      token = passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), action, 
+            request.getTransaction(), request.getOldestTransactionOnClient(), payload.getRawPayload(), concurrencyKey), replicateTo);
+    }
+
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);
     return token;

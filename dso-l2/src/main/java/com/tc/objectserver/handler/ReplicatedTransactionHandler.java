@@ -237,7 +237,7 @@ public class ReplicatedTransactionHandler {
       try {
         LOGGER.debug("entity create called " + entityID);
         ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull());
-        temp.addRequestMessage(request, new MessagePayload(extendedData, null), 
+        temp.addRequestMessage(request, new MessagePayload(extendedData, null, false), 
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
@@ -435,7 +435,7 @@ public class ReplicatedTransactionHandler {
   private ServerEntityRequest makeNoop(EntityID eid, long version) {
     // Anything created within this class represents a replicated message.
     boolean isReplicatedMessage = true;
-    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, true, Optional.empty(), isReplicatedMessage);
+    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, Optional.empty(), isReplicatedMessage);
   }
       
   private ServerEntityRequest make(ReplicationMessage rep) {

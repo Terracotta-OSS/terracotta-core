@@ -160,7 +160,7 @@ public class ManagedEntityImplTest {
   }
   
   private MessagePayload mockInvokePayload() {
-    return new MessagePayload(new byte[0], mock(EntityMessage.class));
+    return new MessagePayload(new byte[0], mock(EntityMessage.class), true);
   }
   
   private RequestProcessor.EntityRequest makeRequest(MessagePayload payload, Runnable r) {
@@ -535,14 +535,14 @@ public class ManagedEntityImplTest {
     
     pth.submit(()->{EntityMessage cstring = mock(EntityMessage.class);
       when(cstring.toString()).thenReturn(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY));
-      managedEntity.addRequestMessage(mockInvokeRequest(), new MessagePayload(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring),  null, null);
+      managedEntity.addRequestMessage(mockInvokeRequest(), new MessagePayload(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring, true),  null, null);
     });
     for (int x=1;x<=24;x++) {
       int key = (x == 12) ? ConcurrencyStrategy.MANAGEMENT_KEY : x;
       pth.submit(()->{
         EntityMessage cstring = mock(EntityMessage.class);
         when(cstring.toString()).thenReturn(Integer.toString(key));
-        managedEntity.addRequestMessage(mockInvokeRequest(), new MessagePayload(Integer.toString(key).getBytes(), cstring),  null, null);
+        managedEntity.addRequestMessage(mockInvokeRequest(), new MessagePayload(Integer.toString(key).getBytes(), cstring, true),  null, null);
       });
     }
 //  only thing in the queue should be the MGMT action    
@@ -666,7 +666,7 @@ public class ManagedEntityImplTest {
   }
   
   private MessagePayload mockCreatePayload(Serializable config) throws IOException {
-    return new MessagePayload(serialize(config), null);
+    return new MessagePayload(serialize(config), null, true);
   }
   
   private TestingResponse mockResponse() {

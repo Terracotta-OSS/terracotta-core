@@ -31,8 +31,6 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.util.Assert;
-import java.io.IOException;
-import java.util.Collections;
 
 import java.util.Optional;
 import java.util.Set;
@@ -45,18 +43,16 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   private final TransactionID transaction;
   private final TransactionID oldest;
   private final ClientID  src;
-  private final boolean requiresReplication;
   
   private boolean isComplete = false;
   private boolean isRetired = false;
   private boolean alsoRetire = false;
 
-  public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication) {
+  public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src) {
     this.action = action;
     this.transaction = transaction;
     this.oldest = oldest;
     this.src = src;
-    this.requiresReplication = requiresReplication;
   }
   
   public abstract Optional<MessageChannel> getReturnChannel();
@@ -83,7 +79,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
 
   @Override
   public Set<NodeID> replicateTo(Set<NodeID> current) {
-    return requiresReplication ? current : Collections.emptySet();
+    return current;
   }
 
   @Override
