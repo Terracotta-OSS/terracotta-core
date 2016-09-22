@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
@@ -295,7 +296,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.entityServices.add(service);
   }
   
-  public void shutdown() {
+  public void stop() {
     // Shutdown can't happen while handling resends.
     Assert.assertTrue(!this.isHandlingResends);
     
@@ -319,6 +320,27 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // We also want to clear the message queue, in case anything else is still sitting there.
     this.messageQueue.clear();
     this.serverThread = null;
+  }
+
+  public void shutdown() {
+    // Make sure that we have been stopped before being shut down.
+    Assert.assertTrue(null == this.serverThread);
+    
+    // Finally, see if any of the ServiceProvider instances are Closeable.
+    // NOTE:  This is a SPECIAL behavior exposed by the passthrough server to allow any "open state" (file descriptors,
+    //  etc) to be closed by a ServiceProvider implementation.  This is ONLY called by the passthrough server since the
+    //  multi-process server has no notion of clean shutdown, meaning that the analogous "clean-up" is realized through
+    //  the server crashing.
+    for (ServiceProvider provider : this.serviceProviders) {
+      if (provider instanceof Closeable) {
+        try {
+          ((Closeable)provider).close();
+        } catch (IOException e) {
+          // We do not permit exceptions here since that would imply a bug in the service being tested.
+          Assert.unexpected(e);
+        }
+      }
+    }
   }
 
   public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {

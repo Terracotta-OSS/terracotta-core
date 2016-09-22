@@ -181,6 +181,7 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   private void internalStop() {
+    this.serverProcess.stop();
     this.serverProcess.shutdown();
     Assert.assertNotNull(this.pseudoConnection);
     this.pseudoConnection.close();
@@ -248,7 +249,7 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void promoteToActive() {
     this.isActive = true;
-    this.serverProcess.shutdown();
+    this.serverProcess.stop();
     // Tell the monitoring producer that we became active.
     this.monitoringProducer.didBecomeActive(this.serverProcess.getServerInfo());
     this.serverProcess.promoteToActive();
