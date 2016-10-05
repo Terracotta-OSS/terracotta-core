@@ -32,18 +32,22 @@ public class ClientStatePersistor {
   private static final String CLIENT_STATES =  "client_states";
   private static final String UUID_CONTAINER =  "uuid_container";
   private static final String UUID_KEY =  "uuid_container:key";
+  private static final String SEQUENCE_CONTAINER = "sequence_container";
+  private static final String SEQUENCE_KEY =  "sequence_container:key";
 
-  private final MutableSequence clientIDSequence;
   private final KeyValueStorage<String, String> uuidContainer;
   private final KeyValueStorage<ChannelID, Boolean> clients;
+  private final MutableSequence clientIDSequence;
 
-  public ClientStatePersistor(SequenceManager sequenceManager, IPersistentStorage storageManager) {
-    this.clientIDSequence = sequenceManager.getSequence();
+  public ClientStatePersistor(IPersistentStorage storageManager) {
     this.uuidContainer = storageManager.getKeyValueStorage(UUID_CONTAINER, String.class, String.class);
     if (!this.uuidContainer.containsKey(UUID_KEY)) {
       this.uuidContainer.put(UUID_KEY, UUID.getUUID().toString());
     }
     this.clients = storageManager.getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class);
+    
+    KeyValueStorage<String, Long> sequenceContainer = storageManager.getKeyValueStorage(SEQUENCE_CONTAINER, String.class, Long.class);
+    this.clientIDSequence = new Sequence(sequenceContainer);
   }
 
   public MutableSequence getConnectionIDSequence() {
@@ -71,5 +75,41 @@ public class ClientStatePersistor {
 
   public String getServerUUID() {
     return this.uuidContainer.get(UUID_KEY);
+  }
+
+
+  private static class Sequence implements MutableSequence {
+    private final KeyValueStorage<String, Long> sequenceContainer;
+    private long next;
+
+    Sequence(KeyValueStorage<String, Long> sequenceContainer) {
+      this.sequenceContainer = sequenceContainer;
+      if (!this.sequenceContainer.containsKey(SEQUENCE_KEY)) {
+        this.sequenceContainer.put(SEQUENCE_KEY, 0L);
+      }
+      this.next = this.sequenceContainer.get(SEQUENCE_KEY);
+    }
+
+    @Override
+    public synchronized void setNext(long next) {
+      if (next < this.next) {
+        throw new AssertionError("next=" + next + " current=" + this.next);
+      }
+      this.next = next;
+      this.sequenceContainer.put(SEQUENCE_KEY, next);
+    }
+
+    @Override
+    public synchronized long next() {
+      long r = next;
+      next += 1;
+      this.sequenceContainer.put(SEQUENCE_KEY, next);
+      return r;
+    }
+
+    @Override
+    public synchronized long current() {
+      return next;
+    }
   }
 }
