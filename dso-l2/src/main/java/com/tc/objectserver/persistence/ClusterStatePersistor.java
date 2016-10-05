@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
 
 import com.tc.net.GroupID;
@@ -28,11 +27,8 @@ import java.io.IOException;
 import java.util.Map;
 import org.terracotta.persistence.IPersistentStorage;
 
-/**
- * @author tim
- */
+
 public class ClusterStatePersistor {
-  private static final String MAX_DATA_STORAGE_SIZE_KEY = "maxdatastoragesize";
   private static final String GROUP_ID_KEY = "groupid";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
@@ -51,15 +47,6 @@ public class ClusterStatePersistor {
     }
     this.map = storageManager.getProperties();
     this.initialState = getCurrentL2State();
-  }
-
-  public void setMaxDataStorageSize(long size) {
-    map.put(MAX_DATA_STORAGE_SIZE_KEY, String.valueOf(size));
-  }
-
-  public Long getMaxDataStorageSize() {
-    String l = map.get(MAX_DATA_STORAGE_SIZE_KEY);
-    return l == null ? null : Long.valueOf(l);
   }
 
   public void setGroupId(GroupID groupId) {
