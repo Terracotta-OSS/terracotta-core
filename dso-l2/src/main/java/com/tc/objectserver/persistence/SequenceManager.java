@@ -90,14 +90,6 @@ public class SequenceManager {
     }
 
     @Override
-    public synchronized long nextBatch(long batchSize) {
-      long r = next;
-      next += batchSize;
-      sequenceMap.put(name, next);
-      return r;
-    }
-
-    @Override
     public synchronized void setNext(long next) {
       if (next < this.next) {
         throw new AssertionError("next=" + next + " current=" + this.next);
@@ -107,8 +99,11 @@ public class SequenceManager {
     }
 
     @Override
-    public long next() {
-      return nextBatch(1);
+    public synchronized long next() {
+      long r = next;
+      next += 1;
+      sequenceMap.put(name, next);
+      return r;
     }
 
     @Override
