@@ -20,9 +20,6 @@ package com.tc.objectserver.persistence;
 
 import com.tc.util.sequence.MutableSequence;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -30,25 +27,17 @@ import org.terracotta.persistence.KeyValueStorage;
 public class SequenceManager {
   private static final String SEQUENCE_MAP = "sequence_map";
 
-  private final ConcurrentMap<String, Sequence> createdSequences =
-          new ConcurrentHashMap<>();
   private final KeyValueStorage<String, Long> sequenceMap;
+  private final Sequence singletonSequence;
 
   public SequenceManager(IPersistentStorage storageManager) {
     this.sequenceMap = storageManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class);
+    long initialValue = 0L;
+    this.singletonSequence = new Sequence(sequenceMap, "singleton", initialValue);
   }
 
-  public MutableSequence getSequence(String name) {
-    Sequence sequence = createdSequences.get(name);
-    if (sequence == null) {
-      long initialValue = 0L;
-      sequence = new Sequence(sequenceMap, name, initialValue);
-      Sequence racer = createdSequences.putIfAbsent(name, sequence);
-      if (racer != null) {
-        sequence = racer;
-      }
-    }
-    return sequence;
+  public MutableSequence getSequence() {
+    return this.singletonSequence;
   }
 
   private static class Sequence implements MutableSequence {

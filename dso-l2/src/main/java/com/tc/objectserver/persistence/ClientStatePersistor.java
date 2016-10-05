@@ -29,7 +29,6 @@ import org.terracotta.persistence.KeyValueStorage;
 
 
 public class ClientStatePersistor {
-  private static final String CLIENT_STATE_SEQUENCE = "client_state_sequence";
   private static final String CLIENT_STATES =  "client_states";
   private static final String UUID_CONTAINER =  "uuid_container";
   private static final String UUID_KEY =  "uuid_container:key";
@@ -39,7 +38,7 @@ public class ClientStatePersistor {
   private final KeyValueStorage<ChannelID, Boolean> clients;
 
   public ClientStatePersistor(SequenceManager sequenceManager, IPersistentStorage storageManager) {
-    this.clientIDSequence = sequenceManager.getSequence(CLIENT_STATE_SEQUENCE);
+    this.clientIDSequence = sequenceManager.getSequence();
     this.uuidContainer = storageManager.getKeyValueStorage(UUID_CONTAINER, String.class, String.class);
     if (!this.uuidContainer.containsKey(UUID_KEY)) {
       this.uuidContainer.put(UUID_KEY, UUID.getUUID().toString());
