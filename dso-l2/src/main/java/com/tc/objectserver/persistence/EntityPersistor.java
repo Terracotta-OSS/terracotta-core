@@ -292,9 +292,7 @@ public class EntityPersistor {
       clients.add(new ClientID(c.getChannelID()));
     }
     clients.removeAll(this.entityLifeJournal.keySet());
-    for (ClientID c : clients) {
-      this.entityLifeJournal.removeAll(clients);
-    }
+    this.entityLifeJournal.removeAll(clients);
   }
   
   public synchronized void serialize(ObjectOutput bucket) throws IOException {
