@@ -16,21 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
 
 import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
-/**
- * @author tim
- */
+
+
 public class SequenceManager {
   private static final String SEQUENCE_MAP = "sequence_map";
   private static final String SEQUENCE_UUID_MAP = "sequence_uuid_map";
@@ -45,14 +42,10 @@ public class SequenceManager {
     this.uuidMap = storageManager.getKeyValueStorage(SEQUENCE_UUID_MAP, String.class, String.class);
   }
 
-  public void clear() {
-    sequenceMap.clear();
-    uuidMap.clear();
-  }
-
-  public MutableSequence getSequence(String name, long initialValue) {
+  public MutableSequence getSequence(String name) {
     Sequence sequence = createdSequences.get(name);
     if (sequence == null) {
+      long initialValue = 0L;
       sequence = new Sequence(sequenceMap, uuidMap, name, initialValue);
       Sequence racer = createdSequences.putIfAbsent(name, sequence);
       if (racer != null) {
@@ -61,15 +54,6 @@ public class SequenceManager {
     }
     return sequence;
   }
-
-  public MutableSequence getSequence(String name) {
-    return getSequence(name, 0L);
-  }
-//
-//  public static void addConfigsTo(Map<String, KeyValueStorageConfig<?, ?>> configs) {
-//    configs.put("platform" + "|" + SEQUENCE_MAP, ImmutableKeyValueStorageConfig.builder(String.class, Long.class).build());
-//    configs.put("platform" + "|" + SEQUENCE_UUID_MAP, ImmutableKeyValueStorageConfig.builder(String.class, String.class).build());
-//  }
 
   private static class Sequence implements MutableSequence {
 

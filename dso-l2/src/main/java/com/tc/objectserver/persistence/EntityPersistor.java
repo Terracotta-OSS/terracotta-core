@@ -125,14 +125,6 @@ public class EntityPersistor {
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, null);
   }
   
-  public void entityCreatedJustInJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version) {
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, null);
-  }
-  
-  public void entityDestroyedJustInJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version) {
-    addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, null);
-  }
-  
   public void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreatedNoJournal " + id);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
@@ -293,6 +285,7 @@ public class EntityPersistor {
     this.entities.put(key, value);
   }
   
+  @SuppressWarnings("deprecation")
   public synchronized void setState(State state, Set<ConnectionID> connectedClients) {
     Set<ClientID> clients = new HashSet<>();
     for (ConnectionID c : connectedClients) {
@@ -305,6 +298,7 @@ public class EntityPersistor {
   }
   
   public synchronized void serialize(ObjectOutput bucket) throws IOException {
+    @SuppressWarnings("deprecation")
     Set<ClientID> locals = this.entityLifeJournal.keySet();
     int size = locals.size();
     bucket.writeInt(size);
@@ -320,6 +314,7 @@ public class EntityPersistor {
       LOGGER.debug("log size " + size);
       for (int x=0;x<size;x++) {
         ClientID key = (ClientID)bucket.readObject();
+        @SuppressWarnings("unchecked")
         List<EntityData.JournalEntry> journal = (List<EntityData.JournalEntry>)bucket.readObject();
         List<EntityData.JournalEntry> check = (List<EntityData.JournalEntry>)this.entityLifeJournal.get(key);
         if (check == null) {

@@ -82,11 +82,6 @@ public class Persistor implements PrettyPrintable {
     return clusterStatePersistor;
   }
 
-  public SequenceManager getSequenceManager() {
-    checkStarted();
-    return sequenceManager;
-  }
-  
   public EntityPersistor getEntityPersistor() {
     return this.entityPersistor;
   }
