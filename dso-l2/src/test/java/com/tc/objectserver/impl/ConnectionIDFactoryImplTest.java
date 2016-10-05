@@ -43,11 +43,11 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void setUp() throws Exception {
     sequence = createSequence();
     persistor = createPersistor(sequence);
+    when(persistor.getServerUUID()).thenReturn("abc123");
     connectionIDFactory = new ConnectionIDFactoryImpl(persistor);
   }
 
   public void testNextID() throws Exception {
-    uid("abc123");
     nextChannelId(0);
     ConnectionID id = connectionIDFactory.populateConnectionID(idWith("Mr. Bogus", -1L));
     assertEquals("Mr. Bogus", id.getJvmID());
@@ -70,10 +70,6 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     verify(persistor).deleteClientState(new ChannelID(0));
   }
 
-  private void uid(String uid) {
-    when(sequence.getUID()).thenReturn(uid);
-  }
-
   private void nextChannelId(long id) {
     when(sequence.next()).thenReturn(id);
   }
@@ -84,7 +80,6 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
 
   private static MutableSequence createSequence() {
     MutableSequence sequence = mock(MutableSequence.class);
-    when(sequence.getUID()).thenReturn("abc123");
     return sequence;
   }
 

@@ -40,13 +40,13 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   private final ClientStatePersistor              clientStateStore;
   private final MutableSequence                   connectionIDSequence;
-  private String                                  uid;
+  private String                                  serverUUID;
   private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
 
   public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
     this.clientStateStore = clientStateStore;
     this.connectionIDSequence = clientStateStore.getConnectionIDSequence();
-    this.uid = connectionIDSequence.getUID();
+    this.serverUUID = this.clientStateStore.getServerUUID();
   }
 
   @Override
@@ -63,10 +63,10 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   private ConnectionID buildConnectionId(String jvmID, long channelID, ProductID productId) {
-    Assert.assertNotNull(uid);
+    Assert.assertNotNull(this.serverUUID);
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
     clientStateStore.saveClientState(new ChannelID(channelID));
-    ConnectionID rv = new ConnectionID(jvmID, channelID, uid, null, null, productId);
+    ConnectionID rv = new ConnectionID(jvmID, channelID, this.serverUUID, null, null, productId);
     fireCreationEvent(rv);
     return rv;
   }
@@ -102,7 +102,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   @Override
   public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
-    this.uid = clusterID;
+    this.serverUUID = clusterID;
     if (nextAvailChannelID >= 0) {
       this.connectionIDSequence.setNext(nextAvailChannelID);
     }
@@ -114,10 +114,10 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   @Override
   public Set<ConnectionID> loadConnectionIDs() {
-    Assert.assertNotNull(uid);
+    Assert.assertNotNull(this.serverUUID);
     Set<ConnectionID> connections = new HashSet<>();
     for (final ChannelID channelID : clientStateStore.loadClientIDs()) {
-      connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, (channelID).toLong(), uid));
+      connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, (channelID).toLong(), this.serverUUID));
     }
     return connections;
   }
@@ -140,7 +140,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     } catch (ClientNotFoundException e) {
       throw new AssertionError(e);
     }
-    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, clientID.toLong(), uid));
+    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, clientID.toLong(), this.serverUUID));
   }
 
   @Override

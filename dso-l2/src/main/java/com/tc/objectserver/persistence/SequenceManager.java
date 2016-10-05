@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,23 +29,20 @@ import org.terracotta.persistence.KeyValueStorage;
 
 public class SequenceManager {
   private static final String SEQUENCE_MAP = "sequence_map";
-  private static final String SEQUENCE_UUID_MAP = "sequence_uuid_map";
 
   private final ConcurrentMap<String, Sequence> createdSequences =
           new ConcurrentHashMap<>();
   private final KeyValueStorage<String, Long> sequenceMap;
-  private final KeyValueStorage<String, String> uuidMap;
 
   public SequenceManager(IPersistentStorage storageManager) {
     this.sequenceMap = storageManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class);
-    this.uuidMap = storageManager.getKeyValueStorage(SEQUENCE_UUID_MAP, String.class, String.class);
   }
 
   public MutableSequence getSequence(String name) {
     Sequence sequence = createdSequences.get(name);
     if (sequence == null) {
       long initialValue = 0L;
-      sequence = new Sequence(sequenceMap, uuidMap, name, initialValue);
+      sequence = new Sequence(sequenceMap, name, initialValue);
       Sequence racer = createdSequences.putIfAbsent(name, sequence);
       if (racer != null) {
         sequence = racer;
@@ -56,37 +52,19 @@ public class SequenceManager {
   }
 
   private static class Sequence implements MutableSequence {
-
-    private String uuid;
     private long next;
 
     private final KeyValueStorage<String, Long> sequenceMap;
-    private final KeyValueStorage<String, String> uuidMap;
     private final String name;
 
-    Sequence(KeyValueStorage<String, Long> sequenceMap, KeyValueStorage<String, String> uuidMap, String name, long initialValue) {
+    Sequence(KeyValueStorage<String, Long> sequenceMap, String name, long initialValue) {
       this.name = name;
       this.sequenceMap = sequenceMap;
-      this.uuidMap = uuidMap;
       if (sequenceMap.get(name) != null) {
         this.next = sequenceMap.get(name);
       } else {
         this.next = initialValue;
       }
-    }
-
-    @Override
-    public synchronized String getUID() {
-      if (uuid == null) {
-        // not cached, try to get it
-        uuid = uuidMap.get(name);
-        if (uuid == null) {
-          // still not there, must not be set.
-          uuid = UUID.getUUID().toString();
-          uuidMap.put(name, uuid);
-        }
-      }
-      return uuid;
     }
 
     @Override

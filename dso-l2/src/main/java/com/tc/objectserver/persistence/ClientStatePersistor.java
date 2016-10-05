@@ -20,6 +20,7 @@ package com.tc.objectserver.persistence;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ClientNotFoundException;
+import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.Set;
@@ -30,12 +31,19 @@ import org.terracotta.persistence.KeyValueStorage;
 public class ClientStatePersistor {
   private static final String CLIENT_STATE_SEQUENCE = "client_state_sequence";
   private static final String CLIENT_STATES =  "client_states";
+  private static final String UUID_CONTAINER =  "uuid_container";
+  private static final String UUID_KEY =  "uuid_container:key";
 
   private final MutableSequence clientIDSequence;
+  private final KeyValueStorage<String, String> uuidContainer;
   private final KeyValueStorage<ChannelID, Boolean> clients;
 
   public ClientStatePersistor(SequenceManager sequenceManager, IPersistentStorage storageManager) {
     this.clientIDSequence = sequenceManager.getSequence(CLIENT_STATE_SEQUENCE);
+    this.uuidContainer = storageManager.getKeyValueStorage(UUID_CONTAINER, String.class, String.class);
+    if (!this.uuidContainer.containsKey(UUID_KEY)) {
+      this.uuidContainer.put(UUID_KEY, UUID.getUUID().toString());
+    }
     this.clients = storageManager.getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class);
   }
 
@@ -60,5 +68,9 @@ public class ClientStatePersistor {
     if (!clients.remove(id)) {
       throw new ClientNotFoundException();
     }
+  }
+
+  public String getServerUUID() {
+    return this.uuidContainer.get(UUID_KEY);
   }
 }
