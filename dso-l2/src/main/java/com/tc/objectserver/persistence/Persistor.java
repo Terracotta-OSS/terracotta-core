@@ -38,7 +38,6 @@ public class Persistor implements PrettyPrintable {
   private final ClusterStatePersistor clusterStatePersistor;
 
   private ClientStatePersistor clientStatePersistor;
-  private SequenceManager sequenceManager;
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
 
@@ -63,8 +62,7 @@ public class Persistor implements PrettyPrintable {
   }
 
   public void start() {
-    sequenceManager = new SequenceManager(persistentStorage);
-    clientStatePersistor = new ClientStatePersistor(sequenceManager, persistentStorage);
+    clientStatePersistor = new ClientStatePersistor(persistentStorage);
     wasDBClean = this.clusterStatePersistor.isDBClean();
     started = true;
   }
