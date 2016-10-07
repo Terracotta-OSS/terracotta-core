@@ -20,6 +20,7 @@ package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.NodeID;
+import com.tc.util.State;
 import java.util.function.Consumer;
 
 /**
@@ -30,12 +31,14 @@ public class ElectionContext {
   private final boolean isNew;
   private final WeightGeneratorFactory factory;
   private final Consumer<NodeID> winner;
+  private final State currentState;
 
-  public ElectionContext(NodeID node, boolean isNew, WeightGeneratorFactory factory, Consumer<NodeID> winner) {
+  public ElectionContext(NodeID node, boolean isNew, WeightGeneratorFactory factory, State currentState, Consumer<NodeID> winner) {
     this.node = node;
     this.isNew = isNew;
     this.factory = factory;
     this.winner = winner;
+    this.currentState = currentState;
   }
 
   public NodeID getNode() {
@@ -52,5 +55,9 @@ public class ElectionContext {
   
   public void setWinner(NodeID node) {
     winner.accept(node);
+  }
+
+  public State getCurrentState() {
+    return currentState;
   }
 }

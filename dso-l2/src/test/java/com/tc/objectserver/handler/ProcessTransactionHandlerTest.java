@@ -114,7 +114,7 @@ public class ProcessTransactionHandlerTest {
     entityManager.enterActiveState();
     channelManager.addEventListener(clientEntityStateManager);
 
-    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager);
+    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager, mock(Runnable.class));
 
     this.loopbackSink = new ForwardingSink(this.processTransactionHandler.getVoltronMessageHandler());
     Stage mockStage = mock(Stage.class);

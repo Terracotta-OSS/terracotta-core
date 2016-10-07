@@ -228,6 +228,11 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     groupMgr[0].join(allNodes[0], nodeStore);
     managers[0].startElection();
     managers[0].waitForDeclaredActive();
+    Set<NodeID> nodeIDs = new HashSet<>();
+    for(int i = 1; i < virtuals; i++) {
+      nodeIDs.add(groupMgr[i].getLocalNodeID());
+    }
+    managers[0].addKnownServersList(nodeIDs);
     for (int i = 1; i < virtuals; ++i) {
       groupMgr[i].join(allNodes[i], nodeStore);
       managers[i].startElection();
@@ -292,6 +297,13 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     ids[0] = groupMgr[0].join(allNodes[0], nodeStore);
     managers[0].startElection();
     managers[0].waitForDeclaredActive();
+
+    Set<NodeID> nodeIDs = new HashSet<>();
+    for(int i = 1; i < virtuals; i++) {
+      nodeIDs.add(groupMgr[i].getLocalNodeID());
+    }
+
+    managers[0].addKnownServersList(nodeIDs);
     
     for (int i=1;i<virtuals;i++) {
       managers[i].startElection();

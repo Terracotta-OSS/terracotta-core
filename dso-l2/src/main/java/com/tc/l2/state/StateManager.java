@@ -63,4 +63,6 @@ public interface StateManager {
   public void handleClusterStateMessage(L2StateMessage clusterMsg);
 
   public NodeID getActiveNodeID();
+
+  public void cleanupKnownServers();
 }

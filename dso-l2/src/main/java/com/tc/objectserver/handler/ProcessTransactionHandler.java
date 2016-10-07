@@ -27,6 +27,7 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -73,6 +74,7 @@ public class ProcessTransactionHandler {
   
   private final EntityPersistor entityPersistor;
   private final TransactionOrderPersistor transactionOrderPersistor;
+  private final Runnable stateManagerCleanup;
   
   private final EntityManager entityManager;
   private final DSOChannelManager dsoChannelManager;
@@ -143,11 +145,12 @@ public class ProcessTransactionHandler {
     return this.voltronHandler;
   }
 
-  public ProcessTransactionHandler(EntityPersistor entityPersistor, TransactionOrderPersistor transactionOrderPersistor, DSOChannelManager channelManager, EntityManager entityManager) {
+  public ProcessTransactionHandler(EntityPersistor entityPersistor, TransactionOrderPersistor transactionOrderPersistor, DSOChannelManager channelManager, EntityManager entityManager, Runnable stateManagerCleanup) {
     this.entityPersistor = entityPersistor;
     this.transactionOrderPersistor = transactionOrderPersistor;
     this.dsoChannelManager = channelManager;
     this.entityManager = entityManager;
+    this.stateManagerCleanup = stateManagerCleanup;
     
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new LinkedList<>();
@@ -413,6 +416,9 @@ public class ProcessTransactionHandler {
     if (this.resendReplayList == null && this.resendNewList == null) {
       return;
     }
+
+    this.stateManagerCleanup.run();
+
     // Clear the transaction order persistor since we are starting fresh.
     this.transactionOrderPersistor.clearAllRecords();
     
