@@ -594,7 +594,7 @@ public class ManagedEntityImplTest {
     TestingResponse response2 = mockResponse();
     pth.submit(()->managedEntity.addRequestMessage(getRequest,  mockInvokePayload(), response2::complete, response2::failure));
     response2.waitFor();
-    verify(activeServerEntity).connected(clientDescriptor);
+    verify(activeServerEntity).connected(eq(clientDescriptor));
     verify(response2).complete(Mockito.any());
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
@@ -602,7 +602,7 @@ public class ManagedEntityImplTest {
     TestingResponse response3 = mockResponse();
     pth.submit(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.EMPTY, response3::complete, response3::failure));
     response3.waitFor();
-    verify(activeServerEntity).disconnected(clientDescriptor);
+    verify(activeServerEntity).disconnected(eq(clientDescriptor));
     verify(response3).complete(Mockito.any());
   }
 
@@ -639,7 +639,7 @@ public class ManagedEntityImplTest {
     TestingResponse response3 = mockResponse();
     pth.submit(()->managedEntity.addRequestMessage(getRequest, MessagePayload.EMPTY, response3::complete, response3::failure));
     response3.waitFor();
-    verify(activeServerEntity).connected(clientDescriptor);
+    verify(activeServerEntity).connected(eq(clientDescriptor));
     verify(response3).complete(Mockito.any());
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
@@ -647,7 +647,7 @@ public class ManagedEntityImplTest {
     TestingResponse response4 = mockResponse();
     pth.submit(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.EMPTY, response4::complete, response4::failure));
     response4.waitFor();
-    verify(activeServerEntity).disconnected(clientDescriptor);
+    verify(activeServerEntity).disconnected(eq(clientDescriptor));
     verify(response4).complete(Mockito.any());
   }
 
