@@ -482,6 +482,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       } else if (clientEntityStateManager.verifyNoReferences(entityDescriptor.getEntityID())) {
         Assert.assertFalse(this.isDestroyed);
         commonServerEntity.destroy();
+        this.retirementManager.entityWasDestroyed();
         if (this.isInActiveState) {
           this.activeServerEntity = null;
         } else {

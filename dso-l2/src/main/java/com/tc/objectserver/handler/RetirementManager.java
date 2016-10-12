@@ -29,7 +29,6 @@ import java.util.Stack;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 
-import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 
@@ -114,7 +113,7 @@ public class RetirementManager {
   }
 
   private void traverseDependencyGraph(List<Retiree> toRetire, LogicalSequence completedRequest) {
-    Stack<LogicalSequence> requestStack = new Stack();
+    Stack<LogicalSequence> requestStack = new Stack<>();
     requestStack.add(completedRequest);
 
     while(!requestStack.isEmpty()) {
@@ -156,6 +155,17 @@ public class RetirementManager {
     
     LogicalSequence previous = this.waitingForDeferredRegistration.put(laterMessage, myRequest);
     Assert.assertNull(previous);
+  }
+
+  /**
+   * This method purely exists for verifying that nothing has been lost (since anything remaining in this object when the
+   *  entity is destroyed would indicate a serious bug and possibly hung clients).
+   */
+  public synchronized void entityWasDestroyed() {
+    Assert.assertTrue(this.currentlyRunning.isEmpty());
+    // Note that we don't assert mostRecentRegisteredToKey is empty since it is fixed-size and always contains the most
+    //  recent LogicalSequence, per-key (just so they aren't explicitly life-cycled from outside).
+    Assert.assertTrue(this.waitingForDeferredRegistration.isEmpty());
   }
 
 
