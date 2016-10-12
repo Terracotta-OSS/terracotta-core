@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
@@ -49,7 +50,7 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
   private final Set<Long> consumers = new HashSet<>();
 
   @Override
-  public boolean initialize(ServiceProviderConfiguration configuration) {
+  public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     // Currently, this provider is created directly so there is no chance of seeing any other kind of provider.
     // In the future, this may change.
     Assert.assertTrue(configuration instanceof FlatFileStorageProviderConfiguration);

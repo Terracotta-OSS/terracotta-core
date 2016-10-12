@@ -21,6 +21,7 @@ package com.tc.services;
 import com.tc.classloader.BuiltinService;
 import com.tc.classloader.ServiceLocator;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -48,16 +49,17 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private boolean hasCreatedSubRegistries;
 
   @Override
-  public void initialize(String serverName, TcConfiguration configuration, ClassLoader loader) {
+  public void initialize(PlatformConfiguration platformConfiguration, TcConfiguration configuration, ClassLoader loader) {
+    String serverName = platformConfiguration.getServerName();
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations().get(serverName);
     Assert.assertFalse(this.hasCreatedSubRegistries);
-    loadClasspathBuiltins(loader);
+    loadClasspathBuiltins(loader, platformConfiguration);
     if(serviceProviderConfigurationList != null) {
       for (ServiceProviderConfiguration config : serviceProviderConfigurationList) {
         Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
         try {
           ServiceProvider provider = serviceClazz.newInstance();
-          if (provider.initialize(config)) {
+          if (provider.initialize(config, platformConfiguration)) {
             registerNewServiceProvider(provider);
           }
         } catch (InstantiationException | IllegalAccessException ie) {
@@ -69,7 +71,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     }
   }
   
-  private void loadClasspathBuiltins(ClassLoader loader) {
+  private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
     List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, loader);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
@@ -78,7 +80,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         } else {
           ServiceProvider service = clazz.newInstance();
     //  there is no config for builtins
-          service.initialize(null);
+          service.initialize(null, platformConfiguration);
           registerNewServiceProvider(service);
         }
       } catch (IllegalAccessException | InstantiationException i) {
