@@ -54,7 +54,6 @@ import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -265,12 +264,16 @@ public class ProcessTransactionHandler {
             locked.addRequestMessage(serverEntityRequest, entityMessage, (result)-> {
               safeChannel.ifPresent((channel)-> {
                 addSequentially(channel, addTo->addTo.addResult(transactionID, result));
-                List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
+              });
+              List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
+              safeChannel.ifPresent((channel)-> {
                 for (Retiree toRetire : readyToRetire) {
-                  if (toRetire == null) continue;
-                  addSequentially(channel, addTo->addTo.addRetired(toRetire.getTransaction()));
+                  if (null != toRetire) {
+                    addSequentially(channel, addTo->addTo.addRetired(toRetire.getTransaction()));
+                  }
                 }
               });
+
               locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
                 @Override
                 public void retired() {
@@ -493,11 +496,5 @@ public class ProcessTransactionHandler {
         break;
     }
     return action;
-  }
-  
-  private static class Result {
-    ClientID client;
-    TransactionID tid;
-    byte[] result;
   }
 }
