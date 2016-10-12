@@ -81,7 +81,16 @@ public class BasicExternalCluster extends Cluster {
       throw new NullPointerException("Entity fragment must be non-null");
     }
     
-    clusterDirectory.mkdirs();
+    if (clusterDirectory.exists()) {
+      if (clusterDirectory.isFile()) {
+        throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
+      }
+    } else {
+      boolean didCreateDirectories = clusterDirectory.mkdirs();
+      if (!didCreateDirectories) {
+        throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
+      }
+    }
     this.clusterDirectory = clusterDirectory;
     this.stripeSize = stripeSize;
     this.namespaceFragment = namespaceFragment;
@@ -99,8 +108,17 @@ public class BasicExternalCluster extends Cluster {
     return super.apply(base, description);
   }
 
+  public void manualStart(String displayName) throws Throwable {
+    this.displayName = displayName;
+    internalStart();
+  }
+
   @Override
   protected void before() throws Throwable {
+    internalStart();
+  }
+  
+  private void internalStart() throws Throwable {
     VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
     VerboseLogger fileHelpersLogger = new VerboseLogger(null, null);
     VerboseLogger clientLogger = null;
@@ -167,8 +185,16 @@ public class BasicExternalCluster extends Cluster {
     waitForSafe();
   }
 
+  public void manualStop() {
+    internalStop();
+  }
+
   @Override
   protected void after() {
+    internalStop();
+  }
+
+  private void internalStop() {
     stateManager.setTestDidPassIfNotFailed();
     // NOTE:  The waitForFinish is called by the shepherding thread so we just join on it having done that.
     try {
