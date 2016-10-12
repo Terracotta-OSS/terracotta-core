@@ -33,7 +33,7 @@ limitations under the License.
     <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
 
     <!-- External dependency versions for the project -->
-    <ipc-eventbus.version>1.0.1</ipc-eventbus.version>
+    <ipc-eventbus.version>1.0.2</ipc-eventbus.version>
   </properties>
 
   <modules>
