@@ -47,7 +47,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
@@ -73,6 +72,8 @@ import org.mockito.Matchers;
 
 
 public class ProcessTransactionHandlerTest {
+  private static final String TEST_ENTITY_CLASS_NAME = "com.tc.objectserver.testentity.TestEntity";
+  
   private TerracottaServiceProviderRegistry terracottaServiceProviderRegistry;
   private EntityPersistor entityPersistor;
   private TransactionOrderPersistor transactionOrderPersistor;
@@ -84,6 +85,7 @@ public class ProcessTransactionHandlerTest {
   private ITopologyEventCollector eventCollector;
   
   
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Before
   public void setUp() throws Exception {
     this.terracottaServiceProviderRegistry = mock(TerracottaServiceProviderRegistry.class);
@@ -160,7 +162,7 @@ public class ProcessTransactionHandlerTest {
   @Test
   public void testFailOnLoadVersionMismatch() throws Exception {
     EntityData.Value data = new EntityData.Value();
-    data.className = "org.terracotta.TestEntity";
+    data.className = TEST_ENTITY_CLASS_NAME;
     data.version = TestEntity.VERSION + 1;
     data.consumerID = 1;
     data.entityName = "foo";
@@ -204,7 +206,7 @@ public class ProcessTransactionHandlerTest {
   private EntityID createMockEntity(String entityName) {
     EntityID entityID = mock(EntityID.class);
     // We will use the TestEntity since we only want to proceed with the check, not actually create it (this is from entity-api).
-    when(entityID.getClassName()).thenReturn("org.terracotta.TestEntity");
+    when(entityID.getClassName()).thenReturn(TEST_ENTITY_CLASS_NAME);
     when(entityID.getEntityName()).thenReturn(entityName);
     return entityID;
   }
@@ -219,6 +221,8 @@ public class ProcessTransactionHandlerTest {
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(0));
+    // Return an empty byte[], for now.
+    when(request.getExtendedData()).thenReturn(new byte[0]);
     return request;
   }
 
