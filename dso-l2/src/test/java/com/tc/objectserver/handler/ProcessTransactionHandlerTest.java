@@ -47,7 +47,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
@@ -73,6 +72,8 @@ import org.mockito.Matchers;
 
 
 public class ProcessTransactionHandlerTest {
+  private static final String TEST_ENTITY_CLASS_NAME = "com.tc.objectserver.testentity.TestEntity";
+  
   private TerracottaServiceProviderRegistry terracottaServiceProviderRegistry;
   private EntityPersistor entityPersistor;
   private TransactionOrderPersistor transactionOrderPersistor;
@@ -84,6 +85,7 @@ public class ProcessTransactionHandlerTest {
   private ITopologyEventCollector eventCollector;
   
   
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Before
   public void setUp() throws Exception {
     this.terracottaServiceProviderRegistry = mock(TerracottaServiceProviderRegistry.class);
@@ -160,7 +162,7 @@ public class ProcessTransactionHandlerTest {
   @Test
   public void testFailOnLoadVersionMismatch() throws Exception {
     EntityData.Value data = new EntityData.Value();
-    data.className = "org.terracotta.TestEntity";
+    data.className = TEST_ENTITY_CLASS_NAME;
     data.version = TestEntity.VERSION + 1;
     data.consumerID = 1;
     data.entityName = "foo";
@@ -196,6 +198,34 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink.runUntilEmpty();
   }
 
+  /**
+   * Tests to make sure that even synthetic messages (those without client channels) are still properly retired.
+   * This test emulates how EntityMessengerService interacts with the handler.
+   */
+  @Test
+  public void testRetireSyntheticMessage() throws Exception {
+    // Create the entity ID.
+    String entityName = "foo";
+    EntityID entityID = createMockEntity(entityName);
+    
+    // We first need to create an entity we can invoke, later.
+    NetworkVoltronEntityMessage createRequest = createMockRequest(VoltronEntityMessage.Type.CREATE_ENTITY, entityID, new TransactionID(1));
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(createRequest);
+    this.requestProcessorSink.runUntilEmpty();
+    
+    // Create the message with no sender.
+    ClientID sender = new ClientID(-1);
+    NetworkVoltronEntityMessage invokeRequest = createMockRequestWithSender(VoltronEntityMessage.Type.INVOKE_ACTION, entityID, new TransactionID(2), sender);
+    // Send the message.
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(invokeRequest);
+    this.requestProcessorSink.runUntilEmpty();
+    
+    // The only way to observe that this was properly cleaned is to destroy it and ensure that there are no assertion failures when the RetirementManager comes down.
+    NetworkVoltronEntityMessage destroyRequest = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(3));
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroyRequest);
+    this.requestProcessorSink.runUntilEmpty();
+  }
+
 
   /**
    * This is pulled out as its own helper since the mocked EntityIDs aren't .equals() each other so using the same
@@ -204,14 +234,18 @@ public class ProcessTransactionHandlerTest {
   private EntityID createMockEntity(String entityName) {
     EntityID entityID = mock(EntityID.class);
     // We will use the TestEntity since we only want to proceed with the check, not actually create it (this is from entity-api).
-    when(entityID.getClassName()).thenReturn("org.terracotta.TestEntity");
+    when(entityID.getClassName()).thenReturn(TEST_ENTITY_CLASS_NAME);
     when(entityID.getEntityName()).thenReturn(entityName);
     return entityID;
   }
 
   private NetworkVoltronEntityMessage createMockRequest(VoltronEntityMessage.Type type, EntityID entityID, TransactionID transactionID) {
+    return createMockRequestWithSender(type, entityID, transactionID, this.source);
+  }
+
+  private NetworkVoltronEntityMessage createMockRequestWithSender(VoltronEntityMessage.Type type, EntityID entityID, TransactionID transactionID, ClientID sender) {
     NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
-    when(request.getSource()).thenReturn(this.source);
+    when(request.getSource()).thenReturn(sender);
     when(request.getVoltronType()).thenReturn(type);
     EntityDescriptor entityDescriptor = mock(EntityDescriptor.class);
     when(entityDescriptor.getClientSideVersion()).thenReturn((long) 1);
@@ -219,6 +253,8 @@ public class ProcessTransactionHandlerTest {
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(0));
+    // Return an empty byte[], for now.
+    when(request.getExtendedData()).thenReturn(new byte[0]);
     return request;
   }
 

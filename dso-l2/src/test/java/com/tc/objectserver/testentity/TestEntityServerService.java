@@ -58,7 +58,31 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
 
   @Override
   public MessageCodec<EntityMessage, EntityResponse> getMessageCodec() {
-    return null;
+    // We need to return a non-null codec but we have no notion of what to do with the messages (since we don't use real types).
+    return new MessageCodec<EntityMessage, EntityResponse>() {
+      @Override
+      public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+        return new byte[((TestElement)message).length];
+      }
+      @Override
+      public EntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
+        return new TestElement(payload.length);
+      }
+      @Override
+      public byte[] encodeResponse(EntityResponse response) throws MessageCodecException {
+        // NOTE:  We always return null so just return an empty array.
+        return new byte[0];
+      }
+      @Override
+      public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+        return new TestElement(payload.length);
+      }};
+  }
+  private static class TestElement implements EntityMessage, EntityResponse {
+    public final int length;
+    public TestElement(int length) {
+      this.length = length;
+    }
   }
 
   @Override
