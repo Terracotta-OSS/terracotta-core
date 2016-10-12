@@ -115,7 +115,9 @@ public class FileHelpers {
     for (String oneJarPath : extraJarPaths) {
       Path sourcePath = fileSystem.getPath(oneJarPath);
       // This file must exist.
-      Assert.assertTrue(sourcePath.toFile().isFile());
+      if (!sourcePath.toFile().isFile()) {
+        throw new IllegalArgumentException("JAR path is not a file: " + oneJarPath);
+      }
       Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
       // This must not exist.
       logger.output("Installing JAR: " + targetPath + "...");
