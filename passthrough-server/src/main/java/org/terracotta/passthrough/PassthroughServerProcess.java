@@ -34,6 +34,7 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -182,11 +183,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(persistentStorage, "lifecycle");
     
     // Look up the service interface the platform will use to publish events.
-    this.serviceInterface = this.platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>() {
-      @Override
-      public Class<IMonitoringProducer> getServiceType() {
-        return IMonitoringProducer.class;
-      }});
+    this.serviceInterface = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IMonitoringProducer>(IMonitoringProducer.class));
     if (null != this.serviceInterface) {
       // Create the root of the platform tree.
       this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
@@ -258,12 +255,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
   
   private IPersistentStorage preparePersistentStorage(boolean shouldLoadStorage) {
-    ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new ServiceConfiguration<IPersistentStorage>() {
-      @Override
-      public Class<IPersistentStorage> getServiceType() {
-        return IPersistentStorage.class;
-      }
-    };
+    ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class);
     IPersistentStorage persistentStorage = this.platformServiceRegistry.getService(persistenceConfiguration);
     if (shouldLoadStorage) {
       // Note that we are told to load storage in the cases where the system is restarting.  In that case, we MUST have
