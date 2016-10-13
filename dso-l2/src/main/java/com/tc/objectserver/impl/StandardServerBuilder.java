@@ -112,7 +112,7 @@ public class StandardServerBuilder implements ServerBuilder {
   @Override
   public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                              StageManager stageManager, StateManager stateMgr, 
-                                             GroupManager groupCommsManager,
+                                             GroupManager<AbstractGroupMessage> groupCommsManager,
                                              ClusterStatePersistor clusterStatePersistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              L2ConfigurationSetupManager configurationSetupManager,

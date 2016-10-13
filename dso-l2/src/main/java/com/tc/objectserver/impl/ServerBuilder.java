@@ -68,7 +68,7 @@ public interface ServerBuilder extends TCDumper, PostInit {
 
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, StateManager stateMgr, 
-                                      GroupManager groupCommsManager,
+                                      GroupManager<AbstractGroupMessage> groupCommsManager,
                                       ClusterStatePersistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,
