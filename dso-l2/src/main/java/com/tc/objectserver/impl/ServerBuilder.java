@@ -18,12 +18,9 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.net.core.security.TCSecurityManager;
-
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.PostInit;
-import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.io.TCFile;
@@ -33,8 +30,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.TCDumper;
-import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -50,15 +45,10 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.server.ServerConnectionValidator;
 import com.tc.util.StartupLock;
 
 import java.io.IOException;
-import java.net.InetAddress;
-
-import javax.management.MBeanServer;
 
 
 public interface ServerBuilder extends TCDumper, PostInit {
@@ -76,11 +66,9 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                                               int maxStageSize, ChannelManager genericChannelManager,
                                                               DumpHandlerStore dumpHandlerStore);
 
-  GroupManager getClusterGroupCommManager();
-
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, StateManager stateMgr, 
-                                      GroupManager groupCommsManager,
+                                      GroupManager<AbstractGroupMessage> groupCommsManager,
                                       ClusterStatePersistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,

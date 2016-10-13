@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
 
 import org.terracotta.entity.ServiceProvider;
@@ -30,7 +29,6 @@ import com.tc.util.Assert;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -47,7 +45,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
  */
 public class FlatFileStorageServiceProvider implements ServiceProvider {
   private static final TCLogger logger = TCLogging.getLogger(FlatFileStorageServiceProvider.class);
-  private boolean shouldPersistAcrossRestarts;
   private Path directory;
   private final Set<Long> consumers = new HashSet<>();
 
@@ -57,13 +54,9 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
     // In the future, this may change.
     Assert.assertTrue(configuration instanceof FlatFileStorageProviderConfiguration);
     FlatFileStorageProviderConfiguration flatFileConfiguration = (FlatFileStorageProviderConfiguration)configuration;
-    this.shouldPersistAcrossRestarts = flatFileConfiguration.shouldPersistAcrossRestarts();
     File targetDirectory = flatFileConfiguration.getBasedir();
-    if (null != targetDirectory) {
-      this.directory = targetDirectory.toPath();
-    } else {
-      this.directory = Paths.get(".").toAbsolutePath().normalize();
-    }
+    Assert.assertNotNull(targetDirectory);
+    this.directory = targetDirectory.toPath();
     logger.info("Initialized flat file storage to: " + this.directory);
     return true;
   }
@@ -73,12 +66,6 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
     consumers.add(consumerID);
     String filename = "consumer_" + consumerID + ".dat";
     File file = this.directory.resolve(filename).toFile();
-    // If this is being configured as non-restartable, we want to delete the file before anyone tries to use it.
-    // However, this means that a given instance can be closed and re-opened, within the same run, without issue.
-    // TODO: fix this - if this method called more than once by same entity, will end up removing the data
-    if (!this.shouldPersistAcrossRestarts) {
-      file.delete();
-    }
     FlatFilePersistentStorage storage = new FlatFilePersistentStorage(file);
     return configuration.getServiceType().cast(storage);
   }

@@ -98,11 +98,6 @@ public class StandardServerBuilder implements ServerBuilder {
         clientHandshakeManager, channelStats, coordinator
     );
   }
-  
-  @Override
-  public GroupManager getClusterGroupCommManager() {
-    throw new AssertionError("Not supported");
-  }
 
   @Override
   public void dump() {
@@ -117,7 +112,7 @@ public class StandardServerBuilder implements ServerBuilder {
   @Override
   public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                              StageManager stageManager, StateManager stateMgr, 
-                                             GroupManager groupCommsManager,
+                                             GroupManager<AbstractGroupMessage> groupCommsManager,
                                              ClusterStatePersistor clusterStatePersistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              L2ConfigurationSetupManager configurationSetupManager,

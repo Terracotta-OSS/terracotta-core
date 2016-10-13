@@ -22,22 +22,20 @@ import java.io.File;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
+import com.tc.util.Assert;
+
 
 public class FlatFileStorageProviderConfiguration implements ServiceProviderConfiguration {
   private final File basedir;
-  private final boolean shouldPersistAcrossRestarts;
 
-  public FlatFileStorageProviderConfiguration(File basedir, boolean shouldPersistAcrossRestarts) {
+  public FlatFileStorageProviderConfiguration(File basedir) {
+    Assert.assertNotNull(basedir);
+    Assert.assertTrue(basedir.isDirectory());
     this.basedir = basedir;
-    this.shouldPersistAcrossRestarts = shouldPersistAcrossRestarts;
   }
 
   public File getBasedir() {
     return this.basedir;
-  }
-
-  public boolean shouldPersistAcrossRestarts() {
-    return this.shouldPersistAcrossRestarts;
   }
 
   @Override
