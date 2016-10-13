@@ -98,11 +98,6 @@ public class StandardServerBuilder implements ServerBuilder {
         clientHandshakeManager, channelStats, coordinator
     );
   }
-  
-  @Override
-  public GroupManager getClusterGroupCommManager() {
-    throw new AssertionError("Not supported");
-  }
 
   @Override
   public void dump() {
