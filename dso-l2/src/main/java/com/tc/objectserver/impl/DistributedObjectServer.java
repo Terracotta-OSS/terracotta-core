@@ -459,7 +459,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
       //  services or be discarded, entirely.
       FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
-      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(null, restartable))) {
+      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(location.getFile()))) {
         throw new AssertionError("bad flat file initialization");
       }
       serviceRegistry.registerExternal(flatFileService);
