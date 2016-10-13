@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -103,12 +104,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
 
   private IStripeMonitoring getUnderlyingService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
     PassthroughServiceRegistry registry = PassthroughMonitoringProducer.this.serverProcess.createServiceRegistryForInternalConsumer(entityClassName, entityName, consumerID, container);
-    final IStripeMonitoring underlying = registry.getService(new ServiceConfiguration<IStripeMonitoring>() {
-      @Override
-      public Class<IStripeMonitoring> getServiceType() {
-        return IStripeMonitoring.class;
-      }
-    });
+    final IStripeMonitoring underlying = registry.getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
     return underlying;
   }
 
