@@ -122,7 +122,7 @@ public class ProcessTransactionHandler {
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage), transactionID, doesRequireReplication, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
     }
 
     @Override
@@ -189,7 +189,7 @@ public class ProcessTransactionHandler {
   }
 // TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
 //   adding any new messages to the PTH
-  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, boolean doesRequireReplication, TransactionID oldestTransactionOnClient) {
+  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
@@ -198,7 +198,7 @@ public class ProcessTransactionHandler {
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
     Optional<MessageChannel> safeChannel = safeGetChannel(sourceNodeID);
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, doesRequireReplication, safeChannel, isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, safeChannel, isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -216,6 +216,7 @@ public class ProcessTransactionHandler {
     if (ServerEntityAction.INVOKE_ACTION != action) {
       serverEntityRequest.received();
     }
+    
     if (ServerEntityAction.CREATE_ENTITY == action) {
       // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
       long consumerID = this.entityPersistor.getNextConsumerID();
@@ -393,7 +394,7 @@ public class ProcessTransactionHandler {
           break;
       }
       if (cached) {
-        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), safeGetChannel(resentMessage.getSource()), false);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -407,7 +408,7 @@ public class ProcessTransactionHandler {
         this.resendNewList.add(resentMessage);
       }
     } catch (EntityException ee) {
-      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), true, safeGetChannel(resentMessage.getSource()), false);
+      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), safeGetChannel(resentMessage.getSource()), false);
       response.received();
       response.failure(ee);
       response.retired();
@@ -462,7 +463,7 @@ public class ProcessTransactionHandler {
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage), transactionID, doesRequireReplication, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {

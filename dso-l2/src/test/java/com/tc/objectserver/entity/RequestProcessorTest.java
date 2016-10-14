@@ -107,7 +107,7 @@ public class RequestProcessorTest {
     instance.setReplication(broker);
     int expResult = key;
 
-    instance.scheduleRequest(descriptor, request, new MessagePayload(payload, null), ()->{}, key);
+    instance.scheduleRequest(descriptor, request, new MessagePayload(payload, null, true), ()->{}, key);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
   }

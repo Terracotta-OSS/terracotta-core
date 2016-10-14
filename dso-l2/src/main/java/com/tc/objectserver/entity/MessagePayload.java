@@ -32,22 +32,27 @@ public class MessagePayload {
   private final byte[] raw;
   private EntityMessage message;
   private final int concurrency;
+  private final boolean requiresReplication;
   
-  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null) {
+  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, false) {
     @Override
     public EntityMessage getEntityMessage() {
       throw new UnsupportedOperationException("empty payload");
     }
   };
-  
-  public MessagePayload(byte[] raw, EntityMessage message) {
-    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY);
-  }
 
   public MessagePayload(byte[] raw, EntityMessage message, int concurrency) {
     this.raw = raw;
     this.message = message;
     this.concurrency = concurrency;
+    this.requiresReplication = false;
+  }
+
+  public MessagePayload(byte[] raw, EntityMessage message, boolean requiresReplication) {
+    this.raw = raw;
+    this.message = message;
+    this.concurrency = ConcurrencyStrategy.MANAGEMENT_KEY;
+    this.requiresReplication = requiresReplication;
   }
   
   public byte[] getRawPayload() {
@@ -67,5 +72,9 @@ public class MessagePayload {
   
   public int getConcurrency() {
     return concurrency;
+  }
+
+  public boolean requiresReplication() {
+    return requiresReplication;
   }
 }

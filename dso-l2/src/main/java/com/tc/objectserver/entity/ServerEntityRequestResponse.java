@@ -41,8 +41,8 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   private final boolean isReplicatedMessage;
 
   public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, boolean requiresReplication, Optional<MessageChannel> returnChannel, boolean isReplicatedMessage) {
-    super(action, transaction, oldest, src, requiresReplication);
+      TransactionID transaction, TransactionID oldest, ClientID src, Optional<MessageChannel> returnChannel, boolean isReplicatedMessage) {
+    super(action, transaction, oldest, src);
     this.descriptor = descriptor;
     this.returnChannel = returnChannel;
     this.isReplicatedMessage = isReplicatedMessage;

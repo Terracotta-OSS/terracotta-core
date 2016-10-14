@@ -52,6 +52,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.FlightControl;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -69,6 +70,9 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 import java.util.function.Consumer;
 import java.util.concurrent.TimeUnit;
+import org.terracotta.entity.ActiveOnlyEntityMessage;
+import org.terracotta.entity.Execution;
+import org.terracotta.entity.PassiveOnlyEntityMessage;
 import org.terracotta.exception.PermanentEntityException;
 
 
@@ -610,7 +614,13 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   private void performAction(ServerEntityRequest wrappedRequest, ResultCapture response, EntityMessage message) {
     Assert.assertNotNull(message);
+    Execution[] whereToExec = message.getClass().getAnnotationsByType(Execution.class);
+
     if (this.isInActiveState) {
+      boolean execute = !(message instanceof PassiveOnlyEntityMessage);
+      if (whereToExec != null && Arrays.asList(whereToExec).stream().noneMatch(e->Arrays.asList(e.value()).contains(Execution.ServerState.ACTIVE))) {
+        execute = false;
+      }
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
@@ -619,8 +629,12 @@ public class ManagedEntityImpl implements ManagedEntity {
             : ConcurrencyStrategy.MANAGEMENT_KEY;
         try {
           this.retirementManager.registerWithMessage(message, concurrencyKey);
-          byte[] er = runWithHelper(()->codec.encodeResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
-          response.complete(er);
+          if (execute) {
+            byte[] er = runWithHelper(()->codec.encodeResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), message)));
+            response.complete(er);
+          } else {
+            response.complete();
+          }
         } catch (EntityUserException e) {
           response.failure(e);
           throw new RuntimeException(e);
@@ -630,6 +644,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
+ //  invokes on passive should never get to passive if they are opted out.  They are replicated as NOOP
+        Assert.assertTrue(!(message instanceof ActiveOnlyEntityMessage));
+        Assert.assertTrue(whereToExec == null || Arrays.asList(whereToExec).stream().anyMatch(e->Arrays.asList(e.value()).contains(Execution.ServerState.PASSIVE)));
         this.passiveServerEntity.invoke(message);
         response.complete();
         // No retire on passive.
@@ -845,6 +862,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     @Override
     public Set<NodeID> replicateTo(Set<NodeID> passives) {
+//  only send this message to the passive being replicated to
       return passive == null ? Collections.emptySet() : Collections.singleton(passive);
     }
 

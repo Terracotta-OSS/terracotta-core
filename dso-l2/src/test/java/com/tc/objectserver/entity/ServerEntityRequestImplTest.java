@@ -76,9 +76,8 @@ public class ServerEntityRequestImplTest {
 
   @Test
   public void testCompleteCreate() throws Exception {
-    boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, Optional.of(messageChannel), isReplicatedMessage);
 
     serverEntityRequest.complete();
     serverEntityRequest.retired();
@@ -107,8 +106,7 @@ public class ServerEntityRequestImplTest {
   }
 
   private ServerEntityRequestResponse buildInvoke() {
-    boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, requiresReplication, Optional.of(messageChannel), isReplicatedMessage);
+    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, Optional.of(messageChannel), isReplicatedMessage);
   }
 }
