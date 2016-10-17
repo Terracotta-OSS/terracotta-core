@@ -32,6 +32,7 @@ import org.junit.Assert;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -45,7 +46,7 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   @Override
   public void setUp() throws Exception {
     provider = new FlatFileStorageServiceProvider();
-    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory()));
+    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory()), mock(PlatformConfiguration.class));
   }
 
   public void testServiceType() {

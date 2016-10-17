@@ -20,6 +20,8 @@ package com.tc.server;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -28,7 +30,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 
 public class TestServiceProvider implements ServiceProvider {
   @Override
-  public boolean initialize(ServiceProviderConfiguration configuration) {
+  public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     return true;
   }
 

@@ -1,5 +1,6 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -20,7 +21,7 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider, Stat
 
 
     @Override
-    public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration) {
+    public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {
         return true;
     }
 

@@ -23,7 +23,9 @@ import com.tc.async.api.EventHandlerException;
 
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.LogBasedStateDumper;
+import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -452,20 +454,21 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     logger.debug("persistent: " + restartable);
 
-    serviceRegistry.initialize(this.configSetupManager.getL2Identifier(), this.configSetupManager.commonl2Config().getBean(), Thread.currentThread().getContextClassLoader());
+    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier());
+    serviceRegistry.initialize(platformConfiguration, this.configSetupManager.commonl2Config().getBean(), Thread.currentThread().getContextClassLoader());
 
     if(restartable) {
       // For now, we will register com.tc.objectserver.persistence.FlatFileStorageServiceProvider here.  We are currently
       //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
       //  services or be discarded, entirely.
       FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
-      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(location.getFile()))) {
+      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(location.getFile()), platformConfiguration)) {
         throw new AssertionError("bad flat file initialization");
       }
       serviceRegistry.registerExternal(flatFileService);
     } else {
       NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
-      nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration());
+      nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration(), platformConfiguration);
       serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
 
