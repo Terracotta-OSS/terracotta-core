@@ -45,6 +45,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -849,7 +850,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     Assert.assertTrue(!this.serviceProvidersReadOnly);
     // We run the initializer right away.
-    boolean didInitialize = serviceProvider.initialize(providerConfiguration);
+    boolean didInitialize = serviceProvider.initialize(providerConfiguration, new PlatformConfiguration() {
+      @Override
+      public String getServerName() {
+        return serverName;
+      }
+    });
     Assert.assertTrue(didInitialize);
     this.serviceProviders.add(serviceProvider);
   }

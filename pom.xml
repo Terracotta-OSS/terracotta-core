@@ -34,7 +34,7 @@ limitations under the License.
     <java.build.version>1.6</java.build.version>
 
     <!-- External dependency versions for the project -->
-    <terracotta-apis.version>1.0.7.beta</terracotta-apis.version>
+    <terracotta-apis.version>1.0.8.beta</terracotta-apis.version>
     <guava.version>18.0</guava.version>
     <junit.version>4.11</junit.version>
   </properties>

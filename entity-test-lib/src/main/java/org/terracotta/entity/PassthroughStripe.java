@@ -140,7 +140,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 //  add the ClientCommunicator builtin
       builtins.add(new ServiceProvider() {
         @Override
-        public boolean initialize(ServiceProviderConfiguration configuration) {
+        public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
           return true;
         }
 

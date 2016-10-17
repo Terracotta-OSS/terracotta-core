@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Assert;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.EntityMessage;
@@ -284,7 +285,12 @@ public class PassthroughServer implements PassthroughDumper {
           System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
         } else {
           // We want to initialize built-in providers with a null configuration.
-          provider.initialize(null);
+          provider.initialize(null, new PlatformConfiguration() {
+            @Override
+            public String getServerName() {
+              return serverName;
+            }
+          });
           this.serverProcess.registerServiceProvider(provider, null);
         }
       }
