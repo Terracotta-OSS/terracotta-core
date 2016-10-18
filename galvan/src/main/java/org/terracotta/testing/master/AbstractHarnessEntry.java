@@ -44,11 +44,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       throw e;
     }
   }
-  
-  public int chooseRandomPort() {
-    return chooser.chooseRandomPort();
-  }
-  
+
   public int chooseRandomPortRange(int number) {
     return chooser.chooseRandomPorts(number);
   }
