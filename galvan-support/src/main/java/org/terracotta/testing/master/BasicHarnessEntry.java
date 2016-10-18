@@ -29,12 +29,15 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     int serversToCreate = runConfiguration.serversInStripe;
     Assert.assertTrue(serversToCreate > 0);
     
+    // Calculate the size of the port range we need:  each server needs 2 ports.
+    int portsRequired = serversToCreate * 2;
+    
     CommonIdioms.StripeConfiguration stripeConfiguration = new CommonIdioms.StripeConfiguration();
     stripeConfiguration.kitOriginPath = harnessOptions.kitOriginPath;
     stripeConfiguration.testParentDirectory = harnessOptions.configTestDirectory;
     stripeConfiguration.serversToCreate = serversToCreate;
     stripeConfiguration.serverHeapInM = harnessOptions.serverHeapInM;
-    stripeConfiguration.serverStartPort = chooseRandomPort();
+    stripeConfiguration.serverStartPort = chooseRandomPortRange(portsRequired);
     stripeConfiguration.serverDebugPortStart = debugOptions.serverDebugPortStart;
     stripeConfiguration.serverStartNumber = 0;
     stripeConfiguration.isRestartable = harnessOptions.isRestartable;
