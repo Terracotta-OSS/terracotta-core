@@ -34,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityException;
@@ -66,7 +67,7 @@ public class PlatformEntity implements ManagedEntity {
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Consumer<byte[]> complete, Consumer<EntityException> exception) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    ActivePassiveAckWaiter waiter = processor.scheduleRequest(descriptor, request, payload, ()-> {complete.accept(payload.getRawPayload());}, payload.getConcurrency());    
+    ActivePassiveAckWaiter waiter = processor.scheduleRequest(descriptor, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
     return new SimpleCompletion() {
       @Override
       public void waitForCompletion() {

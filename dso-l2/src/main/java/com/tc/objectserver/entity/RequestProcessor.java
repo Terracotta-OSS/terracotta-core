@@ -32,6 +32,7 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.ExecutionStrategy;
 
 
 public class RequestProcessor {
@@ -64,12 +65,12 @@ public class RequestProcessor {
 
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
-  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, int concurrencyKey) {
+  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
-        ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), request.getAction(), 
-            request.getTransaction(), request.getOldestTransactionOnClient(), payload.getRawPayload(), concurrencyKey), replicateTo)
+        ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), replicate ? request.getAction() : ServerEntityAction.NOOP, 
+            request.getTransaction(), request.getOldestTransactionOnClient(), replicate ? payload.getRawPayload() : new byte[0], concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);

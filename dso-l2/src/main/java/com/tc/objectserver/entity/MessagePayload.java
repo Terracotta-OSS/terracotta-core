@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
@@ -32,33 +31,38 @@ public class MessagePayload {
   private final byte[] raw;
   private EntityMessage message;
   private final int concurrency;
+  private final boolean replicate;
   
-  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null) {
-    @Override
-    public EntityMessage getEntityMessage() {
-      throw new UnsupportedOperationException("empty payload");
-    }
-  };
+  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, true);
   
-  public MessagePayload(byte[] raw, EntityMessage message) {
-    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY);
+  public MessagePayload(byte[] raw, EntityMessage message, boolean replicate) {
+    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate);
+  }
+  
+  public MessagePayload(byte[] raw, EntityMessage message, int concurrency) {
+    this(raw, message, concurrency, false);
   }
 
-  public MessagePayload(byte[] raw, EntityMessage message, int concurrency) {
+  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate) {
     this.raw = raw;
     this.message = message;
     this.concurrency = concurrency;
+    this.replicate = replicate;
   }
   
   public byte[] getRawPayload() {
     return raw;
   }
   
-  public EntityMessage getEntityMessage() {
-    return message;
+  public EntityMessage decodeRawMessage(MessageCodec codec) {
+    try {
+      return decodeMessage(codec);
+    } catch (MessageCodecException mce) {
+      throw new RuntimeException(mce);
+    }
   }
-  
-  public EntityMessage decodeRawMessage(MessageCodec codec) throws MessageCodecException {
+
+  public EntityMessage decodeMessage(MessageCodec codec) throws MessageCodecException {
     if (message == null) {
       message = codec.decodeMessage(raw);
     }
@@ -67,5 +71,9 @@ public class MessagePayload {
   
   public int getConcurrency() {
     return concurrency;
+  }
+  
+  public boolean shouldReplicate() {
+    return replicate;
   }
 }
