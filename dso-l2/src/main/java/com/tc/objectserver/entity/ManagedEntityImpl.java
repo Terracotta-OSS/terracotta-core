@@ -512,7 +512,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " does not exists.");
       } else {
-        this.activeServerEntity = this.factory.createActiveEntity(this.registry, constructorInfo);
+        this.activeServerEntity = this.factory.reconfigureEntity(this.registry, this.activeServerEntity, constructorInfo);
         this.concurrencyStrategy = this.factory.getConcurrencyStrategy(constructorInfo);
         this.executionStrategy = this.factory.getExecutionStrategy(constructorInfo);
         entityToCreate = this.activeServerEntity;
@@ -521,7 +521,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " does not exists.");
       } else {
-        this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
+        this.passiveServerEntity = this.factory.reconfigureEntity(this.registry, this.passiveServerEntity, this.constructorInfo);
         Assert.assertNull(this.concurrencyStrategy);
         Assert.assertNull(this.executionStrategy);
         // Store the configuration in case we promote.
@@ -529,9 +529,6 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     reconfigureEntityRequest.complete(oldconfig);
-    // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
-    //  instance so make that call.
-    entityToCreate.loadExisting();
     // Fire the event that the entity was created.
     this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
