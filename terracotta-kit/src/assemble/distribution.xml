@@ -66,15 +66,6 @@ The Initial Developer of the Covered Software is
       <directory>src/assemble/server/bin</directory>
       <outputDirectory>/server/bin</outputDirectory>
     </fileSet>
-    <fileSet>
-      <directory>${project.build.directory}/server-lib</directory>
-      <outputDirectory>/client</outputDirectory>
-      <includes>
-        <include>client-runtime*</include>
-        <include>client-logging*</include>
-        <include>slf4j*</include>
-      </includes>
-    </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>
       <directory>${project.build.directory}/server-lib</directory>
@@ -95,4 +86,24 @@ The Initial Developer of the Covered Software is
       <destName>tc.jar</destName>      
     </file>
   </files>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>client/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta.internal:client-*</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>client/logging</outputDirectory>
+      <includes>
+        <include>org.slf4j:slf4j-api</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>client/logging/impl</outputDirectory>
+      <includes>
+        <include>org.slf4j:slf4j-log4j12</include>
+      </includes>
+    </dependencySet>
+  </dependencySets>
 </assembly>
