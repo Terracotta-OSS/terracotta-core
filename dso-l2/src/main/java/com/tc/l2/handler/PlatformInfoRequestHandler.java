@@ -117,7 +117,7 @@ public class PlatformInfoRequestHandler {
 
   private void handleServerInfo(PlatformInfoRequest msg) throws GroupException {
     ServerID sender = (ServerID)msg.messageFrom();
-    PlatformServer platformServer = msg.getServerInfo();
+    PlatformServer platformServer = (PlatformServer)msg.getServerInfo();
     this.monitoringSupport.serverDidJoinStripe(sender, platformServer);
   }
 }

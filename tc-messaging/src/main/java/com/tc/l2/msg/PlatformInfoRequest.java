@@ -30,8 +30,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import org.terracotta.monitoring.PlatformServer;
-
 
 public class PlatformInfoRequest extends AbstractGroupMessage {
   // Factory methods.
@@ -53,7 +51,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     return new PlatformInfoRequest(RESPONSE_REMOVE, consumerID, parents, name, null, null);
   }
 
-  public static PlatformInfoRequest createServerInfoMessage(PlatformServer serverInfo) {
+  public static PlatformInfoRequest createServerInfoMessage(Serializable serverInfo) {
     return new PlatformInfoRequest(RESPONSE_INFO, -1, null, null, null, serverInfo);
   }
 
@@ -72,7 +70,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   private Serializable nodeValue;
   
   // Info related only to RESPONSE_INFO.
-  private PlatformServer serverInfo;
+  private Serializable serverInfo;
 
 
   // Must be public for serialization initializer.
@@ -80,7 +78,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     super(ERROR);
   }
 
-  private PlatformInfoRequest(int type, long changeConsumerID, String[] nodeParents, String nodeName, Serializable nodeValue, PlatformServer serverInfo) {
+  private PlatformInfoRequest(int type, long changeConsumerID, String[] nodeParents, String nodeName, Serializable nodeValue, Serializable serverInfo) {
     super(type);
     // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
     this.changeConsumerID = changeConsumerID;
@@ -104,7 +102,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
       Assert.assertTrue(valueSize > 0);
       byte[] valueArray = new byte[valueSize];
       in.readFully(valueArray);
-      this.serverInfo = (PlatformServer) deserialize(valueArray);
+      this.serverInfo = deserialize(valueArray);
       break;
     }
     case RESPONSE_ADD: {
@@ -203,7 +201,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     return this.nodeValue;
   }
 
-  public PlatformServer getServerInfo() {
+  public Serializable getServerInfo() {
     return this.serverInfo;
   }
 
