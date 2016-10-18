@@ -244,7 +244,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             return true;
           case CREATE_ENTITY:
             if (syncd.contains(eid)) {
-              Assert.assertTrue(destroyed.contains(eid));
               created.add(eid);
               destroyed.remove(eid);
               return true;
@@ -274,12 +273,10 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             if (syncd.contains(eid)) {
 //  this would only happen if an entity was destroyed
               destroyed.add(eid);
-              Assert.assertFalse(created.contains(eid));
               return true;
             } else if (syncingID.equals(eid)) {
  //  tricky.  this one needs to pass but only be applied after sync of this entity is complete
               destroyed.add(eid);
-              Assert.assertFalse(created.contains(eid));
               return true;
             } else if (created.contains(eid)) {
               destroyed.add(eid);
