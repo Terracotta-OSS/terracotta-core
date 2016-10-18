@@ -1131,11 +1131,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     
     byte[] reconfigure(byte[] data) {
       try {
-        this.entityInstance = isActive ? service.createActiveEntity(registry, data) : service.createPassiveEntity(registry, data);
-        this.concurrency = service.getConcurrencyStrategy(data);
+        this.entityInstance = service.reconfigureEntity(registry, this.entityInstance, data);
+        this.concurrency = (isActive) ? service.getConcurrencyStrategy(data) : null;
+        this.executionStrategy = service.getExecutionStrategy(data);
         return this.configuration;
       } finally {
-        this.entityInstance.loadExisting();
         this.configuration = data;
       }
     }
