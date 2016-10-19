@@ -46,6 +46,7 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.PlatformConfiguration;
+import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -507,14 +508,22 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(String className, String entityName, ClientDescriptor clientDescriptor, CreationData<M, R> data, byte[] payload) throws EntityUserException {
     ActiveServerEntity<M, R> entity = data.getActive();
     MessageCodec<M, R> codec = data.messageCodec;
-    R response = entity.invoke(clientDescriptor, deserialize(className, entityName, codec, payload));
-    return serializeResponse(className, entityName, codec, response);
+    M msg = deserialize(className, entityName, codec, payload);
+    if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
+      R response = entity.invoke(clientDescriptor, msg);
+      return serializeResponse(className, entityName, codec, response);
+    } else {
+      return new byte[0];
+    }
   }
 
   private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(String className, String entityName, CreationData<M, R> data, byte[] payload) throws EntityUserException {
     PassiveServerEntity<M, R> entity = data.getPassive();
     MessageCodec<M, R> codec = data.messageCodec;
-    entity.invoke(deserialize(className, entityName, codec, payload));
+    M msg = deserialize(className, entityName, codec, payload);
+    if (data.executionStrategy.getExecutionLocation(msg).runOnPassive()) {
+      entity.invoke(msg);
+    }
   }
 
   private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, CreationData<M, R> data, int concurrencyKey, byte[] payload) throws EntityUserException {
@@ -1066,6 +1075,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public final MessageCodec<M, R> messageCodec;
     public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
+    public ExecutionStrategy<M> executionStrategy;
     public boolean isActive;
     public boolean isDestroyed = false;
     public Map<ClientDescriptor, Integer> references = new HashMap<ClientDescriptor, Integer>();
@@ -1081,6 +1091,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.syncMessageCodec = service.getSyncMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
       this.concurrency = (isActive) ? service.getConcurrencyStrategy(configuration) : null;
+      this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
       this.isActive = isActive;
     }
     
@@ -1120,11 +1131,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     
     byte[] reconfigure(byte[] data) {
       try {
-        this.entityInstance = isActive ? service.createActiveEntity(registry, data) : service.createPassiveEntity(registry, data);
-        this.concurrency = service.getConcurrencyStrategy(data);
+        this.entityInstance = service.reconfigureEntity(registry, this.entityInstance, data);
+        this.concurrency = (isActive) ? service.getConcurrencyStrategy(data) : null;
+        this.executionStrategy = service.getExecutionStrategy(data);
         return this.configuration;
       } finally {
-        this.entityInstance.loadExisting();
         this.configuration = data;
       }
     }
