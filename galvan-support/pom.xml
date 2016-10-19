@@ -32,8 +32,8 @@ limitations under the License.
     <kitUnzipLocation>${project.build.directory}/test-kit</kitUnzipLocation>
 
     <!-- External dependency versions for this module -->
-    <tc-passthrough-testing.version>1.0.8.beta</tc-passthrough-testing.version>
-    <terracotta-core.version>5.0.8-beta</terracotta-core.version>
+    <tc-passthrough-testing.version>1.0.9.beta</tc-passthrough-testing.version>
+    <terracotta-core.version>5.0.9-beta</terracotta-core.version>
   </properties>
 
   <dependencies>
