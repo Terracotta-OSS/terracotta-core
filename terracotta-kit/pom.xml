@@ -55,7 +55,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
-			    <excludeArtifactIds>dso-l1</excludeArtifactIds>  <!-- inside the client runtime -->
+                            <excludeArtifactIds>dso-l1</excludeArtifactIds>  <!-- inside the client runtime -->
                         </configuration>
 
                     </execution>
