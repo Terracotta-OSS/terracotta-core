@@ -64,7 +64,7 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), any(), any(), any(), Matchers.anyInt())).then((invoke)->{
+    when(processor.scheduleRequest(any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
         ((Runnable)invoke.getArguments()[3]).run();
         return null;
       });
