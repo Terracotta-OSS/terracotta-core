@@ -716,8 +716,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertFalse(this.isInActiveState);
     Assert.assertNull(this.activeServerEntity);
 //  checking destroyed here should be fine.  no other threads should be touching during promote
+    this.isInActiveState = true;
     if (!this.isDestroyed) {
-      this.isInActiveState = true;
       if (null != this.passiveServerEntity) {
         this.activeServerEntity = factory.createActiveEntity(this.registry, this.constructorInfo);
         this.concurrencyStrategy = factory.getConcurrencyStrategy(this.constructorInfo);
