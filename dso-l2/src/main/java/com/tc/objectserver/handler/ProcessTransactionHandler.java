@@ -27,7 +27,6 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
-import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -265,28 +264,27 @@ public class ProcessTransactionHandler {
               safeChannel.ifPresent((channel)-> {
                 addSequentially(channel, addTo->addTo.addResult(transactionID, result));
               });
-              List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
-              safeChannel.ifPresent((channel)-> {
-                for (Retiree toRetire : readyToRetire) {
-                  if (null != toRetire) {
-                    addSequentially(channel, addTo->addTo.addRetired(toRetire.getTransaction()));
-                  }
-                }
-              });
-
-              locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
+              RetirementManager retirementManager = locked.getRetirementManager();
+              
+              retirementManager.updateWithRetiree(message, new Retiree() {
                 @Override
                 public void retired() {
                   safeChannel.ifPresent((channel)-> {
                     addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
                   });
                 }
-
                 @Override
                 public TransactionID getTransaction() {
                   return serverEntityRequest.getTransaction();
                 }
               });
+              
+              List<Retiree> readyToRetire = retirementManager.retireForCompletion(message);
+              for (Retiree toRetire : readyToRetire) {
+                if (null != toRetire) {
+                  toRetire.retired();
+                }
+              }
             }, (fail)-> {
               safeChannel.ifPresent(channel -> {
                 VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
@@ -295,8 +293,9 @@ public class ProcessTransactionHandler {
                 multiSend.addSingleThreaded(failMessage);
                 List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
                 for (Retiree toRetire : readyToRetire) {
-                  if (toRetire == null) continue;
-                  toRetire.retired();
+                  if (toRetire != null) {
+                    toRetire.retired();
+                  }
                 }
               });              
               locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
