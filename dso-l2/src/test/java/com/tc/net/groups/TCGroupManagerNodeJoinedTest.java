@@ -351,6 +351,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (Thread t : allThreads) {
       if (t.isAlive() && t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME)) {
         try {
+          t.interrupt(); // break any waits in the select loop
           t.join();
         } catch (InterruptedException ie) {
           throw new AssertionError("trouble shutting down test", ie);
