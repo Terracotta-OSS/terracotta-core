@@ -217,15 +217,9 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
    */
   @Override
   public void stop() {
-    synchronized (this.stateLock) {
-      if (this.isStopped()) {
-        stopServer();
-        logger.info("Server stopped.");
-      } else {
-        logger.warn("Server in incorrect state (" + this.serverState + ") to be stopped.");
-      }
-    }
-
+    // XXX: This is part of the now-deprecated JMX 4.x Management interface called from TCServerInfo.
+    // TODO:  Remove the com.tc.mangement.beans package and then this method.
+    throw new UnsupportedOperationException("Management can no longer request a server shutdown");
   }
 
   @Override
@@ -380,31 +374,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     return buf.toString();
   }
 
-  private void stopServer() {
-    // XXX: I have no idea if order of operations is correct here?
-
-    if (logger.isDebugEnabled()) {
-      consoleLogger.debug("Stopping TC server...");
-    }
-
-    try {
-      getStageManager().stopAll();
-    } catch (Exception e) {
-      logger.error("Error shutting down stage manager", e);
-    }
-
-    // this stops the jmx server then dso server
-    if (this.dsoServer != null) {
-      try {
-        this.dsoServer.quickStop();
-      } catch (Exception e) {
-        logger.error("Error shutting down TSA server", e);
-      } finally {
-        this.dsoServer = null;
-      }
-    }
-
-  }
 
   private class StartAction implements StartupAction {
     @Override

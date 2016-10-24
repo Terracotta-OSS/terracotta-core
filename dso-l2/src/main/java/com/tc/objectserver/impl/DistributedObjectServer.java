@@ -65,7 +65,6 @@ import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
-import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
@@ -214,7 +213,6 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
-import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.Runners;
@@ -276,7 +274,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private CounterManager                         sampledCounterManager;
   private LockManagerImpl                        lockManager;
   private ServerManagementContext                managementContext;
-  private StartupLock                            startupLock;
   private Persistor                              persistor;
 
   private L2Coordinator                          l2Coordinator;
@@ -430,19 +427,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     serverName = serverName.replace('.', '-');
     serverName = serverName.replace(':', '$');
 
-    final TCFile location = new TCFileImpl(dataLoc, serverName);
-    boolean retries = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
-    this.startupLock = this.serverBuilder.createStartupLock(location, retries);
-
-    if (!this.startupLock.canProceed(new TCRandomFileAccessImpl())) {
-      consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
-      if (!restartable) {
-        consoleLogger.error("This is not allowed with persistence mode set to temporary-swap-only.");
-      }
-      consoleLogger.error("Exiting...");
-      System.exit(1);
-    }
-
     final int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final StageManager stageManager = this.seda.getStageManager();
     final SessionManager sessionManager = new NullSessionManager();
@@ -462,7 +446,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
       //  services or be discarded, entirely.
       FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
-      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(location.getFile()), platformConfiguration)) {
+      final TCFile location = new TCFileImpl(dataLoc, serverName);
+      // We want to make sure that the directory exists before we configure the service.
+      location.forceMkdir();
+      boolean shouldBlockOnLock = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
+      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(location.getFile(), shouldBlockOnLock), platformConfiguration)) {
         throw new AssertionError("bad flat file initialization");
       }
       serviceRegistry.registerExternal(flatFileService);
@@ -1047,10 +1035,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     });
   }
 
-  public boolean isBlocking() {
-    return this.startupLock != null && this.startupLock.isBlocked();
-  }
-
   public void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
@@ -1124,49 +1108,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final int configValue = l2DSOConfig.tsaGroupPort().getValue();
     if (configValue != 0) { return configValue; }
     return -1;
-  }
-
-  public synchronized void stop() {
-
-    this.seda.getStageManager().stopAll();
-
-    if (this.l1Listener != null) {
-      try {
-        this.l1Listener.stop(5000);
-      } catch (final TCTimeoutException e) {
-        logger.warn("timeout trying to stop listener: " + e.getMessage());
-      }
-    }
-
-    if ((this.communicationsManager != null)) {
-      this.communicationsManager.shutdown();
-    }
-
-    try {
-      this.persistor.close();
-    } catch (final Exception e) {
-      logger.warn(e);
-    }
-
-    if (this.sampledCounterManager != null) {
-      try {
-        this.sampledCounterManager.shutdown();
-      } catch (final Exception e) {
-        logger.error(e);
-      }
-    }
-
-    basicStop();
-  }
-
-  public void quickStop() {
-    basicStop();
-  }
-
-  private void basicStop() {
-    if (this.startupLock != null) {
-      this.startupLock.release();
-    }
   }
 
   public ConnectionIDFactory getConnectionIdFactory() {

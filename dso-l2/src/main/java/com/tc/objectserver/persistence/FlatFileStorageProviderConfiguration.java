@@ -27,15 +27,21 @@ import com.tc.util.Assert;
 
 public class FlatFileStorageProviderConfiguration implements ServiceProviderConfiguration {
   private final File basedir;
+  private final boolean shouldBlockOnLock;
 
-  public FlatFileStorageProviderConfiguration(File basedir) {
+  public FlatFileStorageProviderConfiguration(File basedir, boolean shouldBlockOnLock) {
     Assert.assertNotNull(basedir);
     Assert.assertTrue(basedir.isDirectory());
     this.basedir = basedir;
+    this.shouldBlockOnLock = shouldBlockOnLock;
   }
 
   public File getBasedir() {
     return this.basedir;
+  }
+
+  public boolean shouldBlockOnLock() {
+    return this.shouldBlockOnLock;
   }
 
   @Override

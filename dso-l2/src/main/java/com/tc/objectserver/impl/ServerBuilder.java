@@ -23,7 +23,6 @@ import org.terracotta.entity.ServiceRegistry;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
@@ -46,7 +45,6 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.util.StartupLock;
 
 import java.io.IOException;
 
@@ -77,8 +75,6 @@ public interface ServerBuilder extends TCDumper, PostInit {
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
-
-  StartupLock createStartupLock(TCFile location, boolean retries);
 
   GroupID getLocalGroupId();
 }

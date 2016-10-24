@@ -46,7 +46,8 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   @Override
   public void setUp() throws Exception {
     provider = new FlatFileStorageServiceProvider();
-    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory()), mock(PlatformConfiguration.class));
+    boolean shouldBlockOnLock = true;
+    provider.initialize(new FlatFileStorageProviderConfiguration(getTempDirectory(), shouldBlockOnLock), mock(PlatformConfiguration.class));
   }
 
   public void testServiceType() {
