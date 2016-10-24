@@ -133,14 +133,18 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     this.activeWrapper = activeWrapper;
     
     // Send our cached state to the new active.
-    for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
-      long consumerID = entry.getKey();
-      walkCacheChildren(new String[0], entry.getValue().children, new CacheWalker() {
-        @Override
-        public void didEnterNode(String[] parents, String name, Serializable value) {
-          // Send this to the active.
-          LocalMonitoringProducer.this.activeWrapper.addNode(consumerID, parents, name, value);
-        }});
+    if (this.cachedTreeRoot != null) {
+      for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
+        long consumerID = entry.getKey();
+        walkCacheChildren(new String[0], entry.getValue().children, new CacheWalker() {
+          @Override
+          public void didEnterNode(String[] parents, String name, Serializable value) {
+            // Send this to the active.
+            LocalMonitoringProducer.this.activeWrapper.addNode(consumerID, parents, name, value);
+          }});
+      }
+    } else {
+//  split brain.  one of the actives will die shortly.
     }
   }
 
