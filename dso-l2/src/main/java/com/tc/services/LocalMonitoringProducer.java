@@ -253,7 +253,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     CacheNode parentNode = null;
     if (null != this.cachedTreeRoot) {
       CacheNode oneNode = this.cachedTreeRoot.get(consumerID);
-      for (int i = 0; (null != oneNode)  && (i < parents.length); ++i) {
+      for (int i = 0; (parents != null) && (null != oneNode)  && (i < parents.length); ++i) {
         oneNode = oneNode.children.get(parents[i]);
       }
       if (null != oneNode) {
