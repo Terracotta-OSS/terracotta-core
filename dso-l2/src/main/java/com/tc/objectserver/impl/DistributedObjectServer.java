@@ -1047,10 +1047,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     });
   }
 
-  public boolean isBlocking() {
-    return this.startupLock != null && this.startupLock.isBlocked();
-  }
-
   public void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
@@ -1124,49 +1120,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final int configValue = l2DSOConfig.tsaGroupPort().getValue();
     if (configValue != 0) { return configValue; }
     return -1;
-  }
-
-  public synchronized void stop() {
-
-    this.seda.getStageManager().stopAll();
-
-    if (this.l1Listener != null) {
-      try {
-        this.l1Listener.stop(5000);
-      } catch (final TCTimeoutException e) {
-        logger.warn("timeout trying to stop listener: " + e.getMessage());
-      }
-    }
-
-    if ((this.communicationsManager != null)) {
-      this.communicationsManager.shutdown();
-    }
-
-    try {
-      this.persistor.close();
-    } catch (final Exception e) {
-      logger.warn(e);
-    }
-
-    if (this.sampledCounterManager != null) {
-      try {
-        this.sampledCounterManager.shutdown();
-      } catch (final Exception e) {
-        logger.error(e);
-      }
-    }
-
-    basicStop();
-  }
-
-  public void quickStop() {
-    basicStop();
-  }
-
-  private void basicStop() {
-    if (this.startupLock != null) {
-      this.startupLock.release();
-    }
   }
 
   public ConnectionIDFactory getConnectionIdFactory() {
