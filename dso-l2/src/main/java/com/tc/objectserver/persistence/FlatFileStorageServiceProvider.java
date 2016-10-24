@@ -24,11 +24,20 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.persistence.IPersistentStorage;
 
+import com.tc.io.TCFile;
+import com.tc.io.TCFileImpl;
+import com.tc.io.TCRandomFileAccessImpl;
+import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import com.tc.util.NonBlockingStartupLock;
+import com.tc.util.startuplock.FileNotCreatedException;
+import com.tc.util.startuplock.LocationNotCreatedException;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,10 +53,14 @@ import org.terracotta.entity.ServiceProviderConfiguration;
  * 
  * The initial use was to test/support platform restart without depending on CoreStorage.
  */
-public class FlatFileStorageServiceProvider implements ServiceProvider {
+public class FlatFileStorageServiceProvider implements ServiceProvider, Closeable {
   private static final TCLogger logger = TCLogging.getLogger(FlatFileStorageServiceProvider.class);
+  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+
+
   private Path directory;
   private final Set<Long> consumers = new HashSet<>();
+  private NonBlockingStartupLock lock;
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
@@ -59,6 +72,25 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
     Assert.assertNotNull(targetDirectory);
     this.directory = targetDirectory.toPath();
     logger.info("Initialized flat file storage to: " + this.directory);
+    
+    // This service needs to ensure that another server instance isn't using the same top-level directory.
+    // (note that we can call System.exit(1) if this fails - that is what the 4.x server did in the same situation)
+    TCFile location = new TCFileImpl(targetDirectory);
+    Assert.assertNull(this.lock);
+    this.lock = new NonBlockingStartupLock(location, flatFileConfiguration.shouldBlockOnLock());
+    try {
+      if (!this.lock.canProceed(new TCRandomFileAccessImpl())) {
+        consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
+        consoleLogger.error("Exiting...");
+        System.exit(1);
+      }
+    } catch (LocationNotCreatedException e) {
+      // Unexpected - fatal.
+      Assert.fail(e.getLocalizedMessage());
+    } catch (FileNotCreatedException e) {
+      // Unexpected - fatal.
+      Assert.fail(e.getLocalizedMessage());
+    }
     return true;
   }
 
@@ -90,5 +122,13 @@ public class FlatFileStorageServiceProvider implements ServiceProvider {
       }
     }
   }
-  
+
+  @Override
+  public void close() throws IOException {
+    // When being tested on the passthrough server, we need to give up our lock file.
+    // Do the null check since someone might close without init.
+    if (null != this.lock) {
+      this.lock.release();
+    }
+  }
 }

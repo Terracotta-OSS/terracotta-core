@@ -24,7 +24,6 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -53,8 +52,6 @@ import com.tc.objectserver.persistence.PersistentStorageServiceConfiguration;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
-import com.tc.util.NonBlockingStartupLock;
-import com.tc.util.StartupLock;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import org.terracotta.persistence.IPersistentStorage;
@@ -126,11 +123,6 @@ public class StandardServerBuilder implements ServerBuilder {
   @Override
   public LongGCLogger createLongGCLogger(long gcTimeOut) {
     return new LongGCLogger(gcTimeOut);
-  }
-
-  @Override
-  public StartupLock createStartupLock(TCFile location, boolean retries) {
-    return new NonBlockingStartupLock(location, retries);
   }
 
   @Override
