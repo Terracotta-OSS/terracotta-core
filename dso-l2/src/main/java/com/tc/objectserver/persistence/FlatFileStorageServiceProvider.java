@@ -70,7 +70,18 @@ public class FlatFileStorageServiceProvider implements ServiceProvider, Closeabl
     FlatFileStorageProviderConfiguration flatFileConfiguration = (FlatFileStorageProviderConfiguration)configuration;
     File targetDirectory = flatFileConfiguration.getBasedir();
     Assert.assertNotNull(targetDirectory);
-    this.directory = targetDirectory.toPath();
+    // We want to use a per-server directory (since this path is likely the same for the entire stripe).
+    File singleServerDirectory = new File(targetDirectory, platformConfiguration.getServerName());
+    // Ensure that we have the directory.
+    if (!singleServerDirectory.isDirectory()) {
+      // Make the directories.
+      boolean didMakeDirectories = singleServerDirectory.mkdirs();
+      // If this fails, throw an exception - not an assert, as this is a config issue.
+      if (!didMakeDirectories) {
+        throw new IllegalArgumentException("Restartable persistent directoy did not exist and could not be created: " + singleServerDirectory.getAbsolutePath());
+      }
+    }
+    this.directory = singleServerDirectory.toPath();
     logger.info("Initialized flat file storage to: " + this.directory);
     
     // This service needs to ensure that another server instance isn't using the same top-level directory.

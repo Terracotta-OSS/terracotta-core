@@ -31,7 +31,7 @@ public class FlatFileStorageProviderConfiguration implements ServiceProviderConf
 
   public FlatFileStorageProviderConfiguration(File basedir, boolean shouldBlockOnLock) {
     Assert.assertNotNull(basedir);
-    Assert.assertTrue(basedir.isDirectory());
+    
     this.basedir = basedir;
     this.shouldBlockOnLock = shouldBlockOnLock;
   }
