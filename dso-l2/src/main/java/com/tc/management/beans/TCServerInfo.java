@@ -362,11 +362,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public boolean getRestartable() {
-    return server.getRestartable();
-  }
-
-  @Override
   public String getConfig() {
     return server.getConfig();
   }

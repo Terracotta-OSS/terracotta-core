@@ -291,11 +291,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   }
 
   @Override
-  public boolean getRestartable() {
-    return configurationSetupManager.dsoL2Config().getRestartable();
-  }
-
-  @Override
   public int getTSAListenPort() {
     if (this.dsoServer != null) { return this.dsoServer.getListenPort(); }
     throw new IllegalStateException("TSA Server not running");

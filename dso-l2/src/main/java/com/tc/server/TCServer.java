@@ -60,8 +60,6 @@ public interface TCServer extends StateChangeListener {
 
   String getConfig();
 
-  boolean getRestartable();
-
   String getDescriptionOfCapabilities();
 
   L2Info[] infoForAllL2s();

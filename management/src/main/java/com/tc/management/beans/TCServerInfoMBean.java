@@ -80,8 +80,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   int getTSAGroupPort();
 
-  boolean getRestartable();
-
   Map<String, Object> getStatistics();
 
   long getUsedMemory();

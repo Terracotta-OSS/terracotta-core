@@ -170,11 +170,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public boolean getRestartable() {
-    return false;
-  }
-
-  @Override
   public String getEnvironment() {
     return null;
   }
