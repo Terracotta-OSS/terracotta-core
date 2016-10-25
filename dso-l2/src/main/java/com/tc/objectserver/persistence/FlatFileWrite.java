@@ -20,9 +20,12 @@ package com.tc.objectserver.persistence;
 
 import java.util.concurrent.Callable;
 
+import com.tc.classloader.CommonComponent;
+
 /**
  *
  */
+@CommonComponent
 public interface FlatFileWrite {
   <T> T run(Callable<T> r);
 }

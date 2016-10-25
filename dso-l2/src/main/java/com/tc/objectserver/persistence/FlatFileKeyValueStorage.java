@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.classloader.CommonComponent;
 import com.tc.util.Assert;
 
 import java.io.Serializable;
@@ -35,7 +36,10 @@ import org.terracotta.persistence.KeyValueStorage;
  * the entire backing flat file to be re-written to disk (this flush is aggressive, eager, and can only operate on the
  * entire file at once).
  */
+@CommonComponent
 public class FlatFileKeyValueStorage<K, V> implements KeyValueStorage<K, V>, StateDumpable, Serializable {
+  private static final long serialVersionUID = -72159945771915614L;
+
   private final HashMap<K, V> storage;
   private transient FlatFileWrite doFlush;
   
