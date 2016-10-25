@@ -53,7 +53,6 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
-  private final Map<FetchTuple, Integer> fetchPairCounts;
   private final Map<ClientID, Collection<EntityDescriptor>> incomingReleases;
   private boolean isActiveState;
 
@@ -61,7 +60,6 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.serviceInterface = serviceInterface;
     this.connectedClients = new HashSet<ClientID>();
     this.entities = new HashSet<EntityID>();
-    this.fetchPairCounts = new HashMap<FetchTuple, Integer>();
     this.incomingReleases = new HashMap<>();
     this.isActiveState = false;
     
@@ -175,49 +173,32 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void clientDidFetchEntity(ClientID client, EntityID id, ClientDescriptor clientDescriptor) {
-    // XXX: Note that there is currently no handling of reconnect on entity promotion from passive to active so there may
-    // be double-counting, here.
-    FetchTuple tuple = new FetchTuple(client, id);
-    int count = 0;
-    if (this.fetchPairCounts.containsKey(tuple)) {
-      count = this.fetchPairCounts.get(tuple);
-    }
-    count += 1;
-    this.fetchPairCounts.put(tuple, count);
-    
+  public synchronized void clientDidFetchEntity(ClientID client, EntityDescriptor entityDescriptor, ClientDescriptor clientDescriptor) {
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       String clientIdentifier = clientIdentifierForService(client);
-      String entityIdentifier = entityIdentifierForService(id);
+      String entityIdentifier = entityIdentifierForService(entityDescriptor.getEntityID());
       PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
-      String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
+      String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
+      boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
+      // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
+      Assert.assertTrue(didAdd);
     }
   }
 
   @Override
-  public synchronized void clientDidReleaseEntity(ClientID client, EntityID id) {
-    FetchTuple tuple = new FetchTuple(client, id);
-    // We can't release something we didn't fetch.
-    Assert.assertTrue(this.fetchPairCounts.containsKey(tuple));
-    int count = this.fetchPairCounts.remove(tuple);
-    count -= 1;
-    if (count > 0) {
-      this.fetchPairCounts.put(tuple, count);
-    }
-    
+  public synchronized void clientDidReleaseEntity(ClientID client, EntityDescriptor entityDescriptor) {
     // Remove it from the monitoring interface.
     if (null != this.serviceInterface) {
-      String clientIdentifier = clientIdentifierForService(client);
-      String entityIdentifier = entityIdentifierForService(id);
-      String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
+      String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
+      boolean didRemove = this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
+      // This CANNOT be unbalanced (it implies that there is a serious bug somewhere).
+      Assert.assertTrue(didRemove);
     }
     
     if (incomingReleases.containsKey(client)) {
       Collection<EntityDescriptor> expected = incomingReleases.get(client);
-      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(id)));
+      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(entityDescriptor.getEntityID())));
       if (expected.isEmpty()) {
         incomingReleases.remove(client);
         // Remove it from the monitoring interface.
@@ -226,39 +207,12 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
           this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
         }
       }
-    }    
+    }
   }
   
   public synchronized void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
     if (null != serviceInterface && !releases.isEmpty()) {
       incomingReleases.put(cid, releases);
-    }
-  }
-  
-  private static class FetchTuple {
-    private final ClientID client;
-    private final EntityID entity;
-    
-    public FetchTuple(ClientID client, EntityID entity) {
-      this.client = client;
-      this.entity = entity;
-    }
-    
-    @Override
-    public int hashCode() {
-      return this.client.hashCode() ^ 
-          (this.entity.hashCode() << 1);
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-      boolean isEqual = false;
-      if (obj instanceof FetchTuple) {
-        FetchTuple other = (FetchTuple) obj;
-        isEqual = this.client.equals(other.client)
-            && this.entity.equals(other.entity);
-      }
-      return isEqual;
     }
   }
 
@@ -294,7 +248,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     return id.getClassName() + id.getEntityName();
   }
 
-  private String fetchIdentifierForService(String clientIdentifier, String entityIdentifier) {
-    return clientIdentifier + entityIdentifier;
+  private String fetchIdentifierForService(ClientID client, EntityDescriptor entityDescriptor) {
+    EntityID entity = entityDescriptor.getEntityID();
+    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity) + "_" + entityDescriptor.getClientInstanceID().getID(); 
   }
 }
