@@ -20,6 +20,7 @@ package com.tc.objectserver.core.api;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.State;
 import org.terracotta.entity.ClientDescriptor;
@@ -82,22 +83,22 @@ public interface ITopologyEventCollector {
 
   /**
    * Called when a given client successfully fetches a specific entity.  Note that the same client can fetch a given entity
-   * multiple times, with overlapping extents.
+   * multiple times, with overlapping durations.
    * A non-existent entity cannot be fetched and all open fetches of a client must be released before it can be destroyed.
    * 
    * @param client The client.
-   * @param id The unique identifier for this entity.
+   * @param entityDescriptor The descriptor describing which entity is fetched and which fetch instance this was, on the client.
    * @param clientDescriptor corresponding ClientDescriptor for client
    */
-  public void clientDidFetchEntity(ClientID client, EntityID id, ClientDescriptor clientDescriptor);
+  public void clientDidFetchEntity(ClientID client, EntityDescriptor entityDescriptor, ClientDescriptor clientDescriptor);
 
   /**
    * Called when a given client successfully releases a specific entity.  Note that the same client can fetch a given entity
-   * multiple times, with overlapping extents, and releasing one does not invalidate the others.
+   * multiple times, with overlapping durations, and releasing one does not invalidate the others.
    * A non-existent entity cannot be fetched and all open fetches of a client must be released before it can be destroyed.
    * 
    * @param client The client.
-   * @param id The unique identifier for this entity.
+   * @param entityDescriptor The descriptor describing which entity is fetched and which fetch instance this was, on the client.
    */
-  public void clientDidReleaseEntity(ClientID client, EntityID id);
+  public void clientDidReleaseEntity(ClientID client, EntityDescriptor entityDescriptor);
 }

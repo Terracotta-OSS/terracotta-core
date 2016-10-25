@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 
 import com.tc.net.TCSocketAddress;
@@ -39,6 +40,8 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.UUID;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
@@ -64,12 +67,57 @@ public class ManagementTopologyEventCollectorTest {
 
   @Before
   public void setUp() throws Exception {
-    this.collector = new ManagementTopologyEventCollector(null);
+    // We want to create a monitoring producer implementation which just ensures that all calls are balanced.
+    this.collector = new ManagementTopologyEventCollector(new IMonitoringProducer() {
+      private HashSet<PathContainer> validPaths = new HashSet<>();
+      private HashMap<PathContainer, Serializable> valuesAtPaths = new HashMap<>();
+      @Override
+      public boolean addNode(String[] parents, String name, Serializable value) {
+        PathContainer parentsContainer = new PathContainer(parents);
+        boolean didFindParent = (null == parents) || (0 == parents.length) || this.validPaths.contains(parentsContainer);
+        if (didFindParent) {
+          String[] newPath = new String[parents.length + 1];
+          System.arraycopy(parents, 0, newPath, 0, parents.length);
+          newPath[parents.length] = name;
+          // Even if something is already there, we will just over-write.
+          PathContainer container = new PathContainer(newPath);
+          this.validPaths.add(container);
+          this.valuesAtPaths.put(container, value);
+        }
+        return didFindParent;
+      }
+      @Override
+      public void pushBestEffortsData(String name, Serializable data) {
+        // Not part of test.
+        Assert.fail();
+      }
+      @Override
+      public boolean removeNode(String[] parents, String name) {
+        String[] pathToRemove = new String[parents.length + 1];
+        System.arraycopy(parents, 0, pathToRemove, 0, parents.length);
+        pathToRemove[parents.length] = name;
+        PathContainer parentsContainer = new PathContainer(pathToRemove);
+        boolean didFind = this.validPaths.contains(parentsContainer);
+        if (didFind) {
+          // Extract anything with this prefix.
+          HashSet<PathContainer> newPaths = new HashSet<>();
+          for (PathContainer onePath : this.validPaths) {
+            boolean shouldAdd = !onePath.hasPrefix(parentsContainer);
+            if (shouldAdd) {
+              newPaths.add(onePath);
+            } else {
+              this.valuesAtPaths.remove(onePath);
+            }
+          }
+          this.validPaths = newPaths;
+        }
+        return didFind;
+      }});
   }
 
   @Test
   public void testConnectDisconnect() throws Exception {
-    MessageChannel channel = mock(MessageChannel.class);
+    MessageChannel channel = mockMessageChannel();
     ClientID client = mock(ClientID.class);
     this.collector.clientDidConnect(channel, client);
     // We should fail to connect a second time.
@@ -156,9 +204,13 @@ public class ManagementTopologyEventCollectorTest {
   public void testFetchReleaseActiveEntity() throws Exception {
     EntityID id = mock(EntityID.class);
     long consumerID = 1;
-    MessageChannel channel = mock(MessageChannel.class);
+    MessageChannel channel = mockMessageChannel();
+    
     ClientID client = mock(ClientID.class);
-    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+    EntityDescriptor entityDescriptor1 = mockDescriptor(id, new ClientInstanceID(1));
+    EntityDescriptor entityDescriptor2 = mockDescriptor(id, new ClientInstanceID(2));
+    ClientDescriptor clientDescriptor1 = mock(ClientDescriptor.class);
+    ClientDescriptor clientDescriptor2 = mock(ClientDescriptor.class);
     
     // Put us into the active state.
     this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
@@ -171,19 +223,19 @@ public class ManagementTopologyEventCollectorTest {
     this.collector.clientDidConnect(channel, client);
     
     // Fetch the entity.
-    this.collector.clientDidFetchEntity(client, id, clientDescriptor);
+    this.collector.clientDidFetchEntity(client, entityDescriptor1, clientDescriptor1);
     
     // Fetch again, since there can be multiple fetches from the same client.
-    this.collector.clientDidFetchEntity(client, id, clientDescriptor);
+    this.collector.clientDidFetchEntity(client, entityDescriptor2, clientDescriptor2);
     
     // Release the entity twice.
-    this.collector.clientDidReleaseEntity(client, id);
-    this.collector.clientDidReleaseEntity(client, id);
+    this.collector.clientDidReleaseEntity(client, entityDescriptor1);
+    this.collector.clientDidReleaseEntity(client, entityDescriptor2);
     
     // A third attempt to release should fail.
     boolean didSucceed = false;
     try {
-      this.collector.clientDidReleaseEntity(client, id);
+      this.collector.clientDidReleaseEntity(client, entityDescriptor1);
       didSucceed = true;
     } catch (AssertionError e) {
       // Expected.
@@ -235,11 +287,13 @@ public class ManagementTopologyEventCollectorTest {
 
     // reset monitoringProducer.addNode(...) invocation counts
     reset(monitoringProducer);
+    when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
 
     EntityID entityID = mock(EntityID.class);
+    EntityDescriptor entityDescriptor1 = mockDescriptor(entityID, new ClientInstanceID(1));
     ClientID client = mock(ClientID.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
-    this.collector.clientDidFetchEntity(client, entityID, clientDescriptor);
+    this.collector.clientDidFetchEntity(client, entityDescriptor1, clientDescriptor);
 
     // verify
     ArgumentCaptor<PlatformClientFetchedEntity> argumentCaptor = ArgumentCaptor.forClass(PlatformClientFetchedEntity.class);
@@ -328,6 +382,7 @@ public class ManagementTopologyEventCollectorTest {
   public void testClientEventOrdering() throws Exception {
     IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
     when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
+    when(monitoringProducer.removeNode(any(), any())).thenReturn(true);
     this.collector = new ManagementTopologyEventCollector(monitoringProducer);
     this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
     ClientID cid = mock(ClientID.class);
@@ -342,6 +397,8 @@ public class ManagementTopologyEventCollectorTest {
     int counts[] = {0,10,1};
     for (int count : counts) {
       reset(monitoringProducer);
+      when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
+      when(monitoringProducer.removeNode(any(), any())).thenReturn(true);
       System.out.println("testing " + count + " fetched entities");
       this.collector.clientDidConnect(channel, cid);
       EntityID[] entities = new EntityID[count];
@@ -354,7 +411,8 @@ public class ManagementTopologyEventCollectorTest {
       }
       for (EntityID eid : entities) {
         ClientDescriptor descriptor = mock(ClientDescriptor.class);
-        this.collector.clientDidFetchEntity(cid, eid, descriptor);
+        EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));
+        this.collector.clientDidFetchEntity(cid, entityDescriptor1, descriptor);
       }
   //  simulate ClientEntityStateManger detecting a client disconnect
       this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1)).collect(Collectors.toList()));
@@ -362,14 +420,92 @@ public class ManagementTopologyEventCollectorTest {
       this.collector.clientDidDisconnect(channel, cid);
       for (EntityID eid : entities) {
         verify(monitoringProducer, Mockito.never()).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
-        this.collector.clientDidReleaseEntity(cid, eid);
-        verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq(Long.toString(1L) + eid.getClassName() + eid.getEntityName()));
+        EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));
+        this.collector.clientDidReleaseEntity(cid, entityDescriptor1);
+        verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() + "_1"));
       }
       verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));
       
       for (EntityID eid : entities) {
         this.collector.entityWasDestroyed(eid);
       }
+    }
+  }
+
+  private EntityDescriptor mockDescriptor(EntityID id, ClientInstanceID clientInstanceID) {
+    EntityDescriptor descriptor = mock(EntityDescriptor.class);
+    when(descriptor.getEntityID()).thenReturn(id);
+    when(descriptor.getClientInstanceID()).thenReturn(clientInstanceID);
+    return descriptor;
+  }
+
+  private MessageChannel mockMessageChannel() {
+    MessageChannel channel = mock(MessageChannel.class);
+    TCSocketAddress localAddress = mock(TCSocketAddress.class);
+    when(localAddress.getAddress()).thenReturn(mock(InetAddress.class));
+    when(localAddress.getPort()).thenReturn(1035);
+    TCSocketAddress remoteAddress = mock(TCSocketAddress.class);
+    when(remoteAddress.getAddress()).thenReturn(mock(InetAddress.class));
+    when(remoteAddress.getPort()).thenReturn(1035);
+    when(channel.getAttachment(any(String.class))).thenReturn(mock(ClientHandshakeMonitoringInfo.class));
+    when(channel.getLocalAddress()).thenReturn(localAddress);
+    when(channel.getRemoteAddress()).thenReturn(remoteAddress);
+    return channel;
+  }
+
+
+  /**
+   * We need to perform some basic tests on paths so we wrap them in an object.
+   */
+  private static class PathContainer {
+    private final String[] path;
+    public PathContainer(String[] path) {
+      this.path = (null != path) ? path : new String[0];
+      for (String oneName : path) {
+        Assert.assertNotNull(oneName);
+      }
+    }
+    public boolean hasPrefix(PathContainer parentsContainer) {
+      boolean hasPrefix = false;
+      if (path.length >= parentsContainer.path.length) {
+        boolean doesMatch = true;
+        for (int i = 0; doesMatch && (i < parentsContainer.path.length); ++i) {
+          doesMatch = this.path[i].equals(parentsContainer.path[i]);
+        }
+        hasPrefix = doesMatch;
+      }
+      return hasPrefix;
+    }
+    @Override
+    public int hashCode() {
+      // We aren't too worried about this, for this test.
+      return path.length;
+    }
+    @Override
+    public boolean equals(Object obj) {
+      boolean isEquals = false;
+      if (obj instanceof PathContainer) {
+        PathContainer other = (PathContainer) obj;
+        if (other.path.length == this.path.length) {
+          boolean didAllMatch = true;
+          for (int i = 0; didAllMatch && (i < this.path.length); ++i) {
+            if (!this.path[i].equals(other.path[i])) {
+              didAllMatch = false;
+            }
+          }
+          isEquals = didAllMatch;
+        }
+      }
+      return isEquals;
+    }
+    @Override
+    public String toString() {
+      String collector = "[";
+      for (String path : this.path) {
+        collector += "/" + path;
+      }
+      collector += "]";
+      return collector;
     }
   }
 }

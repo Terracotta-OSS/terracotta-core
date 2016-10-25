@@ -306,12 +306,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     try {
       write.lock();
       this.activeServerEntity.connected(clientDescriptor);
-      this.activeServerEntity.handleReconnect(clientDescriptor, extendedReconnectData);      
+      this.activeServerEntity.handleReconnect(clientDescriptor, extendedReconnectData);
     } finally {
       write.unlock();
     }
     // Fire the event that the client fetched the entity.
-    this.eventCollector.clientDidFetchEntity(clientID, this.getID(), clientDescriptor);
+    this.eventCollector.clientDidFetchEntity(clientID, entityDescriptor, clientDescriptor);
   }
   
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
@@ -506,7 +506,6 @@ public class ManagedEntityImpl implements ManagedEntity {
       return;
     }
     this.constructorInfo = constructorInfo;
-    CommonServerEntity<EntityMessage, EntityResponse> entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
@@ -515,7 +514,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity = this.factory.reconfigureEntity(this.registry, this.activeServerEntity, constructorInfo);
         this.concurrencyStrategy = this.factory.getConcurrencyStrategy(constructorInfo);
         this.executionStrategy = this.factory.getExecutionStrategy(constructorInfo);
-        entityToCreate = this.activeServerEntity;
       }
     } else {
       if (null == this.passiveServerEntity) {
@@ -524,8 +522,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.passiveServerEntity = this.factory.reconfigureEntity(this.registry, this.passiveServerEntity, this.constructorInfo);
         Assert.assertNull(this.concurrencyStrategy);
         Assert.assertNull(this.executionStrategy);
-        // Store the configuration in case we promote.
-        entityToCreate = this.passiveServerEntity;
+        // TODO: Store the configuration in case we promote.
       }
     }
     reconfigureEntityRequest.complete(oldconfig);
@@ -671,7 +668,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         clientEntityStateManager.addReference(clientID, entityDescriptor);
         response.complete(this.constructorInfo);
         // Fire the event that the client fetched the entity.
-        this.eventCollector.clientDidFetchEntity(clientID, this.getID(), sourceDescriptor);
+        this.eventCollector.clientDidFetchEntity(clientID, entityDescriptor, sourceDescriptor);
         // finally notify the entity that it was fetched
         this.activeServerEntity.connected(sourceDescriptor);
       } else {
@@ -694,7 +691,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         clientEntityStateManager.removeReference(clientID, entityDescriptor);
         this.activeServerEntity.disconnected(sourceDescriptor);
         // Fire the event that the client released the entity.
-        this.eventCollector.clientDidReleaseEntity(clientID, this.getID());
+        this.eventCollector.clientDidReleaseEntity(clientID, entityDescriptor);
         response.complete();
       } else {
         response.complete();
