@@ -157,4 +157,18 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
       }
     }
   }
+
+  /**
+   * @return True if there is a user-provided service for the given class registered.
+   */
+  public boolean hasUserProvidedServiceProvider(Class<?> serviceInterface) {
+    boolean hasProvider = false;
+    for (ServiceProvider serviceProvider : this.serviceProviders) {
+      if (serviceProvider.getProvidedServiceTypes().contains(serviceInterface)) {
+        hasProvider = true;
+        break;
+      }
+    }
+    return hasProvider;
+  }
 }
