@@ -65,6 +65,7 @@ public class PassthroughTestHelpers {
     PassthroughServer[] servers = new PassthroughServer[numOfServers];
     for(int i = 0; i < numOfServers; i++) {
       servers[i] = intializeServer(initializer);
+      servers[i].setServerName(stripeName + "_" + i);
     }
     if(numOfServers == 1) {
       return new PassthroughClusterControl(stripeName, servers[0]);
