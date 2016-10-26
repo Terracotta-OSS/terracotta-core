@@ -25,7 +25,6 @@
   </services>
     <servers>
         <server>
-            <data>%(user.home)/terracotta/server-data</data>
             <logs>%(user.home)/terracotta/server-logs</logs>
         </server>
     </servers>

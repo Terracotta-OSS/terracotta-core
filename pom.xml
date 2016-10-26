@@ -42,7 +42,7 @@
     <skip.deploy>false</skip.deploy>
 
     <terracotta-apis.version>1.0.9.beta</terracotta-apis.version>
-    <terracotta-configuration.version>10.0.9.beta</terracotta-configuration.version>
+    <terracotta-configuration.version>10.0.9.beta2</terracotta-configuration.version>
   </properties>
 
   <modules>

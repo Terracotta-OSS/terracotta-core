@@ -28,11 +28,7 @@ import java.io.File;
  */
 public interface CommonL2Config extends Config<TcConfiguration> {
 
-  File dataPath();
-
   File logsPath();
-
-  File serverDbBackupPath();
 
   BindPort tsaPort();
 
