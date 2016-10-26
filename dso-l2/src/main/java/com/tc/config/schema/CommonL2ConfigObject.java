@@ -77,18 +77,8 @@ public class CommonL2ConfigObject implements CommonL2Config {
   }
 
   @Override
-  public File dataPath() {
-    return new File(server.getData());
-  }
-
-  @Override
   public File logsPath() {
     return new File(server.getLogs());
-  }
-
-  @Override
-  public File serverDbBackupPath() {
-    return new File(server.getDataBackup());
   }
 
   @Override

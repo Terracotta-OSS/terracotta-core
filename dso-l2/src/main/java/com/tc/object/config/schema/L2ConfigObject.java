@@ -33,9 +33,8 @@ import java.io.File;
 /**
  * The standard implementation of {@link L2Config}.
  */
-public class L2ConfigObject implements L2Config {
+public class L2ConfigObject implements L2Config<Server> {
   private static final TCLogger logger = TCLogging.getLogger(L2ConfigObject.class);
-  private static final String WILDCARD_IP = "0.0.0.0";
   private static final String LOCALHOST = "localhost";
   public static final short DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT = 10;
   public static final short DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT = 20;
@@ -51,14 +50,11 @@ public class L2ConfigObject implements L2Config {
   private final String serverName;
   private final String bind;
   private final int clientReconnectWindow;
-  private final boolean restartable;
   private volatile boolean jmxEnabled;
 
-  public L2ConfigObject(Server s, int clientReconnectWindow, boolean restartable) {
+  public L2ConfigObject(Server s, int clientReconnectWindow) {
     Server server = s;
     this.clientReconnectWindow = clientReconnectWindow;
-    // TODO:  The platform should no longer assume that storage restartable and platform restartable are the same thing.
-    this.restartable = restartable;
 
     this.bind = server.getBind();
     this.host = server.getHost();
@@ -97,11 +93,6 @@ public class L2ConfigObject implements L2Config {
   @Override
   public BindPort managementPort() {
     return this.managementPort;
-  }
-
-  @Override
-  public boolean getRestartable() {
-    return this.restartable;
   }
 
   @Override

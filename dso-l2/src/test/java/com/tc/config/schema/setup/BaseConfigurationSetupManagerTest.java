@@ -18,7 +18,6 @@
  */
 package com.tc.config.schema.setup;
 
-import com.tc.util.runtime.Os;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -31,7 +30,6 @@ import org.terracotta.config.Servers;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.setup.BaseConfigurationSetupManager;
 import com.tc.config.schema.setup.ConfigurationCreator;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.ConfigurationSpec;
@@ -264,7 +262,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testServerDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<logs>xyz/abc/451</logs>" + "<data>abc/xyz/123</data>"  + "<data-backup>/qrt/opt/pqr</data-backup>" + "</server>"
+                    + "<logs>xyz/abc/451</logs>" + "</server>"
                     + "</servers>" + "</tc-config>";
 
     writeConfigFile(config);
@@ -295,7 +293,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testServerSubsitutedDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<logs>%i</logs>" + "<data>%h</data>" + "<data-backup>%H</data-backup>" + "</server>" + "</servers>"
+                    + "<logs>%i</logs>" + "</server>" + "</servers>"
                     + "</tc-config>";
 
     writeConfigFile(config);

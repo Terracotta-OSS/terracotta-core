@@ -18,7 +18,6 @@
  */
 package com.tc.config.schema.setup;
 
-import com.tc.classloader.ServiceLocator;
 import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
@@ -28,8 +27,6 @@ import com.tc.config.schema.CommonL2ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.object.config.schema.L2Config;
@@ -70,9 +67,6 @@ import java.util.Set;
  * The standard implementation of {@link com.tc.config.schema.setup.L2ConfigurationSetupManager}.
  */
 public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManager implements L2ConfigurationSetupManager {
-
-  private static final TCLogger logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
-
   private final Map<String, L2ConfigData> l2ConfigData;
   private final String thisL2Identifier;
   private final L2ConfigData myConfigData;
@@ -232,8 +226,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       this.name = name;
       Server s = findMyL2Bean(); // To get the exception in case things are screwed up
       this.commonL2Config = new CommonL2ConfigObject(s, configuration, secure);
-      boolean restartable = serversBean.getRestartable() != null && serversBean.getRestartable().isEnabled();
-      this.dsoL2Config = new L2ConfigObject(s, serversBean.getClientReconnectWindow(), restartable);
+      this.dsoL2Config = new L2ConfigObject(s, serversBean.getClientReconnectWindow());
     }
 
     public CommonL2Config commonL2Config() {

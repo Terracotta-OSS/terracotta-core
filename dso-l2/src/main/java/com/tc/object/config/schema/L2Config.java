@@ -25,7 +25,7 @@ import com.tc.config.schema.Config;
 /**
  * Represents all configuration read by the DSO L2 and which is independent of application.
  */
-public interface L2Config extends Config {
+public interface L2Config<T> extends Config<T> {
 
   public static final String OBJECTDB_DIRNAME                      = "objectdb";
   public static final String DIRTY_OBJECTDB_BACKUP_DIRNAME         = "dirty-objectdb-backup";
@@ -44,8 +44,6 @@ public interface L2Config extends Config {
   int clientReconnectWindow();
 
   String bind();
-
-  boolean getRestartable();
 
   boolean isJmxEnabled();
 

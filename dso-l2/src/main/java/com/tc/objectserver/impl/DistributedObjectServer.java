@@ -30,6 +30,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.persistence.IPersistentStorage;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -63,8 +64,6 @@ import com.tc.handler.CallbackGroupExceptionHandler;
 import com.tc.handler.CallbackZapDirtyDbExceptionAdapter;
 import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
 import com.tc.handler.LockInfoDumpHandler;
-import com.tc.io.TCFile;
-import com.tc.io.TCFileImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
@@ -178,8 +177,6 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
-import com.tc.objectserver.persistence.FlatFileStorageProviderConfiguration;
-import com.tc.objectserver.persistence.FlatFileStorageServiceProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
@@ -200,7 +197,6 @@ import com.tc.services.CommunicatorResponseHandler;
 import com.tc.services.CommunicatorService;
 import com.tc.services.EntityMessengerProvider;
 import com.tc.services.LocalMonitoringProducer;
-import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
@@ -296,7 +292,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   protected final TCSecurityManager              tcSecurityManager;
 
   private final TaskRunner                       taskRunner;
-  private final TerracottaServiceProviderRegistry serviceRegistry;
+  private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManager entityManager;
 
@@ -417,9 +413,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     NIOWorkarounds.solaris10Workaround();
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
-    final boolean restartable = l2DSOConfig.getRestartable();
     
-    TCFile dataLoc = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath());
     String serverName = this.configSetupManager.dsoL2Config().serverName();
 //  this is character replacement for windows platform file names.  This is probably a bogus way to 
 //  handle this.  Re-evaluate the way data directories are managed for 5.0 and fix this when a plan is
@@ -436,30 +430,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
 
-    logger.debug("persistent: " + restartable);
-
+    // Set up the ServiceRegistry.
     PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier());
     serviceRegistry.initialize(platformConfiguration, this.configSetupManager.commonl2Config().getBean(), Thread.currentThread().getContextClassLoader());
-
-    if(restartable) {
-      // For now, we will register com.tc.objectserver.persistence.FlatFileStorageServiceProvider here.  We are currently
-      //  treating it as a core component of the platform but, in the future, it may move out and be loaded like user
-      //  services or be discarded, entirely.
-      FlatFileStorageServiceProvider flatFileService = new FlatFileStorageServiceProvider();
-      final TCFile location = new TCFileImpl(dataLoc, serverName);
-      // We want to make sure that the directory exists before we configure the service.
-      location.forceMkdir();
-      boolean shouldBlockOnLock = tcProperties.getBoolean(TCPropertiesConsts.L2_STARTUPLOCK_RETRIES_ENABLED);
-      if (!flatFileService.initialize(new FlatFileStorageProviderConfiguration(location.getFile(), shouldBlockOnLock), platformConfiguration)) {
-        throw new AssertionError("bad flat file initialization");
-      }
-      serviceRegistry.registerExternal(flatFileService);
-    } else {
-      NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
-      nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration(), platformConfiguration);
-      serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
-    }
-
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
@@ -468,6 +441,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final CommunicatorService communicatorService = new CommunicatorService();
     serviceRegistry.registerImplementationProvided(communicatorService);
     
+    // See if we need to add a service for IPersistentStorage.
+    boolean serverIsRestartable = this.serviceRegistry.hasUserProvidedServiceProvider(IPersistentStorage.class);
+    if (!serverIsRestartable) {
+      // In this case, we do still need to provide an implementation of IPersistentStorage, backed by memory, so that entities can request a service which is as persistent as this server is.
+      NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
+      nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration(), platformConfiguration);
+      serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
+    }
+    logger.debug("persistent: " + serverIsRestartable);
+
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
     String hostAddress = "";
@@ -654,7 +637,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                                  reconnectTimeout,
-                                                                                                 restartable,
+                                                                                                 serverIsRestartable,
                                                                                                  consoleLogger);
     
     
@@ -695,7 +678,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messengerProvider.setMessageSink(voltronMessageSink);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
-    if (restartable) {
+    if (serverIsRestartable) {
       processTransactionHandler.loadExistingEntities();
     }
 
