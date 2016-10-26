@@ -21,8 +21,10 @@ package com.tc.objectserver.persistence;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.util.Map;
 
 import org.terracotta.entity.StateDumpable;
@@ -88,7 +90,7 @@ public class FlatFilePersistentStorage implements IPersistentStorage, StateDumpa
       throw new IOException("not found");
     }
     try {
-      ObjectInputStream in = new ObjectInputStream(new FileInputStream(store));
+      ObjectInputStream in = new SystemLoaderObjectInputStream(new FileInputStream(store));
       this.properties = (FlatFileProperties)in.readObject();
       this.maps = (Map<String, FlatFileKeyValueStorage<?, ?>>) in.readObject();
       in.close();
@@ -180,6 +182,24 @@ public class FlatFilePersistentStorage implements IPersistentStorage, StateDumpa
     stateDumper.subStateDumper("location").dumpState("StorageDir", store.getAbsolutePath());
     for (Map.Entry<String, FlatFileKeyValueStorage<?, ?>> entry : maps.entrySet()) {
       entry.getValue().dumpStateTo(stateDumper.subStateDumper(entry.getKey()));
+    }
+  }
+
+
+  private static class SystemLoaderObjectInputStream extends ObjectInputStream {
+    public SystemLoaderObjectInputStream(InputStream in) throws IOException {
+      super(in);
+    }
+
+    @Override
+    protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+      String name = desc.getName();
+      try {
+        return Class.forName(name, false, ClassLoader.getSystemClassLoader());
+      } catch (ClassNotFoundException ex) {
+        // We failed so try to delegate to the super.
+        return super.resolveClass(desc);
+      }
     }
   }
 }
