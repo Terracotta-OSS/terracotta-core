@@ -19,7 +19,6 @@
 package com.tc.objectserver.persistence;
 
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
 
 import com.tc.test.TCTestCase;
@@ -31,8 +30,8 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   private static final String TEMP_FILE = "temp_file";
   private FlatFilePersistentStorage persistentStorage;
   private TransactionOrderPersistor orderPersistor;
-  private NodeID client1;
-  private NodeID client2;
+  private ClientID client1;
+  private ClientID client2;
 
   @Override
   public void setUp() {
