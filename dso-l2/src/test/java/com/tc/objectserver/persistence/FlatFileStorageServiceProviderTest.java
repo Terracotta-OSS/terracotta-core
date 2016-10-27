@@ -32,7 +32,10 @@ import org.junit.Assert;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
+import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
@@ -60,8 +63,7 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   
   public void testGetService() throws IOException {
     long consumerID = 1;
-    PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
-    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    ServiceConfiguration<IPersistentStorage> configuration = new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class);
     IPersistentStorage storage = provider.getService(consumerID, configuration);
     assertTrue(storage instanceof FlatFilePersistentStorage);
     storage.create();
@@ -83,8 +85,7 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   
   public void testCreateReplacesData() throws IOException {
     long consumerID = 1;
-    PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
-    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    ServiceConfiguration<IPersistentStorage> configuration = new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class);
     IPersistentStorage storage = provider.getService(consumerID, configuration);
     assertTrue(storage instanceof FlatFilePersistentStorage);
     storage.create();
@@ -104,8 +105,7 @@ public class FlatFileStorageServiceProviderTest extends TCTestCase {
   public void testMultiThreaded() throws Exception {
 //  very dumb random test that makes sure we can do things multi-threaded without blowing up.
     long consumerID = 1;
-    PersistentStorageServiceConfiguration configuration = mock(PersistentStorageServiceConfiguration.class);
-    when(configuration.getServiceType()).thenReturn(IPersistentStorage.class);
+    ServiceConfiguration<IPersistentStorage> configuration = new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class);
     IPersistentStorage storage = provider.getService(consumerID, configuration);
     assertTrue(storage instanceof FlatFilePersistentStorage);
     storage.create();
