@@ -859,12 +859,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     Assert.assertTrue(!this.serviceProvidersReadOnly);
     // We run the initializer right away.
-    boolean didInitialize = serviceProvider.initialize(providerConfiguration, new PlatformConfiguration() {
-      @Override
-      public String getServerName() {
-        return serverName;
-      }
-    });
+    boolean didInitialize = serviceProvider.initialize(providerConfiguration, new PassthroughPlatformConfiguration(this.serverName));
     Assert.assertTrue(didInitialize);
     this.serviceProviders.add(serviceProvider);
   }
@@ -1179,6 +1174,20 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       } catch (MessageCodecException me) {
         throw new RuntimeException(me);
       }
+    }
+  }
+
+
+  private static class PassthroughPlatformConfiguration implements PlatformConfiguration {
+    private final String serverName;
+    
+    public PassthroughPlatformConfiguration(String serverName) {
+      this.serverName = serverName;
+    }
+    
+    @Override
+    public String getServerName() {
+      return this.serverName;
     }
   }
 }
