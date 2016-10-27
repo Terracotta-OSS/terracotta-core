@@ -48,7 +48,7 @@ public class TransactionOrderPersistor {
   private final KeyValueStorage<String, Long> localVariables;
     
   private List<ClientTransaction> globalList = null;
-  private boolean rebuild = true;
+  
   // Unchecked and raw warnings because we are trying to use Class<List<?>>, which the compiler doesn't like but has no runtime meaning.
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public TransactionOrderPersistor(IPersistentStorage storageManager) {
@@ -68,13 +68,15 @@ public class TransactionOrderPersistor {
    */
   public synchronized void updateWithNewMessage(ClientID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
     // We need to ensure that the arguments are sane.
-    rebuild = true;
     if ((null == oldestTransactionOnClient) || (null == transactionID)) {
       throw new IllegalArgumentException("Transactions cannot be null");
     }
     if (oldestTransactionOnClient.compareTo(transactionID) > 0) {
       throw new IllegalArgumentException("Oldest transaction cannot come after new transaction");
     }
+    
+    // This operation requires that the globalList be rebuilt.
+    this.globalList = null;
     
     // Get the local list for this client.
     List<ClientTransaction> localList = clientLocals.get(source);
@@ -138,7 +140,7 @@ public class TransactionOrderPersistor {
   
   @SuppressWarnings("deprecation")
   private List<ClientTransaction> buildGlobalListIfNessessary() {
-    if (rebuild || globalList == null) {
+    if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
       for (ClientID client : clientLocals.keySet()) {
         List<ClientTransaction> transactions = clientLocals.get(client);
@@ -149,7 +151,6 @@ public class TransactionOrderPersistor {
       }
       globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
     }
-    rebuild = false;
     return globalList;
   }
 
@@ -177,7 +178,6 @@ public class TransactionOrderPersistor {
   public void clearAllRecords() {
     this.clientLocals.clear();
     this.globalList = null;
-    this.rebuild = true;
   }
 
   /**
