@@ -139,45 +139,65 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   
   @SuppressWarnings("deprecation")
   public void start(boolean shouldLoadStorage) {
+    // Make sure that we install the in-memory registry, if needed.
+    boolean isStorageInstalled = false;
+    for (ServiceProvider provider : this.serviceProviders) {
+      if (provider.getProvidedServiceTypes().contains(IPersistentStorage.class)) {
+        isStorageInstalled = true;
+        break;
+      }
+    }
+    if (!isStorageInstalled) {
+      PassthroughNullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new PassthroughNullPlatformStorageServiceProvider();
+      ServiceProviderConfiguration config = new ServiceProviderConfiguration() {
+        @Override
+        public Class<? extends ServiceProvider> getServiceProviderType() {
+          return PassthroughNullPlatformStorageServiceProvider.class;
+        }};
+      nullPlatformStorageServiceProvider.initialize(config, new PassthroughPlatformConfiguration(this.serverName));
+      this.serviceProviders.add(nullPlatformStorageServiceProvider);
+    }
+    
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry(null, null, null);
     // See if we have persistence support.
     IPersistentStorage persistentStorage = preparePersistentStorage(shouldLoadStorage);
-    if (null != persistentStorage) {
-      // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
-      // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
-      this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+    // Since we installed a storage implementation, if one was missing, we can rely on it being here.
+    Assert.assertTrue(null != persistentStorage);
+    
+    // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
+    // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
+    this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+    
+    // Load the transaction order.
+    this.transactionOrderManager = new PassthroughTransactionOrderManager(persistentStorage);
+    
+    // Load the entities.
+    for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
+      // This is an entity consumer so we use the deferred container.
+      DeferredEntityContainer container = new DeferredEntityContainer();
+      EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
+      // Create the registry for the entity.
+      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
+      // Construct the entity.
+      EntityServerService<?, ?> service = null;
+      try {
+        service = getServerEntityServiceForVersion(entityData.className, entityData.entityName, entityData.version);
+      } catch (Exception e) {
+        // We don't expect a version mismatch here or other failure in this test system.
+        Assert.unexpected(e);
+      }
+      PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
+      CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityData.className, entityData.entityName, entityData.version, entityData.configuration, entityTuple, service, registry, consumerID);
+      // We can now store the entity into the deferred container.
+      container.entity = newEntity;
+      container.codec = service.getMessageCodec();
+      // Tell the entity to load itself from storage.
+      newEntity.loadExisting();
       
-      // Load the transaction order.
-      this.transactionOrderManager = new PassthroughTransactionOrderManager(persistentStorage);
-      
-      // Load the entities.
-      for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
-        // This is an entity consumer so we use the deferred container.
-        DeferredEntityContainer container = new DeferredEntityContainer();
-        EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
-        // Create the registry for the entity.
-        PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
-        // Construct the entity.
-        EntityServerService<?, ?> service = null;
-        try {
-          service = getServerEntityServiceForVersion(entityData.className, entityData.entityName, entityData.version);
-        } catch (Exception e) {
-          // We don't expect a version mismatch here or other failure in this test system.
-          Assert.unexpected(e);
-        }
-        PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
-        CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityData.className, entityData.entityName, entityData.version, entityData.configuration, entityTuple, service, registry, consumerID);
-        // We can now store the entity into the deferred container.
-        container.entity = newEntity;
-        container.codec = service.getMessageCodec();
-        // Tell the entity to load itself from storage.
-        newEntity.loadExisting();
-        
-        // See if we need to bump up the next consumerID for future entities.
-        if (consumerID >= this.nextConsumerID) {
-          this.nextConsumerID = consumerID + 1;
-        }
+      // See if we need to bump up the next consumerID for future entities.
+      if (consumerID >= this.nextConsumerID) {
+        this.nextConsumerID = consumerID + 1;
       }
     }
     
@@ -563,10 +583,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   @Override
   public void dump() {
     System.out.println("Existing entities:");
-    if(this.persistedEntitiesByConsumerID != null) {
-      for(EntityData entityData : this.persistedEntitiesByConsumerID.values()) {
-        System.out.println("\t" + entityData.className + ":" + entityData.entityName + ":" + entityData.version);
-      }
+    for(EntityData entityData : this.persistedEntitiesByConsumerID.values()) {
+      System.out.println("\t" + entityData.className + ":" + entityData.entityName + ":" + entityData.version);
     }
   }
 
@@ -679,14 +697,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // Tell the entity to create itself as something new.
     newEntity.createNew();
     // If we have a persistence layer, record this.
-    if (null != this.persistedEntitiesByConsumerID) {
-      EntityData data = new EntityData();
-      data.className = entityClassName;
-      data.version = version;
-      data.entityName = entityName;
-      data.configuration = serializedConfiguration;
-      this.persistedEntitiesByConsumerID.put(consumerID, data);
-    }
+    EntityData data = new EntityData();
+    data.className = entityClassName;
+    data.version = version;
+    data.entityName = entityName;
+    data.configuration = serializedConfiguration;
+    this.persistedEntitiesByConsumerID.put(consumerID, data);
     
     if (null != this.serviceInterface) {
       // Record this new entity.
@@ -859,12 +875,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     Assert.assertTrue(!this.serviceProvidersReadOnly);
     // We run the initializer right away.
-    boolean didInitialize = serviceProvider.initialize(providerConfiguration, new PlatformConfiguration() {
-      @Override
-      public String getServerName() {
-        return serverName;
-      }
-    });
+    boolean didInitialize = serviceProvider.initialize(providerConfiguration, new PassthroughPlatformConfiguration(this.serverName));
     Assert.assertTrue(didInitialize);
     this.serviceProviders.add(serviceProvider);
   }
@@ -1179,6 +1190,20 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       } catch (MessageCodecException me) {
         throw new RuntimeException(me);
       }
+    }
+  }
+
+
+  private static class PassthroughPlatformConfiguration implements PlatformConfiguration {
+    private final String serverName;
+    
+    public PassthroughPlatformConfiguration(String serverName) {
+      this.serverName = serverName;
+    }
+    
+    @Override
+    public String getServerName() {
+      return this.serverName;
     }
   }
 }
