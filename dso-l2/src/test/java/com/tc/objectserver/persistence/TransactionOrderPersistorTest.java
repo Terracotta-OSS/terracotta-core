@@ -24,6 +24,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.test.TCTestCase;
 
 import java.io.IOException;
+import java.util.Collections;
 
 
 public class TransactionOrderPersistorTest extends TCTestCase {
@@ -41,7 +42,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     } catch (IOException e) {
       fail(e);
     }
-    this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage);
+    this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage, Collections.emptySet());
     this.client1 = new ClientID(1);
     this.client2 = new ClientID(2);
   }
@@ -251,12 +252,12 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     // Create the storage.
     FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable));
     storage.create();
-    new TransactionOrderPersistor(storage);
+    new TransactionOrderPersistor(storage, Collections.emptySet());
     
     // Now, try to reload it.
     storage = new FlatFilePersistentStorage(getTempFile(reloadable));
     storage.open();
-    new TransactionOrderPersistor(storage);
+    new TransactionOrderPersistor(storage, Collections.emptySet());
   }
 
   public void testSaveReloadSimple() throws IOException {
@@ -268,7 +269,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     // Create the storage.
     FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable));
     storage.create();
-    TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage);
+    TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     for (int i = 1; i < 100; ++i) {
       TransactionID transaction = new TransactionID(i);
       persistor.updateWithNewMessage(client1, transaction, oldest);
@@ -278,7 +279,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     // Now, try to reload it.
     storage = new FlatFilePersistentStorage(getTempFile(reloadable));
     storage.open();
-    persistor = new TransactionOrderPersistor(storage);
+    persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     for (int i = 100; i < 200; ++i) {
       TransactionID transaction = new TransactionID(i);
       persistor.updateWithNewMessage(client1, transaction, oldest);
@@ -293,7 +294,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     // Create the storage.
     FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable));
     storage.create();
-    TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage);
+    TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     ClientThread thread1 = new ClientThread(persistor, new ClientID(1), oldest, 1, 100);
     ClientThread thread2 = new ClientThread(persistor, new ClientID(2), oldest, 1, 100);
     
@@ -306,7 +307,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     oldest = new TransactionID(99);
     storage = new FlatFilePersistentStorage(getTempFile(reloadable));
     storage.open();
-    persistor = new TransactionOrderPersistor(storage);
+    persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     thread1 = new ClientThread(persistor, new ClientID(1), oldest, 100, 200);
     thread2 = new ClientThread(persistor, new ClientID(2), oldest, 100, 200);
     

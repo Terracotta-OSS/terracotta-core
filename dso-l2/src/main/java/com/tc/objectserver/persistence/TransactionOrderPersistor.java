@@ -22,6 +22,7 @@ import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TransactionID;
 
 import java.io.Serializable;
@@ -31,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 
@@ -51,7 +53,7 @@ public class TransactionOrderPersistor {
   
   // Unchecked and raw warnings because we are trying to use Class<List<?>>, which the compiler doesn't like but has no runtime meaning.
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public TransactionOrderPersistor(IPersistentStorage storageManager) {
+  public TransactionOrderPersistor(IPersistentStorage storageManager, Set<ChannelID> clients) {
     // In the future, we probably want a different storage approach since storing the information, this way, doesn't
     // work well with the type system (Lists inside KeyValueStorage) and will perform terribly.
     this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, ClientID.class, (Class)LinkedHashSet.class);
