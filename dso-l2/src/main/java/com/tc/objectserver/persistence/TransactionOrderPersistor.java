@@ -16,13 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
 
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.KeyValueStorage;
 
-import com.tc.net.NodeID;
+import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TransactionID;
 
 import java.io.Serializable;
@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 
@@ -45,17 +46,17 @@ public class TransactionOrderPersistor {
   private static final String LOCAL_VARIABLES = "local_variables";
   private static final String RECEIVED_TRANSACTION_COUNT = "local_variables:received_transaction_count";
 //  must be a LinkedHashSet to preserve entry order.  Using set for constant time removal
-  private final KeyValueStorage<NodeID, List<ClientTransaction>> clientLocals;
+  private final KeyValueStorage<ClientID, List<ClientTransaction>> clientLocals;
   private final KeyValueStorage<String, Long> localVariables;
     
   private List<ClientTransaction> globalList = null;
-  private boolean rebuild = true;
+  
   // Unchecked and raw warnings because we are trying to use Class<List<?>>, which the compiler doesn't like but has no runtime meaning.
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public TransactionOrderPersistor(IPersistentStorage storageManager) {
+  public TransactionOrderPersistor(IPersistentStorage storageManager, Set<ChannelID> clients) {
     // In the future, we probably want a different storage approach since storing the information, this way, doesn't
     // work well with the type system (Lists inside KeyValueStorage) and will perform terribly.
-    this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, NodeID.class, (Class)LinkedHashSet.class);
+    this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, ClientID.class, (Class)LinkedHashSet.class);
     this.localVariables = storageManager.getKeyValueStorage(LOCAL_VARIABLES, String.class, (Class)Long.class);
     if (!this.localVariables.containsKey(RECEIVED_TRANSACTION_COUNT)) {
       this.localVariables.put(RECEIVED_TRANSACTION_COUNT, 0L);
@@ -67,15 +68,17 @@ public class TransactionOrderPersistor {
    * This new transactionID will be enqueued as the most recent transaction for the given source but also globally.
    * Any transactions for this source which are older than oldestTransactionOnClient will be removed from persistence.
    */
-  public synchronized void updateWithNewMessage(NodeID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
+  public synchronized void updateWithNewMessage(ClientID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
     // We need to ensure that the arguments are sane.
-    rebuild = true;
     if ((null == oldestTransactionOnClient) || (null == transactionID)) {
       throw new IllegalArgumentException("Transactions cannot be null");
     }
     if (oldestTransactionOnClient.compareTo(transactionID) > 0) {
       throw new IllegalArgumentException("Oldest transaction cannot come after new transaction");
     }
+    
+    // This operation requires that the globalList be rebuilt.
+    this.globalList = null;
     
     // Get the local list for this client.
     List<ClientTransaction> localList = clientLocals.get(source);
@@ -110,14 +113,14 @@ public class TransactionOrderPersistor {
   /**
    * Called when we no longer need to track transaction ordering information from source (presumably due to a disconnect).
    */
-  public void removeTrackingForClient(NodeID source) {
+  public void removeTrackingForClient(ClientID source) {
     // Remove the local list for this client.
     clientLocals.remove(source);
   }
 
   private static class ClientTransaction implements Serializable {
     private static final long serialVersionUID = 1L;
-    public transient NodeID client;
+    public transient ClientID client;
     public TransactionID id;
     public long globalID;
 
@@ -137,19 +140,19 @@ public class TransactionOrderPersistor {
     }
   }
   
+  @SuppressWarnings("deprecation")
   private List<ClientTransaction> buildGlobalListIfNessessary() {
-    if (rebuild || globalList == null) {
+    if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
-      for (NodeID client : clientLocals.keySet()) {
+      for (ClientID client : clientLocals.keySet()) {
         List<ClientTransaction> transactions = clientLocals.get(client);
         for (ClientTransaction ct : transactions) {
           ct.client = client;
           sortMap.put(ct.globalID, ct);
         }
       }
-      globalList = Collections.unmodifiableList(new ArrayList(sortMap.values()));
+      globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
     }
-    rebuild = false;
     return globalList;
   }
 
@@ -157,7 +160,7 @@ public class TransactionOrderPersistor {
    * Called to ask where a given client-local transaction exists in the global transaction list.
    * Returns the index or -1 if it isn't known.
    */
-  public int getIndexToReplay(NodeID source, TransactionID transactionID) {
+  public int getIndexToReplay(ClientID source, TransactionID transactionID) {
     int index = -1;
     List<ClientTransaction> list = buildGlobalListIfNessessary();
     int seek = 0;
@@ -177,7 +180,6 @@ public class TransactionOrderPersistor {
   public void clearAllRecords() {
     this.clientLocals.clear();
     this.globalList = null;
-    this.rebuild = true;
   }
 
   /**

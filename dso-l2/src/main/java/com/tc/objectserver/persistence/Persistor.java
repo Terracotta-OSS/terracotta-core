@@ -16,9 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
-
 
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -26,9 +24,8 @@ import com.tc.text.PrettyPrinter;
 import java.io.IOException;
 
 import org.terracotta.persistence.IPersistentStorage;
-/**
- * @author tim
- */
+
+
 public class Persistor implements PrettyPrintable {
   private final IPersistentStorage persistentStorage;
   private boolean wasDBClean;
@@ -39,7 +36,7 @@ public class Persistor implements PrettyPrintable {
 
   private ClientStatePersistor clientStatePersistor;
   private final EntityPersistor entityPersistor;
-  private final TransactionOrderPersistor transactionOrderPersistor;
+  private TransactionOrderPersistor transactionOrderPersistor;
 
   public Persistor(IPersistentStorage persistentStorage) {
     // The persistor only wants to operate on opened storage.
@@ -58,11 +55,11 @@ public class Persistor implements PrettyPrintable {
     this.persistentStorage = persistentStorage;
     this.clusterStatePersistor = new ClusterStatePersistor(persistentStorage);
     this.entityPersistor = new EntityPersistor(persistentStorage);
-    this.transactionOrderPersistor = new TransactionOrderPersistor(persistentStorage);
   }
 
   public void start() {
     clientStatePersistor = new ClientStatePersistor(persistentStorage);
+    this.transactionOrderPersistor = new TransactionOrderPersistor(persistentStorage, this.clientStatePersistor.loadClientIDs());
     wasDBClean = this.clusterStatePersistor.isDBClean();
     started = true;
   }

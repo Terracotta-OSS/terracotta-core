@@ -80,17 +80,21 @@ public class ServiceClassLoaderTest {
 //  put it in the zip so null parent loader can find it
      zip.finish();
      List<Class<? extends ServiceConfigParser>> list = ServiceLocator.getImplementations(ServiceConfigParser.class, new URLClassLoader(new URL[] {test.toURI().toURL()}));
+     // XXX: depending on the other resources are on the classpath, it is possible that we will see other parsers.  We
+     //  should figure out a better way to restrict this since the index otherwise needs to be manually updated when new
+     //  resources change the order of the ServiceConfigParser instances in the list.
+     int listIndexToTest = 0;
      ClassLoader baseLoader = new ServiceClassLoader(list);
      Class<? extends ServiceConfigParser> check = baseLoader.loadClass("com.tc.server.TestServiceConfigParser").asSubclass(ServiceConfigParser.class);
      ServiceConfigParser parser = check.newInstance();
      Assert.assertTrue(parser.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(parser.getClass().getClassLoader() == list.get(0).getClassLoader());
+     Assert.assertTrue(parser.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
      ServiceProviderConfiguration config = parser.parse(null, null);
      Assert.assertTrue(config.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(config.getClass().getClassLoader() == list.get(0).getClassLoader());
+     Assert.assertTrue(config.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
      Class<? extends ServiceProvider> provider = config.getServiceProviderType();
      Assert.assertTrue(provider.getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(provider.getClassLoader() == list.get(0).getClassLoader());
+     Assert.assertTrue(provider.getClassLoader() == list.get(listIndexToTest).getClassLoader());
    }
 
    private byte[] resourceToBytes(String loc) throws IOException {

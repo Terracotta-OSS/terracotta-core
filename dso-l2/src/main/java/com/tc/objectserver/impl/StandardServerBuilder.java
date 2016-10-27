@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.ConfigurationContext;
@@ -48,7 +49,6 @@ import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.objectserver.persistence.PersistentStorageServiceConfiguration;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
@@ -127,7 +127,7 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public Persistor createPersistor(ServiceRegistry serviceRegistry) {
-    IPersistentStorage persistentStorage = serviceRegistry.getService(new PersistentStorageServiceConfiguration());
+    IPersistentStorage persistentStorage = serviceRegistry.getService(new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class));
     // We can't fail to find persistence support (at least not in our current environment).
     Assert.assertNotNull(persistentStorage);
     return new Persistor(persistentStorage);
