@@ -22,29 +22,20 @@ import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.test.TCTestCase;
 
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 
-import static org.mockito.Mockito.mock;
 import org.terracotta.exception.EntityNotFoundException;
 
 
 public class EntityPersistorTest extends TCTestCase {
-  private static final String TEMP_FILE = "temp_file";
-  private FlatFilePersistentStorage persistentStorage;
+  private NullPlatformPersistentStorage persistentStorage;
   private EntityPersistor entityPersistor;
   private ClientID client;
 
   @Override
   public void setUp() {
-    try {
-      this.persistentStorage = new FlatFilePersistentStorage(getTempFile(TEMP_FILE));
-      this.persistentStorage.create();
-    } catch (IOException e) {
-      fail(e);
-    }
+    this.persistentStorage = new NullPlatformPersistentStorage();
     this.entityPersistor = new EntityPersistor(this.persistentStorage);
     this.client = new ClientID(1);
   }

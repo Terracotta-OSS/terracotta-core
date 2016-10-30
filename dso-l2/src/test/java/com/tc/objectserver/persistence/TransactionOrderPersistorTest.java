@@ -28,20 +28,14 @@ import java.util.Collections;
 
 
 public class TransactionOrderPersistorTest extends TCTestCase {
-  private static final String TEMP_FILE = "temp_file";
-  private FlatFilePersistentStorage persistentStorage;
+  private NullPlatformPersistentStorage persistentStorage;
   private TransactionOrderPersistor orderPersistor;
   private ClientID client1;
   private ClientID client2;
 
   @Override
   public void setUp() {
-    try {
-      this.persistentStorage = new FlatFilePersistentStorage(getTempFile(TEMP_FILE));
-      this.persistentStorage.create();
-    } catch (IOException e) {
-      fail(e);
-    }
+    this.persistentStorage = new NullPlatformPersistentStorage();
     this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage, Collections.emptySet());
     this.client1 = new ClientID(1);
     this.client2 = new ClientID(2);
@@ -247,28 +241,21 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   }
 
   public void testSaveReloadEmpty() throws IOException {
-    final String reloadable = "reloadable_file";
-    
     // Create the storage.
-    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable));
-    storage.create();
+    NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
     new TransactionOrderPersistor(storage, Collections.emptySet());
     
     // Now, try to reload it.
-    storage = new FlatFilePersistentStorage(getTempFile(reloadable));
-    storage.open();
     new TransactionOrderPersistor(storage, Collections.emptySet());
   }
 
   public void testSaveReloadSimple() throws IOException {
-    final String reloadable = "reloadable_file";
     ClientID client1 = new ClientID(1);
     ClientID client2 = new ClientID(2);
     TransactionID oldest = new TransactionID(0);
 
     // Create the storage.
-    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable));
-    storage.create();
+    NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
     TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     for (int i = 1; i < 100; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -277,8 +264,6 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     }
     
     // Now, try to reload it.
-    storage = new FlatFilePersistentStorage(getTempFile(reloadable));
-    storage.open();
     persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     for (int i = 100; i < 200; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -288,12 +273,10 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   }
 
   public void testSaveReloadMultipleThreads() throws IOException, InterruptedException {
-    final String reloadable = "reloadable_file";
     TransactionID oldest = new TransactionID(0);
 
     // Create the storage.
-    FlatFilePersistentStorage storage = new FlatFilePersistentStorage(getTempFile(reloadable));
-    storage.create();
+    NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
     TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     ClientThread thread1 = new ClientThread(persistor, new ClientID(1), oldest, 1, 100);
     ClientThread thread2 = new ClientThread(persistor, new ClientID(2), oldest, 1, 100);
@@ -305,8 +288,6 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     
     // Now, try to reload it.
     oldest = new TransactionID(99);
-    storage = new FlatFilePersistentStorage(getTempFile(reloadable));
-    storage.open();
     persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     thread1 = new ClientThread(persistor, new ClientID(1), oldest, 100, 200);
     thread2 = new ClientThread(persistor, new ClientID(2), oldest, 100, 200);
