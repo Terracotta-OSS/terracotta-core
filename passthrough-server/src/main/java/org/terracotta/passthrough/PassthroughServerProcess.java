@@ -70,7 +70,6 @@ import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessa
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.IPlatformPersistence;
-import org.terracotta.persistence.KeyValueStorage;
 
 
 /**
@@ -80,6 +79,8 @@ import org.terracotta.persistence.KeyValueStorage;
  * and also test concurrency strategy.
  */
 public class PassthroughServerProcess implements MessageHandler, PassthroughDumper {
+  private static final String ENTITIES_FILE_NAME = "entities.map";
+  
   private final String serverName;
   private final int bindPort;
   private final int groupPort;
@@ -108,7 +109,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private Set<PassthroughServerProcess> downstreamPassives = new HashSet<PassthroughServerProcess>();
   private long nextConsumerID;
   private PassthroughServiceRegistry platformServiceRegistry;
-  private KeyValueStorage<Long, EntityData> persistedEntitiesByConsumerID;
+  private IPlatformPersistence platformPersistence;
+  private HashMap<Long, EntityData> persistedEntitiesByConsumerIDMap;
   private LifeCycleMessageHandler lifeCycleMessageHandler;
   private final PassthroughRetirementManager retirementManager;
   private PassthroughTransactionOrderManager transactionOrderManager;
@@ -171,23 +173,30 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry(null, null, null);
-    // See if we have persistence support.
-    IPersistentStorage persistentStorage = preparePersistentStorage(shouldLoadStorage);
-    // Since we installed a storage implementation, if one was missing, we can rely on it being here.
-    Assert.assertTrue(null != persistentStorage);
     
+    // Look up our persistence support (which might be in-memory-only).
+    this.platformPersistence = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    Assert.assertTrue(null != this.platformPersistence);
     // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
     // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
-    this.persistedEntitiesByConsumerID = persistentStorage.getKeyValueStorage("entities", Long.class, EntityData.class);
+    try {
+      this.persistedEntitiesByConsumerIDMap = (HashMap<Long, EntityData>) (shouldLoadStorage ? platformPersistence.loadDataElement(ENTITIES_FILE_NAME) : null);
+    } catch (IOException e1) {
+      Assert.unexpected(e1);
+    }
+    // This could be null if there was no file or we shouldn't load.
+    if (null == this.persistedEntitiesByConsumerIDMap) {
+      this.persistedEntitiesByConsumerIDMap = new HashMap<Long, EntityData>();
+    }
     
     // Load the transaction order.
-    this.transactionOrderManager = new PassthroughTransactionOrderManager(persistentStorage);
+    this.transactionOrderManager = new PassthroughTransactionOrderManager(platformPersistence, shouldLoadStorage);
     
     // Load the entities.
-    for (long consumerID : this.persistedEntitiesByConsumerID.keySet()) {
+    for (long consumerID : this.persistedEntitiesByConsumerIDMap.keySet()) {
       // This is an entity consumer so we use the deferred container.
       DeferredEntityContainer container = new DeferredEntityContainer();
-      EntityData entityData = this.persistedEntitiesByConsumerID.get(consumerID);
+      EntityData entityData = this.persistedEntitiesByConsumerIDMap.get(consumerID);
       // Create the registry for the entity.
       PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
       // Construct the entity.
@@ -213,7 +222,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     
     // We want to create the tracking for life-cycle transactions, so that we correctly handle duplicated re-sends.
-    this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(persistentStorage, "lifecycle");
+    this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(platformPersistence, shouldLoadStorage);
     
     // Look up the service interface the platform will use to publish events.
     this.serviceInterface = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IMonitoringProducer>(IMonitoringProducer.class));
@@ -285,31 +294,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       long timestamp = System.currentTimeMillis();
       tracker.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_SYNCHRONIZING, timestamp, (this.activeEntities != null) ? timestamp : -1));
     }
-  }
-  
-  private IPersistentStorage preparePersistentStorage(boolean shouldLoadStorage) {
-    ServiceConfiguration<IPersistentStorage> persistenceConfiguration = new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class);
-    IPersistentStorage persistentStorage = this.platformServiceRegistry.getService(persistenceConfiguration);
-    if (shouldLoadStorage) {
-      // Note that we are told to load storage in the cases where the system is restarting.  In that case, we MUST have
-      // persistent storage or else the restart doesn't even make sense:  we would have no way of reconnecting the clients.
-      Assert.assertTrue(null != persistentStorage);
-      try {
-        persistentStorage.open();
-      } catch (IOException e) {
-        Assert.unexpected(e);
-      }
-    } else {
-      if (null != persistentStorage) {
-        try {
-          persistentStorage.create();
-        } catch (IOException e) {
-          // We are not expecting both to fail.
-          Assert.unexpected(e);
-        }
-      }
-    }
-    return persistentStorage;
   }
 
   /**
@@ -594,8 +578,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   @Override
   public void dump() {
     System.out.println("Existing entities:");
-    for(EntityData entityData : this.persistedEntitiesByConsumerID.values()) {
-      System.out.println("\t" + entityData.className + ":" + entityData.entityName + ":" + entityData.version);
+    if(this.persistedEntitiesByConsumerIDMap != null) {
+      for(EntityData entityData : this.persistedEntitiesByConsumerIDMap.values()) {
+        System.out.println("\t" + entityData.className + ":" + entityData.entityName + ":" + entityData.version);
+      }
     }
   }
 
@@ -713,7 +699,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     data.version = version;
     data.entityName = entityName;
     data.configuration = serializedConfiguration;
-    this.persistedEntitiesByConsumerID.put(consumerID, data);
+    this.persistedEntitiesByConsumerIDMap.put(consumerID, data);
+    try {
+      this.platformPersistence.storeDataElement(ENTITIES_FILE_NAME, this.persistedEntitiesByConsumerIDMap);
+    } catch (IOException e) {
+      Assert.unexpected(e);
+    }
     
     if (null != this.serviceInterface) {
       // Record this new entity.

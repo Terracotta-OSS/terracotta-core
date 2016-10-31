@@ -18,30 +18,43 @@
  */
 package org.terracotta.passthrough;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class PassthroughTransactionOrderManager {
+  private static final String TRANSACTION_ORDER_FILE_NAME = "transaction_order.map";
+
+  private final IPlatformPersistence platformPersistence;
+
   // We will index this at 0 to get the actual list - only map types provided.
-  private KeyValueStorage<Long, List<ClientTransaction>> transactionOrderContainer;
+  private HashMap<Long, List<ClientTransaction>> transactionOrderMap;
   
   // This map is only available while handling re-sends.
   private Map<ClientTransaction, PassthroughMessageContainer> collectedResends;
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  public PassthroughTransactionOrderManager(IPersistentStorage persistentStorage) {
-    this.transactionOrderContainer = persistentStorage.getKeyValueStorage("transaction order", Long.class, (Class)List.class);
+  @SuppressWarnings({ "unchecked" })
+  public PassthroughTransactionOrderManager(IPlatformPersistence platformPersistence, boolean shouldLoadStorage) {
+    this.platformPersistence = platformPersistence;
+    try {
+      HashMap<Long, List<ClientTransaction>> loadedMap = (HashMap<Long, List<ClientTransaction>>) (shouldLoadStorage ? this.platformPersistence.loadDataElement(TRANSACTION_ORDER_FILE_NAME) : null);
+      if (null == loadedMap) {
+        loadedMap = new HashMap<Long, List<ClientTransaction>>();
+      }
+      this.transactionOrderMap = loadedMap;
+    } catch (IOException e) {
+      Assert.unexpected(e);
+    }
   }
 
   public void updateTracking(long connectionID, long transactionID, long oldestIDOnConnection) {
-    List<ClientTransaction> oldList = this.transactionOrderContainer.get(0L);
+    List<ClientTransaction> oldList = this.transactionOrderMap.get(0L);
     List<ClientTransaction> newList = new Vector<ClientTransaction>();
     
     if (null != oldList) {
@@ -61,7 +74,12 @@ public class PassthroughTransactionOrderManager {
     newTransaction.connectionID = connectionID;
     newTransaction.transactionID = transactionID;
     newList.add(newTransaction);
-    this.transactionOrderContainer.put(0L, newList);
+    this.transactionOrderMap.put(0L, newList);
+    try {
+      this.platformPersistence.storeDataElement(TRANSACTION_ORDER_FILE_NAME, this.transactionOrderMap);
+    } catch (IOException e) {
+      Assert.unexpected(e);
+    }
   }
 
   public void startHandlingResends() {
@@ -82,7 +100,7 @@ public class PassthroughTransactionOrderManager {
     List<PassthroughMessageContainer> orderToExecute = new Vector<PassthroughMessageContainer>();
     
     // First, walk the transaction order list, extracting any matches from the collectedResends.
-    List<ClientTransaction> orderList = this.transactionOrderContainer.get(0L);
+    List<ClientTransaction> orderList = this.transactionOrderMap.get(0L);
     if (null != orderList) {
       for (ClientTransaction transaction : orderList) {
         PassthroughMessageContainer container = this.collectedResends.remove(transaction);
