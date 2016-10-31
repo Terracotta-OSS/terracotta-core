@@ -4,8 +4,8 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * NOTE: This is loosely a clone of the NullPlatformStorageServiceProvider class in terracotta-core with some unused
@@ -43,7 +44,7 @@ public class PassthroughNullPlatformStorageServiceProvider implements ServicePro
     // bindings so doing it manually satisfies the compiler (seems to work in
     // Java8 but not Java6).
     Set<Class<?>> set = new HashSet<Class<?>>();
-    set.add(IPersistentStorage.class);
+    set.add(IPlatformPersistence.class);
     return set;
   }
 

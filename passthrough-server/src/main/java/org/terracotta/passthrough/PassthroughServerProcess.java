@@ -64,10 +64,12 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
+import org.terracotta.passthrough.PassthroughEmulatedStorageServiceProvider.RegistryLookup;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 import org.terracotta.persistence.KeyValueStorage;
 
 
@@ -142,7 +144,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // Make sure that we install the in-memory registry, if needed.
     boolean isStorageInstalled = false;
     for (ServiceProvider provider : this.serviceProviders) {
-      if (provider.getProvidedServiceTypes().contains(IPersistentStorage.class)) {
+      if (provider.getProvidedServiceTypes().contains(IPlatformPersistence.class)) {
         isStorageInstalled = true;
         break;
       }
@@ -157,6 +159,15 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       nullPlatformStorageServiceProvider.initialize(config, new PassthroughPlatformConfiguration(this.serverName));
       this.serviceProviders.add(nullPlatformStorageServiceProvider);
     }
+    // XXX: Temporary inclusion of the IPersistentStorage emulation on IPlatformPersistence.
+    PassthroughEmulatedStorageServiceProvider legacyProvider = new PassthroughEmulatedStorageServiceProvider();
+    PassthroughEmulatedStorageServiceProvider.Configuration legacyConfig = new PassthroughEmulatedStorageServiceProvider.Configuration(new RegistryLookup() {
+      @Override
+      public PassthroughServiceRegistry getRegistryForConsumerID(long consumerID) {
+        return new PassthroughServiceRegistry(null, null, consumerID, PassthroughServerProcess.this.serviceProviders, PassthroughServerProcess.this.implementationProvidedServiceProviders, null);
+      }});
+    legacyProvider.initialize(legacyConfig, new PassthroughPlatformConfiguration(this.serverName));
+    this.serviceProviders.add(legacyProvider);
     
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry(null, null, null);
