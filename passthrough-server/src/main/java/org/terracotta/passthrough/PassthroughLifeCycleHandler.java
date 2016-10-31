@@ -18,16 +18,15 @@
  */
 package org.terracotta.passthrough;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 /**
@@ -37,18 +36,25 @@ import org.terracotta.persistence.KeyValueStorage;
  * The core logic which manipulates the data stored in either of these is the same, only how it is loaded or written-back.
  */
 public class PassthroughLifeCycleHandler implements LifeCycleMessageHandler {
-  private final KeyValueStorage<Long, List<LifeCycleRecord>> lifeCycleRecordByClientID;
-  private final Map<Long, List<LifeCycleRecord>> fallbackMap;
+  private static final String LIFE_CYCLE_RECORD_FILE_NAME = "life_cycle_record.map";
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public PassthroughLifeCycleHandler(IPersistentStorage persistentStorage, String topLevelName) {
-    if (null != persistentStorage) {
-      this.lifeCycleRecordByClientID = persistentStorage.getKeyValueStorage(topLevelName, Long.class, (Class)List.class);
-      this.fallbackMap = null;
-    } else {
-      this.lifeCycleRecordByClientID = null;
-      this.fallbackMap = new HashMap<Long, List<LifeCycleRecord>>();
+  private final IPlatformPersistence platformPersistence;
+  private final HashMap<Long, List<LifeCycleRecord>> lifeCycleRecordByClientIDMap;
+
+  @SuppressWarnings({ "unchecked", })
+  public PassthroughLifeCycleHandler(IPlatformPersistence platformPersistence, boolean shouldLoadStorage) {
+    Assert.assertTrue(null != platformPersistence);
+    this.platformPersistence = platformPersistence;
+    HashMap<Long, List<LifeCycleRecord>> loadedMap = null;
+    try {
+      loadedMap = (HashMap<Long, List<LifeCycleRecord>>) (shouldLoadStorage ? this.platformPersistence.loadDataElement(LIFE_CYCLE_RECORD_FILE_NAME) : null);
+    } catch (IOException e) {
+      Assert.unexpected(e);
     }
+    if (null == loadedMap) {
+      loadedMap = new HashMap<Long, List<LifeCycleRecord>>();
+    }
+    this.lifeCycleRecordByClientIDMap = loadedMap;
   }
 
   @Override
@@ -132,16 +138,15 @@ public class PassthroughLifeCycleHandler implements LifeCycleMessageHandler {
   }
 
   private List<LifeCycleRecord> loadClient(long clientOriginID) {
-    return (null != this.lifeCycleRecordByClientID)
-        ? this.lifeCycleRecordByClientID.get(clientOriginID)
-        : this.fallbackMap.get(clientOriginID);
+    return this.lifeCycleRecordByClientIDMap.get(clientOriginID);
   }
 
   private void storeClient(long clientOriginID, List<LifeCycleRecord> data) {
-    if (null != this.lifeCycleRecordByClientID) {
-      this.lifeCycleRecordByClientID.put(clientOriginID, data);
-    } else {
-      this.fallbackMap.put(clientOriginID, data);
+    this.lifeCycleRecordByClientIDMap.put(clientOriginID, data);
+    try {
+      this.platformPersistence.storeDataElement(LIFE_CYCLE_RECORD_FILE_NAME, this.lifeCycleRecordByClientIDMap);
+    } catch (IOException e) {
+      Assert.unexpected(e);
     }
   }
 
