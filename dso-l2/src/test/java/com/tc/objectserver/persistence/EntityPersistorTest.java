@@ -22,20 +22,29 @@ import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.test.TCTestCase;
 
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.persistence.IPersistentStorage;
 
 
 public class EntityPersistorTest extends TCTestCase {
-  private NullPlatformPersistentStorage persistentStorage;
+  private IPersistentStorage persistentStorage;
   private EntityPersistor entityPersistor;
   private ClientID client;
 
   @Override
   public void setUp() {
-    this.persistentStorage = new NullPlatformPersistentStorage();
+    this.persistentStorage = new EmulatedPersistentStorage(new NullPlatformPersistentStorage());
+    try {
+      this.persistentStorage.create();
+    } catch (IOException e) {
+      // Not expected.
+      Assert.fail(e.getLocalizedMessage());
+    }
     this.entityPersistor = new EntityPersistor(this.persistentStorage);
     this.client = new ClientID(1);
   }
