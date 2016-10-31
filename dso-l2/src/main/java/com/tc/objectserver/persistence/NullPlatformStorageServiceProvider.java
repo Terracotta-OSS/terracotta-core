@@ -7,7 +7,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.entity.StateDumper;
-import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -33,7 +33,7 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider, Stat
 
     @Override
     public Collection<Class<?>> getProvidedServiceTypes() {
-        return Collections.singleton(IPersistentStorage.class);
+      return Collections.singleton(IPlatformPersistence.class);
     }
 
     public void close() throws IOException {

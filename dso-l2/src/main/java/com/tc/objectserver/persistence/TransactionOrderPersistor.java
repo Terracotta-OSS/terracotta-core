@@ -18,22 +18,23 @@
  */
 package com.tc.objectserver.persistence;
 
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 
 /**
@@ -42,25 +43,30 @@ import java.util.TreeMap;
  * the same order as their original order.
  */
 public class TransactionOrderPersistor {
-  private static final String CLIENT_LOCAL_LISTS = "client_local_lists";
-  private static final String LOCAL_VARIABLES = "local_variables";
-  private static final String RECEIVED_TRANSACTION_COUNT = "local_variables:received_transaction_count";
-//  must be a LinkedHashSet to preserve entry order.  Using set for constant time removal
-  private final KeyValueStorage<ClientID, List<ClientTransaction>> clientLocals;
-  private final KeyValueStorage<String, Long> localVariables;
+  private static final String RECEIVED_TRANSACTION_COUNT_FILE_NAME = "received_transaction_count.map";
+  
+  private final IPlatformPersistence storageManager;
+  private Long receivedTransactionCount;
     
   private List<ClientTransaction> globalList = null;
+  private final Set<Long> clientNodeIDs;
   
-  // Unchecked and raw warnings because we are trying to use Class<List<?>>, which the compiler doesn't like but has no runtime meaning.
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public TransactionOrderPersistor(IPersistentStorage storageManager, Set<ChannelID> clients) {
-    // In the future, we probably want a different storage approach since storing the information, this way, doesn't
-    // work well with the type system (Lists inside KeyValueStorage) and will perform terribly.
-    this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, ClientID.class, (Class)LinkedHashSet.class);
-    this.localVariables = storageManager.getKeyValueStorage(LOCAL_VARIABLES, String.class, (Class)Long.class);
-    if (!this.localVariables.containsKey(RECEIVED_TRANSACTION_COUNT)) {
-      this.localVariables.put(RECEIVED_TRANSACTION_COUNT, 0L);
+  public TransactionOrderPersistor(IPlatformPersistence storageManager, Set<ChannelID> clients) {
+    this.storageManager = storageManager;
+    
+    this.clientNodeIDs = new HashSet<>();
+    for (ChannelID oneClient : clients) {
+      this.clientNodeIDs.add(oneClient.toLong());
     }
+    
+    Long receivedTransactionCount = null;
+    try {
+      receivedTransactionCount = (Long)this.storageManager.loadDataElement(RECEIVED_TRANSACTION_COUNT_FILE_NAME);
+    } catch (IOException e) {
+      // We don't expect this during startup so just throw it as runtime.
+      throw new RuntimeException("Failure reading TransactionOrderPersistor count file", e);
+    }
+    this.receivedTransactionCount = (null != receivedTransactionCount) ? receivedTransactionCount : new Long(0L);
   }
 
   /**
@@ -80,75 +86,84 @@ public class TransactionOrderPersistor {
     // This operation requires that the globalList be rebuilt.
     this.globalList = null;
     
-    // Get the local list for this client.
-    List<ClientTransaction> localList = clientLocals.get(source);
-    if (null == localList) {
-      localList = new LinkedList<>();
-    }
+    // Make sure we have tracking for this client.
+    this.clientNodeIDs.add(source.toLong());
     
     // Increment the number of received transactions.
-    long received = (long)this.localVariables.get(RECEIVED_TRANSACTION_COUNT) + 1;
-    this.localVariables.put(RECEIVED_TRANSACTION_COUNT, received);
+    this.receivedTransactionCount += 1;
+    storeToDisk(RECEIVED_TRANSACTION_COUNT_FILE_NAME, this.receivedTransactionCount);
     
     // Create the new pair.
-    ClientTransaction transaction = new ClientTransaction();
-    transaction.id = transactionID;
-    transaction.globalID = received;
+    IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
+    transaction.localSequenceID = transactionID.toLong();
+    transaction.globalSequenceID = this.receivedTransactionCount;
     
-    Iterator<ClientTransaction> walk = localList.iterator();
-    while (walk.hasNext()) {
-      ClientTransaction next = walk.next();
-      if (-1 == next.id.compareTo(oldestTransactionOnClient)) {
-        walk.remove();
-      } else {
-        break;
-      }
+    // We now pass this straight into the underlying storage.
+    Future<Void> syncFuture = this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
+    
+    // TODO:  We need to float this future blocking on the sync further out.
+    try {
+      syncFuture.get();
+    } catch (InterruptedException e) {
+      Assert.fail(e.getLocalizedMessage());
+    } catch (ExecutionException e) {
+      Assert.fail(e.getLocalizedMessage());
     }
-    
-    // Create this new pair and add it to the global list.
-    localList.add(transaction);
-    clientLocals.put(source, localList);
   }
 
   /**
    * Called when we no longer need to track transaction ordering information from source (presumably due to a disconnect).
    */
-  public void removeTrackingForClient(ClientID source) {
-    // Remove the local list for this client.
-    clientLocals.remove(source);
+  public synchronized void removeTrackingForClient(ClientID source) {
+    long sourceID = source.toLong();
+    try {
+      this.storageManager.deleteSequence(sourceID);
+    } catch (IOException e) {
+      Assert.fail(e.getLocalizedMessage());
+    }
+    this.clientNodeIDs.remove(sourceID);
   }
 
-  private static class ClientTransaction implements Serializable {
-    private static final long serialVersionUID = 1L;
-    public transient ClientID client;
-    public TransactionID id;
-    public long globalID;
+  private static class ClientTransaction {
+    public long clientID;
+    public long localTransactionID;
+    public long globalTransactionID;
 
     @Override
     public int hashCode() {
-      return (7 * this.client.hashCode()) ^ this.id.hashCode();
+      return (int) ((7 * clientID)
+          ^ (5 * localTransactionID)
+          ^ globalTransactionID);
     }
     @Override
     public boolean equals(Object obj) {
       boolean isEqual = (obj == this);
       if (!isEqual && (obj instanceof ClientTransaction)) {
         ClientTransaction other = (ClientTransaction) obj;
-        isEqual = this.client.equals(other.client)
-              & this.id.equals(other.id);
+        isEqual = (this.clientID == other.clientID)
+            && (this.localTransactionID == other.localTransactionID)
+            && (this.globalTransactionID == other.globalTransactionID);
       }
       return isEqual;
     }
   }
   
-  @SuppressWarnings("deprecation")
   private List<ClientTransaction> buildGlobalListIfNessessary() {
     if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
-      for (ClientID client : clientLocals.keySet()) {
-        List<ClientTransaction> transactions = clientLocals.get(client);
-        for (ClientTransaction ct : transactions) {
-          ct.client = client;
-          sortMap.put(ct.globalID, ct);
+      for (long clientID : this.clientNodeIDs) {
+        List<IPlatformPersistence.SequenceTuple> transactions = null;
+        try {
+          transactions = this.storageManager.loadSequence(clientID);
+        } catch (IOException e) {
+          Assert.fail(e.getLocalizedMessage());
+        }
+        for (IPlatformPersistence.SequenceTuple tuple : transactions) {
+          ClientTransaction transaction = new ClientTransaction();
+          transaction.clientID = clientID;
+          transaction.localTransactionID = tuple.localSequenceID;
+          transaction.globalTransactionID = tuple.globalSequenceID;
+          sortMap.put(tuple.globalSequenceID, transaction);
         }
       }
       globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
@@ -160,12 +175,15 @@ public class TransactionOrderPersistor {
    * Called to ask where a given client-local transaction exists in the global transaction list.
    * Returns the index or -1 if it isn't known.
    */
-  public int getIndexToReplay(ClientID source, TransactionID transactionID) {
+  public int getIndexToReplay(ClientID source, TransactionID transaction) {
+    long sourceID = source.toLong();
+    long transactionID = transaction.toLong();
+    
     int index = -1;
     List<ClientTransaction> list = buildGlobalListIfNessessary();
     int seek = 0;
-    for (ClientTransaction transaction : list) {
-      if (source.equals(transaction.client) && transactionID.equals(transaction.id)) {
+    for (ClientTransaction oneTransaction : list) {
+      if ((oneTransaction.clientID == sourceID) && (oneTransaction.localTransactionID == transactionID)) {
         index = seek;
         break;
       }
@@ -178,14 +196,30 @@ public class TransactionOrderPersistor {
    * Clears all internal state.
    */
   public void clearAllRecords() {
-    this.clientLocals.clear();
     this.globalList = null;
+    for (long nodeID : clientNodeIDs) {
+      try {
+        this.storageManager.deleteSequence(nodeID);
+      } catch (IOException e) {
+        Assert.fail(e.getLocalizedMessage());
+      }
+    }
+    this.clientNodeIDs.clear();
   }
 
   /**
    * @return The number of transactions which have been observed by the persistor (NOT the number persisted).
    */
   public long getReceivedTransactionCount() {
-    return this.localVariables.get(RECEIVED_TRANSACTION_COUNT);
+    return this.receivedTransactionCount;
+  }
+
+  private void storeToDisk(String dataName, Serializable dataElement) {
+    try {
+      this.storageManager.storeDataElement(dataName, dataElement);
+    } catch (IOException e) {
+      // In general, we have no way of solving this problem so throw it.
+      throw new RuntimeException("Failure storing TransactionOrderPersistor data", e);
+    }
   }
 }

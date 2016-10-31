@@ -21,13 +21,11 @@ package com.tc.objectserver.persistence;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
-import java.io.IOException;
-
-import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class Persistor implements PrettyPrintable {
-  private final IPersistentStorage persistentStorage;
+  private final IPlatformPersistence persistentStorage;
   private boolean wasDBClean;
 
   private volatile boolean started = false;
@@ -38,20 +36,7 @@ public class Persistor implements PrettyPrintable {
   private final EntityPersistor entityPersistor;
   private TransactionOrderPersistor transactionOrderPersistor;
 
-  public Persistor(IPersistentStorage persistentStorage) {
-    // The persistor only wants to operate on opened storage.
-    try {
-      persistentStorage.open();
-    } catch (IOException e) {
-      // Fall back to creating a new one since this probably means it doesn't exist and the Persitor has no notion of which
-      // mode (open/create) it should prefer.
-      try {
-        persistentStorage.create();
-      } catch (IOException e1) {
-        // We are not expecting both to fail.
-        throw new RuntimeException(e1);
-      }
-    }
+  public Persistor(IPlatformPersistence persistentStorage) {
     this.persistentStorage = persistentStorage;
     this.clusterStatePersistor = new ClusterStatePersistor(persistentStorage);
     this.entityPersistor = new EntityPersistor(persistentStorage);
@@ -65,7 +50,6 @@ public class Persistor implements PrettyPrintable {
   }
 
   public void close() {
-    persistentStorage.close();
   }
   
   public ClientStatePersistor getClientStatePersistor() {

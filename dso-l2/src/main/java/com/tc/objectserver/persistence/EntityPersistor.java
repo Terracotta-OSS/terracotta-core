@@ -24,21 +24,23 @@ import com.tc.net.ClientID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
+import com.tc.objectserver.persistence.EntityData.Key;
+import com.tc.objectserver.persistence.EntityData.Value;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
 import org.terracotta.exception.EntityException;
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 /**
@@ -47,23 +49,33 @@ import org.terracotta.persistence.KeyValueStorage;
 public class EntityPersistor {
   private static final TCLogger LOGGER = TCLogging.getLogger(EntityPersistor.class);
   
-  private static final String ENTITIES_ALIVE = "entities_alive";
-  private static final String JOURNAL_CONTAINER = "journal_container";
-  private static final String COUNTERS = "counters";
+  private static final String ENTITIES_ALIVE_FILE_NAME = "entities_alive.map";
+  private static final String JOURNAL_CONTAINER_FILE_NAME = "journal_container.map";
+  private static final String COUNTERS_FILE_NAME = "counters.map";
   private static final String COUNTERS_CONSUMER_ID = "counters:consumerID";
 
-  private final KeyValueStorage<EntityData.Key, EntityData.Value> entities;
-  private final KeyValueStorage<ClientID, List<EntityData.JournalEntry>> entityLifeJournal;
-  private final KeyValueStorage<String, Long> counters;
+  private final IPlatformPersistence storageManager;
+  private final HashMap<EntityData.Key, EntityData.Value> entities;
+  private final HashMap<ClientID, List<EntityData.JournalEntry>> entityLifeJournal;
+  private final HashMap<String, Long> counters;
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public EntityPersistor(IPersistentStorage storageManager) {
-    this.entities = storageManager.getKeyValueStorage(ENTITIES_ALIVE, EntityData.Key.class, EntityData.Value.class);
-    this.entityLifeJournal = storageManager.getKeyValueStorage(JOURNAL_CONTAINER, ClientID.class, (Class)List.class);
-    this.counters = storageManager.getKeyValueStorage(COUNTERS, String.class, Long.class);
-    // Make sure that the consumerID is initialized to 1 (0 reserved for platform).
-    if (!this.counters.containsKey(COUNTERS_CONSUMER_ID)) {
-      this.counters.put(COUNTERS_CONSUMER_ID, new Long(1));
+  @SuppressWarnings({ "unchecked" })
+  public EntityPersistor(IPlatformPersistence storageManager) {
+    this.storageManager = storageManager;
+    try {
+      HashMap<EntityData.Key, EntityData.Value> entities = (HashMap<Key, Value>) this.storageManager.loadDataElement(ENTITIES_ALIVE_FILE_NAME);
+      this.entities = (null != entities) ? entities : new HashMap<>();
+      HashMap<ClientID, List<EntityData.JournalEntry>> entityLifeJournal = (HashMap<ClientID, List<JournalEntry>>) this.storageManager.loadDataElement(JOURNAL_CONTAINER_FILE_NAME);
+      this.entityLifeJournal = (null != entityLifeJournal) ? entityLifeJournal : new HashMap<>();
+      HashMap<String, Long> counters = (HashMap<String, Long>) this.storageManager.loadDataElement(COUNTERS_FILE_NAME);
+      this.counters = (null != counters) ? counters : new HashMap<>();
+      // Make sure that the consumerID is initialized to 1 (0 reserved for platform).
+      if (!this.counters.containsKey(COUNTERS_CONSUMER_ID)) {
+        this.counters.put(COUNTERS_CONSUMER_ID, new Long(1));
+      }
+    } catch (IOException e) {
+      // We don't expect this during startup so just throw it as runtime.
+      throw new RuntimeException("Failure reading EntityPersistor map files", e);
     }
   }
 
@@ -74,9 +86,17 @@ public class EntityPersistor {
     if (!this.counters.containsKey(COUNTERS_CONSUMER_ID)) {
       this.counters.put(COUNTERS_CONSUMER_ID, new Long(1));
     }
+    // We can destroy the backing for these objects.
+    try {
+      this.storageManager.storeDataElement(ENTITIES_ALIVE_FILE_NAME, null);
+      this.storageManager.storeDataElement(JOURNAL_CONTAINER_FILE_NAME, null);
+      this.storageManager.storeDataElement(COUNTERS_FILE_NAME, null);
+    } catch (IOException e) {
+      // In general, we have no way of solving this problem so throw it.
+      throw new RuntimeException("Failure storing EntityPersistor map files", e);
+    }
   }
 
-  @SuppressWarnings("deprecation")
   public Collection<EntityData.Value> loadEntityData() {
     return this.entities.values();
   }
@@ -162,6 +182,7 @@ public class EntityPersistor {
     key.entityName = id.getEntityName();
     Assert.assertTrue(this.entities.containsKey(key));
     this.entities.remove(key);
+    storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
     
     // Record this in the journal - null error on success.
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, null);
@@ -206,6 +227,7 @@ public class EntityPersistor {
     Assert.assertEquals(version, val.version);
     
     this.entities.put(key, val);
+    storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
     
     // Record this in the journal.
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, previousConfiguration, null);
@@ -217,6 +239,7 @@ public class EntityPersistor {
   public long getNextConsumerID() {
     long consumerID = this.counters.get(COUNTERS_CONSUMER_ID);
     this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
+    storeToDisk(COUNTERS_FILE_NAME, this.counters);
     return consumerID;
   }
 
@@ -250,6 +273,7 @@ public class EntityPersistor {
     newEntry.reconfigureResponse = reconfigureResult;
     clientJournal.add(newEntry);
     this.entityLifeJournal.put(clientID, clientJournal);
+    storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
 
   private synchronized JournalEntry getEntryForTransaction(ClientID clientID, long transactionID) {
@@ -283,20 +307,22 @@ public class EntityPersistor {
     value.entityName = entityName;
     value.configuration = configuration;
     this.entities.put(key, value);
+    storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
   }
   
-  @SuppressWarnings("deprecation")
   public synchronized void setState(State state, Set<ConnectionID> connectedClients) {
     Set<ClientID> clients = new HashSet<>();
     for (ConnectionID c : connectedClients) {
       clients.add(new ClientID(c.getChannelID()));
     }
     clients.removeAll(this.entityLifeJournal.keySet());
-    this.entityLifeJournal.removeAll(clients);
+    for (ClientID client : clients) {
+      this.entityLifeJournal.remove(client);
+    }
+    storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
   
   public synchronized void serialize(ObjectOutput bucket) throws IOException {
-    @SuppressWarnings("deprecation")
     Set<ClientID> locals = this.entityLifeJournal.keySet();
     int size = locals.size();
     bucket.writeInt(size);
@@ -334,6 +360,16 @@ public class EntityPersistor {
       }
     } catch (ClassNotFoundException cnf) {
       throw new IOException(cnf);
+    }
+    storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
+  }
+
+  private void storeToDisk(String dataName, Serializable dataElement) {
+    try {
+      this.storageManager.storeDataElement(dataName, dataElement);
+    } catch (IOException e) {
+      // In general, we have no way of solving this problem so throw it.
+      throw new RuntimeException("Failure storing EntityPersistor map file", e);
     }
   }
 }
