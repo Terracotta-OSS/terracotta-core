@@ -99,15 +99,17 @@ public class TransactionOrderPersistor {
     transaction.globalSequenceID = this.receivedTransactionCount;
     
     // We now pass this straight into the underlying storage.
-    Future<Void> syncFuture = this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
+    if (!source.isNull()) {
+      Future<Void> syncFuture = this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
     
     // TODO:  We need to float this future blocking on the sync further out.
-    try {
-      syncFuture.get();
-    } catch (InterruptedException e) {
-      Assert.fail(e.getLocalizedMessage());
-    } catch (ExecutionException e) {
-      Assert.fail(e.getLocalizedMessage());
+      try {
+        syncFuture.get();
+      } catch (InterruptedException e) {
+        Assert.fail(e.getLocalizedMessage());
+      } catch (ExecutionException e) {
+        Assert.fail(e.getLocalizedMessage());
+      }
     }
   }
 
