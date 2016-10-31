@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Collections;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.passthrough.IClusterControl;
 
@@ -18,6 +19,9 @@ import org.terracotta.passthrough.IClusterControl;
  * 
  * In this case, the basic test is watching how Galvan handles interaction with a basic active-passive cluster.
  */
+// XXX: Currently ignored since this test depends on restartability of the server, which now requires a persistence service
+//  to be plugged in (and there isn't one available, in open source).
+@Ignore
 public class SimpleActivePassiveWithClassRuleIT {
   @ClassRule
   public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 2, Collections.<File>emptyList(), "", "", "", true);
