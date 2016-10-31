@@ -54,7 +54,7 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadDumpUtil;
 
-import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class StandardServerBuilder implements ServerBuilder {
@@ -127,10 +127,11 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public Persistor createPersistor(ServiceRegistry serviceRegistry) {
-    IPersistentStorage persistentStorage = serviceRegistry.getService(new BasicServiceConfiguration<IPersistentStorage>(IPersistentStorage.class));
-    // We can't fail to find persistence support (at least not in our current environment).
-    Assert.assertNotNull(persistentStorage);
-    return new Persistor(persistentStorage);
+    IPlatformPersistence platformPersistence = serviceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    // We can't fail to look this up as the implementation will install an in-memory implementation if an on-disk on
+    //  wasn't provided
+    Assert.assertNotNull(platformPersistence);
+    return new Persistor(platformPersistence);
   }
 
   @Override

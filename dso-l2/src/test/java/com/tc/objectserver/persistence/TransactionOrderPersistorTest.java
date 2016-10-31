@@ -22,29 +22,20 @@ import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
 
 import com.tc.test.TCTestCase;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.Collections;
 
-import org.terracotta.persistence.IPersistentStorage;
-
 
 public class TransactionOrderPersistorTest extends TCTestCase {
-  private IPersistentStorage persistentStorage;
+  private NullPlatformPersistentStorage persistentStorage;
   private TransactionOrderPersistor orderPersistor;
   private ClientID client1;
   private ClientID client2;
 
   @Override
   public void setUp() {
-    this.persistentStorage = new EmulatedPersistentStorage(new NullPlatformPersistentStorage());
-    try {
-      this.persistentStorage.create();
-    } catch (IOException e) {
-      // Not expected.
-      Assert.fail(e.getLocalizedMessage());
-    }
+    this.persistentStorage = new NullPlatformPersistentStorage();
     this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage, Collections.emptySet());
     this.client1 = new ClientID(1);
     this.client2 = new ClientID(2);
@@ -251,8 +242,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
 
   public void testSaveReloadEmpty() throws IOException {
     // Create the storage.
-    IPersistentStorage storage = new EmulatedPersistentStorage(new NullPlatformPersistentStorage());
-    storage.create();
+    NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
     new TransactionOrderPersistor(storage, Collections.emptySet());
     
     // Now, try to reload it.
@@ -265,8 +255,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     TransactionID oldest = new TransactionID(0);
 
     // Create the storage.
-    IPersistentStorage storage = new EmulatedPersistentStorage(new NullPlatformPersistentStorage());
-    storage.create();
+    NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
     TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     for (int i = 1; i < 100; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -287,8 +276,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     TransactionID oldest = new TransactionID(0);
 
     // Create the storage.
-    IPersistentStorage storage = new EmulatedPersistentStorage(new NullPlatformPersistentStorage());
-    storage.create();
+    NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
     TransactionOrderPersistor persistor = new TransactionOrderPersistor(storage, Collections.emptySet());
     ClientThread thread1 = new ClientThread(persistor, new ClientID(1), oldest, 1, 100);
     ClientThread thread2 = new ClientThread(persistor, new ClientID(2), oldest, 1, 100);

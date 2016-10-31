@@ -23,12 +23,12 @@ import com.tc.net.StripeID;
 import com.tc.util.State;
 import com.tc.util.version.Version;
 import java.io.IOException;
-
-import java.util.Map;
-import org.terracotta.persistence.IPersistentStorage;
+import java.util.HashMap;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class ClusterStatePersistor {
+  private static final String MAP_FILE_NAME = "ClusterStatePersistor.map";
   private static final String GROUP_ID_KEY = "groupid";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
@@ -36,21 +36,26 @@ public class ClusterStatePersistor {
   private static final String GROUP_STRIPE_ID_PREFIX = "stripeid-for-";
   private static final String VERSION_KEY = "version";
 
-  private final Map<String, String> map;
+  private final IPlatformPersistence storageManager;
+  private final HashMap<String, String> map;
   private State initialState;
 
-  public ClusterStatePersistor(IPersistentStorage storageManager) {
+  @SuppressWarnings("unchecked")
+  public ClusterStatePersistor(IPlatformPersistence storageManager) {
+    this.storageManager = storageManager;
+    HashMap<String, String> map = null;
     try {
-      storageManager.open();
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
+      map = (HashMap<String, String>) this.storageManager.loadDataElement(MAP_FILE_NAME);
+    } catch (IOException e) {
+      // We don't expect this during startup so just throw it as runtime.
+      throw new RuntimeException("Failure reading ClusterStatePersistor map file", e);
     }
-    this.map = storageManager.getProperties();
+    this.map = (null != map) ? map : new HashMap<String, String>();
     this.initialState = getCurrentL2State();
   }
 
   public void setGroupId(GroupID groupId) {
-    map.put(GROUP_ID_KEY, String.valueOf(groupId.toInt()));
+    putAndStore(GROUP_ID_KEY, String.valueOf(groupId.toInt()));
   }
 
   public GroupID getGroupId() {
@@ -59,7 +64,7 @@ public class ClusterStatePersistor {
   }
 
   public void setStripeID(GroupID groupID, StripeID stripeID) {
-    map.put(groupStripeIdKey(groupID), stripeID.getName());
+    putAndStore(groupStripeIdKey(groupID), stripeID.getName());
   }
 
   public StripeID getStripeID(GroupID groupID) {
@@ -68,7 +73,7 @@ public class ClusterStatePersistor {
   }
 
   public void setThisStripeID(StripeID stripeID) {
-    map.put(STRIPE_ID_KEY, stripeID.getName());
+    putAndStore(STRIPE_ID_KEY, stripeID.getName());
   }
 
   public StripeID getThisStripeID() {
@@ -81,7 +86,7 @@ public class ClusterStatePersistor {
   }
 
   public void setCurrentL2State(State state) {
-    map.put(L2_STATE_KEY, state.getName());
+    putAndStore(L2_STATE_KEY, state.getName());
   }
 
   public State getCurrentL2State() {
@@ -100,16 +105,27 @@ public class ClusterStatePersistor {
   }
 
   public void setVersion(Version v) {
-    map.put(VERSION_KEY, v.major() + "." + v.minor() + "." + v.micro());
+    putAndStore(VERSION_KEY, v.major() + "." + v.minor() + "." + v.micro());
   }
 
   public void setDBClean(boolean dbClean) {
-    map.put(DB_CLEAN_KEY, String.valueOf(dbClean));
+    putAndStore(DB_CLEAN_KEY, String.valueOf(dbClean));
   }
 
   public void clear() {
     map.clear();
     initialState = null;
+  }
+
+  // This isn't called from different threads but we can easily synchronize around the putAndStore.
+  private synchronized void putAndStore(String key, String value) {
+    this.map.put(key, value);
+    try {
+      this.storageManager.storeDataElement(MAP_FILE_NAME, this.map);
+    } catch (IOException e) {
+      // In general, we have no way of solving this problem so throw it.
+      throw new RuntimeException("Failure storing ClusterStatePersistor map file", e);
+    }
   }
 
   private static String groupStripeIdKey(GroupID groupID) {

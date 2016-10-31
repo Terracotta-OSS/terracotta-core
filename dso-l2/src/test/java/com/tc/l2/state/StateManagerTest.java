@@ -30,6 +30,7 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.TestClusterStatePersistor;
 import com.tc.test.TCTestCase;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import org.mockito.Matchers;
@@ -70,7 +71,7 @@ public class StateManagerTest extends TCTestCase {
   }
 
   public void testSkipElectionWhenRecoveredPassive() throws Exception {
-    Map<String, String> clusterStateMap = new HashMap<>();
+    Map<String, Serializable> clusterStateMap = new HashMap<>();
     // Simulate going down as PASSIVE_STANDBY, by restarting the clusterStatePersistor and stateManager.
     new TestClusterStatePersistor(clusterStateMap).setCurrentL2State(StateManager.PASSIVE_STANDBY);
     clusterStatePersistor = new TestClusterStatePersistor(clusterStateMap);
@@ -81,7 +82,7 @@ public class StateManagerTest extends TCTestCase {
   }
 
   public void testSkipElectionWhenRecoveredUnitialized() throws Exception {
-    Map<String, String> clusterStateMap = new HashMap<>();
+    Map<String, Serializable> clusterStateMap = new HashMap<>();
     new TestClusterStatePersistor(clusterStateMap).setCurrentL2State(StateManager.PASSIVE_UNINITIALIZED);
     clusterStatePersistor = new TestClusterStatePersistor(clusterStateMap);
     stateManager = new StateManagerImpl(TCLogging.getLogger(getClass()), groupManager,
