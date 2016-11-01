@@ -24,6 +24,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import java.util.Collections;
 import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
 
@@ -75,7 +76,7 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
 
   @Override
   public Set<NodeID> replicateTo(Set<NodeID> passives) {
-    return replicates;
+    return (action == ServerEntityAction.NOOP) ? Collections.emptySet() : replicates;
   }
 
 }
