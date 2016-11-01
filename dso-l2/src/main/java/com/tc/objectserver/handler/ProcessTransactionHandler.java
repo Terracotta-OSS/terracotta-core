@@ -165,8 +165,7 @@ public class ProcessTransactionHandler {
     };
   }
   
-  private void addSequentially(MessageChannel channel, Predicate<VoltronEntityMultiResponse> adder) {
-    ClientID target = (ClientID)channel.getRemoteNodeID();
+  private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
     boolean handled = false;
     while (!handled) {
       TCMessage old = invokeReturn.get(target);
@@ -174,15 +173,30 @@ public class ProcessTransactionHandler {
         handled = adder.test((VoltronEntityMultiResponse)old);
       }
       if (!handled) {
-        VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
-        old = invokeReturn.putIfAbsent(target, vmr);
-        if (old instanceof VoltronEntityMultiResponse) {
-          handled = adder.test((VoltronEntityMultiResponse)old);
+        Optional<MessageChannel> channel = safeGetChannel(target);
+        if (channel.isPresent()) {
+          VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          old = invokeReturn.putIfAbsent(target, vmr);
+          if (old instanceof VoltronEntityMultiResponse) {
+            handled = adder.test((VoltronEntityMultiResponse)old);
+          } else {
+            handled = adder.test(vmr);
+            Assert.assertTrue(handled);
+            sendMultiResponse(vmr);
+          }
         } else {
-          handled = adder.test(vmr);
-          Assert.assertTrue(handled);
-          sendMultiResponse(vmr);
+          handled = true;
+//  no more client.  ignore
         }
+      }
+    }
+  }
+  
+  private static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message) {
+    List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
+    for (Retiree toRetire : readyToRetire) {
+      if (null != toRetire) {
+        toRetire.retired();
       }
     }
   }
@@ -196,8 +210,7 @@ public class ProcessTransactionHandler {
     // This is active-side processing so this is never a replicated message.
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    Optional<MessageChannel> safeChannel = safeGetChannel(sourceNodeID);
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, safeChannel, isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, ()->safeGetChannel(sourceNodeID), isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -255,23 +268,18 @@ public class ProcessTransactionHandler {
         if (ServerEntityAction.INVOKE_ACTION == action) {
           ManagedEntity locked = entity;
           try {
-            safeChannel.ifPresent((channel)-> {
-              addSequentially(channel, addto->addto.addReceived(transactionID));
-            });
-            
+            addSequentially(sourceNodeID, addto->addto.addReceived(transactionID));
+
             EntityMessage message = entityMessage.decodeMessage(entity.getCodec());
+            
             locked.addRequestMessage(serverEntityRequest, entityMessage, (result)-> {
-              safeChannel.ifPresent((channel)-> {
-                addSequentially(channel, addTo->addTo.addResult(transactionID, result));
-              });
+              addSequentially(sourceNodeID, addTo->addTo.addResult(transactionID, result));
               RetirementManager retirementManager = locked.getRetirementManager();
               
               retirementManager.updateWithRetiree(message, new Retiree() {
                 @Override
                 public void retired() {
-                  safeChannel.ifPresent((channel)-> {
-                    addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
-                  });
+                  addSequentially(sourceNodeID, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
                 }
                 @Override
                 public TransactionID getTransaction() {
@@ -279,31 +287,19 @@ public class ProcessTransactionHandler {
                 }
               });
               
-              List<Retiree> readyToRetire = retirementManager.retireForCompletion(message);
-              for (Retiree toRetire : readyToRetire) {
-                if (null != toRetire) {
-                  toRetire.retired();
-                }
-              }
+              retireMessagesForEntity(locked, message);
             }, (fail)-> {
-              safeChannel.ifPresent(channel -> {
+              safeGetChannel(sourceNodeID).ifPresent(channel -> {
                 VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
                 failMessage.setFailure(transactionID, fail, false);
                 invokeReturn.put(sourceNodeID, failMessage);
                 multiSend.addSingleThreaded(failMessage);
-                List<Retiree> readyToRetire = locked.getRetirementManager().retireForCompletion(message);
-                for (Retiree toRetire : readyToRetire) {
-                  if (toRetire != null) {
-                    toRetire.retired();
-                  }
-                }
-              });              
+              });
+              
               locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
                 @Override
                 public void retired() {
-                  safeChannel.ifPresent((channel)-> {
-                    addSequentially(channel, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
-                  });
+                  addSequentially(sourceNodeID, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
                 }
 
                 @Override
@@ -311,6 +307,8 @@ public class ProcessTransactionHandler {
                   return serverEntityRequest.getTransaction();
                 }
               });
+              
+              retireMessagesForEntity(locked, message);
             });
           } catch (MessageCodecException codec) {
             serverEntityRequest.failure(new EntityUserException(locked.getID().getClassName(), locked.getID().getEntityName(), codec));
@@ -392,7 +390,7 @@ public class ProcessTransactionHandler {
           break;
       }
       if (cached) {
-        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), safeGetChannel(resentMessage.getSource()), false);
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), false);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -406,7 +404,7 @@ public class ProcessTransactionHandler {
         this.resendNewList.add(resentMessage);
       }
     } catch (EntityException ee) {
-      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), safeGetChannel(resentMessage.getSource()), false);
+      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), false);
       response.received();
       response.failure(ee);
       response.retired();

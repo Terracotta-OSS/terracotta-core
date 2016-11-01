@@ -6,15 +6,14 @@ import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 public class NullPlatformPersistentStorage implements IPlatformPersistence, StateDumpable {
@@ -42,38 +41,25 @@ public class NullPlatformPersistentStorage implements IPlatformPersistence, Stat
 
     @Override
     public synchronized Future<Void> fastStoreSequence(long sequenceIndex, SequenceTuple newEntry, long oldestValidSequenceID) {
-      List<SequenceTuple> oldSequence = fastSequenceCache.get(sequenceIndex);
-      List<SequenceTuple> newSequence = new ArrayList<>();
-      if (null != oldSequence) {
-        for (SequenceTuple tuple : oldSequence) {
-          if (tuple.localSequenceID >= oldestValidSequenceID) {
-            newSequence.add(tuple);
+      List<SequenceTuple> sequence = fastSequenceCache.get(sequenceIndex);
+      if (sequence == null) {
+        sequence = new LinkedList<>();
+        fastSequenceCache.put(sequenceIndex, sequence);
+      }
+      if (!sequence.isEmpty()) {
+//  exploiting the knowledge that sequences are always updated in an increasing fashion, as soon as the first
+//  cleaning function fails, bail on the iteration
+        Iterator<SequenceTuple> tuple = sequence.iterator();
+        while (tuple.hasNext()) {
+          if (tuple.next().localSequenceID < oldestValidSequenceID) {
+            tuple.remove();
+          } else {
+            break;
           }
         }
       }
-      newSequence.add(newEntry);
-      fastSequenceCache.put(sequenceIndex, newSequence);
-      return new Future<Void>() {
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-          return false;
-        }
-        @Override
-        public boolean isCancelled() {
-          return false;
-        }
-        @Override
-        public boolean isDone() {
-          return true;
-        }
-        @Override
-        public Void get() throws InterruptedException, ExecutionException {
-          return null;
-        }
-        @Override
-        public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-          return null;
-        }};
+      sequence.add(newEntry);
+      return CompletableFuture.completedFuture(null);
     }
 
     @Override

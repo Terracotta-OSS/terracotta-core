@@ -26,6 +26,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.util.Assert;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
@@ -36,12 +37,12 @@ import org.terracotta.exception.EntityException;
  */
 public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse {
   private final EntityDescriptor descriptor;
-  protected final Optional<MessageChannel> returnChannel;
+  protected final Supplier<Optional<MessageChannel>> returnChannel;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
 
   public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, Optional<MessageChannel> returnChannel, boolean isReplicatedMessage) {
+      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, boolean isReplicatedMessage) {
     super(action, transaction, oldest, src);
     this.descriptor = descriptor;
     this.returnChannel = returnChannel;
@@ -50,7 +51,7 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
 
   @Override
   public Optional<MessageChannel> getReturnChannel() {
-    return returnChannel;
+    return returnChannel.get();
   }
 
   @Override

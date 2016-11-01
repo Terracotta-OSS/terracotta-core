@@ -435,7 +435,7 @@ public class ReplicatedTransactionHandler {
   private ServerEntityRequest makeNoop(EntityID eid, long version) {
     // Anything created within this class represents a replicated message.
     boolean isReplicatedMessage = true;
-    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, Optional.empty(), isReplicatedMessage);
+    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, ()->Optional.empty(), isReplicatedMessage);
   }
       
   private ServerEntityRequest make(ReplicationMessage rep) {
