@@ -113,7 +113,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     notifyCallbackOnHandshake(handshakeMessage);
 
     this.logger.info("Sending handshake message");
-    Assert.assertTrue(handshakeMessage.send());
+    if (!handshakeMessage.send()) {
+      if (handshakeMessage.getChannel().isConnected()) {
+        CONSOLE_LOGGER.fatal("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
+      } else {
+        CONSOLE_LOGGER.info("handshake failed. channel not connected");
+      }
+    }
   }
 
   protected boolean isEnterpriseClient() {
