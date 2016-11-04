@@ -62,6 +62,7 @@ public class PassthroughServer implements PassthroughDumper {
   // We also track various information for the restart case.
   private final List<EntityServerService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
+  private final List<ServiceProviderAndConfiguration> overrideServiceProviderData;
   private final Map<Long, PassthroughConnection> savedClientConnections;
   
   public PassthroughServer() {
@@ -70,6 +71,7 @@ public class PassthroughServer implements PassthroughDumper {
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
     this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
     this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
+    this.overrideServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
   }
 
@@ -166,9 +168,25 @@ public class PassthroughServer implements PassthroughDumper {
     
     findClasspathBuiltinServices();
     // Install the user-created services.
-    for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
+    internalInstallServiceProvider(false);
+
+    // Install the override service providers, if any, last in the list
+    // if any service provider was not previously installed for this type, this should still be installed
+    internalInstallServiceProvider(true);
+  }
+
+  private void internalInstallServiceProvider(boolean overrideFlag) {
+    final List<ServiceProviderAndConfiguration> fromList = (overrideFlag) ? this.overrideServiceProviderData :
+        this.savedServiceProviderData;
+    for (ServiceProviderAndConfiguration tuple : fromList) {
       try {
-        this.serverProcess.registerServiceProvider(tuple.serviceProvider.getClass().newInstance(), tuple.providerConfiguration);
+        if (overrideFlag) {
+          this.serverProcess.registerOverrideServiceProvider(tuple.serviceProvider.getClass()
+              .newInstance(), tuple.providerConfiguration);
+        } else {
+          this.serverProcess.registerServiceProvider(tuple.serviceProvider.getClass()
+              .newInstance(), tuple.providerConfiguration);
+        }
       } catch (IllegalAccessException a) {
         throw new RuntimeException(a);
       } catch (InstantiationException i) {
@@ -197,6 +215,10 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     internalRegisterServiceProvider(serviceProvider, providerConfiguration);
+  }
+
+  public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    this.overrideServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
   }
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
