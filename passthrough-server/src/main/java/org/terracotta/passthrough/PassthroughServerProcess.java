@@ -98,6 +98,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   //  is why create/destroy/attachPassive are synchronized since they all directly interact with this entry set.
   private Map<PassthroughEntityTuple, CreationData<?, ?>> activeEntities;
   private Map<PassthroughEntityTuple, CreationData<?, ?>> passiveEntities;
+  private final Map<Long, DeferredEntityContainer> consumerToLiveContainerMap;
   // The service providers offered by the user.
   private final List<ServiceProvider> serviceProviders;
   // The override service providers offered by the user.
@@ -133,6 +134,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.messageQueue = new Vector<PassthroughMessageContainer>();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<?, ?>>());
+    this.consumerToLiveContainerMap = new HashMap<Long, DeferredEntityContainer>();
     this.serviceProviders = new Vector<ServiceProvider>();
     this.overrideServiceProviders = new Vector<ServiceProvider>();
     this.implementationProvidedServiceProviders = new Vector<PassthroughImplementationProvidedServiceProvider>();
@@ -197,6 +199,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     for (long consumerID : this.persistedEntitiesByConsumerIDMap.keySet()) {
       // This is an entity consumer so we use the deferred container.
       DeferredEntityContainer container = new DeferredEntityContainer();
+      this.consumerToLiveContainerMap.put(consumerID, container);
       EntityData entityData = this.persistedEntitiesByConsumerIDMap.get(consumerID);
       // Create the registry for the entity.
       PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
@@ -691,6 +694,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     EntityServerService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
     // This is an entity consumer so we use the deferred container.
     DeferredEntityContainer container = new DeferredEntityContainer();
+    this.consumerToLiveContainerMap.put(consumerID, container);
     PassthroughServiceRegistry registry = getNextServiceRegistry(entityClassName, entityName, container);
     // Before we create the entity, we want to store this information regarding class and name, since that might be needed by a service in its start up.
     CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry, consumerID);
@@ -741,6 +745,14 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // If we found it, destroy it.  Otherwise, throw that we didn't find it.
     if (null != entityData && !entityData.isDestroyed) {
       success = entityData.destroy();
+      if (success) {
+        // If we found it, by any means, we expect that it still has a deferred container and we need to remove that and
+        //  null the entity so that implementation-provided services know it is gone.
+        Assert.assertTrue(entityData.consumerID > 0);
+        DeferredEntityContainer container = this.consumerToLiveContainerMap.remove(entityData.consumerID);
+        Assert.assertTrue(null != container);
+        container.entity = null;
+      }
       if (success && null != this.activeEntities) {
         boolean didRemove = false;
         if (entityData.equals(this.activeEntities.get(entityTuple))) {
@@ -951,7 +963,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // actual instances, don't go through the full creation path.
     for (Map.Entry<PassthroughEntityTuple, CreationData<?, ?>> entry : this.passiveEntities.entrySet()) {
       CreationData<?, ?> data = entry.getValue();
-      CreationData<?, ?> newData = buildCreationData(data);
+      CreationData<?, ?> newData = buildCreationDataForPromotion(data);
       newData.getActive().loadExisting();
       this.activeEntities.put(entry.getKey(), newData);
     }
@@ -965,9 +977,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.passiveEntities = null;
   }
 
-  // This method exists to create the generic type context from the service for creating the CreationData.
-  private <M extends EntityMessage, R extends EntityResponse> CreationData<M, R> buildCreationData(CreationData<M, R> data) {
-    return new CreationData<M, R>(data.entityClassName, data.entityName, data.version, data.configuration, data.registry, data.service, true);
+  // This method exists to create the generic type context from the service for creating the CreationData for promotion to active.
+  private <M extends EntityMessage, R extends EntityResponse> CreationData<M, R> buildCreationDataForPromotion(CreationData<M, R> data) {
+    boolean isActive = true;
+    return new CreationData<M, R>(data.entityClassName, data.entityName, data.version, data.configuration, data.registry, data.service, isActive, data.consumerID);
   }
 
   /**
@@ -1065,12 +1078,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   private <M extends EntityMessage, R extends EntityResponse> CommonServerEntity<M, R> createAndStoreEntity(String entityClassName, String entityName, long version, byte[] serializedConfiguration, PassthroughEntityTuple entityTuple, EntityServerService<M, R> service, PassthroughServiceRegistry registry, long consumerID) {
     CommonServerEntity<M, R> newEntity = null;
-    if (null != this.activeEntities) {
-      CreationData<M, R> data = new CreationData<M, R>(entityClassName, entityName, version, serializedConfiguration, registry, service, true);
+    boolean isActive = (null != this.activeEntities);
+    CreationData<M, R> data = new CreationData<M, R>(entityClassName, entityName, version, serializedConfiguration, registry, service, isActive, consumerID);
+    if (isActive) {
       this.activeEntities.put(entityTuple, data);
       newEntity = data.getActive();
     } else {
-      CreationData<M, R> data = new CreationData<M, R>(entityClassName, entityName, version, serializedConfiguration, registry, service, false);
       this.passiveEntities.put(entityTuple, data);
       newEntity = data.getPassive();
     }
@@ -1099,11 +1112,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
     public ExecutionStrategy<M> executionStrategy;
-    public boolean isActive;
+    public final boolean isActive;
+    public final long consumerID;
     public boolean isDestroyed = false;
     public Map<ClientDescriptor, Integer> references = new HashMap<ClientDescriptor, Integer>();
     
-    public CreationData(String entityClassName, String entityName, long version, byte[] configuration, PassthroughServiceRegistry registry, EntityServerService<M, R> service, boolean isActive) {
+    public CreationData(String entityClassName, String entityName, long version, byte[] configuration, PassthroughServiceRegistry registry, EntityServerService<M, R> service, boolean isActive, long consumerID) {
       this.entityClassName = entityClassName;
       this.entityName = entityName;
       this.version = version;
@@ -1116,6 +1130,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.concurrency = (isActive) ? service.getConcurrencyStrategy(configuration) : null;
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
       this.isActive = isActive;
+      this.consumerID = consumerID;
     }
     
     synchronized boolean reference(ClientDescriptor cid) {
