@@ -18,6 +18,7 @@
  */
 package com.tc.services;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +45,8 @@ public class EntityMessengerProviderTest {
   private MessageCodec<EntityMessage, EntityResponse> messageCodec;
   private ManagedEntity owningEntity;
   private ServiceConfiguration<IEntityMessenger> configuration;
+  private TestTimeSource timeSource;
+  private SingleThreadedTimer timer;
 
   private EntityMessengerProvider entityMessengerProvider;
 
@@ -62,11 +65,21 @@ public class EntityMessengerProviderTest {
     this.configuration = mock(ServiceConfiguration.class);
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     
+    // Build the timer we will use in the provider.
+    this.timeSource = new TestTimeSource(1L);
+    this.timer = new SingleThreadedTimer(this.timeSource);
+    this.timer.start();
+    
     // Build the test subject.
-    this.entityMessengerProvider = new EntityMessengerProvider();
+    this.entityMessengerProvider = new EntityMessengerProvider(this.timer);
     this.entityMessengerProvider.setMessageSink(this.messageSink);
     // Note that we can only serve this service if in active mode.
     this.entityMessengerProvider.serverDidBecomeActive();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    this.timer.stop();
   }
 
   @Test
@@ -85,5 +98,23 @@ public class EntityMessengerProviderTest {
     // Verify the calls we observed.
     verify(this.messageCodec).encodeMessage(message);
     verify(this.messageSink).addSingleThreaded(any(VoltronEntityMessage.class));
+  }
+
+
+  private static class TestTimeSource implements SingleThreadedTimer.TimeSource {
+    private long currentTimeMillis;
+    
+    public TestTimeSource(long currentTimeMillis) {
+      this.currentTimeMillis = currentTimeMillis;
+    }
+    
+    public void passTime(long millis) {
+      this.currentTimeMillis += millis;
+    }
+    
+    @Override
+    public long currentTimeMillis() {
+      return this.currentTimeMillis;
+    }
   }
 }

@@ -39,17 +39,22 @@ import com.tc.util.Assert;
  * a client) and using that to send "fake" VoltronEntityMessage instances into the server's message sink.
  */
 public class EntityMessengerService implements IEntityMessenger {
+  private final SingleThreadedTimer timer;
   private final Sink<VoltronEntityMessage> messageSink;
+  private final ManagedEntity owningEntity;
   private final RetirementManager retirementManager;
   private final MessageCodec<EntityMessage, ?> codec;
   private final EntityDescriptor fakeDescriptor;
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+  public EntityMessengerService(SingleThreadedTimer timer, Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+    Assert.assertNotNull(timer);
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
     
+    this.timer = timer;
     this.messageSink = messageSink;
+    this.owningEntity = owningEntity;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
     this.retirementManager = owningEntity.getRetirementManager();
     // If this service is being created, we expect that the entity has a retirement mananger.

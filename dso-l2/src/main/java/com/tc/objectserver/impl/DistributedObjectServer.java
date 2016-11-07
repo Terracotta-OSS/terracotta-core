@@ -25,6 +25,8 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.services.LogBasedStateDumper;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
+import com.tc.services.SingleThreadedTimer;
+
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
@@ -291,6 +293,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final TCSecurityManager              tcSecurityManager;
 
+  private final SingleThreadedTimer timer;
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManager entityManager;
@@ -324,6 +327,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.seda = seda;
     this.server = server;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
+    this.timer = new SingleThreadedTimer(null);
+    this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
   }
 
@@ -429,7 +434,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     serviceRegistry.initialize(platformConfiguration, this.configSetupManager.commonl2Config().getBean(), Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
-    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
+    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(this.timer);
     this.serviceRegistry.registerImplementationProvided(messengerProvider);
     
     final CommunicatorService communicatorService = new CommunicatorService();

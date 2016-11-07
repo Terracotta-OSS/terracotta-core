@@ -36,8 +36,15 @@ import com.tc.util.Assert;
  * These messages are fed into the general VoltronEntityMessage sink, provided by the server implementation.
  */
 public class EntityMessengerProvider implements ImplementationProvidedServiceProvider {
+  private final SingleThreadedTimer timer;
   private Sink<VoltronEntityMessage> messageSink;
   private boolean serverIsActive;
+
+  public EntityMessengerProvider(SingleThreadedTimer timer) {
+    Assert.assertNotNull(timer);
+    
+    this.timer = timer;
+  }
 
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
@@ -46,7 +53,7 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     Assert.assertNotNull(owningEntity);
     T service = null;
     if (this.serverIsActive) {
-      service = configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
+      service = configuration.getServiceType().cast(new EntityMessengerService(this.timer, this.messageSink, owningEntity));
     }
     return service;
   }
