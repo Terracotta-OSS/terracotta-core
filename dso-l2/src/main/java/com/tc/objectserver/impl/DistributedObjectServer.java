@@ -213,8 +213,6 @@ import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.concurrent.Runners;
-import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.NullThreadIDMapImpl;
 import com.tc.util.runtime.ThreadIDMap;
@@ -293,7 +291,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final TCSecurityManager              tcSecurityManager;
 
-  private final TaskRunner                       taskRunner;
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManager entityManager;
@@ -327,7 +324,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.seda = seda;
     this.server = server;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
-    this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
   }
 
@@ -339,10 +335,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected ServerBuilder getServerBuilder() {
     return this.serverBuilder;
-  }
-
-  public TaskRunner getTaskRunner() {
-    return taskRunner;
   }
 
   @Override
