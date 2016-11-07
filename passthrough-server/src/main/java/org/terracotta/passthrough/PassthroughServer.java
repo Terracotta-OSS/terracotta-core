@@ -200,8 +200,8 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   private void internalStop() {
+    this.serverProcess.shutdownServices();
     this.serverProcess.stop();
-    this.serverProcess.shutdown();
     Assert.assertNotNull(this.pseudoConnection);
     this.pseudoConnection.close();
     this.pseudoConnection = null;
