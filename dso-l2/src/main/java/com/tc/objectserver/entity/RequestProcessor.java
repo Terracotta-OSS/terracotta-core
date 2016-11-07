@@ -70,15 +70,17 @@ public class RequestProcessor {
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
         ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), replicate ? request.getAction() : ServerEntityAction.NOOP, 
-            request.getTransaction(), request.getOldestTransactionOnClient(), replicate ? payload.getRawPayload() : new byte[0], concurrencyKey), replicateTo)
+            request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
     requestExecution.addMultiThreaded(entityRequest);
     return token;
   }
   
+  private static byte[] NO_BYTES = new byte[0];
+  
   private static ReplicationMessage createReplicationMessage(EntityDescriptor id, ClientID src,
-      ServerEntityAction type, TransactionID tid, TransactionID oldest, byte[] payload, int concurrency) {
+      ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
     ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
     switch (type) {
       case CREATE_ENTITY:
@@ -114,7 +116,9 @@ public class RequestProcessor {
     }
 //  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
 //  NOOP should be replicated.  For now, NOOPs hold ordering
-    return ReplicationMessage.createReplicatedMessage(id, src, tid, oldest, actionCode, payload, concurrency);
+    byte[] bytes = (actionCode != ReplicationMessage.ReplicationType.NOOP) ? payload.getRawPayload() : NO_BYTES;
+    
+    return ReplicationMessage.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId());
   }
   
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {

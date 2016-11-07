@@ -64,13 +64,13 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   }
 
   public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
-    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0);
+    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0, "");
   }
 
   public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency) {
-    return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency);
+      ReplicationType action, byte[] payload, int concurrency, String debugId) {
+    return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
   }
 
   EntityDescriptor descriptor;
@@ -85,6 +85,8 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
   long rid = 0;
   
+  String debugId;
+  
   public ReplicationMessage() {
     super(INVALID);
     descriptor = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, 0);
@@ -98,14 +100,14 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 //  a true replicated message
   private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency) {
+      ReplicationType action, byte[] payload, int concurrency, String debugId) {
     super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
-    initialize(descriptor, src, tid, oldest, action, payload, concurrency);
+    initialize(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
   }
   
   protected final void initialize(EntityDescriptor descriptor, ClientID src, 
       TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency) {
+      ReplicationType action, byte[] payload, int concurrency, String debugId) {
     Assert.assertNotNull(tid);
     Assert.assertNotNull(oldest);
     Assert.assertNotNull(src);
@@ -116,6 +118,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     this.action = action;
     this.payload = payload;
     this.concurrency = concurrency;
+    this.debugId = debugId;
   }
   
   public ReplicationEnvelope target(NodeID node) {
@@ -240,6 +243,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor.getEntityID() + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + ", concurrency=" + concurrency +'}';
+    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor.getEntityID() + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + ", concurrency=" + concurrency + ", debug=" + debugId + '}';
   }
 }
