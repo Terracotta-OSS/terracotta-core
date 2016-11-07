@@ -141,8 +141,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.processID = processIdGen.incrementAndGet();
     this.retirementManager = new PassthroughRetirementManager();
   }
-  
-  @SuppressWarnings("deprecation")
+
+  @SuppressWarnings("unchecked")
   public void start(boolean shouldLoadStorage) {
     // Make sure that we install the in-memory registry, if needed.
     boolean isStorageInstalled = false;
@@ -394,47 +394,50 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   public synchronized void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, PassthroughMessage passthroughMessage) {
-    // Can only happen while running.
-    Assert.assertTrue(this.isRunning);
-    // This can only be called on the active server.
-    Assert.assertTrue(null != this.activeEntities);
-    // We must be given a message.
-    Assert.assertTrue(null != passthroughMessage);
-    // This entry-point is only used in the cases where the message already exists.
-    Assert.assertTrue(null != newMessage);
-    // When handling re-sends, we are effectively paused so this shouldn't happen.
-    Assert.assertTrue(!this.isHandlingResends);
-    
-    // Defer the current message, blocking it on the new one.
-    this.retirementManager.deferCurrentMessage(newMessage);
-    PassthroughMessageContainer container = new PassthroughMessageContainer();
-    container.sender = new IMessageSenderWrapper() {
-      @Override
-      public void sendAck(PassthroughMessage ack) {
-        // Do nothing on ack.
-      }
-      @Override
-      public void sendComplete(PassthroughMessage complete) {
-        // Do nothing on complete.
-      }
-      @Override
-      public void sendRetire(PassthroughMessage retired) {
-        handleMessageRetirement(newMessage, null, retired);
-      }
-      @Override
-      public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-        // This can't reasonably be asked.
-        return null;
-      }
-      @Override
-      public long getClientOriginID() {
-        // This can't reasonably be asked.
-        return -1;
-      }
-    };
-    container.message = passthroughMessage.asSerializedBytes();
-    this.messageQueue.add(container);
-    this.notifyAll();
+    // It is possible that this happens when we have already been told to shut down so we want to drop it, in that case.
+    if (this.isRunning) {
+      // This can only be called on the active server.
+      Assert.assertTrue(null != this.activeEntities);
+      // We must be given a message.
+      Assert.assertTrue(null != passthroughMessage);
+      // This entry-point is only used in the cases where the message already exists.
+      Assert.assertTrue(null != newMessage);
+      // When handling re-sends, we are effectively paused so this shouldn't happen.
+      Assert.assertTrue(!this.isHandlingResends);
+      
+      // Defer the current message, blocking it on the new one.
+      this.retirementManager.deferCurrentMessage(newMessage);
+      PassthroughMessageContainer container = new PassthroughMessageContainer();
+      container.sender = new IMessageSenderWrapper() {
+        @Override
+        public void sendAck(PassthroughMessage ack) {
+          // Do nothing on ack.
+        }
+        @Override
+        public void sendComplete(PassthroughMessage complete) {
+          // Do nothing on complete.
+        }
+        @Override
+        public void sendRetire(PassthroughMessage retired) {
+          handleMessageRetirement(newMessage, null, retired);
+        }
+        @Override
+        public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
+          // This can't reasonably be asked.
+          return null;
+        }
+        @Override
+        public long getClientOriginID() {
+          // This can't reasonably be asked.
+          return -1;
+        }
+      };
+      container.message = passthroughMessage.asSerializedBytes();
+      this.messageQueue.add(container);
+      this.notifyAll();
+    } else {
+      System.err.println("WARNING:  Dropping internally-generated message since server is shutting down");
+    }
   }
 
   private void handleMessageRetirement(EntityMessage messageRun, PassthroughConnection sender, PassthroughMessage retired) {
@@ -575,7 +578,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     });
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void dump() {
     System.out.println("Existing entities:");
