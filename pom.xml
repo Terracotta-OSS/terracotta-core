@@ -41,8 +41,8 @@
     <tc-shader.version>1.2</tc-shader.version>
     <skip.deploy>false</skip.deploy>
 
-    <terracotta-apis.version>1.0.10.beta</terracotta-apis.version>
-    <terracotta-configuration.version>10.0.10.beta</terracotta-configuration.version>
+    <terracotta-apis.version>1.0.11.beta</terracotta-apis.version>
+    <terracotta-configuration.version>10.0.11.beta</terracotta-configuration.version>
   </properties>
 
   <modules>
