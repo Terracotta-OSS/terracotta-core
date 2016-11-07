@@ -330,7 +330,7 @@ public class ReplicatedTransactionHandlerTest {
   
   private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
     return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
-        source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency);
+        source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency, "");
   }
 
   private static abstract class NoStatsSink<T> implements Sink<T> {

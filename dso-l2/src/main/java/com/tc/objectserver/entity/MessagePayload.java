@@ -32,6 +32,7 @@ public class MessagePayload {
   private EntityMessage message;
   private final int concurrency;
   private final boolean replicate;
+  private String debugId;
   
   public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, true);
   
@@ -46,12 +47,21 @@ public class MessagePayload {
   private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate) {
     this.raw = raw;
     this.message = message;
+    this.debugId = (message != null) ? message.toString() : "";
     this.concurrency = concurrency;
     this.replicate = replicate;
   }
   
   public byte[] getRawPayload() {
     return raw;
+  }
+  
+  public void setDebugId(String debugId) {
+    this.debugId = debugId;
+  }
+  
+  public String getDebugId() {
+    return debugId;
   }
   
   public EntityMessage decodeRawMessage(MessageCodec codec) {
@@ -65,6 +75,7 @@ public class MessagePayload {
   public EntityMessage decodeMessage(MessageCodec codec) throws MessageCodecException {
     if (message == null) {
       message = codec.decodeMessage(raw);
+      setDebugId(message.toString());
     }
     return message;
   }

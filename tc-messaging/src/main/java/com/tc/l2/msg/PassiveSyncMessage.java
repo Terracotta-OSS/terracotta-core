@@ -79,7 +79,7 @@ public class PassiveSyncMessage extends ReplicationMessage {
     super(SYNC);
     initialize(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), 
         ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID,
-        type, payload, concurrency);
+        type, payload, concurrency, "");
   }
 
   @Override

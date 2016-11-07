@@ -95,6 +95,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 //  the only messages that are relevant before passive sync starts are create messages
       try {
         msg.setReplicationID(rOrder.getAndIncrement());
+        logger.debug("WIRE:" + msg);
         group.sendTo(nodeid, msg);
       }  catch (GroupException ge) {
         logger.info(msg, ge);

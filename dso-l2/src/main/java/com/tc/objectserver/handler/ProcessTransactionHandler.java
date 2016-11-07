@@ -92,11 +92,10 @@ public class ProcessTransactionHandler {
     @Override
     public void handleEvent(TCMessage context) throws EventHandlerException {
       invokeReturn.remove((ClientID)context.getDestinationNodeID(), context);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("sending " + context);
-      }
       Assert.assertTrue(context.send());
-      
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("sent " + context);
+      }      
     }
   };
   public AbstractEventHandler<TCMessage> getMultiResponseSender() {
