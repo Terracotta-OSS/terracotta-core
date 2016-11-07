@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,18 +28,23 @@ import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 
 
-public class PassthroughMessengerServiceProvider implements PassthroughImplementationProvidedServiceProvider {
+public class PassthroughMessengerServiceProvider implements PassthroughImplementationProvidedServiceProvider, Closeable {
+  private final PassthroughTimerThread timerThread;
   private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughConnection pseudoConnection;
   
   public PassthroughMessengerServiceProvider(PassthroughServerProcess passthroughServerProcess, PassthroughConnection connection) {
+    this.timerThread = new PassthroughTimerThread();
     this.passthroughServerProcess = passthroughServerProcess;
     this.pseudoConnection = connection;
+    
+    this.timerThread.setName("PassthroughTimerThread");
+    this.timerThread.start();
   }
 
   @Override
   public <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
-    return configuration.getServiceType().cast(new PassthroughMessengerService(this.passthroughServerProcess, this.pseudoConnection, container, entityClassName, entityName));
+    return configuration.getServiceType().cast(new PassthroughMessengerService(this.timerThread, this.passthroughServerProcess, this.pseudoConnection, container, entityClassName, entityName));
   }
 
   @Override
@@ -47,5 +54,16 @@ public class PassthroughMessengerServiceProvider implements PassthroughImplement
     Set<Class<?>> set = new HashSet<Class<?>>();
     set.add(IEntityMessenger.class);
     return set;
+  }
+
+  @Override
+  public void close() throws IOException {
+    this.timerThread.shutdown();
+    try {
+      this.timerThread.join();
+    } catch (InterruptedException e) {
+      // We don't expect interruptions on this thread.
+      Assert.unexpected(e);
+    }
   }
 }
