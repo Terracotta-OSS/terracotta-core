@@ -332,9 +332,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serverThread = null;
   }
 
-  public void shutdown() {
-    // Make sure that we have been stopped before being shut down.
-    Assert.assertTrue(null == this.serverThread);
+  public void shutdownServices() {
+    // We now stop the services BEFORE the server has actually stopped (this is largely to address the problem where the
+    //  background thread in PassthroughMessengerService might still be trying to enqueue events in a server which has
+    //  already stopped).
+    Assert.assertTrue(null != this.serverThread);
     
     // Finally, see if any of the ServiceProvider instances are Closeable.
     // NOTE:  This is a SPECIAL behavior exposed by the passthrough server to allow any "open state" (file descriptors,
