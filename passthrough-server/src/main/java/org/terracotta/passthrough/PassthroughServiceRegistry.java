@@ -41,7 +41,8 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   private final Map<Class<?>, PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   private final DeferredEntityContainer owningEntityContainer;
   
-  public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders, List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders, DeferredEntityContainer container) {
+  public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders,
+                                    List<ServiceProvider> overrideServiceProviders, List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders, DeferredEntityContainer container) {
     this.entityClassName = entityClassName;
     this.entityName = entityName;
     this.consumerID = consumerID;
@@ -50,7 +51,14 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     for(ServiceProvider provider : serviceProviders) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
         // We currently have no way of handling multiple providers.
-        Assert.assertTrue(null == tempProviders.get(serviceType));
+        ServiceProvider existingProviderForType = tempProviders.get(serviceType);
+        if (existingProviderForType != null && overrideServiceProviders.contains(provider)) {
+          // Since user provided override service providers are always last in the ordered list of service providers,
+          // this means that this is an user provided service that is allowed to override
+          tempProviders.remove(serviceType);
+        } else {
+          Assert.assertTrue(null == existingProviderForType);
+        }
         tempProviders.put(serviceType, provider);
       }
     }

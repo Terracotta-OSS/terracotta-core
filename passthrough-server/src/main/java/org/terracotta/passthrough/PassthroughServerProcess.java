@@ -47,7 +47,6 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ExecutionStrategy;
-import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.SyncMessageCodec;
@@ -68,7 +67,6 @@ import org.terracotta.passthrough.PassthroughEmulatedStorageServiceProvider.Regi
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
-import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
@@ -102,6 +100,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private Map<PassthroughEntityTuple, CreationData<?, ?>> passiveEntities;
   // The service providers offered by the user.
   private final List<ServiceProvider> serviceProviders;
+  // The override service providers offered by the user.
+  private final List<ServiceProvider> overrideServiceProviders;
   // The service providers offered by the server's implementation.
   private final List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   // Note that we will set the service provider collections into a read-only mode as we try to create a registry over them, to catch bugs.
@@ -134,6 +134,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<?, ?>>());
     this.serviceProviders = new Vector<ServiceProvider>();
+    this.overrideServiceProviders = new Vector<ServiceProvider>();
     this.implementationProvidedServiceProviders = new Vector<PassthroughImplementationProvidedServiceProvider>();
     // Consumer IDs start at 0 since that is the one the platform gives itself.
     this.nextConsumerID = 0;
@@ -166,7 +167,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     PassthroughEmulatedStorageServiceProvider.Configuration legacyConfig = new PassthroughEmulatedStorageServiceProvider.Configuration(new RegistryLookup() {
       @Override
       public PassthroughServiceRegistry getRegistryForConsumerID(long consumerID) {
-        return new PassthroughServiceRegistry(null, null, consumerID, PassthroughServerProcess.this.serviceProviders, PassthroughServerProcess.this.implementationProvidedServiceProviders, null);
+        return new PassthroughServiceRegistry(null, null, consumerID, PassthroughServerProcess.this.serviceProviders, PassthroughServerProcess.this.overrideServiceProviders, PassthroughServerProcess.this.implementationProvidedServiceProviders, null);
       }});
     legacyProvider.initialize(legacyConfig, new PassthroughPlatformConfiguration(this.serverName));
     this.serviceProviders.add(legacyProvider);
@@ -198,7 +199,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       DeferredEntityContainer container = new DeferredEntityContainer();
       EntityData entityData = this.persistedEntitiesByConsumerIDMap.get(consumerID);
       // Create the registry for the entity.
-      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
+      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
       // Construct the entity.
       EntityServerService<?, ?> service = null;
       try {
@@ -882,6 +883,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serviceProviders.add(serviceProvider);
   }
 
+  public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    registerServiceProvider(serviceProvider, providerConfiguration);
+    this.overrideServiceProviders.add(serviceProvider);
+  }
+
   public synchronized void addDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
     // Make sure that we are active and they are passive.
     Assert.assertTrue(null != this.activeEntities);
@@ -1027,7 +1033,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
    */
   public PassthroughServiceRegistry createServiceRegistryForInternalConsumer(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
     this.serviceProvidersReadOnly = true;
-    return new PassthroughServiceRegistry(entityClassName, entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
+    return new PassthroughServiceRegistry(entityClassName, entityName, consumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
   }
 
   public PlatformServer getServerInfo() {
@@ -1038,7 +1044,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
     this.serviceProvidersReadOnly = true;
-    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
+    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
   }
 
   private EntityServerService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
