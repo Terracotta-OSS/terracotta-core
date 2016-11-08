@@ -77,7 +77,6 @@ import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMembershipEventsHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
-import com.tc.object.locks.ClientLockManager;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
@@ -148,7 +147,6 @@ public class DistributedObjectClient implements TCClient {
   private final ProductID                            productId;
 
   private ClientMessageChannel                       channel;
-  private ClientLockManager                          lockManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
 
@@ -373,7 +371,7 @@ public class DistributedObjectClient implements TCClient {
 
     this.shutdownManager = new ClientShutdownManager(this, connectionComponents);
 
-    final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager, this.lockManager,
+    final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager,
                                                                          this.clientEntityManager,
                                                                          this.clientHandshakeManager);
     // DO NOT create any stages after this call
@@ -551,16 +549,6 @@ public class DistributedObjectClient implements TCClient {
         logger.error("Error stopping memory manager", t);
       } finally {
         this.tcMemManager = null;
-      }
-    }
-
-    if (this.lockManager != null) {
-      try {
-        this.lockManager.shutdown(false);
-      } catch (final Throwable t) {
-        logger.error("Error stopping lock manager", t);
-      } finally {
-        this.lockManager = null;
       }
     }
 

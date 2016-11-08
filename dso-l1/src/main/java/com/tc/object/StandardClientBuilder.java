@@ -20,7 +20,6 @@ package com.tc.object;
 
 import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
-import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -42,21 +41,16 @@ import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.util.concurrent.TaskRunner;
-import com.tc.util.runtime.ThreadIDManager;
 import com.tcclient.cluster.ClusterInternalEventsGun;
 
 import java.util.Map;
 
-public class StandardClientBuilder implements ClientBuilder {
 
+public class StandardClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          PreparedComponentsFromL2Connection connComp,
@@ -84,16 +78,6 @@ public class StandardClientBuilder implements ClientBuilder {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
                                          connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
                                          reconnectionRejectedHandler, securityManager, productId);
-  }
-
-  @Override
-  public ClientLockManager createLockManager(ClientMessageChannel channel, ClientIDLogger clientIDLogger,
-                                             SessionManager sessionManager,
-                                             LockRequestMessageFactory lockRequestMessageFactory,
-                                             ThreadIDManager threadManager,
-                                             ClientLockManagerConfig config,
-                                             TaskRunner taskRunner) {
-    return null;
   }
 
   @Override
