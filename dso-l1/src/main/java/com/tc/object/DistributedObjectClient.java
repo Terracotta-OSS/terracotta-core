@@ -107,9 +107,7 @@ import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tcclient.cluster.ClusterInternal;
@@ -161,8 +159,6 @@ public class DistributedObjectClient implements TCClient {
   private final String                                 uuid;
   private final String                               name;
 
-  private final TaskRunner                           taskRunner;
-
   private ClientShutdownManager                      shutdownManager;
 
   private final Thread                               shutdownAction;
@@ -194,7 +190,6 @@ public class DistributedObjectClient implements TCClient {
     this.clientBuilder = createClientBuilder();
     this.uuid = uuid;
     this.name = name;
-    this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(threadGroup);
     this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
     Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     
@@ -576,11 +571,6 @@ public class DistributedObjectClient implements TCClient {
       } finally {
         this.communicationsManager = null;
       }
-    }
-
-    if (taskRunner != null) {
-      logger.info("Shutting down TaskRunner");
-      taskRunner.shutdown();
     }
 
     CommonShutDownHook.shutdown();
