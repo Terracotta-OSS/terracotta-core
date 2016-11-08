@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.terracotta.connection;
 
 import org.terracotta.connection.Connection;
@@ -28,7 +27,6 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
-import com.tc.object.locks.ClientLockManager;
 import com.terracotta.connection.entity.TerracottaEntityRef;
 
 import java.util.concurrent.ConcurrentHashMap;

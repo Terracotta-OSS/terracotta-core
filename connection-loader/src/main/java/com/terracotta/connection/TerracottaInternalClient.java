@@ -20,7 +20,6 @@ package com.terracotta.connection;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.ClientEntityManager;
-import com.tc.object.locks.ClientLockManager;
 import java.util.concurrent.TimeoutException;
 
 
