@@ -91,11 +91,15 @@ public class ProcessTransactionHandler {
   private final AbstractEventHandler<TCMessage> multiSender = new AbstractEventHandler<TCMessage>() {
     @Override
     public void handleEvent(TCMessage context) throws EventHandlerException {
-      invokeReturn.remove((ClientID)context.getDestinationNodeID(), context);
-      Assert.assertTrue(context.send());
-      if (LOGGER.isDebugEnabled()) {
+      NodeID destinationID = context.getDestinationNodeID();
+      invokeReturn.remove((ClientID)destinationID, context);
+      boolean didSend = context.send();
+      if (!didSend) {
+        // It is possible for this send to fail.  Typically, it means that the client has disconnected.
+        LOGGER.warn("Failed to send message to: " + destinationID);
+      } else if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("sent " + context);
-      }      
+      }
     }
   };
   public AbstractEventHandler<TCMessage> getMultiResponseSender() {
