@@ -39,8 +39,9 @@ public interface IGalvanStateInterlock {
    *  running, as it will drop them when they terminate.
    * 
    * @param runningClient The running client to register.
+   * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public void registerRunningClient(ClientRunner runningClient);
+  public void registerRunningClient(ClientRunner runningClient) throws GalvanFailureException;
 
   // ----- WAITING-----
   /**

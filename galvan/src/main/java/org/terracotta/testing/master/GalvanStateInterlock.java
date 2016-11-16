@@ -65,20 +65,23 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void registerNewServer(ServerProcess newServer) {
     synchronized (this.sharedLockState) {
+      this.logger.output("registerNewServer: " + newServer);
       // No new registration during shutdown.
       Assert.assertFalse(this.isShuttingDown);
-      this.logger.output("registerNewServer: " + newServer);
       Assert.assertFalse(this.terminatedServers.contains(newServer));
       this.terminatedServers.add(newServer);
     }
   }
 
   @Override
-  public void registerRunningClient(ClientRunner runningClient) {
+  public void registerRunningClient(ClientRunner runningClient) throws GalvanFailureException {
     synchronized (this.sharedLockState) {
-      // No new registration during shutdown.
-      Assert.assertFalse(this.isShuttingDown);
       this.logger.output("registerRunningClient: " + runningClient);
+      // No new registration during shutdown.
+      if (this.isShuttingDown) {
+        throw new GalvanFailureException("Failed to register new client when already shutting down");
+      }
+      Assert.assertFalse(this.isShuttingDown);
       Assert.assertFalse(this.runningClients.contains(runningClient));
       this.runningClients.add(runningClient);
     }
