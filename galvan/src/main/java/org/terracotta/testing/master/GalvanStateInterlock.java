@@ -135,6 +135,17 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   }
 
   @Override
+  public void waitForAllServerRunning() throws GalvanFailureException {
+    synchronized (this.sharedLockState) {
+      this.logger.output("> waitForAllServerRunning");
+      while (!this.sharedLockState.checkDidPass() && (!this.terminatedServers.isEmpty() || !this.zappedServers.isEmpty())) {
+        safeWait();
+      }
+      this.logger.output("< waitForAllServerRunning");
+    }
+  }
+
+  @Override
   public void waitForAllServerReady() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForAllServerReady");
