@@ -27,10 +27,22 @@ package org.terracotta.testing.master;
 public interface IMultiProcessControl {
   public void synchronizeClient() throws GalvanFailureException;
 
+  /**
+   * Terminates the active server, waiting for it to shut down.
+   * 
+   * @throws IllegalStateException There is no active server.
+   * @throws GalvanFailureException The test has failed.
+   */
   public void terminateActive() throws GalvanFailureException;
 
   public void terminateOnePassive() throws GalvanFailureException;
 
+  /**
+   * Starts one terminated server, waiting for it to start.
+   * 
+   * @throws IllegalStateException There are no terminated servers.
+   * @throws GalvanFailureException The test has failed.
+   */
   public void startOneServer() throws GalvanFailureException;
 
   public void startAllServers() throws GalvanFailureException;
