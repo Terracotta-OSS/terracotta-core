@@ -73,7 +73,7 @@ public class StripeInstaller {
     }
   }
   
-  public void startServers(SynchronousProcessControl control) {
+  public void startServers() {
     Assert.assertFalse(this.isBuilt);
     for (ServerInstallation installation : this.installedServers) {
       // Note that starting the process will put it into the interlock and the server will notify it of state changes.

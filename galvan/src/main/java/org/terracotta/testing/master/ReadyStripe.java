@@ -55,9 +55,9 @@ public class ReadyStripe {
     
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
-    SynchronousProcessControl processControl = new SynchronousProcessControl(interlock, processControlLogger);
     // Register the stripe into it and start up the server in the stripe.
-    installer.startServers(processControl);
+    installer.startServers();
+    SynchronousProcessControl processControl = new SynchronousProcessControl(interlock, processControlLogger);
     String connectUri = configBuilder.buildUri();
     ClusterInfo clusterInfo = configBuilder.getClusterInfo();
     return new ReadyStripe(processControl, connectUri, clusterInfo, configText);
