@@ -280,6 +280,7 @@ public class ServerProcess {
   private synchronized void didTerminateWithStatus(int exitStatus) {
     // See if we have a PID yet or if this was a failure, much earlier (hence, if we told the interlock that we are even running).
     GalvanFailureException failureException = null;
+    long originalPid = this.pid;
     if (this.pid > 0) {
       // Ok, tell the interlock.
       this.pid = 0;
@@ -289,7 +290,7 @@ public class ServerProcess {
       failureException = new GalvanFailureException("Server crashed before reporting PID: " + this);
     }
     if (!this.isCrashExpected && (null == failureException)) {
-      failureException = new GalvanFailureException("Unexpected server crash: " + this);
+      failureException = new GalvanFailureException("Unexpected server crash: " + this + " (PID " + originalPid + ") status: " + exitStatus);
     }
     
     if (null != failureException) {
@@ -323,7 +324,7 @@ public class ServerProcess {
     // Can't stop something unless we determined the PID.
     Assert.assertTrue(this.pid > 0);
     // Log the intent.
-    this.harnessLogger.output("Crashing server process: " + this);
+    this.harnessLogger.output("Crashing server process: " + this + " (PID " + this.pid + ")");
     // Mark this as expected.
     this.isCrashExpected = true;
     // Destroy the process.
