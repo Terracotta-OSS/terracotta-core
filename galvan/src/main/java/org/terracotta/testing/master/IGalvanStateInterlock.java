@@ -39,8 +39,9 @@ public interface IGalvanStateInterlock {
    *  running, as it will drop them when they terminate.
    * 
    * @param runningClient The running client to register.
+   * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public void registerRunningClient(ClientRunner runningClient);
+  public void registerRunningClient(ClientRunner runningClient) throws GalvanFailureException;
 
   // ----- WAITING-----
   /**
@@ -69,6 +70,13 @@ public interface IGalvanStateInterlock {
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
   public void waitForServerTermination(ServerProcess terminatedServer) throws GalvanFailureException;
+  /**
+   * Waits until all running servers, known to the interlock, have at least reported that they are running.
+   * This will block until there are no more terminated or zapped servers.
+   * 
+   * @throws GalvanFailureException The test failure description, if it already failed.
+   */
+  public void waitForAllServerRunning() throws GalvanFailureException;
   /**
    * Waits until all running servers, known to the interlock, have entered a known (active or passive) state.
    * 

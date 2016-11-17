@@ -92,30 +92,7 @@ public class ClientSubProcessManager extends Thread {
     boolean destroyWasClean = true;
     String errorMessage = null;
     if (setupWasClean) {
-      ClientRunner[] concurrentTests = installTestClients(this.testClientDebugPortStart, this.clientsToCreate, clientInstaller);
-      
-      // Create a listener.
-      ClientListener listener = new ClientListener(this.stateInterlock, this.stateManager);
-      // Start them.
-      for (ClientRunner oneClient : concurrentTests) {
-        oneClient.setListener(listener);
-        try {
-          oneClient.openStandardLogFiles();
-        } catch (IOException e) {
-          // We don't expect this here.
-          Assert.unexpected(e);
-        }
-        this.stateInterlock.registerRunningClient(oneClient);
-        oneClient.start();
-      }
-      // Now, wait for them to finish.
-      try {
-        this.stateInterlock.waitForClientTermination();
-      } catch (Exception e) {
-        didRunCleanly = false;
-      }
-      
-      shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
+      didRunCleanly = runTestClients(clientInstaller);
       if (didRunCleanly) {
         // Run the destroy client, synchronously.
         List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, this.clientsToCreate);
@@ -136,6 +113,43 @@ public class ClientSubProcessManager extends Thread {
       harnessLogger.error(errorMessage);
       this.stateManager.testDidFail(new GalvanFailureException(errorMessage));
     }
+  }
+
+  private boolean runTestClients(ClientInstaller clientInstaller) {
+    ClientRunner[] concurrentTests = installTestClients(this.testClientDebugPortStart, this.clientsToCreate, clientInstaller);
+    
+    // Create a listener.
+    ClientListener listener = new ClientListener(this.stateInterlock, this.stateManager);
+    // Start them.
+    boolean didRegisterAndStart = true;
+    for (ClientRunner oneClient : concurrentTests) {
+      oneClient.setListener(listener);
+      try {
+        oneClient.openStandardLogFiles();
+      } catch (IOException e) {
+        // We don't expect this here.
+        Assert.unexpected(e);
+      }
+      try {
+        this.stateInterlock.registerRunningClient(oneClient);
+        oneClient.start();
+      } catch (GalvanFailureException e) {
+        // It is possible to end up here if the test failed before we even got to the point of starting clients.
+        didRegisterAndStart = false;
+      }
+    }
+    // Now, wait for them to finish.
+    boolean didTerminateWithoutError = false;
+    try {
+      this.stateInterlock.waitForClientTermination();
+      didTerminateWithoutError = true;
+    } catch (Exception e) {
+      didTerminateWithoutError = false;
+    }
+    
+    boolean didRunCleanly = didRegisterAndStart && didTerminateWithoutError;
+    shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
+    return didRunCleanly;
   }
 
   private void shutDownAndCleanUpClients(boolean shouldForceTerminate, ClientRunner[] concurrentTests) {
@@ -189,8 +203,14 @@ public class ClientSubProcessManager extends Thread {
   private boolean runClientSynchronous(ClientRunner client) throws InterruptedException {
     ClientListener listener = new ClientListener(this.stateInterlock, this.stateManager);
     client.setListener(listener);
-    this.stateInterlock.registerRunningClient(client);
-    client.start();
+    boolean didRegisterAndStart = false;
+    try {
+      this.stateInterlock.registerRunningClient(client);
+      client.start();
+      didRegisterAndStart = true;
+    } catch (GalvanFailureException e) {
+      didRegisterAndStart = false;
+    }
     boolean didFailEarly = false;
     try {
       this.stateInterlock.waitForClientTermination();
@@ -198,7 +218,7 @@ public class ClientSubProcessManager extends Thread {
       didFailEarly = true;
     }
     client.join();
-    return !didFailEarly;
+    return didRegisterAndStart && !didFailEarly;
   }
 
   private ClientRunner[] installTestClients(int testClientDebugPortStart, int clientsToCreate, ClientInstaller clientInstaller) {

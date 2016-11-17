@@ -53,7 +53,9 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     // Get the active and stop it.
     ServerProcess active = this.stateInterlock.getActiveServer();
     // We expect that the test knows there is an active (might change in the future).
-    Assert.assertNotNull(active);
+    if (null == active) {
+      throw new IllegalStateException("No server in active state");
+    }
     safeStop(active);
     
     // Wait until the server has gone down.
@@ -83,7 +85,9 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   public synchronized void startOneServer() throws GalvanFailureException {
     this.logger.output(">>> startOneServer");
     ServerProcess server = this.stateInterlock.getOneTerminatedServer();
-    Assert.assertNotNull(server);
+    if (null == server) {
+      throw new IllegalStateException("Tried to start one server when none are terminated");
+    }
     safeStart(server);
     
     // Wait for it to start up (otherwise, later calls to wait for the servers to become ready may not know that
