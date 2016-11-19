@@ -700,8 +700,19 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry, consumerID);
     container.entity = newEntity;
     container.codec = service.getMessageCodec();
+    
+    // Store the tuple for this entity, so it can see itself via monitoring.
+    if (null != this.serviceInterface) {
+      // Record this new entity.
+      boolean isActive = (null != this.activeEntities);
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
+      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
+    }
+    
     // Tell the entity to create itself as something new.
     newEntity.createNew();
+    
     // If we have a persistence layer, record this.
     EntityData data = new EntityData();
     data.className = entityClassName;
@@ -713,14 +724,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.platformPersistence.storeDataElement(ENTITIES_FILE_NAME, this.persistedEntitiesByConsumerIDMap);
     } catch (IOException e) {
       Assert.unexpected(e);
-    }
-    
-    if (null != this.serviceInterface) {
-      // Record this new entity.
-      boolean isActive = (null != this.activeEntities);
-      PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
-      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
   }
   
@@ -909,6 +912,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     Assert.assertTrue(null != this.activeEntities);
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassives.add(serverProcess);
+    // Set our state synchronizing.
     serverProcess.setStateSynchronizing(this.serviceInterface);
     // Synchronize any entities we have.
     // NOTE:  This synchronization implementation is relatively simplistic and we may require a more substantial
@@ -943,6 +947,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       wrapper = new PassthroughInterserverInterlock(null);
       serverProcess.sendMessageToServerFromActive(wrapper, entityEnd.asSerializedBytes());
       wrapper.waitForComplete();
+    }
+    // Restore our state to active.
+    if (null != this.serviceInterface) {
+      long timestamp = System.currentTimeMillis();
+      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_ACTIVE, timestamp, timestamp));
     }
   }
 
