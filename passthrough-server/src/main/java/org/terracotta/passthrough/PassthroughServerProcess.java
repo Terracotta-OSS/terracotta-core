@@ -700,8 +700,19 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     CommonServerEntity<?, ?> newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry, consumerID);
     container.entity = newEntity;
     container.codec = service.getMessageCodec();
+    
+    // Store the tuple for this entity, so it can see itself via monitoring.
+    if (null != this.serviceInterface) {
+      // Record this new entity.
+      boolean isActive = (null != this.activeEntities);
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
+      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
+    }
+    
     // Tell the entity to create itself as something new.
     newEntity.createNew();
+    
     // If we have a persistence layer, record this.
     EntityData data = new EntityData();
     data.className = entityClassName;
@@ -713,14 +724,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.platformPersistence.storeDataElement(ENTITIES_FILE_NAME, this.persistedEntitiesByConsumerIDMap);
     } catch (IOException e) {
       Assert.unexpected(e);
-    }
-    
-    if (null != this.serviceInterface) {
-      // Record this new entity.
-      boolean isActive = (null != this.activeEntities);
-      PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
-      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
-      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
   }
   
