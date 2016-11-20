@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.exception.EntityReferencedException;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -69,7 +70,9 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 import java.util.function.Consumer;
 import java.util.concurrent.TimeUnit;
+import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ExecutionStrategy;
+import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.PermanentEntityException;
 
 
@@ -144,8 +147,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     return version;
   }
     
-  private ResultCapture createManagedEntityResponse(Consumer<byte[]> completion, Consumer<EntityException> exception) {
-    return new ResultCapture(completion, exception);
+  private ResultCapture createManagedEntityResponse(Consumer<byte[]> completion, Consumer<EntityException> exception, boolean lifecycle) {
+    return new ResultCapture(completion, exception, lifecycle);
   }
 /**
  * This is the main entry point for interaction with the managed entity.  A request consists of a defining action, a 
@@ -160,9 +163,10 @@ public class ManagedEntityImpl implements ManagedEntity {
  */
   @Override
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception) {
-    ResultCapture resp = createManagedEntityResponse(completion, exception);
+    ResultCapture resp;
     switch (request.getAction()) {
       case NOOP:
+        resp = createManagedEntityResponse(completion, exception, false);
         processNoopMessage(request, resp);
         break;
       case CREATE_ENTITY:
@@ -170,9 +174,11 @@ public class ManagedEntityImpl implements ManagedEntity {
       case FETCH_ENTITY:
       case RECONFIGURE_ENTITY:
       case RELEASE_ENTITY:
+        resp = createManagedEntityResponse(completion, exception, true);
         processLifecycleEntity(request, data, resp);
         break;
       case INVOKE_ACTION:
+        resp = createManagedEntityResponse(completion, exception, false);
         processInvokeRequest(request, resp, data, data.getConcurrency());
         break;
       case RECEIVE_SYNC_ENTITY_START:
@@ -181,6 +187,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       case RECEIVE_SYNC_ENTITY_KEY_END:
       case RECEIVE_SYNC_PAYLOAD:
         Assert.assertTrue(!this.isInActiveState);
+        resp = createManagedEntityResponse(completion, exception, false);
         processSyncMessage(request, resp, data, data.getConcurrency());
         break;
       default:
@@ -347,6 +354,13 @@ public class ManagedEntityImpl implements ManagedEntity {
         default:
           throw new IllegalArgumentException("Unknown request " + request);
       }
+    } catch (ConfigurationException ce) {
+      // Wrap this exception.
+      EntityConfigurationException wrapper = new EntityConfigurationException(id.getClassName(), id.getEntityName(), ce);
+      logger.error("configuration error during a lifecyle operation ", wrapper);
+      resp.failure(wrapper);
+    } catch (TCShutdownServerException shutdown) {
+      throw shutdown;
     } catch (Exception e) {
       // Wrap this exception.
       EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
@@ -412,7 +426,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     Assert.assertNull(this.passiveServerEntity);
 //  going to start by building the passive instance
-    createEntity(response, constructor);
+    try {
+      createEntity(response, constructor);
+    } catch (ConfigurationException ce) {
+      throw new TCShutdownServerException("unable to create entity on passive sync " + this.id);
+    }
 //  it better be a passive instance
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncEntity();
@@ -499,7 +517,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
 
-  private void reconfigureEntity(ResultCapture reconfigureEntityRequest, byte[] constructorInfo) {
+  private void reconfigureEntity(ResultCapture reconfigureEntityRequest, byte[] constructorInfo) throws ConfigurationException {
     byte[] oldconfig = this.constructorInfo;
     if (this.isDestroyed || (this.activeServerEntity == null && this.passiveServerEntity == null)) {
       reconfigureEntityRequest.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
@@ -530,7 +548,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
   
-  private void createEntity(ResultCapture response, byte[] constructorInfo) {
+  private void createEntity(ResultCapture response, byte[] constructorInfo) throws ConfigurationException {
     if (!this.isDestroyed && (this.activeServerEntity != null || this.passiveServerEntity != null)) {
       response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
 //  failed to create, destroyed
@@ -653,7 +671,11 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void loadEntity(byte[] configuration) {
-    this.loadExisting(configuration);
+    try {
+      this.loadExisting(configuration);
+    } catch (ConfigurationException ce) {
+      throw new TCShutdownServerException("unable to create entity on passive sync " + this.id);
+    }
   }
 
   private void getEntity(ServerEntityRequest getEntityRequest, ResultCapture response) {
@@ -708,7 +730,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   @Override
-  public void promoteEntity() {
+  public void promoteEntity() throws ConfigurationException {
     // Can't enter active state twice.
     Assert.assertFalse(this.isInActiveState);
     Assert.assertNull(this.activeServerEntity);
@@ -753,7 +775,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           // We don't actually use the message in the direct strategy so this is safe.
           //  don't care about the result
           BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.EMPTY,  () -> {invoke(req, new ResultCapture(null, null), MessagePayload.EMPTY, concurrency);sectionComplete.complete();}, true, concurrency).waitForCompleted();
+          this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.EMPTY,  () -> {invoke(req, new ResultCapture(null, null, false), MessagePayload.EMPTY, concurrency);sectionComplete.complete();}, true, concurrency).waitForCompleted();
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
@@ -805,7 +827,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     reconfiguringInflight.finishOperation();
   }
 
-  private void loadExisting(byte[] constructorInfo) {
+  private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     this.constructorInfo = constructorInfo;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
@@ -920,12 +942,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     
-    public synchronized void waitForPassives() {
+    private synchronized ActivePassiveAckWaiter waitForPassives() {
       try {
         while (waitFor == null) {
           this.wait();
         }
         waitFor.waitForCompleted();
+        return waitFor;
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
@@ -1021,10 +1044,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final Consumer<EntityException> error;
     private SchedulingRunnable setOnce;
     private boolean done = false;
+    private final boolean lifecycle;
 
-    public ResultCapture(Consumer<byte[]> result, Consumer<EntityException> error) {
+    public ResultCapture(Consumer<byte[]> result, Consumer<EntityException> error, boolean lifecycle) {
       this.result = result;
       this.error = error;
+      this.lifecycle = lifecycle;
     }
     
     public void setWaitFor(SchedulingRunnable waitFor) {
@@ -1059,7 +1084,10 @@ public class ManagedEntityImpl implements ManagedEntity {
     public void complete() {
       if (result != null) {
         if (setOnce != null) {
-          setOnce.waitForPassives();
+          ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
+          if (lifecycle) {
+            waiter.verifyLifecycleResult(true);
+          }
         }
         result.accept(null);
       }
@@ -1079,7 +1107,10 @@ public class ManagedEntityImpl implements ManagedEntity {
     public void failure(EntityException ee) {
       if (error != null) {
         if (setOnce != null) {
-          setOnce.waitForPassives();
+          ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
+          if (lifecycle) {
+            waiter.verifyLifecycleResult(false);
+          }
         }
         error.accept(ee);
       }

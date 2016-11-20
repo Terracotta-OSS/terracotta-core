@@ -33,7 +33,9 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   public static final int RECEIVED                = 2; // Means that the replicated action has been received by the passive
   public static final int COMPLETED                = 3; // response that the replicated action completed
   public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
-
+  
+  public ReplicationResultCode result = ReplicationResultCode.NONE;
+  
   // Factory methods.
   public static ReplicationMessageAck createSyncRequestMessage() {
     return new ReplicationMessageAck(START_SYNC);
@@ -47,7 +49,10 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
     return new ReplicationMessageAck(COMPLETED, requestToAck);
   }
 
-
+  public static ReplicationMessageAck createCompletedAck(MessageID requestToAck, ReplicationResultCode payload) {
+    return new ReplicationMessageAck(COMPLETED, requestToAck, payload);
+  }
+  
   public ReplicationMessageAck() {
     super(INVALID);
   }
@@ -60,14 +65,19 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   private ReplicationMessageAck(int type, MessageID requestID) {
     super(type, requestID);
   }
-
+  
+  private ReplicationMessageAck(int type, MessageID requestID, ReplicationResultCode code) {
+    super(type, requestID);
+    result = code;
+  }
+  
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    // Do nothing - no instance variables.
+    result = ReplicationResultCode.decode(in.read());
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    // Do nothing - no instance variables.
+    out.write(result.code());
   }
 }
