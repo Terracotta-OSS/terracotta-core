@@ -248,6 +248,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import java.lang.management.ManagementFactory;
 import java.util.Map;
+import org.terracotta.config.TcConfiguration;
 
 
 /**
@@ -430,8 +431,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
 
     // Set up the ServiceRegistry.
-    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier());
-    serviceRegistry.initialize(platformConfiguration, this.configSetupManager.commonl2Config().getBean(), Thread.currentThread().getContextClassLoader());
+    TcConfiguration base = this.configSetupManager.commonl2Config().getBean();
+    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier(), base);
+    serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(this.timer);

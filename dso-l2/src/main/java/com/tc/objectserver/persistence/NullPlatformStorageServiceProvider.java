@@ -41,7 +41,7 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider, Stat
     }
 
     @Override
-    public void clear() throws ServiceProviderCleanupException {
+    public void prepareForSynchronization() throws ServiceProviderCleanupException {
         providers.clear();
     }
 

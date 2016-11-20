@@ -22,7 +22,7 @@
         xmlns="http://www.terracotta.org/config"
         xsi:schemaLocation="http://www.terracotta.org/config terracotta.xsd
                         http://www.terracotta.org/config/storage ../../main/resources/storage.xsd">
-    <services>
+    <plugins>
         <service>
             <storage:storage>
                 <storage:offheap>
@@ -34,6 +34,6 @@
                 <storage:restartable enabled="false"/>
             </storage:storage>
         </service>
-    </services>
+    </plugins>
 </tc-config>
 

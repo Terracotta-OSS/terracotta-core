@@ -807,7 +807,6 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void loadExisting(byte[] constructorInfo) {
     this.constructorInfo = constructorInfo;
-    CommonServerEntity<EntityMessage, EntityResponse> entityToLoad = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
@@ -816,8 +815,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity = factory.createActiveEntity(registry, constructorInfo);
         this.concurrencyStrategy = factory.getConcurrencyStrategy(constructorInfo);
         this.executionStrategy = factory.getExecutionStrategy(constructorInfo);
-        
-        entityToLoad = this.activeServerEntity;
+//  only active entities have load existing.  passive entities that have persistent state will either transition to active
+//  or be zapped
+        this.activeServerEntity.loadExisting();
+// Fire the event that the entity was reloaded.  This should only happen on active entities.  Passives with either transition to active soon or be destroyed
+        this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
       }
     } else {
       if (null != this.passiveServerEntity) {
@@ -825,14 +827,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       } else {
         this.passiveServerEntity = factory.createPassiveEntity(registry, constructorInfo);
         Assert.assertNull(this.concurrencyStrategy);
-        // Store the configuration in case we promote.
-        entityToLoad = this.passiveServerEntity;
       }
     }
     this.isDestroyed = false;
-    entityToLoad.loadExisting();
-    // Fire the event that the entity was reloaded.
-    this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
 
   private static class PassiveSyncServerEntityRequest implements ServerEntityRequest {
