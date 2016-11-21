@@ -19,19 +19,10 @@ package org.terracotta.testing.master;
 /**
  * This interface allows read-only interaction with the test state.
  * 
- * This interface is used by both external consumers waiting on the test completion but also used by other parts of
- *  the state interlock mechanism in order to check if the pass/fail state has been set, yet.
+ * This is used by GalvanStateInterlock, during its wait loops, to allow any waiting call to break out if the test has
+ *  already passed or failed before the wait started.
  */
 public interface ITestWaiter {
-  /**
-   * Waits until the test completes, as either a pass or a fail, blocking the calling thread.
-   * 
-   * Returns after the run, throwing an exception on failure.
-   * 
-   * @throws GalvanFailureException A description of the failure, if the test has failed
-   */
-  public void waitForFinish() throws GalvanFailureException;
-
   /**
    * Like waitForFinish() but it returns immediately:  true if we passed, false if still running, and throws on
    *  failure.

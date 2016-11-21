@@ -61,10 +61,6 @@ public class GalvanStateInterlockTest {
 
   private static class TestWaiter implements ITestWaiter {
     @Override
-    public void waitForFinish() throws GalvanFailureException {
-      // Do nothing.
-    }
-    @Override
     public boolean checkDidPass() throws GalvanFailureException {
       // We currently don't explicitly set the pass state so always return false.
       return false;
