@@ -25,7 +25,6 @@ public class TestStateManager implements ITestWaiter, ITestStateManager {
   private GalvanFailureException testFailureException;
 
 
-  @Override
   public synchronized void waitForFinish() throws GalvanFailureException {
     while (!this.testDidPass && (null == this.testFailureException)) {
       try {

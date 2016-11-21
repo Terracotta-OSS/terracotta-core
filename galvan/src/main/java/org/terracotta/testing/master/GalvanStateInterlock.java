@@ -273,7 +273,22 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void serverWasZapped(ServerProcess server) {
     synchronized (this.sharedLockState) {
       this.logger.output("serverWasZapped: " + server);
+      // Note that a server can be zapped at pretty well any point.
+      // Normally, this happens only when the server isn't yet in a known state (unknownRunningServers) but network
+      //  interruptions can cause this to happen at other point, once the partition is healed.  A passive can be zapped
+      //  because it is out of sync with its active.  An active can be zapped due to a split-brain.
       boolean didRemove = this.unknownRunningServers.remove(server);
+      if (!didRemove) {
+        // Try the passives.
+        didRemove = this.passiveServers.remove(server);
+      }
+      if (!didRemove) {
+        // Try the active.
+        if (this.activeServer == server) {
+          this.activeServer = null;
+          didRemove = true;
+        }
+      }
       localAssert(didRemove, server);
       this.zappedServers.add(server);
       this.sharedLockState.notifyAll();
