@@ -126,7 +126,9 @@ public class BasicExternalCluster extends Cluster {
     VerboseManager verboseManager = new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
     VerboseManager displayVerboseManager = verboseManager.createComponentManager("[" + displayName + "]");
     
-    File serverInstallDirectory = new File(System.getProperty("kitInstallationPath"));
+    String kitInstallationPath = System.getProperty("kitInstallationPath");
+    harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
+    File serverInstallDirectory = new File(kitInstallationPath);
     File testParentDirectory = File.createTempFile(displayName, "", clusterDirectory);
     testParentDirectory.delete();
     testParentDirectory.mkdir();
