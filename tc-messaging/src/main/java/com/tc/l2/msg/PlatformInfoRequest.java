@@ -55,6 +55,10 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     return new PlatformInfoRequest(RESPONSE_INFO, -1, null, null, null, serverInfo);
   }
 
+  public static PlatformInfoRequest createBestEfforts(long consumerID, String key, Serializable value) {
+    return new PlatformInfoRequest(BEST_EFFORTS, consumerID, null, key, value, null);
+  }
+
 
 //  message types  
   public static final int ERROR               = 0;
@@ -62,6 +66,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   public static final int RESPONSE_INFO               = 2;
   public static final int RESPONSE_ADD               = 3;
   public static final int RESPONSE_REMOVE               = 4;
+  public static final int BEST_EFFORTS               = 5;
   
   // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
   private long changeConsumerID;
@@ -135,6 +140,20 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
       this.nodeName = in.readString();
       break;
     }
+    case BEST_EFFORTS: {
+      // Just the consumerID, name, and value.
+      this.changeConsumerID = in.readLong();
+      this.nodeName = in.readString();
+      int valueSize = in.readInt();
+      if (valueSize > 0) {
+        byte[] valueArray = new byte[valueSize];
+        in.readFully(valueArray);
+        this.nodeValue = deserialize(valueArray);
+      } else {
+        this.nodeValue = null;
+      }
+      break;
+    }
     default:
       Assert.fail();
     }
@@ -178,6 +197,19 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
         out.writeString(this.nodeParents[i]);
       }
       out.writeString(this.nodeName);
+      break;
+    }
+    case BEST_EFFORTS: {
+      // Just the consumerID, name, and value.
+      out.writeLong(this.changeConsumerID);
+      out.writeString(this.nodeName);
+      if (null != this.nodeValue) {
+        byte[] serializedValue = serialize(this.nodeValue);
+        out.writeInt(serializedValue.length);
+        out.write(serializedValue);
+      } else {
+        out.writeInt(0);
+      }
       break;
     }
     default:
