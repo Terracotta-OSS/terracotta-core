@@ -81,7 +81,7 @@ public class EmulatedStorageServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void clear() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() throws ServiceProviderCleanupException {
     // Do nothing - we assume that the underlying service implementation will do this for us.
   }
 

@@ -120,7 +120,7 @@ public class FlatFileStorageServiceProvider implements ServiceProvider, Closeabl
   }
 
   @Override
-  public void clear() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() throws ServiceProviderCleanupException {
     // check that either there are no consumers or platform is the only consumer
     Assert.assertTrue((consumers.size() == 0) || (consumers.size() == 1 && consumers.iterator().next() == 0));
 

@@ -22,7 +22,7 @@
            xmlns="http://www.terracotta.org/config"
            xsi:schemaLocation="http://www.terracotta.org/config terracotta.xsd
                         http://www.terracotta.org/config/security ../../main/resources/security.xsd">
-  <services>
+  <plugins>
     <service>
       <security:security>
         <security:ssl>
@@ -33,7 +33,7 @@
         </security:keychain>
       </security:security>
     </service>
-  </services>
+  </plugins>
 </tc-config>
 
 
