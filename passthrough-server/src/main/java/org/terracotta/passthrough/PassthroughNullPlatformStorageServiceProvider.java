@@ -53,7 +53,7 @@ public class PassthroughNullPlatformStorageServiceProvider implements ServicePro
   }
 
   @Override
-  public synchronized void clear() throws ServiceProviderCleanupException {
+  public synchronized void prepareForSynchronization() throws ServiceProviderCleanupException {
     providers.clear();
   }
 }

@@ -158,7 +158,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
         }
 
         @Override
-        public void clear() throws ServiceProviderCleanupException {
+        public void prepareForSynchronization() throws ServiceProviderCleanupException {
         }
       });
     }

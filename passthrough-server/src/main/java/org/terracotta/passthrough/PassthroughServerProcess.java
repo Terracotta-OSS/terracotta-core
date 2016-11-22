@@ -24,6 +24,8 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -217,7 +219,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       container.entity = newEntity;
       container.codec = service.getMessageCodec();
       // Tell the entity to load itself from storage.
-      newEntity.loadExisting();
+      if (newEntity instanceof ActiveServerEntity) {
+        ((ActiveServerEntity)newEntity).loadExisting();
+      }
       
       // See if we need to bump up the next consumerID for future entities.
       if (consumerID >= this.nextConsumerID) {
@@ -1241,5 +1245,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public String getServerName() {
       return this.serverName;
     }
+
+    @Override
+    public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
+      return Collections.emptyList();
+    }
+    
+    
   }
 }
