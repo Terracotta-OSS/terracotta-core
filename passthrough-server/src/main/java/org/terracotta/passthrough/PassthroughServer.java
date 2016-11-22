@@ -19,6 +19,8 @@
 package org.terracotta.passthrough;
 
 import com.tc.classloader.BuiltinService;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -312,6 +314,11 @@ public class PassthroughServer implements PassthroughDumper {
             public String getServerName() {
               return serverName;
             }
+
+            @Override
+            public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
+              return Collections.emptyList();
+            }            
           });
           this.serverProcess.registerServiceProvider(provider, null);
         }
