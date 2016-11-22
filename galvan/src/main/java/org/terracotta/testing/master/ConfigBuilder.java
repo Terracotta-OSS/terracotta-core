@@ -84,7 +84,7 @@ public class ConfigBuilder {
       String restartableDirectory = "terracotta-kit-test/restart-data";
       restartableNamepsaceSnippet = "xmlns:restartable-platform-persistence=\"http://www.terracotta.org/config/restartable-platform-persistence\"";
       restartableServiceSnippet
-          = "<service id=\"restartable-platform-persistence\">\n"
+          = "<service>\n"
           + " <restartable-platform-persistence:restartable-platform-persistence>\n"
           + "  <restartable-platform-persistence:path>" + restartableDirectory + "</restartable-platform-persistence:path>\n"
           + " </restartable-platform-persistence:restartable-platform-persistence>\n"
