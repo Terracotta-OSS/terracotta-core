@@ -98,11 +98,11 @@ public class ConfigBuilder {
     
     String pre = 
           "<tc-config xmlns=\"http://www.terracotta.org/config\" " + namespaces + ">\n"
-        + "  <services>\n";
+        + "  <plugins>\n";
     String services = restartableServiceSnippet
         + ((null != this.serviceXMLSnippet) ? this.serviceXMLSnippet : "");
     String postservices =
-          "  </services>\n"
+          "  </plugins>\n"
         + "  <entities>\n";
     
     String entities = (null != this.entityXMLSnippet) ? this.entityXMLSnippet : "";
