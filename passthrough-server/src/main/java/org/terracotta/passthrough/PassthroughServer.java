@@ -204,6 +204,7 @@ public class PassthroughServer implements PassthroughDumper {
   private void internalStop() {
     this.serverProcess.shutdownServices();
     this.serverProcess.stop();
+    this.monitoringProducer.serverDidStop();
     Assert.assertNotNull(this.pseudoConnection);
     this.pseudoConnection.close();
     this.pseudoConnection = null;
@@ -228,6 +229,11 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {
+    // Before we attach the downstream to the server process, thus causing the sync, we need to attach the monitoring
+    //  producer, since it needs to know where to forward data to the upstream active.
+    // NOTE:  This will currently call directly since it simplifies the message flow, for now, but this will likely change
+    //  once we have a better sense of how to organize these message channels between the passthrough server processes.
+    passiveServer.monitoringProducer.setUpstreamActive(this.monitoringProducer, passiveServer.serverProcess.getServerInfo());
     this.serverProcess.addDownstreamPassiveServerProcess(passiveServer.serverProcess);
   }
 

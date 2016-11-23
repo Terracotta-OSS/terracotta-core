@@ -38,7 +38,8 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
   // We only keep the cached tree root until we become active.
   // (the tree is per-consumerID).
   private Map<Long, CacheNode> cachedTreeRoot;
-  private PlatformServer serverInfoWhileActive;
+  // The serverInfoToken is set when either we become active or are attached to a specific active as a passive.
+  private PlatformServer serverInfoToken;
 
   public PassthroughMonitoringProducer(PassthroughServerProcess serverProcess) {
     this.serverProcess = serverProcess;
@@ -46,14 +47,13 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
   }
 
   public void didBecomeActive(PlatformServer serverInfo) {
-    Assert.assertTrue(null == this.serverInfoWhileActive);
     Assert.assertTrue(null != serverInfo);
-    this.serverInfoWhileActive = serverInfo;
+    this.serverInfoToken = serverInfo;
     // Get the service for the platform's consumerID.
     final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, ServiceProvider.PLATFORM_CONSUMER_ID, null);
     // Make sure that we are actually running with a monitoring service.
     if (null != platformMonitoring) {
-      platformMonitoring.serverDidBecomeActive(this.serverInfoWhileActive);
+      platformMonitoring.serverDidBecomeActive(this.serverInfoToken);
       // Now, replay the cache.
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
         final IStripeMonitoring entityMonitoring = getUnderlyingService(null, null, entry.getKey(), null);
@@ -101,6 +101,18 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     return set;
   }
 
+  public synchronized void setUpstreamActive(PassthroughMonitoringProducer activeMonitoringProducer, PlatformServer passiveServerInfoToken) {
+    // Note that this is just a stub implementation to get the API and names in place.
+    this.serverInfoToken = passiveServerInfoToken;
+  }
+
+  /**
+   * Called during shutdown of the server where this producer lives.
+   */
+  public synchronized void serverDidStop() {
+    // Note that this is just a stub implementation to get the API and names in place.
+  }
+
 
   private IStripeMonitoring getUnderlyingService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
     PassthroughServiceRegistry registry = PassthroughMonitoringProducer.this.serverProcess.createServiceRegistryForInternalConsumer(entityClassName, entityName, consumerID, container);
@@ -120,7 +132,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
       }
     } else {
       // This means we are active so just pass it through.
-      didStore = underlyingCollector.addNode(this.serverInfoWhileActive, parents, name, value);
+      didStore = underlyingCollector.addNode(this.serverInfoToken, parents, name, value);
     }
     return didStore;
   }
@@ -137,7 +149,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
       }
     } else {
       // This means we are active so just pass it through.
-      didRemove = underlyingCollector.removeNode(this.serverInfoWhileActive, parents, name);
+      didRemove = underlyingCollector.removeNode(this.serverInfoToken, parents, name);
     }
     return didRemove;
   }
@@ -145,7 +157,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
   private synchronized void pushBestEffortsFromShim(IStripeMonitoring underlyingCollector, String name, Serializable data) {
     if (null == this.cachedTreeRoot) {
       // We are the active so just push this through.
-      underlyingCollector.pushBestEffortsData(this.serverInfoWhileActive, name, data);
+      underlyingCollector.pushBestEffortsData(this.serverInfoToken, name, data);
     }
   }
 
@@ -171,7 +183,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     // Make sure we aren't walking the root node.
     Assert.assertTrue(null != nodeName);
     
-    entityMonitoring.addNode(this.serverInfoWhileActive, parents, nodeName, node.data);
+    entityMonitoring.addNode(this.serverInfoToken, parents, nodeName, node.data);
     String[] newParents = new String[parents.length + 1];
     System.arraycopy(parents, 0, newParents, 0, parents.length);
     newParents[parents.length] = nodeName;
