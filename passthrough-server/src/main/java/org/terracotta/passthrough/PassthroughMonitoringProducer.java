@@ -40,6 +40,8 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
   private Map<Long, CacheNode> cachedTreeRoot;
   // The serverInfoToken is set when either we become active or are attached to a specific active as a passive.
   private PlatformServer serverInfoToken;
+  // The reference to our upstream active monitoring producer for when we need to plumb data there.
+  private PassthroughMonitoringProducer activeMonitoringProducer;
 
   public PassthroughMonitoringProducer(PassthroughServerProcess serverProcess) {
     this.serverProcess = serverProcess;
@@ -86,7 +88,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
           }
           @Override
           public void pushBestEffortsData(String name, Serializable data) {
-            pushBestEffortsFromShim(underlying, name, data);
+            pushBestEffortsFromShim(consumerID, underlying, name, data);
           }
         });
       }
@@ -102,15 +104,26 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
   }
 
   public synchronized void setUpstreamActive(PassthroughMonitoringProducer activeMonitoringProducer, PlatformServer passiveServerInfoToken) {
-    // Note that this is just a stub implementation to get the API and names in place.
+    this.activeMonitoringProducer = activeMonitoringProducer;
     this.serverInfoToken = passiveServerInfoToken;
+    // First step is to tell the active that we have attached.
+    this.activeMonitoringProducer.passiveDidJoinCluster(this.serverInfoToken);
+    // We now want to trigger a flush of our cached state.
+    // NOTE:  This is very similar to what we do on promote to active but is copy-paste instead of common since the output
+    //  pipe was much of the specialization, anyway, and made the path less clear.
+    for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
+      long consumerID = entry.getKey();
+      walkCacheChildrenToActive(consumerID, new String[0], entry.getValue().children);
+    }
   }
 
   /**
    * Called during shutdown of the server where this producer lives.
    */
   public synchronized void serverDidStop() {
-    // Note that this is just a stub implementation to get the API and names in place.
+    if (null != this.activeMonitoringProducer) {
+      this.activeMonitoringProducer.passiveDidLeaveCluster(this.serverInfoToken);
+    }
   }
 
 
@@ -130,6 +143,9 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
         parentNode.children.put(name, new CacheNode(value));
         didStore = true;
       }
+      if (null != this.activeMonitoringProducer) {
+        this.activeMonitoringProducer.addNodeFromPassive(this.serverInfoToken, consumerID, parents, name, value);
+      }
     } else {
       // This means we are active so just pass it through.
       didStore = underlyingCollector.addNode(this.serverInfoToken, parents, name, value);
@@ -147,6 +163,9 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
         CacheNode removed = parentNode.children.remove(name);
         didRemove = (null != removed);
       }
+      if (null != this.activeMonitoringProducer) {
+        this.activeMonitoringProducer.removeNodeFromPassive(this.serverInfoToken, consumerID, parents, name);
+      }
     } else {
       // This means we are active so just pass it through.
       didRemove = underlyingCollector.removeNode(this.serverInfoToken, parents, name);
@@ -154,8 +173,15 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     return didRemove;
   }
 
-  private synchronized void pushBestEffortsFromShim(IStripeMonitoring underlyingCollector, String name, Serializable data) {
-    if (null == this.cachedTreeRoot) {
+  private synchronized void pushBestEffortsFromShim(long consumerID, IStripeMonitoring underlyingCollector, String name, Serializable data) {
+    if (null != this.cachedTreeRoot) {
+      // We are the passive.
+      // We don't cache anything, just send it right on the active.
+      // Note:  It might be a better handling of the emulated nature to randomly drop messages, here.
+      if (null != this.activeMonitoringProducer) {
+        this.activeMonitoringProducer.pushBestEffortsFromPassive(this.serverInfoToken, consumerID, name, data);
+      }
+    } else {
       // We are the active so just push this through.
       underlyingCollector.pushBestEffortsData(this.serverInfoToken, name, data);
     }
@@ -188,6 +214,70 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     System.arraycopy(parents, 0, newParents, 0, parents.length);
     newParents[parents.length] = nodeName;
     walkCacheChildren(entityMonitoring, newParents, node.children);
+  }
+
+  /**
+   * Like waskCacheChildren but sends the data to the upstream active, instead.
+   * (called before sync, when a new active is elected).
+   */
+  private void walkCacheChildrenToActive(long consumerID, String[] parents, Map<String, CacheNode> nodeChildren) {
+    for (Map.Entry<String, CacheNode> child : nodeChildren.entrySet()) {
+      walkCacheNodeToActive(consumerID, parents, child.getKey(), child.getValue());
+    }
+  }
+
+  /**
+   * Like waskCacheNode but sends the data to the upstream active, instead.
+   * (called before sync, when a new active is elected).
+   */
+  private void walkCacheNodeToActive(long consumerID, String[] parents, String nodeName, CacheNode node) {
+    // Make sure we aren't walking the root node.
+    Assert.assertTrue(null != nodeName);
+    
+    this.activeMonitoringProducer.addNodeFromPassive(this.serverInfoToken, consumerID, parents, nodeName, node.data);
+    String[] newParents = new String[parents.length + 1];
+    System.arraycopy(parents, 0, newParents, 0, parents.length);
+    newParents[parents.length] = nodeName;
+    walkCacheChildrenToActive(consumerID, newParents, node.children);
+  }
+
+
+  /***** Entry-points for messages coming from downstream passives *****/
+  // Note that these are all synchronized since they come in from another thread (which sort of emulates how they can come
+  //  in other threads, for the underlying service implementation).
+  private synchronized void passiveDidJoinCluster(PlatformServer passiveInfo) {
+    final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, ServiceProvider.PLATFORM_CONSUMER_ID, null);
+    if (null != platformMonitoring) {
+      platformMonitoring.serverDidJoinStripe(passiveInfo);
+    }
+  }
+
+  private synchronized void passiveDidLeaveCluster(PlatformServer passiveInfo) {
+    final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, ServiceProvider.PLATFORM_CONSUMER_ID, null);
+    if (null != platformMonitoring) {
+      platformMonitoring.serverDidLeaveStripe(passiveInfo);
+    }
+  }
+
+  private synchronized void addNodeFromPassive(PlatformServer passiveInfo, long consumerID, String[] parents, String nodeName, Serializable nodeData) {
+    final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, consumerID, null);
+    if (null != platformMonitoring) {
+      platformMonitoring.addNode(passiveInfo, parents, nodeName, nodeData);
+    }
+  }
+
+  private synchronized void removeNodeFromPassive(PlatformServer passiveInfo, long consumerID, String[] parents, String nodeName) {
+    final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, consumerID, null);
+    if (null != platformMonitoring) {
+      platformMonitoring.removeNode(passiveInfo, parents, nodeName);
+    }
+  }
+
+  private synchronized void pushBestEffortsFromPassive(PlatformServer passiveInfo, long consumerID, String name, Serializable data) {
+    final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, consumerID, null);
+    if (null != platformMonitoring) {
+      platformMonitoring.pushBestEffortsData(passiveInfo, name, data);
+    }
   }
 
 
