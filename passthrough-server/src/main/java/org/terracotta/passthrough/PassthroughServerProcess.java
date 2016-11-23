@@ -24,8 +24,6 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +45,6 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -84,6 +81,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private final String serverName;
   private final int bindPort;
   private final int groupPort;
+  private final PassthroughPlatformConfiguration platformConfiguration;
   
   private static final AtomicInteger CLIENT_PORT = new AtomicInteger(49152);  //  current recommended start value of ephemeral ports
   
@@ -132,6 +130,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serverName = serverName;
     this.bindPort = bindPort;
     this.groupPort = groupPort;
+    this.platformConfiguration = new PassthroughPlatformConfiguration(serverName);
     this.entityServices = new Vector<EntityServerService<?, ?>>();
     this.messageQueue = new Vector<PassthroughMessageContainer>();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
@@ -163,7 +162,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         public Class<? extends ServiceProvider> getServiceProviderType() {
           return PassthroughNullPlatformStorageServiceProvider.class;
         }};
-      nullPlatformStorageServiceProvider.initialize(config, new PassthroughPlatformConfiguration(this.serverName));
+      nullPlatformStorageServiceProvider.initialize(config, this.platformConfiguration);
       this.serviceProviders.add(nullPlatformStorageServiceProvider);
     }
     // XXX: Temporary inclusion of the IPersistentStorage emulation on IPlatformPersistence.
@@ -173,7 +172,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       public PassthroughServiceRegistry getRegistryForConsumerID(long consumerID) {
         return new PassthroughServiceRegistry(null, null, consumerID, PassthroughServerProcess.this.serviceProviders, PassthroughServerProcess.this.overrideServiceProviders, PassthroughServerProcess.this.implementationProvidedServiceProviders, null);
       }});
-    legacyProvider.initialize(legacyConfig, new PassthroughPlatformConfiguration(this.serverName));
+    legacyProvider.initialize(legacyConfig, this.platformConfiguration);
     this.serviceProviders.add(legacyProvider);
     
     // We can now get the service registry for the platform.
@@ -220,7 +219,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       container.codec = service.getMessageCodec();
       // Tell the entity to load itself from storage.
       if (newEntity instanceof ActiveServerEntity) {
-        ((ActiveServerEntity)newEntity).loadExisting();
+        ((ActiveServerEntity<?, ?>)newEntity).loadExisting();
       }
       
       // See if we need to bump up the next consumerID for future entities.
@@ -901,7 +900,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void registerServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     Assert.assertTrue(!this.serviceProvidersReadOnly);
     // We run the initializer right away.
-    boolean didInitialize = serviceProvider.initialize(providerConfiguration, new PassthroughPlatformConfiguration(this.serverName));
+    boolean didInitialize = serviceProvider.initialize(providerConfiguration, this.platformConfiguration);
     Assert.assertTrue(didInitialize);
     this.serviceProviders.add(serviceProvider);
   }
@@ -1231,26 +1230,5 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         throw new RuntimeException(me);
       }
     }
-  }
-
-
-  private static class PassthroughPlatformConfiguration implements PlatformConfiguration {
-    private final String serverName;
-    
-    public PassthroughPlatformConfiguration(String serverName) {
-      this.serverName = serverName;
-    }
-    
-    @Override
-    public String getServerName() {
-      return this.serverName;
-    }
-
-    @Override
-    public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
-      return Collections.emptyList();
-    }
-    
-    
   }
 }
