@@ -309,17 +309,6 @@ public class PassthroughServer implements PassthroughDumper {
           System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
         } else {
           // We want to initialize built-in providers with a null configuration.
-          provider.initialize(null, new PlatformConfiguration() {
-            @Override
-            public String getServerName() {
-              return serverName;
-            }
-
-            @Override
-            public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
-              return Collections.emptyList();
-            }            
-          });
           this.serverProcess.registerServiceProvider(provider, null);
         }
       }
