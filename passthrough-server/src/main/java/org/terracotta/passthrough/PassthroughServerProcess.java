@@ -901,8 +901,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     Assert.assertTrue(!this.serviceProvidersReadOnly);
     // We run the initializer right away.
     boolean didInitialize = serviceProvider.initialize(providerConfiguration, this.platformConfiguration);
-    Assert.assertTrue(didInitialize);
-    this.serviceProviders.add(serviceProvider);
+    // If the initializer fails, don't include it.
+    if (didInitialize) {
+      this.serviceProviders.add(serviceProvider);
+    }
   }
 
   public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
