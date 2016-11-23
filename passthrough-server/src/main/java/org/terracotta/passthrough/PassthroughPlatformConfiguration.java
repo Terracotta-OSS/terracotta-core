@@ -19,7 +19,7 @@
 package org.terracotta.passthrough;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Vector;
 
 import org.terracotta.entity.PlatformConfiguration;
 
@@ -32,9 +32,11 @@ import org.terracotta.entity.PlatformConfiguration;
  */
 public class PassthroughPlatformConfiguration implements PlatformConfiguration {
   private final String serverName;
+  private final Collection<Object> extendedConfigurationObjects;
   
-  public PassthroughPlatformConfiguration(String serverName) {
+  public PassthroughPlatformConfiguration(String serverName, Collection<Object> extendedConfigurationObjects) {
     this.serverName = serverName;
+    this.extendedConfigurationObjects = extendedConfigurationObjects;
   }
   
   @Override
@@ -44,6 +46,12 @@ public class PassthroughPlatformConfiguration implements PlatformConfiguration {
 
   @Override
   public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
-    return Collections.emptyList();
+    Collection<T> filtered = new Vector<T>();
+    for (Object instance : this.extendedConfigurationObjects) {
+      if (type.isInstance(instance)) {
+        filtered.add(type.cast(instance));
+      }
+    }
+    return filtered;
   }
 }

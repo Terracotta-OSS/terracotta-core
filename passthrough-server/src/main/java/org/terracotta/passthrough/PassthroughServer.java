@@ -20,7 +20,6 @@ package org.terracotta.passthrough;
 
 import com.tc.classloader.BuiltinService;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Assert;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.EntityMessage;
@@ -65,6 +63,7 @@ public class PassthroughServer implements PassthroughDumper {
   private final List<EntityServerService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final List<ServiceProviderAndConfiguration> overrideServiceProviderData;
+  private final Collection<Object> extendedConfigurationObjects;
   private final Map<Long, PassthroughConnection> savedClientConnections;
   
   public PassthroughServer() {
@@ -74,6 +73,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
     this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.overrideServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
+    this.extendedConfigurationObjects = new Vector<Object>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
   }
 
@@ -154,7 +154,7 @@ public class PassthroughServer implements PassthroughDumper {
   }
   
   private void bootstrapProcess(boolean active) {
-    this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, active);
+    this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, this.extendedConfigurationObjects, active);
 
     // Populate the server with its services.
     for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
@@ -221,6 +221,10 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     this.overrideServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
+  }
+
+  public void registerExtendedConfiguration(Object extendedConfigObject) {
+    this.extendedConfigurationObjects.add(extendedConfigObject);
   }
 
   public void attachDownstreamPassive(PassthroughServer passiveServer) {

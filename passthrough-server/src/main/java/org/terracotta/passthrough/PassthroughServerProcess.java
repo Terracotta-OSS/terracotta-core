@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -126,11 +127,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private boolean isHandlingResends;
 
 
-  public PassthroughServerProcess(String serverName, int bindPort, int groupPort, boolean isActiveMode) {
+  public PassthroughServerProcess(String serverName, int bindPort, int groupPort, Collection<Object> extendedConfigurationObjects, boolean isActiveMode) {
     this.serverName = serverName;
     this.bindPort = bindPort;
     this.groupPort = groupPort;
-    this.platformConfiguration = new PassthroughPlatformConfiguration(serverName);
+    this.platformConfiguration = new PassthroughPlatformConfiguration(serverName, extendedConfigurationObjects);
     this.entityServices = new Vector<EntityServerService<?, ?>>();
     this.messageQueue = new Vector<PassthroughMessageContainer>();
     this.activeEntities = (isActiveMode ? new HashMap<PassthroughEntityTuple, CreationData<?, ?>>() : null);
