@@ -19,7 +19,8 @@ import com.tc.util.Assert;
  */
 public class BestEffortsMonitoring {
   // We will flush 1 second after new data appears.
-  private static final long ASYNC_FLUSH_DELAY_MILLIS = 1000;
+  // (this is marked public for tests)
+  public static final long ASYNC_FLUSH_DELAY_MILLIS = 1000;
 
   private final SingleThreadedTimer timer;
   private final Map<Long, Map<String, Serializable>> bestEffortsCache;
@@ -32,7 +33,7 @@ public class BestEffortsMonitoring {
     this.bestEffortsCache = new HashMap<Long, Map<String, Serializable>>();
   }
 
-  public synchronized void flushAfterActivePromotion(PlatformServer thisServer , TerracottaServiceProviderRegistry globalRegistry) {
+  public synchronized void flushAfterActivePromotion(PlatformServer thisServer, TerracottaServiceProviderRegistry globalRegistry) {
     // We no longer care about the timer so clear it, if one exists.
     ensureTimerCancelled();
     
@@ -100,7 +101,7 @@ public class BestEffortsMonitoring {
         @Override
         public void run() {
           backgroundThreadFlush();
-        }}, ASYNC_FLUSH_DELAY_MILLIS);
+        }}, this.timer.currentTimeMillis() + ASYNC_FLUSH_DELAY_MILLIS);
       Assert.assertTrue(this.outstandingTimerToken > 0);
     }
   }
