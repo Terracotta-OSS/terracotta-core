@@ -473,7 +473,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ProductInfo pInfo = ProductInfo.getInstance();
     PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
     
-    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer);
+    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
     
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!

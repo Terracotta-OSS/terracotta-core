@@ -47,12 +47,14 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   // We only keep the cached tree root until we become active.
   // (the tree is per-consumerID).
   private Map<Long, CacheNode> cachedTreeRoot;
+  private BestEffortsMonitoring bestEfforts;
 
-  public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer) {
+  public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, SingleThreadedTimer timer) {
     this.globalRegistry = globalRegistry;
     this.thisServer = thisServer;
     this.otherServers = new HashMap<ServerID, PlatformServer>();
     this.cachedTreeRoot = new HashMap<Long, CacheNode>();
+    this.bestEfforts = new BestEffortsMonitoring(timer);
   }
 
   public PlatformServer getLocalServerInfo() {
@@ -81,7 +83,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
         }
         @Override
         public void pushBestEffortsData(String name, Serializable data) {
-          pushBestEffortsFromShim(underlyingCollector, name, data);
+          pushBestEffortsFromShim(consumerID, underlyingCollector, name, data);
         }
       });
     }
@@ -117,9 +119,13 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
             underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
           }});
       }
+      
+      // Flush any remaining best-efforts data to the collector.
+      this.bestEfforts.flushAfterActivePromotion(this.thisServer, this.globalRegistry);
     }
     
     this.cachedTreeRoot = null;
+    this.bestEfforts = null;
     this.activeWrapper = null;
   }
 
@@ -143,6 +149,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
             LocalMonitoringProducer.this.activeWrapper.addNode(consumerID, parents, name, value);
           }});
       }
+      this.bestEfforts.attachToNewActive(this.activeWrapper);
     } else {
 //  split brain.  one of the actives will die shortly.
     }
@@ -195,6 +202,20 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     }
   }
 
+  public synchronized void handleRemoteBestEffortsBatch(ServerID sender, long[] consumerIDs, String[] keys, Serializable[] values) {
+    // If we are getting these, we MUST be in active mode.
+    Assert.assertNull(this.cachedTreeRoot);
+    
+    for (int i = 0; i < consumerIDs.length; ++i) {
+      IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerIDs[i]).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      if (null != underlyingCollector) {
+        PlatformServer sendingServer = this.otherServers.get(sender);
+        Assert.assertNotNull(sendingServer);
+        underlyingCollector.pushBestEffortsData(sendingServer, keys[i], values[i]);
+      }
+    }
+  }
+
   private synchronized boolean addNodeFromShim(long consumerID, IStripeMonitoring underlyingCollector, String[] parents, String name, Serializable value) {
     boolean didStore = false;
     // First off, see if we have a cache - this determines if we are in active or passive mode.
@@ -239,11 +260,11 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     return didRemove;
   }
 
-  private synchronized void pushBestEffortsFromShim(IStripeMonitoring underlyingCollector, String name, Serializable data) {
-    // This implementation doesn't currently try to cache any of the best-efforts data.
-    // Additionally, and this is a temporary simplification, we don't send them over the wire, either.
-    // TODO:  Send the best-efforts data over the wire.
-    if (null == this.cachedTreeRoot) {
+  private synchronized void pushBestEffortsFromShim(long consumerID, IStripeMonitoring underlyingCollector, String name, Serializable data) {
+    if (null != this.bestEfforts) {
+      // Pass this to the BestEffortsMonitoring object so it can handle this.
+      this.bestEfforts.pushBestEfforts(consumerID, name, data);
+    } else {
       // We are the active so just push this through.
       underlyingCollector.pushBestEffortsData(this.thisServer, name, data);
     }
@@ -284,7 +305,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   public static interface ActivePipeWrapper {
     public void addNode(long consumerID, String[] parents, String name, Serializable value);
     public void removeNode(long consumerID, String[] parents, String name);
-    // TODO:  Send the best-efforts data over the wire.
+    public void pushBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values);
   }
 
 

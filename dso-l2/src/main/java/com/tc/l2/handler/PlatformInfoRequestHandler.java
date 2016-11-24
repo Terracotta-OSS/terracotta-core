@@ -33,10 +33,8 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.server.TCServerMain;
 import com.tc.services.LocalMonitoringProducer;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
 
 
 public class PlatformInfoRequestHandler {
@@ -69,6 +67,9 @@ public class PlatformInfoRequestHandler {
               break;
             case PlatformInfoRequest.RESPONSE_REMOVE:
               PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteRemove((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName());
+              break;
+            case PlatformInfoRequest.BEST_EFFORTS_BATCH:
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteBestEffortsBatch((ServerID)context.messageFrom(), context.getConsumerIDs(), context.getKeys(), context.getValues());
               break;
             default:
               break;
@@ -104,6 +105,16 @@ public class PlatformInfoRequestHandler {
       @Override
       public void removeNode(long consumerID, String[] parents, String name) {
         PlatformInfoRequest message = PlatformInfoRequest.createRemoveNode(consumerID, parents, name);
+        try {
+          groupManager.sendTo(requester, message);
+        } catch (GroupException e) {
+          // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
+          LOGGER.error(e.getLocalizedMessage());
+        }
+      }
+      @Override
+      public void pushBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values) {
+        PlatformInfoRequest message = PlatformInfoRequest.createBestEffortsBatch(consumerIDs, keys, values);
         try {
           groupManager.sendTo(requester, message);
         } catch (GroupException e) {

@@ -133,22 +133,4 @@ public class SingleThreadedTimerTest {
       Assert.assertTrue(didCancel);
     }
   }
-
-
-  private static class TestTimeSource implements SingleThreadedTimer.TimeSource {
-    private long currentTimeMillis;
-    
-    public TestTimeSource(long currentTimeMillis) {
-      this.currentTimeMillis = currentTimeMillis;
-    }
-    
-    public void passTime(long millis) {
-      this.currentTimeMillis += millis;
-    }
-    
-    @Override
-    public long currentTimeMillis() {
-      return this.currentTimeMillis;
-    }
-  }
 }
