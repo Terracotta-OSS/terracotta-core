@@ -300,7 +300,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   public static interface ActivePipeWrapper {
     public void addNode(long consumerID, String[] parents, String name, Serializable value);
     public void removeNode(long consumerID, String[] parents, String name);
-    public void pushBestEfforts(long consumerID, String key, Serializable value);
+    public void pushBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values);
   }
 
 

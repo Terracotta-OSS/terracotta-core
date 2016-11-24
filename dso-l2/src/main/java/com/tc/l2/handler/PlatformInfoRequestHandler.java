@@ -113,13 +113,15 @@ public class PlatformInfoRequestHandler {
         }
       }
       @Override
-      public void pushBestEfforts(long consumerID, String key, Serializable value) {
-        PlatformInfoRequest message = PlatformInfoRequest.createBestEfforts(consumerID, key, value);
-        try {
-          groupManager.sendTo(requester, message);
-        } catch (GroupException e) {
-          // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
-          LOGGER.error(e.getLocalizedMessage());
+      public void pushBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values) {
+        for (int i = 0; i < consumerIDs.length; ++i) {
+          PlatformInfoRequest message = PlatformInfoRequest.createBestEfforts(consumerIDs[i], keys[i], values[i]);
+          try {
+            groupManager.sendTo(requester, message);
+          } catch (GroupException e) {
+            // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
+            LOGGER.error(e.getLocalizedMessage());
+          }
         }
       }
     };
