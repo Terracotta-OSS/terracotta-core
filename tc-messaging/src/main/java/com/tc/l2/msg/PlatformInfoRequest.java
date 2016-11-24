@@ -40,23 +40,24 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
    * @return The message instance.
    */
   public static PlatformInfoRequest createEmptyRequest() {
-    return new PlatformInfoRequest(REQUEST, -1, null, null, null, null);
+    return new PlatformInfoRequest(REQUEST, -1, null, null, null, null, null, null, null);
   }
 
   public static PlatformInfoRequest createAddNode(long consumerID, String[] parents, String name, Serializable value) {
-    return new PlatformInfoRequest(RESPONSE_ADD, consumerID, parents, name, value, null);
+    return new PlatformInfoRequest(RESPONSE_ADD, consumerID, parents, name, value, null, null, null, null);
   }
 
   public static PlatformInfoRequest createRemoveNode(long consumerID, String[] parents, String name) {
-    return new PlatformInfoRequest(RESPONSE_REMOVE, consumerID, parents, name, null, null);
+    return new PlatformInfoRequest(RESPONSE_REMOVE, consumerID, parents, name, null, null, null, null, null);
   }
 
   public static PlatformInfoRequest createServerInfoMessage(Serializable serverInfo) {
-    return new PlatformInfoRequest(RESPONSE_INFO, -1, null, null, null, serverInfo);
+    return new PlatformInfoRequest(RESPONSE_INFO, -1, null, null, null, serverInfo, null, null, null);
   }
 
-  public static PlatformInfoRequest createBestEfforts(long consumerID, String key, Serializable value) {
-    return new PlatformInfoRequest(BEST_EFFORTS, consumerID, null, key, value, null);
+  public static PlatformInfoRequest createBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values) {
+    // Note that this would, ideally, use a different mechanism but the SEDA implementation routes based on type so we need to extend this class, for now.
+    return new PlatformInfoRequest(BEST_EFFORTS_BATCH, -1, null, null, null, null, consumerIDs, keys, values);
   }
 
 
@@ -66,7 +67,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   public static final int RESPONSE_INFO               = 2;
   public static final int RESPONSE_ADD               = 3;
   public static final int RESPONSE_REMOVE               = 4;
-  public static final int BEST_EFFORTS               = 5;
+  public static final int BEST_EFFORTS_BATCH               = 5;
   
   // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
   private long changeConsumerID;
@@ -76,6 +77,11 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   
   // Info related only to RESPONSE_INFO.
   private Serializable serverInfo;
+  
+  // Info specific to BEST_EFFORTS_BATCH.
+  private long[] consumerIDs;
+  private String[] keys;
+  private Serializable[] values;
 
 
   // Must be public for serialization initializer.
@@ -83,7 +89,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     super(ERROR);
   }
 
-  private PlatformInfoRequest(int type, long changeConsumerID, String[] nodeParents, String nodeName, Serializable nodeValue, Serializable serverInfo) {
+  private PlatformInfoRequest(int type, long changeConsumerID, String[] nodeParents, String nodeName, Serializable nodeValue, Serializable serverInfo, long[] consumerIDs, String[] keys, Serializable[] values) {
     super(type);
     // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
     this.changeConsumerID = changeConsumerID;
@@ -93,6 +99,11 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     
     // Info related only to RESPONSE_INFO.
     this.serverInfo = serverInfo;
+    
+    // Info related to BEST_EFFORTS_BATCH.
+    this.consumerIDs = consumerIDs;
+    this.keys = keys;
+    this.values = values;
   }
 
   @Override
@@ -140,18 +151,28 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
       this.nodeName = in.readString();
       break;
     }
-    case BEST_EFFORTS: {
-      // Just the consumerID, name, and value.
-      this.changeConsumerID = in.readLong();
-      this.nodeName = in.readString();
-      int valueSize = in.readInt();
-      if (valueSize > 0) {
-        byte[] valueArray = new byte[valueSize];
-        in.readFully(valueArray);
-        this.nodeValue = deserialize(valueArray);
-      } else {
-        this.nodeValue = null;
+    case BEST_EFFORTS_BATCH: {
+      // Need to read only the consumerIDs, keys, and values.
+      // Find out how many tuples there are.
+      int tupleCount = in.readInt();
+      long[] consumerIDs = new long[tupleCount];
+      String[] keys = new String[tupleCount];
+      Serializable[] values = new Serializable[tupleCount];
+      for (int i = 0; i < tupleCount; ++i) {
+        consumerIDs[i] = in.readLong();
+        keys[i] = in.readString();
+        int valueSize = in.readInt();
+        if (valueSize > 0) {
+          byte[] valueArray = new byte[valueSize];
+          in.readFully(valueArray);
+          values[i] = deserialize(valueArray);
+        } else {
+          values[i] = null;
+        }
       }
+      this.consumerIDs = consumerIDs;
+      this.keys = keys;
+      this.values = values;
       break;
     }
     default:
@@ -199,16 +220,20 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
       out.writeString(this.nodeName);
       break;
     }
-    case BEST_EFFORTS: {
-      // Just the consumerID, name, and value.
-      out.writeLong(this.changeConsumerID);
-      out.writeString(this.nodeName);
-      if (null != this.nodeValue) {
-        byte[] serializedValue = serialize(this.nodeValue);
-        out.writeInt(serializedValue.length);
-        out.write(serializedValue);
-      } else {
-        out.writeInt(0);
+    case BEST_EFFORTS_BATCH: {
+      // Need to read only the consumerIDs, keys, and values.
+      // First, write an int of how many tuples there are.
+      out.writeInt(this.consumerIDs.length);
+      for (int i = 0; i < this.consumerIDs.length; ++i) {
+        out.writeLong(this.consumerIDs[i]);
+        out.writeString(this.keys[i]);
+        if (null != this.values[i]) {
+          byte[] serializedValue = serialize(this.values[i]);
+          out.writeInt(serializedValue.length);
+          out.write(serializedValue);
+        } else {
+          out.writeInt(0);
+        }
       }
       break;
     }
@@ -235,6 +260,18 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
 
   public Serializable getServerInfo() {
     return this.serverInfo;
+  }
+
+  public long[] getConsumerIDs() {
+    return this.consumerIDs;
+  }
+
+  public String[] getKeys() {
+    return this.keys;
+  }
+
+  public Serializable[] getValues() {
+    return this.values;
   }
 
   private byte[] serialize(Serializable value) {

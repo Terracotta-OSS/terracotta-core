@@ -199,15 +199,17 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     }
   }
 
-  public synchronized void handleRemoteBestEfforts(ServerID sender, long consumerID, String key, Serializable value) {
+  public synchronized void handleRemoteBestEffortsBatch(ServerID sender, long[] consumerIDs, String[] keys, Serializable[] values) {
     // If we are getting these, we MUST be in active mode.
     Assert.assertNull(this.cachedTreeRoot);
     
-    IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
-    if (null != underlyingCollector) {
-      PlatformServer sendingServer = this.otherServers.get(sender);
-      Assert.assertNotNull(sendingServer);
-      underlyingCollector.pushBestEffortsData(sendingServer, key, value);
+    for (int i = 0; i < consumerIDs.length; ++i) {
+      IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerIDs[i]).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      if (null != underlyingCollector) {
+        PlatformServer sendingServer = this.otherServers.get(sender);
+        Assert.assertNotNull(sendingServer);
+        underlyingCollector.pushBestEffortsData(sendingServer, keys[i], values[i]);
+      }
     }
   }
 
