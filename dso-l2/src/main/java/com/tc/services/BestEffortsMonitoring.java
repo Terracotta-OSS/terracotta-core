@@ -1,6 +1,8 @@
 package com.tc.services;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.tc.services.LocalMonitoringProducer.ActivePipeWrapper;
 
@@ -11,40 +13,72 @@ import com.tc.services.LocalMonitoringProducer.ActivePipeWrapper;
  * Note that this interface is synchronized to ensure safe interaction with internal threads.
  */
 public class BestEffortsMonitoring {
-  private static final int BATCH_SIZE = 10;
+  // Currently, we will only flush messages every so often, not based on the size of the cache.  This means that the data remains fresher.
+  private static final int MESSAGE_FLUSH_FREQUENCY = 10;
 
   private ActivePipeWrapper activeWrapper;
-  private long[] consumerIDCache;
-  private String[] keyCache;
-  private Serializable[] valueCache;
-  private int nextIndex;
+  private final Map<Long, Map<String, Serializable>> bestEffortsCache;
+  // We only want to push every MESSAGE_FLUSH_FREQUENCY messages, so keep track of how may we received since last flush.
+  private int messagesSinceLastFlush;
 
+
+  public BestEffortsMonitoring() {
+    this.bestEffortsCache = new HashMap<Long, Map<String, Serializable>>();
+  }
 
   public synchronized void attachToNewActive(ActivePipeWrapper activeWrapper) {
     // Note that it is possible that there already is an active and this is replacing it.
     this.activeWrapper = activeWrapper;
-    initializeCache();
+    
+    // See if we need to flush, now that we have an attached active.
+    flushCacheAndReset();
   }
 
   public synchronized void pushBestEfforts(long consumerID, String name, Serializable data) {
-    // Put these in the cache.
-    this.consumerIDCache[this.nextIndex] = consumerID;
-    this.keyCache[this.nextIndex] = name;
-    this.valueCache[this.nextIndex] = data;
-    this.nextIndex += 1;
-    
-    // See if we need to flush the cache.
-    if (BATCH_SIZE == this.nextIndex) {
-      this.activeWrapper.pushBestEffortsBatch(this.consumerIDCache, this.keyCache, this.valueCache);
-      initializeCache();
+    // We lazily build the cache.
+    if (!this.bestEffortsCache.containsKey(consumerID)) {
+      this.bestEffortsCache.put(consumerID, new HashMap<String, Serializable>());
     }
+    
+    // Update the cache.
+    Map<String, Serializable> map = this.bestEffortsCache.get(consumerID);
+    map.put(name, data);
+    this.messagesSinceLastFlush += 1;
+    
+    // Flush the cache if there is anything here.
+    flushCacheAndReset();
   }
 
 
-  private void initializeCache() {
-    this.consumerIDCache = new long[BATCH_SIZE];
-    this.keyCache = new String[BATCH_SIZE];
-    this.valueCache = new Serializable[BATCH_SIZE];
-    this.nextIndex = 0;
+  private void flushCacheAndReset() {
+    // NOTE:  This must be called under lock!
+    if ((null != this.activeWrapper) && (this.messagesSinceLastFlush >= MESSAGE_FLUSH_FREQUENCY)) {
+      // First, traverse the tree to see how many messages we are going to send in this batch.
+      int messagesInBatch = 0;
+      for (Map.Entry<Long, Map<String, Serializable>> entry : this.bestEffortsCache.entrySet()) {
+        messagesInBatch += entry.getValue().size();
+      }
+      
+      // Serialize the cache.
+      long[] consumerIDs = new long[messagesInBatch];
+      String[] keys = new String[messagesInBatch];
+      Serializable[] values = new Serializable[messagesInBatch];
+      int index = 0;
+      for (Map.Entry<Long, Map<String, Serializable>> entry : this.bestEffortsCache.entrySet()) {
+        long consumerID = entry.getKey();
+        for (Map.Entry<String, Serializable> mapEntry : entry.getValue().entrySet()) {
+          consumerIDs[index] = consumerID;
+          keys[index] = mapEntry.getKey();
+          values[index] = mapEntry.getValue();
+          index += 1;
+        }
+      }
+      // Clear it.
+      this.bestEffortsCache.clear();
+      
+      // Push and reset our counter.
+      this.activeWrapper.pushBestEffortsBatch(consumerIDs, keys, values);
+      this.messagesSinceLastFlush = 0;
+    }
   }
 }

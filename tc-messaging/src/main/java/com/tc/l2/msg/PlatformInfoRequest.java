@@ -56,7 +56,10 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   }
 
   public static PlatformInfoRequest createBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values) {
-    // Note that this would, ideally, use a different mechanism but the SEDA implementation routes based on type so we need to extend this class, for now.
+    // This should not be called if there is no data.
+    Assert.assertTrue(consumerIDs.length > 0);
+    // Note that this would, ideally, use a different mechanism but the SEDA implementation routes based on type so we need
+    //  to extend this class, for now.
     return new PlatformInfoRequest(BEST_EFFORTS_BATCH, -1, null, null, null, null, consumerIDs, keys, values);
   }
 
