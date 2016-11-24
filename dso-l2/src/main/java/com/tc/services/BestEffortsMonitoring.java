@@ -4,7 +4,12 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.monitoring.IStripeMonitoring;
+import org.terracotta.monitoring.PlatformServer;
+
 import com.tc.services.LocalMonitoringProducer.ActivePipeWrapper;
+import com.tc.util.Assert;
 
 
 /**
@@ -24,6 +29,20 @@ public class BestEffortsMonitoring {
 
   public BestEffortsMonitoring() {
     this.bestEffortsCache = new HashMap<Long, Map<String, Serializable>>();
+  }
+
+  public synchronized void flushAfterActivePromotion(PlatformServer thisServer , TerracottaServiceProviderRegistry globalRegistry) {
+    // Walk each consumerID, looking up their registries, and flushing all entries to the implementation.
+    for (Map.Entry<Long, Map<String, Serializable>> perConsumerEntry : this.bestEffortsCache.entrySet()) {
+      IStripeMonitoring collector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      // NOTE:  We assert that there _is_ a registry for IStripeMonitoring if we received this call.
+      Assert.assertNotNull(collector);
+      for (Map.Entry<String, Serializable> entry : perConsumerEntry.getValue().entrySet()) {
+        collector.pushBestEffortsData(thisServer, entry.getKey(), entry.getValue());
+      }
+    }
+    // We can now drop this (gratuitous but makes it clear we are done).
+    this.bestEffortsCache.clear();
   }
 
   public synchronized void attachToNewActive(ActivePipeWrapper activeWrapper) {

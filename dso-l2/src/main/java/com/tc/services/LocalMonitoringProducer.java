@@ -119,6 +119,9 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
             underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
           }});
       }
+      
+      // Flush any remaining best-efforts data to the collector.
+      this.bestEfforts.flushAfterActivePromotion(this.thisServer, this.globalRegistry);
     }
     
     this.cachedTreeRoot = null;
