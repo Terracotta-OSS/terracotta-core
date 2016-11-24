@@ -18,20 +18,24 @@ import com.tc.util.Assert;
  * Note that this interface is synchronized to ensure safe interaction with internal threads.
  */
 public class BestEffortsMonitoring {
-  // Currently, we will only flush messages every so often, not based on the size of the cache.  This means that the data remains fresher.
-  private static final int MESSAGE_FLUSH_FREQUENCY = 10;
+  // We will flush 1 second after new data appears.
+  private static final long ASYNC_FLUSH_DELAY_MILLIS = 1000;
 
-  private ActivePipeWrapper activeWrapper;
+  private final SingleThreadedTimer timer;
   private final Map<Long, Map<String, Serializable>> bestEffortsCache;
-  // We only want to push every MESSAGE_FLUSH_FREQUENCY messages, so keep track of how may we received since last flush.
-  private int messagesSinceLastFlush;
+  private ActivePipeWrapper activeWrapper;
+  private long outstandingTimerToken;
 
 
-  public BestEffortsMonitoring() {
+  public BestEffortsMonitoring(SingleThreadedTimer timer) {
+    this.timer = timer;
     this.bestEffortsCache = new HashMap<Long, Map<String, Serializable>>();
   }
 
   public synchronized void flushAfterActivePromotion(PlatformServer thisServer , TerracottaServiceProviderRegistry globalRegistry) {
+    // We no longer care about the timer so clear it, if one exists.
+    ensureTimerCancelled();
+    
     // Walk each consumerID, looking up their registries, and flushing all entries to the implementation.
     for (Map.Entry<Long, Map<String, Serializable>> perConsumerEntry : this.bestEffortsCache.entrySet()) {
       IStripeMonitoring collector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
@@ -46,11 +50,18 @@ public class BestEffortsMonitoring {
   }
 
   public synchronized void attachToNewActive(ActivePipeWrapper activeWrapper) {
+    // In case an active already exists, and we are merely changing the target, we need to ensure that any pending timer is stopped.
+    ensureTimerCancelled();
+    
     // Note that it is possible that there already is an active and this is replacing it.
     this.activeWrapper = activeWrapper;
     
     // See if we need to flush, now that we have an attached active.
-    flushCacheAndReset();
+    // We can only flush if there is something here so check that it is even possible (since none of the top-level entries
+    //  are empty).
+    if (!this.bestEffortsCache.isEmpty()) {
+      flushCacheAndReset();
+    }
   }
 
   public synchronized void pushBestEfforts(long consumerID, String name, Serializable data) {
@@ -62,42 +73,80 @@ public class BestEffortsMonitoring {
     // Update the cache.
     Map<String, Serializable> map = this.bestEffortsCache.get(consumerID);
     map.put(name, data);
-    this.messagesSinceLastFlush += 1;
     
-    // Flush the cache if there is anything here.
-    flushCacheAndReset();
+    // Request a flush, if needed.
+    requestFlushIfNonePending();
+  }
+
+  /**
+   * Called by the internal background thread running the timer.
+   */
+  public synchronized void backgroundThreadFlush() {
+    // NOTE:  There is a timing hole here we need to close.  It is possible that the timer was cancelled after it after
+    //  started but before it got this lock.  Therefore, we need to make sure that the timer token is still here before we
+    //  run.
+    if (0 != this.outstandingTimerToken) {
+      this.outstandingTimerToken = 0;
+      flushCacheAndReset();
+    }
   }
 
 
+  private void requestFlushIfNonePending() {
+    // NOTE:  This must be called under lock!
+    if ((0 == this.outstandingTimerToken) && (null != this.activeWrapper)) {
+      // There is no timer running so request one.
+      this.outstandingTimerToken = this.timer.addDelayed(new Runnable(){
+        @Override
+        public void run() {
+          backgroundThreadFlush();
+        }}, ASYNC_FLUSH_DELAY_MILLIS);
+      Assert.assertTrue(this.outstandingTimerToken > 0);
+    }
+  }
+
   private void flushCacheAndReset() {
     // NOTE:  This must be called under lock!
-    if ((null != this.activeWrapper) && (this.messagesSinceLastFlush >= MESSAGE_FLUSH_FREQUENCY)) {
-      // First, traverse the tree to see how many messages we are going to send in this batch.
-      int messagesInBatch = 0;
-      for (Map.Entry<Long, Map<String, Serializable>> entry : this.bestEffortsCache.entrySet()) {
-        messagesInBatch += entry.getValue().size();
+    // This should only ever be called if there is an active wrapper.
+    Assert.assertTrue(null != this.activeWrapper);
+    // Calling this with a pending timer is an error (if this was called _via_ the timer, it must clear the token before
+    //  calling).
+    Assert.assertTrue(0 == this.outstandingTimerToken);
+    
+    // First, traverse the tree to see how many messages we are going to send in this batch.
+    int messagesInBatch = 0;
+    for (Map.Entry<Long, Map<String, Serializable>> entry : this.bestEffortsCache.entrySet()) {
+      messagesInBatch += entry.getValue().size();
+    }
+    // Note that we currently ensure that this is only called when non-empty.
+    Assert.assertTrue(messagesInBatch > 0);
+    
+    // Serialize the cache.
+    long[] consumerIDs = new long[messagesInBatch];
+    String[] keys = new String[messagesInBatch];
+    Serializable[] values = new Serializable[messagesInBatch];
+    int index = 0;
+    for (Map.Entry<Long, Map<String, Serializable>> entry : this.bestEffortsCache.entrySet()) {
+      long consumerID = entry.getKey();
+      for (Map.Entry<String, Serializable> mapEntry : entry.getValue().entrySet()) {
+        consumerIDs[index] = consumerID;
+        keys[index] = mapEntry.getKey();
+        values[index] = mapEntry.getValue();
+        index += 1;
       }
-      
-      // Serialize the cache.
-      long[] consumerIDs = new long[messagesInBatch];
-      String[] keys = new String[messagesInBatch];
-      Serializable[] values = new Serializable[messagesInBatch];
-      int index = 0;
-      for (Map.Entry<Long, Map<String, Serializable>> entry : this.bestEffortsCache.entrySet()) {
-        long consumerID = entry.getKey();
-        for (Map.Entry<String, Serializable> mapEntry : entry.getValue().entrySet()) {
-          consumerIDs[index] = consumerID;
-          keys[index] = mapEntry.getKey();
-          values[index] = mapEntry.getValue();
-          index += 1;
-        }
-      }
-      // Clear it.
-      this.bestEffortsCache.clear();
-      
-      // Push and reset our counter.
-      this.activeWrapper.pushBestEffortsBatch(consumerIDs, keys, values);
-      this.messagesSinceLastFlush = 0;
+    }
+    // Clear it.
+    this.bestEffortsCache.clear();
+    
+    // Push the batch.
+    this.activeWrapper.pushBestEffortsBatch(consumerIDs, keys, values);
+  }
+
+  private void ensureTimerCancelled() {
+    if (0 != this.outstandingTimerToken) {
+      this.timer.cancel(this.outstandingTimerToken);
+      // Clear the token so that we can detect it was cancelled, if it already started running.
+      this.outstandingTimerToken = 0;
     }
   }
 }
