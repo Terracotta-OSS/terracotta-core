@@ -32,7 +32,6 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformServer;
-import org.terracotta.persistence.IPersistentStorage;
 import org.terracotta.persistence.IPlatformPersistence;
 
 import com.tc.async.api.PostInit;
@@ -180,7 +179,6 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
-import com.tc.objectserver.persistence.EmulatedStorageServiceProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
@@ -442,7 +440,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final CommunicatorService communicatorService = new CommunicatorService();
     serviceRegistry.registerImplementationProvided(communicatorService);
     
-    // See if we need to add a service for IPersistentStorage.
+    // See if we need to add an in-memory service for IPlatformPersistence.
     boolean serverIsRestartable = this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class);
     if (!serverIsRestartable) {
       // In this case, we do still need to provide an implementation of IPlatformPersistence, backed by memory, so that entities can request a service which is as persistent as this server is.
@@ -452,15 +450,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
     logger.debug("persistent: " + serverIsRestartable);
     
-    // If there is no native IPersistentStorage implementation, install a service which emulates it over IPlatformPersistence.
-    // TODO:  Remove this IPersistentStorage emulator once there are no more users.
-    if (!this.serviceRegistry.hasUserProvidedServiceProvider(IPersistentStorage.class)) {
-      EmulatedStorageServiceProvider.EmulatedStorageConfiguration config = new EmulatedStorageServiceProvider.EmulatedStorageConfiguration(this.serviceRegistry);
-      EmulatedStorageServiceProvider provider = new EmulatedStorageServiceProvider();
-      provider.initialize(config, platformConfiguration);
-      this.serviceRegistry.registerExternal(provider);
-    }
-
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
     String hostAddress = "";
