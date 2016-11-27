@@ -63,7 +63,6 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
-import org.terracotta.passthrough.PassthroughEmulatedStorageServiceProvider.RegistryLookup;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
@@ -166,15 +165,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       nullPlatformStorageServiceProvider.initialize(config, this.platformConfiguration);
       this.serviceProviders.add(nullPlatformStorageServiceProvider);
     }
-    // XXX: Temporary inclusion of the IPersistentStorage emulation on IPlatformPersistence.
-    PassthroughEmulatedStorageServiceProvider legacyProvider = new PassthroughEmulatedStorageServiceProvider();
-    PassthroughEmulatedStorageServiceProvider.Configuration legacyConfig = new PassthroughEmulatedStorageServiceProvider.Configuration(new RegistryLookup() {
-      @Override
-      public PassthroughServiceRegistry getRegistryForConsumerID(long consumerID) {
-        return new PassthroughServiceRegistry(null, null, consumerID, PassthroughServerProcess.this.serviceProviders, PassthroughServerProcess.this.overrideServiceProviders, PassthroughServerProcess.this.implementationProvidedServiceProviders, null);
-      }});
-    legacyProvider.initialize(legacyConfig, this.platformConfiguration);
-    this.serviceProviders.add(legacyProvider);
     
     // We can now get the service registry for the platform.
     this.platformServiceRegistry = getNextServiceRegistry(null, null, null);
