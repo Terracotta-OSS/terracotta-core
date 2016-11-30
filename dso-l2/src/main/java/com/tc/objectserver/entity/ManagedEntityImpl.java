@@ -317,7 +317,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Lock read = reconnectAccessLock.readLock();
     if (logger.isDebugEnabled()) {
-      logger.debug("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
+      logger.info("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
     }
     read.lock();
     try {
