@@ -20,6 +20,7 @@ package com.tc.l2.state;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
+import com.tc.exception.TCServerRestartException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
@@ -228,7 +229,8 @@ public class StateManagerImpl implements StateManager {
       if (!state.equals(PASSIVE_STANDBY) && !state.equals(PASSIVE_UNINITIALIZED)) {
 // TODO:  make sure this is the proper way to handle this.
         logger.fatal("Passive only partially synced when active disappeared.  Restarting");
-        throw new ZapDirtyDbServerNodeException("Passive only partially synced when active disappeared.  Restarting"); 
+        clusterStatePersistor.setDBClean(false);
+        throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
       }
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
@@ -242,7 +244,8 @@ public class StateManagerImpl implements StateManager {
       if (!syncdTo.equals(winningEnrollment.getNodeID())) {
 // TODO:  make sure this is the proper way to handle this.
         logger.fatal("Passive only partially synced when active disappeared.  Restarting");
-        throw new ZapDirtyDbServerNodeException("Passive only partially synced when active disappeared.  Restarting");
+        clusterStatePersistor.setDBClean(false);
+        throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting");
       }
     } else if (state == ACTIVE_COORDINATOR) {
       // TODO:: Support this later
@@ -502,7 +505,8 @@ public class StateManagerImpl implements StateManager {
       if (state == PASSIVE_SYNCING && syncdTo.equals(disconnectedNode)) {
         //  need to zap and start over.  The active being synced to is gone.
         logger.fatal("Passive only partially synced when active disappeared.  Restarting");
-        throw new ZapDirtyDbServerNodeException("Passive only partially synced when active disappeared.  Restarting"); 
+        clusterStatePersistor.setDBClean(false);
+        throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
       } else if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;
       }
