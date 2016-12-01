@@ -24,11 +24,11 @@ import org.terracotta.entity.MessageCodec;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
-import com.tc.objectserver.entity.ActivePassiveAckWaiter;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.function.Consumer;
+import org.terracotta.entity.ConfigurationException;
 
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
@@ -72,9 +72,9 @@ public interface ManagedEntity extends StateDumpable {
    */
   void sync(NodeID passive);
   
-  void loadEntity(byte[] configuration);
+  void loadEntity(byte[] configuration) throws ConfigurationException;
   
-  void promoteEntity();
+  void promoteEntity() throws ConfigurationException;
     
   boolean isDestroyed();
   

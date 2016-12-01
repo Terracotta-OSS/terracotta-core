@@ -16,16 +16,39 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.entity;
+package com.tc.l2.msg;
 
-import com.tc.l2.msg.ReplicationMessage;
-import com.tc.net.NodeID;
-import java.util.Set;
+/**
+ *
+ */
+public enum ReplicationResultCode {
+  NONE, SUCCESS {
+    @Override
+    byte code() {
+      return 1;
+    }
+  }, FAIL {
+    @Override
+    byte code() {
+      return 2;
+    }
+  };
 
+  static ReplicationResultCode decode(int code) {
+    switch (code) {
+      case 0:
+        return NONE;
+      case 1:
+        return SUCCESS;
+      case 2:
+        return FAIL;
+      default:
+        throw new RuntimeException("bad code");
+    }
+  }
 
-public interface PassiveReplicationBroker {
-  ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> passives);
-  void zapAndWait(NodeID node);
-  Set<NodeID> passives();
-  void enterActiveState();
+  byte code() {
+    return 0;
+  }
+  
 }

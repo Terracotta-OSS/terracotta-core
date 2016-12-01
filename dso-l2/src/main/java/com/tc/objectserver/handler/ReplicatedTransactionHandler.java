@@ -26,6 +26,7 @@ import com.tc.async.api.Sink;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -174,7 +175,7 @@ public class ReplicatedTransactionHandler {
       case ReplicationMessage.REPLICATE:
         if (state.ignore(rep)) {
           LOGGER.debug("Ignoring:" + rep);
-          acknowledge(rep);
+          acknowledge(rep, true);
         } else if (state.defer(rep)) {
           LOGGER.debug("Deferring:" + rep);
         } else {
@@ -187,7 +188,7 @@ public class ReplicatedTransactionHandler {
           LOGGER.debug("Sync:" + rep);
           syncMessageReceived(rep);
         } else {
-          acknowledge(rep);
+          acknowledge(rep, true);
         }
         break;
       case ReplicationMessage.START:
@@ -241,17 +242,17 @@ public class ReplicatedTransactionHandler {
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
-              acknowledge(rep);
+              acknowledge(rep, true);
             } else {
               entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, true, extendedData);
-              acknowledge(rep);
+              acknowledge(rep, true);
             }
           }, (exception) -> {
             entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-            acknowledge(rep);
+            acknowledge(rep, false);
           });
       } catch (EntityException ee) {
-        acknowledge(rep);
+        acknowledge(rep, false);
         if (!sourceNodeID.isNull()) {
           entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         }
@@ -272,20 +273,20 @@ public class ReplicatedTransactionHandler {
           entity.get().addRequestMessage(request, payload, 
             (result)->{
               entityPersistor.entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, version, result);
-              acknowledge(rep);
+              acknowledge(rep, true);
             } , (exception) -> {
               entityPersistor.entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-              acknowledge(rep);
+              acknowledge(rep, false);
             });
           break;
         case DESTROY_ENTITY:
           entityInstance.addRequestMessage(request, payload, 
             (result)-> {
               entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID);
-              acknowledge(rep);
+              acknowledge(rep, true);
             }, (exception) -> {
               entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-              acknowledge(rep);
+              acknowledge(rep, false);
             });
           break;
         case NOOP:
@@ -295,13 +296,13 @@ public class ReplicatedTransactionHandler {
           }
           //  fall-through to default
         default:
-          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep), (exception) -> acknowledge(rep));
+          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep, true), (exception) -> acknowledge(rep, false));
           break;
       }
     } else {
  //  fail, just ack
       LOGGER.debug("entity not found:" + rep);
-      acknowledge(rep);
+      acknowledge(rep, false);
     }
   }
   
@@ -353,13 +354,13 @@ public class ReplicatedTransactionHandler {
           throw new RuntimeException(codec);
         }
         MessagePayload payload = new MessagePayload(sync.getExtendedData(), msg, sync.getConcurrency());
-        entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync), (exception)->acknowledge(sync));
+        entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync, true), (exception)->acknowledge(sync, false));
         if (sync.getReplicationType() != ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
           entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
         if (sync.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
-          acknowledge(sync);
+          acknowledge(sync, true);
         } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
@@ -373,8 +374,8 @@ public class ReplicatedTransactionHandler {
               }
               moveToPassiveStandBy();
             }
-            acknowledge(sync);
-          }, (exception)->acknowledge(sync));
+            acknowledge(sync, true);
+          }, (exception)->acknowledge(sync, false));
         }
       }
     } catch (EntityException ee) {
@@ -487,14 +488,14 @@ public class ReplicatedTransactionHandler {
     }
   }
 
-  private void acknowledge(ReplicationMessage rep) {
+  private void acknowledge(ReplicationMessage rep, boolean success) {
 //  when is the right time to send the ack?
     try {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("acking(completed) " + rep);
       }
       if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createCompletedAck(rep.getMessageID()));
+        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createCompletedAck(rep.getMessageID(), success ? ReplicationResultCode.SUCCESS : ReplicationResultCode.FAIL));
       }
     } catch (GroupException ge) {
       // Active must have died.  Swallow the exception after logging.

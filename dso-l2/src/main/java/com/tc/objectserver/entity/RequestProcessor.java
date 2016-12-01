@@ -180,13 +180,5 @@ public class RequestProcessor {
     synchronized boolean isDone() {
       return done;
     }
-    
-    public void waitForPassives() {
-      try {
-        this.replicationWaiter.waitForCompleted();
-      } catch (InterruptedException ie) {
-        throw new RuntimeException(ie);
-      }
-    }
   }
 }

@@ -80,6 +80,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
@@ -175,7 +176,7 @@ public class ManagedEntityImplTest {
   }
   
   @SuppressWarnings("unchecked")
-  private EntityServerService<EntityMessage, EntityResponse> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) {
+  private EntityServerService<EntityMessage, EntityResponse> getServerEntityService(ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity, PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity) throws ConfigurationException {
     EntityServerService<EntityMessage, EntityResponse> entityService = mock(EntityServerService.class);
     doReturn(activeServerEntity).when(entityService).createActiveEntity(any(ServiceRegistry.class), any(byte[].class));
     doReturn(passiveServerEntity).when(entityService).createPassiveEntity(any(ServiceRegistry.class), any(byte[].class));
@@ -295,7 +296,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response::complete, response::failure));
     response.waitFor();
     verify(response).complete(Mockito.any());
-    invokeOnTransactionHandler(()->managedEntity.promoteEntity());
+    invokeOnTransactionHandler(()->{try {managedEntity.promoteEntity();} catch (ConfigurationException ce) {throw new RuntimeException(ce);}});
     
     // We expected to see this as a result of the promotion.
     verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg.getRawPayload()));

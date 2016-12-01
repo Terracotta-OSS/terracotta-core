@@ -32,7 +32,7 @@ public class NoReplicationBroker implements PassiveReplicationBroker {
   
   private boolean isActive = false;
   
-  public static final ActivePassiveAckWaiter NOOP_WAITER = new ActivePassiveAckWaiter(Collections.emptySet());
+  public static final ActivePassiveAckWaiter NOOP_WAITER = new ActivePassiveAckWaiter(Collections.emptySet(), null);
 
   @Override
   public void enterActiveState() {
@@ -50,4 +50,11 @@ public class NoReplicationBroker implements PassiveReplicationBroker {
   public ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> passives) {
     return NOOP_WAITER;
   }
+
+  @Override
+  public void zapAndWait(NodeID node) {
+    //  do nothing
+  }
+  
+  
 }

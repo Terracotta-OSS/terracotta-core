@@ -18,10 +18,15 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.TCServerRestartException;
+import com.tc.exception.ZapServerNodeException;
+import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
 import com.tc.util.Assert;
+import java.util.HashMap;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -32,10 +37,14 @@ import java.util.Set;
 public class ActivePassiveAckWaiter {
   private final Set<NodeID> receivedPending;
   private final Set<NodeID> completedPending;
+  private final Map<NodeID, ReplicationResultCode> results;
+  private final PassiveReplicationBroker parent;
 
-  public ActivePassiveAckWaiter(Set<NodeID> allPassiveNodes) {
+  public ActivePassiveAckWaiter(Set<NodeID> allPassiveNodes, PassiveReplicationBroker parent) {
     this.receivedPending =  new HashSet<NodeID>(allPassiveNodes);
     this.completedPending =  new HashSet<NodeID>(allPassiveNodes);
+    this.results = new HashMap<>();
+    this.parent = parent;
   }
 
   public synchronized void waitForReceived() throws InterruptedException {
@@ -47,6 +56,21 @@ public class ActivePassiveAckWaiter {
   public synchronized void waitForCompleted() throws InterruptedException {
     while (!this.completedPending.isEmpty()) {
       wait();
+    }
+  }
+  
+  public void verifyLifecycleResult(boolean success) {
+    if(success || results.entrySet().stream().anyMatch(e->e.getValue() == ReplicationResultCode.SUCCESS)) {
+      boolean zapped = false;
+      for (Map.Entry<NodeID, ReplicationResultCode> r : results.entrySet()) {
+        if (r.getValue() == ReplicationResultCode.FAIL) {
+          parent.zapAndWait(r.getKey());
+          zapped = true;
+        }
+      }
+      if (!success) {
+        throw new TCServerRestartException("inconsistent lifecycle");
+      }
     }
   }
 
@@ -69,9 +93,10 @@ public class ActivePassiveAckWaiter {
    * 
    * @param onePassive The passive which has completed the replicated message
    * @param isNormalComplete True if this was a normal complete ack, false if we are completing because the node disappeared
+   * @param payload
    * @return True if this was the last outstanding completion required and the waiter is now done.
    */
-  public synchronized boolean didCompleteOnPassive(NodeID onePassive, boolean isNormalComplete) {
+  public synchronized boolean didCompleteOnPassive(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
     // Note that we will try to remove from the received set, but usually it will already have been removed.
     boolean didContainInReceived = this.receivedPending.remove(onePassive);
     // We know that it must still be in the completed set, though.
@@ -81,6 +106,7 @@ public class ActivePassiveAckWaiter {
       // In the unexpected case, we are just making sure this node is removed from all waiters, even though it might have
       // already completed on some of them.
       Assert.assertTrue(didContainInCompleted);
+      this.results.put(onePassive, payload);
     }
     boolean isDoneWaiting = this.completedPending.isEmpty();
     // Wake everyone up if this changed something.

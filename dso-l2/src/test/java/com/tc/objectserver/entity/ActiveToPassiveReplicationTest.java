@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.ServerID;
+import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -71,7 +72,7 @@ public class ActiveToPassiveReplicationTest {
         return null;
       }
     }).when(replicate).addSingleThreaded(Matchers.any());
-    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, mock(EntityPersistor.class), replicate);
+    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   
   @Test

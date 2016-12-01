@@ -19,13 +19,18 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.exception.TCShutdownServerException;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
+import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
@@ -65,12 +70,31 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Sink<ReplicationEnvelope> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
+  private final GroupManager serverCheck;
 
-  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, EntityPersistor persistor, Sink<ReplicationEnvelope> replicate) {
+  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, EntityPersistor persistor, Sink<ReplicationEnvelope> replicate, GroupManager serverMatch) {
     this.entities = entities;
     this.replicate = replicate;
     this.passives = passives;
     this.persistor = persistor;
+    this.serverCheck = serverMatch;
+  }
+
+  @Override
+  public void zapAndWait(NodeID node) {
+    synchronized(this.standByNodes) {
+      logger.warn("ZAPPING " + node + " due to inconsistent lifecycle result");
+      try {
+        if (this.standByNodes.contains(node)) {
+          this.serverCheck.zapNode(node,  L2HAZapNodeRequestProcessor.PROGRAM_ERROR, "inconsistent lifecycle");
+        }
+        while (this.standByNodes.contains(node)) {
+          this.standByNodes.wait();
+        }
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
   
   @Override
@@ -168,17 +192,17 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   public void ackCompleted(GroupMessage msg) {
     // This is a normal completion.
     boolean isNormalComplete = true;
-    internalAckCompleted(msg.inResponseTo(), msg.messageFrom(), isNormalComplete);
+    internalAckCompleted(msg.inResponseTo(), msg.messageFrom(), ((ReplicationMessageAck)msg).result, isNormalComplete);
   }
 
   /**
    * This internal handling for completed is split out since it happens for both completed acks but also situations which
    * implies no ack is forthcoming (the passive disappearing, for example).
    */
-  private void internalAckCompleted(MessageID mid, NodeID passive, boolean isNormalComplete) {
+  private void internalAckCompleted(MessageID mid, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
     ActivePassiveAckWaiter waiter = waiters.get(mid);
     if (null != waiter) {
-      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete);
+      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete,  payload);
       if (shouldDiscardWaiter) {
         waiters.remove(mid);
       }
@@ -195,13 +219,13 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     Set<NodeID> copy = new HashSet<>(all); 
 // don't replicate to a passive that is no longer there
     copy.retainAll(passives());
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy);
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy, this);
     if (!copy.isEmpty()) {
       waiters.put(msg.getMessageID(), waiter);
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node, isNormalComplete)));
+        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
       }
     }
     return waiter;
@@ -216,7 +240,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     if (activated) {
       // This is a an unexpected kind of completion.
       boolean isNormalComplete = false;
-      waiters.forEach((key, value)->internalAckCompleted(key, nodeID, isNormalComplete));
+      waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
       Semaphore block = new Semaphore(0);
@@ -247,6 +271,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  standby nodes for tracking only.  no practical use
     synchronized(standByNodes) {
       standByNodes.remove(nodeID);
+      standByNodes.notifyAll();
     }
   }
 }

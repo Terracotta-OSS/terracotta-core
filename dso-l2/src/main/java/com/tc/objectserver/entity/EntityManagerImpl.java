@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.TCShutdownServerException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import org.terracotta.entity.EntityMessage;
@@ -39,6 +40,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.SyncMessageCodec;
@@ -96,8 +98,13 @@ public class EntityManagerImpl implements EntityManager {
     this.shouldCreateActiveEntities = true;
     // We can promote directly because this method is only called from PTH initialize 
     //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
-    for (ManagedEntity entity : this.entities.values()) {
-      entity.promoteEntity();
+    try {
+      for (ManagedEntity entity : this.entities.values()) {
+        entity.promoteEntity();
+      }
+    } catch (ConfigurationException ce) {
+      LOGGER.warn("failure to promote all entities.  Server is crashing", ce);
+      throw new TCShutdownServerException("failure to promote all entities.  Server is crashing");
     }
 //  only enter active state after all the entities have promoted to active
     processorPipeline.enterActiveState();
@@ -124,7 +131,12 @@ public class EntityManagerImpl implements EntityManager {
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }    
-    temp.loadEntity(configuration);
+    try {
+      temp.loadEntity(configuration);
+    } catch (ConfigurationException ce) {
+      LOGGER.warn("failure to load an existing entity.  Server is crashing", ce);
+      throw new TCShutdownServerException("failure to load an existing entity.  Server is crashing");
+    }
   }
 
   @Override
