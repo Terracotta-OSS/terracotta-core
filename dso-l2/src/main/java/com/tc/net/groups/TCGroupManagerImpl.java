@@ -528,6 +528,17 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public void sendTo(NodeID node, AbstractGroupMessage msg) throws GroupException {
+    // No callback in this case.
+    Runnable sentCallback = null;
+    internalSendTo(node, msg, sentCallback);
+  }
+
+  @Override
+  public void sendToWithSentCallback(NodeID node, AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
+    internalSendTo(node, msg, sentCallback);
+  }
+
+  private void internalSendTo(NodeID node, AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     TCGroupMember member = getMember(node);
     if (member != null && member.isReady()) {
       if (msg instanceof L2StateMessage) {
@@ -535,7 +546,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           debugInfo("Sending msg to " + node + ", msg: " + msg + ", channel: " + member.getChannel());
         }
       }
-      member.send(msg);
+      member.send(msg, sentCallback);
     } else {
       throw new GroupException("Send to " + ((member == null) ? "non-exist" : "not ready") + " member of " + node);
     }
@@ -808,6 +819,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                   + Arrays.toString(weights));
       AbstractGroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights);
       try {
+        // Note that we have no interest in the sent callback for the zap path.
         sendTo(nodeID, msg);
       } catch (GroupException e) {
         logger.error("Error sending ZapNode Request to " + nodeID + " msg = " + msg);
@@ -872,7 +884,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       if (member.isReady()) {
         Assert.assertNotNull(member.getPeerNodeID());
         waitFor.add(member.getPeerNodeID());
-        member.send(msg);
+        // TODO:  Determine if the callers of this method want the sent callback.
+        Runnable sentCallback = null;
+        member.send(msg, sentCallback);
       } else {
         throw new GroupException("Send to a not ready member " + member);
       }

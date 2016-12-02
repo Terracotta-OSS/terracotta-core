@@ -23,6 +23,7 @@ import com.tc.config.NodesStore;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 import com.tc.util.UUID;
 
 import java.util.LinkedList;
@@ -102,6 +103,11 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   @Override
   public void sendTo(NodeID nodeID, GroupMessage msg) {
     sendToMessages.add(new SendToMessage(nodeID, msg));
+  }
+
+  @Override
+  public void sendToWithSentCallback(NodeID node, GroupMessage msg, Runnable sentCallback) throws GroupException {
+    Assert.fail("NOT CALLED IN CURRENT TESTS");
   }
 
   @Override
