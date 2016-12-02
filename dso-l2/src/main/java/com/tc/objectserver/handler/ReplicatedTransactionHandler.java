@@ -36,6 +36,7 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -80,6 +81,17 @@ public class ReplicatedTransactionHandler {
   private Sink<ReplicationMessage> loopback;
   
   private final SyncState state = new SyncState();
+  
+  // This MUST be manipulated under lock - it is the batch of ack messages we are accumulating until the network is ready for another message.
+  private boolean isWaitingForNetwork;
+  private NodeID cachedMessageAckFrom;
+  private ReplicationMessageAck cachedBatchAck;
+  private final Runnable handleMessageSend = new Runnable() {
+    @Override
+    public void run() {
+      handleNetworkDone();
+    }
+  };
   
   public ReplicatedTransactionHandler(StateManager state, TransactionOrderPersistor transactionOrderPersistor, 
       EntityManager manager, EntityPersistor entityPersistor, GroupManager<AbstractGroupMessage> groupManager) {
@@ -475,31 +487,62 @@ public class ReplicatedTransactionHandler {
   }
 
   private void ackReceived(ReplicationMessage rep) {
-    try {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("acking(received) " + rep);
-      }
-      if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createReceivedAck(rep.getMessageID()));
-      }
-    } catch (GroupException ge) {
-      // Active must have died.  Swallow the exception after logging.
-      LOGGER.warn("active died on received ack", ge);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("acking(received) " + rep);
+    }
+    if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
+      prepareAckForSend(rep.messageFrom(), false, rep.getMessageID(), true);
     }
   }
 
   private void acknowledge(ReplicationMessage rep, boolean success) {
 //  when is the right time to send the ack?
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("acking(completed) " + rep);
+    }
+    if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
+      prepareAckForSend(rep.messageFrom(), true, rep.getMessageID(), success);
+    }
+  }
+
+  private synchronized void prepareAckForSend(NodeID sender, boolean isComplete, MessageID respondTo, boolean success) {
+    if (null == this.cachedBatchAck) {
+      this.cachedBatchAck = ReplicationMessageAck.createBatchAck();
+      this.cachedMessageAckFrom = sender;
+    } else {
+      Assert.assertTrue(this.cachedMessageAckFrom.equals(sender));
+    }
+    ReplicationResultCode code = isComplete
+        ? (success ? ReplicationResultCode.SUCCESS : ReplicationResultCode.FAIL)
+        : ReplicationResultCode.RECEIVED;
+    this.cachedBatchAck.addAck(respondTo, code);
+    
+    if (!isWaitingForNetwork) {
+      synchronizedSendAckBatch();
+    }
+  }
+
+  private synchronized void handleNetworkDone() {
+    this.isWaitingForNetwork = false;
+    if (null != this.cachedBatchAck) {
+      synchronizedSendAckBatch();
+    }
+  }
+
+  private void synchronizedSendAckBatch() {
+    // Note that we want to set the flags _before_ making the calls since the unit test mock calls back, immediate.
+    //  (it shouldn't make a different to any other call since this is already synchronized)
+    NodeID cachedMessageAckFrom = this.cachedMessageAckFrom;
+    this.cachedMessageAckFrom = null;
+    ReplicationMessageAck cachedBatchAck = this.cachedBatchAck;
+    this.cachedBatchAck = null;
+    this.isWaitingForNetwork = true;
     try {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("acking(completed) " + rep);
-      }
-      if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-        groupManager.sendTo(rep.messageFrom(), ReplicationMessageAck.createCompletedAck(rep.getMessageID(), success ? ReplicationResultCode.SUCCESS : ReplicationResultCode.FAIL));
-      }
-    } catch (GroupException ge) {
+      groupManager.sendToWithSentCallback(cachedMessageAckFrom, cachedBatchAck, this.handleMessageSend);
+    } catch (GroupException e) {
       // Active must have died.  Swallow the exception after logging.
-      LOGGER.warn("active died on ack", ge);
+      LOGGER.warn("active died on ack", e);
+      this.isWaitingForNetwork = false;
     }
   }
 

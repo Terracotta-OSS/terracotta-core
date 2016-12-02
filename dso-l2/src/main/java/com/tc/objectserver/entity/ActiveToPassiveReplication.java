@@ -19,7 +19,6 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
@@ -31,7 +30,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
@@ -182,17 +180,20 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     return null;
   }
 
-  public void ackReceived(GroupMessage msg) {
-    ActivePassiveAckWaiter waiter = waiters.get(msg.inResponseTo());
-    if (null != waiter) {
-      waiter.didReceiveOnPassive(msg.messageFrom());
+  public void batchAckReceived(ReplicationMessageAck context) {
+    NodeID messageFrom = context.messageFrom();
+    for (ReplicationMessageAck.Tuple tuple : context.getBatch()) {
+      if (ReplicationResultCode.RECEIVED == tuple.result) {
+        ActivePassiveAckWaiter waiter = waiters.get(tuple.respondTo);
+        if (null != waiter) {
+          waiter.didReceiveOnPassive(messageFrom);
+        }
+      } else {
+        // This is a normal completion.
+        boolean isNormalComplete = true;
+        internalAckCompleted(tuple.respondTo, messageFrom, tuple.result, isNormalComplete);
+      }
     }
-  }
-
-  public void ackCompleted(GroupMessage msg) {
-    // This is a normal completion.
-    boolean isNormalComplete = true;
-    internalAckCompleted(msg.inResponseTo(), msg.messageFrom(), ((ReplicationMessageAck)msg).result, isNormalComplete);
   }
 
   /**
@@ -202,7 +203,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private void internalAckCompleted(MessageID mid, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
     ActivePassiveAckWaiter waiter = waiters.get(mid);
     if (null != waiter) {
-      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete,  payload);
+      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete, payload);
       if (shouldDiscardWaiter) {
         waiters.remove(mid);
       }

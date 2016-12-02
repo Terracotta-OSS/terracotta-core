@@ -18,19 +18,30 @@
  */
 package com.tc.l2.msg;
 
+
 /**
- *
+ * An enum defining the meaning of an acknowledgement from the passive.  These can be either RECEIVED, SUCCESS, or FAIL.
  */
 public enum ReplicationResultCode {
-  NONE, SUCCESS {
+  NONE {
     @Override
-    byte code() {
+    public int code() {
+      return 0;
+    }
+  }, RECEIVED {
+    @Override
+    public int code() {
       return 1;
+    }
+  }, SUCCESS {
+    @Override
+    public int code() {
+      return 2;
     }
   }, FAIL {
     @Override
-    byte code() {
-      return 2;
+    public int code() {
+      return 3;
     }
   };
 
@@ -39,16 +50,15 @@ public enum ReplicationResultCode {
       case 0:
         return NONE;
       case 1:
-        return SUCCESS;
+        return RECEIVED;
       case 2:
+        return SUCCESS;
+      case 3:
         return FAIL;
       default:
         throw new RuntimeException("bad code");
     }
   }
 
-  byte code() {
-    return 0;
-  }
-  
+  public abstract int code();
 }

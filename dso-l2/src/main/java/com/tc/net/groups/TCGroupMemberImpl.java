@@ -61,9 +61,9 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
    * Use a wrapper to send old tribes GroupMessage out through channel's TCMessage
    */
   @Override
-  public void send(AbstractGroupMessage msg) throws GroupException {
+  public void send(AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     if (!channel.isOpen()) { throw new GroupException("Channel is not ready: " + toString()); }
-    sendMessage(msg);
+    sendMessage(msg, sentCallback);
   }
 
   @Override
@@ -72,12 +72,18 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
       logger.warn("Attempting send to a not ready member " + this + ", msg will not be sent: " + msg);
       return;
     }
-    sendMessage(msg);
+    // We can expose this callback if the caller is interested but for now we ignore it (at the moment, we are only looking
+    //  at batching passive replication responses).
+    Runnable sentCallback = null;
+    sendMessage(msg, sentCallback);
   }
 
-  private void sendMessage(AbstractGroupMessage msg) {
+  private void sendMessage(AbstractGroupMessage msg, Runnable sentCallback) {
     TCGroupMessageWrapper wrapper = (TCGroupMessageWrapper) channel.createMessage(TCMessageType.GROUP_WRAPPER_MESSAGE);
     wrapper.setGroupMessage(msg);
+    if (null != sentCallback) {
+      wrapper.setSentCallback(sentCallback);
+    }
     wrapper.send();
   }
 
