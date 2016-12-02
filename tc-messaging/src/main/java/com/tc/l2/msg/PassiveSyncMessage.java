@@ -46,9 +46,9 @@ public class PassiveSyncMessage extends ReplicationMessage {
   public static PassiveSyncMessage createEndSyncMessage(byte[] extras) {
     return new PassiveSyncMessage(SYNC_END, EntityID.NULL_ID, NO_VERSION, 0, extras);
   }
-  public static PassiveSyncMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload, boolean canDelete) {
+  public static PassiveSyncMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload, int references) {
  //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
-    return new PassiveSyncMessage(SYNC_ENTITY_BEGIN, id, version, canDelete ? 0 : 1, configPayload);
+    return new PassiveSyncMessage(SYNC_ENTITY_BEGIN, id, version, references, configPayload);
   }
   public static PassiveSyncMessage createEndEntityMessage(EntityID id, long version) {
     return new PassiveSyncMessage(SYNC_ENTITY_END, id, version, 0, null);

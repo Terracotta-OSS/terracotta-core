@@ -646,7 +646,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         @Override
         public void channelCreated(MessageChannel channel) {
           ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
-          if (l2Coordinator.getStateManager().isActiveCoordinator()) {
+          if (l2Coordinator.getStateManager().isActiveCoordinator() && channelManager.isActiveID(cid)) {
             eventCollector.clientDidConnect(channel, cid);
           }
         }

@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.exception.EntityReferencedException;
+import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.logging.TCLogger;
@@ -93,6 +94,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final BiConsumer<EntityID, Long> noopLoopback;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
+  //  for destroy, passives need to reference count to understand if entity is deletable
+  private int passiveReferenceCount = 0;
   private final boolean canDelete;
   private volatile boolean isDestroyed;
   
@@ -117,7 +120,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
-                    boolean isInActiveState, boolean canDelete) {
+                    boolean isInActiveState, int references) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
@@ -131,7 +134,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     // Create the RetirementManager here, since it is currently scoped per-entity.
     this.retirementManager = new RetirementManager();
     this.isInActiveState = isInActiveState;
-    this.canDelete = canDelete;
+    this.canDelete = references >= 0;
+    this.passiveReferenceCount = references;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
     this.syncCodec = factory.getSyncMessageCodec();
@@ -361,6 +365,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       resp.failure(wrapper);
     } catch (TCShutdownServerException shutdown) {
       throw shutdown;
+    } catch (TCServerRestartException shutdown) {
+      throw shutdown;
     } catch (Exception e) {
       // Wrap this exception.
       EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
@@ -499,7 +505,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       // We want to ensure that nobody somehow has a reference to this entity.
       if (!this.canDelete) {
         response.failure(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));
-      } else if (clientEntityStateManager.verifyNoReferences(entityDescriptor.getEntityID())) {
+      } else if ((isInActiveState && clientEntityStateManager.verifyNoReferences(entityDescriptor.getEntityID())) || 
+              (!isInActiveState && passiveReferenceCount == 0)) {
         Assert.assertFalse(this.isDestroyed);
         commonServerEntity.destroy();
         this.retirementManager.entityWasDestroyed();
@@ -679,47 +686,41 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private void getEntity(ServerEntityRequest getEntityRequest, ResultCapture response) {
-    if (this.isInActiveState) {
-      if (this.isDestroyed) {
-        response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
-      } else if (null != this.activeServerEntity) {
-        ClientDescriptor sourceDescriptor = getEntityRequest.getSourceDescriptor();
-        EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-        // The FETCH can only come directly from a client so we can down-cast.
-        ClientID clientID = (ClientID) getEntityRequest.getNodeID();
-        clientEntityStateManager.addReference(clientID, entityDescriptor);
-        response.complete(this.constructorInfo);
-        // Fire the event that the client fetched the entity.
-        this.eventCollector.clientDidFetchEntity(clientID, entityDescriptor, sourceDescriptor);
-        // finally notify the entity that it was fetched
-        this.activeServerEntity.connected(sourceDescriptor);
-      } else {
-        response.complete();
-      }
+    if (this.isDestroyed) {
+      response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
+    } else if (this.isInActiveState) {
+      ClientDescriptor sourceDescriptor = getEntityRequest.getSourceDescriptor();
+      EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
+      // The FETCH can only come directly from a client so we can down-cast.
+      ClientID clientID = (ClientID) getEntityRequest.getNodeID();
+      clientEntityStateManager.addReference(clientID, entityDescriptor);
+      response.complete(this.constructorInfo);
+      // Fire the event that the client fetched the entity.
+      this.eventCollector.clientDidFetchEntity(clientID, entityDescriptor, sourceDescriptor);
+      // finally notify the entity that it was fetched
+      this.activeServerEntity.connected(sourceDescriptor);
     } else {
-      throw new IllegalStateException("GET called on passive entity.");
+      passiveReferenceCount += 1;
+      response.complete();
     }
   }
 
   private void releaseEntity(ServerEntityRequest request, ResultCapture response) {
-    if (this.isInActiveState) {
-      if (this.isDestroyed) {
-        response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
-      } else if (null != this.activeServerEntity) {
-        ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
-        EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
-        // The RELEASE can only come directly from a client so we can down-cast.
-        ClientID clientID = (ClientID) request.getNodeID();
-        clientEntityStateManager.removeReference(clientID, entityDescriptor);
-        this.activeServerEntity.disconnected(sourceDescriptor);
-        // Fire the event that the client released the entity.
-        this.eventCollector.clientDidReleaseEntity(clientID, entityDescriptor);
-        response.complete();
-      } else {
-        response.complete();
-      }
+    if (this.isDestroyed) {
+      response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
+    } else if (this.isInActiveState) {
+      ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
+      EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
+      // The RELEASE can only come directly from a client so we can down-cast.
+      ClientID clientID = (ClientID) request.getNodeID();
+      clientEntityStateManager.removeReference(clientID, entityDescriptor);
+      this.activeServerEntity.disconnected(sourceDescriptor);
+      // Fire the event that the client released the entity.
+      this.eventCollector.clientDidReleaseEntity(clientID, entityDescriptor);
+      response.complete();
     } else {
-      throw new IllegalStateException("RELEASE called on passive entity.");
+      passiveReferenceCount -= 1;
+      response.complete();
     }
   }
   
@@ -755,7 +756,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   public void sync(NodeID passive) {
     try {
   // wait for future is ok, occuring on sync executor thread
-      executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo, canDelete), passive).waitForCompleted();
+      executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo, canDelete ? passiveReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
   // iterate through all the concurrency keys of an entity
       EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
   //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).

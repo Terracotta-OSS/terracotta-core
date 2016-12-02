@@ -51,7 +51,7 @@ public class EntityExistenceHelpers {
       resultWasCached = true;
     } else {
       // There is no record of this, so give it a try.
-      entityManager.createEntity(entityID, version, consumerID, canDelete);
+      entityManager.createEntity(entityID, version, consumerID, canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
     }
     return resultWasCached;
   }

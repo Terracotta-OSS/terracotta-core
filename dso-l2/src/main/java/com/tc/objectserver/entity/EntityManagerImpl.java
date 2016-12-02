@@ -111,11 +111,11 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
+  public ManagedEntity createEntity(EntityID id, long version, long consumerID, int references) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
-        clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
+        clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, references);
     ManagedEntity exists = entities.putIfAbsent(id, temp);
     if (exists == null) {
       LOGGER.debug("created " + id);
@@ -127,7 +127,7 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }    

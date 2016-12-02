@@ -63,6 +63,7 @@ import java.util.function.Consumer;
 import org.junit.Test;
 import org.mockito.Matchers;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.times;
@@ -134,7 +135,7 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.getExtendedData()).thenReturn(new byte[0]);
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
       when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
       return entity;
     });
@@ -147,7 +148,7 @@ public class ReplicatedTransactionHandlerTest {
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0], true));
+    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0], 0));
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
     this.loopbackSink.addSingleThreaded(msg);
     this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, rand));
@@ -210,7 +211,7 @@ public class ReplicatedTransactionHandlerTest {
     MessageCodec codec = mock(MessageCodec.class);
     SyncMessageCodec sync = mock(SyncMessageCodec.class);
     when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
       when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
       return entity;
     });
@@ -291,7 +292,7 @@ public class ReplicatedTransactionHandlerTest {
     long VERSION = 1;
     byte[] config = new byte[0];
     send(PassiveSyncMessage.createStartSyncMessage());
-    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config, true));
+    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config, 0));
     send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 1));
     send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 1, config));
     send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 1));

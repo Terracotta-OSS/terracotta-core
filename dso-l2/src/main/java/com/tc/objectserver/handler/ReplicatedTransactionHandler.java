@@ -237,7 +237,7 @@ public class ReplicatedTransactionHandler {
       long consumerID = this.entityPersistor.getNextConsumerID();
       try {
         LOGGER.debug("entity create called " + entityID);
-        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull());
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull() ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
         temp.addRequestMessage(request, new MessagePayload(extendedData, null, ConcurrencyStrategy.MANAGEMENT_KEY), 
           (result) -> {
             if (!sourceNodeID.isNull()) {
@@ -330,7 +330,7 @@ public class ReplicatedTransactionHandler {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
  //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
-          ManagedEntity temp = this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency() == 0);          
+          this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency());          
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
           this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !sync.getSource().isNull(), sync.getExtendedData());
         } else {
@@ -517,6 +517,10 @@ public class ReplicatedTransactionHandler {
         return ServerEntityAction.INVOKE_ACTION;
       case DESTROY_ENTITY:
         return ServerEntityAction.DESTROY_ENTITY;
+      case FETCH_ENTITY:
+        return ServerEntityAction.FETCH_ENTITY;
+      case RELEASE_ENTITY:
+        return ServerEntityAction.RELEASE_ENTITY;
       case SYNC_ENTITY_BEGIN:
         return ServerEntityAction.RECEIVE_SYNC_ENTITY_START;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:

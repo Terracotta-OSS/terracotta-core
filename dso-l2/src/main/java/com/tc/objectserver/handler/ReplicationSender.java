@@ -263,6 +263,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               return true;
             }
           case RECONFIGURE_ENTITY:
+          case FETCH_ENTITY:
+          case RELEASE_ENTITY:
             if (syncd.contains(eid) || eid.equals(syncingID)) {
 //  this entity is being or has been replicated, send the reconfigure through
               return true;
