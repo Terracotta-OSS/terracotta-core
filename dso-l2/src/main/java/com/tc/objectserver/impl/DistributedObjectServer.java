@@ -737,11 +737,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
             switch (context.getType()) {
-              case ReplicationMessageAck.RECEIVED:
-                passives.ackReceived(context);
-                break;
-              case ReplicationMessageAck.COMPLETED:
-                passives.ackCompleted(context);
+              case ReplicationMessageAck.BATCH:
+                passives.batchAckReceived(context);
                 break;
               case ReplicationMessageAck.START_SYNC:
                 passives.startPassiveSync(context.messageFrom());

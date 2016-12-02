@@ -22,37 +22,45 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
-import java.io.IOException;
+import com.tc.util.Assert;
 
-/**
- *
- */
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class ReplicationMessageAck extends AbstractGroupMessage {
   //message types  
   public static final int INVALID               = 0; // Sent to replicate a request on the passive
-  public static final int RECEIVED                = 2; // Means that the replicated action has been received by the passive
-  public static final int COMPLETED                = 3; // response that the replicated action completed
   public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
-  
-  public ReplicationResultCode result = ReplicationResultCode.NONE;
-  
+  public static final int BATCH                = 5; // Sent from the passive to ack a batch of messages.
+
   // Factory methods.
   public static ReplicationMessageAck createSyncRequestMessage() {
     return new ReplicationMessageAck(START_SYNC);
   }
 
   public static ReplicationMessageAck createReceivedAck(MessageID requestToAck) {
-    return new ReplicationMessageAck(RECEIVED, requestToAck);
+    ReplicationMessageAck message = new ReplicationMessageAck(BATCH);
+    message.addAck(requestToAck, ReplicationResultCode.RECEIVED);
+    return message;
   }
 
   public static ReplicationMessageAck createCompletedAck(MessageID requestToAck) {
-    return new ReplicationMessageAck(COMPLETED, requestToAck);
+    ReplicationMessageAck message = new ReplicationMessageAck(BATCH);
+    message.addAck(requestToAck, ReplicationResultCode.SUCCESS);
+    return message;
   }
 
   public static ReplicationMessageAck createCompletedAck(MessageID requestToAck, ReplicationResultCode payload) {
-    return new ReplicationMessageAck(COMPLETED, requestToAck, payload);
+    ReplicationMessageAck message = new ReplicationMessageAck(BATCH);
+    message.addAck(requestToAck, payload);
+    return message;
   }
-  
+
+
+  private List<Tuple> batch;
+
   public ReplicationMessageAck() {
     super(INVALID);
   }
@@ -60,24 +68,62 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
 //  this type requests passive sync from the active  
   private ReplicationMessageAck(int type) {
     super(type);
+    if (BATCH == type) {
+      this.batch = new ArrayList<Tuple>();
+    }
   }
-  
-  private ReplicationMessageAck(int type, MessageID requestID) {
-    super(type, requestID);
+
+  // Note that this does change the instance, so synchronized would be required if it were being called by multiple threads.
+  // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
+  public void addAck(MessageID respondTo, ReplicationResultCode result) {
+    Assert.assertTrue(BATCH == this.getType());
+    Tuple tuple = new Tuple(respondTo, result);
+    this.batch.add(tuple);
   }
-  
-  private ReplicationMessageAck(int type, MessageID requestID, ReplicationResultCode code) {
-    super(type, requestID);
-    result = code;
+
+  public List<Tuple> getBatch() {
+    return this.batch;
   }
-  
+
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    result = ReplicationResultCode.decode(in.read());
+    if (BATCH == this.getType()) {
+      int batchSize = in.readInt();
+      // We should never send an empty message.
+      Assert.assertTrue(batchSize > 0);
+      this.batch = new ArrayList<Tuple>();
+      for (int i = 0; i < batchSize; ++i) {
+        MessageID respondTo = new MessageID(in.readLong());
+        ReplicationResultCode result = ReplicationResultCode.decode(in.readInt());
+        this.batch.add(new Tuple(respondTo, result));
+      }
+    }
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    out.write(result.code());
+    if (BATCH == this.getType()) {
+      int size = this.batch.size();
+      // We should never send an empty message.
+      Assert.assertTrue(size > 0);
+      out.writeInt(size);
+      for (Tuple tuple : this.batch) {
+        out.writeLong(tuple.respondTo.toLong());
+        out.writeInt(tuple.result.code());
+      }
+    }
+  }
+
+  /**
+   * The respondTo is the message to which we are responding.  The result determines if this is a RECEIVED, SUCCESS, or FAIL.
+   */
+  public static class Tuple {
+    public final MessageID respondTo;
+    public final ReplicationResultCode result;
+    
+    public Tuple(MessageID respondTo, ReplicationResultCode result) {
+      this.respondTo = respondTo;
+      this.result = result;
+    }
   }
 }
