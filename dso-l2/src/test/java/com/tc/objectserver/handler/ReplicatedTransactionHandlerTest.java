@@ -96,6 +96,10 @@ public class ReplicatedTransactionHandlerTest {
     this.stateManager = mock(StateManager.class);
     this.entityManager = mock(EntityManager.class);
     this.groupManager = mock(GroupManager.class);
+    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
+      ((Runnable)invocation.getArguments()[2]).run();
+      return null;
+    }).when(groupManager).sendToWithSentCallback(Mockito.any(), Mockito.any(), Mockito.any());
     this.platform = mock(ManagedEntity.class);
     Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
       ((Consumer)invocation.getArguments()[2]).accept(null);
@@ -158,7 +162,7 @@ public class ReplicatedTransactionHandlerTest {
     verify(msg).getExtendedData();
     verify(entity).getCodec();
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
-    verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
+    verify(groupManager, times(2)).sendToWithSentCallback(Matchers.eq(sid), Matchers.any(), Matchers.any());
   }  
   
   @Test
@@ -194,7 +198,7 @@ public class ReplicatedTransactionHandlerTest {
     verify(msg).getExtendedData();
     verify(msg).getConcurrency();  // make sure RTH is pulling the concurrency from the message
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
-    verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
+    verify(groupManager, times(2)).sendToWithSentCallback(Matchers.eq(sid), Matchers.any(), Matchers.any());
   }
   
   @Test

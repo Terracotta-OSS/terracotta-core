@@ -40,22 +40,8 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
     return new ReplicationMessageAck(START_SYNC);
   }
 
-  public static ReplicationMessageAck createReceivedAck(MessageID requestToAck) {
-    ReplicationMessageAck message = new ReplicationMessageAck(BATCH);
-    message.addAck(requestToAck, ReplicationResultCode.RECEIVED);
-    return message;
-  }
-
-  public static ReplicationMessageAck createCompletedAck(MessageID requestToAck) {
-    ReplicationMessageAck message = new ReplicationMessageAck(BATCH);
-    message.addAck(requestToAck, ReplicationResultCode.SUCCESS);
-    return message;
-  }
-
-  public static ReplicationMessageAck createCompletedAck(MessageID requestToAck, ReplicationResultCode payload) {
-    ReplicationMessageAck message = new ReplicationMessageAck(BATCH);
-    message.addAck(requestToAck, payload);
-    return message;
+  public static ReplicationMessageAck createBatchAck() {
+    return new ReplicationMessageAck(BATCH);
   }
 
 
