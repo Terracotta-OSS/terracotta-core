@@ -48,6 +48,8 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     RECONFIGURE_ENTITY,
     INVOKE_ACTION,
     DESTROY_ENTITY,
+    FETCH_ENTITY,
+    RELEASE_ENTITY,
     
     SYNC_BEGIN,
     SYNC_END,

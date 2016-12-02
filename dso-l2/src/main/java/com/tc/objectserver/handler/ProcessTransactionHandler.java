@@ -236,7 +236,7 @@ public class ProcessTransactionHandler {
       long consumerID = this.entityPersistor.getNextConsumerID();
       serverEntityRequest.setAutoRetire();
       try {
-        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull());
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull() ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
         temp.addRequestMessage(serverEntityRequest, entityMessage,
           (result) -> {
             if (!sourceNodeID.isNull()) {

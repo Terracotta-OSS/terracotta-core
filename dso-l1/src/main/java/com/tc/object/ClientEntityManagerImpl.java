@@ -456,7 +456,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
     // A "RELEASE" doesn't matter to the passive.
-    boolean requiresReplication = false;
+    boolean requiresReplication = true;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY);
     synchronousWaitForResponse(message, requestedAcks);
@@ -496,7 +496,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
     // We don't care about whether a "FETCH" is replicated.
-    boolean requiresReplication = false;
+    boolean requiresReplication = true;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.FETCH_ENTITY);
     return synchronousWaitForResponse(message, requestedAcks);

@@ -41,6 +41,8 @@ import org.terracotta.exception.EntityUserException;
  * Additionally, client-entity connections are rebuilt, after reconnect, using this interface.
  */
 public interface ManagedEntity extends StateDumpable {
+  public final static int UNDELETABLE_ENTITY = -1;
+  
   public EntityID getID();
   
   public long getVersion();

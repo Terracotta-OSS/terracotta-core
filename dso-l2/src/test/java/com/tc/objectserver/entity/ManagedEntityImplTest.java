@@ -159,7 +159,7 @@ public class ManagedEntityImplTest {
     eventCollector = mock(ITopologyEventCollector.class);
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, 0);
     clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
     invokeOnTransactionHandler(()->Thread.currentThread().setName(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
   }
@@ -437,7 +437,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, 0);
     TestingResponse resp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.EMPTY,  resp::complete, resp::failure));
     resp.waitFor();
@@ -501,7 +501,7 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, 0);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.EMPTY,  response::complete, response::failure));
     response.waitFor();
     
@@ -586,7 +586,7 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true));
+    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, 0));
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.EMPTY, response::complete, response::failure));
     response.waitFor();
 

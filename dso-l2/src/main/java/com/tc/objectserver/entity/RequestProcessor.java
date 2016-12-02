@@ -32,7 +32,6 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.ExecutionStrategy;
 
 
 public class RequestProcessor {
@@ -93,7 +92,7 @@ public class RequestProcessor {
         actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
         break;
       case FETCH_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        actionCode = ReplicationMessage.ReplicationType.FETCH_ENTITY;
         break;
       case INVOKE_ACTION:
         actionCode = ReplicationMessage.ReplicationType.INVOKE_ACTION;
@@ -102,7 +101,7 @@ public class RequestProcessor {
         actionCode = ReplicationMessage.ReplicationType.NOOP;
         break;
       case RELEASE_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
         break;
       case REQUEST_SYNC_ENTITY:
 //  this marks the start of entity sync for a concurrency key.  practically, this means that

@@ -157,7 +157,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
 
     @Override
     public boolean doesRequireReplication() {
-      return false;
+      return true;
     }
 
     @Override
