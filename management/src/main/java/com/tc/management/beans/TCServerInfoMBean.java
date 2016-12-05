@@ -23,7 +23,6 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
-import java.io.IOException;
 import java.util.Map;
 
 public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
@@ -37,8 +36,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   boolean isPassiveUninitialized();
 
   boolean isPassiveStandby();
-
-  boolean isRecovering();
 
   long getStartTime();
 
@@ -104,29 +101,5 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   void gc();
 
-  boolean isEnterprise();
-
-  boolean isSecure();
-
-  String getSecurityServiceLocation();
-
-  Integer getSecurityServiceTimeout();
-
-  String getSecurityHostname();
-
-  String getIntraL2Username();
-
-  String getRunningBackup();
-
-  String getBackupStatus(String name) throws IOException;
-
-  String getBackupFailureReason(String name) throws IOException;
-
-  Map<String, String> getBackupStatuses() throws IOException;
-
-  void backup(String name) throws IOException;
-
   String getResourceState();
-
-  boolean isLegacyProductionModeEnabled();
 }

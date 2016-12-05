@@ -29,6 +29,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
+import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.stats.api.ClientMBean;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -62,7 +63,7 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   private final SampledCounter                 writeRate;
   private final SampledCounter                 readRate;
   private final Counter                        pendingTransactions;
-  private final AtomicLong                     sequenceNumber          = new AtomicLong(0L);
+  private final ClientHandshakeMonitoringInfo   minfo;
   private final ClientID                       clientID;
 
   private ObjectName                           enterpriseMBeanName;
@@ -87,6 +88,8 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     this.writeRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.WRITE_RATE);
     this.readRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.READ_RATE);
     this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
+    this.minfo = (ClientHandshakeMonitoringInfo)channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT);
+
   }
 
   @Override
@@ -187,7 +190,29 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     logger.warn("Killing Client on JMX Request :" + channel);
     channel.close();
   }
-
+  
+  @Override
+  public int getRemotePID() {
+    if (minfo !=null) {
+      return minfo.getPid();
+    }
+    return -1;
+  }
+  @Override
+  public String getRemoteName() {
+    if (minfo !=null) {
+      return minfo.getName();
+    }
+    return "";
+  }
+  @Override
+  public String getRemoteUUID() {
+    if (minfo !=null) {
+      return minfo.getUuid();
+    }
+    return "";
+  }
+  
   private void setupL1InfoBean() {
     l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName, L1InfoMBean.class, false);
   }

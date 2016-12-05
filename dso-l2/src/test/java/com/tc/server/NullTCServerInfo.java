@@ -145,11 +145,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public boolean isRecovering() {
-    return false;
-  }
-
-  @Override
   public Map<String, Object> getStatistics() {
     return null;
   }
@@ -215,11 +210,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public boolean isEnterprise() {
-    return false;
-  }
-
-  @Override
   public String getTCProperties() {
     return null;
   }
@@ -230,62 +220,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public boolean isSecure() {
-    return false;
-  }
-
-  @Override
-  public String getSecurityServiceLocation() {
-    return null;
-  }
-
-  @Override
-  public Integer getSecurityServiceTimeout() {
-    return null;
-  }
-
-  @Override
-  public String getSecurityHostname() {
-    return null;
-  }
-
-  @Override
-  public String getIntraL2Username() {
-    return null;
-  }
-
-  @Override
-  public void backup(String name) {
-    //
-  }
-
-  @Override
-  public String getRunningBackup() {
-    return null;
-  }
-
-  @Override
-  public String getBackupStatus(String name) {
-    return BackupManager.BackupStatus.UNKNOWN.toString();
-  }
-
-  @Override
-  public String getBackupFailureReason(String name) {
-    return null;
-  }
-
-  @Override
   public String getResourceState() {
     return "";
-  }
-
-  @Override
-  public Map<String, String> getBackupStatuses() {
-    return null;
-  }
-
-  @Override
-  public boolean isLegacyProductionModeEnabled() {
-    return false;
   }
 }

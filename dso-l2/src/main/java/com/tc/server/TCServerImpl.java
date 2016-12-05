@@ -169,7 +169,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
         //XXX hard coded jmx port
         out[i] = new L2Info(name, host, config.tsaPort().getValue()+10, config.tsaPort().getValue(), config
             .tsaGroupPort().getBind(), config.tsaGroupPort().getValue(),config.tsaGroupPort().getValue() + 1,
-                            getSecurityHostname());
+                            "");
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }
@@ -320,13 +320,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   public boolean isPassiveStandby() {
     synchronized (this.stateLock) {
       return this.serverState.equals(StateManager.PASSIVE_STANDBY);
-    }
-  }
-
-  @Override
-  public boolean isRecovering() {
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.RECOVERING);
     }
   }
 
@@ -484,63 +477,8 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   }
 
   @Override
-  public String getRunningBackup() {
-    return "";
-  }
-
-  @Override
-  public String getBackupStatus(String name) throws IOException {
-    return "";
-  }
-
-  @Override
-  public String getBackupFailureReason(String name) throws IOException {
-    return "";
-  }
-
-  @Override
-  public Map<String, String> getBackupStatuses() throws IOException {
-    Map<String, String> result = new HashMap<>();
-    return result;
-  }
-
-  @Override
-  public void backup(String name) throws IOException {
-  }
-
-  @Override
   public String getResourceState() {
     return "";
-  }
-
-  @Override
-  public boolean isSecure() {
-    return securityManager != null;
-  }
-
-  @Override
-  public String getSecurityServiceLocation() {
-    return null;
-  }
-
-  @Override
-  public Integer getSecurityServiceTimeout() {
-    return null;
-  }
-
-  @Override
-  public String getSecurityHostname() {
-    String securityHostname = null;
-    if (securityHostname == null) {
-      securityHostname = configurationSetupManager.commonl2Config().host();
-    }
-    return securityHostname;
-  }
-
-  @Override
-  public String getIntraL2Username() {
-    if (!isSecure()) { return null; }
-    return securityManager.getIntraL2Username();
   }
 
   @Override

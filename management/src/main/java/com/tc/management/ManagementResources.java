@@ -45,7 +45,7 @@ class ManagementResources {
   }
 
   String getDsoClientType() {
-    return TerracottaManagement.quoteIfNecessary(resources.getString("type.dso-client"));
+    return TerracottaManagement.quoteIfNecessary(resources.getString("type.client"));
   }
 
   String getSessionsType() {

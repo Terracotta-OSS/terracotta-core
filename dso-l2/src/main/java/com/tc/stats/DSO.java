@@ -21,6 +21,7 @@ package com.tc.stats;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.RemoteManagement;
+import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -31,6 +32,7 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -73,7 +75,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final static TCLogger                        logger                 = TCLogging.getLogger(DSO.class);
   private final static String                          DSO_OBJECT_NAME_PREFIX = L2MBeanNames.DSO.getCanonicalName()
                                                                                 + ",";
-
   private final StatsImpl                           dsoStats;
   private final MBeanServer                            mbeanServer;
   private final List<ObjectName>                       rootObjectNames        = new ArrayList<>();
@@ -216,8 +217,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private ObjectName makeClientObjectName(MessageChannel channel) {
     try {
-      return new ObjectName(DSO_OBJECT_NAME_PREFIX + "channelID=" + channel.getChannelID().toLong() +
-                            ",productId=" + channel.getProductId());
+      return TerracottaManagement.createObjectName(TerracottaManagement.Type.Client, TerracottaManagement.Subsystem.None, null, channel.getProductId().toString() + "" + channel.getChannelID().toLong(), TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException e) {
       // this shouldn't happen
       throw new RuntimeException(e);
