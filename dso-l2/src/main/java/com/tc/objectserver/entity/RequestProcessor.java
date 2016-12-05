@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
@@ -79,33 +80,33 @@ public class RequestProcessor {
   
   private static ReplicationMessage createReplicationMessage(EntityDescriptor id, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
-    ReplicationMessage.ReplicationType actionCode = ReplicationMessage.ReplicationType.NOOP;
+    SyncReplicationActivity.ActivityType actionCode = SyncReplicationActivity.ActivityType.NOOP;
     switch (type) {
       case CREATE_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.CREATE_ENTITY;
+        actionCode = SyncReplicationActivity.ActivityType.CREATE_ENTITY;
         break;
       case RECONFIGURE_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.RECONFIGURE_ENTITY;
+        actionCode = SyncReplicationActivity.ActivityType.RECONFIGURE_ENTITY;
         break;
       case DESTROY_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.DESTROY_ENTITY;
+        actionCode = SyncReplicationActivity.ActivityType.DESTROY_ENTITY;
         break;
       case FETCH_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.FETCH_ENTITY;
+        actionCode = SyncReplicationActivity.ActivityType.FETCH_ENTITY;
         break;
       case INVOKE_ACTION:
-        actionCode = ReplicationMessage.ReplicationType.INVOKE_ACTION;
+        actionCode = SyncReplicationActivity.ActivityType.INVOKE_ACTION;
         break;
       case NOOP:
-        actionCode = ReplicationMessage.ReplicationType.NOOP;
+        actionCode = SyncReplicationActivity.ActivityType.NOOP;
         break;
       case RELEASE_ENTITY:
-        actionCode = ReplicationMessage.ReplicationType.RELEASE_ENTITY;
+        actionCode = SyncReplicationActivity.ActivityType.RELEASE_ENTITY;
         break;
       case REQUEST_SYNC_ENTITY:
 //  this marks the start of entity sync for a concurrency key.  practically, this means that
 //  all replicated messages for this key and entity must be forwarded to passives
-        actionCode = ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
+        actionCode = SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN;
         break;
       default:
         // Unknown message type.
@@ -114,7 +115,7 @@ public class RequestProcessor {
     }
 //  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
 //  NOOP should be replicated.  For now, NOOPs hold ordering
-    byte[] bytes = (actionCode != ReplicationMessage.ReplicationType.NOOP) ? payload.getRawPayload() : NO_BYTES;
+    byte[] bytes = (actionCode != SyncReplicationActivity.ActivityType.NOOP) ? payload.getRawPayload() : NO_BYTES;
     
     return ReplicationMessage.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId());
   }

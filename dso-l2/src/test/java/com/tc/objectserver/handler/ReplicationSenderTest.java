@@ -21,7 +21,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.msg.ReplicationMessage.ReplicationType;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
@@ -73,7 +73,7 @@ public class ReplicationSenderTest {
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
   }
   
-  private void makeAndSendSequence(Collection<ReplicationType> list) throws Exception {
+  private void makeAndSendSequence(Collection<SyncReplicationActivity.ActivityType> list) throws Exception {
     list.stream().forEach(msg->{
       ReplicationMessage rep = makeMessage(msg);
       try {
@@ -84,7 +84,7 @@ public class ReplicationSenderTest {
     });
   }
   
-  private ReplicationMessage makeMessage(ReplicationType type) {
+  private ReplicationMessage makeMessage(SyncReplicationActivity.ActivityType type) {
     switch (type) {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
@@ -122,25 +122,25 @@ public class ReplicationSenderTest {
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
     buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), true);  
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.CREATE_ENTITY), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.DESTROY_ENTITY), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.CREATE_ENTITY), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);  
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.DESTROY_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
       try {
@@ -159,25 +159,25 @@ public class ReplicationSenderTest {
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
     buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.CREATE_ENTITY), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);  // invoke actions are valid since the stream is working off the create
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_BEGIN), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_END), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.DESTROY_ENTITY), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.CREATE_ENTITY), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_END), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);  // invoke actions are valid since the stream is working off the create
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.DESTROY_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
       try {
@@ -196,22 +196,22 @@ public class ReplicationSenderTest {
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
     buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.CREATE_ENTITY), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), true);   // invoke actions are valid since the stream is working off the create
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.NOOP), true);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_CONCURRENCY_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_ENTITY_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.SYNC_END), false);
-    buildTest(origin, validation, makeMessage(ReplicationType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   // invoke actions are valid since the stream is working off the create
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
       try {
@@ -227,10 +227,10 @@ public class ReplicationSenderTest {
   private void validateCollector(Collection<ReplicationMessage> valid) {
     Iterator<ReplicationMessage> next = valid.iterator();
     collector.stream().forEach(cmsg->{
-      if (cmsg.getMessage().getReplicationType() != ReplicationType.NOOP) {
+      if (cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
         ReplicationMessage vmsg = next.next();
-        if (vmsg.getReplicationType() != ReplicationType.SYNC_BEGIN &&
-            vmsg.getReplicationType() != ReplicationType.SYNC_END) {
+        if (vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
+            vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_END) {
           Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getEntityID(), cmsg.getMessage().getEntityID());
         }
         Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getReplicationType(), cmsg.getMessage().getReplicationType());

@@ -26,6 +26,7 @@ import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -263,7 +264,7 @@ public class ReplicatedTransactionHandler {
       ManagedEntity entityInstance = entity.get();
       EntityMessage msg = null;
       try {
-        if (rep.getReplicationType() == ReplicationMessage.ReplicationType.INVOKE_ACTION) {
+        if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.INVOKE_ACTION) {
           msg = entityInstance.getCodec().decodeMessage(extendedData);
         }
       } catch (MessageCodecException codec) {
@@ -327,7 +328,7 @@ public class ReplicatedTransactionHandler {
     ackReceived(sync);
     beforeSyncAction(sync);
     
-    if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN && !eid.equals(EntityID.NULL_ID)) {
+    if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN && !eid.equals(EntityID.NULL_ID)) {
       try {
         if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
@@ -349,7 +350,7 @@ public class ReplicatedTransactionHandler {
       if (entity.isPresent()) {
         EntityMessage msg = null;
         try {
-          if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
+          if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
               msg = this.entityManager.getSyncMessageCodec(eid).decode(sync.getConcurrency(), sync.getExtendedData());
           }
         } catch (MessageCodecException codec) {
@@ -357,18 +358,18 @@ public class ReplicatedTransactionHandler {
         }
         MessagePayload payload = new MessagePayload(sync.getExtendedData(), msg, sync.getConcurrency());
         entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync, true), (exception)->acknowledge(sync, false));
-        if (sync.getReplicationType() != ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
+        if (sync.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
           entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
-        if (sync.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+        if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
           acknowledge(sync, true);
         } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
           MessagePayload payload = new MessagePayload(sync.getExtendedData(), null, sync.getConcurrency());
           platform.addRequestMessage(make(sync), payload, (result)-> {
-            if (sync.getReplicationType() == ReplicationMessage.ReplicationType.SYNC_END) {
+            if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_END) {
               try {
                 entityPersistor.layer(new ObjectInputStream(new ByteArrayInputStream(payload.getRawPayload())));
               } catch (IOException ioe) {
@@ -536,7 +537,7 @@ public class ReplicatedTransactionHandler {
     }
   }
 
-  private static ServerEntityAction decodeReplicationType(ReplicationMessage.ReplicationType networkType) {
+  private static ServerEntityAction decodeReplicationType(SyncReplicationActivity.ActivityType networkType) {
     switch(networkType) {
       case SYNC_BEGIN:
       case SYNC_END:
@@ -648,7 +649,7 @@ public class ReplicatedTransactionHandler {
 //  done with sync, need to apply everything now
         return false;
       }
-      if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+      if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
         return false;
       }
       EntityID eid = rep.getEntityDescriptor().getEntityID();
@@ -685,7 +686,7 @@ public class ReplicatedTransactionHandler {
         return false;
       } 
       
-      if (rep.getReplicationType() == ReplicationMessage.ReplicationType.CREATE_ENTITY) {
+      if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
         syncdEntities.add(eid);
         destroyed = false;
         return false;
@@ -694,10 +695,10 @@ public class ReplicatedTransactionHandler {
       if (eid.equals(syncing)) {
         if (syncdKeys.contains(rep.getConcurrency())) {
           return false;
-        } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.NOOP) {
+        } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
 //  NOOP requests cannot be deferred
           return false;
-        } else if (rep.getReplicationType() == ReplicationMessage.ReplicationType.DESTROY_ENTITY) {
+        } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.DESTROY_ENTITY) {
           defer.clear();
           defer.add(rep);
           if (LOGGER.isDebugEnabled()) {

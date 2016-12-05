@@ -32,6 +32,7 @@ import com.tc.objectserver.entity.MessagePayload;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
@@ -61,7 +62,6 @@ import java.util.Random;
 import java.util.function.Consumer;
 import org.junit.Test;
 import org.mockito.Matchers;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import org.mockito.Mockito;
@@ -130,7 +130,7 @@ public class ReplicatedTransactionHandlerTest {
     int rand = 1;
     when(msg.getConcurrency()).thenReturn(rand);
     when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
-    when(msg.getReplicationType()).thenReturn(ReplicationMessage.ReplicationType.INVOKE_ACTION);
+    when(msg.getReplicationType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
     when(msg.getEntityID()).thenReturn(eid);
     when(msg.messageFrom()).thenReturn(sid);
     when(msg.getEntityDescriptor()).thenReturn(descriptor);
@@ -175,7 +175,7 @@ public class ReplicatedTransactionHandlerTest {
     int rand = new Random().nextInt();
     when(msg.getConcurrency()).thenReturn(rand);
     when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
-    when(msg.getReplicationType()).thenReturn(ReplicationMessage.ReplicationType.INVOKE_ACTION);
+    when(msg.getReplicationType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
     when(msg.getEntityID()).thenReturn(eid);
     when(msg.messageFrom()).thenReturn(sid);
     when(msg.getEntityDescriptor()).thenReturn(descriptor);
@@ -332,7 +332,7 @@ public class ReplicatedTransactionHandlerTest {
   
   private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
     return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
-        source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency, "");
+        source, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.INVOKE_ACTION, payload, concurrency, "");
   }
 
   private static abstract class NoStatsSink<T> implements Sink<T> {
