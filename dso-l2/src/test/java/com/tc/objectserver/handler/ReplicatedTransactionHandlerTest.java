@@ -31,7 +31,6 @@ import com.tc.async.api.SpecializedEventContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
-import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
@@ -151,13 +150,13 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0], 0));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartSyncMessage());
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartEntityMessage(eid, 1, new byte[0], 0));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartEntityKeyMessage(eid, 1, rand));
     this.loopbackSink.addSingleThreaded(msg);
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, rand));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityMessage(eid, 1));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndEntityKeyMessage(eid, 1, rand));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndEntityMessage(eid, 1));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndSyncMessage(new byte[0]));
 //  verify there was an attempt to decode the invoke message
     verify(msg).getExtendedData();
     verify(entity).getCodec();
@@ -192,8 +191,8 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartSyncMessage());
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndSyncMessage(new byte[0]));
     this.loopbackSink.addSingleThreaded(msg);
     verify(msg).getExtendedData();
     verify(msg).getConcurrency();  // make sure RTH is pulling the concurrency from the message
@@ -295,30 +294,30 @@ public class ReplicatedTransactionHandlerTest {
     EntityID eid = new EntityID("foo", "bar");
     long VERSION = 1;
     byte[] config = new byte[0];
-    send(PassiveSyncMessage.createStartSyncMessage());
-    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config, 0));
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 1));
-    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 1, config));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 1));
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 2));
-    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 2, config));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 2));  
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 3));
-    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 3, config));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 3));  
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 4));
+    send(ReplicationMessage.createStartSyncMessage());
+    send(ReplicationMessage.createStartEntityMessage(eid, VERSION, config, 0));
+    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 1));
+    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 1, config));
+    send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 1));
+    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 2));
+    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 2, config));
+    send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 2));  
+    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 3));
+    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 3, config));
+    send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 3));  
+    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 4));
 //  defer a few replicated messages with sequence as payload
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(1).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(2).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(3).array(), 4));
-    send(PassiveSyncMessage.createPayloadMessage(eid, 1, 4, config));
+    send(ReplicationMessage.createPayloadMessage(eid, 1, 4, config));
 //  defer a few replicated messages with sequence as payload
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(4).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(5).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(6).array(), 4));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, 4)); 
-    send(PassiveSyncMessage.createEndEntityMessage(eid, VERSION));
-    send(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
+    send(ReplicationMessage.createEndEntityKeyMessage(eid, 1, 4)); 
+    send(ReplicationMessage.createEndEntityMessage(eid, VERSION));
+    send(ReplicationMessage.createEndSyncMessage(new byte[0]));
   }
 
   private long send(ReplicationMessage msg) throws EventHandlerException {

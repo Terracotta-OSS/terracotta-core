@@ -24,17 +24,15 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+
 import java.io.IOException;
 
-/**
- *
- */
+
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
 //  message types  
   public static final int INVALID               = 0; // Invalid message type
@@ -75,6 +73,39 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
   }
 
+  // Sync-related factory methods (here temporarily while this message type is refactored to permit batching).
+  public static ReplicationMessage createStartSyncMessage() {
+    return new ReplicationMessage(EntityDescriptor.NULL_ID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_BEGIN, null, 0, "");
+  }
+  public static ReplicationMessage createEndSyncMessage(byte[] extras) {
+    return new ReplicationMessage(EntityDescriptor.NULL_ID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_END, extras, 0, "");
+  }
+  public static ReplicationMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload, int references) {
+ //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
+    return new ReplicationMessage(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_ENTITY_BEGIN, configPayload, references, "");
+  }
+  public static ReplicationMessage createEndEntityMessage(EntityID id, long version) {
+    return new ReplicationMessage(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_ENTITY_END, null, 0, "");
+  }
+  public static ReplicationMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
+    return new ReplicationMessage(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN, null, concurrency, "");
+  }
+  public static ReplicationMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // We can only synchronize positive-number keys.    
+    Assert.assertTrue(concurrency > 0);
+    return new ReplicationMessage(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_ENTITY_CONCURRENCY_END, null, concurrency, "");
+  }
+  public static ReplicationMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
+    return new ReplicationMessage(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationType.SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency, "");
+  }
+  private static EntityDescriptor descriptorWithoutClient(EntityID id, long version) {
+    return new EntityDescriptor(id, ClientInstanceID.NULL_ID, version);
+  }
+
   EntityDescriptor descriptor;
     
   ClientID src;
@@ -100,16 +131,12 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   }
   
 //  a true replicated message
-  private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency, String debugId) {
+  private ReplicationMessage(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, ReplicationType action, byte[] payload, int concurrency, String debugId) {
     super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
     initialize(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
   }
   
-  protected final void initialize(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency, String debugId) {
+  protected final void initialize(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, ReplicationType action, byte[] payload, int concurrency, String debugId) {
     Assert.assertNotNull(tid);
     Assert.assertNotNull(oldest);
     Assert.assertNotNull(src);

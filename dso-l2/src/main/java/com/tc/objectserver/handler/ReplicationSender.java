@@ -21,11 +21,9 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_BEGIN;
-import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_END;
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_BEGIN;
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_BEGIN;
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCURRENCY_END;
@@ -33,12 +31,10 @@ import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_CONCU
 import static com.tc.l2.msg.ReplicationMessage.ReplicationType.SYNC_ENTITY_END;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -47,9 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- *
- */
+
 public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope> {
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
@@ -153,13 +147,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   private boolean dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
 //  make sure node is not connected
     Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
-    if (msg instanceof PassiveSyncMessage) {
 //  passive must have died during passive sync, ignore this message
-      return true;
-    } else {
-      logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
-      return true;
-    }
+    logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
+    return true;
   }
   
   private boolean shouldReplicate(ReplicationMessage msg) {

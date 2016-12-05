@@ -19,7 +19,6 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.EventHandlerException;
-import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessage.ReplicationType;
@@ -44,9 +43,7 @@ import org.mockito.Matchers;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-/**
- *
- */
+
 public class ReplicationSenderTest {
   
   NodeID node = mock(NodeID.class);
@@ -96,19 +93,19 @@ public class ReplicationSenderTest {
       case RECONFIGURE_ENTITY:
         return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], 0, "");
       case SYNC_BEGIN:
-        return PassiveSyncMessage.createStartSyncMessage();
+        return ReplicationMessage.createStartSyncMessage();
       case SYNC_END:
-        return PassiveSyncMessage.createEndSyncMessage(new byte[0]);
+        return ReplicationMessage.createEndSyncMessage(new byte[0]);
       case SYNC_ENTITY_BEGIN:
-        return PassiveSyncMessage.createStartEntityMessage(entity, 1, new byte[0], 0);
+        return ReplicationMessage.createStartEntityMessage(entity, 1, new byte[0], 0);
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
-        return PassiveSyncMessage.createStartEntityKeyMessage(entity, 1, concurrency);
+        return ReplicationMessage.createStartEntityKeyMessage(entity, 1, concurrency);
       case SYNC_ENTITY_CONCURRENCY_END:
-        return PassiveSyncMessage.createEndEntityKeyMessage(entity, 1, concurrency++);
+        return ReplicationMessage.createEndEntityKeyMessage(entity, 1, concurrency++);
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-        return PassiveSyncMessage.createPayloadMessage(entity, 1, concurrency, new byte[0]);
+        return ReplicationMessage.createPayloadMessage(entity, 1, concurrency, new byte[0]);
       case SYNC_ENTITY_END:
-        return PassiveSyncMessage.createEndEntityMessage(entity, 1);
+        return ReplicationMessage.createEndEntityMessage(entity, 1);
       default:
         throw new AssertionError("bad message type");
     }

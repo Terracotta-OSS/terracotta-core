@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -53,7 +52,7 @@ public class RequestProcessor {
     return passives.passives();
   }
 
-  public ActivePassiveAckWaiter scheduleSync(PassiveSyncMessage msg, NodeID passive) {
+  public ActivePassiveAckWaiter scheduleSync(ReplicationMessage msg, NodeID passive) {
     return passives.replicateMessage(msg, Collections.singleton(passive));
   }
   
