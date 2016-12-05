@@ -82,8 +82,6 @@ public class ActiveToPassiveReplicationTest {
     ReplicationMessage msg = mock(ReplicationMessage.class);
     MessageID id = new MessageID(1);
     when(msg.getMessageID()).thenReturn(id);
-    ReplicationEnvelope env = mock(ReplicationEnvelope.class);
-    when(msg.target(Matchers.any(), Matchers.any())).thenReturn(env);
     ActivePassiveAckWaiter ack = replication.replicateMessage(msg, Collections.singleton(passive));
     Thread it = new Thread(()->{
       try {

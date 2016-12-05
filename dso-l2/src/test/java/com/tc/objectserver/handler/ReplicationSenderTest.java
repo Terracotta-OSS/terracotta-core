@@ -68,7 +68,7 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
-      collector.add(((ReplicationMessage)args[1]).target((NodeID)args[0]));
+      collector.add(new ReplicationEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null));
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
   }
@@ -77,7 +77,7 @@ public class ReplicationSenderTest {
     list.stream().forEach(msg->{
       ReplicationMessage rep = makeMessage(msg);
       try {
-        testSender.handleEvent(rep.target(node));
+        testSender.handleEvent(new ReplicationEnvelope(node, rep, null));
       } catch (EventHandlerException exp) {
         throw new RuntimeException(exp);
       }
@@ -144,7 +144,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(msg.target(node));
+        testSender.handleEvent(new ReplicationEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -181,7 +181,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(msg.target(node));
+        testSender.handleEvent(new ReplicationEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -215,7 +215,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(msg.target(node));
+        testSender.handleEvent(new ReplicationEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }

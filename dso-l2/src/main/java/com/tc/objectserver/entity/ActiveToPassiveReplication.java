@@ -120,7 +120,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       logger.info("Starting message sequence on " + node);
       ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
       Semaphore block = new Semaphore(0);
-      replicate.addSingleThreaded(resetOrderedSink.target(node,()->block.release()));
+      replicate.addSingleThreaded(new ReplicationEnvelope(node, resetOrderedSink, ()->block.release()));
       waitOnSemaphore(block);
       return true;
     } else {
@@ -225,7 +225,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
+        replicate.addSingleThreaded(new ReplicationEnvelope(node, msg, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
       }
     }
     return waiter;

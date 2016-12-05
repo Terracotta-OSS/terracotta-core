@@ -108,14 +108,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
     this.activity = activity;
   }
-  
-  public ReplicationEnvelope target(NodeID node) {
-    return new ReplicationEnvelope(node, this, null);
-  }
-  
-  public ReplicationEnvelope target(NodeID node, Runnable waitRelease) {
-    return new ReplicationEnvelope(node, this, waitRelease);
-  }
 
   /**
    * This is a temporary method (until the underlying activities are being managed, directly).
