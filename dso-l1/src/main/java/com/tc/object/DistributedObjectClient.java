@@ -96,8 +96,6 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.runtime.TCMemoryManagerImpl;
-import com.tc.runtime.logging.LongGCLogger;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
@@ -150,7 +148,6 @@ public class DistributedObjectClient implements TCClient {
 
   private CounterManager                             counterManager;
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
-  private TCMemoryManagerImpl                        tcMemManager;
 
   private Stage<ClusterInternalEventsContext> clusterEventsStage;
 
@@ -196,7 +193,6 @@ public class DistributedObjectClient implements TCClient {
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA<Void> seda = new SEDA<Void>(threadGroup);
     communicationStageManager = seda.getStageManager();
-    this.tcMemManager = new TCMemoryManagerImpl(threadGroup);
   }
 
   protected ClientBuilder createClientBuilder() {
@@ -340,10 +336,6 @@ public class DistributedObjectClient implements TCClient {
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.clientEntityManager));
 
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
-    final LongGCLogger gcLogger = this.clientBuilder.createLongGCLogger(timeOut);
-    this.tcMemManager.registerForMemoryEvents(gcLogger);
-    // CDV-1181 warn if using CMS
-    this.tcMemManager.checkGarbageCollectors();
 
     final Stage<HydrateContext> hydrateStage = this.communicationStageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), 1, maxSize);
 
@@ -534,16 +526,6 @@ public class DistributedObjectClient implements TCClient {
         logger.error("error shutting down counter manager", t);
       } finally {
         this.counterManager = null;
-      }
-    }
-
-    if (this.tcMemManager != null) {
-      try {
-        this.tcMemManager.shutdown();
-      } catch (final Throwable t) {
-        logger.error("Error stopping memory manager", t);
-      } finally {
-        this.tcMemManager = null;
       }
     }
 
