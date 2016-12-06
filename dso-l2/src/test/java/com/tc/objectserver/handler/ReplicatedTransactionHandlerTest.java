@@ -214,7 +214,7 @@ public class ReplicatedTransactionHandlerTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     MessageCodec codec = mock(MessageCodec.class);
     SyncMessageCodec sync = mock(SyncMessageCodec.class);
-    when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.empty());
+    when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
     when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
       when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
       return entity;
@@ -323,9 +323,7 @@ public class ReplicatedTransactionHandlerTest {
 
   private long send(ReplicationMessage msg) throws EventHandlerException {
     msg.setReplicationID(rid++);
-    if (!msg.getEntityID().equals(EntityID.NULL_ID)) {
-      loopbackSink.addSingleThreaded(msg);
-    }
+    loopbackSink.addSingleThreaded(msg);
     return rid;
   }
   @After

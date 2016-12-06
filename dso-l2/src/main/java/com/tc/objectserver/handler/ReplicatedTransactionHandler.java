@@ -585,16 +585,19 @@ public class ReplicatedTransactionHandler {
     }
     
     private void startEntity(EntityID eid) {
+      Assert.assertTrue(started);
       Assert.assertNull(syncing);
       syncing = eid;
       LOGGER.debug("Starting " + eid);
     }
     
     private boolean destroyed(EntityID eid) {
+      // Note that the destroyed notification may arrive without the sync having started.
       return (eid.equals(syncing) && destroyed) || syncdEntities.contains(eid);
     }
     
     private void endEntity(EntityID eid) {
+      Assert.assertTrue(started);
       Assert.assertEquals(syncing, eid);
       syncdEntities.add(eid);
       syncdKeys.clear();
@@ -603,6 +606,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private void startConcurrency(EntityID eid, int concurrency) {
+      Assert.assertTrue(started);
       if (destroyed && !syncing.equals(eid)) {
         destroyed = false;
       }
@@ -614,6 +618,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private Deque<ReplicationMessage> endConcurrency(EntityID eid, int concurrency) {
+      Assert.assertTrue(started);
       try {
         if (!eid.equals(syncing) || concurrency != currentKey) {
           throw new AssertionError();
@@ -632,11 +637,13 @@ public class ReplicatedTransactionHandler {
     }
     
     private void finish() {
+      Assert.assertTrue(started);
       syncdEntities.clear();
       finished = true;
     }
     
     private boolean ignore(ReplicationMessage rep) {
+      Assert.assertTrue(started);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
@@ -667,6 +674,7 @@ public class ReplicatedTransactionHandler {
     }
 
     private boolean defer(ReplicationMessage rep) {
+      Assert.assertTrue(started);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
