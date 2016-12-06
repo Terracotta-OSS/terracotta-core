@@ -22,7 +22,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
@@ -78,8 +77,6 @@ public class ReplicatedTransactionHandler {
   private final StateManager stateManager;
   private final ManagedEntity platform;
   
-  private Sink<ReplicationMessage> loopback;
-  
   private final SyncState state = new SyncState();
   
   // This MUST be manipulated under lock - it is the batch of ack messages we are accumulating until the network is ready for another message.
@@ -124,7 +121,6 @@ public class ReplicatedTransactionHandler {
       ServerConfigurationContext scxt = (ServerConfigurationContext)context;
   //  when this spins up, send  request to active and ask for sync
       scxt.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(scxt.getL2Coordinator().getStateManager().getCurrentState());
-      setLoopback(scxt.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class).getSink());
       if (stateManager.getCurrentState().equals(StateManager.PASSIVE_UNINITIALIZED)) {
         requestPassiveSync();
       }
@@ -173,10 +169,6 @@ public class ReplicatedTransactionHandler {
       }
     }    
   };
-  
-  private void setLoopback(Sink<ReplicationMessage> loop) {
-    this.loopback = loop;
-  }
   
   public EventHandler<ReplicationMessage> getEventHandler() {
     return eventHorizon;
@@ -235,8 +227,6 @@ public class ReplicatedTransactionHandler {
     long version = rep.getVersion();
     EntityID entityID = descriptor.getEntityID();
     byte[] extendedData = rep.getExtendedData();
-
-    ReplicationMessage.ReplicationType replicationType = rep.getReplicationType();
 
     // At this point, we can now look up the managed entity (used later).
     Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
