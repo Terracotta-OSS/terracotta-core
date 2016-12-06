@@ -68,7 +68,7 @@ public class ActiveToPassiveReplicationTest {
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((ReplicationEnvelope)invocation.getArguments()[0]).release();
+        ((ReplicationEnvelope)invocation.getArguments()[0]).droppedWithoutSend();
         return null;
       }
     }).when(replicate).addSingleThreaded(Matchers.any());

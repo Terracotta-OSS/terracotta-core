@@ -59,19 +59,19 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 // this is a flush of the replication channel.  shut it down and return;
       ordering.remove(nodeid);
       filtering.remove(nodeid);
-      context.release();
+      context.droppedWithoutSend();
     } else {
       SyncState syncing = getSyncState(nodeid, msg);
       AtomicLong rOrder = getOrdering(nodeid, msg);
       
       if (rOrder == null) {
 // this is message priming, the order is being established or the passive is gone
-        context.release();
+        context.droppedWithoutSend();
         return;
       }
 // check to make sure that this message is a type that is relevant to a passive
       if (!shouldReplicate(msg)) {
-        context.release();
+        context.droppedWithoutSend();
         return;
       }   
 // filter out messages based on sync state.
