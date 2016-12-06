@@ -124,6 +124,11 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
+  public void resetReferences(int count) {
+
+  }
+ 
+  @Override
   public void dumpStateTo(StateDumper stateDumper) {
 
   }

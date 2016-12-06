@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.handshakemanager;
 
-import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
@@ -40,7 +39,9 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
+import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.util.Assert;
 import java.util.Collection;
@@ -133,7 +134,9 @@ public class ServerClientHandshakeManager {
             EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
             ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
             byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
+            ReferenceMessage msg = new ReferenceMessage(clientID, true, entityDescriptor);
             entity.get().reconnectClient(clientID, clientDescriptor, extendedReconnectData);
+            transactionHandler.handleResentReferenceMessage(msg);
           } else {
             throw Assert.failure("entity not found");
           }

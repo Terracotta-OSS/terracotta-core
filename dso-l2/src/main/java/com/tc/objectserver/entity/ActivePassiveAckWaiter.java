@@ -59,8 +59,8 @@ public class ActivePassiveAckWaiter {
     }
   }
   
-  public void verifyLifecycleResult(boolean success) {
-    if(success || results.entrySet().stream().anyMatch(e->e.getValue() == ReplicationResultCode.SUCCESS)) {
+  public boolean verifyLifecycleResult(boolean success) {
+    if(results.entrySet().stream().anyMatch(e->e.getValue() == (success ? ReplicationResultCode.FAIL : ReplicationResultCode.SUCCESS))) {
       boolean zapped = false;
       for (Map.Entry<NodeID, ReplicationResultCode> r : results.entrySet()) {
         if (r.getValue() == ReplicationResultCode.FAIL) {
@@ -71,7 +71,9 @@ public class ActivePassiveAckWaiter {
       if (!success) {
         throw new TCServerRestartException("inconsistent lifecycle");
       }
+      return zapped;
     }
+    return false;
   }
 
   public synchronized boolean isCompleted() {

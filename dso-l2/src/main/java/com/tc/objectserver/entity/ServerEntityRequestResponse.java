@@ -95,4 +95,9 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   public ClientDescriptor getSourceDescriptor() {
     return new ClientDescriptorImpl(getNodeID(), this.descriptor);
   }
+
+  @Override
+  public String toString() {
+    return "ServerEntityRequestResponse{action=" +getAction() + ", descriptor=" + descriptor.getEntityID() + '}';
+  }
 }

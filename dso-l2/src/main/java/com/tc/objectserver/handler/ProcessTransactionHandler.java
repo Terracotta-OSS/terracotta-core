@@ -46,6 +46,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
+import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
@@ -78,6 +79,7 @@ public class ProcessTransactionHandler {
   private final DSOChannelManager dsoChannelManager;
   
   // Data required for handling transaction resends.
+  private List<ReferenceMessage> references;
   private SparseList<ResendVoltronEntityMessage> resendReplayList;
   private List<ResendVoltronEntityMessage> resendNewList;
   
@@ -153,6 +155,7 @@ public class ProcessTransactionHandler {
     this.entityManager = entityManager;
     this.stateManagerCleanup = stateManagerCleanup;
     
+    this.references = new LinkedList<>();
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new LinkedList<>();
   }
@@ -337,7 +340,15 @@ public class ProcessTransactionHandler {
               EntityExistenceHelpers.recordDestroyEntity(entityPersistor, entityManager, sourceNodeID, transactionID, oldestTransactionOnClient, entityID, exception);
               serverEntityRequest.failure(exception);
             });
-        } else {
+        } else if (ServerEntityAction.FETCH_ENTITY == action || ServerEntityAction.RELEASE_ENTITY == action) {
+          serverEntityRequest.setAutoRetire();
+          entity.addRequestMessage(serverEntityRequest, entityMessage,
+            (result) -> {
+              serverEntityRequest.complete(result);
+            }, (exception) -> {
+              serverEntityRequest.failure(exception);
+            });
+      } else {
           if (ServerEntityAction.NOOP == action && entity.isRemoveable()) {
             LOGGER.debug("removing " + entity.getID());
             entityManager.removeDestroyed(entity.getID());
@@ -365,6 +376,10 @@ public class ProcessTransactionHandler {
       }
     }
   }
+  
+  public void handleResentReferenceMessage(ReferenceMessage msg) {
+    this.references.add(msg);
+  }
 
   public void handleResentMessage(ResendVoltronEntityMessage resentMessage) {
     boolean cached = false;
@@ -386,8 +401,6 @@ public class ProcessTransactionHandler {
           break;
         case FETCH_ENTITY:
         case RELEASE_ENTITY:
-//  are not replicated
-          break;
         default:
           index = this.transactionOrderPersistor.getIndexToReplay(resentMessage.getSource(), resentMessage.getTransactionID());
           break;
@@ -425,6 +438,11 @@ public class ProcessTransactionHandler {
     // Clear the transaction order persistor since we are starting fresh.
     this.transactionOrderPersistor.clearAllRecords();
     
+    for (ReferenceMessage msg : this.references) {
+      executeResend(msg);
+    }
+    this.references = null;
+    
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {
       executeResend(message);
@@ -449,7 +467,7 @@ public class ProcessTransactionHandler {
     }
   }
 
-  private void executeResend(ResendVoltronEntityMessage message) {
+  private void executeResend(VoltronEntityMessage message) {
     ClientID sourceNodeID = message.getSource();
     EntityDescriptor descriptor = message.getEntityDescriptor();
     ServerEntityAction action = decodeMessageType(message.getVoltronType());

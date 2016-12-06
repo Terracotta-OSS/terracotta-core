@@ -197,7 +197,9 @@ public class ReplicatedTransactionHandler {
         }
         break;
       case ReplicationMessage.START:
-        throw new AssertionError("unexpected message type " + rep);
+        entityManager.resetReferences();
+        acknowledge(rep, true);
+        break;
       default:
         // This is an unexpected replicated message type.
         throw new RuntimeException();
@@ -288,7 +290,16 @@ public class ReplicatedTransactionHandler {
               entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID);
               acknowledge(rep, true);
             }, (exception) -> {
-              entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+             entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+              acknowledge(rep, false);
+            });
+          break;
+        case FETCH_ENTITY:
+        case RELEASE_ENTITY:
+          entityInstance.addRequestMessage(request, payload, 
+            (result)-> {
+              acknowledge(rep, true);
+            }, (exception) -> {
               acknowledge(rep, false);
             });
           break;

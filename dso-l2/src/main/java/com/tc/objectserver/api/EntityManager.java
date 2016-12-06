@@ -75,7 +75,9 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier {
    * @param configuration The opaque configuration to use in the creation.
    */
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException;
-
+  
+  void resetReferences();
+  
   Collection<ManagedEntity> getAll();
   /**
    * 
