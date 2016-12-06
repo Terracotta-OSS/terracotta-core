@@ -586,7 +586,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private void startEntity(EntityID eid) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       Assert.assertNull(syncing);
       syncing = eid;
       LOGGER.debug("Starting " + eid);
@@ -598,7 +598,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private void endEntity(EntityID eid) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       Assert.assertEquals(syncing, eid);
       syncdEntities.add(eid);
       syncdKeys.clear();
@@ -607,7 +607,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private void startConcurrency(EntityID eid, int concurrency) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       if (destroyed && !syncing.equals(eid)) {
         destroyed = false;
       }
@@ -619,7 +619,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private Deque<ReplicationMessage> endConcurrency(EntityID eid, int concurrency) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       try {
         if (!eid.equals(syncing) || concurrency != currentKey) {
           throw new AssertionError();
@@ -638,13 +638,13 @@ public class ReplicatedTransactionHandler {
     }
     
     private void finish() {
-      Assert.assertTrue(started);
+      assertStarted(null);
       syncdEntities.clear();
       finished = true;
     }
     
     private boolean ignore(ReplicationMessage rep) {
-      Assert.assertTrue(started);
+      assertStarted(rep);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
@@ -675,7 +675,7 @@ public class ReplicatedTransactionHandler {
     }
 
     private boolean defer(ReplicationMessage rep) {
-      Assert.assertTrue(started);
+      assertStarted(rep);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
@@ -716,7 +716,29 @@ public class ReplicatedTransactionHandler {
       }
       return false;
     }
-  }  
+    
+    /**
+     * Note that this state machine has several special-cases but the started flag can be used to assert consistency in most
+     * of them.
+     * 
+     * The cases where it is OK to NOT be started:
+     * -SYNC_BEGIN:  The message which IS the start message isn't checked here but is obviously ok.
+     * -the replicated message is a CREATE call:  Creates can happen concurrently with sync but they are also independent of
+     *  it so it is possible for one to arrive before the sync even starts.
+     * -the replicated message applies to an entity we already synced:  This is a corollary to the CREATE exemption since it
+     *  might be another message replicated to that entity (which is unrelated to the sync).
+     * 
+     * @param rep The replicated message being processed (can be null if this is a sync case, but those cases must all have
+     *  already started, unless this is the start message).
+     */
+    private void assertStarted(ReplicationMessage rep) {
+      // These should short-circuit quickly, not creating an expensive check overhead.
+      Assert.assertTrue(started
+          || (SyncReplicationActivity.ActivityType.CREATE_ENTITY == rep.getReplicationType())
+          || (this.syncdEntities.contains(rep.getEntityID()))
+      );
+    }
+  }
  
   public static class BasicServerEntityRequest implements ServerEntityRequest {
     private final ServerEntityAction action;
