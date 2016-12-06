@@ -88,7 +88,8 @@ public class TCByteBufferFactory {
 
   private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
     try {
-      LinkedBlockingQueue<TCByteBuffer> poolQueue = direct ? directFreePool.get() : nonDirectFreePool.get();
+      LinkedBlockingQueue<TCByteBuffer> poolQueue = getPoolQueue(direct);
+
       TCByteBuffer rv = new TCByteBufferImpl(capacity, direct, poolQueue);
       // Assert.assertEquals(0, rv.position());
       // Assert.assertEquals(capacity, rv.capacity());
@@ -205,12 +206,20 @@ public class TCByteBufferFactory {
   public static int getTotalBufferSizeNeededForMessageSize(int length) {
     return (getBufferCountNeededForMessageSize(length) * FIXED_BUFFER_SIZE);
   }
+  
+  private static LinkedBlockingQueue<TCByteBuffer> getPoolQueue(boolean direct) {
+    if (disablePooling) {
+      return null;     
+    } else {
+      return direct ? directFreePool.get() : nonDirectFreePool.get();
+    }
+  }
 
   private static TCByteBuffer getFromPool(boolean direct) {
     if (disablePooling) return null;
     TCByteBuffer buf = null;
 
-    LinkedBlockingQueue<TCByteBuffer> poolQueue = direct ? directFreePool.get() : nonDirectFreePool.get();
+    LinkedBlockingQueue<TCByteBuffer> poolQueue = getPoolQueue(direct);
 
     Assert.assertNotNull(poolQueue);
 
