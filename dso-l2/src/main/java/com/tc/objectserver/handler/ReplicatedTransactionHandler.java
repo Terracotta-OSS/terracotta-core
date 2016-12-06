@@ -577,7 +577,9 @@ public class ReplicatedTransactionHandler {
     private final Set<Integer> syncdKeys = new HashSet<>();
     private EntityID syncing;
     private int currentKey = -1;
-    private boolean destroyed = false;
+    // We need to track if the entity we are currently syncing has been destroyed and know to drop it, once we are done
+    //  syncing it, if it was.
+    private boolean wasCurrentlySyncingEntityDestroyed;
     private boolean finished = false;
     private boolean started = false;
     
@@ -589,12 +591,13 @@ public class ReplicatedTransactionHandler {
       assertStarted(null);
       Assert.assertNull(syncing);
       syncing = eid;
+      wasCurrentlySyncingEntityDestroyed = false;
       LOGGER.debug("Starting " + eid);
     }
     
     private boolean destroyed(EntityID eid) {
       // Note that the destroyed notification may arrive without the sync having started.
-      return (eid.equals(syncing) && destroyed) || syncdEntities.contains(eid);
+      return (eid.equals(syncing) && wasCurrentlySyncingEntityDestroyed) || syncdEntities.contains(eid);
     }
     
     private void endEntity(EntityID eid) {
@@ -608,9 +611,6 @@ public class ReplicatedTransactionHandler {
     
     private void startConcurrency(EntityID eid, int concurrency) {
       assertStarted(null);
-      if (destroyed && !syncing.equals(eid)) {
-        destroyed = false;
-      }
       Assert.assertEquals(syncing, eid);
       currentKey = concurrency;
       if (LOGGER.isDebugEnabled()) {
@@ -655,12 +655,14 @@ public class ReplicatedTransactionHandler {
       EntityID eid = rep.getEntityDescriptor().getEntityID();
 //  everything else, check
       if (eid.equals(syncing)) {
-        if (destroyed) {
-//  blackhole this request.  The entity has been destroyed. 
+        // Note that it is possible that the currently syncing entity has already been destroyed, in which case this message
+        //  is either targeting something which doesn't exist or targets something which has been created over top of it.
+        // In either case, we shouldn't ignore it.
+        if (wasCurrentlySyncingEntityDestroyed) {
           if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Dropping " + rep + " due to destroy");
+            LOGGER.debug("Unexpected message to destroyed syncing entity being passed through: " + rep);
           }
-          return true;
+          return false;
         } else if (rep.getConcurrency() == currentKey) {
           return false;
         } else if (!syncdKeys.contains(rep.getConcurrency())) {
@@ -688,11 +690,15 @@ public class ReplicatedTransactionHandler {
       
       if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
         syncdEntities.add(eid);
-        destroyed = false;
         return false;
       }
       
       if (eid.equals(syncing)) {
+        // We are currently syncing this entity but we may have already destroyed it, in which case we don't need to defer
+        //  the message since it is targeting a later instance by the same name.
+        if (wasCurrentlySyncingEntityDestroyed) {
+          return false;
+        }
         if (syncdKeys.contains(rep.getConcurrency())) {
           return false;
         } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
@@ -704,7 +710,9 @@ public class ReplicatedTransactionHandler {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Destroying " + rep);
           }
-          destroyed = true;
+          // We hadn't already been destroyed, so we needed to add it to the defer list, but now we are destroyed so nothing
+          //  else will be deferred or ignored.
+          wasCurrentlySyncingEntityDestroyed = true;
           return false;
         } else if (currentKey == rep.getConcurrency()) {
           if (LOGGER.isDebugEnabled()) {
