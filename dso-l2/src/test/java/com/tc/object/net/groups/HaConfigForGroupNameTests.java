@@ -22,7 +22,6 @@ import com.tc.config.ClusterInfo;
 import com.tc.config.HaConfig;
 import com.tc.config.NodesStore;
 import com.tc.config.ReloadConfigChangeContext;
-import com.tc.net.GroupID;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
 
@@ -37,10 +36,6 @@ public class HaConfigForGroupNameTests implements HaConfig {
     this.set = new ClusterInfoImpl(tempSet);
   }
 
-  @Override
-  public GroupID getActiveCoordinatorGroupID() {
-    throw new UnsupportedOperationException();
-  }
 
   public ServerGroup[] getAllActiveServerGroups() {
     throw new UnsupportedOperationException();
@@ -48,21 +43,6 @@ public class HaConfigForGroupNameTests implements HaConfig {
 
   public Node[] getAllNodes() {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public GroupID getThisGroupID() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public GroupID[] getGroupIDs() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public ClusterInfo getClusterInfo() {
-    return this.set;
   }
 
   public ServerGroup getThisGroup() {
@@ -78,15 +58,7 @@ public class HaConfigForGroupNameTests implements HaConfig {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public boolean isActiveActive() {
-    throw new UnsupportedOperationException();
-  }
 
-  @Override
-  public boolean isActiveCoordinatorGroup() {
-    throw new UnsupportedOperationException();
-  }
 
   public boolean isDiskedBasedActivePassive() {
     throw new UnsupportedOperationException();
@@ -96,10 +68,6 @@ public class HaConfigForGroupNameTests implements HaConfig {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public ReloadConfigChangeContext reloadConfiguration() {
-    throw new UnsupportedOperationException();
-  }
 
   @Override
   public NodesStore getNodesStore() {
@@ -132,10 +100,6 @@ public class HaConfigForGroupNameTests implements HaConfig {
       this.serverNamesForThisGroup = tmp;
     }
 
-    @Override
-    public GroupID getGroupIDFromNodeName(String name) {
-      throw new UnsupportedOperationException();
-    }
 
     @Override
     public boolean hasServerInCluster(String name) {
@@ -143,8 +107,4 @@ public class HaConfigForGroupNameTests implements HaConfig {
     }
   }
 
-  @Override
-  public String getNodeName(String member) {
-    return null;
-  }
 }

@@ -20,7 +20,6 @@ package com.tc.l2.msg;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 
 import org.junit.Test;
@@ -35,7 +34,6 @@ public class ActiveJoinMessageTest {
     assertEquals(ajm.inResponseTo(), ajm1.inResponseTo());
     assertEquals(ajm.messageFrom(), ajm1.messageFrom());
 
-    assertEquals(ajm.getGroupID(), ajm1.getGroupID());
     assertEquals(ajm.getServerID(), ajm1.getServerID());
   }
 
@@ -54,11 +52,11 @@ public class ActiveJoinMessageTest {
   @Test
   public void testBasicSerialization() throws Exception {
     ActiveJoinMessage ajm = (ActiveJoinMessage) ActiveJoinMessage
-        .createActiveJoinMessage(new GroupID(100), new ServerID("30001", new byte[] { 54, -125, 34, -4 }));
+        .createActiveJoinMessage(new ServerID("30001", new byte[] { 54, -125, 34, -4 }));
     ActiveJoinMessage ajm1 = writeAndRead(ajm);
     validate(ajm, ajm1);
 
-    ajm = (ActiveJoinMessage) ActiveJoinMessage.createActiveLeftMessage(new GroupID(100));
+    ajm = (ActiveJoinMessage) ActiveJoinMessage.createActiveLeftMessage();
     ajm1 = writeAndRead(ajm);
     validate(ajm, ajm1);
 

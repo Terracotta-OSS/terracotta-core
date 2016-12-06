@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.util.State;
 import com.tc.util.version.Version;
@@ -29,7 +28,6 @@ import org.terracotta.persistence.IPlatformPersistence;
 
 public class ClusterStatePersistor {
   private static final String MAP_FILE_NAME = "ClusterStatePersistor.map";
-  private static final String GROUP_ID_KEY = "groupid";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
   private static final String STRIPE_ID_KEY = "stripeid";
@@ -54,21 +52,12 @@ public class ClusterStatePersistor {
     this.initialState = getCurrentL2State();
   }
 
-  public void setGroupId(GroupID groupId) {
-    putAndStore(GROUP_ID_KEY, String.valueOf(groupId.toInt()));
+  public void setStripeID(StripeID stripeID) {
+    putAndStore(STRIPE_ID_KEY, stripeID.getName());
   }
 
-  public GroupID getGroupId() {
-    String g = map.get(GROUP_ID_KEY);
-    return g == null ? GroupID.NULL_ID : new GroupID(Integer.valueOf(g));
-  }
-
-  public void setStripeID(GroupID groupID, StripeID stripeID) {
-    putAndStore(groupStripeIdKey(groupID), stripeID.getName());
-  }
-
-  public StripeID getStripeID(GroupID groupID) {
-    String s = map.get(groupStripeIdKey(groupID));
+  public StripeID getStripeID() {
+    String s = map.get(STRIPE_ID_KEY);
     return s == null ? StripeID.NULL_ID : new StripeID(s);
   }
 
@@ -126,9 +115,5 @@ public class ClusterStatePersistor {
       // In general, we have no way of solving this problem so throw it.
       throw new RuntimeException("Failure storing ClusterStatePersistor map file", e);
     }
-  }
-
-  private static String groupStripeIdKey(GroupID groupID) {
-    return GROUP_STRIPE_ID_PREFIX + groupID.toInt();
   }
 }

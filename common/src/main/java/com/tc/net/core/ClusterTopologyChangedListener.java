@@ -19,5 +19,5 @@
 package com.tc.net.core;
 
 public interface ClusterTopologyChangedListener {
-  void serversUpdated(ConnectionAddressProvider... addressProviders);
+  void serversUpdated(ConnectionAddressProvider addressProviders);
 }

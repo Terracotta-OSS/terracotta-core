@@ -162,33 +162,32 @@ public class ClusterDumper {
   }
 
   public void takeClusterStateDump(boolean server, boolean client) throws Exception {
-    ServerGroupInfo[] serverGrpInfos = getServerGroupInfo();
-    L2Info activeCoordinator = findActiveCoordinator(serverGrpInfos);
+    ServerGroupInfo serverGrpInfo = getStripeInfo();
+    L2Info activeCoordinator = findActiveCoordinator(serverGrpInfo);
 
-    if (server) doServerStateDumps(serverGrpInfos);
+    if (server) doServerStateDumps(serverGrpInfo);
     if (client) doClientsStateDump(activeCoordinator.host(), activeCoordinator.jmxPort());
     System.out.println("\nCluster state dump taken successfully. ");
   }
 
   public void takeClusterThreadDump(boolean server, boolean client) throws Exception {
-    ServerGroupInfo[] serverGrpInfos = getServerGroupInfo();
-    L2Info activeCoordinator = findActiveCoordinator(serverGrpInfos);
+    ServerGroupInfo serverGrpInfo = getStripeInfo();
+    L2Info activeCoordinator = findActiveCoordinator(serverGrpInfo);
 
     File file = new File(String.format(FILENAME_FORMAT, dateFormat.format(new Date())));
     FileOutputStream fos = new FileOutputStream(file);
     ZipOutputStream zout = new ZipOutputStream(fos);
 
-    if (server) doServerThreadDump(serverGrpInfos, zout);
+    if (server) doServerThreadDump(serverGrpInfo, zout);
     if (client) doClientThreadDumps(activeCoordinator.host(), activeCoordinator.jmxPort(), zout);
     zout.close();
     System.out.println("\nAll thread dumps taken successfully. ");
     System.out.println("Zipped to " + file.getAbsolutePath());
   }
 
-  private void doServerStateDumps(ServerGroupInfo[] serverGrpInfos) {
+  private void doServerStateDumps(ServerGroupInfo serverGrpInfo) {
     System.out.println("\nTaking Server State dumps.");
     System.out.println("==========================\n");
-    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
       L2Info[] members = serverGrpInfo.members();
       for (L2Info member : members) {
         L2DumperMBean mbean = null;
@@ -214,14 +213,12 @@ public class ClusterDumper {
             }
           }
         }
-      }
     }
   }
 
-  private void doServerThreadDump(ServerGroupInfo[] serverGrpInfos, ZipOutputStream zout) {
+  private void doServerThreadDump(ServerGroupInfo serverGrpInfo, ZipOutputStream zout) {
     System.out.println("\nTaking Server Thread dumps.");
     System.out.println("===========================\n");
-    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
       L2Info[] members = serverGrpInfo.members();
       for (L2Info member : members) {
         TCServerInfoMBean mbean = null;
@@ -254,7 +251,6 @@ public class ClusterDumper {
             }
           }
         }
-      }
     }
   }
 
@@ -282,14 +278,8 @@ public class ClusterDumper {
     }
   }
 
-  private L2Info findActiveCoordinator(ServerGroupInfo[] serverGrpInfos) {
-    L2Info[] l2Infos = null;
-    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
-      if (serverGrpInfo.isCoordinator()) {
-        l2Infos = serverGrpInfo.members();
-        break;
-      }
-    }
+  private L2Info findActiveCoordinator(ServerGroupInfo serverGrpInfo) {
+    L2Info[] l2Infos = serverGrpInfo.members();
 
     if (l2Infos == null) { throw new IllegalStateException("Active coordinator group not found,"
                                                            + " clients dump are not taken."); }
@@ -303,13 +293,13 @@ public class ClusterDumper {
     throw new IllegalStateException("Active coordinator group not found, clients dump are not taken.");
   }
 
-  private ServerGroupInfo[] getServerGroupInfo() throws Exception {
-    ServerGroupInfo[] serverGrpInfos = null;
+  private ServerGroupInfo getStripeInfo() throws Exception {
+    ServerGroupInfo serverGrpInfos = null;
     TCServerInfoMBean mbean = null;
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-    serverGrpInfos = mbean.getServerGroupInfo();
+    serverGrpInfos = mbean.getStripeInfo();
     jmxConnector.close();
     return serverGrpInfos;
   }

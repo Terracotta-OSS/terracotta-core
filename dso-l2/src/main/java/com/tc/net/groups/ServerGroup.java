@@ -23,7 +23,6 @@ import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.net.GroupID;
 import com.tc.object.config.schema.L2Config;
 
 import java.util.ArrayList;
@@ -35,12 +34,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerGroup {
 
-  private final GroupID           groupId;
   private volatile String[]       members;
   private final Map<String, Node> nodes;
 
   public ServerGroup(ActiveServerGroupConfig group) {
-    this.groupId = group.getGroupId();
     this.members = group.getMembers();
     this.nodes = new ConcurrentHashMap<String, Node>();
   }
@@ -88,10 +85,6 @@ public class ServerGroup {
     }
   }
 
-  public GroupID getGroupId() {
-    return groupId;
-  }
-
   public Collection<Node> getNodes() {
     return getNodes(false);
   }
@@ -124,32 +117,13 @@ public class ServerGroup {
 
   public void addNode(Node node, String serverName) {
     if (!hasMember(serverName)) { throw new AssertionError("Server=[" + serverName
-                                                           + "] is not a member of activeServerGroup=[" + this.groupId
+                                                           + "] is not a member of activeServerGroup=["
                                                            + "]"); }
     this.nodes.put(serverName, node);
   }
 
   public Node getNode(String serverName) {
     return this.nodes.get(serverName);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof ServerGroup) {
-      ServerGroup that = (ServerGroup) obj;
-      return this.groupId == that.groupId;
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return groupId.toInt();
-  }
-
-  @Override
-  public String toString() {
-    return "ActiveServerGroup{groupId=" + groupId + "}";
   }
 
   public boolean hasMember(String serverName) {

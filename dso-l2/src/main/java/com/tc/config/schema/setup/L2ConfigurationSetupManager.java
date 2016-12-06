@@ -38,8 +38,6 @@ public interface L2ConfigurationSetupManager {
 
   L2Config dsoL2Config();
 
-  ActiveServerGroupsConfig activeServerGroupsConfig();
-
   ActiveServerGroupConfig getActiveServerGroupForThisL2();
 
   String describeSources();

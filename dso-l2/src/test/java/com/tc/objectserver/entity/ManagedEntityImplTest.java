@@ -156,6 +156,8 @@ public class ManagedEntityImplTest {
     passiveServerEntity = mock(PassiveServerEntity.class);
     serverEntityService = getServerEntityService(this.activeServerEntity, this.passiveServerEntity);
     clientEntityStateManager = mock(ClientEntityStateManager.class);
+    when(clientEntityStateManager.addReference(any(ClientID.class), any(EntityDescriptor.class))).thenReturn(Boolean.TRUE);
+    when(clientEntityStateManager.removeReference(any(ClientID.class), any(EntityDescriptor.class))).thenReturn(Boolean.TRUE);
     eventCollector = mock(ITopologyEventCollector.class);
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;

@@ -19,8 +19,6 @@
 package com.tc.objectserver.entity;
 
 
-import com.tc.async.api.Sink;
-import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -28,8 +26,6 @@ import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collections;

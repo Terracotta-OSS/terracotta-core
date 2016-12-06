@@ -66,7 +66,7 @@ public interface TCServer extends StateChangeListener {
 
   String getL2Identifier();
 
-  ServerGroupInfo[] serverGroups();
+  ServerGroupInfo getStripeInfo();
 
   int getTSAListenPort();
 

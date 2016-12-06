@@ -329,7 +329,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected ServerBuilder createServerBuilder(HaConfig config, TCLogger tcLogger, TCServer server,
                                                  L2Config l2dsoConfig) {
-    Assert.assertEquals(config.isActiveActive(), false);
     return new StandardServerBuilder(config, tcLogger, tcSecurityManager);
   }
 
@@ -542,7 +541,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                 new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
 
-    this.stripeIDStateManager = new StripeIDStateManagerImpl(this.haConfig, this.persistor.getClusterStatePersistor());
+    this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
 

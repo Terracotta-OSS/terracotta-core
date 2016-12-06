@@ -19,64 +19,33 @@
 package com.tc.config;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.net.GroupID;
-import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
 import com.tc.object.config.schema.L2Config;
 import com.tc.util.Assert;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class HaConfigImpl implements HaConfig {
 
   private final L2ConfigurationSetupManager configSetupManager;
-  private final GroupID[]                   groupIDs;
-  private final GroupID                     thisGroupID;
-  private final GroupID                     activeCoordinatorGroupID;
 
   private final NodesStoreImpl              nodeStore;
-  private final ServerGroup[]               groups;
   private final Node                        thisNode;
   private final ServerGroup                 thisGroup;
 
   public HaConfigImpl(L2ConfigurationSetupManager configSetupManager) {
     this.configSetupManager = configSetupManager;
-    ActiveServerGroupsConfig groupsConfig = this.configSetupManager.activeServerGroupsConfig();
-    int groupCount = groupsConfig.getActiveServerGroupCount();
-    this.groups = new ServerGroup[groupCount];
-    this.groupIDs = new GroupID[groupCount];
-    for (int i = 0; i < groupCount; i++) {
-      this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroups().get(i));
-      this.groupIDs[i] = groups[i].getGroupId();
-    }
-
-    this.activeCoordinatorGroupID = new OrderedGroupIDs(groupIDs).getActiveCoordinatorGroup();
+    ActiveServerGroupConfig groupsConfig = this.configSetupManager.getActiveServerGroupForThisL2();
+    this.thisGroup = new ServerGroup(groupsConfig);
 
     Set<Node> nodes = makeAllNodes();
     this.thisNode = makeThisNode();
-    this.thisGroup = getThisGroupFrom(this.groups, this.configSetupManager.getActiveServerGroupForThisL2());
-    this.thisGroupID = thisGroup.getGroupId();
-
-    this.nodeStore = new NodesStoreImpl(nodes, getNodeNamesForThisGroup(), buildServerGroupIDMap(),
-                                        configSetupManager);
-  }
-
-  private HashMap<String, GroupID> buildServerGroupIDMap() {
-    HashMap<String, GroupID> tempMap = new HashMap<>();
-    for (ServerGroup group : groups) {
-      for (Node node : group.getNodes()) {
-        tempMap.put(node.getServerNodeName(), group.getGroupId());
-      }
-    }
-    return tempMap;
+    this.nodeStore = new NodesStoreImpl(nodes, getNodeNamesForThisGroup(),configSetupManager);
   }
 
   private Set<String> getNodeNamesForThisGroup() {
@@ -87,73 +56,9 @@ public class HaConfigImpl implements HaConfig {
     return tmpSet;
   }
 
-  /**
-   * @throws ConfigurationSetupException
-   */
-  @Override
-  public ReloadConfigChangeContext reloadConfiguration() throws ConfigurationSetupException {
-    ActiveServerGroupsConfig asgsc = this.configSetupManager.activeServerGroupsConfig();
-    int grpCount = asgsc.getActiveServerGroupCount();
-
-    ReloadConfigChangeContext context = new ReloadConfigChangeContext();
-
-    List<ActiveServerGroupConfig> asgcArray = asgsc.getActiveServerGroups();
-    for (int i = 0; i < grpCount; i++) {
-      GroupID gid = asgcArray.get(i).getGroupId();
-      for (int j = 0; j < grpCount; j++) {
-        if (groups[i].getGroupId().equals(gid)) {
-          ReloadConfigChangeContext tempContext = groups[i].reloadGroup(this.configSetupManager, asgcArray.get(i));
-          context.update(tempContext);
-
-          nodeStore.updateServerNames(tempContext, gid);
-
-          if (groups[i].getGroupId().equals(thisGroupID)) {
-            updateNamesForThisGroup(tempContext);
-          }
-        }
-      }
-    }
-
-    nodeStore.topologyChanged(context);
-    return context;
-  }
-
-  private void updateNamesForThisGroup(ReloadConfigChangeContext context) {
-    nodeStore.updateServerNames(context);
-  }
-
-  private ServerGroup getThisGroupFrom(ServerGroup[] sg, ActiveServerGroupConfig activeServerGroupForThisL2) {
-    for (ServerGroup element : sg) {
-      if (element.getGroupId() == activeServerGroupForThisL2.getGroupId()) { return element; }
-    }
-    throw new RuntimeException("Unable to find this group information for " + this.thisNode + " "
-                               + activeServerGroupForThisL2);
-  }
-
-  @Override
-  public boolean isActiveActive() {
-    return this.configSetupManager.activeServerGroupsConfig().getActiveServerGroupCount() > 1;
-  }
-
-  @Override
-  public GroupID getActiveCoordinatorGroupID() {
-    return this.activeCoordinatorGroupID;
-  }
-
-  @Override
-  public GroupID getThisGroupID() {
-    return this.thisGroupID;
-  }
-
-  @Override
-  public GroupID[] getGroupIDs() {
-    return this.groupIDs;
-  }
-
   private Set<Node> makeAllNodes() {
     Set<Node> allClusterNodes = new HashSet<>();
-    List<ActiveServerGroupConfig> asgcs = this.configSetupManager.activeServerGroupsConfig().getActiveServerGroups();
-    for (ActiveServerGroupConfig asgc : asgcs) {
+    ActiveServerGroupConfig asgc = this.configSetupManager.getActiveServerGroupForThisL2();
       Assert.assertNotNull(asgc);
       String[] l2Names = asgc.getMembers();
       for (String l2Name : l2Names) {
@@ -166,20 +71,18 @@ public class HaConfigImpl implements HaConfig {
           throw new RuntimeException("Error getting l2 config for: " + l2Name, e);
         }
       }
-    }
     return allClusterNodes;
   }
 
   // servers and groups were checked in configSetupManger
   private void addNodeToGroup(Node node, String serverName) {
     boolean added = false;
-    for (ServerGroup group : this.groups) {
-      if (group.hasMember(serverName)) {
-        group.addNode(node, serverName);
+      if (this.thisGroup.hasMember(serverName)) {
+        thisGroup.addNode(node, serverName);
         added = true;
       }
-    }
-    if (!added) { throw new AssertionError("Node=[" + node + "] with serverName=[" + serverName
+
+      if (!added) { throw new AssertionError("Node=[" + node + "] with serverName=[" + serverName
                                            + "] was not added to any group!"); }
   }
 
@@ -201,27 +104,12 @@ public class HaConfigImpl implements HaConfig {
     return new Node(host, l2.tsaPort().getValue(), l2.tsaGroupPort().getValue());
   }
 
-  @Override
-  public boolean isActiveCoordinatorGroup() {
-    return this.thisGroupID.equals(this.activeCoordinatorGroupID);
-  }
 
-  @Override
-  public ClusterInfo getClusterInfo() {
-    return nodeStore;
-  }
 
   @Override
   public NodesStore getNodesStore() {
     return nodeStore;
   }
 
-  @Override
-  public String getNodeName(String member) {
-    for (ServerGroup group : this.groups) {
-      if (group.hasMember(member)) { return group.getNode(member).getServerNodeName(); }
-    }
-    return null;
-  }
 
 }

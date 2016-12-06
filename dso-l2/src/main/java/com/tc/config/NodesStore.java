@@ -18,7 +18,6 @@
  */
 package com.tc.config;
 
-import com.tc.config.ClusterInfo;
 import com.tc.net.groups.Node;
 
 public interface NodesStore extends ClusterInfo {

@@ -190,7 +190,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public ServerGroupInfo[] getServerGroupInfo() {
+  public ServerGroupInfo getStripeInfo() {
     return null;
   }
 

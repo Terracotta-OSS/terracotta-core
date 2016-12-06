@@ -74,7 +74,7 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getL2Identifier();
 
-  ServerGroupInfo[] getServerGroupInfo();
+  ServerGroupInfo getStripeInfo();
 
   int getTSAListenPort();
 

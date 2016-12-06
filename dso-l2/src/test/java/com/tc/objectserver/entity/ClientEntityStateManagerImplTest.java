@@ -34,16 +34,14 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import java.util.Arrays;
+import static com.tc.util.Assert.assertEquals;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import org.mockito.Matchers;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -92,10 +90,10 @@ public class ClientEntityStateManagerImplTest {
     ClientID clientID = new ClientID(1);
 
     clientEntityStateManager.addReference(clientID, new EntityDescriptor(entityID, clientInstanceID, version));
-    clientEntityStateManager.clientDisconnected(clientID);
+    List<VoltronEntityMessage> list = clientEntityStateManager.clientDisconnected(clientID);
 
-    verify(requestSink).addSingleThreaded(argThat(hasClientAndEntityIDs(clientID, entityID)));
-    verify(collector).expectedReleases(Matchers.eq(clientID), argThat(collectionMatcher(Arrays.asList(new EntityDescriptor(entityID, clientInstanceID, version)))));
+    assertEquals(1, list.size());
+    assertEquals(entityID, list.get(0).getEntityDescriptor().getEntityID());
   }
 
   @Test

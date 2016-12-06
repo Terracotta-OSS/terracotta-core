@@ -286,7 +286,7 @@ public class DistributedObjectClient implements TCClient {
                                      messageRouter,
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
-                                     this.connectionComponents.createConnectionInfoConfigItemByGroup().length,
+                                     1,
                                      new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "DSO Client"),
                                      getMessageTypeClassMapping(),
@@ -294,9 +294,9 @@ public class DistributedObjectClient implements TCClient {
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
-    final ConnectionInfoConfig[] connectionInfoItems = this.connectionComponents
-        .createConnectionInfoConfigItemByGroup();
-    final ConnectionInfo[] connectionInfo = connectionInfoItems[0].getConnectionInfos();
+    final ConnectionInfoConfig connectionInfoItems = this.connectionComponents
+        .createConnectionInfoConfigItem();
+    final ConnectionInfo[] connectionInfo = connectionInfoItems.getConnectionInfos();
     final String serverHost = connectionInfo[0].getHostname();
     final int serverPort = connectionInfo[0].getPort();
 

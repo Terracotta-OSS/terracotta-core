@@ -252,8 +252,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public ServerGroupInfo[] getServerGroupInfo() {
-    return server.serverGroups();
+  public ServerGroupInfo getStripeInfo() {
+    return server.getStripeInfo();
   }
 
   @Override

@@ -26,7 +26,6 @@ import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -45,7 +44,6 @@ public class L2HACoordinator implements L2Coordinator {
   private final TCLogger                                    consoleLogger;
   private final DistributedObjectServer                     server;
   private final GroupManager<AbstractGroupMessage> groupManager;
-  private final GroupID                                     thisGroupID;
 
   private StateManager                                      stateManager;
   private ReplicatedClusterStateManager                     rClusterStateMgr;
@@ -58,13 +56,12 @@ public class L2HACoordinator implements L2Coordinator {
                          ClusterStatePersistor clusterStatePersistor,
                          WeightGeneratorFactory weightGeneratorFactory,
                          L2ConfigurationSetupManager configurationSetupManager,
-                         GroupID thisGroupID, StripeIDStateManager stripeIDStateManager, 
+                         StripeIDStateManager stripeIDStateManager, 
                          ChannelLifeCycleHandler clm) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.stateManager = stateManager;
-    this.thisGroupID = thisGroupID;
     this.configSetupManager = configurationSetupManager;
 
     init(stageManager, clusterStatePersistor,
@@ -76,7 +73,6 @@ public class L2HACoordinator implements L2Coordinator {
                     StripeIDStateManager stripeIDStateManager, ChannelLifeCycleHandler clm) {
     final ClusterState clusterState = new ClusterStateImpl(statePersistor,
                                                            this.server.getConnectionIdFactory(),
-                                                       this.thisGroupID,
                                                        stripeIDStateManager);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
@@ -157,7 +153,6 @@ public class L2HACoordinator implements L2Coordinator {
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     final StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
-    strBuilder.append(this.thisGroupID);
     strBuilder.append(" ]");
     out.indent().print(strBuilder.toString()).flush();
     out.indent().print("ReplicatedClusterStateMgr").visit(this.rClusterStateMgr).flush();

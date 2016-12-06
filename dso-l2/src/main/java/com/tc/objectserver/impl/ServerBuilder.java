@@ -29,7 +29,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.TCDumper;
-import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
@@ -76,5 +75,4 @@ public interface ServerBuilder extends TCDumper, PostInit {
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 
-  GroupID getLocalGroupId();
 }

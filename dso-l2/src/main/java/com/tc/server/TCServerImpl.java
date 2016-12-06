@@ -41,8 +41,6 @@ import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
-import com.tc.net.GroupID;
-import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.HttpConnectionContext;
@@ -132,36 +130,19 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     return StateManager.VALID_STATES.contains(state);
   }
 
-
-  private static OrderedGroupIDs createOrderedGroupIds(List<ActiveServerGroupConfig> groups) {
-    GroupID[] gids = new GroupID[groups.size()];
-    for (int i = 0; i < groups.size(); i++) {
-      gids[i] = groups.get(i).getGroupId();
-    }
-    return new OrderedGroupIDs(gids);
-  }
-
   @Override
-  public ServerGroupInfo[] serverGroups() {
+  public ServerGroupInfo getStripeInfo() {
     L2Info[] l2Infos = infoForAllL2s();
-    List<ActiveServerGroupConfig> groups = this.configurationSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroups();
-    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groups);
-    GroupID coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup();
-    ServerGroupInfo[] result = new ServerGroupInfo[groups.size()];
-    for (int i = 0; i < groups.size(); i++) {
-      ActiveServerGroupConfig groupInfo = groups.get(i);
-      GroupID groupId = groupInfo.getGroupId();
-      List<L2Info> memberList = new ArrayList<>();
-      for (L2Info l2Info : l2Infos) {
-        if (groupInfo.isMember(l2Info.name())) {
-          memberList.add(l2Info);
-        }
+    ActiveServerGroupConfig groupInfo = this.configurationSetupManager.getActiveServerGroupForThisL2();
+
+    List<L2Info> memberList = new ArrayList<>();
+    for (L2Info l2Info : l2Infos) {
+      if (groupInfo.isMember(l2Info.name())) {
+        memberList.add(l2Info);
       }
-      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(), groupId.toInt(),
-                                      coordinatorId.equals(groupId));
     }
-    return result;
+
+    return new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(),true);
   }
 
   @Override

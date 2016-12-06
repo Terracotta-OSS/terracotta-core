@@ -21,7 +21,6 @@ package com.tc.config;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.net.GroupID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.object.config.schema.L2Config;
@@ -38,7 +37,6 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   private final Set<Node>                                   nodes;
   private final CopyOnWriteArraySet<TopologyChangeListener> listeners              = new CopyOnWriteArraySet<>();
   private L2ConfigurationSetupManager                       configSetupManager;
-  private volatile Map<String, GroupID>                     nodeNameToGidMap       = new HashMap<>();
   private volatile Set<String>                              nodeNamesForThisGroup  = new HashSet<>();
   private volatile Map<String, String>                      nodeNamesToServerNames = new HashMap<>();
 
@@ -49,11 +47,9 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     this.nodes = Collections.synchronizedSet(nodes);
   }
 
-  public NodesStoreImpl(Set<Node> nodes, Set<String> nodeNamesForThisGroup,
-                        HashMap<String, GroupID> serverNodeNameToGidMap, L2ConfigurationSetupManager configSetupManager) {
+  public NodesStoreImpl(Set<Node> nodes, Set<String> nodeNamesForThisGroup, L2ConfigurationSetupManager configSetupManager) {
     this(nodes);
     this.nodeNamesForThisGroup.addAll(nodeNamesForThisGroup);
-    this.nodeNameToGidMap = serverNodeNameToGidMap;
     this.configSetupManager = configSetupManager;
     initNodeNamesToServerNames();
   }
@@ -127,38 +123,17 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     this.nodeNamesForThisGroup = tmp;
   }
 
-  /**
-   * ServerNameGroupIDInfo methods ....
-   */
-
   @Override
   public boolean hasServerInCluster(String name) {
-    return nodeNameToGidMap.containsKey(name);
+    return nodeNamesForThisGroup.contains(name);
   }
 
-  @Override
-  public GroupID getGroupIDFromNodeName(String name) {
-    return nodeNameToGidMap.get(name);
-  }
 
   @Override
   public String getGroupNameFromNodeName(String nodeName) {
     if (configSetupManager == null) { return null; }
-    ActiveServerGroupConfig asgc = configSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroupForL2(nodeNamesToServerNames.get(nodeName));
+    ActiveServerGroupConfig asgc = configSetupManager.getActiveServerGroupForThisL2();
     if (asgc == null) { return null; }
     return asgc.getGroupName();
-  }
-
-  void updateServerNames(ReloadConfigChangeContext context, GroupID gid) {
-    Map<String, GroupID> tempMap = new HashMap<>(nodeNameToGidMap);
-    for (Node n : context.getNodesAdded()) {
-      tempMap.put(n.getServerNodeName(), gid);
-    }
-
-    for (Node n : context.getNodesRemoved()) {
-      tempMap.remove(n.getServerNodeName());
-    }
-    this.nodeNameToGidMap = tempMap;
   }
 }

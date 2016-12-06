@@ -480,7 +480,7 @@ public class ClientConnectionEstablisher {
     private void startThreadIfNecessary() {
   //  Should be synchronized by caller
       if (connectionEstablisherThread == null && !disableThreadSpawn) {
-        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId() + "-" + System.identityHashCode(this));
+        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getId() + "-" + System.identityHashCode(this));
         thread.setDaemon(true);
         thread.start();
         connectionEstablisherThread = thread;
