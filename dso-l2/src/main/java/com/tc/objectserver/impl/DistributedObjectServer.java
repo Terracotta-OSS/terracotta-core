@@ -109,7 +109,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
-import com.tc.net.ClientID;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -130,7 +129,6 @@ import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
@@ -159,7 +157,6 @@ import com.tc.object.msg.ListRegisteredServicesMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
@@ -639,33 +636,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  consoleLogger);
     
     
-    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
-    ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, eventCollector, 
-      new DSOChannelManagerEventListener() {
-        @Override
-        public void channelCreated(MessageChannel channel) {
-          ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
-          if (l2Coordinator.getStateManager().isActiveCoordinator() && channelManager.isActiveID(cid)) {
-            eventCollector.clientDidConnect(channel, cid);
-          }
-        }
-
-        @Override
-        public void channelRemoved(MessageChannel channel) {
-          ClientID cid = channelManager.getClientIDFor(channel.getChannelID());
-          if (l2Coordinator.getStateManager().isActiveCoordinator() && clientHandshakeManager.isStarted() && channelManager.isActiveID(cid)) {
-            eventCollector.clientDidDisconnect(channel, cid);
-          }
-        }
-      });
-
     final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
 
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
     
+    ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
+    ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
+
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
-    channelManager.addEventListener(clientEntityStateManager);
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor(), channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
@@ -684,9 +663,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
-
-    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, stageManager, channelManager, this.haConfig);
-    channelManager.addEventListener(channelLifeCycleHandler);
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.NOOP_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -711,7 +687,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         this.persistor.getClusterStatePersistor());
     
     state.registerForStateChangeEvents(this.server);
-
+//  routing for passive to receive replication    
+    Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
+        new ReplicatedTransactionHandler(state, this.persistor.getTransactionOrderPersistor(), entityManager, 
+            this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
+    
+    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, stageManager, channelManager, clientEntityStateManager, state, eventCollector);
+    channelManager.addEventListener(channelLifeCycleHandler);
+    
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
                                                                   stageManager, state,
                                                                   this.groupCommManager,
@@ -727,10 +710,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(l2Coordinator.getReplicatedClusterStateManager().getPassives(), processTransactionHandler.getEntityList(), this.persistor.getEntityPersistor(), replicationDriver.getSink(), this.getGroupManager());
     processor.setReplication(passives); 
-//  routing for passive to receive replication    
-    Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
-        new ReplicatedTransactionHandler(this.l2Coordinator.getStateManager(), this.persistor.getTransactionOrderPersistor(), entityManager, 
-            this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
+
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
         new AbstractEventHandler<ReplicationMessageAck>() {
           @Override

@@ -79,7 +79,6 @@ public class ReplicatedTransactionHandlerTest {
   private ReplicatedTransactionHandler rth;
   private ClientID source;
   private ForwardingSink loopbackSink;
-  private ClientEntityStateManager clientEntityStateManager;
   private StateManager stateManager;
   private EntityManager entityManager;
   private ManagedEntity platform;
@@ -116,8 +115,6 @@ public class ReplicatedTransactionHandlerTest {
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
     
     this.loopbackSink = new ForwardingSink(this.rth.getEventHandler());
-    
-    channelManager.addEventListener(clientEntityStateManager);
   }
   
   @Test

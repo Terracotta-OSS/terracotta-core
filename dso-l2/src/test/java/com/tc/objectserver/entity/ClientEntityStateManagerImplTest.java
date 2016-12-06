@@ -33,7 +33,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,10 +63,9 @@ public class ClientEntityStateManagerImplTest {
     stageManager = mock(StageManager.class);
     when(stageManager.getStage(any(), any())).thenReturn(requestStage);
     collector = mock(ManagementTopologyEventCollector.class);
-    clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, collector, mock(DSOChannelManagerEventListener.class));
+    clientEntityStateManager = new ClientEntityStateManagerImpl();
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getRemoteNodeID()).thenReturn(new ClientID(1));
-    clientEntityStateManager.channelCreated(channel);
   }
 
   @Test
@@ -92,11 +90,9 @@ public class ClientEntityStateManagerImplTest {
     ClientInstanceID clientInstanceID = new ClientInstanceID(1);
     long version = 1;
     ClientID clientID = new ClientID(1);
-    MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.getRemoteNodeID()).thenReturn(clientID);
 
     clientEntityStateManager.addReference(clientID, new EntityDescriptor(entityID, clientInstanceID, version));
-    clientEntityStateManager.channelRemoved(messageChannel);
+    clientEntityStateManager.clientDisconnected(clientID);
 
     verify(requestSink).addSingleThreaded(argThat(hasClientAndEntityIDs(clientID, entityID)));
     verify(collector).expectedReleases(Matchers.eq(clientID), argThat(collectionMatcher(Arrays.asList(new EntityDescriptor(entityID, clientInstanceID, version)))));
