@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
-import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
@@ -121,7 +120,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       logger.info("Starting message sequence on " + node);
       ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
       Semaphore block = new Semaphore(0);
-      replicate.addSingleThreaded(resetOrderedSink.target(node,()->block.release()));
+      replicate.addSingleThreaded(new ReplicationEnvelope(node, resetOrderedSink, ()->block.release()));
       waitOnSemaphore(block);
       return true;
     } else {
@@ -151,7 +150,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         // start passive sync message
         logger.debug("starting sync for " + newNode);
         try {
-          replicateMessage(PassiveSyncMessage.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
+          replicateMessage(ReplicationMessage.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
           for (ManagedEntity entity : entities) {
             logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
             entity.sync(newNode);
@@ -159,7 +158,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           }
       //  passive sync done message.  causes passive to go into passive standby mode
           logger.debug("ending sync " + newNode);
-          replicateMessage(PassiveSyncMessage.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
+          replicateMessage(ReplicationMessage.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
         } catch (InterruptedException e) {
           throw new AssertionError("error during passive sync", e);
         }
@@ -226,7 +225,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        replicate.addSingleThreaded(msg.target(node, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
+        replicate.addSingleThreaded(new ReplicationEnvelope(node, msg, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
       }
     }
     return waiter;

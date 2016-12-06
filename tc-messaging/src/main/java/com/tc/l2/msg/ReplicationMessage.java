@@ -24,17 +24,14 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
-import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+
 import java.io.IOException;
 
-/**
- *
- */
+
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
 //  message types  
   public static final int INVALID               = 0; // Invalid message type
@@ -42,57 +39,64 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public static final int SYNC               = 2; // Sent as part of a sync sequence
   public static final int START                = 3; // start replication
 
-  public enum ReplicationType {
-    NOOP,
-    CREATE_ENTITY,
-    RECONFIGURE_ENTITY,
-    INVOKE_ACTION,
-    DESTROY_ENTITY,
-    FETCH_ENTITY,
-    RELEASE_ENTITY,
-    
-    SYNC_BEGIN,
-    SYNC_END,
-    SYNC_ENTITY_BEGIN,
-    SYNC_ENTITY_END,
-    SYNC_ENTITY_CONCURRENCY_BEGIN,
-    SYNC_ENTITY_CONCURRENCY_PAYLOAD,
-    SYNC_ENTITY_CONCURRENCY_END;
-  }
-  
   // Factory methods.
   public static ReplicationMessage createStartMessage() {
     return new ReplicationMessage(START);
   }
 
   public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
-    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0, "");
+    SyncReplicationActivity activity = SyncReplicationActivity.createNoOpMessage(eid, version);
+    return new ReplicationMessage(activity);
   }
 
-  public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency, String debugId) {
-    return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
+  public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, SyncReplicationActivity.ActivityType action, byte[] payload, int concurrency, String debugId) {
+    SyncReplicationActivity activity = SyncReplicationActivity.createReplicatedMessage(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
+    return new ReplicationMessage(activity);
   }
 
-  EntityDescriptor descriptor;
-    
-  ClientID src;
-  TransactionID tid;
-  TransactionID oldest;
+  // Sync-related factory methods (here temporarily while this message type is refactored to permit batching).
+  public static ReplicationMessage createStartSyncMessage() {
+    SyncReplicationActivity activity = SyncReplicationActivity.createStartSyncMessage();
+    return new ReplicationMessage(activity);
+  }
+  public static ReplicationMessage createEndSyncMessage(byte[] extras) {
+    SyncReplicationActivity activity = SyncReplicationActivity.createEndSyncMessage(extras);
+    return new ReplicationMessage(activity);
+  }
+  public static ReplicationMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload, int references) {
+ //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
+    SyncReplicationActivity activity = SyncReplicationActivity.createStartEntityMessage(id, version, configPayload, references);
+    return new ReplicationMessage(activity);
+  }
+  public static ReplicationMessage createEndEntityMessage(EntityID id, long version) {
+    SyncReplicationActivity activity = SyncReplicationActivity.createEndEntityMessage(id, version);
+    return new ReplicationMessage(activity);
+  }
+  public static ReplicationMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
+    SyncReplicationActivity activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, concurrency);
+    return new ReplicationMessage(activity);
+  }
+  public static ReplicationMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
+    // We can only synchronize positive-number keys.    
+    Assert.assertTrue(concurrency > 0);
+    SyncReplicationActivity activity = SyncReplicationActivity.createEndEntityKeyMessage(id, version, concurrency);
+    return new ReplicationMessage(activity);
+  }
+  public static ReplicationMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
+    // We can only synchronize positive-number keys.
+    Assert.assertTrue(concurrency > 0);
+    SyncReplicationActivity activity = SyncReplicationActivity.createPayloadMessage(id, version, concurrency, payload);
+    return new ReplicationMessage(activity);
+  }
 
-  ReplicationType action;
-  byte[] payload;
-  int concurrency;
+  private SyncReplicationActivity activity;
   
   long rid = 0;
   
-  String debugId;
-  
   public ReplicationMessage() {
     super(INVALID);
-    descriptor = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, 0);
-    
   }
   
   protected ReplicationMessage(int type) {
@@ -100,43 +104,22 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   }
   
 //  a true replicated message
-  private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency, String debugId) {
-    super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
-    initialize(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
+  private ReplicationMessage(SyncReplicationActivity activity) {
+    super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
+    this.activity = activity;
   }
-  
-  protected final void initialize(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency, String debugId) {
-    Assert.assertNotNull(tid);
-    Assert.assertNotNull(oldest);
-    Assert.assertNotNull(src);
-    this.descriptor = descriptor;
-    this.src = src;
-    this.tid = tid;
-    this.oldest = oldest;
-    this.action = action;
-    this.payload = payload;
-    this.concurrency = concurrency;
-    this.debugId = debugId;
-  }
-  
-  public ReplicationEnvelope target(NodeID node) {
-    return new ReplicationEnvelope(node, this, null);
-  }
-  
-  public ReplicationEnvelope target(NodeID node, Runnable waitRelease) {
-    return new ReplicationEnvelope(node, this, waitRelease);
+
+  /**
+   * This is a temporary method (until the underlying activities are being managed, directly).
+   */
+  public void setSingleActivityToNoOp() {
+    this.activity = SyncReplicationActivity.createNoOpMessage(this.activity.getEntityID(), this.activity.getEntityDescriptor().getClientSideVersion());
+    getType();
+    Assert.assertNotNull(this.activity);
   }
   
   public void setReplicationID(long rid) {
     this.rid = rid;
-  }
-  
-  public void setNoop() {
-    this.action = ReplicationType.NOOP;
   }
 
   @Override
@@ -145,39 +128,41 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   }
   
   public long getVersion() {
-    return descriptor.getClientSideVersion();
+    return this.activity.descriptor.getClientSideVersion();
   }
   
-  public ReplicationType getReplicationType() {
-    return action;
+  public SyncReplicationActivity.ActivityType getReplicationType() {
+    // One can only ask what type of replication activity this is if it is a sync or replication activity.
+    Assert.assertNotNull(this.activity);
+    return this.activity.action;
   }
 
   public byte[] getExtendedData() {
-    return payload;
+    return this.activity.payload;
   }
   
   public ClientID getSource() {
-    return src;
+    return this.activity.src;
   }
   
   public TransactionID getTransactionID() {
-    return tid;
+    return this.activity.tid;
   }
   
   public TransactionID getOldestTransactionOnClient() {
-    return oldest;
+    return this.activity.oldest;
   }
 
   public EntityDescriptor getEntityDescriptor() {
-    return descriptor;
+    return this.activity.descriptor;
   }
   
   public EntityID getEntityID() {
-    return descriptor == null ? EntityID.NULL_ID : descriptor.getEntityID();
+    return this.activity.descriptor == null ? EntityID.NULL_ID : this.activity.descriptor.getEntityID();
   }
   
   public int getConcurrency() {
-    return this.concurrency;
+    return this.activity.concurrency;
   }
   
   @Override
@@ -194,20 +179,14 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
       case REPLICATE:
       case SYNC:
         this.rid = in.readLong();
-        this.descriptor = EntityDescriptor.readFrom(in);
-        int type = in.read();
-        if (type == NodeID.CLIENT_NODE_TYPE) {
-          this.src = new ClientID().deserializeFrom(in);
-        } else if (type == NodeID.SERVER_NODE_TYPE) {
-          throw new AssertionError("node type is incorrect");
+        this.activity = SyncReplicationActivity.deserializeFrom(in);
+        Assert.assertNotNull(this.activity);
+        // Make sure that the message type and activity type are consistent.
+        if (this.activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal()) {
+          Assert.assertTrue(SYNC == messageType);
+        } else {
+          Assert.assertTrue(REPLICATE == messageType);
         }
-        this.tid = new TransactionID(in.readLong());
-        this.oldest = new TransactionID(in.readLong());
-        this.action = ReplicationType.values()[in.readInt()];
-        int length = in.readInt();
-        this.payload = new byte[length];
-        in.readFully(this.payload);
-        this.concurrency = in.readInt();
         break;
     }
   }
@@ -226,25 +205,13 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
       case REPLICATE:
       case SYNC:
         out.writeLong(rid);
-        this.descriptor.serializeTo(out);
-        out.write(this.src.getNodeType());
-        this.src.serializeTo(out);
-        out.writeLong(tid.toLong());
-        out.writeLong(oldest.toLong());
-        out.writeInt(this.action.ordinal());
-        if (payload != null) {
-          out.writeInt(payload.length);
-          out.write(payload);
-        } else {
-          out.writeInt(0);
-        }
-        out.writeInt(concurrency);
+        this.activity.serializeTo(out);
         break;
     }
   }
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor.getEntityID() + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + ", concurrency=" + concurrency + ", debug=" + debugId + '}';
+    return "ReplicationMessage{rid=" + rid + ", activity=" + this.activity + "}";
   }
 }

@@ -82,7 +82,6 @@ import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.l2.msg.PassiveSyncMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
@@ -763,7 +762,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  Replicated messages need to be ordered
     Sink<ReplicationMessage> replication = new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink());
     this.groupCommManager.routeMessages(ReplicationMessage.class, replication);
-    this.groupCommManager.routeMessages(PassiveSyncMessage.class, replication);
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);

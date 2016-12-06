@@ -21,7 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
-import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.l2.msg.ReplicationMessage;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
@@ -605,7 +605,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               for (NodeID passive : passives) {
                 try {
                   byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
-                  executor.scheduleSync(PassiveSyncMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).waitForCompleted();
+                  executor.scheduleSync(ReplicationMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).waitForCompleted();
                 } catch (EntityUserException | InterruptedException eu) {
                 // TODO: do something reasoned here
                   throw new RuntimeException(eu);
@@ -623,7 +623,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  whether the entity is destroyed or not, if arrived here. end sync needs to be called
     for (NodeID passive : passives) {
       try {
-        executor.scheduleSync(PassiveSyncMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive).waitForCompleted();
+        executor.scheduleSync(ReplicationMessage.createEndEntityKeyMessage(id, version, concurrencyKey), passive).waitForCompleted();
       } catch (InterruptedException ie) {
       // TODO: do something reasoned here
         throw new RuntimeException(ie);
@@ -756,7 +756,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   public void sync(NodeID passive) {
     try {
   // wait for future is ok, occuring on sync executor thread
-      executor.scheduleSync(PassiveSyncMessage.createStartEntityMessage(id, version, constructorInfo, canDelete ? passiveReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
+      executor.scheduleSync(ReplicationMessage.createStartEntityMessage(id, version, constructorInfo, canDelete ? passiveReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
   // iterate through all the concurrency keys of an entity
       EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
   //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
@@ -786,7 +786,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
   //  end passive sync for an entity
   // wait for future is ok, occuring on sync executor thread
-      executor.scheduleSync(PassiveSyncMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
+      executor.scheduleSync(ReplicationMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
     } catch (InterruptedException e) {
       throw new AssertionError("sync failed", e);
     }
