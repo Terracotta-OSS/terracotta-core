@@ -58,7 +58,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     this.service = service;
   }
   
-  public boolean createServerEntity(String name, byte[] configuration) {
+  public boolean createServerEntity(String name, byte[] configuration) throws ConfigurationException {
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
       // Create the instances.
