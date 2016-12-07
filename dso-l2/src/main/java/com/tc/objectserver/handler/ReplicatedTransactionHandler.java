@@ -577,7 +577,9 @@ public class ReplicatedTransactionHandler {
     private final Set<Integer> syncdKeys = new HashSet<>();
     private EntityID syncing;
     private int currentKey = -1;
-    private boolean destroyed = false;
+    // We need to track if the entity we are currently syncing has been destroyed and know to drop it, once we are done
+    //  syncing it, if it was.
+    private boolean wasCurrentlySyncingEntityDestroyed;
     private boolean finished = false;
     private boolean started = false;
     
@@ -586,19 +588,20 @@ public class ReplicatedTransactionHandler {
     }
     
     private void startEntity(EntityID eid) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       Assert.assertNull(syncing);
       syncing = eid;
+      wasCurrentlySyncingEntityDestroyed = false;
       LOGGER.debug("Starting " + eid);
     }
     
     private boolean destroyed(EntityID eid) {
       // Note that the destroyed notification may arrive without the sync having started.
-      return (eid.equals(syncing) && destroyed) || syncdEntities.contains(eid);
+      return (eid.equals(syncing) && wasCurrentlySyncingEntityDestroyed) || syncdEntities.contains(eid);
     }
     
     private void endEntity(EntityID eid) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       Assert.assertEquals(syncing, eid);
       syncdEntities.add(eid);
       syncdKeys.clear();
@@ -607,10 +610,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private void startConcurrency(EntityID eid, int concurrency) {
-      Assert.assertTrue(started);
-      if (destroyed && !syncing.equals(eid)) {
-        destroyed = false;
-      }
+      assertStarted(null);
       Assert.assertEquals(syncing, eid);
       currentKey = concurrency;
       if (LOGGER.isDebugEnabled()) {
@@ -619,7 +619,7 @@ public class ReplicatedTransactionHandler {
     }
     
     private Deque<ReplicationMessage> endConcurrency(EntityID eid, int concurrency) {
-      Assert.assertTrue(started);
+      assertStarted(null);
       try {
         if (!eid.equals(syncing) || concurrency != currentKey) {
           throw new AssertionError();
@@ -638,13 +638,13 @@ public class ReplicatedTransactionHandler {
     }
     
     private void finish() {
-      Assert.assertTrue(started);
+      assertStarted(null);
       syncdEntities.clear();
       finished = true;
     }
     
     private boolean ignore(ReplicationMessage rep) {
-      Assert.assertTrue(started);
+      assertStarted(rep);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
@@ -655,12 +655,14 @@ public class ReplicatedTransactionHandler {
       EntityID eid = rep.getEntityDescriptor().getEntityID();
 //  everything else, check
       if (eid.equals(syncing)) {
-        if (destroyed) {
-//  blackhole this request.  The entity has been destroyed. 
+        // Note that it is possible that the currently syncing entity has already been destroyed, in which case this message
+        //  is either targeting something which doesn't exist or targets something which has been created over top of it.
+        // In either case, we shouldn't ignore it.
+        if (wasCurrentlySyncingEntityDestroyed) {
           if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Dropping " + rep + " due to destroy");
+            LOGGER.debug("Unexpected message to destroyed syncing entity being passed through: " + rep);
           }
-          return true;
+          return false;
         } else if (rep.getConcurrency() == currentKey) {
           return false;
         } else if (!syncdKeys.contains(rep.getConcurrency())) {
@@ -675,7 +677,7 @@ public class ReplicatedTransactionHandler {
     }
 
     private boolean defer(ReplicationMessage rep) {
-      Assert.assertTrue(started);
+      assertStarted(rep);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
@@ -688,11 +690,15 @@ public class ReplicatedTransactionHandler {
       
       if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
         syncdEntities.add(eid);
-        destroyed = false;
         return false;
       }
       
       if (eid.equals(syncing)) {
+        // We are currently syncing this entity but we may have already destroyed it, in which case we don't need to defer
+        //  the message since it is targeting a later instance by the same name.
+        if (wasCurrentlySyncingEntityDestroyed) {
+          return false;
+        }
         if (syncdKeys.contains(rep.getConcurrency())) {
           return false;
         } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
@@ -704,7 +710,9 @@ public class ReplicatedTransactionHandler {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Destroying " + rep);
           }
-          destroyed = true;
+          // We hadn't already been destroyed, so we needed to add it to the defer list, but now we are destroyed so nothing
+          //  else will be deferred or ignored.
+          wasCurrentlySyncingEntityDestroyed = true;
           return false;
         } else if (currentKey == rep.getConcurrency()) {
           if (LOGGER.isDebugEnabled()) {
@@ -716,7 +724,29 @@ public class ReplicatedTransactionHandler {
       }
       return false;
     }
-  }  
+    
+    /**
+     * Note that this state machine has several special-cases but the started flag can be used to assert consistency in most
+     * of them.
+     * 
+     * The cases where it is OK to NOT be started:
+     * -SYNC_BEGIN:  The message which IS the start message isn't checked here but is obviously ok.
+     * -the replicated message is a CREATE call:  Creates can happen concurrently with sync but they are also independent of
+     *  it so it is possible for one to arrive before the sync even starts.
+     * -the replicated message applies to an entity we already synced:  This is a corollary to the CREATE exemption since it
+     *  might be another message replicated to that entity (which is unrelated to the sync).
+     * 
+     * @param rep The replicated message being processed (can be null if this is a sync case, but those cases must all have
+     *  already started, unless this is the start message).
+     */
+    private void assertStarted(ReplicationMessage rep) {
+      // These should short-circuit quickly, not creating an expensive check overhead.
+      Assert.assertTrue(started
+          || (SyncReplicationActivity.ActivityType.CREATE_ENTITY == rep.getReplicationType())
+          || (this.syncdEntities.contains(rep.getEntityID()))
+      );
+    }
+  }
  
   public static class BasicServerEntityRequest implements ServerEntityRequest {
     private final ServerEntityAction action;

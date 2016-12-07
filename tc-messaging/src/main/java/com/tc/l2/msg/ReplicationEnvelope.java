@@ -20,19 +20,24 @@ package com.tc.l2.msg;
 
 import com.tc.net.NodeID;
 
-/**
- *
- */
+
 public class ReplicationEnvelope {
-  
   private final NodeID dest;
   private final ReplicationMessage msg;
-  private final Runnable waitRelease;
+  private final Runnable droppedWithoutSend;
 
-  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable waitRelease) {
+  /**
+   * Creates an envelope containing a replication message to be sent to the ReplicationSender for processing.
+   * 
+   * @param dest The destination node of the message.
+   * @param msg The message to send.
+   * @param droppedWithoutSend A runnable to run if the message is dropped by ReplicationSender and will NOT be replicated to
+   *  dest.
+   */
+  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable droppedWithoutSend) {
     this.dest = dest;
     this.msg = msg;
-    this.waitRelease = waitRelease;
+    this.droppedWithoutSend = droppedWithoutSend;
   }
   
   public NodeID getDestination() {
@@ -43,9 +48,9 @@ public class ReplicationEnvelope {
     return msg;
   }
   
-  public void release() {
-    if (waitRelease != null) {
-      waitRelease.run();
+  public void droppedWithoutSend() {
+    if (droppedWithoutSend != null) {
+      droppedWithoutSend.run();
     }
   }
 }
