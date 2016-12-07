@@ -741,7 +741,7 @@ public class ReplicatedTransactionHandler {
      */
     private void assertStarted(ReplicationMessage rep) {
       // These should short-circuit quickly, not creating an expensive check overhead.
-      Assert.assertTrue(started
+      Assert.assertTrue(rep, started
           || (SyncReplicationActivity.ActivityType.CREATE_ENTITY == rep.getReplicationType())
           || (this.syncdEntities.contains(rep.getEntityID()))
       );
