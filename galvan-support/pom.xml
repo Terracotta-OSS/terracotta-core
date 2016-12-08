@@ -33,7 +33,7 @@ limitations under the License.
 
     <!-- External dependency versions for this module -->
     <tc-passthrough-testing.version>1.0.14.beta</tc-passthrough-testing.version>
-    <terracotta-core.version>5.0.14-beta</terracotta-core.version>
+    <terracotta-core.version>5.0.14-beta2</terracotta-core.version>
   </properties>
 
   <dependencies>
