@@ -603,7 +603,7 @@ public class ManagedEntityImpl implements ManagedEntity {
                 try {
                   byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
                   executor.scheduleSync(ReplicationMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).waitForCompleted();
-                } catch (EntityUserException | InterruptedException eu) {
+                } catch (EntityUserException eu) {
                 // TODO: do something reasoned here
                   throw new RuntimeException(eu);
                 }
@@ -780,6 +780,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       BarrierCompletion opComplete = new BarrierCompletion();
       this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
           Assert.assertTrue(this.isInActiveState);
+          if (!this.isDestroyed) {
+            executor.scheduleSync(ReplicationMessage.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
+          }
           opComplete.complete();
         }, true, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
       //  wait for completed above waits for acknowledgment from the passive
@@ -801,10 +804,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
   //  end passive sync for an entity
   // wait for future is ok, occuring on sync executor thread
-      executor.scheduleSync(ReplicationMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
-    } catch (InterruptedException e) {
-      throw new AssertionError("sync failed", e);
-    }
+      if (!this.isDestroyed) {
+        executor.scheduleSync(ReplicationMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
+      }
   }  
   /**
    * sync and reconfigure MUST be exclusive events from each other. 

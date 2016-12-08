@@ -71,11 +71,7 @@ public class PlatformEntity implements ManagedEntity {
     return new SimpleCompletion() {
       @Override
       public void waitForCompletion() {
-        try {
-          waiter.waitForCompleted();
-        } catch (InterruptedException ie) {
-          throw new RuntimeException(ie);
-        }
+        waiter.waitForCompleted();
       }
     };
   }

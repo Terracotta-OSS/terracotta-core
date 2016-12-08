@@ -193,14 +193,10 @@ public class ActivePassiveAckWaiterTest {
     @Override
     public void run() {
       Assert.assertFalse(this.waiter.isCompleted());
-      try {
-        this.interlock.decrementStarts();
-        this.waiter.waitForReceived();
-        this.interlock.decrementReceives();
-        this.waiter.waitForCompleted();
-      } catch (InterruptedException e) {
-        Assert.fail();
-      }
+      this.interlock.decrementStarts();
+      this.waiter.waitForReceived();
+      this.interlock.decrementReceives();
+      this.waiter.waitForCompleted();
       this.interlock.decrementCompletes();
       Assert.assertTrue(this.waiter.isCompleted());
     }

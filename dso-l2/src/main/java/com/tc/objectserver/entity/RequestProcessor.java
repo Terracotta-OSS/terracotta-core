@@ -149,7 +149,6 @@ public class RequestProcessor {
     }
     
     void invoke()  {
-      try {
         // NOTE:  We want to wait to hear that the passive has received the replicated invoke.
         this.replicationWaiter.waitForReceived();
         // We can now run the invoke.
@@ -158,10 +157,6 @@ public class RequestProcessor {
         this.replicationWaiter.waitForCompleted();
         // We are now completely finished.
         finish();
-      } catch (InterruptedException interrupted) {
-//  shutdown logic?  uniterruptable?
-        throw new RuntimeException(interrupted);
-      }
     }
 
     @Override
