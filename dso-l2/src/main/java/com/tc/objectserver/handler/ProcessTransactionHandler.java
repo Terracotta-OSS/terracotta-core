@@ -46,6 +46,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
+import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
@@ -68,7 +69,7 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 
 
-public class ProcessTransactionHandler {
+public class ProcessTransactionHandler implements ReconnectListener {
   private static final TCLogger LOGGER = TCLogging.getLogger(ProcessTransactionHandler.class);
   
   private final EntityPersistor entityPersistor;
@@ -82,12 +83,19 @@ public class ProcessTransactionHandler {
   private List<ReferenceMessage> references;
   private SparseList<ResendVoltronEntityMessage> resendReplayList;
   private List<ResendVoltronEntityMessage> resendNewList;
+  private boolean reconnecting = true;
   
   private Sink<TCMessage> multiSend;
   private ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
   
   private void sendMultiResponse(VoltronEntityMultiResponse response) {
     multiSend.addSingleThreaded(response);
+  }
+  
+  @Override
+  public synchronized void reconnectComplete() {
+    reconnecting = false;
+    notify();
   }
   
   private final AbstractEventHandler<TCMessage> multiSender = new AbstractEventHandler<TCMessage>() {
@@ -115,7 +123,7 @@ public class ProcessTransactionHandler {
 //  resends are processed in this manner so invokes are scheduled by the expected stage thread
 //  see ManagedEntityImpl.scheduleInOrder()
 //  the call always happens and immediately returns if the resends have already been processed
-      processAllResends();
+      processAllResends(message);
       ClientID sourceNodeID = message.getSource();
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
@@ -125,7 +133,7 @@ public class ProcessTransactionHandler {
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
-      
+
       ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
     }
 
@@ -142,6 +150,8 @@ public class ProcessTransactionHandler {
       
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       entityManager.enterActiveState();
+      
+      server.getClientHandshakeManager().addReconnectListener(ProcessTransactionHandler.this);
     }
   };
   public AbstractEventHandler<VoltronEntityMessage> getVoltronMessageHandler() {
@@ -427,10 +437,21 @@ public class ProcessTransactionHandler {
     }
   }
   
-  private void processAllResends() {
+  private void processAllResends(VoltronEntityMessage trigger) {
  //   TODO:  investigate the need to fold FETCH and RELEASE resends on top of each other
-    if (this.resendReplayList == null && this.resendNewList == null) {
+    if (this.references == null && this.resendReplayList == null && this.resendNewList == null) {
       return;
+    } else {
+      LOGGER.debug("RESENDS:START");
+      synchronized (this) {
+        while (reconnecting) {
+          try {
+            this.wait();
+          } catch (InterruptedException ie) {
+            throw new RuntimeException(ie);
+          }
+        }
+      }
     }
 
     this.stateManagerCleanup.run();
@@ -439,24 +460,28 @@ public class ProcessTransactionHandler {
     this.transactionOrderPersistor.clearAllRecords();
     
     for (ReferenceMessage msg : this.references) {
+      LOGGER.debug("RESENDS:" + msg.getSource() + " " + msg.getVoltronType());
       executeResend(msg);
     }
     this.references = null;
     
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {
+      LOGGER.debug("RESENDS:" + message.getSource() + " " + message.getVoltronType());
       executeResend(message);
     }
     this.resendReplayList = null;
     
     // Replay all the new messages found during resends.
     for (ResendVoltronEntityMessage message : this.resendNewList) {
+      LOGGER.debug("RESENDS:" + message.getSource() + " " + message.getVoltronType());
       executeResend(message);
     }
 //  remove tracking for any resent create journal entries
     entityPersistor.removeTrackingForClient(ClientID.NULL_ID);
-    
+    LOGGER.debug("RESENDS:END");
     this.resendNewList = null;
+    
   }
 
   private Optional<MessageChannel> safeGetChannel(NodeID id) {
