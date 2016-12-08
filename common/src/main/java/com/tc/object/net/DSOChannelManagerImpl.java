@@ -204,8 +204,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   private void fireChannelRemovedEvent(MessageChannel channel) {
+    boolean isActive = isActiveID(channel.getRemoteNodeID());
     for (DSOChannelManagerEventListener eventListener : eventListeners) {
-      eventListener.channelRemoved(channel);
+      eventListener.channelRemoved(channel, isActive);
     }
   }
 

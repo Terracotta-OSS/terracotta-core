@@ -46,7 +46,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel) {
+  public void channelRemoved(MessageChannel channel, boolean wasActive) {
     ClientAccount clientAccount = clientAccounts.remove(channel.getRemoteNodeID());
     if (clientAccount != null) {
       clientAccount.close();

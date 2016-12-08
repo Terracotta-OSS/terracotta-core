@@ -28,8 +28,6 @@ public interface ReplicatedClusterStateManager {
 
   public void publishClusterState(NodeID nodeID) throws GroupException;
 
-  public void fireNodeLeftEvent(NodeID nodeID);
-
   public void setCurrentState(State currentState);
 
   public Iterable<NodeID> getPassives();

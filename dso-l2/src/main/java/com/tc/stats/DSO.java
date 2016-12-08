@@ -466,7 +466,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
 
     @Override
-    public void channelRemoved(MessageChannel channel) {
+    public void channelRemoved(MessageChannel channel, boolean wasActive) {
       removeClientMBean(channel);
     }
   }

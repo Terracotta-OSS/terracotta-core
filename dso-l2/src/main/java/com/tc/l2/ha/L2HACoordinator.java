@@ -35,6 +35,7 @@ import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 
 
 
@@ -143,7 +144,7 @@ public class L2HACoordinator implements L2Coordinator {
   public void nodeLeft(NodeID nodeID) {
     warn(nodeID + " left the cluster");
     if (this.stateManager.isActiveCoordinator()) {
-      this.rClusterStateMgr.fireNodeLeftEvent(nodeID);
+      Assert.assertFalse(nodeID.getNodeType() == NodeID.CLIENT_NODE_TYPE);
     } else {
       this.stateManager.startElectionIfNecessary(nodeID);
     }

@@ -79,7 +79,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(NodeID nodeID, ProductID productId) {
+  private void nodeDisconnected(NodeID nodeID, ProductID productId, boolean wasActive) {
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
@@ -95,7 +95,9 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
           collector.expectedReleases(clientID, msg.stream().map(m->m.getEntityDescriptor()).collect(Collectors.toList()));
           msg.forEach(m->processTransactionSink.addSingleThreaded(m));
         }
-        notifyTopoCollectorDisconnected(clientID);
+        if (wasActive) {
+          notifyTopoCollectorDisconnected(clientID);
+        }
       }
     }
     if (commsManager.isInShutdown()) {
@@ -152,7 +154,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     nodeConnected(client, product);
   }
   
-  public void clientDropped(ClientID clientID, ProductID product) {
+  public void clientDropped(ClientID clientID, ProductID product, boolean wasActive) {
     // Note that the remote node ID always refers to a client, in this path.
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
@@ -160,7 +162,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     SpecializedEventContext sec = new SpecializedEventContext() {
       @Override
       public void execute() throws EventHandlerException {
-        requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(clientID, product));
+        requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(clientID, product, wasActive));
       }
 
       @Override
@@ -179,7 +181,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel) {
+  public void channelRemoved(MessageChannel channel, boolean wasActive) {
     // Note that the remote node ID always refers to a client, in this path.
     ClientID clientID = (ClientID) channel.getRemoteNodeID();
     ProductID product = channel.getProductId();
@@ -189,17 +191,19 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     // the chain is hydrate stage -> process transaction handler -> request processor (flushed) -> deliver event to 
     // disconnect node.  This is done so that all messages issued by the client have fully run their course 
     // before an attempt is made to remove references.
-    clientDropped(clientID, product);
+    clientDropped(clientID, product, wasActive);
   }  
   
   private class FlushThenDisconnect implements MultiThreadedEventContext, Runnable {
     
     private final ClientID clientID;
     private final ProductID product;
+    private final boolean wasActive;
 
-    public FlushThenDisconnect(ClientID client, ProductID product) {
+    public FlushThenDisconnect(ClientID client, ProductID product, boolean wasActive) {
       this.clientID = client;
       this.product = product;
+      this.wasActive = wasActive;
     }
 
     @Override
@@ -214,7 +218,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
 
     @Override
     public void run() {
-      nodeDisconnected(clientID, product);
+      nodeDisconnected(clientID, product, wasActive);
     }
   }
 }

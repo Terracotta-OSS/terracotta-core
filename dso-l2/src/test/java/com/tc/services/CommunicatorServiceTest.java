@@ -134,7 +134,7 @@ public class CommunicatorServiceTest {
     ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
     Future<Void> future = clientCommunicator.send(clientDescriptor, response);
 
-    communicatorService.channelRemoved(messageChannel);
+    communicatorService.channelRemoved(messageChannel, true);
     future.get();
   }
 

@@ -66,7 +66,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
 
   public void testRemoveId() throws Exception {
-    connectionIDFactory.channelRemoved(channelWithId(0));
+    connectionIDFactory.channelRemoved(channelWithId(0), true);
     verify(persistor).deleteClientState(new ChannelID(0));
   }
 

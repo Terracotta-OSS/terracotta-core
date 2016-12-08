@@ -133,7 +133,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel) {
+  public void channelRemoved(MessageChannel channel, boolean wasActive)  {
     ChannelID clientID = channel.getChannelID();
     try {
       clientStateStore.deleteClientState(clientID);

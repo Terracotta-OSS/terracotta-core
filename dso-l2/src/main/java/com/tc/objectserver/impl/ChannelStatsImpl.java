@@ -80,7 +80,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel) {
+  public void channelRemoved(MessageChannel channel, boolean wasActive) {
     for (StatsConfig config : STATS_CONFIG) {
       Counter counter = (Counter) channel.removeAttachment(config.getStatsName());
       if (counter != null) {
