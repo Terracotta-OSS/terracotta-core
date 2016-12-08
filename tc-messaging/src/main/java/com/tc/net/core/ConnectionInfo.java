@@ -25,8 +25,7 @@ public class ConnectionInfo implements java.io.Serializable {
   public static final ConnectionInfo[] EMPTY_ARRAY = new ConnectionInfo[0];
   private final String                 hostname;
   private final int                    port;
-  private final int                    groupId;
-  private final String                 groupName;
+  private final int                    server;
   private final SecurityInfo           securityInfo;
 
   public ConnectionInfo(String hostname, int port) {
@@ -34,19 +33,18 @@ public class ConnectionInfo implements java.io.Serializable {
   }
 
   public ConnectionInfo(String hostname, int port, SecurityInfo securityInfo) {
-    this(hostname, port, 0, null, securityInfo);
+    this(hostname, port, 0, securityInfo);
   }
 
-  public ConnectionInfo(String hostname, int port, int groupId, String groupName) {
-    this(hostname, port, groupId, groupName, new SecurityInfo());
+  public ConnectionInfo(String hostname, int port, int server) {
+    this(hostname, port, server, new SecurityInfo());
   }
-
-  public ConnectionInfo(String hostname, int port, int groupId, String groupName, SecurityInfo securityInfo) {
+  
+  public ConnectionInfo(String hostname, int port, int server, SecurityInfo securityInfo) {
     Assert.assertNotNull(hostname);
     this.hostname = hostname;
     this.port = port;
-    this.groupId = groupId;
-    this.groupName = groupName;
+    this.server = server;
     this.securityInfo = securityInfo;
   }
 
@@ -57,13 +55,9 @@ public class ConnectionInfo implements java.io.Serializable {
   public int getPort() {
     return port;
   }
-
-  public int getGroupId() {
-    return groupId;
-  }
-
-  public String getGroupName() {
-    return groupName;
+  
+  public int getServer() {
+    return server;
   }
 
   @Override
@@ -71,12 +65,7 @@ public class ConnectionInfo implements java.io.Serializable {
     if (o == this) return true;
     if (o instanceof ConnectionInfo) {
       ConnectionInfo other = (ConnectionInfo) o;
-      if (groupName == null) {
-        return this.hostname.equals(other.getHostname()) && this.port == other.getPort();
-      } else {
-        return this.hostname.equals(other.getHostname()) && this.port == other.getPort()
-               && this.groupName.equals(other.groupName);
-      }
+      return this.hostname.equals(other.getHostname()) && this.port == other.getPort();
     }
     return false;
   }
@@ -90,7 +79,7 @@ public class ConnectionInfo implements java.io.Serializable {
 
   @Override
   public String toString() {
-    return (s == null ? (s = hostname + ":" + port + (groupName != null ? ":" + groupName : "")) : s);
+    return (s == null ? (s = hostname + ":" + port) : s);
   }
 
   public SecurityInfo getSecurityInfo() {

@@ -24,8 +24,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.util.State;
 
-import java.io.IOException;
-import java.util.Map;
 
 public interface TCServer extends StateChangeListener {
   String[] processArguments();
@@ -43,9 +41,7 @@ public interface TCServer extends StateChangeListener {
   boolean isPassiveUnitialized();
   
   boolean isPassiveStandby();
-  
-  boolean isRecovering();
-  
+    
   State getState();
 
   long getStartTime();
@@ -66,7 +62,7 @@ public interface TCServer extends StateChangeListener {
 
   String getL2Identifier();
 
-  ServerGroupInfo[] serverGroups();
+  ServerGroupInfo getStripeInfo();
 
   int getTSAListenPort();
 
@@ -79,26 +75,6 @@ public interface TCServer extends StateChangeListener {
   void dumpClusterState();
 
   void reloadConfiguration() throws ConfigurationSetupException;
-
-  boolean isSecure();
-
-  String getSecurityServiceLocation();
-
-  Integer getSecurityServiceTimeout();
-
-  String getSecurityHostname();
-
-  String getIntraL2Username();
-
-  String getRunningBackup();
-
-  String getBackupStatus(String name) throws IOException;
-
-  String getBackupFailureReason(String name) throws IOException;
-
-  Map<String, String> getBackupStatuses() throws IOException;
-
-  void backup(String name) throws IOException;
 
   String getResourceState();
 

@@ -91,11 +91,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public boolean isLegacyProductionModeEnabled() {
-    return false;
-  }
-
-  @Override
   public boolean isStarted() {
     return server.isStarted();
   }
@@ -113,11 +108,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public boolean isPassiveStandby() {
     return server.isPassiveStandby();
-  }
-
-  @Override
-  public boolean isRecovering() {
-    return server.isRecovering();
   }
 
   @Override
@@ -252,8 +242,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public ServerGroupInfo[] getServerGroupInfo() {
-    return server.serverGroups();
+  public ServerGroupInfo getStripeInfo() {
+    return server.getStripeInfo();
   }
 
   @Override
@@ -415,62 +405,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     boolean oldValue = isVerboseGC();
     ManagementFactory.getMemoryMXBean().setVerbose(verboseGC);
     _sendNotification("VerboseGC changed", "VerboseGC", "java.lang.Boolean", oldValue, verboseGC);
-  }
-
-  @Override
-  public boolean isEnterprise() {
-    return server.getClass().getSimpleName().equals("EnterpriseServerImpl");
-  }
-
-  @Override
-  public boolean isSecure() {
-    return server.isSecure();
-  }
-
-  @Override
-  public String getSecurityServiceLocation() {
-    return server.getSecurityServiceLocation();
-  }
-
-  @Override
-  public String getSecurityHostname() {
-    server.getTSAListenPort();
-    return server.getSecurityHostname();
-  }
-
-  @Override
-  public String getIntraL2Username() {
-    return server.getIntraL2Username();
-  }
-
-  @Override
-  public Integer getSecurityServiceTimeout() {
-    return server.getSecurityServiceTimeout();
-  }
-
-  @Override
-  public void backup(String name) throws IOException {
-    server.backup(name);
-  }
-
-  @Override
-  public String getRunningBackup() {
-    return server.getRunningBackup();
-  }
-
-  @Override
-  public String getBackupStatus(String name) throws IOException {
-    return server.getBackupStatus(name);
-  }
-
-  @Override
-  public String getBackupFailureReason(String name) throws IOException {
-    return server.getBackupFailureReason(name);
-  }
-
-  @Override
-  public Map<String, String> getBackupStatuses() throws IOException {
-    return server.getBackupStatuses();
   }
 
   @Override

@@ -194,7 +194,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       clm.clientCreated(nodeID, msg.getConnectionID().getProductId());
     } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
       ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientDropped(nodeID, msg.getConnectionID().getProductId());
+      clm.clientDropped(nodeID, msg.getConnectionID().getProductId(), false);
     }
   }
 
@@ -211,14 +211,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       groupManager.sendTo(fromNode, ClusterStateMessage.createNGSplitBrainResponse(msg));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
-    }
-  }
-
-  @Override
-  public void fireNodeLeftEvent(NodeID nodeID) {
-    // this is needed to clean up some data structures internally
-    if (nodeID instanceof ClientID) {
-      clm.clientDropped((ClientID)nodeID, null);
     }
   }
 

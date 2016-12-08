@@ -18,26 +18,18 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 
-import java.util.HashMap;
-import java.util.Map;
 
 public class DummyStripeIDStateManager implements StripeIDStateManager {
 
   @Override
-  public StripeID getStripeID(GroupID gid) {
+  public StripeID getStripeID() {
     return StripeID.NULL_ID;
   }
 
   @Override
-  public Map<GroupID, StripeID> getStripeIDMap(boolean fromAACoordinator) {
-    return new HashMap<GroupID, StripeID>();
-  }
-
-  @Override
-  public boolean isStripeIDMatched(GroupID gid, StripeID stripeID) {
+  public boolean isStripeIDMatched(StripeID stripeID) {
     return true;
   }
 
@@ -47,7 +39,7 @@ public class DummyStripeIDStateManager implements StripeIDStateManager {
   }
 
   @Override
-  public boolean verifyOrSaveStripeID(GroupID gid, StripeID stripeID, boolean overwrite) {
+  public boolean verifyOrSaveStripeID(StripeID stripeID, boolean overwrite) {
     return true;
   }
 

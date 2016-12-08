@@ -24,6 +24,6 @@ public interface DSOChannelManagerEventListener {
 
   void channelCreated(MessageChannel channel);
 
-  void channelRemoved(MessageChannel channel);
+  void channelRemoved(MessageChannel channel, boolean wasActive);
 
 }

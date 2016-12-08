@@ -31,6 +31,8 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -50,6 +52,7 @@ import org.terracotta.monitoring.ServerState;
  */
 public class ManagementTopologyEventCollector implements ITopologyEventCollector {
   // Note that serviceInterface may be null if there isn't an IMonitoringProducer service registered.
+  private static final TCLogger LOGGER = TCLogging.getLogger(ManagementTopologyEventCollector.class);
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
@@ -103,6 +106,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     if (null != this.serviceInterface) {
       this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(stateValue, System.currentTimeMillis(), activateTime));
     }
+    LOGGER.debug("server entered state " + state + " at " + activateTime);
   }
 
   @Override
@@ -128,10 +132,11 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
     }
+    LOGGER.debug("client did connect " + channel);
   }
 
   @Override
-  public synchronized void clientDidDisconnect(MessageChannel channel, ClientID client) {
+  public synchronized void clientDidDisconnect(ClientID client) {
     // Ensure that this client was already connected.
     Assert.assertTrue(this.connectedClients.contains(client));
     // Now, remove it from the connected set.
@@ -142,6 +147,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
     }
+    LOGGER.debug("client did disconnect " + client);
   }
 
   @Override
@@ -151,6 +157,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     // Ensure that this entity didn't already exist.
     Assert.assertFalse(this.entities.contains(id));
     addEntityToTracking(id, consumerID, isActive);
+    LOGGER.debug("entity created " + id);
   }
 
   @Override
@@ -159,6 +166,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     Assert.assertTrue(this.entities.contains(id));
     // Now, remove it from the set.
     removeEntityFromTracking(id);
+    LOGGER.debug("entity destroyed " + id);
   }
 
   @Override
@@ -170,6 +178,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // Seems to be new so add it to the set.
       addEntityToTracking(id, consumerID, isActive);
     }
+    LOGGER.debug("entity reloaded " + id);
   }
 
   @Override
@@ -184,6 +193,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
       Assert.assertTrue(didAdd);
     }
+    LOGGER.debug("client " + client + " fetched " + entityDescriptor);
   }
 
   @Override
@@ -208,6 +218,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         }
       }
     }
+    LOGGER.debug("client " + client + " released " + entityDescriptor);
   }
   
   public synchronized void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {

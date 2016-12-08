@@ -83,6 +83,10 @@ public interface ManagedEntity extends StateDumpable {
   boolean isActive();
   
   boolean isRemoveable();
+  
+  boolean clearQueue();
+  
+  void resetReferences(int count);
 
   /**
    * Used when an external component (such as CommunicatorService) needs to translate to/from something specific to this

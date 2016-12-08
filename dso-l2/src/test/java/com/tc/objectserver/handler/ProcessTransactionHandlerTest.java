@@ -44,12 +44,10 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
@@ -106,7 +104,7 @@ public class ProcessTransactionHandlerTest {
     StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();
     
-    this.clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, mock(ManagementTopologyEventCollector.class), mock(DSOChannelManagerEventListener.class));
+    this.clientEntityStateManager = new ClientEntityStateManagerImpl();
     this.eventCollector = mock(ITopologyEventCollector.class);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
@@ -114,7 +112,6 @@ public class ProcessTransactionHandlerTest {
     processor.setReplication(broker);
     EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     entityManager.enterActiveState();
-    channelManager.addEventListener(clientEntityStateManager);
 
     this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager, mock(Runnable.class));
 
@@ -123,6 +120,7 @@ public class ProcessTransactionHandlerTest {
     when(mockStage.getSink()).thenReturn(this.loopbackSink);
     when(stageManager.getStage(any(), any())).thenReturn(mockStage);
 
+    this.processTransactionHandler.reconnectComplete();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
   
@@ -182,9 +180,6 @@ public class ProcessTransactionHandlerTest {
   @Test
   public void testChannelManagement() throws Exception {    
     // Set up the channel.
-    MessageChannel channel = mock(MessageChannel.class);
-    when(channel.getRemoteNodeID()).thenReturn(this.source);
-    this.clientEntityStateManager.channelCreated(channel);
     this.requestProcessorSink.runUntilEmpty();
     String entityName = "foo";
     EntityID entityID = createMockEntity(entityName);
@@ -194,7 +189,7 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage fetchRequest = createMockRequest(VoltronEntityMessage.Type.FETCH_ENTITY, entityID, new TransactionID(2));
     this.processTransactionHandler.getVoltronMessageHandler().handleEvent(fetchRequest);
     this.requestProcessorSink.runUntilEmpty();
-    this.clientEntityStateManager.channelRemoved(channel);
+    this.clientEntityStateManager.clientDisconnected((ClientID)this.source);
     this.requestProcessorSink.runUntilEmpty();
   }
 

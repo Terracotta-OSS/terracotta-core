@@ -20,7 +20,6 @@ package com.tc.l2.ha;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -32,7 +31,6 @@ import com.tc.util.UUID;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class ClusterStateImpl implements ClusterState {
@@ -41,7 +39,6 @@ public class ClusterStateImpl implements ClusterState {
 
   private final ClusterStatePersistor               clusterStatePersistor;
   private final ConnectionIDFactory                 connectionIdFactory;
-  private final GroupID                             thisGroupID;
   private final StripeIDStateManager                stripeIDStateManager;
 
   private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<ConnectionID>());
@@ -50,25 +47,12 @@ public class ClusterStateImpl implements ClusterState {
   private StripeID                                  stripeID;
 
   public ClusterStateImpl(ClusterStatePersistor clusterStatePersistor,
-                          ConnectionIDFactory connectionIdFactory,
-                          GroupID thisGroupID, StripeIDStateManager stripeIDStateManager) {
+                          ConnectionIDFactory connectionIdFactory, StripeIDStateManager stripeIDStateManager) {
     this.clusterStatePersistor = clusterStatePersistor;
     this.connectionIdFactory = connectionIdFactory;
-    this.thisGroupID = thisGroupID;
     this.stripeIDStateManager = stripeIDStateManager;
     this.stripeID = clusterStatePersistor.getThisStripeID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
-    checkAndSetGroupID(clusterStatePersistor, thisGroupID);
-  }
-
-  private void checkAndSetGroupID(ClusterStatePersistor statePersistor, GroupID groupID) {
-    if (statePersistor.getGroupId().isNull()) {
-      statePersistor.setGroupId(thisGroupID);
-    } else if (!groupID.equals(statePersistor.getGroupId())) {
-      logger.error("Found data from the incorrect stripe in the server data path. Verify that the server is starting up " +
-                   "with the correct data files and that the cluster topology has not changed across a restart.");
-      throw new IllegalStateException("Data for " + statePersistor.getGroupId() + " found. Expected data from group " + thisGroupID + ".");
-    }
   }
 
   @Override
@@ -120,7 +104,7 @@ public class ClusterStateImpl implements ClusterState {
     syncStripeIDToDB();
 
     // notify stripeIDStateManager
-    stripeIDStateManager.verifyOrSaveStripeID(thisGroupID, stripeID, true);
+    stripeIDStateManager.verifyOrSaveStripeID(stripeID, true);
   }
 
   private void syncStripeIDToDB() {
@@ -165,17 +149,7 @@ public class ClusterStateImpl implements ClusterState {
       setStripeID(UUID.getUUID().toString());
     }
   }
-
-  @Override
-  public Map<GroupID, StripeID> getStripeIDMap() {
-    return stripeIDStateManager.getStripeIDMap(false);
-  }
-
-  @Override
-  public void addToStripeIDMap(GroupID gid, StripeID sid) {
-    stripeIDStateManager.verifyOrSaveStripeID(gid, sid, true);
-  }
-
+  
   @Override
   public String toString() {
     StringBuilder strBuilder = new StringBuilder();

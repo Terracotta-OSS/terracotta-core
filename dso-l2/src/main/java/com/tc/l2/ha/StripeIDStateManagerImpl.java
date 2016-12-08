@@ -18,23 +18,14 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.config.HaConfig;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDEventListener;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,97 +34,56 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
                                                                                      .getLogger(StripeIDStateManagerImpl.class);
 
   private final CopyOnWriteArrayList<StripeIDEventListener> listeners            = new CopyOnWriteArrayList<>();
-  private final Map<GroupID, StripeID>                      groupIDToStripeIDMap = new ConcurrentHashMap<>();
+  private StripeID                                    stripeID = StripeID.NULL_ID;
   private final AtomicInteger                               unKnownIDCount       = new AtomicInteger(0);
-  private final boolean                                     isAACoordinator;
-  private final GroupID                                     thisGroupID;
   private final ClusterStatePersistor                       clusterStatePersistor;
 
-  public StripeIDStateManagerImpl(HaConfig haConfig, ClusterStatePersistor clusterStatePersistor) {
+  public StripeIDStateManagerImpl(ClusterStatePersistor clusterStatePersistor) {
     this.clusterStatePersistor = clusterStatePersistor;
-    this.isAACoordinator = haConfig.isActiveCoordinatorGroup();
-    this.thisGroupID = haConfig.getThisGroupID();
-    this.unKnownIDCount.set(loadStripeIDFromDB(haConfig));
+    this.unKnownIDCount.set(loadStripeIDFromDB());
   }
 
-  private int loadStripeIDFromDB(HaConfig haConfig) {
-    GroupID[] groupIDs = haConfig.getGroupIDs();
-    int count = groupIDs.length;
-    for (GroupID gid : groupIDs) {
-      StripeID stripeID = clusterStatePersistor.getStripeID(gid);
-      if (!stripeID.isNull()) {
-        --count;
-      }
-      groupIDToStripeIDMap.put(gid, stripeID);
-    }
-    return count;
+  private int loadStripeIDFromDB() {
+    StripeID id = clusterStatePersistor.getStripeID();
+    return id.isNull() ? 1 : 0;
+  }
+  
+  public StripeID getStripeID() {
+    return stripeID;
   }
 
   @Override
-  public boolean isStripeIDMatched(GroupID gid, StripeID stripeID) {
-    return !stripeID.isNull() && stripeID.equals(getStripeID(gid));
+  public boolean isStripeIDMatched(StripeID stripeID) {
+    return !stripeID.isNull() && stripeID.equals(getStripeID());
+  }
+
+  private void putToStore(StripeID stripeID) {
+    logger.info("putToStore " + stripeID);
+    clusterStatePersistor.setStripeID(stripeID);
   }
 
   @Override
-  public Map<GroupID, StripeID> getStripeIDMap(boolean askMapfromAACoordinator) {
-    // return empty map if request map only from AACoordinator and it is not an AACoordinator
-    return (!askMapfromAACoordinator || isAACoordinator) ? Collections.unmodifiableMap(groupIDToStripeIDMap)
-        : new HashMap<>();
-  }
-
-  private void putToStore(GroupID groupID, StripeID stripeID) {
-    logger.info("putToStore " + groupID + " " + stripeID);
-    groupIDToStripeIDMap.put(groupID, stripeID);
-    clusterStatePersistor.setStripeID(groupID, stripeID);
-  }
-
-  @Override
-  public boolean verifyOrSaveStripeID(GroupID gid, StripeID stripeID, boolean overwrite) {
+  public boolean verifyOrSaveStripeID(StripeID stripeID, boolean overwrite) {
     if (stripeID.isNull()) {
-      logger.warn("Ignore null StripeID from " + gid);
+      logger.warn("Ignore null StripeID");
       return false;
     }
 
-    StripeID oldID = groupIDToStripeIDMap.get(gid);
-
-    if (oldID == null) {
-      logger.warn("non-cluster group " + gid);
-      return false;
-    }
+    StripeID oldID = this.stripeID;
 
     if (overwrite || oldID.isNull()) {
-      putToStore(gid, stripeID);
+      putToStore(stripeID);
       if (oldID.isNull()) unKnownIDCount.decrementAndGet();
-      logger.debug("Collected " + gid + " " + stripeID + " count: " + unKnownIDCount.get());
+      logger.debug("Collected " + stripeID + " count: " + unKnownIDCount.get());
 
-      // if local StripeID ready (by ClusterState), notify listeners
-      if (thisGroupID.equals(gid)) {
-        notifyLocalStripeIDReady(stripeID);
-      }
-
-      if (unKnownIDCount.get() == 0) {
-        // notify listeners when have a complete map
-        notifyIfStripeIDMapReady();
-      }
+      notifyLocalStripeIDReady(stripeID);
     } else {
       if (!oldID.equals(stripeID)) {
-        logger.error("Mismatch StripeID " + oldID + " with " + stripeID + " on " + gid);
+        logger.error("Mismatch StripeID " + oldID + " with " + stripeID);
         return false;
       }
     }
     return true;
-  }
-
-  @Override
-  public StripeID getStripeID(GroupID gid) {
-    return groupIDToStripeIDMap.get(gid);
-  }
-
-  private void notifyIfStripeIDMapReady() {
-    logger.info("Notify StripeIDMap ready");
-    for (StripeIDEventListener listener : listeners) {
-      listener.notifyStripeIDMapReady();
-    }
   }
 
   private void notifyLocalStripeIDReady(StripeID stripeID) {
@@ -147,7 +97,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
   public void registerForStripeIDEvents(StripeIDEventListener listener) {
     listeners.add(listener);
 
-    StripeID stripeID = getStripeID(thisGroupID);
+    StripeID stripeID = getStripeID();
     if (!stripeID.isNull()) {
       listener.notifyStripeIDCreated(stripeID);
     }
@@ -161,13 +111,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
-    out.print("groupIDToStripeIDMap:").flush();
-    StringBuilder strBuffer = new StringBuilder();
-    for(Iterator<Entry<GroupID, StripeID>> iter = this.groupIDToStripeIDMap.entrySet().iterator(); iter.hasNext();){
-      Entry<GroupID, StripeID> entry = iter.next();
-      strBuffer.append(entry.getKey() + "->" + entry.getValue()).append(",");
-    }
-    out.duplicateAndIndent().indent().print(strBuffer.toString()).flush();
+    out.print("stripeID: ").print(getStripeID()).flush();
     return out;
   }
 

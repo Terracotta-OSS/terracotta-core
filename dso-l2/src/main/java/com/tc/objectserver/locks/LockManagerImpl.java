@@ -79,7 +79,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel) {
+  public void channelRemoved(MessageChannel channel, boolean wasActive) {
     clearAllLocksFor((ClientID) channel.getRemoteNodeID());
   }
 

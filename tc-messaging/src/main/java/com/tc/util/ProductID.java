@@ -34,4 +34,8 @@ public enum ProductID {
   public boolean isInternal() {
     return internal;
   }
+  
+  public String toString() {
+    return name().charAt(0) + name().substring(1).toLowerCase();
+  }
 }

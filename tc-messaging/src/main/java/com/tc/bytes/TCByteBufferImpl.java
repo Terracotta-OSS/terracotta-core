@@ -598,7 +598,9 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   @Override
   public void offer(TCByteBuffer buf) throws InterruptedException {
-    this.bufPool.offer(buf, 0, TimeUnit.MILLISECONDS);
+    if (this.bufPool != null) {
+      this.bufPool.offer(buf, 0, TimeUnit.MILLISECONDS);
+    }
   }
 
   /* This is the debug version. PLEASE DONT DELETE */

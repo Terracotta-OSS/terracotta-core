@@ -31,6 +31,7 @@ import com.tc.object.config.ClientConfigImpl;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.util.Assert;
+import com.tc.util.PortChooser;
 import com.tcclient.cluster.ClusterInternal;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
@@ -80,9 +81,8 @@ public class DistributedObjectClientTest extends TestCase {
     };
     PreparedComponentsFromL2Connection l2connection = Mockito.mock(PreparedComponentsFromL2Connection.class);
     ConnectionInfoConfig config = Mockito.mock(ConnectionInfoConfig.class);
-    ConnectionInfo info = new ConnectionInfo("localhost", 9510);
+    ConnectionInfo info = new ConnectionInfo("localhost", new PortChooser().chooseRandomPort());
     Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
-    Mockito.when(l2connection.createConnectionInfoConfigItemByGroup()).thenReturn(new ConnectionInfoConfig[] {config});
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class)));
@@ -100,7 +100,9 @@ public class DistributedObjectClientTest extends TestCase {
     Thread[] t = new Thread[count];
     Thread.enumerate(t);
     for (Thread z : t) {
-      System.out.println(z.getName());
+      if (z != null ) {
+        System.out.println(z.getName());
+      }
     }
   }
 }

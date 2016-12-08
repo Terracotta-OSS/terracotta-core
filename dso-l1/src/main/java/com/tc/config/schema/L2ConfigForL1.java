@@ -28,7 +28,6 @@ public interface L2ConfigForL1 {
     private final String  host;
     private final int     tsaPort;
     private int           groupId = -1;
-    private String        groupName;
     private final boolean secure;
 
     public L2Data(String host, int tsaPort) {
@@ -64,17 +63,6 @@ public interface L2ConfigForL1 {
       return groupId;
     }
 
-    public void setGroupName(String groupName) {
-      this.groupName = groupName;
-    }
-
-    /**
-     * This function could return null if no group name is specified in the tc config file
-     */
-    public String getGroupName() {
-      return groupName;
-    }
-
     @Override
     public int hashCode() {
       final int prime = 31;
@@ -106,7 +94,5 @@ public interface L2ConfigForL1 {
   }
 
   L2Data[] l2Data();
-
-  L2Data[][] getL2DataByGroup();
 
 }

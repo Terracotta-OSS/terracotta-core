@@ -25,6 +25,8 @@ import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
+import com.tc.net.StripeID;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
@@ -59,10 +61,10 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private final ConnectionAddressProvider addressProvider;
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, NodeID remoteNodeID,
+                                     SessionProvider sessionProvider, 
                                      SecurityInfo securityInfo, PwProvider pwProvider,
                                      ConnectionAddressProvider addressProvider, ProductID productId) {
-    super(router, logger, msgFactory, remoteNodeID, productId);
+    super(router, logger, msgFactory, StripeID.NULL_ID, productId);
 
     this.securityInfo = securityInfo;
     this.pwProvider = pwProvider;

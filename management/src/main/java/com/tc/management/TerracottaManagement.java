@@ -46,7 +46,7 @@ public abstract class TerracottaManagement {
   public static class Type {
 
     private static final Map<String, Type> typesByName      = Collections.synchronizedMap(new HashMap<String, Type>());
-    public static final Type DsoClient        = new Type(MANAGEMENT_RESOURCES.getDsoClientType());
+    public static final Type Client        = new Type(MANAGEMENT_RESOURCES.getDsoClientType());
     public static final Type Sessions         = new Type(MANAGEMENT_RESOURCES.getSessionsType());
     public static final Type Server           = new Type(MANAGEMENT_RESOURCES.getTerracottaServerType());
     public static final Type Cluster          = new Type(MANAGEMENT_RESOURCES.getTerracottaClusterType());
@@ -147,12 +147,18 @@ public abstract class TerracottaManagement {
       }
       objName.append(COMMA);
     }
-    objName.append(MBeanKeys.TYPE).append(EQUALS).append(type);
+    objName.append(MBeanKeys.NAME).append(EQUALS).append(uiFriendlyName);
+    if (type != null) {
+      objName.append(COMMA).append(MBeanKeys.TYPE).append(EQUALS).append(type);
+    }
     if (subsystem != Subsystem.None) {
       objName.append(COMMA).append(MBeanKeys.SUBSYSTEM).append(EQUALS).append(subsystem);
     }
-    objName.append(COMMA).append(MBeanKeys.NAME).append(EQUALS).append(uiFriendlyName);
-    return new ObjectName(objName.toString());
+    try {
+      return new ObjectName(objName.toString());
+    } catch (MalformedObjectNameException mal) {
+      throw new MalformedObjectNameException(objName.toString() + " " + mal.getMessage());
+    }
   }
 
   private static void addNodeInfo(StringBuffer objName, TCSocketAddress addr) {

@@ -32,7 +32,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -116,8 +115,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                              StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm) {
     return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
         groupCommsManager, clusterStatePersistor,
-        weightGeneratorFactory, configurationSetupManager,
-        haConfig.getThisGroupID(), stripeStateManager, clm);
+        weightGeneratorFactory, configurationSetupManager, stripeStateManager, clm);
   }
 
   @Override
@@ -132,10 +130,5 @@ public class StandardServerBuilder implements ServerBuilder {
     //  wasn't provided
     Assert.assertNotNull(platformPersistence);
     return new Persistor(platformPersistence);
-  }
-
-  @Override
-  public GroupID getLocalGroupId() {
-    return haConfig.getThisGroupID();
   }
 }

@@ -60,4 +60,10 @@ public interface ClientMBean extends TerracottaMBean {
   int getLiveObjectCount();
 
   void killClient();
+  
+  int getRemotePID();
+  
+  String getRemoteName();
+  
+  String getRemoteUUID();
 }

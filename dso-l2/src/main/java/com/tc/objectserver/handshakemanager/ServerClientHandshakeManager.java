@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.handshakemanager;
 
-import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
@@ -41,11 +40,15 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.ReconnectListener;
+import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.util.Assert;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
@@ -61,6 +64,7 @@ public class ServerClientHandshakeManager {
   static final int                       RECONNECT_WARN_INTERVAL           = 15000;
 
   private State                          state                             = State.INIT;
+  private List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
 
   private final Timer                    timer;
   private final ReconnectTimerTask       reconnectTimerTask;
@@ -133,7 +137,9 @@ public class ServerClientHandshakeManager {
             EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
             ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
             byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
+            ReferenceMessage msg = new ReferenceMessage(clientID, true, entityDescriptor);
             entity.get().reconnectClient(clientID, clientDescriptor, extendedReconnectData);
+            transactionHandler.handleResentReferenceMessage(msg);
           } else {
             throw Assert.failure("entity not found");
           }
@@ -141,6 +147,7 @@ public class ServerClientHandshakeManager {
         
         // Find any resent messages and re-apply them in the transaction handler.
         for (ResendVoltronEntityMessage resentMessage : handshake.getResendMessages()) {
+          logger.debug("RESENT:" + resentMessage.getVoltronType() + " " + resentMessage.getEntityDescriptor());
           transactionHandler.handleResentMessage(resentMessage);
         }
 
@@ -196,15 +203,22 @@ public class ServerClientHandshakeManager {
       sendAckMessageFor(clientID);
     }
     this.state = State.STARTED;
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).unpause();
+    notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
     stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new NoopEntityMessage(EntityDescriptor.NULL_ID));
   }
+  
+  public void notifyComplete() {
+    waitingForReconnect.forEach(ReconnectListener::reconnectComplete);
+  }
+  
+  public void addReconnectListener(ReconnectListener rl) {
+    waitingForReconnect.add(rl);
+  }
 
   public synchronized void setStarting(Set<ConnectionID> existingConnections) {
     assertInit();
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).pause();
     this.state = State.STARTING;
     if (existingConnections.isEmpty()) {
       start();

@@ -20,7 +20,6 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
-import com.tc.net.GroupID;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 
@@ -31,7 +30,6 @@ public class ActiveServerGroupConfigObject implements ActiveServerGroupConfig {
 
   private final Servers s;
 
-  private GroupID             groupId;
   private String              grpName;
   private final Set<String>   members;
 
@@ -42,10 +40,6 @@ public class ActiveServerGroupConfigObject implements ActiveServerGroupConfig {
     for(Server server : s.getServer()) {
       members.add(server.getName());
     }
-  }
-
-  public void setGroupId(GroupID groupId) {
-    this.groupId = groupId;
   }
 
   @Override
@@ -66,11 +60,6 @@ public class ActiveServerGroupConfigObject implements ActiveServerGroupConfig {
   @Override
   public String[] getMembers() {
     return this.members.toArray(new String[members.size()]);
-  }
-
-  @Override
-  public GroupID getGroupId() {
-    return this.groupId;
   }
 
   @Override

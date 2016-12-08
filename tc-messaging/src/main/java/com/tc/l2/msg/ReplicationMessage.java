@@ -22,7 +22,6 @@ import com.tc.async.api.OrderedEventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;

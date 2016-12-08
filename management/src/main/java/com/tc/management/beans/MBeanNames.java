@@ -32,7 +32,7 @@ public class MBeanNames {
 
   static {
     try {
-      L1DUMPER_INTERNAL = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null,
+      L1DUMPER_INTERNAL = TerracottaManagement.createObjectName(Type.Client, Subsystem.None, null,
                                                                 "DSO Client Dump Bean", TerracottaManagement.MBeanDomain.INTERNAL);
       
       OPERATOR_EVENTS_PUBLIC = TerracottaManagement.createObjectName(Type.TcOperatorEvents, Subsystem.None, null,

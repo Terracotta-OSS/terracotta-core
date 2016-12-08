@@ -21,7 +21,6 @@ package com.tc.util;
 
 import com.tc.config.schema.ActiveServerGroupConfigObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.net.GroupID;
 
 import java.util.Arrays;
 import java.util.Map.Entry;
@@ -46,7 +45,6 @@ public class ActiveCoordinatorHelper {
       if (groupNameNotSet(groupInfo)) {
         groupInfo.setGroupName(GROUP_NAME_PREFIX + groupID);
       }
-      groupInfo.setGroupId(new GroupID(groupID));
       groupInfos[groupID] = groupInfo;
       groupID++;
     }

@@ -93,11 +93,7 @@ public class ActiveToPassiveReplicationTest {
       }
     });
     it.start();
-    try {
-      ack.waitForCompleted();
-    } catch (InterruptedException ie) {
-      Assert.fail("test failed");
-    }
+    ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
   }
   

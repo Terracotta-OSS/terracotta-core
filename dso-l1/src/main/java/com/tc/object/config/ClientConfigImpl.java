@@ -81,9 +81,8 @@ public class ClientConfigImpl implements ClientConfig {
   public void validateClientServerCompatibility(PwProvider pwProvider, SecurityInfo securityInfo)
       throws ConfigurationSetupException {
     PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager);
-    ConnectionInfoConfig[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
-    for (int stripeNumber = 0; stripeNumber < connectionInfoItems.length; stripeNumber++) {
-      ConnectionInfo[] connectionInfo = connectionInfoItems[stripeNumber].getConnectionInfos();
+    ConnectionInfoConfig connectionInfoItem = connectionComponents.createConnectionInfoConfigItem();
+      ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
       boolean foundCompatibleActive = false;
       boolean activeDown = false;
       int serverNumberInStripe = 0;
@@ -93,11 +92,10 @@ public class ClientConfigImpl implements ClientConfig {
       // or the timeout occurs
       while ((endTime - startTime) < CONFIGURATION_TOTAL_TIMEOUT) {
 
-        ConnectionInfo connectionIn = new ConnectionInfo(connectionInfo[serverNumberInStripe].getHostname(),
-                                                         connectionInfo[serverNumberInStripe].getPort(),
-                                                         stripeNumber * serverNumberInStripe + serverNumberInStripe,
-                                                         connectionInfo[serverNumberInStripe].getGroupName(),
-                                                         connectionInfo[serverNumberInStripe].getSecurityInfo());
+      ConnectionInfo connectionIn = new ConnectionInfo(connectionInfo[serverNumberInStripe].getHostname(),
+                                                       connectionInfo[serverNumberInStripe].getPort(),
+                                                       serverNumberInStripe,
+                                                       connectionInfo[serverNumberInStripe].getSecurityInfo());
 
         ServerURL serverUrl = null;
         try {
@@ -158,7 +156,6 @@ public class ClientConfigImpl implements ClientConfig {
                                           + " is not compatible with a server of Terracotta version: 4.0 or before");
         }
       }
-    }
   }
 
   private boolean checkServerClientVersion(Version serverVersion, ServerURL serverUrl) {

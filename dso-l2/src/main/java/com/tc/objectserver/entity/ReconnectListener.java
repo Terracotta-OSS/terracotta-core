@@ -16,11 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.management.beans.object;
+package com.tc.objectserver.entity;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.management.TerracottaMBean;
-
-public interface EnterpriseTCClientMbean extends TerracottaMBean {
-  void reloadConfiguration() throws ConfigurationSetupException;
+/**
+ *
+ */
+public interface ReconnectListener {
+  void reconnectComplete();
 }

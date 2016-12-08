@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.net.DSOChannelManagerEventListener;
+import java.util.List;
 
 
 /**
@@ -29,7 +30,7 @@ import com.tc.object.net.DSOChannelManagerEventListener;
  * Note that the same client can refer to a specific entity multiple times, which each connection possessing a distinct
  * life cycle.
  */
-public interface ClientEntityStateManager extends DSOChannelManagerEventListener {
+public interface ClientEntityStateManager {
   /**
    * Adds a reference from clientID to the entity described by entityDescriptor.
    * 
@@ -55,4 +56,6 @@ public interface ClientEntityStateManager extends DSOChannelManagerEventListener
    * @return true if there are no references
    */
   public boolean verifyNoReferences(EntityID entityDescriptor);
+  
+  public List<VoltronEntityMessage> clientDisconnected(ClientID clientID);
 }

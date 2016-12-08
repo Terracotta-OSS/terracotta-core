@@ -18,13 +18,9 @@
  */
 package com.tc.config;
 
-import com.tc.net.GroupID;
-
 public interface ClusterInfo {
 
   boolean hasServerInCluster(String name);
-
-  GroupID getGroupIDFromNodeName(String name);
-
+  
   boolean hasServerInGroup(String serverName);
 }

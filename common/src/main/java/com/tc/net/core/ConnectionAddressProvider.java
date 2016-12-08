@@ -38,21 +38,19 @@ public class ConnectionAddressProvider implements ClusterTopologyChangedListener
   }
   
   @Override
-  public synchronized void serversUpdated(ConnectionAddressProvider... addressProviders) {
-    for(ConnectionAddressProvider cap: addressProviders) {
-      if(cap.getGroupId() == this.getGroupId()) {
-        this.addresses = cap.addresses;
-      }
-    }
+  public synchronized void serversUpdated(ConnectionAddressProvider addressProvider) {
+    this.addresses = addressProvider.addresses;
   }
-
-  public int getGroupId() {
-    if (addresses == null || addresses[0] == null) {
-      synchronized (this) {
-        if (addresses == null || addresses[0] == null) { return -1; }
-      }
+  
+  public String getId() {
+    StringBuilder build = new StringBuilder();
+    char sep = ' ';
+    for (ConnectionInfo info : addresses) {
+      build.append(info.toString());
+      build.append(sep);
+      sep = ',';
     }
-    return addresses[0].getGroupId();
+    return build.toString();
   }
 
   public SecurityInfo getSecurityInfo() {

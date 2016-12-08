@@ -134,14 +134,14 @@ public class ManagementTopologyEventCollectorTest {
       Assert.assertFalse(didSucceed);
     }
     // Now, disconnect.
-    this.collector.clientDidDisconnect(channel, client);
+    this.collector.clientDidDisconnect(client);
     // We should fail to disconnect a second time.
     // XXX:  Note that there is currently a bug where we need to permit this so this part of the test is disabled.
     boolean isDisconnectCheckBroken = true;
     if (!isDisconnectCheckBroken) {
       didSucceed = false;
       try {
-        this.collector.clientDidDisconnect(channel, client);
+        this.collector.clientDidDisconnect(client);
         didSucceed = true;
       } catch (AssertionError e) {
         // Expected.
@@ -243,7 +243,7 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertFalse(didSucceed);
     
     // Disconnect the client.
-    this.collector.clientDidDisconnect(channel, client);
+    this.collector.clientDidDisconnect(client);
     
     // Destroy the entity.
     this.collector.entityWasDestroyed(id);
@@ -417,7 +417,7 @@ public class ManagementTopologyEventCollectorTest {
   //  simulate ClientEntityStateManger detecting a client disconnect
       this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1)).collect(Collectors.toList()));
   //  now disconnect the client
-      this.collector.clientDidDisconnect(channel, cid);
+      this.collector.clientDidDisconnect(cid);
       for (EntityID eid : entities) {
         verify(monitoringProducer, Mockito.never()).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
         EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));

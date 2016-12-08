@@ -18,15 +18,13 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
-import com.tc.async.impl.NullSink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
-import com.tc.net.GroupID;
 import com.tc.net.ServerID;
+import com.tc.net.StripeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.Constants;
@@ -295,7 +293,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
-                                                               new GroupID(addressProvider.getGroupId()),
                                                                addressProvider.getSecurityInfo(), securityManager,
                                                                addressProvider, productId);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,

@@ -21,16 +21,12 @@ package com.tc.l2.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.ha.ClusterState;
-import com.tc.net.GroupID;
-import com.tc.net.StripeID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.GroupToStripeMapSerializer;
 import com.tc.net.groups.MessageID;
 import com.tc.net.protocol.transport.ConnectionID;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class ClusterStateMessage extends AbstractGroupMessage {
@@ -47,7 +43,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   private ConnectionID           connectionID;
   private long                   nextAvailableChannelID;
   private Set<ConnectionID>      connectionIDs;
-  private Map<GroupID, StripeID> stripeIDMap;
 
   // To make serialization happy
   public ClusterStateMessage() {
@@ -84,9 +79,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (int i = 0; i < size; i++) {
           connectionIDs.add(ConnectionID.readFrom(in));
         }
-        GroupToStripeMapSerializer serializer = new GroupToStripeMapSerializer();
-        serializer.deserializeFrom(in);
-        stripeIDMap = serializer.getMap();
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -112,7 +104,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (ConnectionID id : connectionIDs) {
           id.writeTo(out);
         }
-        new GroupToStripeMapSerializer(stripeIDMap).serializeTo(out);
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -144,7 +135,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableChannelID = state.getNextAvailableChannelID();
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
-        stripeIDMap = state.getStripeIDMap();
         break;
       default:
         throw new AssertionError("Wrong Type : " + getType());
@@ -157,9 +147,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         state.setNextAvailableChannelID(nextAvailableChannelID);
         for (ConnectionID id : connectionIDs) {
           state.addNewConnection(id);
-        }
-        for (GroupID gid : stripeIDMap.keySet()) {
-          state.addToStripeIDMap(gid, stripeIDMap.get(gid));
         }
         // trigger local stripeID ready event after StripeIDMap loaded.
         state.setStripeID(clusterID);

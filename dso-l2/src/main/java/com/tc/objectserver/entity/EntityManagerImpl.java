@@ -204,6 +204,13 @@ public class EntityManagerImpl implements EntityManager {
     }
     return service;
   }
+  
+  @Override
+  public void resetReferences() {
+    for (ManagedEntity me : entities.values()) {
+      me.resetReferences(0);
+    }
+  }
 
   @Override
   public MessageCodec<EntityMessage, EntityResponse> getMessageCodec(EntityID eid) {

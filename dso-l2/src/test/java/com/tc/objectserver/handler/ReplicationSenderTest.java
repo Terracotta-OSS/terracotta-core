@@ -135,8 +135,6 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.DESTROY_ENTITY), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
@@ -227,7 +225,7 @@ public class ReplicationSenderTest {
   private void validateCollector(Collection<ReplicationMessage> valid) {
     Iterator<ReplicationMessage> next = valid.iterator();
     collector.stream().forEach(cmsg->{
-      if (cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
+      if (cmsg.getMessage().getType() != ReplicationMessage.START && cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
         ReplicationMessage vmsg = next.next();
         if (vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
             vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_END) {

@@ -31,7 +31,7 @@ import org.junit.Test;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.config.HaConfig;
+import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -39,6 +39,8 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.objectserver.entity.ClientEntityStateManager;
 
 
 public class ChannelLifeCycleHandlerTest {
@@ -52,13 +54,12 @@ public class ChannelLifeCycleHandlerTest {
     StageManager stageManager = mock(StageManager.class);
     CommunicationsManager commsManager = mock(CommunicationsManager.class);
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
-    HaConfig haConfig = mock(HaConfig.class);
     this.eventCollector = mock(ITopologyEventCollector.class);
     ServerConfigurationContext context = mock(ServerConfigurationContext.class);
     Stage<HydrateContext> stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
-    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager, haConfig);
+    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager, mock(ClientEntityStateManager.class), mock(StateManager.class), mock(ManagementTopologyEventCollector.class));
   }
 
   @After
@@ -75,9 +76,9 @@ public class ChannelLifeCycleHandlerTest {
     when(fakeChannel.getRemoteNodeID()).thenReturn(mock(ClientID.class));
     // But a null local address.
     when(fakeChannel.getLocalAddress()).thenReturn(null);
-    this.handler.channelRemoved(fakeChannel);
+    this.handler.channelRemoved(fakeChannel, false);
     // We expect NOT to receive the disconnect event in the event collector.
     //  this test is no longer relevant but leave it as harmless
-    verify(this.eventCollector, never()).clientDidDisconnect(any(MessageChannel.class), any(ClientID.class));
+    verify(this.eventCollector, never()).clientDidDisconnect(any(ClientID.class));
   }
 }

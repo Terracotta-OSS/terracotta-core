@@ -39,7 +39,7 @@ public class CloseChannelHandler extends AbstractEventHandler<L1RemovedGroupMess
     final ClientID cid = msg.getClientID();
     MessageChannel channel = channelManager.getChannel(cid.getChannelID());
     if (channel != null) {
-      logger.warn("Close " + cid + " due to disconnect from stripe " + msg.getGroupID());
+      logger.warn("Close " + cid + " due to disconnect from stripe");
       channel.close();
     }
   }

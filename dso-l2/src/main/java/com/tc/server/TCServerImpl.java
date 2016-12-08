@@ -41,8 +41,6 @@ import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
-import com.tc.net.GroupID;
-import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.HttpConnectionContext;
@@ -132,36 +130,19 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     return StateManager.VALID_STATES.contains(state);
   }
 
-
-  private static OrderedGroupIDs createOrderedGroupIds(List<ActiveServerGroupConfig> groups) {
-    GroupID[] gids = new GroupID[groups.size()];
-    for (int i = 0; i < groups.size(); i++) {
-      gids[i] = groups.get(i).getGroupId();
-    }
-    return new OrderedGroupIDs(gids);
-  }
-
   @Override
-  public ServerGroupInfo[] serverGroups() {
+  public ServerGroupInfo getStripeInfo() {
     L2Info[] l2Infos = infoForAllL2s();
-    List<ActiveServerGroupConfig> groups = this.configurationSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroups();
-    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groups);
-    GroupID coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup();
-    ServerGroupInfo[] result = new ServerGroupInfo[groups.size()];
-    for (int i = 0; i < groups.size(); i++) {
-      ActiveServerGroupConfig groupInfo = groups.get(i);
-      GroupID groupId = groupInfo.getGroupId();
-      List<L2Info> memberList = new ArrayList<>();
-      for (L2Info l2Info : l2Infos) {
-        if (groupInfo.isMember(l2Info.name())) {
-          memberList.add(l2Info);
-        }
+    ActiveServerGroupConfig groupInfo = this.configurationSetupManager.getActiveServerGroupForThisL2();
+
+    List<L2Info> memberList = new ArrayList<>();
+    for (L2Info l2Info : l2Infos) {
+      if (groupInfo.isMember(l2Info.name())) {
+        memberList.add(l2Info);
       }
-      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(), groupId.toInt(),
-                                      coordinatorId.equals(groupId));
     }
-    return result;
+
+    return new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(),true);
   }
 
   @Override
@@ -188,7 +169,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
         //XXX hard coded jmx port
         out[i] = new L2Info(name, host, config.tsaPort().getValue()+10, config.tsaPort().getValue(), config
             .tsaGroupPort().getBind(), config.tsaGroupPort().getValue(),config.tsaGroupPort().getValue() + 1,
-                            getSecurityHostname());
+                            "");
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }
@@ -339,13 +320,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   public boolean isPassiveStandby() {
     synchronized (this.stateLock) {
       return this.serverState.equals(StateManager.PASSIVE_STANDBY);
-    }
-  }
-
-  @Override
-  public boolean isRecovering() {
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.RECOVERING);
     }
   }
 
@@ -503,63 +477,8 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   }
 
   @Override
-  public String getRunningBackup() {
-    return "";
-  }
-
-  @Override
-  public String getBackupStatus(String name) throws IOException {
-    return "";
-  }
-
-  @Override
-  public String getBackupFailureReason(String name) throws IOException {
-    return "";
-  }
-
-  @Override
-  public Map<String, String> getBackupStatuses() throws IOException {
-    Map<String, String> result = new HashMap<>();
-    return result;
-  }
-
-  @Override
-  public void backup(String name) throws IOException {
-  }
-
-  @Override
   public String getResourceState() {
     return "";
-  }
-
-  @Override
-  public boolean isSecure() {
-    return securityManager != null;
-  }
-
-  @Override
-  public String getSecurityServiceLocation() {
-    return null;
-  }
-
-  @Override
-  public Integer getSecurityServiceTimeout() {
-    return null;
-  }
-
-  @Override
-  public String getSecurityHostname() {
-    String securityHostname = null;
-    if (securityHostname == null) {
-      securityHostname = configurationSetupManager.commonl2Config().host();
-    }
-    return securityHostname;
-  }
-
-  @Override
-  public String getIntraL2Username() {
-    if (!isSecure()) { return null; }
-    return securityManager.getIntraL2Username();
   }
 
   @Override

@@ -84,8 +84,14 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 //  the only messages that are relevant before passive sync starts are create messages
       try {
         msg.setReplicationID(rOrder.getAndIncrement());
-        logger.debug("WIRE:" + msg);
+        if (logger.isDebugEnabled()) {
+          logger.debug("WIRE:" + msg);
+        }
         group.sendTo(nodeid, msg);
+        if (msg.getType() == ReplicationMessage.START) {
+     //  this message will not be ack'd by the other side so just drop it
+          context.droppedWithoutSend();
+        }
       }  catch (GroupException ge) {
         logger.info(msg, ge);
       }
@@ -95,10 +101,11 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   private AtomicLong getOrdering(NodeID nodeid, ReplicationMessage msg) {
     if (!ordering.containsKey(nodeid)) {
       if (msg.getType() == ReplicationMessage.START) {
-        ordering.put(nodeid, new AtomicLong());
+        AtomicLong first = new AtomicLong();
+        ordering.put(nodeid, first);
 //  release the message so sync can continue
-//  this is a priming event.  The passive does not need to receive this
-        return null;
+//  this is a priming event.  passive resets client state
+        return first;
       } else {
         if (dropMessageForDisconnectedServer(nodeid, msg)) {
           return null;
@@ -150,7 +157,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   private boolean shouldReplicate(ReplicationMessage msg) {
     if (msg.getType() == ReplicationMessage.START) {
 //  these types of messages are incoming types or internal server use, not outgoing
-      throw new AssertionError("unexpected message type " + msg);
+      return true;
     }
     switch (msg.getReplicationType()) {
       case NOOP:
@@ -263,9 +270,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               destroyed.add(eid);
               return true;
             } else if (syncingID.equals(eid)) {
- //  tricky.  this one needs to pass but only be applied after sync of this entity is complete
-              destroyed.add(eid);
-              return true;
+              Assert.fail("destroy during sync " + eid);
             } else if (created.contains(eid)) {
               destroyed.add(eid);
               created.remove(eid);

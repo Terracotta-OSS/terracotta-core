@@ -20,7 +20,6 @@ package com.tc.platform.rejoin;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -97,8 +96,6 @@ public class ClientChannelEventController {
 
     @Override
     public void notifyChannelEvent(ChannelEvent event) {
-      final NodeID remoteNodeId = event.getChannel().getRemoteNodeID();
-      if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
       LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
                       + CallStackTrace.getCallStack());
       if (controller.clientHandshakeManager.isShutdown()) { return; }

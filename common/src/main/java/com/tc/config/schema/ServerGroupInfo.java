@@ -23,13 +23,11 @@ import java.io.Serializable;
 public class ServerGroupInfo implements Serializable {
   private final L2Info[] members;
   private final String   name;
-  private final int      id;
   private final boolean  isCoordinator;
 
-  public ServerGroupInfo(L2Info[] members, String name, int id, boolean isCoordinator) {
+  public ServerGroupInfo(L2Info[] members, String name, boolean isCoordinator) {
     this.members = members;
     this.name = name;
-    this.id = id;
     this.isCoordinator = isCoordinator;
   }
 
@@ -42,7 +40,7 @@ public class ServerGroupInfo implements Serializable {
   }
 
   public int id() {
-    return id;
+    return 1;
   }
 
   public boolean isCoordinator() {

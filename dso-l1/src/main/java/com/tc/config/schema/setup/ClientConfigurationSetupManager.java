@@ -94,11 +94,6 @@ public class ClientConfigurationSetupManager implements L1ConfigurationSetupMana
       public L2Data[] l2Data() {
         return l2Data;
       }
-
-      @Override
-      public L2Data[][] getL2DataByGroup() {
-        return new L2Data[][] { l2Data };
-      }
     };
   }
 
