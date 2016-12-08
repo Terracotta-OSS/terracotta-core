@@ -46,6 +46,7 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.entity.BarrierCompletion;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
@@ -61,7 +62,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
@@ -129,7 +129,6 @@ public class ReplicatedTransactionHandler {
 
     @Override
     public void destroy() {
-      CountDownLatch latch = new CountDownLatch(1);
       ServerEntityRequest req = new ServerEntityRequest() {
         @Override
         public ServerEntityAction getAction() {
@@ -162,12 +161,17 @@ public class ReplicatedTransactionHandler {
         }
       };
   //    MGMT_KEY because the request processor needs to be flushed
-      platform.addRequestMessage(req, new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY), (result)->latch.countDown(), null);
-      try {
-        latch.await();
-      } catch (InterruptedException ie) {
-        throw new RuntimeException(ie);
+      for (ManagedEntity me : entityManager.getAll()) {
+        BarrierCompletion latch = new BarrierCompletion();
+        me.clearQueue();
+        me.addRequestMessage(req,
+            new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY), 
+            (result)->latch.complete(), exception->Assert.fail());
+        latch.waitForCompletion();
       }
+      BarrierCompletion latch = new BarrierCompletion();
+      platform.addRequestMessage(req, new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY), (result)->latch.complete(), null);
+      latch.waitForCompletion();
     }    
   };
   
@@ -189,16 +193,10 @@ public class ReplicatedTransactionHandler {
         }
         break;
       case ReplicationMessage.SYNC:
-        if (!state.destroyed(rep.getEntityID())) {
-          LOGGER.debug("Sync:" + rep);
-          syncMessageReceived(rep);
-        } else {
-          acknowledge(rep, true);
-        }
+        syncMessageReceived(rep);
         break;
       case ReplicationMessage.START:
         entityManager.resetReferences();
-        acknowledge(rep, true);
         break;
       default:
         // This is an unexpected replicated message type.
@@ -543,7 +541,7 @@ public class ReplicatedTransactionHandler {
       groupManager.sendToWithSentCallback(cachedMessageAckFrom, cachedBatchAck, this.handleMessageSend);
     } catch (GroupException e) {
       // Active must have died.  Swallow the exception after logging.
-      LOGGER.warn("active died on ack", e);
+      LOGGER.debug("active died on ack", e);
       this.isWaitingForNetwork = false;
     }
   }
@@ -588,9 +586,6 @@ public class ReplicatedTransactionHandler {
     private final Set<Integer> syncdKeys = new HashSet<>();
     private EntityID syncing;
     private int currentKey = -1;
-    // We need to track if the entity we are currently syncing has been destroyed and know to drop it, once we are done
-    //  syncing it, if it was.
-    private boolean wasCurrentlySyncingEntityDestroyed;
     private boolean finished = false;
     private boolean started = false;
     
@@ -602,13 +597,7 @@ public class ReplicatedTransactionHandler {
       assertStarted(null);
       Assert.assertNull(syncing);
       syncing = eid;
-      wasCurrentlySyncingEntityDestroyed = false;
       LOGGER.debug("Starting " + eid);
-    }
-    
-    private boolean destroyed(EntityID eid) {
-      // Note that the destroyed notification may arrive without the sync having started.
-      return (eid.equals(syncing) && wasCurrentlySyncingEntityDestroyed) || syncdEntities.contains(eid);
     }
     
     private void endEntity(EntityID eid) {
@@ -669,12 +658,7 @@ public class ReplicatedTransactionHandler {
         // Note that it is possible that the currently syncing entity has already been destroyed, in which case this message
         //  is either targeting something which doesn't exist or targets something which has been created over top of it.
         // In either case, we shouldn't ignore it.
-        if (wasCurrentlySyncingEntityDestroyed) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Unexpected message to destroyed syncing entity being passed through: " + rep);
-          }
-          return false;
-        } else if (rep.getConcurrency() == currentKey) {
+        if (rep.getConcurrency() == currentKey) {
           return false;
         } else if (!syncdKeys.contains(rep.getConcurrency())) {
 //  ignore, haven't gotten to this key yet
@@ -705,25 +689,13 @@ public class ReplicatedTransactionHandler {
       }
       
       if (eid.equals(syncing)) {
-        // We are currently syncing this entity but we may have already destroyed it, in which case we don't need to defer
-        //  the message since it is targeting a later instance by the same name.
-        if (wasCurrentlySyncingEntityDestroyed) {
-          return false;
-        }
         if (syncdKeys.contains(rep.getConcurrency())) {
           return false;
         } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
 //  NOOP requests cannot be deferred
           return false;
         } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.DESTROY_ENTITY) {
-          defer.clear();
-          defer.add(rep);
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Destroying " + rep);
-          }
-          // We hadn't already been destroyed, so we needed to add it to the defer list, but now we are destroyed so nothing
-          //  else will be deferred or ignored.
-          wasCurrentlySyncingEntityDestroyed = true;
+          Assert.fail("destroy received during a sync of an entity " + syncing);
           return false;
         } else if (currentKey == rep.getConcurrency()) {
           if (LOGGER.isDebugEnabled()) {

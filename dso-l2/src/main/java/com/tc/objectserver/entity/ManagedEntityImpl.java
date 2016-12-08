@@ -201,7 +201,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void processLifecycleEntity(ServerEntityRequest create, MessagePayload data, ResultCapture resp) {
-    if (this.isInActiveState && create.getAction() == ServerEntityAction.RECONFIGURE_ENTITY) {
+    if (this.isInActiveState) {
 //  this is the process transaction handler thread adding a reconfigure to the message flow of this entity.  
 //  before it can proceed, need to make sure any syncs are completed so the concurrency strategy is not changed out from 
 //  under it.
@@ -223,7 +223,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (isInActiveState) {
       Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE));
     } else {
-      Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
+      Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE) ||
+        Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE));
     }
     
     SchedulingRunnable next = new SchedulingRunnable(desc, request, payload, r, ckey);
@@ -235,9 +236,26 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     if (!runnables.offer(next)) {
       next.start();
+    } else if (Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE)) {
+      for (SchedulingRunnable sr : runnables.queue) {
+        logger.fatal(runnables + " " + this.id + " " + sr);
+      }
+      Assert.fail();
     }
     
     return next;
+  }
+  
+  @Override
+  public boolean clearQueue() {
+    while (!runnables.isEmpty()) {
+      SchedulingRunnable sr = runnables.checkDeferred();
+      if (sr != null) {
+        sr.start();
+      }
+      runnables.pause();
+    }
+    return true;
   }
   
   private void processInvokeRequest(final ServerEntityRequest request, ResultCapture response, MessagePayload message, int key) {
@@ -322,9 +340,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
     Lock read = reconnectAccessLock.readLock();
-    if (logger.isDebugEnabled()) {
-      logger.info("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
-    }
+    logger.info("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
     read.lock();
     try {
       switch (request.getAction()) {

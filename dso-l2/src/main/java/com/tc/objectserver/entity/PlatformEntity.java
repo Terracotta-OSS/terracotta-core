@@ -27,14 +27,9 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityException;
@@ -127,6 +122,11 @@ public class PlatformEntity implements ManagedEntity {
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
 
+  }
+
+  @Override
+  public boolean clearQueue() {
+    return true;
   }
 
   @Override

@@ -84,6 +84,8 @@ public interface ManagedEntity extends StateDumpable {
   
   boolean isRemoveable();
   
+  boolean clearQueue();
+  
   void resetReferences(int count);
 
   /**
