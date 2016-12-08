@@ -88,7 +88,10 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
           logger.debug("WIRE:" + msg);
         }
         group.sendTo(nodeid, msg);
-        context.release();
+        if (msg.getType() == ReplicationMessage.START) {
+     //  this message will not be ack'd by the other side so just drop it
+          context.droppedWithoutSend();
+        }
       }  catch (GroupException ge) {
         logger.info(msg, ge);
       }
@@ -267,9 +270,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               destroyed.add(eid);
               return true;
             } else if (syncingID.equals(eid)) {
- //  tricky.  this one needs to pass but only be applied after sync of this entity is complete
-              destroyed.add(eid);
-              return true;
+              Assert.fail("destroy during sync " + eid);
             } else if (created.contains(eid)) {
               destroyed.add(eid);
               created.remove(eid);

@@ -99,66 +99,10 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
       }
 
       for (EntityDescriptor oneInstance : list) {
-        msgs.add(new RemovalMessage(client, oneInstance));
+        msgs.add(new ReferenceMessage(client, false, oneInstance));
       }
       return msgs;
     }
     return Collections.emptyList();
-  }
-
-  private static class RemovalMessage implements VoltronEntityMessage {
-    private static final byte[] EMPTY_EXTENDED_DATA = new byte[0];
-    private final ClientID clientID;
-    private final EntityDescriptor entityDescriptor;
-
-    public RemovalMessage(ClientID clientID, EntityDescriptor entityDescriptor) {
-      this.clientID = clientID;
-      this.entityDescriptor = entityDescriptor;
-    }
-
-    @Override
-    public ClientID getSource() {
-      return clientID;
-    }
-
-    @Override
-    public TransactionID getTransactionID() {
-      return TransactionID.NULL_ID;
-    }
-
-    @Override
-    public EntityDescriptor getEntityDescriptor() {
-      return this.entityDescriptor;
-    }
-
-    @Override
-    public boolean doesRequireReplication() {
-      return true;
-    }
-
-    @Override
-    public Type getVoltronType() {
-      return Type.RELEASE_ENTITY;
-    }
-
-    @Override
-    public byte[] getExtendedData() {
-      return EMPTY_EXTENDED_DATA;
-    }
-
-    @Override
-    public TransactionID getOldestTransactionOnClient() {
-      // This message isn't from a "client", in the traditional sense, so there isn't an "oldest transaction".
-      // Since it is a disconnect, that means that this client can't end up in a reconnect scenario.  Therefore, we
-      // will return null, here, and define that to mean that the client is no longer requiring persistent ordering.
-      // Note that it may be worth making this a more explicit case in case other unexpected null cases are found.
-      return null;
-    }
-
-    @Override
-    public EntityMessage getEntityMessage() {
-      // There is no message instance for this type.
-      return null;
-    }
   }
 }
