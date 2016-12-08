@@ -120,6 +120,7 @@ public class ProcessTransactionHandlerTest {
     when(mockStage.getSink()).thenReturn(this.loopbackSink);
     when(stageManager.getStage(any(), any())).thenReturn(mockStage);
 
+    this.processTransactionHandler.reconnectComplete();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
   

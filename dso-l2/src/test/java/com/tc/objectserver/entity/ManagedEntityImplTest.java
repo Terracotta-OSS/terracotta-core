@@ -37,6 +37,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.api.ServerEntityResponse;
@@ -803,12 +804,14 @@ public class ManagedEntityImplTest {
   private ServerEntityRequest mockGetRequest(com.tc.net.ClientID requester) {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.FETCH_ENTITY);
     when(request.getNodeID()).thenReturn(requester);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
     return request;
   }
 
   private ServerEntityRequest mockReleaseRequest(com.tc.net.ClientID requester) {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RELEASE_ENTITY);
     when(request.getNodeID()).thenReturn(requester);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
     return request;
   }
     
