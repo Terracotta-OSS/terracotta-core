@@ -70,11 +70,11 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     // Now, before we can actually RUN the message, we need to make sure that we wait for its replicated copy to complete
     // on the passive.
     if (shouldReplicate && this.downstreamPassives.size() > 0) {
-      PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(this.sender);
       for (PassthroughServerProcess passive : downstreamPassives) {
+        PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(this.sender);
         passive.sendMessageToServerFromActive(wrapper, message);
+        wrapper.waitForComplete();
       }
-      wrapper.waitForComplete();
     }
     
     // Now, decode the message and interpret it.
