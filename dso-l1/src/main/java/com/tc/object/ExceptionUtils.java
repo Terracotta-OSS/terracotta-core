@@ -1,6 +1,7 @@
 package com.tc.object;
 
 import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
@@ -28,6 +29,8 @@ public class ExceptionUtils {
       wrappedException = new EntityVersionMismatchException(e.getClassName(), e.getEntityName(), vme.getExpectedVersion(), vme.getAttemptedVersion(), e);
     } else if(e instanceof EntityAlreadyExistsException) {
       wrappedException = new EntityAlreadyExistsException(e.getClassName(), e.getEntityName(), e);
+    } else if(e instanceof EntityConfigurationException) {
+      wrappedException = new EntityConfigurationException(e.getClassName(), e.getEntityName(), e);
     } else {
       wrappedException = new EntityException(e.getClassName(), e.getClassName(), e.getDescription(), e) {};
     }
