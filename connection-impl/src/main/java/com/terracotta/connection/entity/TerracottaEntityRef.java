@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.terracotta.connection.entity;
 
 import com.tc.object.ExceptionUtils;
@@ -28,12 +27,12 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.EntityReferencedException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -42,10 +41,9 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
+import com.tc.util.Throwables;
 import com.tc.util.Util;
 
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -135,14 +133,24 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
 
   @Override
-  public C reconfigure(C configuration) throws EntityException {
+  public C reconfigure(C configuration) throws EntityNotProvidedException, EntityConfigurationException {
     EntityID entityID = getEntityID();
     try {
       return entityClientService.deserializeConfiguration(
           this.entityManager.reconfigureEntity(entityID, this.version, entityClientService.serializeConfiguration(configuration)).get()
       );
     } catch (EntityException e) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(e);
+      // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
+      // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
+      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      if (e instanceof EntityNotProvidedException) {
+        throw (EntityNotProvidedException)e;
+      } else if (e instanceof EntityConfigurationException) {
+        throw (EntityConfigurationException) e;
+      } else {
+        // WARNING:  Assert.failure returns an exception, instead of throwing one.
+        throw Assert.failure("Unsupported exception type returned to create", e);
+      }
     } catch (InterruptedException e) {
       // We don't expect an interruption here.
       throw new RuntimeException(e);
@@ -150,7 +158,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
   
   @Override
-  public boolean destroy() throws EntityNotFoundException {
+  public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException {
     try {
       return destroyEntity();
     } catch (InterruptedException ie) {
@@ -158,7 +166,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     }
   }
 
-  private boolean destroyEntity() throws EntityNotFoundException, InterruptedException {
+  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException, InterruptedException {
     EntityID entityID = getEntityID();
     InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version);
     boolean success = false;
@@ -169,10 +177,16 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      if (e instanceof EntityNotFoundException) {
+      if (e instanceof EntityNotProvidedException) {
+        throw (EntityNotProvidedException)e;
+      } else if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
       } else if (e instanceof EntityReferencedException) {
         success = false;
+      } else {
+        // This is something unsupported so there is probably some wire-level corruption so throw it as runtime so we can
+        //  examine what went wrong, at a higher level.
+        Throwables.propagate(e);
       }
     }
     
