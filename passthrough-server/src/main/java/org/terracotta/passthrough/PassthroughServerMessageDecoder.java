@@ -72,11 +72,18 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     
     // Now, before we can actually RUN the message, we need to make sure that we wait for its replicated copy to complete
     // on the passive.
+    // In order to implement the consensus model, we also need to see if the passives experienced success or failure when running the replicated message.
+    // Either all the servers need to succeed, all them need to fail, or any failing servers must be crashed.
+    // (note that we only use this in the create/reconfigure cases, for now).
+    Set<PassthroughServerProcess> failingServers = new HashSet<PassthroughServerProcess>();
     if (shouldReplicate && this.downstreamPassives.size() > 0) {
       for (PassthroughServerProcess passive : downstreamPassives) {
         PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(this.sender);
         passive.sendMessageToServerFromActive(wrapper, message);
-        wrapper.waitForComplete();
+        boolean didSucceed = wrapper.waitForComplete();
+        if (!didSucceed) {
+          failingServers.add(passive);
+        }
       }
     }
     
@@ -120,7 +127,11 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
             this.lifeCycleMessageHandler.failureInMessage(clientOriginID, transactionID, oldestTransactionID, error);
           }
         }
-        sendCompleteResponse(sender, transactionID, response, error);
+        // Before sending the complete, determine how to handle the case where there is an inconsistency across the stripe.
+        boolean shouldSendResponse = handleConsensus(failingServers, error);
+        if (shouldSendResponse) {
+          sendCompleteResponse(sender, transactionID, response, error);
+        }
         break;
       }
       case RECONFIGURE_ENTITY: {
@@ -163,7 +174,11 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
             this.lifeCycleMessageHandler.failureInMessage(clientOriginID, transactionID, oldestTransactionID, error);
           }
         }
-        sendCompleteResponse(sender, transactionID, response, error);
+        // Before sending the complete, determine how to handle the case where there is an inconsistency across the stripe.
+        boolean shouldSendResponse = handleConsensus(failingServers, error);
+        if (shouldSendResponse) {
+          sendCompleteResponse(sender, transactionID, response, error);
+        }
         break;
       }      
       case DESTROY_ENTITY: {
@@ -417,6 +432,32 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         break;
     }
     return null;
+  }
+
+  /**
+   * 
+   * @param failingServers
+   * @param error
+   * @return True if the response should be sent (false implies that we are the one being crashed so we shouldn't respond).
+   */
+  private boolean handleConsensus(Set<PassthroughServerProcess> failingServers, EntityException error) {
+    boolean shouldSendResponse = true;
+    if (null == error) {
+      // This was a success so kill any other servers which don't agree.
+      for (PassthroughServerProcess serverProcess : failingServers) {
+        this.crasher.terminateServerProcess(serverProcess);
+      }
+    } else {
+      // This was a failure so see if everyone failed.  If anyone succeeded, kill all failing servers and then ourself.
+      if (this.downstreamPassives.size() != failingServers.size()) {
+        for (PassthroughServerProcess serverProcess : failingServers) {
+          this.crasher.terminateServerProcess(serverProcess);
+          shouldSendResponse = false;
+        }
+        this.crasher.terminateServerProcess(this.thisServer);
+      }
+    }
+    return shouldSendResponse;
   }
 
   private void sendCompleteResponse(IMessageSenderWrapper sender, long transactionID, byte[] response, EntityException error) {
