@@ -421,7 +421,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     // The oldestTransactionID isn't relevant when sent back.
     long oldestTransactionID = -1;
     complete.setTransactionTracking(transactionID, oldestTransactionID);
-    sender.sendComplete(complete);
+    sender.sendComplete(complete, error);
     
     // Note that we will create the retire message, as well, at this point.  At this level, we don't distinguish between
     // "complete" and "retire" since the operation is logically "done".

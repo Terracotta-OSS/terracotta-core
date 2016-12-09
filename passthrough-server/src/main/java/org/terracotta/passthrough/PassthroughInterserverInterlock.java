@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import org.terracotta.exception.EntityException;
 
 /**
  * In the case where we are an active sending a message to a downstream passive, we use this implementation to provide the
@@ -26,13 +27,14 @@ package org.terracotta.passthrough;
 public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   private final IMessageSenderWrapper sender;
   private boolean isComplete = false;
+  private boolean didSucceed = false;
   private boolean isRetired = false;
   
   public PassthroughInterserverInterlock(IMessageSenderWrapper sender) {
     this.sender = sender;
   }
 
-  public synchronized void waitForComplete() {
+  public synchronized boolean waitForComplete() {
     while (!this.isComplete) {
       try {
         wait();
@@ -40,9 +42,10 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
         Assert.unexpected(e);
       }
     }
+    return this.didSucceed;
   }
 
-  public synchronized void waitForRetired() {
+  public synchronized boolean waitForRetired() {
     while (!this.isRetired) {
       try {
         wait();
@@ -50,13 +53,15 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
         Assert.unexpected(e);
       }
     }
+    return this.didSucceed;
   }
   @Override
   public void sendAck(PassthroughMessage ack) {
   }
   @Override
-  public synchronized void sendComplete(PassthroughMessage complete) {
+  public synchronized void sendComplete(PassthroughMessage complete, EntityException error) {
     this.isComplete = true;
+    this.didSucceed = (null == error);
     notifyAll();
   }
   @Override

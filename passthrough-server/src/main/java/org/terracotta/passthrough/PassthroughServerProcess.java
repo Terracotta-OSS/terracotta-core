@@ -373,7 +373,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         sender.sendMessageToClient(PassthroughServerProcess.this, ack.asSerializedBytes());
       }
       @Override
-      public void sendComplete(PassthroughMessage complete) {
+      public void sendComplete(PassthroughMessage complete, EntityException error) {
         sender.sendMessageToClient(PassthroughServerProcess.this, complete.asSerializedBytes());
       }
       @Override
@@ -421,7 +421,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
           // Do nothing on ack.
         }
         @Override
-        public void sendComplete(PassthroughMessage complete) {
+        public void sendComplete(PassthroughMessage complete, EntityException error) {
           // Do nothing on complete.
         }
         @Override
