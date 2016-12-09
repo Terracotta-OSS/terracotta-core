@@ -32,6 +32,7 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
+import org.terracotta.exception.PermanentEntityException;
 
 import com.tc.exception.EntityReferencedException;
 import com.tc.logging.TCLogger;
@@ -108,7 +109,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
 
   @Override
-  public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException {
+  public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException, EntityConfigurationException {
     EntityID entityID = getEntityID();
     try {
       this.entityManager.createEntity(entityID, this.version, entityClientService.serializeConfiguration(configuration)).get();
@@ -122,6 +123,8 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
         throw (EntityAlreadyExistsException)e;
       } else if (e instanceof EntityVersionMismatchException) {
         throw (EntityVersionMismatchException)e;
+      } else if (e instanceof EntityConfigurationException) {
+        throw (EntityConfigurationException) e;
       } else {
         // WARNING:  Assert.failure returns an exception, instead of throwing one.
         throw Assert.failure("Unsupported exception type returned to create", e);
@@ -158,7 +161,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
   
   @Override
-  public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException {
+  public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException {
     try {
       return destroyEntity();
     } catch (InterruptedException ie) {
@@ -166,7 +169,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     }
   }
 
-  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException, InterruptedException {
+  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException, InterruptedException {
     EntityID entityID = getEntityID();
     InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version);
     boolean success = false;
@@ -181,6 +184,8 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
+      } else if (e instanceof PermanentEntityException) {
+        throw (PermanentEntityException)e;
       } else if (e instanceof EntityReferencedException) {
         success = false;
       } else {
