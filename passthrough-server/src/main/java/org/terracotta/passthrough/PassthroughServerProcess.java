@@ -117,6 +117,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private LifeCycleMessageHandler lifeCycleMessageHandler;
   private final PassthroughRetirementManager retirementManager;
   private PassthroughTransactionOrderManager transactionOrderManager;
+  private final IAsynchronousServerCrasher crasher;
   
   private static final AtomicInteger processIdGen = new AtomicInteger(0);
   
@@ -128,7 +129,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private boolean isHandlingResends;
 
 
-  public PassthroughServerProcess(String serverName, int bindPort, int groupPort, Collection<Object> extendedConfigurationObjects, boolean isActiveMode) {
+  public PassthroughServerProcess(String serverName, int bindPort, int groupPort, Collection<Object> extendedConfigurationObjects, boolean isActiveMode, IAsynchronousServerCrasher crasher) {
     this.serverName = serverName;
     this.bindPort = bindPort;
     this.groupPort = groupPort;
@@ -145,6 +146,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.nextConsumerID = 0;
     this.processID = processIdGen.incrementAndGet();
     this.retirementManager = new PassthroughRetirementManager();
+    Assert.assertTrue(null != crasher);
+    this.crasher = crasher;
   }
 
   @SuppressWarnings("unchecked")
@@ -501,7 +504,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   
   private void serverThreadHandleMessage(IMessageSenderWrapper sender, byte[] message) {
     // Called on the server thread to handle a message.
-    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this.transactionOrderManager, this.lifeCycleMessageHandler, this.downstreamPassives, sender, message);
+    PassthroughMessageCodec.Decoder<Void> decoder = new PassthroughServerMessageDecoder(this, this, this.transactionOrderManager, this.lifeCycleMessageHandler, this.downstreamPassives, sender, this.crasher, message);
     PassthroughMessageCodec.decodeRawMessage(decoder, message);
   }
 

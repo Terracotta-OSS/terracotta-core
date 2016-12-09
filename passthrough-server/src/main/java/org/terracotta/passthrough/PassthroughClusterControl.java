@@ -34,6 +34,7 @@ public class PassthroughClusterControl implements IClusterControl {
   private PassthroughServer activeServer;
   // A spot to store the most recently active server is we brought it down with nothing else running.  This is so we can re-attach the clients, later.
   private PassthroughServer mostRecentlyStoppedActiveServer;
+  private final PassthroughServerCrasher crasher;
 
   /**
    * Constructs a PassthroughClusterControl with given stripeName and servers (at least one server needed to define a
@@ -45,11 +46,15 @@ public class PassthroughClusterControl implements IClusterControl {
    */
   public PassthroughClusterControl(String stripeName, PassthroughServer passthroughServer, PassthroughServer... passthroughServers) {
     this.stripeName = stripeName;
+    this.crasher = new PassthroughServerCrasher(this);
+    this.crasher.start();
     Assert.assertTrue(passthroughServer != null);
     this.passthroughServers.add(passthroughServer);
+    passthroughServer.registerAsynchronousServerCrasher(this.crasher);
     for (PassthroughServer ps : passthroughServers) {
       Assert.assertTrue(ps != null);
       this.passthroughServers.add(ps);
+      ps.registerAsynchronousServerCrasher(this.crasher);
     }
     bootstrapCluster();
   }
@@ -71,6 +76,10 @@ public class PassthroughClusterControl implements IClusterControl {
 
   @Override
   public synchronized void startOneServer() {
+    internalStartOneServer();
+  }
+
+  private void internalStartOneServer() {
     try {
       PassthroughServer terminatedServer = this.stoppedPassthroughServers.remove(0);
       startTerminatedServer(terminatedServer);
@@ -89,38 +98,7 @@ public class PassthroughClusterControl implements IClusterControl {
 
   @Override
   public synchronized void terminateActive() {
-    Assert.assertTrue(this.activeServer != null);
-    final PassthroughServer prevActiveServer = this.activeServer;
-    this.activeServer = null;
-
-    // disconnect clients and stop current active
-    prevActiveServer.disconnectClients();
-    prevActiveServer.stop();
-
-    Assert.assertTrue(PassthroughServerRegistry.getSharedInstance().unregisterServer(this.stripeName) == prevActiveServer);
-
-    // add current active to stopped servers list, so that election code won't consider this server
-    this.stoppedPassthroughServers.add(prevActiveServer);
-
-    final PassthroughServer electedActive = electActive();
-    //electedActive could be null, when there is only one server in this cluster
-    if(electedActive != null) {
-      electedActive.promoteToActive();
-
-      // attach all passives to new active and connect clients from old active
-      attachPassivesToActive(electedActive);
-      prevActiveServer.connectSavedClientsTo(electedActive);
-
-      PassthroughServer prevActive = PassthroughServerRegistry.getSharedInstance().registerServer(this.stripeName, electedActive);
-      Assert.assertTrue(prevActive == null);
-
-      this.activeServer = electedActive;
-      this.notifyAll();
-    } else {
-      // In this case, it means that no server in the stripe is running, at all.  In that case, we still need to hold onto this active server so that we can re-attach clients, whenever something is started.
-      Assert.assertTrue(null == this.mostRecentlyStoppedActiveServer);
-      this.mostRecentlyStoppedActiveServer = prevActiveServer;
-    }
+    internalTerminateActive();
   }
 
   @Override
@@ -134,15 +112,19 @@ public class PassthroughClusterControl implements IClusterControl {
       }
     }
     if (null != victim) {
-      // Disconnect it from the active.
-      if (null != this.activeServer) {
-        this.activeServer.detachDownstreamPassive(victim);
-      }
-      // Stop the server.
-      victim.stop();
-      // Add it to our stopped list so we don't consider it for election.
-      this.stoppedPassthroughServers.add(victim);
+      internalTerminatePassive(victim);
     }
+  }
+
+  private void internalTerminatePassive(PassthroughServer victim) {
+    // Disconnect it from the active.
+    if (null != this.activeServer) {
+      this.activeServer.detachDownstreamPassive(victim);
+    }
+    // Stop the server.
+    victim.stop();
+    // Add it to our stopped list so we don't consider it for election.
+    this.stoppedPassthroughServers.add(victim);
   }
 
   @Override
@@ -170,7 +152,25 @@ public class PassthroughClusterControl implements IClusterControl {
     }
   }
 
+  public synchronized void restartOneServerFromInside(PassthroughServerProcess victim) {
+    // Walk all the servers, terminating the one with victim as the underlying process.
+    for (PassthroughServer candidate : this.passthroughServers) {
+      if (!this.stoppedPassthroughServers.contains(candidate)  && (candidate.isRunningProcess(victim))) {
+        // Terminate this server.
+        if (candidate == this.activeServer) {
+          internalTerminateActive();
+        } else {
+          internalTerminatePassive(candidate);
+        }
+        // Now, restart it.
+        internalStartOneServer();
+        break;
+      }
+    }
+  }
+
   public void tearDown() {
+    this.crasher.waitForStop();
     for (PassthroughServer passthroughServer : passthroughServers) {
       // don't stop twice
       if(!stoppedPassthroughServers.contains(passthroughServer)) {
@@ -251,6 +251,41 @@ public class PassthroughClusterControl implements IClusterControl {
 
       this.activeServer = lastTerminatedServer;
       this.notifyAll();
+    }
+  }
+
+  private void internalTerminateActive() {
+    Assert.assertTrue(this.activeServer != null);
+    final PassthroughServer prevActiveServer = this.activeServer;
+    this.activeServer = null;
+
+    // disconnect clients and stop current active
+    prevActiveServer.disconnectClients();
+    prevActiveServer.stop();
+
+    Assert.assertTrue(PassthroughServerRegistry.getSharedInstance().unregisterServer(this.stripeName) == prevActiveServer);
+
+    // add current active to stopped servers list, so that election code won't consider this server
+    this.stoppedPassthroughServers.add(prevActiveServer);
+
+    final PassthroughServer electedActive = electActive();
+    //electedActive could be null, when there is only one server in this cluster
+    if(electedActive != null) {
+      electedActive.promoteToActive();
+
+      // attach all passives to new active and connect clients from old active
+      attachPassivesToActive(electedActive);
+      prevActiveServer.connectSavedClientsTo(electedActive);
+
+      PassthroughServer prevActive = PassthroughServerRegistry.getSharedInstance().registerServer(this.stripeName, electedActive);
+      Assert.assertTrue(prevActive == null);
+
+      this.activeServer = electedActive;
+      this.notifyAll();
+    } else {
+      // In this case, it means that no server in the stripe is running, at all.  In that case, we still need to hold onto this active server so that we can re-attach clients, whenever something is started.
+      Assert.assertTrue(null == this.mostRecentlyStoppedActiveServer);
+      this.mostRecentlyStoppedActiveServer = prevActiveServer;
     }
   }
 }

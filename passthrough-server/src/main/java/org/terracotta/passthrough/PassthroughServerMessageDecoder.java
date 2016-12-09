@@ -35,20 +35,23 @@ import org.terracotta.passthrough.PassthroughMessage.Type;
  * It is used entirely on the server thread.
  */
 public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.Decoder<Void> {
+  private final PassthroughServerProcess thisServer;
   private final MessageHandler messageHandler;
   private final PassthroughTransactionOrderManager transactionOrderManager;
   private final LifeCycleMessageHandler lifeCycleMessageHandler;
   private final Set<PassthroughServerProcess> downstreamPassives = new HashSet<PassthroughServerProcess>();
   private final IMessageSenderWrapper sender;
+  private final IAsynchronousServerCrasher crasher;
   private final byte[] message;
 
-  public PassthroughServerMessageDecoder(MessageHandler messageHandler, PassthroughTransactionOrderManager
-    transactionOrderManager, LifeCycleMessageHandler lifeCycleMessageHandler, Set<PassthroughServerProcess> downstreamPassives, IMessageSenderWrapper sender, byte[] message) {
+  public PassthroughServerMessageDecoder(PassthroughServerProcess thisServer, MessageHandler messageHandler, PassthroughTransactionOrderManager transactionOrderManager, LifeCycleMessageHandler lifeCycleMessageHandler, Set<PassthroughServerProcess> downstreamPassives, IMessageSenderWrapper sender, IAsynchronousServerCrasher crasher, byte[] message) {
+    this.thisServer = thisServer;
     this.messageHandler = messageHandler;
     this.transactionOrderManager = transactionOrderManager;
     this.lifeCycleMessageHandler = lifeCycleMessageHandler;
     this.downstreamPassives.addAll(downstreamPassives);
     this.sender = sender;
+    this.crasher = crasher;
     this.message = message;
   }
   @Override
