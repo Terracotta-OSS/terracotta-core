@@ -59,12 +59,15 @@ public class PassthroughServer implements PassthroughDumper {
   private PassthroughConnection pseudoConnection;
   private PassthroughMonitoringProducer monitoringProducer;
   
+  private IAsynchronousServerCrasher crasher;
+  
   // We also track various information for the restart case.
   private final List<EntityServerService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final List<ServiceProviderAndConfiguration> overrideServiceProviderData;
   private final Collection<Object> extendedConfigurationObjects;
   private final Map<Long, PassthroughConnection> savedClientConnections;
+  
   
   public PassthroughServer() {
     this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
@@ -75,6 +78,12 @@ public class PassthroughServer implements PassthroughDumper {
     this.overrideServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.extendedConfigurationObjects = new Vector<Object>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
+  }
+
+  public void registerAsynchronousServerCrasher(IAsynchronousServerCrasher crasher) {
+    // This should only be set once.
+    Assert.assertNull(this.crasher);
+    this.crasher = crasher;
   }
 
   public void setServerName(String serverName) {
@@ -154,7 +163,7 @@ public class PassthroughServer implements PassthroughDumper {
   }
   
   private void bootstrapProcess(boolean active) {
-    this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, this.extendedConfigurationObjects, active);
+    this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, this.extendedConfigurationObjects, active, this.crasher);
 
     // Populate the server with its services.
     for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
@@ -290,6 +299,11 @@ public class PassthroughServer implements PassthroughDumper {
     this.serverProcess.promoteToActive();
     this.serverProcess.resumeMessageProcessing();
   }
+
+  public boolean isRunningProcess(PassthroughServerProcess victim) {
+    return (this.serverProcess == victim);
+  }
+
 
   private static class ServiceProviderAndConfiguration {
     public final ServiceProvider serviceProvider;

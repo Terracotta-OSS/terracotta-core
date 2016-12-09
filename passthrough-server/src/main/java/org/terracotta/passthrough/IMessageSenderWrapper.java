@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import org.terracotta.exception.EntityException;
 
 /**
  * An interface used to represent the party who sent a message to a server.
@@ -28,7 +29,7 @@ package org.terracotta.passthrough;
  */
 public interface IMessageSenderWrapper {
   void sendAck(PassthroughMessage ack);
-  void sendComplete(PassthroughMessage complete);
+  void sendComplete(PassthroughMessage complete, EntityException error);
   void sendRetire(PassthroughMessage retire);
   PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID);
   /**

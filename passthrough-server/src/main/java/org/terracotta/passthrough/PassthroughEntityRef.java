@@ -24,6 +24,7 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
@@ -85,7 +86,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException {
+  public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException, EntityConfigurationException {
     // Make sure that we have a service provider.
     if (null != this.service) {
       // NOTE:  We use a try-lock so that we can emulate the "fast fail" semantics now desired for create() - failure to acquire the lock
@@ -104,6 +105,8 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
           throw (EntityAlreadyExistsException) e;
         } else if (e instanceof EntityVersionMismatchException) {
           throw (EntityVersionMismatchException) e;
+        } else if (e instanceof EntityConfigurationException) {
+          throw (EntityConfigurationException) e;
         } else {
           Assert.unexpected(e);
         }
@@ -117,36 +120,34 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   
 
   @Override
-  public C reconfigure(C configuration) throws EntityException {
+  public C reconfigure(C configuration) throws EntityNotProvidedException, EntityConfigurationException {
+    C result = null;
     // Make sure that we have a service provider.
     if (null != this.service) {
+      byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
+      PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
+      PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(reconfig);
+      received.blockGetOnRetire();
       try {
-        byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-        PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
-        PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(reconfig);
-        received.blockGetOnRetire();
-        try {
-          return this.service.deserializeConfiguration(received.get());
-        } catch (EntityException e) {
-          // Check that this is the correct type.
-          if (e instanceof EntityNotProvidedException) {
-            throw (EntityNotProvidedException) e;
-          } else if (e instanceof EntityAlreadyExistsException) {
-            throw (EntityAlreadyExistsException) e;
-          } else if (e instanceof EntityVersionMismatchException) {
-            throw (EntityVersionMismatchException) e;
-          } else {
-            throw e;
-          }
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
+        result = this.service.deserializeConfiguration(received.get());
+      } catch (EntityException e) {
+        // Check that this is the correct type.
+        if (e instanceof EntityNotProvidedException) {
+          throw (EntityNotProvidedException) e;
+        } else if (e instanceof EntityConfigurationException) {
+          throw (EntityConfigurationException) e;
+        } else {
+          // This isn't a supported entity type.
+          Assert.unexpected(e);
         }
-      } finally {
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
     } else {
       throw new EntityNotProvidedException(this.clazz.getName(), this.name);
     }
-  }  
+    return result;
+  }
 
   @Override
   public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException {
