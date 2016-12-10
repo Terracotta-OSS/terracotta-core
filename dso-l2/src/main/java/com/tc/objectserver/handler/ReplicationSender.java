@@ -30,6 +30,7 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
+import com.tc.objectserver.entity.MessagePayload;
 import com.tc.util.Assert;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   private final Map<NodeID, AtomicLong> ordering = new HashMap<>();
   private final Map<NodeID, SyncState> filtering = new HashMap<>();
   private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
+  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
 
   public ReplicationSender(GroupManager group) {
     this.group = group;
@@ -86,6 +88,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         msg.setReplicationID(rOrder.getAndIncrement());
         if (logger.isDebugEnabled()) {
           logger.debug("WIRE:" + msg);
+        }
+        if (PLOGGER.isDebugEnabled()) {
+          PLOGGER.debug("SENDING:" + msg.getDebugId());
         }
         group.sendTo(nodeid, msg);
         if (msg.getType() == ReplicationMessage.START) {

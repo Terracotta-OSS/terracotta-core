@@ -635,7 +635,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               for (NodeID passive : passives) {
                 try {
                   byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
-                  executor.scheduleSync(ReplicationMessage.createPayloadMessage(id, version, concurrencyKey, message), passive).waitForCompleted();
+                  executor.scheduleSync(ReplicationMessage.createPayloadMessage(id, version, concurrencyKey, message, ""), passive).waitForCompleted();
                 } catch (EntityUserException eu) {
                 // TODO: do something reasoned here
                   throw new RuntimeException(eu);

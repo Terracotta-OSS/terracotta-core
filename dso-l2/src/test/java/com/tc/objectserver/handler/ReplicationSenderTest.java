@@ -103,7 +103,7 @@ public class ReplicationSenderTest {
       case SYNC_ENTITY_CONCURRENCY_END:
         return ReplicationMessage.createEndEntityKeyMessage(entity, 1, concurrency++);
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-        return ReplicationMessage.createPayloadMessage(entity, 1, concurrency, new byte[0]);
+        return ReplicationMessage.createPayloadMessage(entity, 1, concurrency, new byte[0], "");
       case SYNC_ENTITY_END:
         return ReplicationMessage.createEndEntityMessage(entity, 1);
       default:

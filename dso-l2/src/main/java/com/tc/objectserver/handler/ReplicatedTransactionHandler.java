@@ -70,6 +70,7 @@ import org.terracotta.exception.EntityException;
 
 
 public class ReplicatedTransactionHandler {
+  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
@@ -180,6 +181,9 @@ public class ReplicatedTransactionHandler {
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
+    if (PLOGGER.isDebugEnabled()) {
+      PLOGGER.debug("RECEIVED:" + rep.getDebugId());
+    }
     switch (rep.getType()) {
       case ReplicationMessage.REPLICATE:
         if (state.ignore(rep)) {

@@ -91,4 +91,9 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   public static EntityDescriptor readFrom(TCByteBufferInput serialInput) throws IOException {
     return new EntityDescriptor(EntityID.readFrom(serialInput), ClientInstanceID.readFrom(serialInput), serialInput.readLong());
   }
+
+  @Override
+  public String toString() {
+    return "EntityDescriptor{" + "entityID=" + entityID + ", clientInstanceID=" + clientInstanceID + '}';
+  }
 }
