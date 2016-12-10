@@ -915,6 +915,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final Runnable original;
     private final int concurrency;
     private ActivePassiveAckWaiter  waitFor;
+    private boolean waitForReplication = false;
 
     public SchedulingRunnable(EntityDescriptor desc, ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
       this.desc = desc;
@@ -949,6 +950,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           replicate = loc.runOnPassive();
         }
       } 
+      waitForReplication = replicate;
       waitFor = executor.scheduleRequest(desc, request, payload, this, replicate, concurrency);
       this.notifyAll();
     }
@@ -975,8 +977,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         while (waitFor == null) {
           this.wait();
         }
-        waitFor.waitForCompleted();
-        return waitFor;
+        if (waitForReplication) {
+          waitFor.waitForCompleted();
+        } else {
+          waitFor.waitForReceived();
+        }
+        return waitForReplication ? waitFor : null;
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }

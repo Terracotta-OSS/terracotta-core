@@ -153,10 +153,6 @@ public class RequestProcessor {
         this.replicationWaiter.waitForReceived();
         // We can now run the invoke.
         invoke.run();
-        // Now that we are done, wait for the passive to finish.
-        this.replicationWaiter.waitForCompleted();
-        // We are now completely finished.
-        finish();
     }
 
     @Override
@@ -164,15 +160,6 @@ public class RequestProcessor {
 // anything on the management key needs a complete flush of all the queues
 // the hydrate stage does not need to be flushed as each client 
       return (key == ConcurrencyStrategy.MANAGEMENT_KEY);
-    }
-    
-    private synchronized void finish() {
-      done = true;
-      this.notifyAll();
-    }
-    
-    synchronized boolean isDone() {
-      return done;
     }
   }
 }
