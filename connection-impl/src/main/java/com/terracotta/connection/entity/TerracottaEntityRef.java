@@ -34,6 +34,7 @@ import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 
+import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -45,11 +46,13 @@ import com.tc.util.Assert;
 import com.tc.util.Throwables;
 import com.tc.util.Util;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C> {
-  private final TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
+  private final static TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
   private final ClientEntityManager entityManager;
   private final Class<T> type;
   private final long version;
@@ -107,17 +110,42 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   private EntityID getEntityID() {
     return new EntityID(type.getName(), name);
   }
+  
+  private static <R> R tryWhileBusy(String name, Callable<R> op) throws EntityException, InterruptedException {
+    while (true) {
+      try {
+        return op.call();
+      } catch (EntityBusyException eb) {
+  //  server was busy, try again in 2 seconds
+        TimeUnit.SECONDS.sleep(2);
+        logger.info("Operation delayed:" + name + ", busy wait");
+      } catch (EntityException e) {
+        throw e;
+      } catch (InterruptedException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException("unexpected", e);
+      }
+    }
+  }
 
   @Override
-  public void create(C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException, EntityConfigurationException {
-    EntityID entityID = getEntityID();
+  public void create(final C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException, EntityConfigurationException {
+    final EntityID entityID = getEntityID();
     try {
-      this.entityManager.createEntity(entityID, this.version, entityClientService.serializeConfiguration(configuration)).get();
+      tryWhileBusy("create" , new Callable<Void>() {
+        public Void call() throws EntityException, InterruptedException {
+          entityManager.createEntity(entityID, version, entityClientService.serializeConfiguration(configuration)).get();
+          return null;
+        }
+      });
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
       e = ExceptionUtils.addLocalStackTraceToEntityException(e);
-      if (e instanceof EntityNotProvidedException) {
+      if (e instanceof EntityBusyException) {
+      // busy, try again in 2 sec
+      } else if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityAlreadyExistsException) {
         throw (EntityAlreadyExistsException)e;
@@ -136,12 +164,15 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
 
   @Override
-  public C reconfigure(C configuration) throws EntityNotProvidedException, EntityConfigurationException {
-    EntityID entityID = getEntityID();
+  public C reconfigure(final C configuration) throws EntityNotProvidedException, EntityConfigurationException {
+    final EntityID entityID = getEntityID();
     try {
-      return entityClientService.deserializeConfiguration(
-          this.entityManager.reconfigureEntity(entityID, this.version, entityClientService.serializeConfiguration(configuration)).get()
-      );
+      return tryWhileBusy("reconfigure" , new Callable<C>() {
+        public C call() throws EntityException, InterruptedException {
+          return entityClientService.deserializeConfiguration(
+            entityManager.reconfigureEntity(entityID, version, entityClientService.serializeConfiguration(configuration)).get());
+        }
+      });
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
@@ -152,7 +183,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
         throw (EntityConfigurationException) e;
       } else {
         // WARNING:  Assert.failure returns an exception, instead of throwing one.
-        throw Assert.failure("Unsupported exception type returned to create", e);
+        throw Assert.failure("Unsupported exception type returned to reconfigure", e);
       }
     } catch (InterruptedException e) {
       // We don't expect an interruption here.
@@ -164,12 +195,18 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException {
     try {
       return destroyEntity();
+    } catch (EntityException e) {
+      if (e instanceof EntityNotFoundException) {
+        throw (EntityNotFoundException)e;
+      } else {
+        throw new RuntimeException("unexpected", e);
+      }
     } catch (InterruptedException ie) {
       return false;
     }
   }
 
-  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException, InterruptedException {
+  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException, InterruptedException, EntityBusyException {
     EntityID entityID = getEntityID();
     InvokeFuture<byte[]> future = this.entityManager.destroyEntity(entityID, this.version);
     boolean success = false;
@@ -182,6 +219,9 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
+      } else if (e instanceof EntityBusyException) {
+        logger.info("Operation failed: destroy.  busy wait");
+        success = false;
       } else if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
       } else if (e instanceof PermanentEntityException) {
