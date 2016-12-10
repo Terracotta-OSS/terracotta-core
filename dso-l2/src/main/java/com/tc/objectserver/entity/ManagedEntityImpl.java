@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
@@ -53,7 +54,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.FlightControl;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -111,8 +111,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   //  reconnect access has to be exclusive.  it is out-of-band from normal invoke access
   private final ReadWriteLock reconnectAccessLock = new ReentrantReadWriteLock();
-  private final FlightControl syncingThreads = new FlightControl();
-  private final FlightControl lifecycleInflight = new FlightControl();
+  private final ManagedEntitySyncInterop interop = new ManagedEntitySyncInterop();
   // NOTE:  This may be removed in the future if we change how we access the config from the ServerEntityService but
   //  it presently holds the config we used when we first created passiveServerEntity (if it isn't null).  It is used
   //  when we promote to an active.
@@ -201,15 +200,32 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void processLifecycleEntity(ServerEntityRequest create, MessagePayload data, ResultCapture resp) {
+    boolean schedule = true;
     if (this.isInActiveState) {
 //  this is the process transaction handler thread adding a lifecycle to the message flow of this entity.  
 //  before it can proceed, need to make sure any syncs are completed so the concurrency strategy is not changed out from 
 //  under it.
-      waitForSyncToFinish();
+      switch(create.getAction()) {
+        case CREATE_ENTITY:
+        case DESTROY_ENTITY:
+        case RECONFIGURE_ENTITY:
+          schedule = interop.tryStartLifecycle();
+          break;
+        case FETCH_ENTITY:
+        case RELEASE_ENTITY:
+          interop.startReference();
+          break;
+        default:
+          throw new AssertionError("unexpected");
+      }
     }
-    scheduleInOrder(getEntityDescriptorForSource(create.getSourceDescriptor()), create, resp, data , ()-> {
-      invokeLifecycleOperation(create, data, resp);
-    }, ConcurrencyStrategy.MANAGEMENT_KEY);
+    if (schedule) {
+      scheduleInOrder(getEntityDescriptorForSource(create.getSourceDescriptor()), create, resp, data , ()-> {
+        invokeLifecycleOperation(create, data, resp);
+      }, ConcurrencyStrategy.MANAGEMENT_KEY);
+    } else {
+      resp.failure(new EntityBusyException(id.getClassName(), id.getEntityName(), "entity is busy in sync, retry"));
+    }
   }
   
   private void processNoopMessage(ServerEntityRequest request, ResultCapture resp) {
@@ -386,7 +402,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw new RuntimeException(wrapper);
     } finally {
       read.unlock();
-      lifecycleFinished();
+      if (this.isInActiveState) {
+        interop.finishLifecycle();
+      }
     }
   }
 
@@ -781,84 +799,47 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   @Override
   public void sync(NodeID passive) {
-      waitForLifecycleToFinish();
-  // iterate through all the concurrency keys of an entity
-      EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
-  //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
-      PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
+    interop.startSync();
+// iterate through all the concurrency keys of an entity
+    EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
+//  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
+    PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
-      BarrierCompletion opComplete = new BarrierCompletion();
-      this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
-          Assert.assertTrue(this.isInActiveState);
-          if (!this.isDestroyed) {
-            executor.scheduleSync(ReplicationMessage.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
-          }
-          opComplete.complete();
-        }, true, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
-      //  wait for completed above waits for acknowledgment from the passive
-      //  waitForCompletion below waits for completion of the local request processor
-      opComplete.waitForCompletion();
-  // wait for future is ok, occuring on sync executor thread
-      try {
+    BarrierCompletion opComplete = new BarrierCompletion();
+    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
+        Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
-          for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {
-            // We don't actually use the message in the direct strategy so this is safe.
-            //  don't care about the result
-            BarrierCompletion sectionComplete = new BarrierCompletion();
-            this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.EMPTY,  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.EMPTY, concurrency), true, concurrency).waitForCompleted();
-          //  wait for completed above waits for acknowledgment from the passive
-          //  waitForCompletion below waits for completion of the local request processor
-            sectionComplete.waitForCompletion();
-            executor.scheduleSync(ReplicationMessage.createEndEntityKeyMessage(id, version, concurrency), passive).waitForCompleted();
-          }
+          executor.scheduleSync(ReplicationMessage.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
         }
-      } finally {
-        syncFinished();
+        opComplete.complete();
+      }, true, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
+    //  wait for completed above waits for acknowledgment from the passive
+    //  waitForCompletion below waits for completion of the local request processor
+    opComplete.waitForCompletion();
+    interop.syncStarted();
+// wait for future is ok, occuring on sync executor thread
+    try {
+      if (!this.isDestroyed) {
+        for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {
+          // We don't actually use the message in the direct strategy so this is safe.
+          //  don't care about the result
+          BarrierCompletion sectionComplete = new BarrierCompletion();
+          this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.EMPTY,  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.EMPTY, concurrency), true, concurrency).waitForCompleted();
+        //  wait for completed above waits for acknowledgment from the passive
+        //  waitForCompletion below waits for completion of the local request processor
+          sectionComplete.waitForCompletion();
+          executor.scheduleSync(ReplicationMessage.createEndEntityKeyMessage(id, version, concurrency), passive).waitForCompleted();
+        }
       }
   //  end passive sync for an entity
   // wait for future is ok, occuring on sync executor thread
       if (!this.isDestroyed) {
         executor.scheduleSync(ReplicationMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
       }
+    } finally {
+      interop.syncFinished();
+    }
   }  
-  /**
-   * sync and lifecycle must not step on each other
-   * this method is called by sync before stepping the concurrency keys
-   */
-  private void waitForLifecycleToFinish() {
- // synchronize on lifecycle to prevent deadlock
-    synchronized (lifecycleInflight) {
-      lifecycleInflight.waitForOperationsToComplete();
-      syncingThreads.startOperation();
-    }
-  }
-  /**
-   * sync and lifecycle MUST be exclusive events from each other. 
-   * TODO:  This is very expensive as it blocks the process transaction
-   * handler thread.  ASAP, rework this exclusive access for each lifecycle type
-   * to minimize the blocking
-   */  
-  private void waitForSyncToFinish() {
- // synchronize on lifecycle to prevent deadlock
-    synchronized (lifecycleInflight) {
-      syncingThreads.waitForOperationsToComplete();
-      lifecycleInflight.startOperation();
-    }
-  }
-  /**
-   * sync and lifecycle MUST be exclusive events from each other. 
-   * sync is finished stepping the keys
-   */
-  private void syncFinished() {
-    syncingThreads.finishOperation();
-  }
-  /**
-   * sync and lifecycle MUST be exclusive events from each other. 
-   * lifecycle has completed
-   */
-  private void lifecycleFinished() {
-    lifecycleInflight.finishOperation();
-  }
 
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     this.constructorInfo = constructorInfo;

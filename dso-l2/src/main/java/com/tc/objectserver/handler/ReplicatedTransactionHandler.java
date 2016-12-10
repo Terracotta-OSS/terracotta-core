@@ -597,6 +597,9 @@ public class ReplicatedTransactionHandler {
       assertStarted(null);
       Assert.assertNull(syncing);
       syncing = eid;
+// these keys are never sync'd only replicated so add them to the set
+      syncdKeys.add(ConcurrencyStrategy.MANAGEMENT_KEY);
+      syncdKeys.add(ConcurrencyStrategy.UNIVERSAL_KEY);
       LOGGER.debug("Starting " + eid);
     }
     
