@@ -162,6 +162,8 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     } catch (EntityException e) {
       if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
+      } else if (e instanceof PermanentEntityException) {
+        throw (PermanentEntityException)e;
       } else {
         throw new RuntimeException("unexpected", e);
       }
