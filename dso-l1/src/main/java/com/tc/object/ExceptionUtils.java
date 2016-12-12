@@ -1,6 +1,7 @@
 package com.tc.object;
 
 import com.tc.exception.EntityBusyException;
+import com.tc.exception.EntityReferencedException;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
@@ -35,7 +36,9 @@ public class ExceptionUtils {
     } else if(e instanceof EntityBusyException) {
       wrappedException = new EntityBusyException(e.getClassName(), e.getEntityName(), e);
     } else {
-      wrappedException = new EntityException(e.getClassName(), e.getClassName(), e.getDescription(), e) {};
+//  just return the remote exception with remote stack, don't want to hide the type of the 
+//  exception in these cases.
+      return e;
     }
     StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
     //strip last two recent elements - getStackTrace() and this method
