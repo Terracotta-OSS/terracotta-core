@@ -157,20 +157,6 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   
   @Override
   public boolean destroy() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException {
-    try {
-      return destroyEntity();
-    } catch (EntityException e) {
-      if (e instanceof EntityNotFoundException) {
-        throw (EntityNotFoundException)e;
-      } else if (e instanceof PermanentEntityException) {
-        throw (PermanentEntityException)e;
-      } else {
-        throw new RuntimeException("unexpected", e);
-      }
-    }
-  }
-
-  private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException, PermanentEntityException {
     EntityID entityID = getEntityID();
     
     try {
