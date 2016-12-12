@@ -76,6 +76,15 @@ public final class ManagedEntitySyncInterop implements Serializable {
       throw new RuntimeException(ie);
     }
   } 
+
+  public synchronized boolean tryStartReference() {
+    if (syncsReadyToStart > 0) {
+      return false;
+    } else {
+      lifecycleOccuring += 1;
+      return true;
+    }
+  } 
   
   public synchronized void syncStarted() {
     Assert.assertTrue(syncsReadyToStart > 0);

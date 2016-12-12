@@ -213,7 +213,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           break;
         case FETCH_ENTITY:
         case RELEASE_ENTITY:
-          interop.startReference();
+          schedule = interop.tryStartReference();
           break;
         default:
           throw new AssertionError("unexpected");
@@ -830,10 +830,8 @@ public class ManagedEntityImpl implements ManagedEntity {
           sectionComplete.waitForCompletion();
           executor.scheduleSync(ReplicationMessage.createEndEntityKeyMessage(id, version, concurrency), passive).waitForCompleted();
         }
-      }
   //  end passive sync for an entity
   // wait for future is ok, occuring on sync executor thread
-      if (!this.isDestroyed) {
         executor.scheduleSync(ReplicationMessage.createEndEntityMessage(id, version), passive).waitForCompleted();
       }
     } finally {
