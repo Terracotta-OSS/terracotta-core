@@ -39,6 +39,8 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
+import com.tc.exception.EntityBusyException;
+import com.tc.exception.EntityReferencedException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -63,12 +65,17 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityUserException;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
@@ -101,7 +108,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     
     this.outbound = createSendStage(stages);
   }
-  
+
   private Sink<InFlightMessage> createSendStage(StageManager stages) {
     final EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
       @Override
@@ -226,23 +233,23 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public InvokeFuture<byte[]> createEntity(EntityID entityID, long version, byte[] config) {
+  public byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException {
     // A create needs to be replicated.
     boolean requiresReplication = true;
-    NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
+    final NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
     // Only invoke calls can wait for retire so don't wait in this path.
-    boolean shouldBlockGetOnRetire = false;
-    return createInFlightMessageAfterAcks(message, lifecycleAcks(), shouldBlockGetOnRetire);
+    final boolean shouldBlockGetOnRetire = false;
+    return sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire);
   }
 
   @Override
-  public InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, byte[] config) {
+  public byte[] reconfigureEntity(EntityID entityID, long version, byte[] config) throws EntityException {
     // A create needs to be replicated.
     boolean requiresReplication = true;
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.RECONFIGURE_ENTITY);
     // Only invoke calls can wait for retire so don't wait in this path.
     boolean shouldBlockGetOnRetire = false;
-    return createInFlightMessageAfterAcks(message, lifecycleAcks(), shouldBlockGetOnRetire);
+    return sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire);
   }
   
   private Set<VoltronEntityMessage.Acks> lifecycleAcks() {
@@ -250,7 +257,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
   
   @Override
-  public InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version) {
+  public boolean destroyEntity(EntityID entityID, long version) throws EntityException {
     // A destroy needs to be replicated.
     boolean requiresReplication = true;
     // A destroy call has no extended data.
@@ -258,7 +265,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
     // Only invoke calls can wait for retire so don't wait in this path.
     boolean shouldBlockGetOnRetire = false;
-    return createInFlightMessageAfterAcks(message, lifecycleAcks(), shouldBlockGetOnRetire);
+    try {
+      //  don't care about the return
+      sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire);
+    } catch (EntityReferencedException r) {
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -456,11 +469,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
     // A "RELEASE" doesn't matter to the passive.
+    boolean shouldBlockOnRetire = false;
     boolean requiresReplication = true;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY);
-    synchronousWaitForResponse(message, requestedAcks);
-
+    sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire);
+          
     // Note that we remove the entity from the local object store only after this release call returns in order to avoid
     // the case where a reconnect might happen before the message completes, thus causing a re-send.  If we don't include
     // this reference in the reconnect handshake, the re-sent release will try to release a non-fetched entity.
@@ -470,36 +484,38 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       closeHook.run();
     }
   }
-
-  /**
-   * Sends the message, waiting for requestedAcks, then waits for the response to come back.
-   * @return The returned byte[], on success, or throws the ExecutionException representing the failure.
-   */
-  private byte[] synchronousWaitForResponse(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks) throws EntityException {
-    // Only invoke calls can wait for retire so don't wait in this path.
-    boolean shouldBlockGetOnRetire = false;
-    InFlightMessage inFlight = createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
-    // Just wait for it.
-    byte[] result = null;
-    try {
-      result = inFlight.get();
-    } catch (InterruptedException e) {
-      // For now, we will just rethrow this until we determine how else to handle it.
-      throw new RuntimeException(e);
+  
+  private byte[] sendMessageWhileBusy(NetworkVoltronEntityMessage msg, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) throws EntityException {
+    EntityID eid = msg.getEntityDescriptor().getEntityID();
+    while (true) {
+      try {
+        return createInFlightMessageAfterAcks(msg, requestedAcks, shouldBlockGetOnRetire).get();
+      } catch (EntityBusyException busy) {
+  //  server was busy, try again in 2 seconds
+        try {
+          TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException in) {
+          throw new EntityUserException(eid.getClassName(), eid.getEntityName(), in);
+        }
+        logger.info("Operation delayed:" + msg.getVoltronType() + ", busy wait");
+        msg = createMessageWithDescriptor(msg.getEntityDescriptor(), msg.doesRequireReplication(), msg.getExtendedData(), msg.getVoltronType());
+      } catch (InterruptedException ie) {
+        throw new EntityUserException(eid.getClassName(), eid.getEntityName(), ie);
+      }
     }
-    return result;
   }
-
+  
   private byte[] internalRetrieve(EntityDescriptor entityDescriptor) throws EntityException {
     stateManager.waitUntilRunning();
 
     // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
     Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
 
+    boolean shouldBlockOnRetire = false;
     boolean requiresReplication = true;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.FETCH_ENTITY);
-    return synchronousWaitForResponse(message, requestedAcks);
+    return sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire);
   }
 
   private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) {

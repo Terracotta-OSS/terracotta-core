@@ -83,10 +83,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     SyncReplicationActivity activity = SyncReplicationActivity.createEndEntityKeyMessage(id, version, concurrency);
     return new ReplicationMessage(activity);
   }
-  public static ReplicationMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
+  public static ReplicationMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload, String debugId) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
-    SyncReplicationActivity activity = SyncReplicationActivity.createPayloadMessage(id, version, concurrency, payload);
+    SyncReplicationActivity activity = SyncReplicationActivity.createPayloadMessage(id, version, concurrency, payload, debugId);
     return new ReplicationMessage(activity);
   }
 
@@ -182,9 +182,9 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
         Assert.assertNotNull(this.activity);
         // Make sure that the message type and activity type are consistent.
         if (this.activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal()) {
-          Assert.assertTrue(SYNC == messageType);
+          Assert.assertTrue(this.activity.action, SYNC == messageType);
         } else {
-          Assert.assertTrue(REPLICATE == messageType);
+          Assert.assertTrue(this.activity.action, REPLICATE == messageType);
         }
         break;
     }
@@ -207,6 +207,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
         this.activity.serializeTo(out);
         break;
     }
+  }
+  
+  public String getDebugId() {
+    return this.getType() + " " + ((this.activity != null) ? (this.activity.debugId.length() == 0 ? this.activity.action : this.activity.debugId) : "");
   }
 
   @Override

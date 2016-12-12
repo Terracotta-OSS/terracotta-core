@@ -70,6 +70,7 @@ import org.terracotta.exception.EntityException;
 
 
 public class ReplicatedTransactionHandler {
+  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
@@ -180,6 +181,9 @@ public class ReplicatedTransactionHandler {
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
+    if (PLOGGER.isDebugEnabled()) {
+      PLOGGER.debug("RECEIVED:" + rep.getDebugId());
+    }
     switch (rep.getType()) {
       case ReplicationMessage.REPLICATE:
         if (state.ignore(rep)) {
@@ -597,6 +601,9 @@ public class ReplicatedTransactionHandler {
       assertStarted(null);
       Assert.assertNull(syncing);
       syncing = eid;
+// these keys are never sync'd only replicated so add them to the set
+      syncdKeys.add(ConcurrencyStrategy.MANAGEMENT_KEY);
+      syncdKeys.add(ConcurrencyStrategy.UNIVERSAL_KEY);
       LOGGER.debug("Starting " + eid);
     }
     
@@ -644,7 +651,10 @@ public class ReplicatedTransactionHandler {
     }
     
     private boolean ignore(ReplicationMessage rep) {
-      assertStarted(rep);
+      if (!started) {
+ // this passive has never been sync'd to anything, ignore all messages
+        return true;
+      }
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
@@ -709,25 +719,21 @@ public class ReplicatedTransactionHandler {
     }
     
     /**
-     * Note that this state machine has several special-cases but the started flag can be used to assert consistency in most
-     * of them.
+     * Note that this state machine the started flag can be used to assert consistency.
      * 
-     * The cases where it is OK to NOT be started:
-     * -SYNC_BEGIN:  The message which IS the start message isn't checked here but is obviously ok.
-     * -the replicated message is a CREATE call:  Creates can happen concurrently with sync but they are also independent of
-     *  it so it is possible for one to arrive before the sync even starts.
-     * -the replicated message applies to an entity we already synced:  This is a corollary to the CREATE exemption since it
-     *  might be another message replicated to that entity (which is unrelated to the sync).
+     * The start flag starts the valid stream for a passive.  A passive can only accept valid 
+     * messages after sync has started on the server.  Prior to that, everything is invalid
+     * and can be safely ignored.  Messages can be received prior to the start sync message
+     * because replication started as soon as the active detects a connect from a passive.
      * 
-     * @param rep The replicated message being processed (can be null if this is a sync case, but those cases must all have
-     *  already started, unless this is the start message).
+     * Sync start begins after the passive has successfully connected and requested to be sync'd
+     * 
+     * NOTE: it is possible in the multiple passive scenario, for a stream to start a new 
+     * active but in this case, the server will have already been sync'd and thus valid
      */
     private void assertStarted(ReplicationMessage rep) {
       // These should short-circuit quickly, not creating an expensive check overhead.
-      Assert.assertTrue(rep, started
-          || (SyncReplicationActivity.ActivityType.CREATE_ENTITY == rep.getReplicationType())
-          || (this.syncdEntities.contains(rep.getEntityID()))
-      );
+      Assert.assertTrue(rep, started);
     }
   }
  

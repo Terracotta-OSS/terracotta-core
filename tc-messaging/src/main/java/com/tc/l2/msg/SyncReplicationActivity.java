@@ -88,10 +88,10 @@ public class SyncReplicationActivity {
     return new SyncReplicationActivity(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_END, null, concurrency, "");
   }
 
-  public static SyncReplicationActivity createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload) {
+  public static SyncReplicationActivity createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload, String debugId) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
-    return new SyncReplicationActivity(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency, "");
+    return new SyncReplicationActivity(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency, debugId);
   }
 
   private static EntityDescriptor descriptorWithoutClient(EntityID id, long version) {
@@ -172,6 +172,10 @@ public class SyncReplicationActivity {
       out.writeInt(0);
     }
     out.writeInt(concurrency);
+    if (debugId == null) {
+      debugId = "";
+    }
+    out.writeString(debugId);
   }
 
   public static SyncReplicationActivity deserializeFrom(TCByteBufferInput in) throws IOException {
@@ -187,7 +191,8 @@ public class SyncReplicationActivity {
     byte[] payload = new byte[length];
     in.readFully(payload);
     int concurrency = in.readInt();
-    return new SyncReplicationActivity(descriptor, source, tid, oldest, action, payload, concurrency, "");
+    String debug = in.readString();
+    return new SyncReplicationActivity(descriptor, source, tid, oldest, action, payload, concurrency, debug);
   }
 
   @Override

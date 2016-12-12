@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.EntityBusyException;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
@@ -28,6 +29,8 @@ import org.terracotta.exception.EntityException;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.request.RequestResponseHandler;
 import com.tc.text.PrettyPrintable;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 
 
@@ -57,9 +60,9 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    */
   void handleMessage(EntityDescriptor entityDescriptor, byte[] message);
 
-  InvokeFuture<byte[]> createEntity(EntityID entityID, long version, byte[] config);
+  byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException;
   
-  InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version);
+  boolean destroyEntity(EntityID entityID, long version) throws EntityException;
 
-  InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, byte[] config);
+  byte[] reconfigureEntity(EntityID entityID, long version, byte[] config) throws EntityException;
 }

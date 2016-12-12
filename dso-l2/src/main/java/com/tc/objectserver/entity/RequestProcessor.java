@@ -22,6 +22,8 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityDescriptor;
@@ -38,6 +40,7 @@ public class RequestProcessor {
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
   private boolean isActive = false;
+  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
 //  TODO: do some accounting for transaction de-dupping on failover
 
   public RequestProcessor(Sink<Runnable> requestExecution) {
@@ -72,6 +75,9 @@ public class RequestProcessor {
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
+    if (PLOGGER.isDebugEnabled()) {
+      PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + entity + ":" + concurrencyKey);
+    }
     requestExecution.addMultiThreaded(entityRequest);
     return token;
   }
@@ -153,10 +159,6 @@ public class RequestProcessor {
         this.replicationWaiter.waitForReceived();
         // We can now run the invoke.
         invoke.run();
-        // Now that we are done, wait for the passive to finish.
-        this.replicationWaiter.waitForCompleted();
-        // We are now completely finished.
-        finish();
     }
 
     @Override
@@ -164,15 +166,6 @@ public class RequestProcessor {
 // anything on the management key needs a complete flush of all the queues
 // the hydrate stage does not need to be flushed as each client 
       return (key == ConcurrencyStrategy.MANAGEMENT_KEY);
-    }
-    
-    private synchronized void finish() {
-      done = true;
-      this.notifyAll();
-    }
-    
-    synchronized boolean isDone() {
-      return done;
     }
   }
 }

@@ -20,7 +20,6 @@ package com.tc.objectserver.api;
 
 import com.tc.net.ClientID;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.exception.EntityException;
 
 import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;

@@ -294,20 +294,20 @@ public class ReplicatedTransactionHandlerTest {
     send(ReplicationMessage.createStartSyncMessage());
     send(ReplicationMessage.createStartEntityMessage(eid, VERSION, config, 0));
     send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 1));
-    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 1, config));
+    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 1, config, ""));
     send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 1));
     send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 2));
-    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 2, config));
+    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 2, config, ""));
     send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 2));  
     send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 3));
-    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 3, config));
+    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 3, config, ""));
     send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 3));  
     send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 4));
 //  defer a few replicated messages with sequence as payload
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(1).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(2).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(3).array(), 4));
-    send(ReplicationMessage.createPayloadMessage(eid, 1, 4, config));
+    send(ReplicationMessage.createPayloadMessage(eid, 1, 4, config, ""));
 //  defer a few replicated messages with sequence as payload
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(4).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(5).array(), 4));

@@ -355,9 +355,8 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> waiter = this.manager.createEntity(entityID, version, config);
+    byte[] waiter = this.manager.createEntity(entityID, version, config);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
-    waiter.get();
   }
 
   @Test
@@ -389,7 +388,7 @@ public class ClientEntityManagerTest extends TestCase {
     assertThat(t.isAlive(), is(false));
   }
 
-  private boolean didFindEndpoint(TestFetcher fetcher) {
+  private boolean didFindEndpoint(TestFetcher fetcher) throws Exception {
     boolean didFind = false;
     try {
       EntityClientEndpoint<EntityMessage, EntityResponse> endpoint = fetcher.getResult();
@@ -398,9 +397,6 @@ public class ClientEntityManagerTest extends TestCase {
     } catch (EntityNotFoundException e) {
       // This is how we flag something as not found.
       didFind = false;
-    } catch (Throwable e) {
-      // No exception expected.
-      fail();
     }
     return didFind;
   }
@@ -410,7 +406,7 @@ public class ClientEntityManagerTest extends TestCase {
     private final ClientEntityManager manager;
     private final EntityDescriptor entityDescriptor;
     private EntityClientEndpoint<EntityMessage, EntityResponse> result;
-    private Throwable exception;
+    private Exception exception;
     
     public TestFetcher(ClientEntityManager manager, EntityDescriptor entityDescriptor) {
       this.manager = manager;
@@ -421,11 +417,11 @@ public class ClientEntityManagerTest extends TestCase {
     public void run() {
       try {
         this.result = this.manager.fetchEntity(this.entityDescriptor, mock(MessageCodec.class), mock(Runnable.class));
-      } catch (Throwable t) {
+      } catch (Exception t) {
         this.exception = t;
       }
     }
-    public EntityClientEndpoint<EntityMessage, EntityResponse> getResult() throws Throwable {
+    public EntityClientEndpoint<EntityMessage, EntityResponse> getResult() throws Exception {
       if (null != this.exception) {
         throw this.exception;
       }
@@ -444,6 +440,9 @@ public class ClientEntityManagerTest extends TestCase {
     private final EntityException resultException;
     private final boolean autoComplete;
     private TransactionID transactionID;
+    private EntityDescriptor descriptor;
+    private byte[] extendedData;
+    private boolean requiresReplication;
     
     public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, EntityException resultException, boolean autoComplete) {
       this.clientEntityManager = clientEntityManager;
@@ -525,11 +524,11 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public EntityDescriptor getEntityDescriptor() {
-      throw new UnsupportedOperationException();
+      return this.descriptor;
     }
     @Override
     public boolean doesRequireReplication() {
-      throw new UnsupportedOperationException();
+      return this.requiresReplication;
     }
     @Override
     public Type getVoltronType() {
@@ -537,7 +536,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public byte[] getExtendedData() {
-      throw new UnsupportedOperationException();
+      return this.extendedData;
     }
     @Override
     public TransactionID getOldestTransactionOnClient() {
@@ -546,6 +545,9 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
       this.transactionID = transactionID;
+      this.descriptor = entityDescriptor;
+      this.extendedData = extendedData;
+      this.requiresReplication = requiresReplication;
     }
 
     @Override
