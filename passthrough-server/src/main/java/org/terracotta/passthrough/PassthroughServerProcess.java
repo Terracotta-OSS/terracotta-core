@@ -931,7 +931,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     Assert.assertTrue(null != serverProcess.passiveEntities);
     this.downstreamPassives.add(serverProcess);
     // Set our state synchronizing.
-    serverProcess.setStateSynchronizing(this.serviceInterface);
+    serverProcess.setStateSynchronizing(serverProcess.serviceInterface);
     // Synchronize any entities we have.
     // NOTE:  This synchronization implementation is relatively simplistic and we may require a more substantial
     // implementation, in the future, to support concurrent replication/synchronization ordering concerns, multiple
@@ -967,9 +967,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       wrapper.waitForComplete();
     }
     // Restore our state to active.
-    if (null != this.serviceInterface) {
+    if (null != serverProcess.serviceInterface) {
       long timestamp = System.currentTimeMillis();
-      this.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_ACTIVE, timestamp, timestamp));
+      serverProcess.serviceInterface.addNode(PlatformMonitoringConstants.PLATFORM_PATH, PlatformMonitoringConstants.STATE_NODE_NAME, new ServerState(PlatformMonitoringConstants.SERVER_STATE_PASSIVE, timestamp, timestamp));
     }
   }
 
