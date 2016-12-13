@@ -77,13 +77,13 @@ public class StateManagerImpl implements StateManager {
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, 
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
-                          StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory,
+                          int electionTimeInSec, WeightGeneratorFactory weightFactory,
                           ClusterStatePersistor clusterStatePersistor) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
     this.weightsFactory = weightFactory;
-    this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
+    this.electionMgr = new ElectionManagerImpl(groupManager, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
   }

@@ -45,7 +45,8 @@ public class ActiveServerGroupConfigObject implements ActiveServerGroupConfig {
   @Override
   public int getElectionTimeInSecs() {
     //TODO fix the election time
-    return 5;
+    // If there is only one server, always going to win so no reason to wait
+    return (members.size() == 1) ? 0 : 5;
   }
 
   public void setGroupName(String groupName) {

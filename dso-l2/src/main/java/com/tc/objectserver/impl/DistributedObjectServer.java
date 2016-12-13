@@ -89,7 +89,6 @@ import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
-import com.tc.l2.state.StateManagerConfigImpl;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
@@ -681,7 +680,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
-        new StateManagerConfigImpl(configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs()),
+        configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs(),
         weightGeneratorFactory, 
         this.persistor.getClusterStatePersistor());
     
