@@ -60,11 +60,10 @@ public class StateManagerImplTest {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
       nodeSet.add(nodes[i]);
       Sink<StateChangedEvent> stageChangeSinkMock = mock(Sink.class);
-      StateManagerConfig stateManagerConfigMock = mock(StateManagerConfig.class);
       ClusterStatePersistor clusterStatePersistorMock = mock(ClusterStatePersistor.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory<>());
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], null, weightGeneratorFactory);
-      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageChangeSinkMock, stageManagers[i], stateManagerConfigMock, weightGeneratorFactory,
+      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageChangeSinkMock, stageManagers[i], 5, weightGeneratorFactory,
         clusterStatePersistorMock);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);

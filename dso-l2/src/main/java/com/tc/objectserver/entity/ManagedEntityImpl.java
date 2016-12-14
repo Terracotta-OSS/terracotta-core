@@ -635,7 +635,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               for (NodeID passive : passives) {
                 try {
                   byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
-                  executor.scheduleSync(ReplicationMessage.createPayloadMessage(id, version, concurrencyKey, message, ""), passive).waitForCompleted();
+                  executor.scheduleSync(ReplicationMessage.createPayloadMessage(id, version, concurrencyKey, message, ""), passive).waitForReceived();
                 } catch (EntityUserException eu) {
                 // TODO: do something reasoned here
                   throw new RuntimeException(eu);
@@ -821,8 +821,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     try {
       if (!this.isDestroyed) {
         for (Integer concurrency : concurrencyStrategy.getKeysForSynchronization()) {
+    // make sure that concurrency key is in the valid range
+          //  MGMT_KEY and UNIVERSAL keys are not valid for sync
+          Assert.assertTrue(concurrency > 0);  
           // We don't actually use the message in the direct strategy so this is safe.
           //  don't care about the result
+                                              
           BarrierCompletion sectionComplete = new BarrierCompletion();
           this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.EMPTY,  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.EMPTY, concurrency), true, concurrency).waitForCompleted();
         //  wait for completed above waits for acknowledgment from the passive

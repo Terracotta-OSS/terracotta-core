@@ -27,7 +27,6 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManager;
-import com.tc.l2.state.StateManagerConfig;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
@@ -55,14 +54,12 @@ public class TestStateManagerFactory {
   private StateManagerImpl createStateManager(GroupManager groupMgr) throws Exception {
     MyGroupEventListener gel = new MyGroupEventListener(groupMgr.getLocalNodeID());
     groupMgr.registerForGroupEvents(gel);
-    MyStateManagerConfig config = new MyStateManagerConfig();
-    config.electionTime = 5;
      
     StageManager stages = stageCreator.createStageManager();
     
     LateLoadingEventHandler handler = new LateLoadingEventHandler();
     Stage stateChange = stages.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, handler, 0, 1024);
-    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, config, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
+    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 5, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
     handler.setMgr(mgr);
 
     stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();
@@ -76,15 +73,6 @@ public class TestStateManagerFactory {
 
   public Sink getStateMessageSink() {
     return stateMsgs;
-  }
-    
-  private static class MyStateManagerConfig implements StateManagerConfig {
-    public int electionTime;
-
-    @Override
-    public int getElectionTimeInSecs() {
-      return electionTime;
-    }
   }
   
   private class LateLoadingEventHandler extends AbstractEventHandler<StateChangedEvent> {

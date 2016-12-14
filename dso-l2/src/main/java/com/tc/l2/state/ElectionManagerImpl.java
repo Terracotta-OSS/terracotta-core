@@ -55,9 +55,9 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private final long            electionTime;
 
-  public ElectionManagerImpl(GroupManager groupManager, StateManagerConfig stateManagerConfig) {
+  public ElectionManagerImpl(GroupManager groupManager, int electionTimeInSec) {
     this.groupManager = groupManager;
-    electionTime = stateManagerConfig.getElectionTimeInSecs() * 1000;
+    electionTime = electionTimeInSec * 1000;
   }
   
   public EventHandler<ElectionContext> getEventHandler() {
