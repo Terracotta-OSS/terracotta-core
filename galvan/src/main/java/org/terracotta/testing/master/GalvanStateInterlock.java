@@ -46,8 +46,6 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   private final List<ServerProcess> unknownRunningServers = new Vector<ServerProcess>();
   // A server which has returned an exit status, or hasn't yet become running, is a terminated server.
   private final List<ServerProcess> terminatedServers = new Vector<ServerProcess>();
-  // A server which we tried to start up but it restarted itself for a zap.  These are distinct from terminatedServers since they haven't actually started up and found their PIDs, but they also have already been started so we can't "start()" them, again.
-  private final List<ServerProcess> zappedServers = new Vector<ServerProcess>();
 
 
   // ----- CLIENT STATE -----
@@ -116,7 +114,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForServerRunning: " + startingUpServer);
       // Wait until it is no longer terminated (whether it is unknown, active, or passive).
-      while (!this.sharedLockState.checkDidPass() && (this.terminatedServers.contains(startingUpServer) || this.zappedServers.contains(startingUpServer))) {
+      while (!this.sharedLockState.checkDidPass() && (this.terminatedServers.contains(startingUpServer))) {
         safeWait();
       }
       this.logger.output("< waitForServerRunning: " + startingUpServer);
@@ -138,7 +136,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void waitForAllServerRunning() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForAllServerRunning");
-      while (!this.sharedLockState.checkDidPass() && (!this.terminatedServers.isEmpty() || !this.zappedServers.isEmpty())) {
+      while (!this.sharedLockState.checkDidPass() && (!this.terminatedServers.isEmpty())) {
         safeWait();
       }
       this.logger.output("< waitForAllServerRunning");
@@ -149,7 +147,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   public void waitForAllServerReady() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForAllServerReady");
-      while (!this.sharedLockState.checkDidPass() && (!this.unknownRunningServers.isEmpty() || !this.zappedServers.isEmpty())) {
+      while (!this.sharedLockState.checkDidPass() && !this.unknownRunningServers.isEmpty()) {
         safeWait();
       }
       this.logger.output("< waitForAllServerReady");
@@ -206,23 +204,32 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void serverBecameActive(ServerProcess server) {
     synchronized (this.sharedLockState) {
-      this.logger.output("serverBecameActive: " + server);
       localAssert(null == this.activeServer, server);
       boolean didRemove = this.unknownRunningServers.remove(server);
+      boolean wasPassive = false;
       if (!didRemove) {
         didRemove = this.passiveServers.remove(server);
+        wasPassive = true;
       }
+      this.logger.output("serverBecameActive: " + server + " was passive:" + wasPassive);
       localAssert(didRemove, server);
       this.activeServer = server;
       this.sharedLockState.notifyAll();
     }
   }
+  
+
+  public boolean isServerRunning(ServerProcess server) {
+    synchronized (this.sharedLockState) {
+      return this.unknownRunningServers.contains(server) || this.passiveServers.contains(server) || server.equals(this.activeServer);
+    }
+  }  
 
   @Override
   public void serverBecamePassive(ServerProcess server) {
     synchronized (this.sharedLockState) {
-      this.logger.output("serverBecamePassive: " + server);
       boolean didRemove = this.unknownRunningServers.remove(server);
+      this.logger.output("serverBecamePassive: " + server);
       localAssert(didRemove, server);
       this.passiveServers.add(server);
       this.sharedLockState.notifyAll();
@@ -254,10 +261,6 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     synchronized (this.sharedLockState) {
       this.logger.output("serverDidStartup: " + server);
       boolean didRemove = this.terminatedServers.remove(server);
-      if (!didRemove) {
-        // See if this server was zapped (since that is effectively a special case of terminated).
-        didRemove = this.zappedServers.remove(server);
-      }
       localAssert(didRemove, server);
       this.unknownRunningServers.add(server);
       // Check if this server is a late arrival - explicit termination, in that case.
@@ -290,7 +293,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
         }
       }
       localAssert(didRemove, server);
-      this.zappedServers.add(server);
+      this.unknownRunningServers.add(server);
       this.sharedLockState.notifyAll();
     }
   }
@@ -363,7 +366,6 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
         + "\n\tPassives: " + this.passiveServers
         + "\n\tUnknown: " + this.unknownRunningServers
         + "\n\tTerminated: " + this.terminatedServers
-        + "\n\tZapped: " + this.zappedServers
         + "\n\tClients: " + this.runningClients
         ;
   }

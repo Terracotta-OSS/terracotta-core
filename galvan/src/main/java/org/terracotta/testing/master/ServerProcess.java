@@ -25,6 +25,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +52,13 @@ public class ServerProcess {
   private final int debugPort;
   private final File serverWorkingDirectory;
   private final String eyeCatcher;
+// make sure only one caller is messing around on the process
+  private final Semaphore oneUser = new Semaphore(1);
+  
+  private UUID userToken;
+  
+  //  flag if the server was zapped so it can be logged
+  private boolean wasZapped;
   
   private boolean isRunning;
   // The PID of the actual server, underneath the start script.  This is 0 until we are killable and can tell the interlock that we are running.
@@ -80,6 +89,24 @@ public class ServerProcess {
     // We start up in the shutdown state so notify the interlock.
     this.stateInterlock.registerNewServer(this);
   }
+  /**
+   * enter/exit is used by start and stop to make sure those methods are called one
+   * at a time.  
+   * @return a unique token used to make sure the starter is the finisher (passed to exit)
+   */
+  private UUID enter() {
+    try {
+      oneUser.acquire();
+      userToken = UUID.randomUUID();
+      return this.userToken;
+    } catch (InterruptedException ie) {
+      throw new RuntimeException(ie);
+    }
+  }
+  private void exit(UUID token) {
+    Assert.assertTrue(token.equals(this.userToken));
+    oneUser.release();
+  }
 
   /**
    * Starts the server, in the background, using its constructed name to find its config in the stripe's config file.
@@ -93,9 +120,11 @@ public class ServerProcess {
    * 
    * @throws FileNotFoundException The logs couldn't be created since the server's working directory is missing.
    */
-  public synchronized void start() throws FileNotFoundException {
+  public void start() throws FileNotFoundException {
+    UUID token = enter();
+    try {
     // First thing we need to do is make sure that we aren't already running.
-    Assert.assertFalse(this.isRunning);
+    Assert.assertFalse(this.stateInterlock.isServerRunning(this));
     
     // Now, open the log files.
     // We want to create an output log file for both STDOUT and STDERR.
@@ -133,10 +162,8 @@ public class ServerProcess {
         .pipeStderr(stderr)
         .build();
     
-    // We aren't expecting a crash and we are now running.
-    this.isCrashExpected = false;
-    this.pid = 0;
-    this.isRunning = true;
+    reset(true);
+    this.stateInterlock.serverDidStartup(this);
     Assert.assertNull(this.outputStream);
     this.outputStream = outputStream;
     Assert.assertNull(this.errorStream);
@@ -145,6 +172,38 @@ public class ServerProcess {
     // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
     ExitWaiter exitWaiter = new ExitWaiter(process);
     exitWaiter.start();
+    } finally {
+      exit(token);
+    }
+  }
+  
+  private synchronized boolean isCrashExpected() {
+    return this.isCrashExpected;
+  }
+  
+  private synchronized void setCrashExpected() {
+    Assert.assertFalse(this.isCrashExpected);
+    this.isCrashExpected = true;
+  }
+  
+  private synchronized long waitForPid(){
+    try {
+      while (this.isRunning && this.pid == 0) {
+        this.wait();
+      }
+    } catch (InterruptedException ie) {
+      throw new RuntimeException(ie);
+    }
+    return this.pid;
+  }
+  
+  private synchronized void reset(boolean running) {
+    // We aren't expecting a crash and we are now running.
+    this.isCrashExpected = false;
+    this.pid = 0;
+    this.wasZapped = this.isRunning;
+    this.isRunning = running;
+    notifyAll();
   }
 
   private String getStartScriptCommand() {
@@ -243,7 +302,7 @@ public class ServerProcess {
    * 
    * @param isActive True if active, false if passive.
    */
-  private synchronized void didBecomeActive(boolean isActive) {
+  private void didBecomeActive(boolean isActive) {
     if (isActive) {
       this.stateInterlock.serverBecameActive(this);
     } else {
@@ -255,9 +314,9 @@ public class ServerProcess {
    * Called by the inline EventListener when the instance goes down for a restart due to ZAP.
    * This is really just a special case of a shut-down (we accept it, even if we weren't expecting it).
    */
-  private synchronized void instanceWasZapped() {
+  private void instanceWasZapped() {
     this.harnessLogger.output("Server restarted due to ZAP");
-    this.pid = 0;
+    reset(true);
     this.stateInterlock.serverWasZapped(this);
   }
 
@@ -269,7 +328,7 @@ public class ServerProcess {
   private synchronized void didStartWithPid(long pid) {
     Assert.assertTrue(pid > 0);
     this.pid = pid;
-    this.stateInterlock.serverDidStartup(this);
+    notifyAll();
   }
 
   /**
@@ -277,19 +336,18 @@ public class ServerProcess {
    * 
    * @param exitStatus The exit code of the underlying process.
    */
-  private synchronized void didTerminateWithStatus(int exitStatus) {
+  private void didTerminateWithStatus(int exitStatus) {
     // See if we have a PID yet or if this was a failure, much earlier (hence, if we told the interlock that we are even running).
     GalvanFailureException failureException = null;
-    long originalPid = this.pid;
-    if (this.pid > 0) {
+    long originalPid = this.waitForPid();
+    if (originalPid > 0) {
       // Ok, tell the interlock.
-      this.pid = 0;
       this.stateInterlock.serverDidShutdown(this);
     } else {
       // This is a fast-failure so report the test failure.
       failureException = new GalvanFailureException("Server crashed before reporting PID: " + this);
     }
-    if (!this.isCrashExpected && (null == failureException)) {
+    if (!this.isCrashExpected() && (null == failureException)) {
       failureException = new GalvanFailureException("Unexpected server crash: " + this + " (PID " + originalPid + ") status: " + exitStatus);
     }
     
@@ -297,8 +355,7 @@ public class ServerProcess {
       this.stateManager.testDidFail(failureException);
     }
     // In either case, we are not running.
-    this.pid = 0;
-    this.isRunning = false;
+    reset(false);
     // Close the log files.
     try {
       this.outputStream.close();
@@ -318,43 +375,61 @@ public class ServerProcess {
    * 
    * @throws InterruptedException
    */
-  public synchronized void stop() throws InterruptedException {
+  public void stop() throws InterruptedException {
+    UUID token = enter();
+    try {
     // Can't stop something now running.
-    Assert.assertTrue(this.isRunning);
+    Assert.assertTrue(this.stateInterlock.isServerRunning(this));
     // Can't stop something unless we determined the PID.
-    Assert.assertTrue(this.pid > 0);
+    long localPid = waitForPid();
+    Assert.assertTrue(localPid > 0);
     // Log the intent.
-    this.harnessLogger.output("Crashing server process: " + this + " (PID " + this.pid + ")");
+    this.harnessLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
     // Mark this as expected.
-    this.isCrashExpected = true;
+    this.setCrashExpected();
+    
+    Process process = null;
     // Destroy the process.
     if (TestHelpers.isWindows()){
       //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
-      killProcessWindows(this.pid);
+      process = killProcessWindows(this.pid);
     } else {
-      killProcessUnix(this.pid);
+      process = killProcessUnix(this.pid);
     }
+    while (process.isAlive()) {
+      harnessLogger.output("Waiting for server to exit PID:" + localPid);
+ //  give up the synchronized lock while waiting for the kill process to 
+ //  do it's job.  This can deadlock since the event bus will need this lock 
+ //  to log events
+      process.waitFor(1, TimeUnit.SECONDS);
+    }
+    int result = process.exitValue();
+    harnessLogger.output("Attempt to kill server process resulted in:" + result);
     harnessLogger.output("server process killed");
+    } finally {
+      exit(token);
+    }
   }
 
-  private void killProcessWindows(long pid) throws InterruptedException {
+  private Process killProcessWindows(long pid) throws InterruptedException {
     harnessLogger.output("killing windows process");
     Process p = startStandardProcess("taskkill", "/F", "/t", "/pid", String.valueOf(pid));
     // We don't care about the output but we want to make sure that the process can be terminated.
     discardProcessOutput(p);
     
     //not checking exit code here..taskkill may faill if server process was crashed during the test.
-    p.waitFor();
     harnessLogger.output("killed server with PID " + pid);
+    return p;
   }
 
-  private void killProcessUnix(long pid) throws InterruptedException {
+  private Process killProcessUnix(long pid) throws InterruptedException {
     Process killProcess = startStandardProcess("kill", String.valueOf(pid));
     // We don't care about the output but we want to make sure that the process can be terminated.
     discardProcessOutput(killProcess);
-    int result = killProcess.waitFor();
-    harnessLogger.output("Attempt to kill server process resulted in:" + result);
+
+    harnessLogger.output("killed server with PID " + pid);
     // (note that the server may have raced to die so we can't assert that the kill succeeded)
+    return killProcess;
   }
 
   private void discardProcessOutput(Process process) {
