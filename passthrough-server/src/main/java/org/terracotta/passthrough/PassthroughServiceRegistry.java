@@ -47,19 +47,28 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     this.entityName = entityName;
     this.consumerID = consumerID;
     
+    Map<Class<?>, ServiceProvider> overrideServiceTypes = new HashMap<Class<?>, ServiceProvider>();
+    for (ServiceProvider overrideServiceProvider : overrideServiceProviders) {
+      for (Class<?> serviceType : overrideServiceProvider.getProvidedServiceTypes()) {
+        overrideServiceTypes.put(serviceType, overrideServiceProvider);
+      }
+    }
+
     Map<Class<?>, ServiceProvider> tempProviders = new HashMap<Class<?>, ServiceProvider>();
     for(ServiceProvider provider : serviceProviders) {
       for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
         // We currently have no way of handling multiple providers.
-        ServiceProvider existingProviderForType = tempProviders.get(serviceType);
-        if (existingProviderForType != null && overrideServiceProviders.contains(provider)) {
-          // Since user provided override service providers are always last in the ordered list of service providers,
-          // this means that this is an user provided service that is allowed to override
-          tempProviders.remove(serviceType);
+        //Note that all override ServiceProviders are part of this serviceProviders 
+        if(overrideServiceTypes.containsKey(serviceType)) {
+          //install override ServiceProvider
+          if(!tempProviders.containsKey(serviceType)) {
+            tempProviders.put(serviceType, overrideServiceTypes.get(serviceType));
+          }
         } else {
-          Assert.assertTrue(null == existingProviderForType);
+          //real server behaviour
+          Assert.assertTrue(null == tempProviders.get(serviceType));
+          tempProviders.put(serviceType, provider);
         }
-        tempProviders.put(serviceType, provider);
       }
     }
     this.serviceProviderMap = ImmutableMap.copyOf(tempProviders);
