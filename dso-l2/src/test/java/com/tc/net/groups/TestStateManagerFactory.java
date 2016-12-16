@@ -59,7 +59,7 @@ public class TestStateManagerFactory {
     
     LateLoadingEventHandler handler = new LateLoadingEventHandler();
     Stage stateChange = stages.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, handler, 0, 1024);
-    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 5, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
+    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
     handler.setMgr(mgr);
 
     stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();

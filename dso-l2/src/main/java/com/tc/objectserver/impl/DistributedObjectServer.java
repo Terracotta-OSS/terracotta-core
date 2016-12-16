@@ -680,6 +680,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
+        configSetupManager.getActiveServerGroupForThisL2().getMembers().length,
         configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs(),
         weightGeneratorFactory, 
         this.persistor.getClusterStatePersistor());
