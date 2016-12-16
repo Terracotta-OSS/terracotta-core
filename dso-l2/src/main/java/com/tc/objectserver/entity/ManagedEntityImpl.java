@@ -807,7 +807,6 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   @Override
   public void sync(NodeID passive) {
-    interop.startSync();
 // iterate through all the concurrency keys of an entity
     EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
@@ -850,6 +849,10 @@ public class ManagedEntityImpl implements ManagedEntity {
       interop.syncFinished();
     }
   }  
+  
+  public void startSync() {
+    interop.startSync();
+  }
 
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     this.constructorInfo = constructorInfo;

@@ -39,7 +39,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Semaphore;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
@@ -61,6 +63,9 @@ public class EntityManagerImpl implements EntityManager {
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
+  
+  private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
+
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
       ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
@@ -114,13 +119,18 @@ public class EntityManagerImpl implements EntityManager {
   public ManagedEntity createEntity(EntityID id, long version, long consumerID, int references) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
-        clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, references);
-    ManagedEntity exists = entities.putIfAbsent(id, temp);
-    if (exists == null) {
-      LOGGER.debug("created " + id);
+    snapshotLock.acquireUninterruptibly();
+    try {
+      ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
+          clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, references);
+      ManagedEntity exists = entities.putIfAbsent(id, temp);
+      if (exists == null) {
+        LOGGER.debug("created " + id);
+      }
+      return exists != null ? exists : temp;
+    } finally {
+      snapshotLock.release();
     }
-    return exists != null ? exists : temp;
   }
 
   @Override
@@ -142,16 +152,21 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public boolean removeDestroyed(EntityID id) {
     boolean removed = false;
-    ManagedEntity e = entities.get(id);
-    if (e != null && e.isDestroyed()) {
-      if (entities.remove(id) != null) {
-        removed = true;
+    snapshotLock.acquireUninterruptibly();
+    try {
+      ManagedEntity e = entities.get(id);
+      if (e != null && e.isDestroyed()) {
+        if (entities.remove(id) != null) {
+          removed = true;
+        }
       }
+      if (removed) {
+        LOGGER.debug("removed " + id);
+      }
+      return removed;
+    } finally {
+      snapshotLock.release();
     }
-    if (removed) {
-      LOGGER.debug("removed " + id);
-    }
-    return removed;
   }
 
   @Override
@@ -173,9 +188,28 @@ public class EntityManagerImpl implements EntityManager {
     }
     return Optional.ofNullable(entity);
   }
-  
+
+  @Override
   public Collection<ManagedEntity> getAll() {
     return new ArrayList<>(entities.values());
+  }
+  
+  @Override
+  public Collection<ManagedEntity> snapshot(Runnable runFirst, Consumer<ManagedEntity> runOnEach, Runnable runLast) {
+    snapshotLock.acquireUninterruptibly();
+    try {
+      if (runFirst != null) {
+        runFirst.run();
+      }
+      Collection<ManagedEntity> collection = new ArrayList<>(entities.values());
+      collection.forEach(runOnEach);
+      if (runLast != null) {
+        runLast.run();
+      }
+      return collection;
+    } finally {
+      snapshotLock.release();
+    }
   }
   
   private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException, EntityNotProvidedException {

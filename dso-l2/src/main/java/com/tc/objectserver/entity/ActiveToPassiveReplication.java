@@ -57,7 +57,6 @@ import java.util.concurrent.Executors;
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
-  private final Iterable<ManagedEntity> entities;
   private final Iterable<NodeID> passives;
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
@@ -67,13 +66,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
+  private final ProcessTransactionHandler snapshotter;
 
-  public ActiveToPassiveReplication(Iterable<NodeID> passives, Iterable<ManagedEntity> entities, EntityPersistor persistor, Sink<ReplicationEnvelope> replicate, GroupManager serverMatch) {
-    this.entities = entities;
+  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, Sink<ReplicationEnvelope> replicate, GroupManager serverMatch) {
     this.replicate = replicate;
     this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
+    this.snapshotter = snapshotter;
   }
 
   @Override
@@ -148,8 +148,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {    
         // start passive sync message
         logger.debug("starting sync for " + newNode);
-        replicateMessage(ReplicationMessage.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
-        for (ManagedEntity entity : entities) {
+        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(()->replicateMessage(ReplicationMessage.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted());
+        for (ManagedEntity entity : e) {
           logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
           entity.sync(newNode);
           logger.debug("ending sync for entity " + newNode + "/" + entity.getID());

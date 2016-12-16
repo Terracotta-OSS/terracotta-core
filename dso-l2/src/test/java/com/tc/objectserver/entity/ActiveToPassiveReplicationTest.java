@@ -25,6 +25,7 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -63,7 +64,6 @@ public class ActiveToPassiveReplicationTest {
   @SuppressWarnings("unchecked")
   public void setUp() {
     passive = mock(ServerID.class);
-    Iterable<ManagedEntity> entities = mock(Iterable.class);
     Sink<ReplicationEnvelope> replicate = mock(Sink.class);
     doAnswer(new Answer<Void>() {
       @Override
@@ -72,7 +72,7 @@ public class ActiveToPassiveReplicationTest {
         return null;
       }
     }).when(replicate).addSingleThreaded(Matchers.any());
-    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, mock(EntityPersistor.class), replicate, mock(GroupManager.class));
+    replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   
   @Test

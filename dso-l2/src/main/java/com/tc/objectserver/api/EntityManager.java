@@ -24,6 +24,7 @@ import com.tc.object.EntityID;
 import java.util.Collection;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.terracotta.entity.EntityMessage;
 
 import org.terracotta.entity.StateDumpable;
@@ -77,6 +78,15 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier {
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException;
   
   void resetReferences();
+
+  /**
+   * get the collection of managed entities under lock.  
+   * @param runFirst
+   * @param runEach
+   * @param runLast
+   * @return 
+   */
+  Collection<ManagedEntity> snapshot(Runnable runFirst, Consumer<ManagedEntity> runEach, Runnable runLast);
   
   Collection<ManagedEntity> getAll();
   /**
