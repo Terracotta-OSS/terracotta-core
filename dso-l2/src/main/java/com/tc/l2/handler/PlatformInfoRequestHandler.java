@@ -35,6 +35,8 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.services.LocalMonitoringProducer;
 import com.tc.util.Assert;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class PlatformInfoRequestHandler {
@@ -42,6 +44,8 @@ public class PlatformInfoRequestHandler {
 
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final LocalMonitoringProducer monitoringSupport;
+// single threaded, doesn't need synchronization
+  private final Set<NodeID> knownServer = new HashSet<>();
 
   public PlatformInfoRequestHandler(GroupManager<AbstractGroupMessage> groupManager, LocalMonitoringProducer monitoringSupport) {
     Assert.assertNotNull(groupManager);
@@ -61,6 +65,9 @@ public class PlatformInfoRequestHandler {
               break;
             case PlatformInfoRequest.RESPONSE_INFO:
               handleServerInfo(context);
+              break;
+            case PlatformInfoRequest.INFO_REMOVE:
+              handleServerRemove(context);
               break;
             case PlatformInfoRequest.RESPONSE_ADD:
               PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteAdd((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName(), context.getNodeValue());
@@ -129,6 +136,16 @@ public class PlatformInfoRequestHandler {
   private void handleServerInfo(PlatformInfoRequest msg) throws GroupException {
     ServerID sender = (ServerID)msg.messageFrom();
     PlatformServer platformServer = (PlatformServer)msg.getServerInfo();
-    this.monitoringSupport.serverDidJoinStripe(sender, platformServer);
+    if (knownServer.add(sender)) {
+      this.monitoringSupport.serverDidJoinStripe(sender, platformServer);
+    }
   }
+  
+
+  private void handleServerRemove(PlatformInfoRequest msg) throws GroupException {
+    ServerID sender = (ServerID)msg.messageFrom();
+    if (knownServer.remove(sender)) {
+      this.monitoringSupport.serverDidLeaveStripe(sender);      
+    }
+  }  
 }

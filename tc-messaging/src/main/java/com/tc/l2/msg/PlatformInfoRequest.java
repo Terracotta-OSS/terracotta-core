@@ -20,6 +20,7 @@ package com.tc.l2.msg;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.util.Assert;
 
@@ -54,7 +55,11 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   public static PlatformInfoRequest createServerInfoMessage(Serializable serverInfo) {
     return new PlatformInfoRequest(RESPONSE_INFO, -1, null, null, null, serverInfo, null, null, null);
   }
-
+  
+  public static PlatformInfoRequest createServerInfoRemoveMessage(ServerID server) {
+    return new PlatformInfoRequest(INFO_REMOVE, -1, null, null, null, server, null, null, null);
+  }
+  
   public static PlatformInfoRequest createBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values) {
     // This should not be called if there is no data.
     Assert.assertTrue(consumerIDs.length > 0);
@@ -71,6 +76,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
   public static final int RESPONSE_ADD               = 3;
   public static final int RESPONSE_REMOVE               = 4;
   public static final int BEST_EFFORTS_BATCH               = 5;
+  public static final int INFO_REMOVE                     = 6;
   
   // Info related to RESPONSE_ADD and RESPONSE_REMOVE.
   private long changeConsumerID;

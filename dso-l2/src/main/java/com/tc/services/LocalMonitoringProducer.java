@@ -15,6 +15,8 @@ import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
@@ -40,6 +42,7 @@ import com.tc.util.Assert;
  */
 @BuiltinService
 public class LocalMonitoringProducer implements ImplementationProvidedServiceProvider {
+  private static final TCLogger LOGGER = TCLogging.getLogger(LocalMonitoringProducer.class);
   private final TerracottaServiceProviderRegistry globalRegistry;
   private final PlatformServer thisServer;
   private final Map<ServerID, PlatformServer> otherServers;
@@ -156,8 +159,9 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   }
 
   public void serverDidJoinStripe(ServerID sender, PlatformServer platformServer) {
+    //  WARNING:  It is possible to get multiple copies if servers rapidly join and leave the group, always update
     PlatformServer oldValue = this.otherServers.put(sender, platformServer);
-    Assert.assertNull(oldValue);
+    LOGGER.warn("multiple copies of server information are being reported.old=" + oldValue + " new=" + platformServer);
     
     // Notify the platform collector.
     IStripeMonitoring platformCollector = this.globalRegistry.subRegistry(ServiceProvider.PLATFORM_CONSUMER_ID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
