@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.util.Assert;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -29,7 +30,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -63,11 +63,11 @@ public class ManagedEntitySyncInteropTest {
   public void testMultipleAccessToSync() throws Exception {
     ManagedEntitySyncInterop instance = new ManagedEntitySyncInterop();
 // start two syncs
-    Future f1 = run(()->instance.startSync());
-    Future f2 = run(()->instance.startSync());
+    Future f1 = run(()->{instance.startSync();return null;});
+    Future f2 = run(()->{instance.startSync();return null;});
     try {
-      f1.get(1, TimeUnit.SECONDS);
-      f2.get(1, TimeUnit.SECONDS);
+      f1.get(5, TimeUnit.SECONDS);
+      f2.get(5, TimeUnit.SECONDS);
     } catch (TimeoutException to) {
       Assert.fail("should not block");
     }
@@ -77,8 +77,8 @@ public class ManagedEntitySyncInteropTest {
   public void testLifecyleBlocksSync() throws Exception {
     ManagedEntitySyncInterop instance = new ManagedEntitySyncInterop();
 // start two syncs
-    Future f1 = run(()->instance.startLifecycle());
-    Future f2 = run(()->instance.startSync());
+    Future f1 = run(()->{instance.startLifecycle();return null;});
+    Future f2 = run(()->{instance.startSync();return null;});
     try {
       f2.get(1, TimeUnit.SECONDS);
       Assert.fail();
@@ -87,7 +87,7 @@ public class ManagedEntitySyncInteropTest {
     }
     instance.finishLifecycle();
     try {
-      f2.get(1, TimeUnit.SECONDS);
+      f2.get(5, TimeUnit.SECONDS);
     } catch (TimeoutException to) {
       Assert.fail("should not block");
     }
@@ -97,8 +97,8 @@ public class ManagedEntitySyncInteropTest {
   public void testSyncStartBlockReference() throws Exception {
     ManagedEntitySyncInterop instance = new ManagedEntitySyncInterop();
 // start two syncs
-    Future f1 = run(()->instance.startSync());
-    Future f2 = run(()->instance.startReference());
+    Future f1 = run(()->{instance.startSync();return null;});
+    Future f2 = run(()->{instance.startReference();return null;});
     try {
       f2.get(1, TimeUnit.SECONDS);
       Assert.fail();
@@ -107,7 +107,7 @@ public class ManagedEntitySyncInteropTest {
     }
     instance.syncStarted();
     try {
-      f2.get(1, TimeUnit.SECONDS);
+      f2.get(5, TimeUnit.SECONDS);
     } catch (TimeoutException to) {
       Assert.fail("should not block");
     }
@@ -117,8 +117,8 @@ public class ManagedEntitySyncInteropTest {
   public void testSyncBlockLifecycle() throws Exception {
     ManagedEntitySyncInterop instance = new ManagedEntitySyncInterop();
 // start two syncs
-    Future f1 = run(()->instance.startSync());
-    Future f2 = run(()->instance.startLifecycle());
+    Future f1 = run(()->{instance.startSync();return null;});
+    Future f2 = run(()->{instance.startLifecycle();return null;});
     try {
       f2.get(1, TimeUnit.SECONDS);
       Assert.fail();
@@ -134,13 +134,13 @@ public class ManagedEntitySyncInteropTest {
     }
     instance.syncFinished();
     try {
-      f2.get(1, TimeUnit.SECONDS);
+      f2.get(5, TimeUnit.SECONDS);
     } catch (TimeoutException to) {
       Assert.fail("should not block");
     }
   }
   
-  private Future<?> run(Runnable r) {
+  private <T> Future<T> run(Callable<T> r) {
     return service.submit(r);
   }
   
