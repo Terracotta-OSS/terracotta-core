@@ -340,11 +340,11 @@ public class ServerProcess {
     // See if we have a PID yet or if this was a failure, much earlier (hence, if we told the interlock that we are even running).
     GalvanFailureException failureException = null;
     long originalPid = this.waitForPid();
-    if (originalPid > 0) {
-      // Ok, tell the interlock.
-      this.stateInterlock.serverDidShutdown(this);
-    } else {
-      // This is a fast-failure so report the test failure.
+//  no matter what, the server is gone so report it to interlock
+    this.stateInterlock.serverDidShutdown(this);
+    if (!this.isCrashExpected() && originalPid == 0) {
+// didn't have time to get the PID, this is not expected
+      Assert.assertFalse(this.isCrashExpected()); // can't expect a crash without a PID
       failureException = new GalvanFailureException("Server crashed before reporting PID: " + this);
     }
     if (!this.isCrashExpected() && (null == failureException)) {

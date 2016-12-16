@@ -105,7 +105,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       while (!this.sharedLockState.checkDidPass() && (null == this.activeServer)) {
         safeWait();
       }
-      this.logger.output("< waitForActiveServer");
+      this.logger.output("< waitForActiveServer " + this.activeServer);
     }
   }
 
@@ -167,7 +167,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public ServerProcess getActiveServer() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
-      this.logger.output("getActiveServer");
+      this.logger.output("getActiveServer " + this.activeServer);
       this.sharedLockState.checkDidPass();
       return this.activeServer;
     }

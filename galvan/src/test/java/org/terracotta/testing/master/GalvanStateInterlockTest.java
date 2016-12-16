@@ -75,7 +75,6 @@ public class GalvanStateInterlockTest {
         // Zap the unknown server.
         GalvanStateInterlockTest.this.interlock.serverWasZapped(passive);
         // Start up the zapped server and have it come up as a passive.
-        GalvanStateInterlockTest.this.interlock.serverDidStartup(passive);
         GalvanStateInterlockTest.this.interlock.serverBecamePassive(passive);
       }
     };
@@ -109,7 +108,6 @@ public class GalvanStateInterlockTest {
         // Zap the passive.
         GalvanStateInterlockTest.this.interlock.serverWasZapped(passive);
         // Start up the zapped server and have it come up as a passive.
-        GalvanStateInterlockTest.this.interlock.serverDidStartup(passive);
         GalvanStateInterlockTest.this.interlock.serverBecamePassive(passive);
         // Now, have the slow server become passive.
         GalvanStateInterlockTest.this.interlock.serverBecamePassive(slow);
@@ -147,7 +145,6 @@ public class GalvanStateInterlockTest {
         // Promote the passive.
         GalvanStateInterlockTest.this.interlock.serverBecameActive(passive);
         // Start up the zapped server and have it come up as a passive.
-        GalvanStateInterlockTest.this.interlock.serverDidStartup(active);
         GalvanStateInterlockTest.this.interlock.serverBecamePassive(active);
         // Now, have the slow server become passive.
         GalvanStateInterlockTest.this.interlock.serverBecamePassive(slow);
