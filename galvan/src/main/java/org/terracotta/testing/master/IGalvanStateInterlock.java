@@ -159,5 +159,5 @@ public interface IGalvanStateInterlock {
    * that they are offline.
    * Note that this doesn't throw, on test failure, since it is assumed that this is being called AFTER the test has run.
    */
-  public void forceShutdown();
+  public void forceShutdown() throws GalvanFailureException;
 }
