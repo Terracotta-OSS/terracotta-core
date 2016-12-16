@@ -32,24 +32,26 @@ public class MessagePayload {
   private EntityMessage message;
   private final int concurrency;
   private final boolean replicate;
+  private final boolean canBeBusy;
   private String debugId;
   
-  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, true);
+  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, true, true);
   
-  public MessagePayload(byte[] raw, EntityMessage message, boolean replicate) {
-    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate);
+  public MessagePayload(byte[] raw, EntityMessage message, boolean replicate, boolean canBeBusy) {
+    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate, canBeBusy);
   }
   
   public MessagePayload(byte[] raw, EntityMessage message, int concurrency) {
-    this(raw, message, concurrency, false);
+    this(raw, message, concurrency, false, false);
   }
 
-  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate) {
+  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate, boolean canBeBusy) {
     this.raw = raw;
     this.message = message;
     this.debugId = (message != null) ? message.toString() : "";
     this.concurrency = concurrency;
     this.replicate = replicate;
+    this.canBeBusy = canBeBusy;
   }
   
   public byte[] getRawPayload() {
@@ -62,6 +64,10 @@ public class MessagePayload {
   
   public String getDebugId() {
     return debugId;
+  }
+  
+  public boolean canBeBusy() {
+    return canBeBusy;
   }
   
   public EntityMessage decodeRawMessage(MessageCodec codec) {

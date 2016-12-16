@@ -134,7 +134,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
 
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication, true), transactionID, oldestTransactionOnClient);
     }
 
     @Override
@@ -460,21 +460,21 @@ public class ProcessTransactionHandler implements ReconnectListener {
     this.transactionOrderPersistor.clearAllRecords();
     
     for (ReferenceMessage msg : this.references) {
-      LOGGER.debug("RESENDS:" + msg.getSource() + " " + msg.getVoltronType());
+      LOGGER.debug("RESENDS:" + msg);
       executeResend(msg);
     }
     this.references = null;
     
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {
-      LOGGER.debug("RESENDS:" + message.getSource() + " " + message.getVoltronType());
+      LOGGER.debug("RESENDS:" + message);
       executeResend(message);
     }
     this.resendReplayList = null;
     
     // Replay all the new messages found during resends.
     for (ResendVoltronEntityMessage message : this.resendNewList) {
-      LOGGER.debug("RESENDS:" + message.getSource() + " " + message.getVoltronType());
+      LOGGER.debug("RESENDS:" + message);
       executeResend(message);
     }
 //  remove tracking for any resent create journal entries
@@ -505,7 +505,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication, false), transactionID, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
