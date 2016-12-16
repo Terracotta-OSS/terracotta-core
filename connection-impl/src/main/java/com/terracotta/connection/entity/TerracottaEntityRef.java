@@ -33,11 +33,10 @@ import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 
-import com.tc.exception.EntityBusyException;
-import com.tc.exception.EntityReferencedException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientEntityManager;
+import com.tc.object.ClientEntityManagerImpl;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -45,8 +44,6 @@ import com.tc.util.Assert;
 import com.tc.util.Throwables;
 import com.tc.util.Util;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -70,6 +67,10 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     this.name = name;
     this.entityClientService = entityClientService;
     this.nextClientInstanceID = clientIds;
+  }
+  
+  public boolean wasBusy() {
+    return ((ClientEntityManagerImpl)entityManager).checkBusy();
   }
 
   @Override
