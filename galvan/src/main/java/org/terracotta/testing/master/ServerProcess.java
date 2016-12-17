@@ -349,10 +349,7 @@ public class ServerProcess {
     if (!this.isCrashExpected() && (null == failureException)) {
       failureException = new GalvanFailureException("Unexpected server crash: " + this + " (PID " + originalPid + ") status: " + exitStatus);
     }
-    
-    if (null != failureException) {
-      this.stateManager.testDidFail(failureException);
-    }
+
     // Close the log files.
     try {
       this.outputStream.flush();
@@ -368,6 +365,11 @@ public class ServerProcess {
 
     this.stateInterlock.serverDidShutdown(this);
     // In either case, we are not running.
+    
+    if (null != failureException) {
+      this.stateManager.testDidFail(failureException);
+    }
+
     reset(false);
   }
 
