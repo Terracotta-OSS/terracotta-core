@@ -43,7 +43,9 @@ import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -53,6 +55,8 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private final StateManager                coordinator;
   private final ClientEntityStateManager      clientEvents;
   private final ManagementTopologyEventCollector collector;
+  
+  private final Set<ClientID>  knownClients = new HashSet<>();
 
   private static final TCLogger         logger = TCLogging.getLogger(ChannelLifeCycleHandler.class);
   private final Sink<HydrateContext> hydrateSink;
@@ -94,7 +98,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
           msg.forEach(m->processTransactionSink.addSingleThreaded(m));
         }
         if (wasActive) {
-          notifyTopoCollectorDisconnected(clientID);
+          notifyClientRemoved(clientID);
         }
       }
     }
@@ -102,18 +106,6 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
       logger.info(": Received transport disconnect.  Shutting down client " + nodeID);
-    }
-  }
-  
-  private void notifyTopoCollectorDisconnected(ClientID client) {
-    collector.clientDidDisconnect(client);
-  }
-  
-  private void notifyTopoCollectorConnected(ClientID client) {
-    try {
-      collector.clientDidConnect(this.channelMgr.getActiveChannel(client), client);
-    } catch (NoSuchChannelException nochan) {
-      logger.warn("client channel is not available for " + client);
     }
   }
 
@@ -124,7 +116,6 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
       // Broadcast locally (chain) and remotely this message if active
       if (coordinator.isActiveCoordinator()) {
         broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
-        notifyTopoCollectorConnected(clientID);
       }
     }
   }
@@ -141,11 +132,39 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
       }
     }
   }
-
+/**
+ * channel created is strangely connected.  When a new channel is created, it can be 
+ * either a brand new client connected or just a client reconnecting (failover).
+ * All the accounting for the client should all ready be there for failover created channels 
+ * 
+ * @param channel
+ * @param newHandshake 
+ */
   @Override
   public void channelCreated(MessageChannel channel) {
-    ClientID clientID = new ClientID(channel.getChannelID().toLong());
+    ClientID clientID = (ClientID)channel.getRemoteNodeID();
+ //  brand new member, broadcast the change if active
     clientCreated(clientID, channel.getProductId());
+ //  client is connecting to the active
+    if (coordinator.isActiveCoordinator()) {
+      notifyClientAdded(channel, clientID);
+    }
+  }
+  
+  private void notifyClientAdded(MessageChannel channel, ClientID clientID) {
+    synchronized (knownClients) {
+      collector.clientDidConnect(channel, clientID);
+      knownClients.add(clientID);
+    }
+  }
+  
+  private void notifyClientRemoved(ClientID clientID) {
+    synchronized (knownClients) {
+      if (knownClients.contains(clientID)) {
+        collector.clientDidDisconnect(clientID);
+        knownClients.remove(clientID);
+      }
+    }
   }
   
   public void clientCreated(ClientID client, ProductID product) {
@@ -177,7 +196,14 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     InBandMoveToNextSink context3 = new InBandMoveToNextSink(null, sec, coordinator.isActiveCoordinator() ? processTransactionSink : replicatedTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
     hydrateSink.addSpecialized(context3);
   }
-
+/**
+ * Again, channel disconnection is oddly connected.  A channel disconnect can come as
+ * a result of a reconnect timeout so not all channel removals represent a physical 
+ * connection of a client to this machine.  Only report to the topo collector if it 
+ * was physically connected
+ * @param channel
+ * @param wasActive 
+ */
   @Override
   public void channelRemoved(MessageChannel channel, boolean wasActive) {
     // Note that the remote node ID always refers to a client, in this path.

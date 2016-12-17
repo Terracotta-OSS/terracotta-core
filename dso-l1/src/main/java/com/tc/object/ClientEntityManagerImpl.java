@@ -65,14 +65,11 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
@@ -93,6 +90,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final StageManager stages;
   
   private boolean isShutdown = false;
+
+//  for testing
+  private boolean wasBusy = false;
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
     this.logger = new ClientIDLogger(channel, TCLogging.getLogger(ClientEntityManager.class));
@@ -106,10 +106,18 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint<?, ?>>(10240, 0.75f, 128);
     this.stages = mgr;
     
-    this.outbound = createSendStage(stages);
+    this.outbound = createSendStage();
+  }
+  
+  public boolean checkBusy() {
+    try {
+      return wasBusy;
+    } finally {
+      wasBusy = false;
+    }
   }
 
-  private Sink<InFlightMessage> createSendStage(StageManager stages) {
+  private Sink<InFlightMessage> createSendStage() {
     final EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
       @Override
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
@@ -492,6 +500,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         return createInFlightMessageAfterAcks(msg, requestedAcks, shouldBlockGetOnRetire).get();
       } catch (EntityBusyException busy) {
   //  server was busy, try again in 2 seconds
+        wasBusy = true;
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException in) {

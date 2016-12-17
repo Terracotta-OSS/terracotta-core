@@ -97,6 +97,11 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
+  public void startSync() {
+
+  }
+  
+  @Override
   public void loadEntity(byte[] configuration) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }

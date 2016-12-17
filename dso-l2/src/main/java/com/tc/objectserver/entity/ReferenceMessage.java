@@ -84,4 +84,9 @@ public class ReferenceMessage implements VoltronEntityMessage {
     // There is no message instance for this type.
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "ReferenceMessage{" + "clientID=" + clientID + ", entityDescriptor=" + entityDescriptor + ", type=" + type + '}';
+  }
 }

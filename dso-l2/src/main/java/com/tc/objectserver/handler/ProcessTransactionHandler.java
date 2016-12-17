@@ -55,7 +55,7 @@ import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.LinkedList;
 
 import java.util.List;
@@ -134,7 +134,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
 
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication, true), transactionID, oldestTransactionOnClient);
     }
 
     @Override
@@ -169,16 +169,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
     this.resendReplayList = new SparseList<>();
     this.resendNewList = new LinkedList<>();
   }
-  
-  public Iterable<ManagedEntity> getEntityList() {
-    return new Iterable<ManagedEntity>() {
-      @Override
-      public Iterator<ManagedEntity> iterator() {
-        synchronized (ProcessTransactionHandler.this) {
-          return new ArrayList<ManagedEntity>(entityManager.getAll()).iterator();
-        }
-      }
-    };
+  /**
+   * This is a confusing method used in a confusing way.  This is used to snapshot the current
+   * set of ManagedEntities.  There is synchronization in the EntityManager so a clean snapshot 
+   * can be taken.  The runnable is functionality that is passed in that must run under lock.
+   * entities while the snapshot is being captured.  Once the live set of entities is established, 
+   * startSync is called on each one so that internal state of the entity is locked down until 
+   * the sync has happened on that particular entity
+   */
+  public Iterable<ManagedEntity> snapshotEntityList(Runnable r) {
+    return entityManager.snapshot(r, m->m.startSync(), null);
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
@@ -216,9 +216,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
     }
   }
-// TODO:  Make sure that the ReplicatedTransactionHandler is flushed before 
-//   adding any new messages to the PTH
-  private synchronized void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
+// only the process transaction thread will add messages here except for on reconnect
+  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
     EntityID entityID = descriptor.getEntityID();
@@ -460,21 +459,21 @@ public class ProcessTransactionHandler implements ReconnectListener {
     this.transactionOrderPersistor.clearAllRecords();
     
     for (ReferenceMessage msg : this.references) {
-      LOGGER.debug("RESENDS:" + msg.getSource() + " " + msg.getVoltronType());
+      LOGGER.debug("RESENDS:" + msg);
       executeResend(msg);
     }
     this.references = null;
     
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {
-      LOGGER.debug("RESENDS:" + message.getSource() + " " + message.getVoltronType());
+      LOGGER.debug("RESENDS:" + message);
       executeResend(message);
     }
     this.resendReplayList = null;
     
     // Replay all the new messages found during resends.
     for (ResendVoltronEntityMessage message : this.resendNewList) {
-      LOGGER.debug("RESENDS:" + message.getSource() + " " + message.getVoltronType());
+      LOGGER.debug("RESENDS:" + message);
       executeResend(message);
     }
 //  remove tracking for any resent create journal entries
@@ -505,7 +504,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication, false), transactionID, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {

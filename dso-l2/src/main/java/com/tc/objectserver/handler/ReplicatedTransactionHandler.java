@@ -187,12 +187,18 @@ public class ReplicatedTransactionHandler {
     switch (rep.getType()) {
       case ReplicationMessage.REPLICATE:
         if (state.ignore(rep)) {
-          LOGGER.debug("Ignoring:" + rep);
-          acknowledge(rep, true);
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Ignoring:" + rep);
+          }
+          acknowledge(rep, ReplicationResultCode.NONE);
         } else if (state.defer(rep)) {
-          LOGGER.debug("Deferring:" + rep);
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Deferring:" + rep);
+          }
         } else {
-          LOGGER.debug("Applying:" + rep);
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Applying:" + rep);
+          }
           replicatedMessageReceived(rep);
         }
         break;
@@ -243,23 +249,22 @@ public class ReplicatedTransactionHandler {
 // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
       long consumerID = this.entityPersistor.getNextConsumerID();
       try {
-        LOGGER.debug("entity create called " + entityID);
         ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull() ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
         temp.addRequestMessage(request, new MessagePayload(extendedData, null, ConcurrencyStrategy.MANAGEMENT_KEY), 
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
-              acknowledge(rep, true);
+              acknowledge(rep, ReplicationResultCode.SUCCESS);
             } else {
               entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, true, extendedData);
-              acknowledge(rep, true);
+              acknowledge(rep, ReplicationResultCode.SUCCESS);
             }
           }, (exception) -> {
             entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-            acknowledge(rep, false);
+            acknowledge(rep, ReplicationResultCode.FAIL);
           });
       } catch (EntityException ee) {
-        acknowledge(rep, false);
+        acknowledge(rep, ReplicationResultCode.FAIL);
         if (!sourceNodeID.isNull()) {
           entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         }
@@ -280,29 +285,30 @@ public class ReplicatedTransactionHandler {
           entity.get().addRequestMessage(request, payload, 
             (result)->{
               entityPersistor.entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, version, result);
-              acknowledge(rep, true);
+              acknowledge(rep, ReplicationResultCode.SUCCESS);
             } , (exception) -> {
               entityPersistor.entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-              acknowledge(rep, false);
+              acknowledge(rep, ReplicationResultCode.FAIL);
             });
           break;
         case DESTROY_ENTITY:
           entityInstance.addRequestMessage(request, payload, 
             (result)-> {
               entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID);
-              acknowledge(rep, true);
+              acknowledge(rep, ReplicationResultCode.SUCCESS);
             }, (exception) -> {
              entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-              acknowledge(rep, false);
+              acknowledge(rep, ReplicationResultCode.FAIL);
             });
           break;
         case FETCH_ENTITY:
         case RELEASE_ENTITY:
           entityInstance.addRequestMessage(request, payload, 
             (result)-> {
-              acknowledge(rep, true);
+              acknowledge(rep, ReplicationResultCode.SUCCESS);
             }, (exception) -> {
-              acknowledge(rep, false);
+              LOGGER.warn("fetch/release fail:" + rep);
+              acknowledge(rep, ReplicationResultCode.FAIL);
             });
           break;
         case NOOP:
@@ -312,13 +318,12 @@ public class ReplicatedTransactionHandler {
           }
           //  fall-through to default
         default:
-          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep, true), (exception) -> acknowledge(rep, false));
+          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(rep, ReplicationResultCode.FAIL));
           break;
       }
     } else {
  //  fail, just ack
-      LOGGER.debug("entity not found:" + rep);
-      acknowledge(rep, false);
+      acknowledge(rep, ReplicationResultCode.FAIL);
     }
   }
   
@@ -370,13 +375,13 @@ public class ReplicatedTransactionHandler {
           throw new RuntimeException(codec);
         }
         MessagePayload payload = new MessagePayload(sync.getExtendedData(), msg, sync.getConcurrency());
-        entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync, true), (exception)->acknowledge(sync, false));
+        entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync, ReplicationResultCode.SUCCESS), (exception)->acknowledge(sync, ReplicationResultCode.FAIL));
         if (sync.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
           entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
         if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
-          acknowledge(sync, true);
+          acknowledge(sync, ReplicationResultCode.SUCCESS);
         } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
@@ -390,8 +395,8 @@ public class ReplicatedTransactionHandler {
               }
               moveToPassiveStandBy();
             }
-            acknowledge(sync, true);
-          }, (exception)->acknowledge(sync, false));
+            acknowledge(sync, ReplicationResultCode.SUCCESS);
+          }, (exception)->acknowledge(sync, ReplicationResultCode.FAIL));
         }
       }
     } catch (EntityException ee) {
@@ -456,10 +461,6 @@ public class ReplicatedTransactionHandler {
   }
       
   private ServerEntityRequest make(ReplicationMessage rep) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Making " + rep);
-    }
-
     return new BasicServerEntityRequest(decodeReplicationType(rep.getReplicationType()), rep.getSource(),  
       rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getEntityDescriptor());
   }
@@ -491,34 +492,26 @@ public class ReplicatedTransactionHandler {
   }
 
   private void ackReceived(ReplicationMessage rep) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("acking(received) " + rep);
-    }
     if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-      prepareAckForSend(rep.messageFrom(), false, rep.getMessageID(), true);
+      prepareAckForSend(rep.messageFrom(), rep.getMessageID(), ReplicationResultCode.RECEIVED);
     }
   }
 
-  private void acknowledge(ReplicationMessage rep, boolean success) {
+  private void acknowledge(ReplicationMessage rep, ReplicationResultCode code) {
 //  when is the right time to send the ack?
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("acking(completed) " + rep);
-    }
     if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-      prepareAckForSend(rep.messageFrom(), true, rep.getMessageID(), success);
+      prepareAckForSend(rep.messageFrom(), rep.getMessageID(), code);
     }
   }
 
-  private synchronized void prepareAckForSend(NodeID sender, boolean isComplete, MessageID respondTo, boolean success) {
+  private synchronized void prepareAckForSend(NodeID sender, MessageID respondTo, ReplicationResultCode code) {
     if (null == this.cachedBatchAck) {
       this.cachedBatchAck = ReplicationMessageAck.createBatchAck();
       this.cachedMessageAckFrom = sender;
     } else {
       Assert.assertTrue(this.cachedMessageAckFrom.equals(sender));
     }
-    ReplicationResultCode code = isComplete
-        ? (success ? ReplicationResultCode.SUCCESS : ReplicationResultCode.FAIL)
-        : ReplicationResultCode.RECEIVED;
+
     this.cachedBatchAck.addAck(respondTo, code);
     
     if (!isWaitingForNetwork) {
@@ -635,9 +628,6 @@ public class ReplicatedTransactionHandler {
         Assert.assertEquals(currentKey, concurrency);
         syncdKeys.add(concurrency);
         currentKey = -1;
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Ending " + eid + "/" + currentKey);
-        }
         return defer;
       } finally {
         defer = new LinkedList<>();
@@ -659,9 +649,6 @@ public class ReplicatedTransactionHandler {
 //  done with sync, need to apply everything now
         return false;
       }
-      if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
-        return false;
-      }
       EntityID eid = rep.getEntityDescriptor().getEntityID();
 //  everything else, check
       if (eid.equals(syncing)) {
@@ -672,13 +659,18 @@ public class ReplicatedTransactionHandler {
           return false;
         } else if (!syncdKeys.contains(rep.getConcurrency())) {
 //  ignore, haven't gotten to this key yet
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Ignoring " + rep);
-          }
           return true;
+        } else {
+//  valid, already sync'd key, apply
+          return false;
         }
       }
-      return false;
+      if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
+        syncdEntities.add(eid);
+        return false;
+      }
+//  if not syncing or sync'd, just ignore it.
+      return (!syncdEntities.contains(eid));
     }
 
     private boolean defer(ReplicationMessage rep) {
@@ -694,8 +686,7 @@ public class ReplicatedTransactionHandler {
       } 
       
       if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
-        syncdEntities.add(eid);
-        return false;
+        Assert.fail("create received during a sync of an entity " + syncing);
       }
       
       if (eid.equals(syncing)) {
@@ -708,9 +699,6 @@ public class ReplicatedTransactionHandler {
           Assert.fail("destroy received during a sync of an entity " + syncing);
           return false;
         } else if (currentKey == rep.getConcurrency()) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Deferring " + rep);
-          }
           defer.add(rep);
           return true;
         }

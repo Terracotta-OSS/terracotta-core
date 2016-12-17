@@ -91,7 +91,7 @@ public class ReplicationSenderTest {
       case INVOKE_ACTION:
       case NOOP:
       case RECONFIGURE_ENTITY:
-        return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], 0, "");
+        return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
       case SYNC_BEGIN:
         return ReplicationMessage.createStartSyncMessage();
       case SYNC_END:
@@ -127,15 +127,14 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);  
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
@@ -147,33 +146,30 @@ public class ReplicationSenderTest {
         throw new RuntimeException(h);
       }
     });
-    
+    System.err.println("filter SDSC");
     validateCollector(validation);
   }  
   
   @Test
   public void filterCDC() throws Exception {  // Create-Delete-Create
     entity = new EntityID("TEST", "test");
+ //  creates and sync can no longer intermix
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
     buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
+ // this create is not part of the sync set so everything should pass through
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);  // invoke actions are valid since the stream is working off the create
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), true);
+
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.DESTROY_ENTITY), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
+// create and destroy can no longer happen concurrently with sync
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
@@ -185,6 +181,7 @@ public class ReplicationSenderTest {
       }
     });
     
+    System.err.println("filter CDC");
     validateCollector(validation);
   }  
 
@@ -196,17 +193,18 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   // invoke actions are valid since the stream is working off the create
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);

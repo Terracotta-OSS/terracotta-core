@@ -680,6 +680,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
+        configSetupManager.getActiveServerGroupForThisL2().getMembers().length,
         configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs(),
         weightGeneratorFactory, 
         this.persistor.getClusterStatePersistor());
@@ -706,7 +707,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 // setup replication    
     final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(l2Coordinator.getReplicatedClusterStateManager().getPassives(), processTransactionHandler.getEntityList(), this.persistor.getEntityPersistor(), replicationDriver.getSink(), this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationDriver.getSink(), this.getGroupManager());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
@@ -733,7 +734,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     GroupEventsDispatchHandler dispatchHandler = new GroupEventsDispatchHandler();
     dispatchHandler.addListener(this.l2Coordinator);  
     dispatchHandler.addListener(passives);
-    dispatchHandler.addListener(connectPassiveOperatorEvents(haConfig.getNodesStore(), monitoringShimService));
+    
     Stage<GroupEvent> groupEvents = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE, GroupEvent.class, dispatchHandler, 1, maxStageSize);
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically    
@@ -742,7 +743,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.routeMessages(ReplicationMessage.class, replication);
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
-    createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
+    Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
+    dispatchHandler.addListener(connectPassiveOperatorEvents(info, haConfig.getNodesStore(), monitoringShimService));
     
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
@@ -806,7 +808,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     setLoggerOnExit();
   }
   
-  private void createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
+  private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
     Stage<PlatformInfoRequest> stage = stageManager.createStage(ServerConfigurationContext.PLATFORM_INFORMATION_REQUEST, 
         PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, monitoringSupport).getEventHandler(), 1, maxStageSize);
     groupCommManager.routeMessages(PlatformInfoRequest.class, stage.getSink());
@@ -820,6 +822,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         groupCommManager.sendAll(req);  //  request info from all the other servers
       }
     });
+    return stage.getSink();
   }
   
   private void startStages(StageManager stageManager, List<PostInit> toInit) {
@@ -871,7 +874,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return control;
   }
   
-  private GroupEventsListener connectPassiveOperatorEvents(NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
+  private GroupEventsListener connectPassiveOperatorEvents(Sink<PlatformInfoRequest> infoHandler, NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
     OperatorEventsPassiveServerConnectionListener delegate = new OperatorEventsPassiveServerConnectionListener(nodesStore);
     return new GroupEventsListener() {
 
@@ -893,7 +896,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeLeft(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerLeft((ServerID)nodeID);
-          monitoringShimService.serverDidLeaveStripe((ServerID)nodeID);
+          PlatformInfoRequest fake = PlatformInfoRequest.createServerInfoRemoveMessage((ServerID)nodeID);
+          fake.setMessageOrginator(nodeID);
+          infoHandler.addSingleThreaded(fake);
         }
       }
     };

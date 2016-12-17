@@ -209,11 +209,19 @@ public class ManagedEntityImpl implements ManagedEntity {
         case CREATE_ENTITY:
         case DESTROY_ENTITY:
         case RECONFIGURE_ENTITY:
-          schedule = interop.tryStartLifecycle();
+          if (data.canBeBusy()) {
+            schedule = interop.tryStartLifecycle();
+          } else {
+            interop.startLifecycle();
+          }
           break;
         case FETCH_ENTITY:
         case RELEASE_ENTITY:
-          schedule = interop.tryStartReference();
+          if (data.canBeBusy()) {
+            schedule = interop.tryStartReference();
+          } else {
+            interop.startReference();
+          }
           break;
         default:
           throw new AssertionError("unexpected");
@@ -799,7 +807,6 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   @Override
   public void sync(NodeID passive) {
-    interop.startSync();
 // iterate through all the concurrency keys of an entity
     EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
@@ -842,6 +849,10 @@ public class ManagedEntityImpl implements ManagedEntity {
       interop.syncFinished();
     }
   }  
+  
+  public void startSync() {
+    interop.startSync();
+  }
 
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     this.constructorInfo = constructorInfo;
@@ -938,7 +949,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         case FETCH_ENTITY:
         case RECONFIGURE_ENTITY:
         case RELEASE_ENTITY:
-          if (replicate == false) {
+          if (replicate == false && isInActiveState) {
             logger.warn("Ignoring replication flag. All lifecycle operations are replicated " + request.getAction());
           }
           replicate = true;
@@ -1012,7 +1023,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     boolean activate() {
-      logger.debug("activated from " + Thread.currentThread().getName());
       try {
         return deferCleared;
       } finally {
@@ -1021,7 +1031,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     synchronized boolean clear() {
-     logger.debug("cleared from " + Thread.currentThread().getName() + " with " + queue.size());
      try {
         notifyAll();
         return deferCleared;

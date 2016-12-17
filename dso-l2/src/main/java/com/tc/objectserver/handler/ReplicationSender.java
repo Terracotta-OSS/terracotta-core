@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import org.terracotta.entity.ConcurrencyStrategy;
 
 
 public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope> {
@@ -48,6 +49,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   private final Map<NodeID, SyncState> filtering = new HashMap<>();
   private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
+  private static final boolean debugLogging = logger.isDebugEnabled();
+  private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
 
   public ReplicationSender(GroupManager group) {
     this.group = group;
@@ -80,16 +83,19 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       if (filterMessage(syncing, nodeid, msg)) {
 //  if a message is filtered, it is turned to a NOOP so ordering can be preserved 
 //  on the passive for possible resends
+        if (debugLogging) {
+          logger.debug("FILTERING:" + msg);
+        }
         msg.setSingleActivityToNoOp();
       }
 //  sending message on to passive, additional filtering may happen on the other side.
 //  the only messages that are relevant before passive sync starts are create messages
       try {
         msg.setReplicationID(rOrder.getAndIncrement());
-        if (logger.isDebugEnabled()) {
+        if (debugLogging) {
           logger.debug("WIRE:" + msg);
         }
-        if (PLOGGER.isDebugEnabled()) {
+        if (debugMessaging) {
           PLOGGER.debug("SENDING:" + msg.getDebugId());
         }
         group.sendTo(nodeid, msg);
@@ -99,6 +105,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         }
       }  catch (GroupException ge) {
         logger.info(msg, ge);
+        context.droppedWithoutSend();
       }
     }
   }
@@ -133,15 +140,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   private boolean filterMessage(SyncState state, NodeID nodeid, ReplicationMessage msg) {
     if (state != null) {
 //  there is an active sync going on, need to filter out messages that should not be replicated
-      if (!state.filter(msg)) {
-        if (logger.isDebugEnabled()) {
-          logger.debug(nodeid + ":Filtering " + msg + " for " + msg.getEntityDescriptor().getEntityID());
-        }
+      if (!state.shouldMessageBeReplicated(msg)) {
         return true;
       } else {
-        if (logger.isDebugEnabled()) {
-          logger.debug(nodeid + ":Sending " + msg + " for " + msg.getEntityDescriptor().getEntityID());
-        }
         state.validateSending(msg);
         if (state.isComplete()) {
           filtering.remove(nodeid);
@@ -180,29 +181,34 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   }
   
   private static class SyncState {
-    private final Set<EntityID> syncd = new HashSet<>();
-    private EntityID syncingID = EntityID.NULL_ID;
+    private final Set<EntityID> liveSet = new HashSet<>();
     private final Set<Integer> syncdID = new HashSet<>();
-    private final Set<EntityID> created = new HashSet<>();
-    private final Set<EntityID> destroyed = new HashSet<>();
+    private EntityID syncingID = EntityID.NULL_ID;
     private int syncingConcurrency = -1;
+    boolean begun = false;
     private SyncReplicationActivity.ActivityType lastSeen;
     private SyncReplicationActivity.ActivityType lastSent;
     
-    public boolean filter(ReplicationMessage msg) {
+    public boolean shouldMessageBeReplicated(ReplicationMessage msg) {
       final EntityID eid = msg.getEntityDescriptor().getEntityID();
+        
         switch (validateInput(msg)) {
           case SYNC_BEGIN:
+            begun = true;
             return true;
           case SYNC_ENTITY_BEGIN:
             syncingID = eid;
             syncdID.clear();
+            syncdID.add(ConcurrencyStrategy.MANAGEMENT_KEY);
+            syncdID.add(ConcurrencyStrategy.UNIVERSAL_KEY);
             syncingConcurrency = 0;
 //  if the entity is created through the create message replication, the entity should not be sync'd
 //  set syncid to null so all messages until end get filtered out.  this should not be alot, it just got created
-            if (created.contains(syncingID) || destroyed.contains(eid)) {
+            if (liveSet.contains(syncingID)) {
               syncingID = EntityID.NULL_ID;
-              logger.debug("Drop: entity " + syncingID + " was created no sync required");
+              if (debugLogging) {
+                logger.debug("Drop: entity " + syncingID + " was created no sync required");
+              }
               return false;
             }
             return true;
@@ -215,13 +221,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             syncingConcurrency = msg.getConcurrency();
             return true;
           case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-            if (syncingID == EntityID.NULL_ID) {
-              return false;
-            }
-            if (destroyed.contains(eid)) {
-              return false;
-            }
-            return true;
+            return (syncingID != EntityID.NULL_ID);
           case SYNC_ENTITY_CONCURRENCY_END:
             if (syncingID == EntityID.NULL_ID) {
               return false;
@@ -235,58 +235,25 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
               return false;
             }
             Assert.assertEquals(syncingID, eid);
-            syncd.add(syncingID);
+            liveSet.add(syncingID);
             syncingID = EntityID.NULL_ID;
             return true;
           case SYNC_END:
             return true;
           case CREATE_ENTITY:
-            if (syncd.contains(eid)) {
-              created.add(eid);
-              destroyed.remove(eid);
-              return true;
-            } else if (destroyed.contains(eid)) {
-              created.add(eid);
-              destroyed.remove(eid);
-              return true;
-            } else if (eid.equals(syncingID)) {
-              logger.debug("skipping create due to syncing id " + syncingID);
-//  this entity is being or has been replicated, don't create it on the passive
-              return false;
-            } else {
-//  add this to the list of entities already syncd
-              created.add(eid);
-              destroyed.remove(eid);
-              return true;
+// if this create came through, it is not part of the snapshot set so everything
+// applies
+            if (begun) {
+              liveSet.add(eid);
             }
+//  fall-through
           case RECONFIGURE_ENTITY:
           case FETCH_ENTITY:
           case RELEASE_ENTITY:
-            if (syncd.contains(eid) || eid.equals(syncingID)) {
-//  this entity is being or has been replicated, send the reconfigure through
-              return true;
-            } else {
-//  this entity has not been on the passive yet, reconfigure will go with replication
-              return false;
-            }
           case DESTROY_ENTITY:
-            if (syncd.contains(eid)) {
-//  this would only happen if an entity was destroyed
-              destroyed.add(eid);
-              return true;
-            } else if (syncingID.equals(eid)) {
-              Assert.fail("destroy during sync " + eid);
-            } else if (created.contains(eid)) {
-              destroyed.add(eid);
-              created.remove(eid);
-              return true;
-            } else {
- //  hasn't been syncd yet.  never sync it
-              destroyed.add(eid);
-              return false;
-            }
+            return begun;
           case INVOKE_ACTION:
-            if (syncd.contains(eid) || created.contains(eid)) {
+            if (liveSet.contains(eid)) {
               return true;
             } else if (syncingID.equals(eid)) {
               if (syncingConcurrency == msg.getConcurrency()) {
@@ -352,5 +319,4 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       return type;
     }
   }
-  
 }
