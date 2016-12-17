@@ -112,7 +112,7 @@ public class ClientEventManager {
           call.runWithControl(control);
         } catch (Throwable t) {
           System.err.println("WARNING:  Client being sent FATAL ack (while processing " + eventNameBase + ") due to internal error: " + t);
-          responseToSend = IPCMessageConstants.FATAL_CLUSTER_ACK;
+          responseToSend = IPCMessageConstants.FATAL_CLUSTER_ACK + " " + t.getMessage();
         }
         // We also want to send the ACK to the client.
         processStdin.println(responseToSend);

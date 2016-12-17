@@ -340,11 +340,10 @@ public class ServerProcess {
     // See if we have a PID yet or if this was a failure, much earlier (hence, if we told the interlock that we are even running).
     GalvanFailureException failureException = null;
     long originalPid = this.waitForPid();
-    if (originalPid > 0) {
-      // Ok, tell the interlock.
-      this.stateInterlock.serverDidShutdown(this);
-    } else {
-      // This is a fast-failure so report the test failure.
+//  no matter what, the server is gone so report it to interlock
+    if (!this.isCrashExpected() && originalPid == 0) {
+// didn't have time to get the PID, this is not expected
+      Assert.assertFalse(this.isCrashExpected()); // can't expect a crash without a PID
       failureException = new GalvanFailureException("Server crashed before reporting PID: " + this);
     }
     if (!this.isCrashExpected() && (null == failureException)) {
@@ -354,18 +353,22 @@ public class ServerProcess {
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
-    // In either case, we are not running.
-    reset(false);
     // Close the log files.
     try {
+      this.outputStream.flush();
       this.outputStream.close();
       this.outputStream = null;
+      this.errorStream.flush();
       this.errorStream.close();
       this.errorStream = null;
     } catch (IOException e) {
       // Not expected in this framework.
       Assert.unexpected(e);
     }
+
+    this.stateInterlock.serverDidShutdown(this);
+    // In either case, we are not running.
+    reset(false);
   }
 
   /**
@@ -389,6 +392,7 @@ public class ServerProcess {
     this.setCrashExpected();
     
     Process process = null;
+
     // Destroy the process.
     if (TestHelpers.isWindows()){
       //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.

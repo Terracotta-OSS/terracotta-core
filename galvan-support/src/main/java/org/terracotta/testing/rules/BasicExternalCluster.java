@@ -167,7 +167,12 @@ public class BasicExternalCluster extends Cluster {
           didPass = false;
         }
         // Whether we passed or failed, bring everything down.
-        interlock.forceShutdown();
+        try {
+          interlock.forceShutdown();
+        } catch (GalvanFailureException e) {
+          e.printStackTrace();
+          didPass = false;
+        }
         setSafeForRun(false);
         if (!didPass) {
           // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection

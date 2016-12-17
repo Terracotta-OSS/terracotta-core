@@ -17,6 +17,7 @@ package org.terracotta.testing.master;
 
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -105,7 +106,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       while (!this.sharedLockState.checkDidPass() && (null == this.activeServer)) {
         safeWait();
       }
-      this.logger.output("< waitForActiveServer");
+      this.logger.output("< waitForActiveServer " + this.activeServer);
     }
   }
 
@@ -154,6 +155,14 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     }
   }
 
+  private void safeWaitWithTimeout(long time, TimeUnit units) {
+    try {
+      this.sharedLockState.wait(units.toMillis(time));
+    } catch (InterruptedException e) {
+      Assert.unexpected(e);
+    }
+  }
+  
   private void safeWait() {
     try {
       this.sharedLockState.wait();
@@ -167,7 +176,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public ServerProcess getActiveServer() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
-      this.logger.output("getActiveServer");
+      this.logger.output("getActiveServer " + this.activeServer);
       this.sharedLockState.checkDidPass();
       return this.activeServer;
     }
@@ -311,7 +320,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
 
   // ----- CLEANUP-----
   @Override
-  public void forceShutdown() {
+  public void forceShutdown() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
       this.logger.output("> forceShutdown");
       // Set the flag that we are shutting down.  That way, any servers which were concurrently coming online can be stopped when they check in.
@@ -330,21 +339,31 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       if (null != this.activeServer) {
         safeStop(this.activeServer);
       }
-      
+//  trying to debug a Galvan hang where not all the servers are seen
+      long timeExpired = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
       // We wait until there is no active, no passives, no unknown servers, and no running clients.
-      while (
+      while (timeExpired > System.currentTimeMillis() && (
           (null != this.activeServer)
           || !this.passiveServers.isEmpty()
           || !this.unknownRunningServers.isEmpty()
           || !this.runningClients.isEmpty()
+        )
       ) {
         this.logger.output("* forceShutdown waiting on active: " + (null != this.activeServer)
             + " passives: " + this.passiveServers.size()
             + " unknown: " + this.unknownRunningServers.size()
             + " clients: " + this.runningClients.size()
             );
-        safeWait();
+        safeWaitWithTimeout(1, TimeUnit.MINUTES);
       }
+      if (System.currentTimeMillis() > timeExpired) {
+        this.logger.output("* forceShutdown FAILED waiting on active: " + (null != this.activeServer)
+            + " passives: " + this.passiveServers.size()
+            + " unknown: " + this.unknownRunningServers.size()
+            + " clients: " + this.runningClients.size());
+        throw new RuntimeException("FORCE SHUTDOWN FAILED:" + toString());
+      }
+      
       this.logger.output("< forceShutdown");
     }
   }
