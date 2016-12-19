@@ -285,7 +285,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void processInvokeRequest(final ServerEntityRequest request, ResultCapture response, MessagePayload message, int key) {
     ClientDescriptor client = request.getSourceDescriptor();
     if (isInActiveState) {
-      key = this.concurrencyStrategy.concurrencyKey(message.decodeRawMessage(codec));
+      key = this.concurrencyStrategy.concurrencyKey(message.decodeRawMessage(raw->this.codec.decodeMessage(raw)));
     }
     int locked = key;
     scheduleInOrder(getEntityDescriptorForSource(client), request, response, message, ()->invoke(request, response, message, locked), locked);
@@ -508,7 +508,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void receiveSyncEntityPayload(ResultCapture response, MessagePayload message) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
-    this.passiveServerEntity.invoke(message.decodeRawMessage(codec));
+    this.passiveServerEntity.invoke(message.decodeRawMessage(raw->syncCodec.decode(message.getConcurrency(), raw)));
     response.complete();
     // No retire on passive.
     Assert.assertFalse(this.isInActiveState);
@@ -664,7 +664,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   private void performAction(ServerEntityRequest wrappedRequest, ResultCapture response, MessagePayload message) {
     Assert.assertNotNull(message);
-    EntityMessage em = message.decodeRawMessage(codec);
+    EntityMessage em = message.decodeRawMessage(raw->this.codec.decodeMessage(raw));
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
@@ -958,7 +958,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           break;
       }
       if (isActive() && request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-        ExecutionStrategy.Location loc = executionStrategy.getExecutionLocation(payload.decodeRawMessage(codec));
+        ExecutionStrategy.Location loc = executionStrategy.getExecutionLocation(payload.decodeRawMessage(raw->codec.decodeMessage(raw)));
         if (loc != ExecutionStrategy.Location.IGNORE) {
           replicate = loc.runOnPassive();
         }

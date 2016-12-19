@@ -165,7 +165,7 @@ public class SyncReplicationActivity {
     out.writeLong(oldest.toLong());
     
     out.writeInt(this.action.ordinal());
-    if (payload != null) {
+    if (payload != null && this.action != ActivityType.NOOP) {
       out.writeInt(payload.length);
       out.write(payload);
     } else {

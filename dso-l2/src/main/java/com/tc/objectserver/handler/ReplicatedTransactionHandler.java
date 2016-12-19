@@ -206,7 +206,7 @@ public class ReplicatedTransactionHandler {
         syncMessageReceived(rep);
         break;
       case ReplicationMessage.START:
-        entityManager.resetReferences();
+        establishNewPassive(rep);
         break;
       default:
         // This is an unexpected replicated message type.
@@ -327,6 +327,10 @@ public class ReplicatedTransactionHandler {
     }
   }
   
+  private void establishNewPassive(ReplicationMessage rep) {
+    entityManager.resetReferences();
+  }
+  
   private void requestPassiveSync() {
     NodeID node = stateManager.getActiveNodeID();
     Assert.assertTrue(entityManager.getAll().stream().allMatch((e)->e.getID().equals(PlatformEntity.PLATFORM_ID)));
@@ -366,15 +370,7 @@ public class ReplicatedTransactionHandler {
     try {
       Optional<ManagedEntity> entity = entityManager.getEntity(eid, version);
       if (entity.isPresent()) {
-        EntityMessage msg = null;
-        try {
-          if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
-              msg = this.entityManager.getSyncMessageCodec(eid).decode(sync.getConcurrency(), sync.getExtendedData());
-          }
-        } catch (MessageCodecException codec) {
-          throw new RuntimeException(codec);
-        }
-        MessagePayload payload = new MessagePayload(sync.getExtendedData(), msg, sync.getConcurrency());
+        MessagePayload payload = new MessagePayload(sync.getExtendedData(), null, sync.getConcurrency());
         entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync, ReplicationResultCode.SUCCESS), (exception)->acknowledge(sync, ReplicationResultCode.FAIL));
         if (sync.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
           entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);

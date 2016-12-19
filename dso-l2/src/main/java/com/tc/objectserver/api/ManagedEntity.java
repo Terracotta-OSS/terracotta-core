@@ -29,6 +29,8 @@ import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
@@ -96,8 +98,7 @@ public interface ManagedEntity extends StateDumpable {
    * 
    * @return The codec which can translate to/from this entity's message dialect.
    */
-  MessageCodec<?, ?> getCodec();
-
+  MessageCodec<? extends EntityMessage, ? extends EntityResponse> getCodec();
   /**
    * Of specific interest to the EntityMessengerService since it may need to install dependencies between messages to this
    * entity.

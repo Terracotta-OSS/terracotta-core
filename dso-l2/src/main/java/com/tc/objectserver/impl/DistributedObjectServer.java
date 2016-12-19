@@ -816,6 +816,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Coordinator.getStateManager().registerForStateChangeEvents((StateChangedEvent sce) -> {
       if (sce.movedToActive()) {
         server.updateActivateTime();
+        monitoringSupport.serverIsActive();
         PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
 //  due to the broadcast nature of this call, it is possible to get multiple 
 //  responses from the same server.  The underlying collector must tolerate this

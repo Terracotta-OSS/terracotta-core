@@ -70,7 +70,7 @@ public class MessagePayload {
     return canBeBusy;
   }
   
-  public EntityMessage decodeRawMessage(MessageCodec codec) {
+  public EntityMessage decodeRawMessage(MessageDecoder codec) {
     try {
       return decodeMessage(codec);
     } catch (MessageCodecException mce) {
@@ -78,9 +78,9 @@ public class MessagePayload {
     }
   }
 
-  public EntityMessage decodeMessage(MessageCodec codec) throws MessageCodecException {
+  public EntityMessage decodeMessage(MessageDecoder codec) throws MessageCodecException {
     if (message == null) {
-      message = codec.decodeMessage(raw);
+      message = codec.decode(raw);
       setDebugId(message.toString());
     }
     return message;
