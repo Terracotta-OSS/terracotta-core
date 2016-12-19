@@ -206,7 +206,7 @@ public class ReplicatedTransactionHandler {
         syncMessageReceived(rep);
         break;
       case ReplicationMessage.START:
-        entityManager.resetReferences();
+        establishNewPassive(rep);
         break;
       default:
         // This is an unexpected replicated message type.
@@ -325,6 +325,10 @@ public class ReplicatedTransactionHandler {
  //  fail, just ack
       acknowledge(rep, ReplicationResultCode.FAIL);
     }
+  }
+  
+  private void establishNewPassive(ReplicationMessage rep) {
+    entityManager.resetReferences();
   }
   
   private void requestPassiveSync() {

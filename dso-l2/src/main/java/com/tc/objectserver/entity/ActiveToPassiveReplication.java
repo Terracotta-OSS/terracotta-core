@@ -119,7 +119,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       logger.info("Starting message sequence on " + node);
       ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(new ReplicationEnvelope(node, resetOrderedSink, ()->block.complete()));
+      replicate.addSingleThreaded(new ReplicationEnvelope(node, resetOrderedSink, ()->block.complete(), ()->block.complete()));
       block.waitForCompletion();
       return true;
     } else {
@@ -220,7 +220,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        replicate.addSingleThreaded(new ReplicationEnvelope(node, msg, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
+        replicate.addSingleThreaded(new ReplicationEnvelope(node, msg, null, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
       }
     }
     return waiter;
@@ -239,7 +239,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, ()->block.complete()));
+      replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, null, ()->block.complete()));
       block.waitForCompletion();
     }
   }

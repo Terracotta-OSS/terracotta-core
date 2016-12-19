@@ -107,15 +107,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
     this.activity = activity;
   }
-
-  /**
-   * This is a temporary method (until the underlying activities are being managed, directly).
-   */
-  public void setSingleActivityToNoOp() {
-    this.activity = SyncReplicationActivity.createNoOpMessage(this.activity.getEntityID(), this.activity.getEntityDescriptor().getClientSideVersion());
-    getType();
-    Assert.assertNotNull(this.activity);
-  }
   
   public void setReplicationID(long rid) {
     this.rid = rid;

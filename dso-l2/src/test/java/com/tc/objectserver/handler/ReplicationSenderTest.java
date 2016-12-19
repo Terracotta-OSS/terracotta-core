@@ -68,7 +68,7 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
-      collector.add(new ReplicationEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null));
+      collector.add(new ReplicationEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null, null));
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
   }
@@ -77,7 +77,7 @@ public class ReplicationSenderTest {
     list.stream().forEach(msg->{
       ReplicationMessage rep = makeMessage(msg);
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, rep, null));
+        testSender.handleEvent(new ReplicationEnvelope(node, rep, null, null));
       } catch (EventHandlerException exp) {
         throw new RuntimeException(exp);
       }
@@ -141,7 +141,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, msg, null));
+        testSender.handleEvent(new ReplicationEnvelope(node, msg, null, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -175,7 +175,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, msg, null));
+        testSender.handleEvent(new ReplicationEnvelope(node, msg, null, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -193,9 +193,9 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), true);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   // invoke actions are valid since the stream is working off the create
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
@@ -211,7 +211,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, msg, null));
+        testSender.handleEvent(new ReplicationEnvelope(node, msg, null, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }

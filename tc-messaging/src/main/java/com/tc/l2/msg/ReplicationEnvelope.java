@@ -19,12 +19,15 @@
 package com.tc.l2.msg;
 
 import com.tc.net.NodeID;
+import com.tc.util.concurrent.SetOnceFlag;
 
 
 public class ReplicationEnvelope {
   private final NodeID dest;
   private final ReplicationMessage msg;
   private final Runnable droppedWithoutSend;
+  private final Runnable sent;
+  private final SetOnceFlag handled = new SetOnceFlag();
 
   /**
    * Creates an envelope containing a replication message to be sent to the ReplicationSender for processing.
@@ -34,9 +37,10 @@ public class ReplicationEnvelope {
    * @param droppedWithoutSend A runnable to run if the message is dropped by ReplicationSender and will NOT be replicated to
    *  dest.
    */
-  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable droppedWithoutSend) {
+  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
     this.dest = dest;
     this.msg = msg;
+    this.sent = sent;
     this.droppedWithoutSend = droppedWithoutSend;
   }
   
@@ -48,9 +52,21 @@ public class ReplicationEnvelope {
     return msg;
   }
   
+  public void sent() {
+    handled.set();
+    if (sent != null) {
+      sent.run();
+    }
+  }
+  
   public void droppedWithoutSend() {
+    handled.set();
     if (droppedWithoutSend != null) {
       droppedWithoutSend.run();
     }
+  }
+  
+  public boolean wasSentOrDropped() {
+    return handled.isSet();
   }
 }

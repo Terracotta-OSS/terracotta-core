@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
@@ -45,7 +44,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager group;
-  private final Map<NodeID, AtomicLong> ordering = new HashMap<>();
   private final Map<NodeID, SyncState> filtering = new HashMap<>();
   private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
@@ -62,45 +60,39 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     ReplicationMessage msg = context.getMessage();
     if (msg == null) {
 // this is a flush of the replication channel.  shut it down and return;
-      ordering.remove(nodeid);
       filtering.remove(nodeid);
       context.droppedWithoutSend();
     } else {
       SyncState syncing = getSyncState(nodeid, msg);
-      AtomicLong rOrder = getOrdering(nodeid, msg);
-      
-      if (rOrder == null) {
-// this is message priming, the order is being established or the passive is gone
-        context.droppedWithoutSend();
-        return;
-      }
-// check to make sure that this message is a type that is relevant to a passive
+      boolean shouldSend = true;
       if (!shouldReplicate(msg)) {
-        context.droppedWithoutSend();
-        return;
-      }   
+// check to make sure that this message is a type that is relevant to a passive
+        shouldSend = false;
+      } else if (filterMessage(syncing, msg)) {
 // filter out messages based on sync state.
-      if (filterMessage(syncing, nodeid, msg)) {
 //  if a message is filtered, it is turned to a NOOP so ordering can be preserved 
 //  on the passive for possible resends
         if (debugLogging) {
           logger.debug("FILTERING:" + msg);
         }
-        msg.setSingleActivityToNoOp();
+//  these will never be relevant on the passive because a failover to 
+//  a partially sync'd passive is not possible
+        shouldSend = false;
       }
 //  sending message on to passive, additional filtering may happen on the other side.
 //  the only messages that are relevant before passive sync starts are create messages
       try {
-        msg.setReplicationID(rOrder.getAndIncrement());
-        if (debugLogging) {
-          logger.debug("WIRE:" + msg);
-        }
-        if (debugMessaging) {
-          PLOGGER.debug("SENDING:" + msg.getDebugId());
-        }
-        group.sendTo(nodeid, msg);
-        if (msg.getType() == ReplicationMessage.START) {
-     //  this message will not be ack'd by the other side so just drop it
+        if (shouldSend) {
+          msg.setReplicationID(syncing.nextMessageID());
+          if (debugLogging) {
+            logger.debug("WIRE:" + msg);
+          }
+          if (debugMessaging) {
+            PLOGGER.debug("SENDING:" + msg.getDebugId());
+          }
+          group.sendTo(nodeid, msg);
+          context.sent();
+        } else {
           context.droppedWithoutSend();
         }
       }  catch (GroupException ge) {
@@ -108,48 +100,38 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         context.droppedWithoutSend();
       }
     }
+    Assert.assertTrue(context.wasSentOrDropped());
   }
   
-  private AtomicLong getOrdering(NodeID nodeid, ReplicationMessage msg) {
-    if (!ordering.containsKey(nodeid)) {
+  private SyncState getSyncState(NodeID nodeid, ReplicationMessage msg) {
+    if (!filtering.containsKey(nodeid)) {
       if (msg.getType() == ReplicationMessage.START) {
-        AtomicLong first = new AtomicLong();
-        ordering.put(nodeid, first);
+        SyncState state = new SyncState();
+        filtering.put(nodeid, state);
 //  release the message so sync can continue
 //  this is a priming event.  passive resets client state
-        return first;
+        return state;
       } else {
         if (dropMessageForDisconnectedServer(nodeid, msg)) {
           return null;
         }
       }
     }
-    return ordering.get(nodeid);
+    return filtering.get(nodeid);
   }
   
-  private SyncState getSyncState(NodeID nodeid, ReplicationMessage msg) {
-    if ((ReplicationMessage.SYNC == msg.getType()) && (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_BEGIN)) {
-      SyncState syncing = new SyncState();
-      filtering.put(nodeid, syncing);
-      return syncing;
-    } else {
-      return filtering.get(nodeid);
-    }
-  }
-  
-  private boolean filterMessage(SyncState state, NodeID nodeid, ReplicationMessage msg) {
+  private boolean filterMessage(SyncState state, ReplicationMessage msg) {
     if (state != null) {
-//  there is an active sync going on, need to filter out messages that should not be replicated
-      if (!state.shouldMessageBeReplicated(msg)) {
+      if (msg.getType() == ReplicationMessage.START) {
+        return false;
+      } else if (!state.shouldMessageBeReplicated(msg)) {
         return true;
       } else {
         state.validateSending(msg);
-        if (state.isComplete()) {
-          filtering.remove(nodeid);
-        }
+        return false;
       }
     }
-    return false;
+    return true;
   }
   
   private boolean dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
@@ -188,6 +170,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     boolean begun = false;
     private SyncReplicationActivity.ActivityType lastSeen;
     private SyncReplicationActivity.ActivityType lastSent;
+    private long messageId;
     
     public boolean shouldMessageBeReplicated(ReplicationMessage msg) {
       final EntityID eid = msg.getEntityDescriptor().getEntityID();
@@ -284,6 +267,10 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       if (msg.getType() == ReplicationMessage.SYNC) {
         lastSent = validate(msg.getReplicationType(), lastSent);
       }
+    }
+    
+    public long nextMessageID() {
+      return messageId++;
     }
     
     public boolean isComplete() {
