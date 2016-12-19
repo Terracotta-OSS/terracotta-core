@@ -16,6 +16,9 @@
 package org.terracotta.testing.api;
 
 
+/**
+ * A test configuration for a single-stripe cluster.
+ */
 public class BasicTestClusterConfiguration implements ITestClusterConfiguration {
   private final String name;
   public final int serversInStripe;

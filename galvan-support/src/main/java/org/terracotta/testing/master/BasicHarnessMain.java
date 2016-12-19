@@ -22,6 +22,11 @@ import org.terracotta.testing.api.BasicTestClusterConfiguration;
 import org.terracotta.testing.logging.VerboseManager;
 
 
+/**
+ * The main class for tests running as a basic stand-alone test (running the harness directly, not part of JUnit).
+ * 
+ * While not typically used, it does persist as an example of how to run a single test on its own.
+ */
 public class BasicHarnessMain {
   public static void main(String[] args) throws InterruptedException, IOException {
     // Parse required command-line args.
