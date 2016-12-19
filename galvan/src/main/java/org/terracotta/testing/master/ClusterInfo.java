@@ -15,16 +15,12 @@
  */
 package org.terracotta.testing.master;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-/**
- * @author vmad
- */
+
 public class ClusterInfo {
   private static final String SERVER_INFO_DELIM = ";";
   private final Map<String, ServerInfo> servers;
