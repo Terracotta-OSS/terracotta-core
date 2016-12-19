@@ -105,6 +105,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 
   @Override
   public synchronized void serverDidBecomeActive() {
+ //  avoid this notification,  it happens too early.  the method below will be called directly in the correct sequence
+  }
+  
+  public synchronized void serverIsActive() {
     // Tell the ID0 instance that the server is active.
     IStripeMonitoring platformCollector = this.globalRegistry.subRegistry(ServiceProvider.PLATFORM_CONSUMER_ID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
     
