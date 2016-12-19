@@ -30,7 +30,7 @@ Apache Ivy version: 2.2.0 20100923230623
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.2-SNAPSHOT</version>
+    <version>5.2.0-pre1</version>
     <relativePath>../build-parent</relativePath>
   </parent>
 
