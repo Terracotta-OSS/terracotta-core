@@ -22,6 +22,9 @@ import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.VerboseManager;
 
 
+/**
+ * The harness entry-point for the harness running {@link BasicTestClusterConfiguration} tests.
+ */
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
   // Run the one configuration.
   @Override

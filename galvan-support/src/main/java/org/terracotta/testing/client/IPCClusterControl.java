@@ -18,6 +18,9 @@ package org.terracotta.testing.client;
 import org.terracotta.passthrough.IClusterControl;
 
 
+/**
+ * The {@link IClusterControl} implementation which is instantiated on the client-side for the running test.
+ */
 public class IPCClusterControl implements IClusterControl {
   private final ClientSideIPCManager ipcManager;
 

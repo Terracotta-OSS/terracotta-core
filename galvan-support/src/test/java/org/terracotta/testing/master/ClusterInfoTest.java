@@ -3,15 +3,12 @@ package org.terracotta.testing.master;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 
 /**
- * @author vmad
+ * Tests that {@link ClusterInfo} can be correctly encoded and decoded.
  */
 public class ClusterInfoTest {
   @Test
@@ -31,5 +28,4 @@ public class ClusterInfoTest {
     Assert.assertEquals(testServerPort, serverInfo.getServerPort());
     Assert.assertEquals(testGroupPort, serverInfo.getGroupPort());
   }
-
 }

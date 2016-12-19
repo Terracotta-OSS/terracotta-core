@@ -3,10 +3,9 @@ package org.terracotta.testing.master;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
 
 /**
- * @author vmad
+ * Tests that {@link ServerInfo} can be correctly encoded and decoded.
  */
 public class ServerInfoTest {
   @Test
@@ -23,5 +22,4 @@ public class ServerInfoTest {
     Assert.assertEquals(testServerPort, decoded.getServerPort());
     Assert.assertEquals(testGroupPort, decoded.getGroupPort());
   }
-
 }

@@ -26,6 +26,9 @@ import org.terracotta.testing.master.EnvironmentOptions;
 import org.terracotta.testing.master.GalvanFailureException;
 
 
+/**
+ * The JUnit harness runner class for all {@link BasicHarnessTest} tests.
+ */
 public class BasicHarnessRunner extends AbstractHarnessRunner<BasicTestClusterConfiguration> {
   public BasicHarnessRunner(Class<?> testClass) throws InstantiationException, IllegalAccessException {
     super(testClass);
