@@ -177,6 +177,9 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     if (!this.entities.contains(id)) {
       // Seems to be new so add it to the set.
       addEntityToTracking(id, consumerID, isActive);
+    } else {
+      removeEntityFromTracking(id);
+      addEntityToTracking(id, consumerID, isActive);
     }
     LOGGER.debug("entity reloaded " + id);
   }
