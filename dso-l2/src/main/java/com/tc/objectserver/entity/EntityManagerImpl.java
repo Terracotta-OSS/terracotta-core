@@ -247,22 +247,13 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public MessageCodec<EntityMessage, EntityResponse> getMessageCodec(EntityID eid) {
-    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
-    if (service != null) {
-      return service.getMessageCodec();
+  public MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityID eid) {
+    ManagedEntity e = this.entities.get(eid);
+    if (e != null) {
+      return e.getCodec();
     }
     return null;
   }
-
-  @Override
-  public SyncMessageCodec<EntityMessage> getSyncMessageCodec(EntityID eid) {
-    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
-    if (service != null) {
-      return service.getSyncMessageCodec();
-    }
-    return null;
-  }  
 
   @Override
   public String toString() {

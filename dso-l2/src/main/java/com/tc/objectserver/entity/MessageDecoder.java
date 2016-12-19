@@ -16,16 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.entity;
+package com.tc.objectserver.entity;
 
-import com.tc.object.EntityID;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 
 /**
  *
  */
-public interface MessageCodecSupplier {
-  MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityID eid);
+public interface MessageDecoder {
+  EntityMessage decode(byte[] raw) throws MessageCodecException;
 }

@@ -162,7 +162,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     
     try {
       if (this.type == Type.INVOKE_ACTION) {
-        MessageCodec<EntityMessage, EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor.getEntityID());
+        MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor.getEntityID());
         this.message = codec.decodeMessage(extendedData);
       }
     } catch (MessageCodecException exception) {

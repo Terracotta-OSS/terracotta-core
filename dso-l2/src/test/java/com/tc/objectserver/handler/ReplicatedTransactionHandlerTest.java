@@ -217,7 +217,6 @@ public class ReplicatedTransactionHandlerTest {
     });
     when(this.entityManager.getMessageCodec(Matchers.eq(eid))).thenReturn(codec);
     when(entity.getCodec()).thenReturn(codec);
-    when(this.entityManager.getSyncMessageCodec(Matchers.eq(eid))).thenReturn(sync);
     
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];

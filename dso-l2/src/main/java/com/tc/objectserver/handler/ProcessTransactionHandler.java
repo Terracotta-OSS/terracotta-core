@@ -285,7 +285,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           try {
             addSequentially(sourceNodeID, addto->addto.addReceived(transactionID));
 
-            EntityMessage message = entityMessage.decodeMessage(entity.getCodec());
+            EntityMessage message = entityMessage.decodeMessage(raw->locked.getCodec().decodeMessage(raw));
             
             locked.addRequestMessage(serverEntityRequest, entityMessage, (result)-> {
               addSequentially(sourceNodeID, addTo->addTo.addResult(transactionID, result));

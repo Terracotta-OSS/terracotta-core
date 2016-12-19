@@ -94,6 +94,4 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier {
    * @return the classloader used to create all entities
    */
   ClassLoader getEntityLoader();
-  
-  SyncMessageCodec<EntityMessage> getSyncMessageCodec(EntityID eid);
 }
