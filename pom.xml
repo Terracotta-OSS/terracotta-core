@@ -43,6 +43,7 @@
 
     <terracotta-apis.version>1.2.0-pre1</terracotta-apis.version>
     <terracotta-configuration.version>10.2.0-pre1</terracotta-configuration.version>
+    <galvan.version>1.2.0-pre2</galvan.version>
   </properties>
 
   <modules>
@@ -60,6 +61,7 @@
     <module>terracotta</module>
     <module>client-runtime</module>
     <module>client-logging</module>
+    <module>galvan-support</module>
   </modules>
 
   <build>

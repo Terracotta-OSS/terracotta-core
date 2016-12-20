@@ -19,9 +19,10 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta</groupId>
-    <artifactId>galvan-root</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <groupId>org.terracotta.internal</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>5.2-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
   </parent>
 
   <artifactId>galvan-support</artifactId>
@@ -35,56 +36,31 @@ limitations under the License.
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>ipc-eventbus</artifactId>
-      <version>${ipc-eventbus.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>test-interfaces</artifactId>
-      <version>${project.version}</version>
+      <version>${galvan.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>passthrough-server</artifactId>
-      <version>${project.version}</version>
+      <version>${galvan.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
-      <version>${project.version}</version>
+      <version>${galvan.version}</version>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -100,7 +76,7 @@ limitations under the License.
                 <artifactItem>
                   <groupId>org.terracotta.internal</groupId>
                   <artifactId>terracotta-kit</artifactId>
-                  <version>${terracotta-core.version}</version>
+                  <version>${project.version}</version>
                   <type>zip</type>
                   <outputDirectory>${kitUnzipLocation}</outputDirectory>
                 </artifactItem>
@@ -122,7 +98,7 @@ limitations under the License.
         </executions>
         <configuration>
           <systemPropertyVariables>
-            <kitInstallationPath>${kitUnzipLocation}/terracotta-${terracotta-core.version}</kitInstallationPath>
+            <kitInstallationPath>${kitUnzipLocation}/terracotta-${project.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
           </systemPropertyVariables>
         </configuration>
