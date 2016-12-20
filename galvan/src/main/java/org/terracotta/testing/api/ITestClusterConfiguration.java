@@ -16,6 +16,12 @@
 package org.terracotta.testing.api;
 
 
+/**
+ * The basic interface for test configurations.
+ */
 public interface ITestClusterConfiguration {
+  /**
+   * @return The name to describe this test configuration.
+   */
   public String getName();
 }

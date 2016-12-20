@@ -24,7 +24,6 @@ limitations under the License.
     <version>1.2-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.terracotta</groupId>
   <artifactId>galvan</artifactId>
   <packaging>jar</packaging>
 
@@ -50,6 +49,16 @@ limitations under the License.
       <artifactId>jna-platform</artifactId>
       <version>4.1.0</version>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>test-interfaces</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>passthrough-server</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 

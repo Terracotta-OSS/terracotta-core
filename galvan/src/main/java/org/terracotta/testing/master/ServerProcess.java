@@ -129,14 +129,11 @@ public class ServerProcess {
     // Now, open the log files.
     // We want to create an output log file for both STDOUT and STDERR.
     // rawOut closed by stdout
-    @SuppressWarnings("resource")
     FileOutputStream rawOut = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"));
     // rawErr closed by stderr
-    @SuppressWarnings("resource")
     FileOutputStream rawErr = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"));
     // We also want to stream output going to these files to the server's logger.
     // stdout closed by outputStream
-    @SuppressWarnings("resource")
     VerboseOutputStream stdout = new VerboseOutputStream(rawOut, this.serverLogger, false);
     VerboseOutputStream stderr = new VerboseOutputStream(rawErr, this.serverLogger, true);
     
@@ -487,6 +484,6 @@ public class ServerProcess {
 
   @Override
   public String toString() {
-    return "Server \"" + this.serverName + "\": " + this.eyeCatcher;
+    return "Server \"" + this.serverName + "\": " + this.eyeCatcher + " (has been zapped: " + this.wasZapped + ")";
   }
 }

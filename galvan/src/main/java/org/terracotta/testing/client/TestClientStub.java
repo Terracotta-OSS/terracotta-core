@@ -31,6 +31,9 @@ import org.terracotta.testing.master.ClusterInfo;
 import org.terracotta.testing.master.ServerInfo;
 
 
+/**
+ * The client-side "main" class of a galvan test.
+ */
 public class TestClientStub {
   private static IClientTestEnvironment testEnvironment;
   private static IClientErrorHandler errorHandler;
