@@ -35,13 +35,11 @@ limitations under the License.
     <!-- External dependency versions for the project -->
     <ipc-eventbus.version>1.0.2</ipc-eventbus.version>
     <junit.version>4.12</junit.version>
-    <terracotta-core.version>5.2.0-pre1</terracotta-core.version>
   </properties>
 
 
   <modules>
     <module>galvan</module>
-    <module>galvan-support</module>
     <module>test-interfaces</module>
   </modules>
 
