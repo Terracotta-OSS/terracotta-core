@@ -23,45 +23,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>org.terracotta</groupId>
-    <artifactId>passthrough-testing-root</artifactId>
+    <artifactId>galvan-root</artifactId>
     <version>1.2-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.terracotta</groupId>
   <artifactId>test-interfaces</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-client-api</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-common-api</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>standard-cluster-services</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>monitoring-support</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

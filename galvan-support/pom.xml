@@ -35,7 +35,7 @@ limitations under the License.
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>${junit.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -45,12 +45,12 @@ limitations under the License.
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>test-interfaces</artifactId>
-      <version>${tc-passthrough-testing.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>passthrough-server</artifactId>
-      <version>${tc-passthrough-testing.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
