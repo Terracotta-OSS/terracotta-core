@@ -35,6 +35,7 @@ limitations under the License.
 
     <!-- External dependency versions for the project -->
     <terracotta-apis.version>1.2.0-pre1</terracotta-apis.version>
+    <galvan.version>1.2.0-pre2</galvan.version>
     <guava.version>18.0</guava.version>
     <junit.version>4.11</junit.version>
   </properties>
@@ -42,7 +43,6 @@ limitations under the License.
   <modules>
     <module>entity-test-lib</module>
     <module>passthrough-server</module>
-    <module>test-interfaces</module>
   </modules>
 
   <build>
