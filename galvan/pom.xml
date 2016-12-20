@@ -55,11 +55,6 @@ limitations under the License.
       <artifactId>test-interfaces</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>passthrough-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
 
   <build>
