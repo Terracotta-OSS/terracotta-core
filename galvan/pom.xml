@@ -50,6 +50,16 @@ limitations under the License.
       <version>4.1.0</version>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>test-interfaces</artifactId>
+      <version>${tc-passthrough-testing.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>passthrough-server</artifactId>
+      <version>${tc-passthrough-testing.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
