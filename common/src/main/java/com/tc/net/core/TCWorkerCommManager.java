@@ -25,10 +25,8 @@ import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * The whole intention of this class is to manage the workerThreads for each Listener
@@ -47,8 +45,6 @@ public class TCWorkerCommManager {
   private final SetOnceFlag       started            = new SetOnceFlag();
   private final SetOnceFlag       stopped            = new SetOnceFlag();
 
-  private final AtomicInteger     nextWorkerCommId   = new AtomicInteger();
-
   TCWorkerCommManager(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
     logger.info("Creating " + workerCommCount + " worker comm threads for " + name);
@@ -60,39 +56,38 @@ public class TCWorkerCommManager {
   }
 
   public CoreNIOServices getNextWorkerComm() {
-    List<CoreNIOServices> leastWeightWorkerComms = getLeastWeightWorkerComms();
-    CoreNIOServices rv;
-    Assert.eval(leastWeightWorkerComms.size() >= 1);
-    if (leastWeightWorkerComms.size() == 1) {
-      rv = leastWeightWorkerComms.get(0);
-    } else {
-      rv = leastWeightWorkerComms.get(nextWorkerCommId.getAndIncrement() % leastWeightWorkerComms.size());
-    }
+    CoreNIOServices leastWeightWorkerComm = getLeastWeightWorkerComm();
+    // We can't fail to get the least.
+    Assert.assertTrue(null != leastWeightWorkerComm);
 
-    String message = "Selecting " + rv + "  from " + Arrays.asList(this.workerCommThreads);
+    String message = "Selecting " + leastWeightWorkerComm + "  from " + Arrays.asList(this.workerCommThreads);
     if (logger.isDebugEnabled()) {
       logger.debug(message);
     } else {
       lossyLogger.info(message);
     }
 
-    return rv;
+    return leastWeightWorkerComm;
   }
 
-  private List<CoreNIOServices> getLeastWeightWorkerComms() {
-    List<CoreNIOServices> selectedWorkerComms = new ArrayList<CoreNIOServices>();
+  /**
+   * Finds the underlying {@link CoreNIOServices} worker comm thread with the lowest weight.  Note that this might be
+   * called, concurrently, so it is really just a best-efforts attempt (since 2 threads could get the same answer or
+   * a previously-requesting thread changes the result underneath the currently-requesting thread).
+   * 
+   * @return The CoreNIOServices with the least weight (at least when scanned).
+   */
+  private CoreNIOServices getLeastWeightWorkerComm() {
+    CoreNIOServices selectedWorkerComm = null;
     int leastValue = Integer.MAX_VALUE;
     for (CoreNIOServices workerComm : workerCommThreads) {
       int presentValue = workerComm.getWeight();
       if (presentValue < leastValue) {
-        selectedWorkerComms.clear();
-        selectedWorkerComms.add(workerComm);
+        selectedWorkerComm = workerComm;
         leastValue = presentValue;
-      } else if (presentValue == leastValue) {
-        selectedWorkerComms.add(workerComm);
       }
     }
-    return selectedWorkerComms;
+    return selectedWorkerComm;
   }
 
   public synchronized void start() {
