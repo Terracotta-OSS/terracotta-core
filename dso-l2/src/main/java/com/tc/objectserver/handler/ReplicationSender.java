@@ -27,6 +27,7 @@ import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
@@ -43,14 +44,14 @@ import org.terracotta.entity.ConcurrencyStrategy;
 public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope> {
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
-  private final GroupManager group;
+  private final GroupManager<AbstractGroupMessage> group;
   private final Map<NodeID, SyncState> filtering = new HashMap<>();
   private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
 
-  public ReplicationSender(GroupManager group) {
+  public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
   }
 
@@ -112,9 +113,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
 //  this is a priming event.  passive resets client state
         return state;
       } else {
-        if (dropMessageForDisconnectedServer(nodeid, msg)) {
-          return null;
-        }
+        dropMessageForDisconnectedServer(nodeid, msg);
+        return null;
       }
     }
     return filtering.get(nodeid);
@@ -134,12 +134,11 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     return true;
   }
   
-  private boolean dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
+  private void dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
 //  make sure node is not connected
     Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
 //  passive must have died during passive sync, ignore this message
     logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
-    return true;
   }
   
   private boolean shouldReplicate(ReplicationMessage msg) {
@@ -271,10 +270,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     
     public long nextMessageID() {
       return messageId++;
-    }
-    
-    public boolean isComplete() {
-      return lastSent == SyncReplicationActivity.ActivityType.SYNC_END;
     }
     
     private SyncReplicationActivity.ActivityType validate(SyncReplicationActivity.ActivityType type, SyncReplicationActivity.ActivityType compare) {
