@@ -677,7 +677,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
 
-    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, new L2StateChangeHandler(createStageController(), eventCollector), 1, maxStageSize);
+    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService), eventCollector);
+    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
         configSetupManager.getActiveServerGroupForThisL2().getMembers().length,
@@ -813,16 +814,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, monitoringSupport).getEventHandler(), 1, maxStageSize);
     groupCommManager.routeMessages(PlatformInfoRequest.class, stage.getSink());
 //  publish state change events to everyone in the stripe
-    this.l2Coordinator.getStateManager().registerForStateChangeEvents((StateChangedEvent sce) -> {
-      if (sce.movedToActive()) {
-        server.updateActivateTime();
-        monitoringSupport.serverIsActive();
-        PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
-//  due to the broadcast nature of this call, it is possible to get multiple 
-//  responses from the same server.  The underlying collector must tolerate this
-        groupCommManager.sendAll(req);  //  request info from all the other servers
-      }
-    });
     return stage.getSink();
   }
   
@@ -857,7 +848,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .getSink().addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
   }
 
-  private StageController createStageController() {
+  private StageController createStageController(LocalMonitoringProducer monitoringSupport) {
     StageController control = new StageController();
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
@@ -871,6 +862,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    control.addTriggerToState(StateManager.ACTIVE_COORDINATOR, () -> {
+      server.updateActivateTime();
+  // transition the local monitoring producer to active so the tree is rebuilt as a new active of the stripe
+      monitoringSupport.serverIsActive();
+      PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
+  //  due to the broadcast nature of this call, it is possible to get multiple 
+  //  responses from the same server.  The underlying collector must tolerate this
+      groupCommManager.sendAll(req);  //  request info from all the other servers
+    });
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE);
     return control;
   }
