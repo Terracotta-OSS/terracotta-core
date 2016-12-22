@@ -29,15 +29,16 @@ import org.terracotta.entity.EntityMessage;
  */
 
 public class ReferenceMessage implements VoltronEntityMessage {
-  private static final byte[] EMPTY_EXTENDED_DATA = new byte[0];
   private final ClientID clientID;
   private final EntityDescriptor entityDescriptor;
   private final VoltronEntityMessage.Type type;
+  private final byte[] extendedData;
 
-  public ReferenceMessage(ClientID clientID, boolean fetch, EntityDescriptor entityDescriptor) {
+  public ReferenceMessage(ClientID clientID, boolean fetch, EntityDescriptor entityDescriptor, byte[] extendedData) {
     this.clientID = clientID;
     this.type = fetch ? VoltronEntityMessage.Type.FETCH_ENTITY : VoltronEntityMessage.Type.RELEASE_ENTITY;
     this.entityDescriptor = entityDescriptor;
+    this.extendedData = extendedData;
   }
 
   @Override
@@ -67,7 +68,7 @@ public class ReferenceMessage implements VoltronEntityMessage {
 
   @Override
   public byte[] getExtendedData() {
-    return EMPTY_EXTENDED_DATA;
+    return extendedData;
   }
 
   @Override

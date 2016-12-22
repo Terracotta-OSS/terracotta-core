@@ -87,11 +87,6 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
-  // never reconnect
-  }
-
-  @Override
   public void sync(NodeID passive) {
   //  never sync
   }

@@ -135,10 +135,8 @@ public class ServerClientHandshakeManager {
 
           if (entity.isPresent()) {
             EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
-            ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
             byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
-            ReferenceMessage msg = new ReferenceMessage(clientID, true, entityDescriptor);
-            entity.get().reconnectClient(clientID, clientDescriptor, extendedReconnectData);
+            ReferenceMessage msg = new ReferenceMessage(clientID, true, entityDescriptor, extendedReconnectData);
             transactionHandler.handleResentReferenceMessage(msg);
           } else {
             throw Assert.failure("entity not found");

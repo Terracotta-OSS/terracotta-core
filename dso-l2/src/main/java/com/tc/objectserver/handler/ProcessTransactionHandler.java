@@ -503,8 +503,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
+    MessagePayload payload = new MessagePayload(extendedData, entityMessage, doesRequireReplication, false);
+    payload.setDebugId(message.toString());
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication, false), transactionID, oldestTransactionOnClient);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
