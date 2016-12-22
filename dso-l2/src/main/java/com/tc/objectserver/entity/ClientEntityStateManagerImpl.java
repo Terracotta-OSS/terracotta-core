@@ -99,7 +99,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
       }
 
       for (EntityDescriptor oneInstance : list) {
-        msgs.add(new ReferenceMessage(client, false, oneInstance));
+        msgs.add(new ReferenceMessage(client, false, oneInstance, null));
       }
       return msgs;
     }

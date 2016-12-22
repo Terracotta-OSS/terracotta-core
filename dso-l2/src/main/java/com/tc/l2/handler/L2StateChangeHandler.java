@@ -25,7 +25,9 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
+import com.tc.services.LocalMonitoringProducer;
 import com.tc.util.State;
 
 
@@ -47,11 +49,16 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
 // can happen in any order.  State transition happens in specific order as dictated 
 // by the stage controller.
     State newState = sce.getCurrentState();
+    // notify the collector that the server's state first to mark the start of transition
+    if (sce.movedToActive()) {
+      TCServerMain.getServer().updateActivateTime(); // make sure activateTime is updated if needed
+//  if this server just became active
+      eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());      
+    } else {
+      eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
+    }
     stageManager.transition(context, sce.getOldState(), newState);
     stateManager.fireStateChangedEvent(sce);
-    // Now that we have processed the event, the last thing we want to do is notify the collector that the server's state
-    // has changed.
-    eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());
   }
 
   @Override

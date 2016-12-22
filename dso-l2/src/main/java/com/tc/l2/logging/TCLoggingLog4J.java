@@ -94,8 +94,7 @@ public class TCLoggingLog4J implements TCLoggingService {
 
   public static final String        LOG_CONFIGURATION_PREFIX           = "The configuration read for Logging: ";
 
-  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracotta",
-      "com.terracottatech", "org.terracotta", "tc.operator", "com", "org"};
+  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com", "org", "tc.operator"};
   
   private static final String       LOCK_FILE_NAME                     = ".terracotta-logging.lock";
 

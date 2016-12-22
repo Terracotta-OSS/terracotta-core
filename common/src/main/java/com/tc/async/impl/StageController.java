@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  *
@@ -32,10 +33,15 @@ import java.util.Set;
 public class StageController {
 
   private final Map<com.tc.util.State, Set<String>> states = new HashMap<com.tc.util.State, Set<String>>();
+  private final Map<String, Runnable> triggers = new HashMap<String, Runnable>();
 
   public StageController() {
   }
-
+/**
+ * makes sure a stage is running when the server transitions to a state
+ * @param state state where stage should be active
+ * @param stage name of the stage to be active
+ */
   public synchronized void addStageToState(com.tc.util.State state, String stage) {
     Set<String> list = states.get(state);
     if (list == null) {
@@ -45,12 +51,21 @@ public class StageController {
     }
     list.add(stage);
   }
-
-  public synchronized void removeStageFromState(com.tc.util.State state, String stage) {
+  /**
+   * Adds a runnable trigger to the state transition map
+   * @param state
+   * @param trigger 
+   */
+  public synchronized void addTriggerToState(com.tc.util.State state, Runnable trigger) {
     Set<String> list = states.get(state);
-    if (list != null) {
-      list.remove(stage);
+    String uuid = "TRIGGER-" + UUID.randomUUID().toString();
+    triggers.put(uuid, trigger);
+    if (list == null) {
+// order is important here.  each stage should be started in the order added.
+      list = new LinkedHashSet<String>();
+      states.put(state, list);
     }
+    list.add(uuid);
   }
 
   public void transition(ConfigurationContext cxt, com.tc.util.State old, com.tc.util.State current) {
@@ -69,10 +84,14 @@ public class StageController {
       }
     }
     for (String s : coming) {
-      Stage<?> st = cxt.getStage(s, Object.class);
-      if (st != null && !leaving.contains(s)) {
-        st.start(cxt);
-        st.unpause();
+      if (s.startsWith("TRIGGER-")) {
+        triggers.get(s).run();
+      } else {
+        Stage<?> st = cxt.getStage(s, Object.class);
+        if (st != null && !leaving.contains(s)) {
+          st.start(cxt);
+          st.unpause();
+        }
       }
     }
   }
