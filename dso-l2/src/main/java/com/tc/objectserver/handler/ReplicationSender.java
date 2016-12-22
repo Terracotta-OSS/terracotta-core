@@ -59,21 +59,17 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   public void handleEvent(ReplicationEnvelope context) throws EventHandlerException {
     NodeID nodeid = context.getDestination();
     ReplicationMessage msg = context.getMessage();
-    // If another component sent us a null message, it just means that the passive is gone.
-    boolean shouldRemovePassive = (null == msg);
-    // If we got a start message, we need to both set up the sync state but also send the start message, itself.
-    boolean shouldAddPassive = (null != msg) && (msg.getType() == ReplicationMessage.START);
     
-    if (shouldRemovePassive) {
+    if (context.isRemovePassiveMessage()) {
 // this is a flush of the replication channel.  shut it down and return;
       filtering.remove(nodeid);
       context.droppedWithoutSend();
-    } else if (shouldAddPassive) {
+    } else if (context.isAddPassiveMessage()) {
       // Set up the sync state.
       SyncState syncing = createAndRegisterSyncState(nodeid);
       // Send the message.
       tagAndSendMessageCompletingContext(context, nodeid, msg, syncing);
-    } else if (isSyntheticNoop(msg)) {
+    } else if (context.isSyntheticNoopMessage()) {
       // While NOOPs which come from the client need to be replicated, synthetic ones are dropped.
       context.droppedWithoutSend();
     } else {
@@ -97,18 +93,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       }
     }
     Assert.assertTrue(context.wasSentOrDropped());
-  }
-
-  private boolean isSyntheticNoop(ReplicationMessage msg) {
-    boolean isSyntheticNoop = false;
-    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType()));
-    if (isReplicatedNoop) {
-      // This is synthetic if it has no source.
-      // Otherwise, this is a special-case of a noop, which came from a client and must be replicated to the passive to
-      // communicate that the client has gone away and persistors should do cleanup.
-      isSyntheticNoop = msg.getSource().isNull();
-    }
-    return isSyntheticNoop;
   }
 
   private boolean shouldRemoveMessageFromReplicationStream(ReplicationMessage msg, SyncState syncing) {

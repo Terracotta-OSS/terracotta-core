@@ -69,4 +69,24 @@ public class ReplicationEnvelope {
   public boolean wasSentOrDropped() {
     return handled.isSet();
   }
+
+  public boolean isRemovePassiveMessage() {
+    return (null == this.msg);
+  }
+
+  public boolean isAddPassiveMessage() {
+    return (null != this.msg) && (this.msg.getType() == ReplicationMessage.START);
+  }
+
+  public boolean isSyntheticNoopMessage() {
+    boolean isSyntheticNoop = false;
+    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == this.msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == this.msg.getReplicationType()));
+    if (isReplicatedNoop) {
+      // This is synthetic if it has no source.
+      // Otherwise, this is a special-case of a noop, which came from a client and must be replicated to the passive to
+      // communicate that the client has gone away and persistors should do cleanup.
+      isSyntheticNoop = this.msg.getSource().isNull();
+    }
+    return isSyntheticNoop;
+  }
 }
