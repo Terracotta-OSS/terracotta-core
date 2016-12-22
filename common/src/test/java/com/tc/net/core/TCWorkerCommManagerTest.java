@@ -373,9 +373,18 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     waitForConnected(client4, client5, client6);
 
-    Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-    Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-    Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+    // Issue #414:  This intermittently fails so collect more information regarding the state of the workers.  While the
+    //  test expects them each to have 2 clients, we fail when one of them has a different number.  I suspect that there
+    //  is a race in how the connections are distributed to the worker threads meaning that 2 concurrent connection
+    //  attempts may choose the same worker, not realizing that each of them changes its weight.
+    int weightFor0 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0);
+    int weightFor1 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1);
+    int weightFor2 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2);
+    System.out.println("Issue #414 debug weights: " + weightFor0 + ", " + weightFor1 + ", " + weightFor2);
+    Assert.assertEquals(6, weightFor0 + weightFor1 + weightFor2);
+    Assert.assertEquals(2, weightFor0);
+    Assert.assertEquals(2, weightFor1);
+    Assert.assertEquals(2, weightFor2);
 
     // case 4: closing all connections from server side
     System.out.println("XXX closing all client connections");
