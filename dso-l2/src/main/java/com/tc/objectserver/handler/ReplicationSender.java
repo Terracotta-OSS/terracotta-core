@@ -59,101 +59,112 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   public void handleEvent(ReplicationEnvelope context) throws EventHandlerException {
     NodeID nodeid = context.getDestination();
     ReplicationMessage msg = context.getMessage();
-    if (msg == null) {
+    // If another component sent us a null message, it just means that the passive is gone.
+    boolean shouldRemovePassive = (null == msg);
+    // If we got a start message, we need to both set up the sync state but also send the start message, itself.
+    boolean shouldAddPassive = (null != msg) && (msg.getType() == ReplicationMessage.START);
+    
+    if (shouldRemovePassive) {
 // this is a flush of the replication channel.  shut it down and return;
       filtering.remove(nodeid);
       context.droppedWithoutSend();
+    } else if (shouldAddPassive) {
+      // Set up the sync state.
+      SyncState syncing = createAndRegisterSyncState(nodeid);
+      // Send the message.
+      tagAndSendMessageCompletingContext(context, nodeid, msg, syncing);
+    } else if (isSyntheticNoop(msg)) {
+      // While NOOPs which come from the client need to be replicated, synthetic ones are dropped.
+      context.droppedWithoutSend();
     } else {
       SyncState syncing = getSyncState(nodeid, msg);
-      boolean shouldSend = true;
-      if (!shouldReplicate(msg)) {
-// check to make sure that this message is a type that is relevant to a passive
-        shouldSend = false;
-      } else if (filterMessage(syncing, msg)) {
-// filter out messages based on sync state.
-//  if a message is filtered, it is turned to a NOOP so ordering can be preserved 
-//  on the passive for possible resends
+      
+      // See if the message needs to be filtered out of the stream.
+      boolean shouldRemoveFromStream = shouldRemoveMessageFromReplicationStream(msg, syncing);
+      if (!shouldRemoveFromStream) {
+        // We want to send this message.
+        syncing.validateSending(msg);
+        tagAndSendMessageCompletingContext(context, nodeid, msg, syncing);
+      } else {
+        // We are filtering this out so don't send it.
+        // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
+        // Log that this is dropped due to filtering.
         if (debugLogging) {
           logger.debug("FILTERING:" + msg);
         }
-//  these will never be relevant on the passive because a failover to 
-//  a partially sync'd passive is not possible
-        shouldSend = false;
-      }
-//  sending message on to passive, additional filtering may happen on the other side.
-//  the only messages that are relevant before passive sync starts are create messages
-      try {
-        if (shouldSend) {
-          msg.setReplicationID(syncing.nextMessageID());
-          if (debugLogging) {
-            logger.debug("WIRE:" + msg);
-          }
-          if (debugMessaging) {
-            PLOGGER.debug("SENDING:" + msg.getDebugId());
-          }
-          group.sendTo(nodeid, msg);
-          context.sent();
-        } else {
-          context.droppedWithoutSend();
-        }
-      }  catch (GroupException ge) {
-        logger.info(msg, ge);
+        // Call the dropped callback on the context.
         context.droppedWithoutSend();
       }
     }
     Assert.assertTrue(context.wasSentOrDropped());
   }
+
+  private boolean isSyntheticNoop(ReplicationMessage msg) {
+    boolean isSyntheticNoop = false;
+    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType()));
+    if (isReplicatedNoop) {
+      // This is synthetic if it has no source.
+      // Otherwise, this is a special-case of a noop, which came from a client and must be replicated to the passive to
+      // communicate that the client has gone away and persistors should do cleanup.
+      isSyntheticNoop = msg.getSource().isNull();
+    }
+    return isSyntheticNoop;
+  }
+
+  private boolean shouldRemoveMessageFromReplicationStream(ReplicationMessage msg, SyncState syncing) {
+    // By default, we want to filter out messages for which there is no syncing state.
+    boolean shouldRemoveFromStream = true;
+    if (syncing != null) {
+      // If there is a valid syncing state, we should only remove this from the stream if the state doesn't think it should be replicated.
+      shouldRemoveFromStream = !syncing.shouldMessageBeReplicated(msg);
+    }
+    return shouldRemoveFromStream;
+  }
+
+  private void tagAndSendMessageCompletingContext(ReplicationEnvelope context, NodeID nodeid, ReplicationMessage msg, SyncState syncing) {
+    long replicationID = syncing.nextMessageID();
+    try {
+      doSendMessage(nodeid, msg, replicationID);
+      context.sent();
+    }  catch (GroupException ge) {
+      logger.info(msg, ge);
+      context.droppedWithoutSend();
+    }
+  }
+
+  private void doSendMessage(NodeID nodeid, ReplicationMessage msg, long replicationID) throws GroupException {
+    msg.setReplicationID(replicationID);
+    if (debugLogging) {
+      logger.debug("WIRE:" + msg);
+    }
+    if (debugMessaging) {
+      PLOGGER.debug("SENDING:" + msg.getDebugId());
+    }
+    group.sendTo(nodeid, msg);
+  }
   
+  private SyncState createAndRegisterSyncState(NodeID nodeid) {
+    // We can't already have a state for this passive.
+    Assert.assertTrue(!filtering.containsKey(nodeid));
+    SyncState state = new SyncState();
+    filtering.put(nodeid, state);
+    return state;
+  }
+
   private SyncState getSyncState(NodeID nodeid, ReplicationMessage msg) {
-    if (!filtering.containsKey(nodeid)) {
-      if (msg.getType() == ReplicationMessage.START) {
-        SyncState state = new SyncState();
-        filtering.put(nodeid, state);
-//  release the message so sync can continue
-//  this is a priming event.  passive resets client state
-        return state;
-      } else {
-        dropMessageForDisconnectedServer(nodeid, msg);
-        return null;
-      }
+    SyncState state = filtering.get(nodeid);
+    if (null == state) {
+      // We don't know anything about this passive so drop the message.
+      dropMessageForDisconnectedServer(nodeid, msg);
     }
-    return filtering.get(nodeid);
+    return state;
   }
-  
-  private boolean filterMessage(SyncState state, ReplicationMessage msg) {
-    if (state != null) {
-      if (msg.getType() == ReplicationMessage.START) {
-        return false;
-      } else if (!state.shouldMessageBeReplicated(msg)) {
-        return true;
-      } else {
-        state.validateSending(msg);
-        return false;
-      }
-    }
-    return true;
-  }
-  
+
   private void dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
 //  make sure node is not connected
     Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
 //  passive must have died during passive sync, ignore this message
     logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
-  }
-  
-  private boolean shouldReplicate(ReplicationMessage msg) {
-    if (msg.getType() == ReplicationMessage.START) {
-//  these types of messages are incoming types or internal server use, not outgoing
-      return true;
-    }
-    switch (msg.getReplicationType()) {
-      case NOOP:
-//  this is a special case noop that gets replicated to the passive to communicate that
-//  the client has gone away and persistors should do cleanup
-        return !msg.getSource().isNull();
-      default:
-        return true;
-    }
   }
 
   @Override
