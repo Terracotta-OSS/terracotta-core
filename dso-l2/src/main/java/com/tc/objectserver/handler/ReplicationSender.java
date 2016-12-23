@@ -246,6 +246,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
             }
           case NOOP:
             return false;
+          case SYNC_START:
+            // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
           default:
             throw new AssertionError("unknown replication message:" + msg);
         }
@@ -292,6 +294,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
         case SYNC_END:
           Assert.assertTrue(type + " " + compare, EnumSet.of(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END, SyncReplicationActivity.ActivityType.SYNC_BEGIN).contains(compare));
           break;
+        case SYNC_START:
+          // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
         default:
           throw new AssertionError("unexpected message type");
       }

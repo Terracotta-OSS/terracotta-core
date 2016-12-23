@@ -226,7 +226,7 @@ public class ReplicationSenderTest {
     Iterator<ReplicationMessage> next = valid.iterator();
     collector.stream().forEach(bareIntent->{
       ReplicationReplicateMessageIntent cmsg = (ReplicationReplicateMessageIntent) bareIntent;
-      if (cmsg.getMessage().getType() != ReplicationMessage.START && cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
+      if ((cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_START) && (cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP)) {
         ReplicationMessage vmsg = next.next();
         if (vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
             vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_END) {

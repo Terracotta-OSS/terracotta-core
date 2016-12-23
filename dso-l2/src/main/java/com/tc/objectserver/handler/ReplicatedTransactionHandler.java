@@ -205,9 +205,6 @@ public class ReplicatedTransactionHandler {
       case ReplicationMessage.SYNC:
         syncMessageReceived(rep);
         break;
-      case ReplicationMessage.START:
-        establishNewPassive(rep);
-        break;
       default:
         // This is an unexpected replicated message type.
         throw new RuntimeException();
@@ -464,6 +461,9 @@ public class ReplicatedTransactionHandler {
   private void beforeSyncAction(ReplicationMessage rep) {
     EntityID eid = rep.getEntityDescriptor().getEntityID();
     switch (rep.getReplicationType()) {
+      case SYNC_START:
+        establishNewPassive(rep);
+        break;
       case SYNC_BEGIN:
         start();
         break;
@@ -541,6 +541,7 @@ public class ReplicatedTransactionHandler {
 
   private static ServerEntityAction decodeReplicationType(SyncReplicationActivity.ActivityType networkType) {
     switch(networkType) {
+      case SYNC_START:
       case SYNC_BEGIN:
       case SYNC_END:
       case NOOP:

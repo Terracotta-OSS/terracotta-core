@@ -41,6 +41,7 @@ public class SyncReplicationActivity {
     FETCH_ENTITY,
     RELEASE_ENTITY,
     
+    SYNC_START,  // The SYNC_START message is special in that it tells the passive to setup the synchronization machinery.
     SYNC_BEGIN,
     SYNC_END,
     SYNC_ENTITY_BEGIN,
@@ -92,6 +93,10 @@ public class SyncReplicationActivity {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     return new SyncReplicationActivity(descriptorWithoutClient(id, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency, debugId);
+  }
+
+  public static SyncReplicationActivity createStartMessage() {
+    return new SyncReplicationActivity(EntityDescriptor.NULL_ID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_START, null, 0, "");
   }
 
   private static EntityDescriptor descriptorWithoutClient(EntityID id, long version) {

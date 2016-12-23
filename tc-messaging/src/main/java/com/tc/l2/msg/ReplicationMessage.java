@@ -36,11 +36,11 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public static final int INVALID               = 0; // Invalid message type
   public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
   public static final int SYNC               = 2; // Sent as part of a sync sequence
-  public static final int START                = 3; // start replication
 
   // Factory methods.
   public static ReplicationMessage createStartMessage() {
-    return new ReplicationMessage(START);
+    SyncReplicationActivity activity = SyncReplicationActivity.createStartMessage();
+    return new ReplicationMessage(activity);
   }
 
   public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
@@ -104,7 +104,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
 //  a true replicated message
   private ReplicationMessage(SyncReplicationActivity activity) {
-    super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
+    super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal() ? SYNC : REPLICATE);
     this.activity = activity;
   }
   
@@ -163,16 +163,13 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
         // This message was not correctly initialized.
         Assert.fail();
         break;
-      case START:
-     // do nothing, just need the source
-        break;
       case REPLICATE:
       case SYNC:
         this.rid = in.readLong();
         this.activity = SyncReplicationActivity.deserializeFrom(in);
         Assert.assertNotNull(this.activity);
         // Make sure that the message type and activity type are consistent.
-        if (this.activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_BEGIN.ordinal()) {
+        if (this.activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal()) {
           Assert.assertTrue(this.activity.action, SYNC == messageType);
         } else {
           Assert.assertTrue(this.activity.action, REPLICATE == messageType);
@@ -188,9 +185,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
       case INVALID:
         // This message was not correctly initialized.
         Assert.fail();
-        break;
-      case START:
-     // do nothing, just need the source
         break;
       case REPLICATE:
       case SYNC:
