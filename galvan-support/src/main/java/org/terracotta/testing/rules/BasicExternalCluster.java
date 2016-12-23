@@ -15,6 +15,7 @@
  */
 package org.terracotta.testing.rules;
 
+import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import java.io.File;
 import java.net.URI;
@@ -26,7 +27,6 @@ import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.passthrough.Assert;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
@@ -228,7 +228,8 @@ public class BasicExternalCluster extends Cluster {
       try {
         this.shepherdingThread.join();
       } catch (InterruptedException unexpected) {
-        Assert.unexpected(unexpected);
+        // Interrupts are unexpected at this point - fail.
+        Assert.fail(unexpected.getLocalizedMessage());
       }
     }
     this.shepherdingThread = null;

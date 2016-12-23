@@ -21,8 +21,11 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.l2.msg.ReplicationEnvelope;
+import com.tc.l2.msg.ReplicationAddPassiveIntent;
+import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.ReplicationRemovePassiveIntent;
+import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -41,7 +44,7 @@ import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope> {
+public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager<AbstractGroupMessage> group;
@@ -56,104 +59,98 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   }
 
   @Override
-  public void handleEvent(ReplicationEnvelope context) throws EventHandlerException {
+  public void handleEvent(ReplicationIntent context) throws EventHandlerException {
     NodeID nodeid = context.getDestination();
-    ReplicationMessage msg = context.getMessage();
-    if (msg == null) {
-// this is a flush of the replication channel.  shut it down and return;
+    
+    if (context instanceof ReplicationRemovePassiveIntent) {
+   // this is a flush of the replication channel.  shut it down and return;
       filtering.remove(nodeid);
       context.droppedWithoutSend();
-    } else {
+    } else if (context instanceof ReplicationAddPassiveIntent) {
+      // Set up the sync state.
+      SyncState syncing = createAndRegisterSyncState(nodeid);
+      // Send the message.
+      tagAndSendMessageCompletingContext(context, nodeid, ((ReplicationAddPassiveIntent)context).getMessage(), syncing);
+    } else if (context instanceof ReplicationReplicateMessageIntent) {
+      ReplicationMessage msg = ((ReplicationReplicateMessageIntent)context).getMessage();
       SyncState syncing = getSyncState(nodeid, msg);
-      boolean shouldSend = true;
-      if (!shouldReplicate(msg)) {
-// check to make sure that this message is a type that is relevant to a passive
-        shouldSend = false;
-      } else if (filterMessage(syncing, msg)) {
-// filter out messages based on sync state.
-//  if a message is filtered, it is turned to a NOOP so ordering can be preserved 
-//  on the passive for possible resends
+      
+      // See if the message needs to be filtered out of the stream.
+      boolean shouldRemoveFromStream = shouldRemoveMessageFromReplicationStream(msg, syncing);
+      if (!shouldRemoveFromStream) {
+        // We want to send this message.
+        syncing.validateSending(msg);
+        tagAndSendMessageCompletingContext(context, nodeid, msg, syncing);
+      } else {
+        // We are filtering this out so don't send it.
+        // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
+        // Log that this is dropped due to filtering.
         if (debugLogging) {
           logger.debug("FILTERING:" + msg);
         }
-//  these will never be relevant on the passive because a failover to 
-//  a partially sync'd passive is not possible
-        shouldSend = false;
-      }
-//  sending message on to passive, additional filtering may happen on the other side.
-//  the only messages that are relevant before passive sync starts are create messages
-      try {
-        if (shouldSend) {
-          msg.setReplicationID(syncing.nextMessageID());
-          if (debugLogging) {
-            logger.debug("WIRE:" + msg);
-          }
-          if (debugMessaging) {
-            PLOGGER.debug("SENDING:" + msg.getDebugId());
-          }
-          group.sendTo(nodeid, msg);
-          context.sent();
-        } else {
-          context.droppedWithoutSend();
-        }
-      }  catch (GroupException ge) {
-        logger.info(msg, ge);
+        // Call the dropped callback on the context.
         context.droppedWithoutSend();
       }
+    } else {
+      Assert.fail("Unknown replication intent type");
     }
     Assert.assertTrue(context.wasSentOrDropped());
   }
+
+  private boolean shouldRemoveMessageFromReplicationStream(ReplicationMessage msg, SyncState syncing) {
+    // By default, we want to filter out messages for which there is no syncing state.
+    boolean shouldRemoveFromStream = true;
+    if (syncing != null) {
+      // If there is a valid syncing state, we should only remove this from the stream if the state doesn't think it should be replicated.
+      shouldRemoveFromStream = !syncing.shouldMessageBeReplicated(msg);
+    }
+    return shouldRemoveFromStream;
+  }
+
+  private void tagAndSendMessageCompletingContext(ReplicationIntent context, NodeID nodeid, ReplicationMessage msg, SyncState syncing) {
+    long replicationID = syncing.nextMessageID();
+    try {
+      doSendMessage(nodeid, msg, replicationID);
+      context.sent();
+    }  catch (GroupException ge) {
+      logger.info(msg, ge);
+      context.droppedWithoutSend();
+    }
+  }
+
+  private void doSendMessage(NodeID nodeid, ReplicationMessage msg, long replicationID) throws GroupException {
+    msg.setReplicationID(replicationID);
+    if (debugLogging) {
+      logger.debug("WIRE:" + msg);
+    }
+    if (debugMessaging) {
+      PLOGGER.debug("SENDING:" + msg.getDebugId());
+    }
+    group.sendTo(nodeid, msg);
+  }
   
+  private SyncState createAndRegisterSyncState(NodeID nodeid) {
+    // We can't already have a state for this passive.
+    Assert.assertTrue(!filtering.containsKey(nodeid));
+    SyncState state = new SyncState();
+    filtering.put(nodeid, state);
+    return state;
+  }
+
   private SyncState getSyncState(NodeID nodeid, ReplicationMessage msg) {
-    if (!filtering.containsKey(nodeid)) {
-      if (msg.getType() == ReplicationMessage.START) {
-        SyncState state = new SyncState();
-        filtering.put(nodeid, state);
-//  release the message so sync can continue
-//  this is a priming event.  passive resets client state
-        return state;
-      } else {
-        dropMessageForDisconnectedServer(nodeid, msg);
-        return null;
-      }
+    SyncState state = filtering.get(nodeid);
+    if (null == state) {
+      // We don't know anything about this passive so drop the message.
+      dropMessageForDisconnectedServer(nodeid, msg);
     }
-    return filtering.get(nodeid);
+    return state;
   }
-  
-  private boolean filterMessage(SyncState state, ReplicationMessage msg) {
-    if (state != null) {
-      if (msg.getType() == ReplicationMessage.START) {
-        return false;
-      } else if (!state.shouldMessageBeReplicated(msg)) {
-        return true;
-      } else {
-        state.validateSending(msg);
-        return false;
-      }
-    }
-    return true;
-  }
-  
+
   private void dropMessageForDisconnectedServer(NodeID nodeid, ReplicationMessage msg) {
 //  make sure node is not connected
     Assert.assertFalse("node is not connected for:" + msg, group.isNodeConnected(nodeid));
 //  passive must have died during passive sync, ignore this message
     logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
-  }
-  
-  private boolean shouldReplicate(ReplicationMessage msg) {
-    if (msg.getType() == ReplicationMessage.START) {
-//  these types of messages are incoming types or internal server use, not outgoing
-      return true;
-    }
-    switch (msg.getReplicationType()) {
-      case NOOP:
-//  this is a special case noop that gets replicated to the passive to communicate that
-//  the client has gone away and persistors should do cleanup
-        return !msg.getSource().isNull();
-      default:
-        return true;
-    }
   }
 
   @Override
@@ -249,6 +246,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
             }
           case NOOP:
             return false;
+          case SYNC_START:
+            // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
           default:
             throw new AssertionError("unknown replication message:" + msg);
         }
@@ -295,6 +294,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         case SYNC_END:
           Assert.assertTrue(type + " " + compare, EnumSet.of(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END, SyncReplicationActivity.ActivityType.SYNC_BEGIN).contains(compare));
           break;
+        case SYNC_START:
+          // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
         default:
           throw new AssertionError("unexpected message type");
       }
