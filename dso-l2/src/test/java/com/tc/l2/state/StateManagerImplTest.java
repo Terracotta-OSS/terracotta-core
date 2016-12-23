@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -84,9 +85,11 @@ public class StateManagerImplTest {
       groupManagers[i].join(nodes[i], nodesStore);
     }
 
-    Thread.sleep(2000);
-
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
+      int spin = 0;
+      while (spin++ < 5 && 2 > groupManagers[i].getMembers().size()) {
+        TimeUnit.SECONDS.sleep(2);
+      }
       Assert.assertEquals(2, groupManagers[i].getMembers().size());
     }
 
@@ -116,13 +119,21 @@ public class StateManagerImplTest {
     NodeID active = stateManagers[0].getActiveNodeID();
 
     groupManagers[1].join(nodes[1], nodesStore);
-    Thread.sleep(2000);
+    int spin = 0;
+    while (spin++ < 5 && 1 > groupManagers[1].getMembers().size()) {
+      TimeUnit.SECONDS.sleep(2);
+    }
+    Assert.assertEquals(1, groupManagers[1].getMembers().size());
     stateManagers[1].startElection();
     stateManagers[1].waitForDeclaredActive();
     Assert.assertEquals(active, stateManagers[1].getActiveNodeID());
 
     groupManagers[2].join(nodes[2], nodesStore);
-    Thread.sleep(2000);
+    spin = 0;
+    while (spin++ < 5 && 2 > groupManagers[2].getMembers().size()) {
+      TimeUnit.SECONDS.sleep(2);
+    }
+    Assert.assertEquals(2, groupManagers[2].getMembers().size());
     stateManagers[2].startElection();
     stateManagers[2].waitForDeclaredActive();
     Assert.assertEquals(active, stateManagers[2].getActiveNodeID());
