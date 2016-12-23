@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.MessageID;
@@ -80,6 +81,7 @@ public class ActiveToPassiveReplicationTest {
     replication.enterActiveState();
     replication.nodeJoined(passive);
     ReplicationMessage msg = mock(ReplicationMessage.class);
+    when(msg.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
     MessageID id = new MessageID(1);
     when(msg.getMessageID()).thenReturn(id);
     ActivePassiveAckWaiter ack = replication.replicateMessage(msg, Collections.singleton(passive));

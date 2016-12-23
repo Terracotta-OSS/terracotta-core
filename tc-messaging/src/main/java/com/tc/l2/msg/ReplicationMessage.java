@@ -109,6 +109,15 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return this.activity.concurrency;
   }
   
+  /**
+   * NOTE:  This is temporary while SyncReplicationActivity is further decoupled from ReplicationMessage.
+   * 
+   * @return The ActivityID of the underlying activity (fails with NPE if not wrapping an activity).
+   */
+  public SyncReplicationActivity.ActivityID getActivityID() {
+    return this.activity.getActivityID();
+  }
+  
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     int messageType = getType();

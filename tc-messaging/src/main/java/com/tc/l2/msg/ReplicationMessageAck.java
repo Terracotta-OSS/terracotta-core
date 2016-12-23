@@ -21,7 +21,6 @@ package com.tc.l2.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -61,7 +60,7 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
 
   // Note that this does change the instance, so synchronized would be required if it were being called by multiple threads.
   // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
-  public void addAck(MessageID respondTo, ReplicationResultCode result) {
+  public void addAck(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
     Assert.assertTrue(BATCH == this.getType());
     Tuple tuple = new Tuple(respondTo, result);
     this.batch.add(tuple);
@@ -79,7 +78,7 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
       Assert.assertTrue(batchSize > 0);
       this.batch = new ArrayList<Tuple>();
       for (int i = 0; i < batchSize; ++i) {
-        MessageID respondTo = new MessageID(in.readLong());
+        SyncReplicationActivity.ActivityID respondTo = new SyncReplicationActivity.ActivityID(in.readLong());
         ReplicationResultCode result = ReplicationResultCode.decode(in.readInt());
         this.batch.add(new Tuple(respondTo, result));
       }
@@ -94,7 +93,7 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
       Assert.assertTrue(size > 0);
       out.writeInt(size);
       for (Tuple tuple : this.batch) {
-        out.writeLong(tuple.respondTo.toLong());
+        out.writeLong(tuple.respondTo.id);
         out.writeInt(tuple.result.code());
       }
     }
@@ -104,10 +103,10 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
    * The respondTo is the message to which we are responding.  The result determines if this is a RECEIVED, SUCCESS, or FAIL.
    */
   public static class Tuple {
-    public final MessageID respondTo;
+    public final SyncReplicationActivity.ActivityID respondTo;
     public final ReplicationResultCode result;
     
-    public Tuple(MessageID respondTo, ReplicationResultCode result) {
+    public Tuple(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
       this.respondTo = respondTo;
       this.result = result;
     }

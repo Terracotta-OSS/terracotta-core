@@ -36,7 +36,6 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -489,18 +488,18 @@ public class ReplicatedTransactionHandler {
 
   private void ackReceived(ReplicationMessage rep) {
     if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-      prepareAckForSend(rep.messageFrom(), rep.getMessageID(), ReplicationResultCode.RECEIVED);
+      prepareAckForSend(rep.messageFrom(), rep.getActivityID(), ReplicationResultCode.RECEIVED);
     }
   }
 
   private void acknowledge(ReplicationMessage rep, ReplicationResultCode code) {
 //  when is the right time to send the ack?
     if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-      prepareAckForSend(rep.messageFrom(), rep.getMessageID(), code);
+      prepareAckForSend(rep.messageFrom(), rep.getActivityID(), code);
     }
   }
 
-  private synchronized void prepareAckForSend(NodeID sender, MessageID respondTo, ReplicationResultCode code) {
+  private synchronized void prepareAckForSend(NodeID sender, SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode code) {
     if (null == this.cachedBatchAck) {
       this.cachedBatchAck = ReplicationMessageAck.createBatchAck();
       this.cachedMessageAckFrom = sender;

@@ -33,7 +33,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
@@ -65,7 +64,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
-  private final ConcurrentHashMap<MessageID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationIntent> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
@@ -198,12 +197,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * This internal handling for completed is split out since it happens for both completed acks but also situations which
    * implies no ack is forthcoming (the passive disappearing, for example).
    */
-  private void internalAckCompleted(MessageID mid, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
-    ActivePassiveAckWaiter waiter = waiters.get(mid);
+  private void internalAckCompleted(SyncReplicationActivity.ActivityID activityID, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
+    ActivePassiveAckWaiter waiter = waiters.get(activityID);
     if (null != waiter) {
       boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete, payload);
       if (shouldDiscardWaiter) {
-        waiters.remove(mid);
+        waiters.remove(activityID);
       }
     }
   }
@@ -220,7 +219,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     copy.retainAll(passives());
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy, this);
     if (!copy.isEmpty()) {
-      waiters.put(msg.getMessageID(), waiter);
+      SyncReplicationActivity.ActivityID activityID = msg.getActivityID();
+      waiters.put(activityID, waiter);
       // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a synthetic noop.
       boolean isSyntheticNoop = (ReplicationMessage.REPLICATE == msg.getType())
           && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType())
@@ -228,7 +228,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        Runnable droppedWithoutSend = ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete);
+        Runnable droppedWithoutSend = ()->internalAckCompleted(activityID, node, null, isNormalComplete);
         if (isSyntheticNoop) {
           // We aren't going to send this to the replication sender so just acknowledge that it was dropped without send, here.
           droppedWithoutSend.run();
