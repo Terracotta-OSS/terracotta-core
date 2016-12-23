@@ -43,11 +43,6 @@ limitations under the License.
       <version>${galvan.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>passthrough-server</artifactId>
-      <version>${galvan.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
       <version>${project.version}</version>
