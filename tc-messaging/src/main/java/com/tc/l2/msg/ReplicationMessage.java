@@ -38,57 +38,11 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public static final int SYNC               = 2; // Sent as part of a sync sequence
 
   // Factory methods.
-  public static ReplicationMessage createStartMessage() {
-    SyncReplicationActivity activity = SyncReplicationActivity.createStartMessage();
+  public static ReplicationMessage createActivityContainer(SyncReplicationActivity activity) {
+    Assert.assertNotNull(activity);
     return new ReplicationMessage(activity);
   }
 
-  public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
-    SyncReplicationActivity activity = SyncReplicationActivity.createNoOpMessage(eid, version);
-    return new ReplicationMessage(activity);
-  }
-
-  public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, SyncReplicationActivity.ActivityType action, byte[] payload, int concurrency, String debugId) {
-    SyncReplicationActivity activity = SyncReplicationActivity.createReplicatedMessage(descriptor, src, tid, oldest, action, payload, concurrency, debugId);
-    return new ReplicationMessage(activity);
-  }
-
-  // Sync-related factory methods (here temporarily while this message type is refactored to permit batching).
-  public static ReplicationMessage createStartSyncMessage() {
-    SyncReplicationActivity activity = SyncReplicationActivity.createStartSyncMessage();
-    return new ReplicationMessage(activity);
-  }
-  public static ReplicationMessage createEndSyncMessage(byte[] extras) {
-    SyncReplicationActivity activity = SyncReplicationActivity.createEndSyncMessage(extras);
-    return new ReplicationMessage(activity);
-  }
-  public static ReplicationMessage createStartEntityMessage(EntityID id, long version, byte[] configPayload, int references) {
- //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
-    SyncReplicationActivity activity = SyncReplicationActivity.createStartEntityMessage(id, version, configPayload, references);
-    return new ReplicationMessage(activity);
-  }
-  public static ReplicationMessage createEndEntityMessage(EntityID id, long version) {
-    SyncReplicationActivity activity = SyncReplicationActivity.createEndEntityMessage(id, version);
-    return new ReplicationMessage(activity);
-  }
-  public static ReplicationMessage createStartEntityKeyMessage(EntityID id, long version, int concurrency) {
-    // We can only synchronize positive-number keys.
-    Assert.assertTrue(concurrency > 0);
-    SyncReplicationActivity activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, concurrency);
-    return new ReplicationMessage(activity);
-  }
-  public static ReplicationMessage createEndEntityKeyMessage(EntityID id, long version, int concurrency) {
-    // We can only synchronize positive-number keys.    
-    Assert.assertTrue(concurrency > 0);
-    SyncReplicationActivity activity = SyncReplicationActivity.createEndEntityKeyMessage(id, version, concurrency);
-    return new ReplicationMessage(activity);
-  }
-  public static ReplicationMessage createPayloadMessage(EntityID id, long version, int concurrency, byte[] payload, String debugId) {
-    // We can only synchronize positive-number keys.
-    Assert.assertTrue(concurrency > 0);
-    SyncReplicationActivity activity = SyncReplicationActivity.createPayloadMessage(id, version, concurrency, payload, debugId);
-    return new ReplicationMessage(activity);
-  }
 
   private SyncReplicationActivity activity;
   

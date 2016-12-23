@@ -76,7 +76,7 @@ public class ReplicationSenderTest {
   
   private void makeAndSendSequence(Collection<SyncReplicationActivity.ActivityType> list) throws Exception {
     list.stream().forEach(msg->{
-      ReplicationMessage rep = makeMessage(msg);
+      ReplicationMessage rep = ReplicationMessage.createActivityContainer(makeMessage(msg));
       try {
         testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, rep, null));
       } catch (EventHandlerException exp) {
@@ -85,7 +85,7 @@ public class ReplicationSenderTest {
     });
   }
   
-  private ReplicationMessage makeMessage(SyncReplicationActivity.ActivityType type) {
+  private SyncReplicationActivity makeMessage(SyncReplicationActivity.ActivityType type) {
     switch (type) {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
@@ -93,21 +93,21 @@ public class ReplicationSenderTest {
       case NOOP:
       case RECONFIGURE_ENTITY:
         ClientID source = new ClientID(1);
-        return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+        return SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
       case SYNC_BEGIN:
-        return ReplicationMessage.createStartSyncMessage();
+        return SyncReplicationActivity.createStartSyncMessage();
       case SYNC_END:
-        return ReplicationMessage.createEndSyncMessage(new byte[0]);
+        return SyncReplicationActivity.createEndSyncMessage(new byte[0]);
       case SYNC_ENTITY_BEGIN:
-        return ReplicationMessage.createStartEntityMessage(entity, 1, new byte[0], 0);
+        return SyncReplicationActivity.createStartEntityMessage(entity, 1, new byte[0], 0);
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
-        return ReplicationMessage.createStartEntityKeyMessage(entity, 1, concurrency);
+        return SyncReplicationActivity.createStartEntityKeyMessage(entity, 1, concurrency);
       case SYNC_ENTITY_CONCURRENCY_END:
-        return ReplicationMessage.createEndEntityKeyMessage(entity, 1, concurrency++);
+        return SyncReplicationActivity.createEndEntityKeyMessage(entity, 1, concurrency++);
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-        return ReplicationMessage.createPayloadMessage(entity, 1, concurrency, new byte[0], "");
+        return SyncReplicationActivity.createPayloadMessage(entity, 1, concurrency, new byte[0], "");
       case SYNC_ENTITY_END:
-        return ReplicationMessage.createEndEntityMessage(entity, 1);
+        return SyncReplicationActivity.createEndEntityMessage(entity, 1);
       default:
         throw new AssertionError("bad message type");
     }
@@ -123,7 +123,7 @@ public class ReplicationSenderTest {
     entity = new EntityID("TEST", "test");
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
-    buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
+    buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
@@ -158,7 +158,7 @@ public class ReplicationSenderTest {
  //  creates and sync can no longer intermix
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
-    buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
+    buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
@@ -192,7 +192,7 @@ public class ReplicationSenderTest {
     entity = new EntityID("TEST", "test");
     List<ReplicationMessage> origin = new LinkedList<>();
     List<ReplicationMessage> validation = new LinkedList<>();
-    buildTest(origin, validation, ReplicationMessage.createStartMessage(), true);
+    buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), true);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
@@ -239,7 +239,8 @@ public class ReplicationSenderTest {
     });
   }
   
-  private void buildTest(List<ReplicationMessage> origin, List<ReplicationMessage> validation, ReplicationMessage msg, boolean filtered) {
+  private void buildTest(List<ReplicationMessage> origin, List<ReplicationMessage> validation, SyncReplicationActivity activity, boolean filtered) {
+    ReplicationMessage msg = ReplicationMessage.createActivityContainer(activity);
     origin.add(msg);
     if (!filtered) validation.add(msg);
   }

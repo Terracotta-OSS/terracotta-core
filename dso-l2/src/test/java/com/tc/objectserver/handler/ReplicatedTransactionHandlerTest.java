@@ -147,13 +147,13 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartEntityMessage(eid, 1, new byte[0], 0));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartEntityKeyMessage(eid, 1, rand));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartSyncMessage()));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartEntityMessage(eid, 1, new byte[0], 0)));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartEntityKeyMessage(eid, 1, rand)));
     this.loopbackSink.addSingleThreaded(msg);
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndEntityKeyMessage(eid, 1, rand));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndEntityMessage(eid, 1));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndSyncMessage(new byte[0]));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, rand)));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndEntityMessage(eid, 1)));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
 //  verify there was an attempt to decode the invoke message
     verify(msg).getExtendedData();
     verify(entity).getCodec();
@@ -188,8 +188,8 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createEndSyncMessage(new byte[0]));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartSyncMessage()));
+    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
     this.loopbackSink.addSingleThreaded(msg);
     verify(msg).getExtendedData();
     verify(msg).getConcurrency();  // make sure RTH is pulling the concurrency from the message
@@ -290,33 +290,34 @@ public class ReplicatedTransactionHandlerTest {
     EntityID eid = new EntityID("foo", "bar");
     long VERSION = 1;
     byte[] config = new byte[0];
-    send(ReplicationMessage.createStartSyncMessage());
-    send(ReplicationMessage.createStartEntityMessage(eid, VERSION, config, 0));
-    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 1));
-    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 1, config, ""));
-    send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 1));
-    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 2));
-    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 2, config, ""));
-    send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 2));  
-    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 3));
-    send(ReplicationMessage.createPayloadMessage(eid, VERSION, 3, config, ""));
-    send(ReplicationMessage.createEndEntityKeyMessage(eid, VERSION, 3));  
-    send(ReplicationMessage.createStartEntityKeyMessage(eid, VERSION, 4));
+    send(SyncReplicationActivity.createStartSyncMessage());
+    send(SyncReplicationActivity.createStartEntityMessage(eid, VERSION, config, 0));
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, 1));
+    send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, 1, config, ""));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, VERSION, 1));
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, 2));
+    send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, 2, config, ""));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, VERSION, 2));  
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, 3));
+    send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, 3, config, ""));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, VERSION, 3));  
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, 4));
 //  defer a few replicated messages with sequence as payload
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(1).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(2).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(3).array(), 4));
-    send(ReplicationMessage.createPayloadMessage(eid, 1, 4, config, ""));
+    send(SyncReplicationActivity.createPayloadMessage(eid, 1, 4, config, ""));
 //  defer a few replicated messages with sequence as payload
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(4).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(5).array(), 4));
     send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(6).array(), 4));
-    send(ReplicationMessage.createEndEntityKeyMessage(eid, 1, 4)); 
-    send(ReplicationMessage.createEndEntityMessage(eid, VERSION));
-    send(ReplicationMessage.createEndSyncMessage(new byte[0]));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, 4)); 
+    send(SyncReplicationActivity.createEndEntityMessage(eid, VERSION));
+    send(SyncReplicationActivity.createEndSyncMessage(new byte[0]));
   }
 
-  private long send(ReplicationMessage msg) throws EventHandlerException {
+  private long send(SyncReplicationActivity activity) throws EventHandlerException {
+    ReplicationMessage msg = ReplicationMessage.createActivityContainer(activity);
     msg.setReplicationID(rid++);
     loopbackSink.addSingleThreaded(msg);
     return rid;
@@ -326,8 +327,8 @@ public class ReplicatedTransactionHandlerTest {
     this.rth.getEventHandler().destroy();
   }
   
-  private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
-    return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
+  private SyncReplicationActivity createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
+    return SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
         source, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.INVOKE_ACTION, payload, concurrency, "");
   }
 

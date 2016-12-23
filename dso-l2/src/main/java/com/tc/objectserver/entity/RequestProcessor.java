@@ -123,7 +123,7 @@ public class RequestProcessor {
 //  NOOP should be replicated.  For now, NOOPs hold ordering
     byte[] bytes = (actionCode != SyncReplicationActivity.ActivityType.NOOP) ? payload.getRawPayload() : NO_BYTES;
     
-    return ReplicationMessage.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId());
+    return ReplicationMessage.createActivityContainer(SyncReplicationActivity.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId()));
   }
   
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {

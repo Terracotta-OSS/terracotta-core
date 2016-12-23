@@ -121,7 +121,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
-      ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
+      ReplicationMessage resetOrderedSink = ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartMessage());
       BarrierCompletion block = new BarrierCompletion();
       replicate.addSingleThreaded(ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, resetOrderedSink, ()->block.complete(), ()->block.complete()));
       block.waitForCompletion();
@@ -152,7 +152,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {    
         // start passive sync message
         logger.debug("starting sync for " + newNode);
-        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(()->replicateMessage(ReplicationMessage.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted());
+        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(()->replicateMessage(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartSyncMessage()), Collections.singleton(newNode)).waitForCompleted());
         for (ManagedEntity entity : e) {
           logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
           entity.sync(newNode);
@@ -160,7 +160,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         }
     //  passive sync done message.  causes passive to go into passive standby mode
         logger.debug("ending sync " + newNode);
-        replicateMessage(ReplicationMessage.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
+        replicateMessage(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndSyncMessage(replicateEntityPersistor())), Collections.singleton(newNode)).waitForCompleted();
       }
     });
   }

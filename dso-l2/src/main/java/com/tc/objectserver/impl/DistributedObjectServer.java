@@ -86,6 +86,7 @@ import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
@@ -836,7 +837,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(ReplicationMessage.createNoOpMessage(eid, version));
+            .getSink().addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createNoOpMessage(eid, version)));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
