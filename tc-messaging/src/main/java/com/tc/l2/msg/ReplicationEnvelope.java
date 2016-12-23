@@ -19,10 +19,44 @@
 package com.tc.l2.msg;
 
 import com.tc.net.NodeID;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 
 public class ReplicationEnvelope {
+  public static ReplicationEnvelope createAddPassiveEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+    Assert.assertNotNull(dest);
+    Assert.assertNotNull(msg);
+    Assert.assertTrue(ReplicationMessage.START == msg.getType());
+    return new ReplicationEnvelope(dest, msg, sent, droppedWithoutSend);
+  }
+
+  public static ReplicationEnvelope createRemovePassiveEnvelope(NodeID dest, Runnable droppedWithoutSend) {
+    Assert.assertNotNull(dest);
+    return new ReplicationEnvelope(dest, null, null, droppedWithoutSend);
+  }
+
+  public static ReplicationEnvelope createReplicatedMessageEnvelope(NodeID dest, ReplicationMessage msg, Runnable droppedWithoutSend) {
+    Assert.assertNotNull(dest);
+    Assert.assertNotNull(msg);
+    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType()));
+    if (isReplicatedNoop) {
+      // This better be a real client (otherwise, the synthetic path should have been used).
+      Assert.assertFalse(msg.getSource().isNull());
+    }
+    return new ReplicationEnvelope(dest, msg, null, droppedWithoutSend);
+  }
+
+  public static ReplicationEnvelope createSyntheticNoopEnvelope(NodeID dest, ReplicationMessage msg, Runnable droppedWithoutSend) {
+    Assert.assertNotNull(dest);
+    Assert.assertNotNull(msg);
+    Assert.assertTrue(ReplicationMessage.REPLICATE == msg.getType());
+    Assert.assertTrue(SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType());
+    Assert.assertTrue(msg.getSource().isNull());
+    return new ReplicationEnvelope(dest, msg, null, droppedWithoutSend);
+  }
+
+
   private final NodeID dest;
   private final ReplicationMessage msg;
   private final Runnable droppedWithoutSend;
@@ -37,7 +71,7 @@ public class ReplicationEnvelope {
    * @param droppedWithoutSend A runnable to run if the message is dropped by ReplicationSender and will NOT be replicated to
    *  dest.
    */
-  public ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+  private ReplicationEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
     this.dest = dest;
     this.msg = msg;
     this.sent = sent;

@@ -24,6 +24,7 @@ import com.tc.l2.msg.ReplicationEnvelope;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -119,7 +120,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       logger.info("Starting message sequence on " + node);
       ReplicationMessage resetOrderedSink = ReplicationMessage.createStartMessage();
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(new ReplicationEnvelope(node, resetOrderedSink, ()->block.complete(), ()->block.complete()));
+      replicate.addSingleThreaded(ReplicationEnvelope.createAddPassiveEnvelope(node, resetOrderedSink, ()->block.complete(), ()->block.complete()));
       block.waitForCompletion();
       return true;
     } else {
@@ -217,10 +218,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy, this);
     if (!copy.isEmpty()) {
       waiters.put(msg.getMessageID(), waiter);
+      // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a synthetic noop.
+      boolean isSyntheticNoop = (ReplicationMessage.REPLICATE == msg.getType())
+          && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType())
+          && msg.getSource().isNull();
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        replicate.addSingleThreaded(new ReplicationEnvelope(node, msg, null, ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete)));
+        Runnable droppedWithoutSend = ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete);
+        ReplicationEnvelope envelope = isSyntheticNoop
+            ? ReplicationEnvelope.createSyntheticNoopEnvelope(node, msg, droppedWithoutSend)
+            : ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, droppedWithoutSend);
+        replicate.addSingleThreaded(envelope);
       }
     }
     return waiter;
@@ -239,7 +248,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(new ReplicationEnvelope(nodeID, null, null, ()->block.complete()));
+      replicate.addSingleThreaded(ReplicationEnvelope.createRemovePassiveEnvelope(nodeID, ()->block.complete()));
       block.waitForCompletion();
     }
   }

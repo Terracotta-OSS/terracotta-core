@@ -68,7 +68,7 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
-      collector.add(new ReplicationEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null, null));
+      collector.add(ReplicationEnvelope.createReplicatedMessageEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null));
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
   }
@@ -77,7 +77,7 @@ public class ReplicationSenderTest {
     list.stream().forEach(msg->{
       ReplicationMessage rep = makeMessage(msg);
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, rep, null, null));
+        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, rep, null));
       } catch (EventHandlerException exp) {
         throw new RuntimeException(exp);
       }
@@ -91,7 +91,8 @@ public class ReplicationSenderTest {
       case INVOKE_ACTION:
       case NOOP:
       case RECONFIGURE_ENTITY:
-        return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+        ClientID source = new ClientID(1);
+        return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
       case SYNC_BEGIN:
         return ReplicationMessage.createStartSyncMessage();
       case SYNC_END:
@@ -141,7 +142,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, msg, null, null));
+        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -175,7 +176,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, msg, null, null));
+        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -211,7 +212,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(new ReplicationEnvelope(node, msg, null, null));
+        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
