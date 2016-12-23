@@ -83,7 +83,7 @@ import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
-import com.tc.l2.msg.ReplicationEnvelope;
+import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
@@ -706,7 +706,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     connectServerStateToReplicatedState(state, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Stage<ReplicationEnvelope> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationEnvelope.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
+    final Stage<ReplicationIntent> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationIntent.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
     
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationDriver.getSink(), this.getGroupManager());
     processor.setReplication(passives); 

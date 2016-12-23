@@ -21,8 +21,11 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.l2.msg.ReplicationEnvelope;
+import com.tc.l2.msg.ReplicationAddPassiveIntent;
+import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.ReplicationRemovePassiveIntent;
+import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -41,7 +44,7 @@ import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope> {
+public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager<AbstractGroupMessage> group;
@@ -56,20 +59,20 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
   }
 
   @Override
-  public void handleEvent(ReplicationEnvelope context) throws EventHandlerException {
+  public void handleEvent(ReplicationIntent context) throws EventHandlerException {
     NodeID nodeid = context.getDestination();
-    ReplicationMessage msg = context.getMessage();
     
-    if (context.isRemovePassiveMessage()) {
-// this is a flush of the replication channel.  shut it down and return;
+    if (context instanceof ReplicationRemovePassiveIntent) {
+   // this is a flush of the replication channel.  shut it down and return;
       filtering.remove(nodeid);
       context.droppedWithoutSend();
-    } else if (context.isAddPassiveMessage()) {
+    } else if (context instanceof ReplicationAddPassiveIntent) {
       // Set up the sync state.
       SyncState syncing = createAndRegisterSyncState(nodeid);
       // Send the message.
-      tagAndSendMessageCompletingContext(context, nodeid, msg, syncing);
-    } else {
+      tagAndSendMessageCompletingContext(context, nodeid, ((ReplicationAddPassiveIntent)context).getMessage(), syncing);
+    } else if (context instanceof ReplicationReplicateMessageIntent) {
+      ReplicationMessage msg = ((ReplicationReplicateMessageIntent)context).getMessage();
       SyncState syncing = getSyncState(nodeid, msg);
       
       // See if the message needs to be filtered out of the stream.
@@ -88,6 +91,8 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
         // Call the dropped callback on the context.
         context.droppedWithoutSend();
       }
+    } else {
+      Assert.fail("Unknown replication intent type");
     }
     Assert.assertTrue(context.wasSentOrDropped());
   }
@@ -102,7 +107,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
     return shouldRemoveFromStream;
   }
 
-  private void tagAndSendMessageCompletingContext(ReplicationEnvelope context, NodeID nodeid, ReplicationMessage msg, SyncState syncing) {
+  private void tagAndSendMessageCompletingContext(ReplicationIntent context, NodeID nodeid, ReplicationMessage msg, SyncState syncing) {
     long replicationID = syncing.nextMessageID();
     try {
       doSendMessage(nodeid, msg, replicationID);

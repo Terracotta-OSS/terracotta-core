@@ -19,8 +19,9 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.EventHandlerException;
-import com.tc.l2.msg.ReplicationEnvelope;
+import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -48,7 +49,7 @@ public class ReplicationSenderTest {
   
   NodeID node = mock(NodeID.class);
   GroupManager groupMgr = mock(GroupManager.class);
-  List<ReplicationEnvelope> collector = new LinkedList<>();
+  List<ReplicationIntent> collector = new LinkedList<>();
   ReplicationSender testSender = new ReplicationSender(groupMgr);
   EntityID entity = EntityID.NULL_ID;
   int concurrency = 1;
@@ -68,7 +69,7 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
-      collector.add(ReplicationEnvelope.createReplicatedMessageEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null));
+      collector.add(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null));
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
   }
@@ -77,7 +78,7 @@ public class ReplicationSenderTest {
     list.stream().forEach(msg->{
       ReplicationMessage rep = makeMessage(msg);
       try {
-        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, rep, null));
+        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, rep, null));
       } catch (EventHandlerException exp) {
         throw new RuntimeException(exp);
       }
@@ -142,7 +143,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, null));
+        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -176,7 +177,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, null));
+        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -212,7 +213,7 @@ public class ReplicationSenderTest {
 
     origin.stream().forEach(msg-> {
       try {
-        testSender.handleEvent(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, null));
+        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -223,7 +224,8 @@ public class ReplicationSenderTest {
   
   private void validateCollector(Collection<ReplicationMessage> valid) {
     Iterator<ReplicationMessage> next = valid.iterator();
-    collector.stream().forEach(cmsg->{
+    collector.stream().forEach(bareIntent->{
+      ReplicationReplicateMessageIntent cmsg = (ReplicationReplicateMessageIntent) bareIntent;
       if (cmsg.getMessage().getType() != ReplicationMessage.START && cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
         ReplicationMessage vmsg = next.next();
         if (vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&

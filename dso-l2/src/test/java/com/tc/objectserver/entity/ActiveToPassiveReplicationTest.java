@@ -19,7 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.l2.msg.ReplicationEnvelope;
+import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
@@ -64,11 +64,11 @@ public class ActiveToPassiveReplicationTest {
   @SuppressWarnings("unchecked")
   public void setUp() {
     passive = mock(ServerID.class);
-    Sink<ReplicationEnvelope> replicate = mock(Sink.class);
+    Sink<ReplicationIntent> replicate = mock(Sink.class);
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((ReplicationEnvelope)invocation.getArguments()[0]).droppedWithoutSend();
+        ((ReplicationIntent)invocation.getArguments()[0]).droppedWithoutSend();
         return null;
       }
     }).when(replicate).addSingleThreaded(Matchers.any());
