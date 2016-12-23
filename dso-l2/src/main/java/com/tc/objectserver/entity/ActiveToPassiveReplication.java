@@ -226,10 +226,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         // This is a normal completion.
         boolean isNormalComplete = true;
         Runnable droppedWithoutSend = ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete);
-        ReplicationEnvelope envelope = isSyntheticNoop
-            ? ReplicationEnvelope.createSyntheticNoopEnvelope(node, msg, droppedWithoutSend)
-            : ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, droppedWithoutSend);
-        replicate.addSingleThreaded(envelope);
+        if (isSyntheticNoop) {
+          // We aren't going to send this to the replication sender so just acknowledge that it was dropped without send, here.
+          droppedWithoutSend.run();
+        } else {
+          replicate.addSingleThreaded(ReplicationEnvelope.createReplicatedMessageEnvelope(node, msg, droppedWithoutSend));
+        }
       }
     }
     return waiter;

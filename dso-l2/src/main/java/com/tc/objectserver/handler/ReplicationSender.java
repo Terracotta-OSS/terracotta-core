@@ -69,9 +69,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationEnvelope>
       SyncState syncing = createAndRegisterSyncState(nodeid);
       // Send the message.
       tagAndSendMessageCompletingContext(context, nodeid, msg, syncing);
-    } else if (context.isSyntheticNoopMessage()) {
-      // While NOOPs which come from the client need to be replicated, synthetic ones are dropped.
-      context.droppedWithoutSend();
     } else {
       SyncState syncing = getSyncState(nodeid, msg);
       
