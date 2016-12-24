@@ -82,6 +82,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return rid;
   }
 
+  public void addActivity(SyncReplicationActivity activity) {
+    this.activities.add(activity);
+  }
+
   public List<SyncReplicationActivity> getActivities() {
     // If this was created locally, we shouldn't be reaching into it to read the underlying activity - this is for the
     //  receiving side, only.

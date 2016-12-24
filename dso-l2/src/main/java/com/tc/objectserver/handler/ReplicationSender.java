@@ -53,6 +53,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
+  private final Map<NodeID, BatchContext> batchContexts = new HashMap<>();
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
@@ -65,12 +66,13 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     if (context instanceof ReplicationRemovePassiveIntent) {
    // this is a flush of the replication channel.  shut it down and return;
       filtering.remove(nodeid);
+      this.batchContexts.remove(nodeid);
       context.droppedWithoutSend();
     } else if (context instanceof ReplicationAddPassiveIntent) {
       // Set up the sync state.
-      SyncState syncing = createAndRegisterSyncState(nodeid);
+      createAndRegisterSyncState(nodeid);
       // Send the message.
-      tagAndSendActivityCompletingContext(context, nodeid, ((ReplicationAddPassiveIntent)context).getActivity(), syncing);
+      tagAndSendActivityCompletingContext(context, nodeid, ((ReplicationAddPassiveIntent)context).getActivity());
     } else if (context instanceof ReplicationReplicateMessageIntent) {
       SyncReplicationActivity activity = ((ReplicationReplicateMessageIntent)context).getActivity();
       SyncState syncing = getSyncState(nodeid, activity);
@@ -80,7 +82,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
       if (!shouldRemoveFromStream) {
         // We want to send this message.
         syncing.validateSending(activity);
-        tagAndSendActivityCompletingContext(context, nodeid, activity, syncing);
+        tagAndSendActivityCompletingContext(context, nodeid, activity);
       } else {
         // We are filtering this out so don't send it.
         // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
@@ -112,10 +114,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     return shouldRemoveFromStream;
   }
 
-  private void tagAndSendActivityCompletingContext(ReplicationIntent context, NodeID nodeid, SyncReplicationActivity activity, SyncState syncing) {
-    long replicationID = syncing.nextMessageID();
+  private void tagAndSendActivityCompletingContext(ReplicationIntent context, NodeID nodeid, SyncReplicationActivity activity) {
     try {
-      doSendActivity(nodeid, activity, replicationID);
+      doSendActivity(nodeid, activity);
       context.sent();
     }  catch (GroupException ge) {
       logger.info(activity, ge);
@@ -123,24 +124,23 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     }
   }
 
-  private void doSendActivity(NodeID nodeid, SyncReplicationActivity activity, long replicationID) throws GroupException {
+  private void doSendActivity(NodeID nodeid, SyncReplicationActivity activity) throws GroupException {
     if (debugLogging) {
       logger.debug("WIRE:" + activity);
     }
     if (debugMessaging) {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
-    ReplicationMessage message = ReplicationMessage.createActivityContainer(activity);
-    message.setReplicationID(replicationID);
-    group.sendTo(nodeid, message);
+    this.batchContexts.get(nodeid).batchAndSend(activity);
   }
   
-  private SyncState createAndRegisterSyncState(NodeID nodeid) {
+  private void createAndRegisterSyncState(NodeID nodeid) {
     // We can't already have a state for this passive.
     Assert.assertTrue(!filtering.containsKey(nodeid));
+    Assert.assertTrue(!batchContexts.containsKey(nodeid));
     SyncState state = new SyncState();
     filtering.put(nodeid, state);
-    return state;
+    this.batchContexts.put(nodeid, new BatchContext(this.group, nodeid));
   }
 
   private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
@@ -181,7 +181,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     boolean complete = false;
     private SyncReplicationActivity.ActivityType lastSeen;
     private SyncReplicationActivity.ActivityType lastSent;
-    private long messageId;
     
     public boolean isSyncOccuring() {
       return (begun && !complete);
@@ -299,10 +298,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
       }
     }
     
-    public long nextMessageID() {
-      return messageId++;
-    }
-    
     private SyncReplicationActivity.ActivityType validate(SyncReplicationActivity.ActivityType type, SyncReplicationActivity.ActivityType compare) {
       switch (type) {
         case SYNC_BEGIN:
@@ -332,6 +327,57 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
           throw new AssertionError("unexpected message type");
       }
       return type;
+    }
+  }
+
+
+  private static class BatchContext {
+    private final GroupManager<AbstractGroupMessage> groupManager;
+    private final NodeID target;
+    private boolean isWaitingForNetwork;
+    private ReplicationMessage cachedMessage;
+    private long nextReplicationID;
+    
+    public BatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target) {
+      this.groupManager = groupManager;
+      this.target = target;
+    }
+    private final Runnable handleMessageSend = new Runnable() {
+      @Override
+      public void run() {
+        handleNetworkDone();
+      }
+    };
+    public synchronized void batchAndSend(SyncReplicationActivity activity) {
+      if (null == this.cachedMessage) {
+        this.cachedMessage = ReplicationMessage.createActivityContainer(activity);
+        this.cachedMessage.setReplicationID(this.nextReplicationID++);
+      } else {
+        this.cachedMessage.addActivity(activity);
+      }
+      
+      if (!isWaitingForNetwork) {
+        synchronizedSendBatch();
+      }
+    }
+
+    public synchronized void handleNetworkDone() {
+      this.isWaitingForNetwork = false;
+      if (null != this.cachedMessage) {
+        synchronizedSendBatch();
+      }
+    }
+    private void synchronizedSendBatch() {
+      ReplicationMessage cachedBatch = this.cachedMessage;
+      this.cachedMessage = null;
+      this.isWaitingForNetwork = true;
+      try {
+        this.groupManager.sendToWithSentCallback(this.target, cachedBatch, this.handleMessageSend);
+      } catch (GroupException e) {
+        this.isWaitingForNetwork = false;
+        // TODO:  HANDLE THIS!
+        throw Assert.failure("TODO", e);
+      }
     }
   }
 }
