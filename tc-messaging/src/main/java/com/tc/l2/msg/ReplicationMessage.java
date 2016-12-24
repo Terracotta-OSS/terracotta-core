@@ -43,6 +43,12 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return new ReplicationMessage(activity);
   }
 
+  public static ReplicationMessage createLocalContainer(SyncReplicationActivity activity) {
+    Assert.assertNotNull(activity);
+    ReplicationMessage message = new ReplicationMessage(activity);
+    return message;
+  }
+
 
   private SyncReplicationActivity activity;
   
