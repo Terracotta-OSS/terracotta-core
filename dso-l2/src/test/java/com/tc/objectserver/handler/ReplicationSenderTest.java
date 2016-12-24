@@ -289,16 +289,18 @@ public class ReplicationSenderTest {
   private void validateCollector(Collection<SyncReplicationActivity> valid) {
     Iterator<SyncReplicationActivity> next = valid.iterator();
     collector.stream().forEach(msg->{
-      SyncReplicationActivity.ActivityType activityType = msg.getActivity().getActivityType();
-      if ((activityType != SyncReplicationActivity.ActivityType.SYNC_START) && (activityType != SyncReplicationActivity.ActivityType.NOOP)) {
-        SyncReplicationActivity nextActivity = next.next();
-        SyncReplicationActivity.ActivityType nextActivityType = nextActivity.getActivityType();
-        if (nextActivityType != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
-            nextActivityType != SyncReplicationActivity.ActivityType.SYNC_END) {
+      for (SyncReplicationActivity activity : msg.getActivities()) {
+        SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
+        if ((activityType != SyncReplicationActivity.ActivityType.SYNC_START) && (activityType != SyncReplicationActivity.ActivityType.NOOP)) {
+          SyncReplicationActivity nextActivity = next.next();
+          SyncReplicationActivity.ActivityType nextActivityType = nextActivity.getActivityType();
+          if (nextActivityType != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
+              nextActivityType != SyncReplicationActivity.ActivityType.SYNC_END) {
+          }
+          Assert.assertEquals(activityType, nextActivityType);
+          Assert.assertEquals(activity.getConcurrency(), nextActivity.getConcurrency());
+          System.err.println(nextActivityType + " on " + nextActivity.getEntityID());
         }
-        Assert.assertEquals(activityType, nextActivityType);
-        Assert.assertEquals(msg.getActivity().getConcurrency(), nextActivity.getConcurrency());
-        System.err.println(nextActivityType + " on " + nextActivity.getEntityID());
       }
     });
   }

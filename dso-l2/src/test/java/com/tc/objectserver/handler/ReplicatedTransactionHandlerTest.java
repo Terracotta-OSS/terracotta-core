@@ -53,7 +53,6 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
@@ -62,6 +61,7 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -140,7 +140,7 @@ public class ReplicatedTransactionHandlerTest {
     ReplicationMessage msg = mock(ReplicationMessage.class);
     when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
     when(msg.messageFrom()).thenReturn(sid);
-    when(msg.getActivity()).thenReturn(activity);
+    when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
     when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
@@ -186,7 +186,7 @@ public class ReplicatedTransactionHandlerTest {
     MessageCodec codec = mock(MessageCodec.class);
     when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
     when(msg.messageFrom()).thenReturn(sid);
-    when(msg.getActivity()).thenReturn(activity);
+    when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getMessageCodec(Matchers.any())).thenReturn(codec);

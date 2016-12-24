@@ -25,6 +25,8 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.util.Assert;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
@@ -47,7 +49,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   }
 
 
-  private SyncReplicationActivity activity;
+  private List<SyncReplicationActivity> activities;
   long rid = 0;
   // We will keep a flag to track whether this message is outgoing (created here and being sent to the network) or incoming
   //  (created elsewhere and decoded here) to ensure that it is being used correctly.
@@ -68,7 +70,8 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 //  a true replicated message
   private ReplicationMessage(SyncReplicationActivity activity) {
     super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal() ? SYNC : REPLICATE);
-    this.activity = activity;
+    this.activities = new ArrayList<SyncReplicationActivity>();
+    this.activities.add(activity);
     this.didCreateLocally = true;
   }
   
@@ -81,11 +84,11 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return rid;
   }
 
-  public SyncReplicationActivity getActivity() {
+  public List<SyncReplicationActivity> getActivities() {
     // If this was created locally, we shouldn't be reaching into it to read the underlying activity - this is for the
     //  receiving side, only.
     Assert.assertFalse(this.didCreateLocally);
-    return this.activity;
+    return this.activities;
   }
 
   @Override
@@ -99,14 +102,22 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
       case REPLICATE:
       case SYNC:
         this.rid = in.readLong();
-        this.activity = SyncReplicationActivity.deserializeFrom(in);
-        Assert.assertNotNull(this.activity);
-        // Make sure that the message type and activity type are consistent.
-        if (this.activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal()) {
-          Assert.assertTrue(this.activity.action, SYNC == messageType);
-        } else {
-          Assert.assertTrue(this.activity.action, REPLICATE == messageType);
+        int batchSize = in.readInt();
+        // We don't send empty batches.
+        Assert.assertTrue(batchSize > 0);
+        this.activities = new ArrayList<SyncReplicationActivity>();
+        for (int i = 0; i < batchSize; ++i) {
+          SyncReplicationActivity activity = SyncReplicationActivity.deserializeFrom(in);
+          Assert.assertNotNull(activity);
+          // TODO:  In the future, remove this distinction since this should now be purely a matter of the activities.
+          if (activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal()) {
+            Assert.assertTrue(activity.action, SYNC == messageType);
+          } else {
+            Assert.assertTrue(activity.action, REPLICATE == messageType);
+          }
+          this.activities.add(activity);
         }
+        // Make sure that the message type and activity type are consistent.
         break;
     }
   }
@@ -122,17 +133,22 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
       case REPLICATE:
       case SYNC:
         out.writeLong(rid);
-        this.activity.serializeTo(out);
+        int batchSize = this.activities.size();
+        Assert.assertTrue(batchSize > 0);
+        out.writeInt(batchSize);
+        for (SyncReplicationActivity activity : this.activities) {
+          activity.serializeTo(out);
+        }
         break;
     }
   }
   
   public String getDebugId() {
-    return this.getType() + " " + ((this.activity != null) ? (this.activity.debugId.length() == 0 ? this.activity.action : this.activity.debugId) : "");
+    return this.getType() + " " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities");
   }
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", activity=" + this.activity + "}";
+    return "ReplicationMessage{rid=" + rid + ", " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities") + "}";
   }
 }

@@ -186,28 +186,30 @@ public class ReplicatedTransactionHandler {
     switch (rep.getType()) {
       case ReplicationMessage.REPLICATE: {
         ServerID activeSender = (ServerID) rep.messageFrom();
-        SyncReplicationActivity activity = rep.getActivity();
-        if (state.ignore(activity)) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Ignoring:" + rep);
+        for (SyncReplicationActivity activity : rep.getActivities()) {
+          if (state.ignore(activity)) {
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Ignoring:" + rep);
+            }
+            acknowledge(activeSender, activity, ReplicationResultCode.NONE);
+          } else if (state.defer(activeSender, activity)) {
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Deferring:" + rep);
+            }
+          } else {
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Applying:" + rep);
+            }
+            replicatedActivityReceived(activeSender, activity);
           }
-          acknowledge(activeSender, activity, ReplicationResultCode.NONE);
-        } else if (state.defer(activeSender, activity)) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Deferring:" + rep);
-          }
-        } else {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Applying:" + rep);
-          }
-          replicatedActivityReceived(activeSender, activity);
         }
         break;
       }
       case ReplicationMessage.SYNC: {
         ServerID activeSender = (ServerID) rep.messageFrom();
-        SyncReplicationActivity activity = rep.getActivity();
-        syncActivityReceived(activeSender, activity);
+        for (SyncReplicationActivity activity : rep.getActivities()) {
+          syncActivityReceived(activeSender, activity);
+        }
         break;
       }
       default:
