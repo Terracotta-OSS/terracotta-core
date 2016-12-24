@@ -183,38 +183,27 @@ public class ReplicatedTransactionHandler {
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("RECEIVED:" + rep.getDebugId());
     }
-    switch (rep.getType()) {
-      case ReplicationMessage.REPLICATE: {
-        ServerID activeSender = (ServerID) rep.messageFrom();
-        for (SyncReplicationActivity activity : rep.getActivities()) {
-          if (state.ignore(activity)) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Ignoring:" + rep);
-            }
-            acknowledge(activeSender, activity, ReplicationResultCode.NONE);
-          } else if (state.defer(activeSender, activity)) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Deferring:" + rep);
-            }
-          } else {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Applying:" + rep);
-            }
-            replicatedActivityReceived(activeSender, activity);
+    ServerID activeSender = (ServerID) rep.messageFrom();
+    for (SyncReplicationActivity activity : rep.getActivities()) {
+      if (activity.isSyncActivity()) {
+        syncActivityReceived(activeSender, activity);
+      } else {
+        if (state.ignore(activity)) {
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Ignoring:" + rep);
           }
+          acknowledge(activeSender, activity, ReplicationResultCode.NONE);
+        } else if (state.defer(activeSender, activity)) {
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Deferring:" + rep);
+          }
+        } else {
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Applying:" + rep);
+          }
+          replicatedActivityReceived(activeSender, activity);
         }
-        break;
       }
-      case ReplicationMessage.SYNC: {
-        ServerID activeSender = (ServerID) rep.messageFrom();
-        for (SyncReplicationActivity activity : rep.getActivities()) {
-          syncActivityReceived(activeSender, activity);
-        }
-        break;
-      }
-      default:
-        // This is an unexpected replicated message type.
-        throw new RuntimeException();
     }
   }
 //  don't need to worry about resends here for lifecycle messages.  active will filer them  

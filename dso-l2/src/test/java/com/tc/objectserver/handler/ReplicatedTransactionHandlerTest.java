@@ -138,7 +138,6 @@ public class ReplicatedTransactionHandlerTest {
     when(activity.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     when(activity.getExtendedData()).thenReturn(new byte[0]);
     ReplicationMessage msg = mock(ReplicationMessage.class);
-    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
     when(msg.messageFrom()).thenReturn(sid);
     when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
@@ -184,7 +183,6 @@ public class ReplicatedTransactionHandlerTest {
     when(activity.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     ReplicationMessage msg = mock(ReplicationMessage.class);
     MessageCodec codec = mock(MessageCodec.class);
-    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
     when(msg.messageFrom()).thenReturn(sid);
     when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));

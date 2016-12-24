@@ -30,10 +30,8 @@ import java.util.List;
 
 
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
-//  message types  
-  public static final int INVALID               = 0; // Invalid message type
-  public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
-  public static final int SYNC               = 2; // Sent as part of a sync sequence
+  // We don't have an explicit message type - the ReplicationMessage is only a container.
+  public static final int IGNORED = 0;
 
   // Factory methods.
   public static ReplicationMessage createActivityContainer(SyncReplicationActivity activity) {
@@ -58,7 +56,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   private boolean didCreateLocally;
   
   public ReplicationMessage() {
-    super(INVALID);
+    super(IGNORED);
     this.didCreateLocally = false;
   }
   
@@ -69,7 +67,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   
 //  a true replicated message
   private ReplicationMessage(SyncReplicationActivity activity) {
-    super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal() ? SYNC : REPLICATE);
+    super(IGNORED);
     this.activities = new ArrayList<SyncReplicationActivity>();
     this.activities.add(activity);
     this.didCreateLocally = true;
@@ -95,12 +93,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     int messageType = getType();
     switch (messageType) {
-      case INVALID:
-        // This message was not correctly initialized.
-        Assert.fail();
-        break;
-      case REPLICATE:
-      case SYNC:
+      case IGNORED:
         this.rid = in.readLong();
         int batchSize = in.readInt();
         // We don't send empty batches.
@@ -109,12 +102,6 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
         for (int i = 0; i < batchSize; ++i) {
           SyncReplicationActivity activity = SyncReplicationActivity.deserializeFrom(in);
           Assert.assertNotNull(activity);
-          // TODO:  In the future, remove this distinction since this should now be purely a matter of the activities.
-          if (activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal()) {
-            Assert.assertTrue(activity.action, SYNC == messageType);
-          } else {
-            Assert.assertTrue(activity.action, REPLICATE == messageType);
-          }
           this.activities.add(activity);
         }
         // Make sure that the message type and activity type are consistent.
@@ -126,12 +113,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   protected void basicSerializeTo(TCByteBufferOutput out) {
     int messageType = getType();
     switch (messageType) {
-      case INVALID:
-        // This message was not correctly initialized.
-        Assert.fail();
-        break;
-      case REPLICATE:
-      case SYNC:
+      case IGNORED:
         out.writeLong(rid);
         int batchSize = this.activities.size();
         Assert.assertTrue(batchSize > 0);
