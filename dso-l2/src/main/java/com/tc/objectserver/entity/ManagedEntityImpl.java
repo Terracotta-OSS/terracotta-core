@@ -414,7 +414,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       try {
         read.lock();
         if (logger.isDebugEnabled()) {
-          logger.debug("Invoking " + request.getAction() + " on " + getID() + "/" + concurrencyKey);
+          logger.debug(request.getAction() + " on " + getID() + "/" + concurrencyKey + " with " + message);
         }
         switch (request.getAction()) {
           case INVOKE_ACTION:

@@ -19,6 +19,7 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.EventHandlerException;
+import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationReplicateMessageIntent;
@@ -31,6 +32,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -214,6 +216,57 @@ public class ReplicationSenderTest {
     origin.stream().forEach(msg-> {
       try {
         testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
+      } catch (EventHandlerException h) {
+        throw new RuntimeException(h);
+      }
+    });
+    
+    validateCollector(validation);
+  }
+  
+  @Test
+  public void validateSyncState() {
+    entity = new EntityID("TEST", "test");
+    List<ReplicationMessage> origin = new LinkedList<>();
+    List<ReplicationMessage> validation = new LinkedList<>();
+    buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
+
+    SetOnceFlag started = new SetOnceFlag();
+    SetOnceFlag finished = new SetOnceFlag();
+    origin.stream().forEach(msg-> {
+      try {
+        if (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_BEGIN) {
+          started.set();
+        } else if (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_END) {
+          finished.set();
+        }
+        SetOnceFlag sent = new SetOnceFlag();
+        SetOnceFlag notsent = new SetOnceFlag();
+        ReplicationIntent intent = (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_START) ? 
+                ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, msg, ()->sent.set(), ()->notsent.set()) :
+                ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, msg, ()->sent.set(), ()->notsent.set());
+        testSender.handleEvent(intent);
+        Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
+        if (!testSender.isSyncOccuring(node) && msg.getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
+          Assert.assertTrue(msg, sent.isSet());
+        }
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }

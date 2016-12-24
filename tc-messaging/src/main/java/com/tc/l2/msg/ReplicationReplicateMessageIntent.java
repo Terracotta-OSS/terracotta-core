@@ -33,7 +33,17 @@ public class ReplicationReplicateMessageIntent extends ReplicationIntent {
     }
     return new ReplicationReplicateMessageIntent(dest, msg, null, droppedWithoutSend);
   }
-
+  
+  public static ReplicationReplicateMessageIntent createReplicatedMessageDebugEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+    Assert.assertNotNull(dest);
+    Assert.assertNotNull(msg);
+    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType()));
+    if (isReplicatedNoop) {
+      // This better be a real client (otherwise, the synthetic path should have been used).
+      Assert.assertFalse(msg.getSource().isNull());
+    }
+    return new ReplicationReplicateMessageIntent(dest, msg, sent, droppedWithoutSend);
+  }
 
   private final ReplicationMessage msg;
 

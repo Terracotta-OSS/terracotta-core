@@ -93,4 +93,9 @@ public class MessagePayload {
   public boolean shouldReplicate() {
     return replicate;
   }
+
+  @Override
+  public String toString() {
+    return "MessagePayload{" + "debugId=" + debugId + '}';
+  }
 }
