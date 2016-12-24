@@ -101,8 +101,13 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     // By default, we want to filter out messages for which there is no syncing state.
     boolean shouldRemoveFromStream = true;
     if (syncing != null) {
-      // If there is a valid syncing state, we should only remove this from the stream if the state doesn't think it should be replicated.
-      shouldRemoveFromStream = !syncing.shouldMessageBeReplicated(msg);
+//  first check if the sync has finished, if it has replicate everything
+//  if it hasn't, check if the message should be replicated based on sync state.  Do this here in case the message is SYNC_BEGIN
+//  if still false, if sync hasn't yet started, replicate and the passive 
+//      will either NOOP ack or apply based on it's own state (STANDBY or UNINITIALIZED)
+      shouldRemoveFromStream = !(syncing.hasSyncFinished() 
+              || syncing.shouldMessageBeReplicated(msg)
+              || !syncing.hasSyncBegun());
     }
     return shouldRemoveFromStream;
   }
@@ -152,7 +157,15 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
 //  passive must have died during passive sync, ignore this message
     logger.info("ignoring " + msg + " target " + nodeid + " no longer exists");
   }
-
+// for testing only
+  boolean isSyncOccuring(NodeID origin) {
+    SyncState state = filtering.get(origin);
+    if (state != null) {
+      return state.isSyncOccuring();
+    }
+    return false;
+  }  
+ 
   @Override
   protected void initialize(ConfigurationContext context) {
     super.initialize(context);
@@ -164,13 +177,26 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     private EntityID syncingID = EntityID.NULL_ID;
     private int syncingConcurrency = -1;
     boolean begun = false;
+    boolean complete = false;
     private SyncReplicationActivity.ActivityType lastSeen;
     private SyncReplicationActivity.ActivityType lastSent;
     private long messageId;
     
+    public boolean isSyncOccuring() {
+      return (begun && !complete);
+    }
+    
+    public boolean hasSyncBegun() {
+      return begun;
+    }
+    
+    public boolean hasSyncFinished() {
+      return complete;
+    }
+    
     public boolean shouldMessageBeReplicated(ReplicationMessage msg) {
+
       final EntityID eid = msg.getEntityDescriptor().getEntityID();
-        
         switch (validateInput(msg)) {
           case SYNC_BEGIN:
             begun = true;
@@ -218,6 +244,11 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
             syncingID = EntityID.NULL_ID;
             return true;
           case SYNC_END:
+ //  sync is complete, clear all collections and let everything pass
+            complete = true;
+            liveSet.clear();
+            syncdID.clear();
+            syncingID = EntityID.NULL_ID;
             return true;
           case CREATE_ENTITY:
 // if this create came through, it is not part of the snapshot set so everything
