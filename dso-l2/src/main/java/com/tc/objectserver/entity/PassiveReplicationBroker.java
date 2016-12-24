@@ -18,13 +18,13 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
 import java.util.Set;
 
 
 public interface PassiveReplicationBroker {
-  ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> passives);
+  ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<NodeID> passives);
   void zapAndWait(NodeID node);
   Set<NodeID> passives();
   void enterActiveState();

@@ -18,6 +18,7 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.async.api.OrderedEventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
@@ -32,7 +33,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class SyncReplicationActivity {
+public class SyncReplicationActivity implements OrderedEventContext {
   public enum ActivityType {
     NOOP,
     CREATE_ENTITY,
@@ -164,6 +165,11 @@ public class SyncReplicationActivity {
     this.debugId = debugId;
   }
 
+  @Override
+  public long getSequenceID() {
+    return this.id.id;
+  }
+
   public ActivityID getActivityID() {
     return this.id;
   }
@@ -194,6 +200,18 @@ public class SyncReplicationActivity {
   
   public int getConcurrency() {
     return this.concurrency;
+  }
+
+  public ActivityType getActivityType() {
+    return this.action;
+  }
+
+  public String getDebugID() {
+    return this.debugId;
+  }
+
+  public boolean isSyncActivity() {
+    return (this.action.ordinal() >= ActivityType.SYNC_START.ordinal());
   }
 
   protected void serializeTo(TCByteBufferOutput out) {

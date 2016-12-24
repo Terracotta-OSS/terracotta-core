@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -56,8 +55,8 @@ public class RequestProcessor {
     return passives.passives();
   }
 
-  public ActivePassiveAckWaiter scheduleSync(ReplicationMessage msg, NodeID passive) {
-    return passives.replicateMessage(msg, Collections.singleton(passive));
+  public ActivePassiveAckWaiter scheduleSync(SyncReplicationActivity activity, NodeID passive) {
+    return passives.replicateActivity(activity, Collections.singleton(passive));
   }
   
   public void setReplication(PassiveReplicationBroker passives) {
@@ -71,7 +70,7 @@ public class RequestProcessor {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
-        ? passives.replicateMessage(createReplicationMessage(entity, request.getNodeID(), replicate ? request.getAction() : ServerEntityAction.NOOP, 
+        ? passives.replicateActivity(createReplicationActivity(entity, request.getNodeID(), replicate ? request.getAction() : ServerEntityAction.NOOP, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
@@ -84,7 +83,7 @@ public class RequestProcessor {
   
   private static byte[] NO_BYTES = new byte[0];
   
-  private static ReplicationMessage createReplicationMessage(EntityDescriptor id, ClientID src,
+  private static SyncReplicationActivity createReplicationActivity(EntityDescriptor id, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
     SyncReplicationActivity.ActivityType actionCode = SyncReplicationActivity.ActivityType.NOOP;
     switch (type) {
@@ -123,7 +122,7 @@ public class RequestProcessor {
 //  NOOP should be replicated.  For now, NOOPs hold ordering
     byte[] bytes = (actionCode != SyncReplicationActivity.ActivityType.NOOP) ? payload.getRawPayload() : NO_BYTES;
     
-    return ReplicationMessage.createActivityContainer(SyncReplicationActivity.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId()));
+    return SyncReplicationActivity.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId());
   }
   
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {

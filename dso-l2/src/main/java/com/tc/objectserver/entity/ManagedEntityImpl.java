@@ -22,7 +22,6 @@ import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
-import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -628,7 +627,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               for (NodeID passive : passives) {
                 try {
                   byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
-                  executor.scheduleSync(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createPayloadMessage(id, version, concurrencyKey, message, "")), passive).waitForReceived();
+                  executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, concurrencyKey, message, ""), passive).waitForReceived();
                 } catch (EntityUserException eu) {
                 // TODO: do something reasoned here
                   throw new RuntimeException(eu);
@@ -800,7 +799,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
-          executor.scheduleSync(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY)), passive).waitForCompleted();
+          executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
         }
         opComplete.complete();
       }, true, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
@@ -823,11 +822,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
-          executor.scheduleSync(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndEntityKeyMessage(id, version, concurrency)), passive).waitForCompleted();
+          executor.scheduleSync(SyncReplicationActivity.createEndEntityKeyMessage(id, version, concurrency), passive).waitForCompleted();
         }
   //  end passive sync for an entity
   // wait for future is ok, occuring on sync executor thread
-        executor.scheduleSync(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndEntityMessage(id, version)), passive).waitForCompleted();
+        executor.scheduleSync(SyncReplicationActivity.createEndEntityMessage(id, version), passive).waitForCompleted();
       }
     } finally {
       interop.syncFinished();

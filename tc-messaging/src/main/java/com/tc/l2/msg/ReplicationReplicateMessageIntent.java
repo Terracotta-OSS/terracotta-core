@@ -23,36 +23,36 @@ import com.tc.util.Assert;
 
 
 public class ReplicationReplicateMessageIntent extends ReplicationIntent {
-  public static ReplicationReplicateMessageIntent createReplicatedMessageEnvelope(NodeID dest, ReplicationMessage msg, Runnable droppedWithoutSend) {
+  public static ReplicationReplicateMessageIntent createReplicatedMessageEnvelope(NodeID dest, SyncReplicationActivity activity, Runnable droppedWithoutSend) {
     Assert.assertNotNull(dest);
-    Assert.assertNotNull(msg);
-    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType()));
+    Assert.assertNotNull(activity);
+    boolean isReplicatedNoop = (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType());
     if (isReplicatedNoop) {
       // This better be a real client (otherwise, the synthetic path should have been used).
-      Assert.assertFalse(msg.getSource().isNull());
+      Assert.assertFalse(activity.getSource().isNull());
     }
-    return new ReplicationReplicateMessageIntent(dest, msg, null, droppedWithoutSend);
+    return new ReplicationReplicateMessageIntent(dest, activity, null, droppedWithoutSend);
   }
   
-  public static ReplicationReplicateMessageIntent createReplicatedMessageDebugEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+  public static ReplicationReplicateMessageIntent createReplicatedMessageDebugEnvelope(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
     Assert.assertNotNull(dest);
-    Assert.assertNotNull(msg);
-    boolean isReplicatedNoop = ((ReplicationMessage.REPLICATE == msg.getType()) && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType()));
+    Assert.assertNotNull(activity);
+    boolean isReplicatedNoop = (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType());
     if (isReplicatedNoop) {
       // This better be a real client (otherwise, the synthetic path should have been used).
-      Assert.assertFalse(msg.getSource().isNull());
+      Assert.assertFalse(activity.getSource().isNull());
     }
-    return new ReplicationReplicateMessageIntent(dest, msg, sent, droppedWithoutSend);
+    return new ReplicationReplicateMessageIntent(dest, activity, sent, droppedWithoutSend);
   }
 
-  private final ReplicationMessage msg;
+  private final SyncReplicationActivity activity;
 
-  private ReplicationReplicateMessageIntent(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+  private ReplicationReplicateMessageIntent(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
     super(dest, sent, droppedWithoutSend);
-    this.msg = msg;
+    this.activity = activity;
   }
   
-  public ReplicationMessage getMessage() {
-    return msg;
+  public SyncReplicationActivity getActivity() {
+    return this.activity;
   }
 }

@@ -46,7 +46,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExecutionStrategy;
 
 
 public class RequestProcessorTest {
@@ -180,19 +179,19 @@ public class RequestProcessorTest {
 
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.singleton(mock(NodeID.class)));
-    when(broker.replicateMessage(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
+    when(broker.replicateActivity(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     
     instance.scheduleRequest(descriptor, request, MessagePayload.EMPTY, ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
     
-    verify(broker, times(0)).replicateMessage(Matchers.any(), Matchers.any());
+    verify(broker, times(0)).replicateActivity(Matchers.any(), Matchers.any());
     
     instance.enterActiveState();
     
     instance.scheduleRequest(descriptor, request, MessagePayload.EMPTY, ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
 //  assume args from mocked request are passed.  just testing execution
-    verify(broker).replicateMessage(Matchers.any(), Matchers.any());
+    verify(broker).replicateActivity(Matchers.any(), Matchers.any());
 //    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
   }
   
