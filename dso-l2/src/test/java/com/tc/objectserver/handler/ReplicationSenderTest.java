@@ -19,6 +19,10 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.EventHandlerException;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
@@ -26,6 +30,7 @@ import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -33,6 +38,8 @@ import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,7 +57,8 @@ import static org.mockito.Mockito.mock;
 public class ReplicationSenderTest {
   
   NodeID node = mock(NodeID.class);
-  GroupManager groupMgr = mock(GroupManager.class);
+  @SuppressWarnings("unchecked")
+  GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
   ReplicationSender testSender = new ReplicationSender(groupMgr);
   EntityID entity = EntityID.NULL_ID;
@@ -71,20 +79,22 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
-      collector.add((ReplicationMessage)args[1]);
+      // We need to emulate having sent the message so run it through the serialization mechanism.
+      ReplicationMessage sending = (ReplicationMessage)args[1];
+      TCByteBufferOutput output = new TCByteBufferOutputStream();
+      sending.serializeTo(output);
+      TCByteBufferInput input = new TCByteBufferInputStream(output.toArray());
+      ReplicationMessage receiving = new ReplicationMessage();
+      try {
+        receiving.deserializeFrom(input);
+      } catch (IOException e) {
+        // Not expected in test.
+        e.printStackTrace();
+        Assert.fail(e.getLocalizedMessage());
+      }
+      collector.add(receiving);
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
-  }
-  
-  private void makeAndSendSequence(Collection<SyncReplicationActivity.ActivityType> list) throws Exception {
-    list.stream().forEach(msg->{
-      SyncReplicationActivity rep = makeMessage(msg);
-      try {
-        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, rep, null));
-      } catch (EventHandlerException exp) {
-        throw new RuntimeException(exp);
-      }
-    });
   }
   
   private SyncReplicationActivity makeMessage(SyncReplicationActivity.ActivityType type) {
@@ -279,7 +289,7 @@ public class ReplicationSenderTest {
   private void validateCollector(Collection<SyncReplicationActivity> valid) {
     Iterator<SyncReplicationActivity> next = valid.iterator();
     collector.stream().forEach(msg->{
-      SyncReplicationActivity.ActivityType activityType = msg.getReplicationType();
+      SyncReplicationActivity.ActivityType activityType = msg.getActivity().getActivityType();
       if ((activityType != SyncReplicationActivity.ActivityType.SYNC_START) && (activityType != SyncReplicationActivity.ActivityType.NOOP)) {
         SyncReplicationActivity nextActivity = next.next();
         SyncReplicationActivity.ActivityType nextActivityType = nextActivity.getActivityType();
@@ -287,7 +297,7 @@ public class ReplicationSenderTest {
             nextActivityType != SyncReplicationActivity.ActivityType.SYNC_END) {
         }
         Assert.assertEquals(activityType, nextActivityType);
-        Assert.assertEquals(msg.getConcurrency(), nextActivity.getConcurrency());
+        Assert.assertEquals(msg.getActivity().getConcurrency(), nextActivity.getConcurrency());
         System.err.println(nextActivityType + " on " + nextActivity.getEntityID());
       }
     });

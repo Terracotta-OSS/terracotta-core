@@ -21,11 +21,7 @@ package com.tc.l2.msg;
 import com.tc.async.api.OrderedEventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.ClientID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -46,26 +42,34 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public static ReplicationMessage createLocalContainer(SyncReplicationActivity activity) {
     Assert.assertNotNull(activity);
     ReplicationMessage message = new ReplicationMessage(activity);
+    message.didCreateLocally = false;
     return message;
   }
 
 
   private SyncReplicationActivity activity;
-  
   long rid = 0;
+  // We will keep a flag to track whether this message is outgoing (created here and being sent to the network) or incoming
+  //  (created elsewhere and decoded here) to ensure that it is being used correctly.
+  // (Note that this check can be removed in the future - it is mostly to validate during refactoring and buffering
+  //  implementation).
+  private boolean didCreateLocally;
   
   public ReplicationMessage() {
     super(INVALID);
+    this.didCreateLocally = false;
   }
   
   protected ReplicationMessage(int type) {
     super(type);
+    this.didCreateLocally = false;
   }
   
 //  a true replicated message
   private ReplicationMessage(SyncReplicationActivity activity) {
     super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal() ? SYNC : REPLICATE);
     this.activity = activity;
+    this.didCreateLocally = true;
   }
   
   public void setReplicationID(long rid) {
@@ -76,54 +80,14 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public long getSequenceID() {
     return rid;
   }
-  
-  public long getVersion() {
-    return this.activity.descriptor.getClientSideVersion();
-  }
-  
-  public SyncReplicationActivity.ActivityType getReplicationType() {
-    // One can only ask what type of replication activity this is if it is a sync or replication activity.
-    Assert.assertNotNull(this.activity);
-    return this.activity.action;
+
+  public SyncReplicationActivity getActivity() {
+    // If this was created locally, we shouldn't be reaching into it to read the underlying activity - this is for the
+    //  receiving side, only.
+    Assert.assertFalse(this.didCreateLocally);
+    return this.activity;
   }
 
-  public byte[] getExtendedData() {
-    return this.activity.payload;
-  }
-  
-  public ClientID getSource() {
-    return this.activity.src;
-  }
-  
-  public TransactionID getTransactionID() {
-    return this.activity.tid;
-  }
-  
-  public TransactionID getOldestTransactionOnClient() {
-    return this.activity.oldest;
-  }
-
-  public EntityDescriptor getEntityDescriptor() {
-    return this.activity.descriptor;
-  }
-  
-  public EntityID getEntityID() {
-    return this.activity.descriptor == null ? EntityID.NULL_ID : this.activity.descriptor.getEntityID();
-  }
-  
-  public int getConcurrency() {
-    return this.activity.concurrency;
-  }
-  
-  /**
-   * NOTE:  This is temporary while SyncReplicationActivity is further decoupled from ReplicationMessage.
-   * 
-   * @return The ActivityID of the underlying activity (fails with NPE if not wrapping an activity).
-   */
-  public SyncReplicationActivity.ActivityID getActivityID() {
-    return this.activity.getActivityID();
-  }
-  
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     int messageType = getType();
