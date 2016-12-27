@@ -79,6 +79,7 @@ public class ManagedEntitySyncInteropTest {
 // start two syncs
     Future f1 = run(()->{instance.startLifecycle();return null;});
     Future f2 = run(()->{instance.startSync();return null;});
+    f1.get();
     try {
       f2.get(1, TimeUnit.SECONDS);
       Assert.fail();
