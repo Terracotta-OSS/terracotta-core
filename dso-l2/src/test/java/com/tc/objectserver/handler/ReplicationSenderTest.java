@@ -19,6 +19,10 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.EventHandlerException;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
@@ -26,6 +30,7 @@ import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -33,6 +38,8 @@ import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,8 +57,9 @@ import static org.mockito.Mockito.mock;
 public class ReplicationSenderTest {
   
   NodeID node = mock(NodeID.class);
-  GroupManager groupMgr = mock(GroupManager.class);
-  List<ReplicationIntent> collector = new LinkedList<>();
+  @SuppressWarnings("unchecked")
+  GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
+  List<ReplicationMessage> collector = new LinkedList<>();
   ReplicationSender testSender = new ReplicationSender(groupMgr);
   EntityID entity = EntityID.NULL_ID;
   int concurrency = 1;
@@ -71,20 +79,22 @@ public class ReplicationSenderTest {
   public void setUp() throws Exception {
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
-      collector.add(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope((NodeID)args[0], (ReplicationMessage)args[1], null));
+      // We need to emulate having sent the message so run it through the serialization mechanism.
+      ReplicationMessage sending = (ReplicationMessage)args[1];
+      TCByteBufferOutput output = new TCByteBufferOutputStream();
+      sending.serializeTo(output);
+      TCByteBufferInput input = new TCByteBufferInputStream(output.toArray());
+      ReplicationMessage receiving = new ReplicationMessage();
+      try {
+        receiving.deserializeFrom(input);
+      } catch (IOException e) {
+        // Not expected in test.
+        e.printStackTrace();
+        Assert.fail(e.getLocalizedMessage());
+      }
+      collector.add(receiving);
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
-  }
-  
-  private void makeAndSendSequence(Collection<SyncReplicationActivity.ActivityType> list) throws Exception {
-    list.stream().forEach(msg->{
-      ReplicationMessage rep = ReplicationMessage.createActivityContainer(makeMessage(msg));
-      try {
-        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, rep, null));
-      } catch (EventHandlerException exp) {
-        throw new RuntimeException(exp);
-      }
-    });
   }
   
   private SyncReplicationActivity makeMessage(SyncReplicationActivity.ActivityType type) {
@@ -123,8 +133,8 @@ public class ReplicationSenderTest {
   @Test
   public void filterSCDC() throws Exception {  // Sync-Create-Delete-Create
     entity = new EntityID("TEST", "test");
-    List<ReplicationMessage> origin = new LinkedList<>();
-    List<ReplicationMessage> validation = new LinkedList<>();
+    List<SyncReplicationActivity> origin = new LinkedList<>();
+    List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
@@ -143,9 +153,9 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
-    origin.stream().forEach(msg-> {
+    origin.stream().forEach(activity-> {
       try {
-        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
+        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, activity, null));
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
       }
@@ -158,8 +168,8 @@ public class ReplicationSenderTest {
   public void filterCDC() throws Exception {  // Create-Delete-Create
     entity = new EntityID("TEST", "test");
  //  creates and sync can no longer intermix
-    List<ReplicationMessage> origin = new LinkedList<>();
-    List<ReplicationMessage> validation = new LinkedList<>();
+    List<SyncReplicationActivity> origin = new LinkedList<>();
+    List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
@@ -192,8 +202,8 @@ public class ReplicationSenderTest {
   @Test
   public void filterValidation() throws Exception {
     entity = new EntityID("TEST", "test");
-    List<ReplicationMessage> origin = new LinkedList<>();
-    List<ReplicationMessage> validation = new LinkedList<>();
+    List<SyncReplicationActivity> origin = new LinkedList<>();
+    List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
@@ -227,8 +237,8 @@ public class ReplicationSenderTest {
   @Test
   public void validateSyncState() {
     entity = new EntityID("TEST", "test");
-    List<ReplicationMessage> origin = new LinkedList<>();
-    List<ReplicationMessage> validation = new LinkedList<>();
+    List<SyncReplicationActivity> origin = new LinkedList<>();
+    List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
@@ -250,22 +260,23 @@ public class ReplicationSenderTest {
 
     SetOnceFlag started = new SetOnceFlag();
     SetOnceFlag finished = new SetOnceFlag();
-    origin.stream().forEach(msg-> {
+    origin.stream().forEach(activity-> {
       try {
-        if (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_BEGIN) {
+        SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
+        if (SyncReplicationActivity.ActivityType.SYNC_BEGIN == activityType) {
           started.set();
-        } else if (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_END) {
+        } else if (SyncReplicationActivity.ActivityType.SYNC_END == activityType) {
           finished.set();
         }
         SetOnceFlag sent = new SetOnceFlag();
         SetOnceFlag notsent = new SetOnceFlag();
-        ReplicationIntent intent = (msg.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_START) ? 
-                ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, msg, ()->sent.set(), ()->notsent.set()) :
-                ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, msg, ()->sent.set(), ()->notsent.set());
+        ReplicationIntent intent = (SyncReplicationActivity.ActivityType.SYNC_START == activityType) ? 
+                ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, activity, ()->sent.set(), ()->notsent.set()) :
+                ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, activity, ()->sent.set(), ()->notsent.set());
         testSender.handleEvent(intent);
         Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
-        if (!testSender.isSyncOccuring(node) && msg.getReplicationType() != SyncReplicationActivity.ActivityType.NOOP) {
-          Assert.assertTrue(msg, sent.isSet());
+        if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.NOOP != activityType)) {
+          Assert.assertTrue(activity, sent.isSet());
         }
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
@@ -275,26 +286,29 @@ public class ReplicationSenderTest {
     validateCollector(validation);
   }
   
-  private void validateCollector(Collection<ReplicationMessage> valid) {
-    Iterator<ReplicationMessage> next = valid.iterator();
-    collector.stream().forEach(bareIntent->{
-      ReplicationReplicateMessageIntent cmsg = (ReplicationReplicateMessageIntent) bareIntent;
-      if ((cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_START) && (cmsg.getMessage().getReplicationType() != SyncReplicationActivity.ActivityType.NOOP)) {
-        ReplicationMessage vmsg = next.next();
-        if (vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
-            vmsg.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_END) {
-          Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getEntityID(), cmsg.getMessage().getEntityID());
+  private void validateCollector(Collection<SyncReplicationActivity> valid) {
+    Iterator<SyncReplicationActivity> next = valid.iterator();
+    collector.stream().forEach(msg->{
+      for (SyncReplicationActivity activity : msg.getActivities()) {
+        SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
+        if ((activityType != SyncReplicationActivity.ActivityType.SYNC_START) && (activityType != SyncReplicationActivity.ActivityType.NOOP)) {
+          SyncReplicationActivity nextActivity = next.next();
+          SyncReplicationActivity.ActivityType nextActivityType = nextActivity.getActivityType();
+          if (nextActivityType != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&
+              nextActivityType != SyncReplicationActivity.ActivityType.SYNC_END) {
+          }
+          Assert.assertEquals(activityType, nextActivityType);
+          Assert.assertEquals(activity.getConcurrency(), nextActivity.getConcurrency());
+          System.err.println(nextActivityType + " on " + nextActivity.getEntityID());
         }
-        Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getReplicationType(), cmsg.getMessage().getReplicationType());
-        Assert.assertEquals(vmsg + "!=" + cmsg.getMessage(), vmsg.getConcurrency(), cmsg.getMessage().getConcurrency());
-        System.err.println(vmsg.getReplicationType() + " on " + vmsg.getEntityID());
       }
     });
   }
   
-  private void buildTest(List<ReplicationMessage> origin, List<ReplicationMessage> validation, SyncReplicationActivity activity, boolean filtered) {
-    ReplicationMessage msg = ReplicationMessage.createActivityContainer(activity);
-    origin.add(msg);
-    if (!filtered) validation.add(msg);
+  private void buildTest(List<SyncReplicationActivity> origin, List<SyncReplicationActivity> validation, SyncReplicationActivity activity, boolean filtered) {
+    origin.add(activity);
+    if (!filtered) {
+      validation.add(activity);
+    }
   }
 }

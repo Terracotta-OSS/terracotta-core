@@ -23,22 +23,22 @@ import com.tc.util.Assert;
 
 
 public class ReplicationAddPassiveIntent extends ReplicationIntent {
-  public static ReplicationAddPassiveIntent createAddPassiveEnvelope(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+  public static ReplicationAddPassiveIntent createAddPassiveEnvelope(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
     Assert.assertNotNull(dest);
-    // TODO:  Determine if this msg can be synthesized at a lower level.
-    Assert.assertNotNull(msg);
-    return new ReplicationAddPassiveIntent(dest, msg, sent, droppedWithoutSend);
+    // TODO:  Determine if this activity can be synthesized at a lower level.
+    Assert.assertNotNull(activity);
+    return new ReplicationAddPassiveIntent(dest, activity, sent, droppedWithoutSend);
   }
 
 
-  private final ReplicationMessage msg;
+  private final SyncReplicationActivity activity;
 
-  private ReplicationAddPassiveIntent(NodeID dest, ReplicationMessage msg, Runnable sent, Runnable droppedWithoutSend) {
+  private ReplicationAddPassiveIntent(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
     super(dest, sent, droppedWithoutSend);
-    this.msg = msg;
+    this.activity = activity;
   }
   
-  public ReplicationMessage getMessage() {
-    return msg;
+  public SyncReplicationActivity getActivity() {
+    return this.activity;
   }
 }

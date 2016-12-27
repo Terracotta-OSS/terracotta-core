@@ -22,7 +22,6 @@ import com.tc.async.api.Sink;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationIntent;
-import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationRemovePassiveIntent;
 import com.tc.l2.msg.ReplicationReplicateMessageIntent;
@@ -33,7 +32,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.MessageID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
@@ -65,7 +63,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
-  private final ConcurrentHashMap<MessageID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final Sink<ReplicationIntent> replicate;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
@@ -121,9 +119,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
-      ReplicationMessage resetOrderedSink = ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartMessage());
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, resetOrderedSink, ()->block.complete(), ()->block.complete()));
+      replicate.addSingleThreaded(ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, SyncReplicationActivity.createStartMessage(), ()->block.complete(), ()->block.complete()));
       block.waitForCompletion();
       return true;
     } else {
@@ -152,7 +149,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {    
         // start passive sync message
         logger.debug("starting sync for " + newNode);
-        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(()->replicateMessage(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartSyncMessage()), Collections.singleton(newNode)).waitForCompleted());
+        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(()->replicateActivity(SyncReplicationActivity.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted());
         for (ManagedEntity entity : e) {
           logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
           entity.sync(newNode);
@@ -160,7 +157,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         }
     //  passive sync done message.  causes passive to go into passive standby mode
         logger.debug("ending sync " + newNode);
-        replicateMessage(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndSyncMessage(replicateEntityPersistor())), Collections.singleton(newNode)).waitForCompleted();
+        replicateActivity(SyncReplicationActivity.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
       }
     });
   }
@@ -198,12 +195,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * This internal handling for completed is split out since it happens for both completed acks but also situations which
    * implies no ack is forthcoming (the passive disappearing, for example).
    */
-  private void internalAckCompleted(MessageID mid, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
-    ActivePassiveAckWaiter waiter = waiters.get(mid);
+  private void internalAckCompleted(SyncReplicationActivity.ActivityID activityID, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
+    ActivePassiveAckWaiter waiter = waiters.get(activityID);
     if (null != waiter) {
       boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete, payload);
       if (shouldDiscardWaiter) {
-        waiters.remove(mid);
+        waiters.remove(activityID);
       }
     }
   }
@@ -214,26 +211,26 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   @Override
-  public ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> all) {
+  public ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<NodeID> all) {
     Set<NodeID> copy = new HashSet<>(all); 
 // don't replicate to a passive that is no longer there
     copy.retainAll(passives());
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy, this);
     if (!copy.isEmpty()) {
-      waiters.put(msg.getMessageID(), waiter);
+      SyncReplicationActivity.ActivityID activityID = activity.getActivityID();
+      waiters.put(activityID, waiter);
       // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a synthetic noop.
-      boolean isSyntheticNoop = (ReplicationMessage.REPLICATE == msg.getType())
-          && (SyncReplicationActivity.ActivityType.NOOP == msg.getReplicationType())
-          && msg.getSource().isNull();
+      boolean isSyntheticNoop = (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType())
+          && activity.getSource().isNull();
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
-        Runnable droppedWithoutSend = ()->internalAckCompleted(msg.getMessageID(), node, null, isNormalComplete);
+        Runnable droppedWithoutSend = ()->internalAckCompleted(activityID, node, null, isNormalComplete);
         if (isSyntheticNoop) {
           // We aren't going to send this to the replication sender so just acknowledge that it was dropped without send, here.
           droppedWithoutSend.run();
         } else {
-          replicate.addSingleThreaded(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, droppedWithoutSend));
+          replicate.addSingleThreaded(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, activity, droppedWithoutSend));
         }
       }
     }

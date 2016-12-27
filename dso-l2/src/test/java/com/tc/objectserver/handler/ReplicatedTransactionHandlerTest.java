@@ -31,6 +31,10 @@ import com.tc.async.api.SpecializedEventContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.state.StateManager;
@@ -49,14 +53,15 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -105,7 +110,8 @@ public class ReplicatedTransactionHandlerTest {
     }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
-    this.source = mock(ClientID.class);
+    // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
+    this.source = new ClientID(1);
     
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
@@ -123,16 +129,17 @@ public class ReplicatedTransactionHandlerTest {
     EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
     ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
-    ReplicationMessage msg = mock(ReplicationMessage.class);
+    SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
     int rand = 1;
-    when(msg.getConcurrency()).thenReturn(rand);
-    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
-    when(msg.getReplicationType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
-    when(msg.getEntityID()).thenReturn(eid);
+    when(activity.getConcurrency()).thenReturn(rand);
+    when(activity.getActivityType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
+    when(activity.getEntityID()).thenReturn(eid);
+    when(activity.getEntityDescriptor()).thenReturn(descriptor);
+    when(activity.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(activity.getExtendedData()).thenReturn(new byte[0]);
+    ReplicationMessage msg = mock(ReplicationMessage.class);
     when(msg.messageFrom()).thenReturn(sid);
-    when(msg.getEntityDescriptor()).thenReturn(descriptor);
-    when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
-    when(msg.getExtendedData()).thenReturn(new byte[0]);
+    when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
     when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
@@ -147,15 +154,15 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartSyncMessage()));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartEntityMessage(eid, 1, new byte[0], 0)));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartEntityKeyMessage(eid, 1, rand)));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage()));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityMessage(eid, 1, new byte[0], 0)));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityKeyMessage(eid, 1, rand)));
     this.loopbackSink.addSingleThreaded(msg);
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, rand)));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndEntityMessage(eid, 1)));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, rand)));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityMessage(eid, 1)));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
 //  verify there was an attempt to decode the invoke message
-    verify(msg).getExtendedData();
+    verify(activity).getExtendedData();
     verify(entity).getCodec();
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendToWithSentCallback(Matchers.eq(sid), Matchers.any(), Matchers.any());
@@ -167,16 +174,17 @@ public class ReplicatedTransactionHandlerTest {
     EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
     ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
+    SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
+    int rand = new Random().nextInt();
+    when(activity.getConcurrency()).thenReturn(rand);
+    when(activity.getActivityType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
+    when(activity.getEntityID()).thenReturn(eid);
+    when(activity.getEntityDescriptor()).thenReturn(descriptor);
+    when(activity.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
     ReplicationMessage msg = mock(ReplicationMessage.class);
     MessageCodec codec = mock(MessageCodec.class);
-    int rand = new Random().nextInt();
-    when(msg.getConcurrency()).thenReturn(rand);
-    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
-    when(msg.getReplicationType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
-    when(msg.getEntityID()).thenReturn(eid);
     when(msg.messageFrom()).thenReturn(sid);
-    when(msg.getEntityDescriptor()).thenReturn(descriptor);
-    when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
     when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getMessageCodec(Matchers.any())).thenReturn(codec);
@@ -188,11 +196,11 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createStartSyncMessage()));
-    this.loopbackSink.addSingleThreaded(ReplicationMessage.createActivityContainer(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage()));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
     this.loopbackSink.addSingleThreaded(msg);
-    verify(msg).getExtendedData();
-    verify(msg).getConcurrency();  // make sure RTH is pulling the concurrency from the message
+    verify(activity).getExtendedData();
+    verify(activity).getConcurrency();  // make sure RTH is pulling the concurrency from the message
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendToWithSentCallback(Matchers.eq(sid), Matchers.any(), Matchers.any());
   }
@@ -317,7 +325,7 @@ public class ReplicatedTransactionHandlerTest {
   }
 
   private long send(SyncReplicationActivity activity) throws EventHandlerException {
-    ReplicationMessage msg = ReplicationMessage.createActivityContainer(activity);
+    ReplicationMessage msg = createReceivedActivity(activity);
     msg.setReplicationID(rid++);
     loopbackSink.addSingleThreaded(msg);
     return rid;
@@ -395,4 +403,24 @@ public class ReplicatedTransactionHandlerTest {
     
     
 }
+
+
+  /**
+   * Wraps the activity in a ReplicationMessage but also emulates its "received from network" state.
+   */
+  private static ReplicationMessage createReceivedActivity(SyncReplicationActivity activity) {
+    ReplicationMessage sending = ReplicationMessage.createActivityContainer(activity);
+    TCByteBufferOutput output = new TCByteBufferOutputStream();
+    sending.serializeTo(output);
+    TCByteBufferInput input = new TCByteBufferInputStream(output.toArray());
+    ReplicationMessage receiving = new ReplicationMessage();
+    try {
+      receiving.deserializeFrom(input);
+    } catch (IOException e) {
+      // Not expected in test.
+      e.printStackTrace();
+      Assert.fail(e.getLocalizedMessage());
+    }
+    return receiving;
+  }
 }

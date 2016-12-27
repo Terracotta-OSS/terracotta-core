@@ -36,7 +36,6 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.MessageID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -184,14 +183,17 @@ public class ReplicatedTransactionHandler {
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("RECEIVED:" + rep.getDebugId());
     }
-    switch (rep.getType()) {
-      case ReplicationMessage.REPLICATE:
-        if (state.ignore(rep)) {
+    ServerID activeSender = (ServerID) rep.messageFrom();
+    for (SyncReplicationActivity activity : rep.getActivities()) {
+      if (activity.isSyncActivity()) {
+        syncActivityReceived(activeSender, activity);
+      } else {
+        if (state.ignore(activity)) {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Ignoring:" + rep);
           }
-          acknowledge(rep, ReplicationResultCode.NONE);
-        } else if (state.defer(rep)) {
+          acknowledge(activeSender, activity, ReplicationResultCode.NONE);
+        } else if (state.defer(activeSender, activity)) {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Deferring:" + rep);
           }
@@ -199,26 +201,20 @@ public class ReplicatedTransactionHandler {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Applying:" + rep);
           }
-          replicatedMessageReceived(rep);
+          replicatedActivityReceived(activeSender, activity);
         }
-        break;
-      case ReplicationMessage.SYNC:
-        syncMessageReceived(rep);
-        break;
-      default:
-        // This is an unexpected replicated message type.
-        throw new RuntimeException();
+      }
     }
   }
 //  don't need to worry about resends here for lifecycle messages.  active will filer them  
-  private void replicatedMessageReceived(ReplicationMessage rep) throws EntityException {
-    ClientID sourceNodeID = rep.getSource();
-    TransactionID transactionID = rep.getTransactionID();
-    TransactionID oldestTransactionOnClient = rep.getOldestTransactionOnClient();
-    EntityDescriptor descriptor = rep.getEntityDescriptor();
+  private void replicatedActivityReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
+    ClientID sourceNodeID = activity.getSource();
+    TransactionID transactionID = activity.getTransactionID();
+    TransactionID oldestTransactionOnClient = activity.getOldestTransactionOnClient();
+    EntityDescriptor descriptor = activity.getEntityDescriptor();
 
     // Send the RECEIVED ack before we run this.
-    ackReceived(rep);
+    ackReceived(activeSender, activity);
     
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -232,15 +228,15 @@ public class ReplicatedTransactionHandler {
       }
     }
 
-    long version = rep.getVersion();
+    long version = descriptor.getClientSideVersion();
     EntityID entityID = descriptor.getEntityID();
-    byte[] extendedData = rep.getExtendedData();
+    byte[] extendedData = activity.getExtendedData();
 
     // At this point, we can now look up the managed entity (used later).
     Optional<ManagedEntity> entity = entityManager.getEntity(entityID,version);
 
     // Create the request, since it is how we will generically return complete.
-    ServerEntityRequest request = make(rep);
+    ServerEntityRequest request = activityToLocalRequest(activity);
     // If we satisfied this as a known re-send, don't add the request to the entity.
     if (request.getAction() == ServerEntityAction.CREATE_ENTITY) {
 // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
@@ -251,17 +247,17 @@ public class ReplicatedTransactionHandler {
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
-              acknowledge(rep, ReplicationResultCode.SUCCESS);
+              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             } else {
               entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, true, extendedData);
-              acknowledge(rep, ReplicationResultCode.SUCCESS);
+              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }
           }, (exception) -> {
             entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-            acknowledge(rep, ReplicationResultCode.FAIL);
+            acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
           });
       } catch (EntityException ee) {
-        acknowledge(rep, ReplicationResultCode.FAIL);
+        acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
         if (!sourceNodeID.isNull()) {
           entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         }
@@ -270,42 +266,42 @@ public class ReplicatedTransactionHandler {
       ManagedEntity entityInstance = entity.get();
       EntityMessage msg = null;
       try {
-        if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.INVOKE_ACTION) {
+        if (SyncReplicationActivity.ActivityType.INVOKE_ACTION == activity.getActivityType()) {
           msg = entityInstance.getCodec().decodeMessage(extendedData);
         }
       } catch (MessageCodecException codec) {
         throw new RuntimeException(codec);
       }
-      MessagePayload payload = new MessagePayload(extendedData, msg, rep.getConcurrency());
+      MessagePayload payload = new MessagePayload(extendedData, msg, activity.getConcurrency());
       if (null != request.getAction()) switch (request.getAction()) {
         case RECONFIGURE_ENTITY:  
           entity.get().addRequestMessage(request, payload, 
             (result)->{
               entityPersistor.entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, version, result);
-              acknowledge(rep, ReplicationResultCode.SUCCESS);
+              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             } , (exception) -> {
               entityPersistor.entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-              acknowledge(rep, ReplicationResultCode.FAIL);
+              acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
             });
           break;
         case DESTROY_ENTITY:
           entityInstance.addRequestMessage(request, payload, 
             (result)-> {
               entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID);
-              acknowledge(rep, ReplicationResultCode.SUCCESS);
+              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }, (exception) -> {
              entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
-              acknowledge(rep, ReplicationResultCode.FAIL);
+              acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
             });
           break;
         case FETCH_ENTITY:
         case RELEASE_ENTITY:
           entityInstance.addRequestMessage(request, payload, 
             (result)-> {
-              acknowledge(rep, ReplicationResultCode.SUCCESS);
+              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }, (exception) -> {
-              LOGGER.warn("fetch/release fail:" + rep);
-              acknowledge(rep, ReplicationResultCode.FAIL);
+              LOGGER.warn("fetch/release fail:" + activity);
+              acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
             });
           break;
         case NOOP:
@@ -315,16 +311,16 @@ public class ReplicatedTransactionHandler {
           }
           //  fall-through to default
         default:
-          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(rep, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(rep, ReplicationResultCode.FAIL));
+          entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
           break;
       }
     } else {
  //  fail, just ack
-      acknowledge(rep, ReplicationResultCode.FAIL);
+      acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
     }
   }
   
-  private void establishNewPassive(ReplicationMessage rep) {
+  private void establishNewPassive() {
     entityManager.resetReferences();
   }
   
@@ -340,21 +336,22 @@ public class ReplicatedTransactionHandler {
     }
   }  
   
-  private void syncMessageReceived(ReplicationMessage sync) {
-    EntityID eid = sync.getEntityDescriptor().getEntityID();
-    long version = sync.getVersion();
+  private void syncActivityReceived(ServerID activeSender, SyncReplicationActivity activity) {
+    EntityDescriptor descriptor = activity.getEntityDescriptor();
+    EntityID eid = descriptor.getEntityID();
+    long version = descriptor.getClientSideVersion();
     
-    ackReceived(sync);
-    beforeSyncAction(sync);
+    ackReceived(activeSender, activity);
+    beforeSyncAction(activity);
     
-    if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN && !eid.equals(EntityID.NULL_ID)) {
+    if ((SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == activity.getActivityType()) && !eid.equals(EntityID.NULL_ID)) {
       try {
-        if (!this.entityManager.getEntity(eid, sync.getVersion()).isPresent()) {
+        if (!this.entityManager.getEntity(eid, version).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
  //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
-          this.entityManager.createEntity(eid, sync.getVersion(), consumerID, sync.getConcurrency());          
+          this.entityManager.createEntity(eid, version, consumerID, activity.getConcurrency());
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
-          this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !sync.getSource().isNull(), sync.getExtendedData());
+          this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !activity.getSource().isNull(), activity.getExtendedData());
         } else {
           Assert.fail("this entity should not be here");
         }
@@ -367,20 +364,20 @@ public class ReplicatedTransactionHandler {
     try {
       Optional<ManagedEntity> entity = entityManager.getEntity(eid, version);
       if (entity.isPresent()) {
-        MessagePayload payload = new MessagePayload(sync.getExtendedData(), null, sync.getConcurrency());
-        entity.get().addRequestMessage(make(sync), payload, (result)->acknowledge(sync, ReplicationResultCode.SUCCESS), (exception)->acknowledge(sync, ReplicationResultCode.FAIL));
-        if (sync.getReplicationType() != SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD) {
+        MessagePayload payload = new MessagePayload(activity.getExtendedData(), null, activity.getConcurrency());
+        entity.get().addRequestMessage(activityToLocalRequest(activity), payload, (result)->acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception)->acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
+        if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD != activity.getActivityType()) {
           entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
-        if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
-          acknowledge(sync, ReplicationResultCode.SUCCESS);
+        if (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType()) {
+          acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
         } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
-          MessagePayload payload = new MessagePayload(sync.getExtendedData(), null, sync.getConcurrency());
-          platform.addRequestMessage(make(sync), payload, (result)-> {
-            if (sync.getReplicationType() == SyncReplicationActivity.ActivityType.SYNC_END) {
+          MessagePayload payload = new MessagePayload(activity.getExtendedData(), null, activity.getConcurrency());
+          platform.addRequestMessage(activityToLocalRequest(activity), payload, (result)-> {
+            if (SyncReplicationActivity.ActivityType.SYNC_END == activity.getActivityType()) {
               try {
                 entityPersistor.layer(new ObjectInputStream(new ByteArrayInputStream(payload.getRawPayload())));
               } catch (IOException ioe) {
@@ -388,8 +385,8 @@ public class ReplicatedTransactionHandler {
               }
               moveToPassiveStandBy();
             }
-            acknowledge(sync, ReplicationResultCode.SUCCESS);
-          }, (exception)->acknowledge(sync, ReplicationResultCode.FAIL));
+            acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
+          }, (exception)->acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
         }
       }
     } catch (EntityException ee) {
@@ -421,13 +418,12 @@ public class ReplicatedTransactionHandler {
     scheduleDeferred(state.endConcurrency(eid, concurrency));
   }
   
-  private void scheduleDeferred(Deque<ReplicationMessage> deferred) {
+  private void scheduleDeferred(Deque<DeferredContainer> deferred) {
     if (deferred != null) {
       while(!deferred.isEmpty()) {
-        ReplicationMessage r = deferred.pop();
+        DeferredContainer r = deferred.pop();
         try {
-          Assert.assertTrue(r.getType() == ReplicationMessage.REPLICATE);
-          replicatedMessageReceived(r);
+          replicatedActivityReceived(r.activeSender, r.activity);
         } catch (EntityException ee) {
           throw new RuntimeException(ee);
         }
@@ -453,16 +449,16 @@ public class ReplicatedTransactionHandler {
     return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, ()->Optional.empty(), isReplicatedMessage);
   }
       
-  private ServerEntityRequest make(ReplicationMessage rep) {
-    return new BasicServerEntityRequest(decodeReplicationType(rep.getReplicationType()), rep.getSource(),  
-      rep.getTransactionID(), rep.getOldestTransactionOnClient(), rep.getEntityDescriptor());
+  private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
+    return new BasicServerEntityRequest(decodeReplicationType(activity.getActivityType()), activity.getSource(),  
+      activity.getTransactionID(), activity.getOldestTransactionOnClient(), activity.getEntityDescriptor());
   }
   
-  private void beforeSyncAction(ReplicationMessage rep) {
-    EntityID eid = rep.getEntityDescriptor().getEntityID();
-    switch (rep.getReplicationType()) {
+  private void beforeSyncAction(SyncReplicationActivity activity) {
+    EntityID eid = activity.getEntityDescriptor().getEntityID();
+    switch (activity.getActivityType()) {
       case SYNC_START:
-        establishNewPassive(rep);
+        establishNewPassive();
         break;
       case SYNC_BEGIN:
         start();
@@ -477,30 +473,30 @@ public class ReplicatedTransactionHandler {
         finish(eid);
         break;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
-        start(eid, rep.getConcurrency());
+        start(eid, activity.getConcurrency());
         break;
       case SYNC_ENTITY_CONCURRENCY_END:
-        finish(eid, rep.getConcurrency());// finish inline so messages are requeued from the proper sync
+        finish(eid, activity.getConcurrency());// finish inline so messages are requeued from the proper sync
         break;
       default:
         break;
     }
   }
 
-  private void ackReceived(ReplicationMessage rep) {
-    if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-      prepareAckForSend(rep.messageFrom(), rep.getMessageID(), ReplicationResultCode.RECEIVED);
+  private void ackReceived(ServerID activeSender, SyncReplicationActivity activity) {
+    if (!activeSender.equals(ServerID.NULL_ID)) {
+      prepareAckForSend(activeSender, activity.getActivityID(), ReplicationResultCode.RECEIVED);
     }
   }
 
-  private void acknowledge(ReplicationMessage rep, ReplicationResultCode code) {
+  private void acknowledge(ServerID activeSender, SyncReplicationActivity activity, ReplicationResultCode code) {
 //  when is the right time to send the ack?
-    if (!rep.messageFrom().equals(ServerID.NULL_ID)) {
-      prepareAckForSend(rep.messageFrom(), rep.getMessageID(), code);
+    if (!activeSender.equals(ServerID.NULL_ID)) {
+      prepareAckForSend(activeSender, activity.getActivityID(), code);
     }
   }
 
-  private synchronized void prepareAckForSend(NodeID sender, MessageID respondTo, ReplicationResultCode code) {
+  private synchronized void prepareAckForSend(NodeID sender, SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode code) {
     if (null == this.cachedBatchAck) {
       this.cachedBatchAck = ReplicationMessageAck.createBatchAck();
       this.cachedMessageAckFrom = sender;
@@ -574,7 +570,7 @@ public class ReplicatedTransactionHandler {
   }  
   
  private class SyncState {
-    private LinkedList<ReplicationMessage> defer = new LinkedList<>();
+    private LinkedList<DeferredContainer> defer = new LinkedList<>();
     
     private final Set<EntityID> syncdEntities = new HashSet<>();
     private final Set<Integer> syncdKeys = new HashSet<>();
@@ -615,7 +611,7 @@ public class ReplicatedTransactionHandler {
       }
     }
     
-    private Deque<ReplicationMessage> endConcurrency(EntityID eid, int concurrency) {
+    private Deque<DeferredContainer> endConcurrency(EntityID eid, int concurrency) {
       assertStarted(null);
       try {
         if (!eid.equals(syncing) || concurrency != currentKey) {
@@ -637,7 +633,7 @@ public class ReplicatedTransactionHandler {
       finished = true;
     }
     
-    private boolean ignore(ReplicationMessage rep) {
+    private boolean ignore(SyncReplicationActivity activity) {
       if (!started) {
  // this passive has never been sync'd to anything, ignore all messages
         return true;
@@ -646,15 +642,15 @@ public class ReplicatedTransactionHandler {
 //  done with sync, need to apply everything now
         return false;
       }
-      EntityID eid = rep.getEntityDescriptor().getEntityID();
+      EntityID eid = activity.getEntityDescriptor().getEntityID();
 //  everything else, check
       if (eid.equals(syncing)) {
         // Note that it is possible that the currently syncing entity has already been destroyed, in which case this message
         //  is either targeting something which doesn't exist or targets something which has been created over top of it.
         // In either case, we shouldn't ignore it.
-        if (rep.getConcurrency() == currentKey) {
+        if (activity.getConcurrency() == currentKey) {
           return false;
-        } else if (!syncdKeys.contains(rep.getConcurrency())) {
+        } else if (!syncdKeys.contains(activity.getConcurrency())) {
 //  ignore, haven't gotten to this key yet
           return true;
         } else {
@@ -662,7 +658,7 @@ public class ReplicatedTransactionHandler {
           return false;
         }
       }
-      if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
+      if (SyncReplicationActivity.ActivityType.CREATE_ENTITY == activity.getActivityType()) {
         syncdEntities.add(eid);
         return false;
       }
@@ -670,33 +666,34 @@ public class ReplicatedTransactionHandler {
       return (!syncdEntities.contains(eid));
     }
 
-    private boolean defer(ReplicationMessage rep) {
-      assertStarted(rep);
+    private boolean defer(ServerID activeSender, SyncReplicationActivity activity) {
+      assertStarted(activity);
       if (finished) {
 //  done with sync, need to apply everything now
         return false;
       }
 //  everything else, check
-      EntityID eid = rep.getEntityDescriptor().getEntityID();
+      EntityID eid = activity.getEntityDescriptor().getEntityID();
       if (syncdEntities.contains(eid)) {
         return false;
       } 
       
-      if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.CREATE_ENTITY) {
+      SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
+      if (SyncReplicationActivity.ActivityType.CREATE_ENTITY == activityType) {
         Assert.fail("create received during a sync of an entity " + syncing);
       }
       
       if (eid.equals(syncing)) {
-        if (syncdKeys.contains(rep.getConcurrency())) {
+        if (syncdKeys.contains(activity.getConcurrency())) {
           return false;
-        } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.NOOP) {
+        } else if (SyncReplicationActivity.ActivityType.NOOP == activityType) {
 //  NOOP requests cannot be deferred
           return false;
-        } else if (rep.getReplicationType() == SyncReplicationActivity.ActivityType.DESTROY_ENTITY) {
+        } else if (SyncReplicationActivity.ActivityType.DESTROY_ENTITY == activityType) {
           Assert.fail("destroy received during a sync of an entity " + syncing);
           return false;
-        } else if (currentKey == rep.getConcurrency()) {
-          defer.add(rep);
+        } else if (currentKey == activity.getConcurrency()) {
+          defer.add(new DeferredContainer(activeSender, activity));
           return true;
         }
       }
@@ -716,9 +713,9 @@ public class ReplicatedTransactionHandler {
      * NOTE: it is possible in the multiple passive scenario, for a stream to start a new 
      * active but in this case, the server will have already been sync'd and thus valid
      */
-    private void assertStarted(ReplicationMessage rep) {
+    private void assertStarted(SyncReplicationActivity activity) {
       // These should short-circuit quickly, not creating an expensive check overhead.
-      Assert.assertTrue(rep, started);
+      Assert.assertTrue(activity, started);
     }
   }
  
@@ -765,6 +762,16 @@ public class ReplicatedTransactionHandler {
     @Override
     public Set<NodeID> replicateTo(Set<NodeID> passives) {
       return Collections.emptySet();
+    }
+  }
+
+
+  private static class DeferredContainer {
+    public final ServerID activeSender;
+    public final SyncReplicationActivity activity;
+    public DeferredContainer(ServerID activeSender, SyncReplicationActivity activity) {
+      this.activeSender = activeSender;
+      this.activity = activity;
     }
   }
 }

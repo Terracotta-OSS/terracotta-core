@@ -21,21 +21,17 @@ package com.tc.l2.msg;
 import com.tc.async.api.OrderedEventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.ClientID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
-//  message types  
-  public static final int INVALID               = 0; // Invalid message type
-  public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
-  public static final int SYNC               = 2; // Sent as part of a sync sequence
+  // We don't have an explicit message type - the ReplicationMessage is only a container.
+  public static final int IGNORED = 0;
 
   // Factory methods.
   public static ReplicationMessage createActivityContainer(SyncReplicationActivity activity) {
@@ -43,23 +39,38 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return new ReplicationMessage(activity);
   }
 
+  public static ReplicationMessage createLocalContainer(SyncReplicationActivity activity) {
+    Assert.assertNotNull(activity);
+    ReplicationMessage message = new ReplicationMessage(activity);
+    message.didCreateLocally = false;
+    return message;
+  }
 
-  private SyncReplicationActivity activity;
-  
+
+  private List<SyncReplicationActivity> activities;
   long rid = 0;
+  // We will keep a flag to track whether this message is outgoing (created here and being sent to the network) or incoming
+  //  (created elsewhere and decoded here) to ensure that it is being used correctly.
+  // (Note that this check can be removed in the future - it is mostly to validate during refactoring and buffering
+  //  implementation).
+  private boolean didCreateLocally;
   
   public ReplicationMessage() {
-    super(INVALID);
+    super(IGNORED);
+    this.didCreateLocally = false;
   }
   
   protected ReplicationMessage(int type) {
     super(type);
+    this.didCreateLocally = false;
   }
   
 //  a true replicated message
   private ReplicationMessage(SyncReplicationActivity activity) {
-    super(activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal() ? SYNC : REPLICATE);
-    this.activity = activity;
+    super(IGNORED);
+    this.activities = new ArrayList<SyncReplicationActivity>();
+    this.activities.add(activity);
+    this.didCreateLocally = true;
   }
   
   public void setReplicationID(long rid) {
@@ -70,64 +81,34 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public long getSequenceID() {
     return rid;
   }
-  
-  public long getVersion() {
-    return this.activity.descriptor.getClientSideVersion();
-  }
-  
-  public SyncReplicationActivity.ActivityType getReplicationType() {
-    // One can only ask what type of replication activity this is if it is a sync or replication activity.
-    Assert.assertNotNull(this.activity);
-    return this.activity.action;
+
+  public void addActivity(SyncReplicationActivity activity) {
+    this.activities.add(activity);
   }
 
-  public byte[] getExtendedData() {
-    return this.activity.payload;
-  }
-  
-  public ClientID getSource() {
-    return this.activity.src;
-  }
-  
-  public TransactionID getTransactionID() {
-    return this.activity.tid;
-  }
-  
-  public TransactionID getOldestTransactionOnClient() {
-    return this.activity.oldest;
+  public List<SyncReplicationActivity> getActivities() {
+    // If this was created locally, we shouldn't be reaching into it to read the underlying activity - this is for the
+    //  receiving side, only.
+    Assert.assertFalse(this.didCreateLocally);
+    return this.activities;
   }
 
-  public EntityDescriptor getEntityDescriptor() {
-    return this.activity.descriptor;
-  }
-  
-  public EntityID getEntityID() {
-    return this.activity.descriptor == null ? EntityID.NULL_ID : this.activity.descriptor.getEntityID();
-  }
-  
-  public int getConcurrency() {
-    return this.activity.concurrency;
-  }
-  
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     int messageType = getType();
     switch (messageType) {
-      case INVALID:
-        // This message was not correctly initialized.
-        Assert.fail();
-        break;
-      case REPLICATE:
-      case SYNC:
+      case IGNORED:
         this.rid = in.readLong();
-        this.activity = SyncReplicationActivity.deserializeFrom(in);
-        Assert.assertNotNull(this.activity);
-        // Make sure that the message type and activity type are consistent.
-        if (this.activity.action.ordinal() >= SyncReplicationActivity.ActivityType.SYNC_START.ordinal()) {
-          Assert.assertTrue(this.activity.action, SYNC == messageType);
-        } else {
-          Assert.assertTrue(this.activity.action, REPLICATE == messageType);
+        int batchSize = in.readInt();
+        // We don't send empty batches.
+        Assert.assertTrue(batchSize > 0);
+        this.activities = new ArrayList<SyncReplicationActivity>();
+        for (int i = 0; i < batchSize; ++i) {
+          SyncReplicationActivity activity = SyncReplicationActivity.deserializeFrom(in);
+          Assert.assertNotNull(activity);
+          this.activities.add(activity);
         }
+        // Make sure that the message type and activity type are consistent.
         break;
     }
   }
@@ -136,24 +117,24 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   protected void basicSerializeTo(TCByteBufferOutput out) {
     int messageType = getType();
     switch (messageType) {
-      case INVALID:
-        // This message was not correctly initialized.
-        Assert.fail();
-        break;
-      case REPLICATE:
-      case SYNC:
+      case IGNORED:
         out.writeLong(rid);
-        this.activity.serializeTo(out);
+        int batchSize = this.activities.size();
+        Assert.assertTrue(batchSize > 0);
+        out.writeInt(batchSize);
+        for (SyncReplicationActivity activity : this.activities) {
+          activity.serializeTo(out);
+        }
         break;
     }
   }
   
   public String getDebugId() {
-    return this.getType() + " " + ((this.activity != null) ? (this.activity.debugId.length() == 0 ? this.activity.action : this.activity.debugId) : "");
+    return this.getType() + " " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities");
   }
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", activity=" + this.activity + "}";
+    return "ReplicationMessage{rid=" + rid + ", " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities") + "}";
   }
 }
