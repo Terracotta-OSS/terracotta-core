@@ -56,7 +56,11 @@ public class TCWorkerCommManager {
   }
 
   public CoreNIOServices getNextWorkerComm() {
-    CoreNIOServices leastWeightWorkerComm = getLeastWeightWorkerComm();
+    CoreNIOServices leastWeightWorkerComm = null;
+    
+    while (leastWeightWorkerComm == null) {
+      leastWeightWorkerComm = getLeastWeightWorkerComm();
+    }
     // We can't fail to get the least.
     Assert.assertTrue(null != leastWeightWorkerComm);
 
@@ -79,12 +83,9 @@ public class TCWorkerCommManager {
    */
   private CoreNIOServices getLeastWeightWorkerComm() {
     CoreNIOServices selectedWorkerComm = null;
-    int leastValue = Integer.MAX_VALUE;
     for (CoreNIOServices workerComm : workerCommThreads) {
-      int presentValue = workerComm.getWeight();
-      if (presentValue < leastValue) {
+      if (workerComm.compareWeights(selectedWorkerComm)) {
         selectedWorkerComm = workerComm;
-        leastValue = presentValue;
       }
     }
     return selectedWorkerComm;

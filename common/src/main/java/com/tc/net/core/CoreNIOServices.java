@@ -74,6 +74,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   // maintains weight of all L1 Connections which is handled by this WorkerComm
   private final HashMap<TCConnection, Integer> managedConnectionsMap;
   private int                                  clientWeights;
+  private boolean                              isSelectedForWeighting;
   private final List<TCListener>               listeners     = new ArrayList<TCListener>();
   private String                               listenerString;
 
@@ -168,8 +169,36 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   public long getTotalBytesWritten() {
     return readerComm.getTotalBytesWritten() + writerComm.getTotalBytesWritten();
   }
+  
+  public boolean compareWeights(CoreNIOServices incoming) {
+    boolean retVal = false;
+// if incoming is passed in, the current search is the one that set the flag
+// so it is ok to assert the below is true
+    Assert.assertTrue(incoming == null || incoming.isSelectedForWeighting);
+    
+    synchronized (managedConnectionsMap) {
+      if (!isSelectedForWeighting) {
+        if (incoming == null || incoming.clientWeights > this.clientWeights) {
+          this.isSelectedForWeighting = true;
+          retVal = true;
+        }
+      }
+    }
+//  if trading, unset the previous selected
+    if (retVal && incoming != null) {
+      incoming.deselectForWeighting();
+    }
 
-  public int getWeight() {
+    return retVal;
+  }
+  
+  private void deselectForWeighting() {
+    synchronized (managedConnectionsMap) {
+      isSelectedForWeighting = false;
+    }
+  }
+
+  int getWeight() {
     synchronized (managedConnectionsMap) {
       return this.clientWeights;
     }
@@ -218,6 +247,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       Assert.eval(!managedConnectionsMap.containsKey(connection));
       managedConnectionsMap.put(connection, initialWeight);
       this.clientWeights += initialWeight;
+      this.isSelectedForWeighting = false;
       connection.addListener(this);
     }
   }
@@ -249,8 +279,10 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   }
 
   @Override
-  public synchronized String toString() {
-    return "[" + this.commThreadName + ", FD, wt:" + getWeight() + "]";
+  public String toString() {
+    synchronized (this.managedConnectionsMap) {
+      return "[" + this.commThreadName + ", FD, wt:" + this.clientWeights + "]";
+    }
   }
 
   void requestConnectInterest(TCConnectionImpl conn, SocketChannel sc) {
