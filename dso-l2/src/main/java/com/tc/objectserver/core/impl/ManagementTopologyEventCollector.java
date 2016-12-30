@@ -57,6 +57,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
   private final Map<ClientID, Collection<EntityDescriptor>> incomingReleases;
+  private final Map<ClientID, Collection<ResolvedDescriptors>> incomingFetches;
   private boolean isActiveState;
 
   public ManagementTopologyEventCollector(IMonitoringProducer serviceInterface) {
@@ -64,6 +65,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.connectedClients = new HashSet<ClientID>();
     this.entities = new HashSet<EntityID>();
     this.incomingReleases = new HashMap<>();
+    this.incomingFetches = new HashMap<>();
     this.isActiveState = false;
     
     // Do our initial configuration of the service.
@@ -115,7 +117,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     Assert.assertFalse(this.connectedClients.contains(client));
     // Now, add it to the connected set.
     this.connectedClients.add(client);
-    
+    Collection<ResolvedDescriptors> earlyFetches = incomingFetches.remove(client);
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       // Create the structure to describe this client.
@@ -131,6 +133,18 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // We will use the ClientID long value as the node name.
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
+      if (earlyFetches != null && !earlyFetches.isEmpty()) {
+        for (ResolvedDescriptors ed : earlyFetches) {
+          String fetchIdentifier = fetchIdentifierForService(client, ed.getEntity());
+          boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, 
+                  fetchIdentifier, 
+                  new PlatformClientFetchedEntity(clientIdentifierForService(client), 
+                          entityIdentifierForService(ed.getEntity().getEntityID()), 
+                          ed.getClient()));
+          // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
+          Assert.assertTrue(didAdd);
+        }
+      }
     }
     LOGGER.debug("client did connect " + channel);
   }
@@ -191,10 +205,15 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       String clientIdentifier = clientIdentifierForService(client);
       String entityIdentifier = entityIdentifierForService(entityDescriptor.getEntityID());
       PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
-      String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
-      boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
-      // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
-      Assert.assertTrue(didAdd);
+      if (connectedClients.contains(client)) {
+        String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
+        boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
+        // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
+        Assert.assertTrue(didAdd);
+      } else {
+        Collection<ResolvedDescriptors> set = incomingFetches.computeIfAbsent(client, (c)->new HashSet<>());
+        set.add(new ResolvedDescriptors(entityDescriptor, clientDescriptor));
+      }
     }
     LOGGER.debug("client " + client + " fetched " + entityDescriptor);
   }
@@ -261,9 +280,27 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private String entityIdentifierForService(EntityID id) {
     return id.getClassName() + id.getEntityName();
   }
-
+  
   private String fetchIdentifierForService(ClientID client, EntityDescriptor entityDescriptor) {
     EntityID entity = entityDescriptor.getEntityID();
     return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity) + "_" + entityDescriptor.getClientInstanceID().getID(); 
+  }
+  
+  private static class ResolvedDescriptors {
+    private final EntityDescriptor entity;
+    private final ClientDescriptor client;
+
+    public ResolvedDescriptors(EntityDescriptor entity, ClientDescriptor client) {
+      this.entity = entity;
+      this.client = client;
+    }
+
+    public EntityDescriptor getEntity() {
+      return entity;
+    }
+
+    public ClientDescriptor getClient() {
+      return client;
+    }
   }
 }
