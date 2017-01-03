@@ -21,8 +21,6 @@ package com.tc.config.schema.setup;
 import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupConfigObject;
-import com.tc.config.schema.ActiveServerGroupsConfig;
-import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.CommonL2ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
@@ -56,13 +54,13 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.L2ConfigurationSetupManager}.

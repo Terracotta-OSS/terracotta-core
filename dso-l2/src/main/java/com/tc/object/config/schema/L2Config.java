@@ -19,13 +19,15 @@
 package com.tc.object.config.schema;
 
 import org.terracotta.config.BindPort;
+import org.terracotta.config.Server;
 
 import com.tc.config.schema.Config;
+
 
 /**
  * Represents all configuration read by the DSO L2 and which is independent of application.
  */
-public interface L2Config<T> extends Config<T> {
+public interface L2Config extends Config<Server> {
 
   public static final String OBJECTDB_DIRNAME                      = "objectdb";
   public static final String DIRTY_OBJECTDB_BACKUP_DIRNAME         = "dirty-objectdb-backup";
