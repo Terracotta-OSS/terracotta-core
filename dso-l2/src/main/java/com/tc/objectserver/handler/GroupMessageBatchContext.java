@@ -26,6 +26,7 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.util.Assert;
 
 
 public class GroupMessageBatchContext {
@@ -33,16 +34,20 @@ public class GroupMessageBatchContext {
   
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final NodeID target;
-  private boolean isWaitingForNetwork;
+  private final int maximumBatchSize;
+  private final int idealMessagesInFlight;
+  private int messagesInFlight;
   private ReplicationMessage cachedMessage;
   private long nextReplicationID;
   // Note that we may see this exception, asynchronously.  In that case, we will just hold it and fail in the next call.
   private GroupException mostRecentException;
 
 
-  public GroupMessageBatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target) {
+  public GroupMessageBatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight) {
     this.groupManager = groupManager;
     this.target = target;
+    this.maximumBatchSize = maximumBatchSize;
+    this.idealMessagesInFlight = idealMessagesInFlight;
   }
 
   private final Runnable handleMessageSend = new Runnable() {
@@ -52,18 +57,33 @@ public class GroupMessageBatchContext {
     }
   };
 
-  public synchronized void batchAndSend(SyncReplicationActivity activity) throws GroupException {
+  public void batchAndSend(SyncReplicationActivity activity) throws GroupException {
+    // Determine if batching is even enabled.
+    if (0 == this.idealMessagesInFlight) {
+      // There is no batching - send directly.
+      Assert.assertTrue(null == this.cachedMessage);
+      ReplicationMessage message = ReplicationMessage.createActivityContainer(activity);
+      this.groupManager.sendTo(this.target, message);
+    } else {
+      // We are using batching.
+      batchAndSendEnabled(activity);
+    }
+  }
+
+  private synchronized void batchAndSendEnabled(SyncReplicationActivity activity) throws GroupException {
     if (null != this.mostRecentException) {
       throw this.mostRecentException;
     }
+    boolean mustFlush = false;
     if (null == this.cachedMessage) {
       this.cachedMessage = ReplicationMessage.createActivityContainer(activity);
       this.cachedMessage.setReplicationID(this.nextReplicationID++);
     } else {
-      this.cachedMessage.addActivity(activity);
+      int currentBatchSize = this.cachedMessage.addActivity(activity);
+      mustFlush = (currentBatchSize >= this.maximumBatchSize);
     }
     
-    if (!isWaitingForNetwork) {
+    if (mustFlush || (this.messagesInFlight < this.idealMessagesInFlight)) {
       try {
         synchronizedSendBatch();
       } catch (GroupException e) {
@@ -73,10 +93,11 @@ public class GroupMessageBatchContext {
       }
     }
   }
-
   public synchronized void handleNetworkDone() {
-    this.isWaitingForNetwork = false;
-    if (null != this.cachedMessage) {
+    this.messagesInFlight -= 1;
+    // Note that we might still be over the ideal number of in-flight messages if they are being flushed due to batch
+    //  size so check this limit.
+    if ((null != this.cachedMessage) && (this.messagesInFlight < this.idealMessagesInFlight)) {
       try {
         synchronizedSendBatch();
       } catch (GroupException e) {
@@ -91,12 +112,12 @@ public class GroupMessageBatchContext {
   private void synchronizedSendBatch() throws GroupException {
     ReplicationMessage cachedBatch = this.cachedMessage;
     this.cachedMessage = null;
-    this.isWaitingForNetwork = true;
+    this.messagesInFlight += 1;
     try {
       this.groupManager.sendToWithSentCallback(this.target, cachedBatch, this.handleMessageSend);
     } catch (GroupException e) {
-      // We aren't going to be hearing back from this unset our waiting state.
-      this.isWaitingForNetwork = false;
+      // We aren't going to be hearing back from this decrement our in-flight counter.
+      this.messagesInFlight -= 1;
       throw e;
     }
   }

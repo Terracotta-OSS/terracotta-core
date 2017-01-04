@@ -34,6 +34,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -44,6 +45,9 @@ import org.terracotta.entity.ConcurrencyStrategy;
 
 
 public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
+  private static final int DEFAULT_BATCH_LIMIT = 64;
+  private static final int DEFAULT_INFLIGHT_MESSAGES = 2;
+  
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager<AbstractGroupMessage> group;
@@ -139,7 +143,11 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     Assert.assertTrue(!batchContexts.containsKey(nodeid));
     SyncState state = new SyncState();
     filtering.put(nodeid, state);
-    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid));
+    // Find out how many messages we should keep in-flight and our maximum batch size.
+    int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("active-passive.batchsize", DEFAULT_BATCH_LIMIT);
+    int idealMessagesInFlight = TCPropertiesImpl.getProperties().getInt("active-passive.inflight", DEFAULT_INFLIGHT_MESSAGES);
+    logger.info("Created batch context for passive " + nodeid + " with max batch size " + maximumBatchSize + " and ideal messages in flight " + idealMessagesInFlight);
+    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid, maximumBatchSize, idealMessagesInFlight));
   }
 
   private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
