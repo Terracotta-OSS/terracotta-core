@@ -123,9 +123,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
   }
 
-  // having this variable at instance level helps reducing memory pressure at VM;
-  private final ArrayList<TCNetworkMessage>     messagesToBatch             = new ArrayList<TCNetworkMessage>();
-
   // for creating unconnected client connections
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
                    TCConnectionManagerImpl managerJDK14, CoreNIOServices nioServiceThread,
@@ -201,7 +198,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.eventCaller.fireConnectEvent(this.eventListeners, this);
   }
 
-  @SuppressWarnings("resource")
   private void connectImpl(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
     SocketChannel newSocket = null;
     final InetSocketAddress inetAddr = new InetSocketAddress(addr.getAddress(), addr.getPort());
@@ -232,7 +228,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.commWorker.requestReadInterest(this, newSocket);
   }
 
-  @SuppressWarnings("resource")
   private SocketChannel createChannel() throws IOException, SocketException {
     final SocketChannel rv = SocketChannel.open();
     final Socket s = rv.socket();
@@ -386,59 +381,51 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       messagesToWrite = this.writeMessages.toArray(new TCNetworkMessage[this.writeMessages.size()]);
       this.writeMessages.clear();
     }
+    ArrayList<TCNetworkMessage> currentBatch = (MSG_GROUPING_ENABLED
+        ? new ArrayList<TCNetworkMessage>()
+        : null);
+    
 
     int batchSize = 0;
     int batchMsgCount = 0;
-    TCNetworkMessage msg = null;
     for (final TCNetworkMessage element : messagesToWrite) {
-      msg = element;
-
-      // we don't want to group already constructed Transport Handshake WireProtocolMessages
-      if (msg instanceof WireProtocolMessage) {
-        final TCNetworkMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) msg, 1);
+      if (element instanceof WireProtocolMessage) {
+        // we don't want to group already constructed Transport Handshake WireProtocolMessages
+        final WireProtocolMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) element, 1);
         this.writeContexts.add(new WriteContext(ms));
-        continue;
-      }
-
-      // GenericNetwork messages are used for testing
-      if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(msg)) {
-        this.writeContexts.add(new WriteContext(msg));
-        continue;
-      }
-
-      if (MSG_GROUPING_ENABLED) {
-        if (!canBatch(msg, batchSize, batchMsgCount)) {
-          if (batchMsgCount > 0) {
-            this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(this.messagesToBatch)));
-            batchSize = 0;
-            batchMsgCount = 0;
-            this.messagesToBatch.clear();
-          } else {
-            // fall thru and add to the existing batch. next message will goto a new batch
-          }
+      } else if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(element)) {
+        // GenericNetwork messages are used for testing
+        this.writeContexts.add(new WriteContext(element));
+      } else if (MSG_GROUPING_ENABLED) {
+        int realMessageSize = getRealMessgeSize(element.getTotalLength());
+        if (!canBatch(realMessageSize, batchSize, batchMsgCount)) {
+          // We can't add this to the current batch so seal the current batch as a write context and create a new one.
+          this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(currentBatch)));
+          batchSize = 0;
+          batchMsgCount = 0;
+          currentBatch = new ArrayList<TCNetworkMessage>();
         }
-        batchSize += getRealMessgeSize(msg.getTotalLength());
+        batchSize += realMessageSize;
         batchMsgCount++;
-        this.messagesToBatch.add(msg);
+        currentBatch.add(element);
       } else {
-        this.writeContexts.add(new WriteContext(buildWireProtocolMessage(msg)));
+        this.writeContexts.add(new WriteContext(buildWireProtocolMessage(element)));
       }
-      msg = null;
     }
 
     if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
-      final TCNetworkMessage ms = buildWireProtocolMessageGroup(this.messagesToBatch);
+      final WireProtocolMessage ms = buildWireProtocolMessageGroup(currentBatch);
       this.writeContexts.add(new WriteContext(ms));
     }
-
-    messagesToWrite = null;
-    this.messagesToBatch.clear();
   }
 
-  private boolean canBatch(TCNetworkMessage newMessage, int currentBatchSize, int currentBatchMsgCount) {
-    if ((currentBatchSize + getRealMessgeSize(newMessage.getTotalLength())) <= MSG_GROUPING_MAX_SIZE_BYTES
-        && (currentBatchMsgCount + 1 <= WireProtocolHeader.MAX_MESSAGE_COUNT)) { return true; }
-    return false;
+  private boolean canBatch(int realMessageSize, int currentBatchSize, int currentBatchMsgCount) {
+    // We can add this message to the batch if it fits, we don't already have too many messages in the batch
+    //  OR if the message batch is currently empty (a degenerate case where a single message is too big to batch but
+    //  we still want to send it).
+    return (0 == currentBatchMsgCount) 
+        || ((currentBatchSize + realMessageSize) <= MSG_GROUPING_MAX_SIZE_BYTES
+          && (currentBatchMsgCount + 1 <= WireProtocolHeader.MAX_MESSAGE_COUNT));
   }
 
   private int getRealMessgeSize(int length) {
@@ -491,9 +478,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (this.writeContexts.size() <= 0) {
       buildWriteContextsFromMessages();
     }
-    WriteContext context;
     while (this.writeContexts.size() > 0) {
-      context = this.writeContexts.get(0);
+      WriteContext context = this.writeContexts.get(0);
       final TCByteBuffer[] buffers = context.entireMessageData;
 
       long bytesWritten = 0;
@@ -836,53 +822,57 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return detachImpl();
   }
 
-  private TCNetworkMessage buildWireProtocolMessageGroup(ArrayList<TCNetworkMessage> messages) {
-    Assert.assertTrue("Messages count not ok to build WireProtocolMessageGroup : " + messages.size(),
-        (messages.size() > 0) && (messages.size() <= WireProtocolHeader.MAX_MESSAGE_COUNT));
-    if (messages.size() == 1) { return buildWireProtocolMessage(messages.get(0)); }
+  private WireProtocolMessage buildWireProtocolMessageGroup(ArrayList<TCNetworkMessage> messages) {
+    int messageGroupSize = messages.size();
+    Assert.assertTrue("Messages count not ok to build WireProtocolMessageGroup : " + messageGroupSize,
+        (messageGroupSize > 0) && (messageGroupSize <= WireProtocolHeader.MAX_MESSAGE_COUNT));
+    if (messageGroupSize == 1) { return buildWireProtocolMessage(messages.get(0)); }
 
-    final TCNetworkMessage message = WireProtocolGroupMessageImpl.wrapMessages(messages, this);
+    final WireProtocolGroupMessageImpl message = WireProtocolGroupMessageImpl.wrapMessages(messages, this);
     Assert.eval(message.getSentCallback() == null);
 
-    final Runnable[] callbacks = new Runnable[messages.size()];
-    for (int i = 0; i < messages.size(); i++) {
-      Assert.eval(!(messages.get(i) instanceof WireProtocolMessage));
-      callbacks[i] = messages.get(i).getSentCallback();
+    boolean hasNonNullCallbacks = false;
+    final Runnable[] callbacks = new Runnable[messageGroupSize];
+    for (int i = 0; i < messageGroupSize; i++) {
+      TCNetworkMessage oneMessage = messages.get(i);
+      Assert.eval(!(oneMessage instanceof WireProtocolMessage));
+      Runnable callback = oneMessage.getSentCallback();
+      if (null != callback) {
+        callbacks[i] = callback;
+        hasNonNullCallbacks = true;
+      }
     }
 
-    message.setSentCallback(new Runnable() {
-      @Override
-      public void run() {
-        for (final Runnable callback : callbacks) {
-          if (callback != null) {
-            callback.run();
-          }
-        }
-      }
-    });
-    return finalizeWireProtocolMessage((WireProtocolMessage) message, messages.size());
-  }
-
-  private TCNetworkMessage buildWireProtocolMessage(TCNetworkMessage message) {
-    Assert.eval(!(message instanceof WireProtocolMessage));
-    final TCNetworkMessage payload = message;
-
-    message = WireProtocolMessageImpl.wrapMessage(message, this);
-    Assert.eval(message.getSentCallback() == null);
-
-    final Runnable callback = payload.getSentCallback();
-    if (callback != null) {
+    if (hasNonNullCallbacks) {
       message.setSentCallback(new Runnable() {
         @Override
         public void run() {
-          callback.run();
+          for (final Runnable callback : callbacks) {
+            if (callback != null) {
+              callback.run();
+            }
+          }
         }
       });
     }
-    return finalizeWireProtocolMessage((WireProtocolMessage) message, 1);
+    return finalizeWireProtocolMessage(message, messageGroupSize);
   }
 
-  private TCNetworkMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
+  private WireProtocolMessage buildWireProtocolMessage(TCNetworkMessage message) {
+    Assert.eval(!(message instanceof WireProtocolMessage));
+    final TCNetworkMessage payload = message;
+
+    WireProtocolMessage wireMessage = WireProtocolMessageImpl.wrapMessage(message, this);
+    Assert.eval(wireMessage.getSentCallback() == null);
+
+    final Runnable callback = payload.getSentCallback();
+    if (callback != null) {
+      wireMessage.setSentCallback(callback);
+    }
+    return finalizeWireProtocolMessage(wireMessage, 1);
+  }
+
+  private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
     final WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
     hdr.setSourceAddress(getLocalAddress().getAddressBytes());
     hdr.setSourcePort(getLocalAddress().getPort());
