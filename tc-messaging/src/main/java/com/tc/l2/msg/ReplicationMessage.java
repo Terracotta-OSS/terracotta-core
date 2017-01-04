@@ -82,8 +82,15 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return rid;
   }
 
-  public void addActivity(SyncReplicationActivity activity) {
+  /**
+   * Adds the given activity to the current batch, returning the new size of the batch.
+   * 
+   * @param activity The activity to add to the batch.
+   * @return The number of activities now in the message batch.
+   */
+  public int addActivity(SyncReplicationActivity activity) {
     this.activities.add(activity);
+    return this.activities.size();
   }
 
   public List<SyncReplicationActivity> getActivities() {
