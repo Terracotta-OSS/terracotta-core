@@ -23,7 +23,6 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationIntent;
-import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationRemovePassiveIntent;
 import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -53,7 +52,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
-  private final Map<NodeID, BatchContext> batchContexts = new HashMap<>();
+  private final Map<NodeID, GroupMessageBatchContext> batchContexts = new HashMap<>();
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
@@ -140,7 +139,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     Assert.assertTrue(!batchContexts.containsKey(nodeid));
     SyncState state = new SyncState();
     filtering.put(nodeid, state);
-    this.batchContexts.put(nodeid, new BatchContext(this.group, nodeid));
+    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid));
   }
 
   private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
@@ -327,75 +326,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
           throw new AssertionError("unexpected message type");
       }
       return type;
-    }
-  }
-
-
-  private static class BatchContext {
-    private final GroupManager<AbstractGroupMessage> groupManager;
-    private final NodeID target;
-    private boolean isWaitingForNetwork;
-    private ReplicationMessage cachedMessage;
-    private long nextReplicationID;
-    // Note that we may see this exception, asynchronously.  In that case, we will just hold it and fail in the next call.
-    private GroupException mostRecentException;
-    
-    public BatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target) {
-      this.groupManager = groupManager;
-      this.target = target;
-    }
-    private final Runnable handleMessageSend = new Runnable() {
-      @Override
-      public void run() {
-        handleNetworkDone();
-      }
-    };
-    public synchronized void batchAndSend(SyncReplicationActivity activity) throws GroupException {
-      if (null != this.mostRecentException) {
-        throw this.mostRecentException;
-      }
-      if (null == this.cachedMessage) {
-        this.cachedMessage = ReplicationMessage.createActivityContainer(activity);
-        this.cachedMessage.setReplicationID(this.nextReplicationID++);
-      } else {
-        this.cachedMessage.addActivity(activity);
-      }
-      
-      if (!isWaitingForNetwork) {
-        try {
-          synchronizedSendBatch();
-        } catch (GroupException e) {
-          // Set the exception, before throwing it, so the next call also fails.
-          this.mostRecentException = e;
-          throw e;
-        }
-      }
-    }
-
-    public synchronized void handleNetworkDone() {
-      this.isWaitingForNetwork = false;
-      if (null != this.cachedMessage) {
-        try {
-          synchronizedSendBatch();
-        } catch (GroupException e) {
-          // This happened asynchronously so we can't throw back to the caller (it thinks we already send this).
-          // Log that this happened and set our exception state so that this batch context will be assumed invalid.
-          logger.warn("Asynchronous group exception in batched replication message", e);
-          this.mostRecentException = e;
-        }
-      }
-    }
-    private void synchronizedSendBatch() throws GroupException {
-      ReplicationMessage cachedBatch = this.cachedMessage;
-      this.cachedMessage = null;
-      this.isWaitingForNetwork = true;
-      try {
-        this.groupManager.sendToWithSentCallback(this.target, cachedBatch, this.handleMessageSend);
-      } catch (GroupException e) {
-        // We aren't going to be hearing back from this unset our waiting state.
-        this.isWaitingForNetwork = false;
-        throw e;
-      }
     }
   }
 }
