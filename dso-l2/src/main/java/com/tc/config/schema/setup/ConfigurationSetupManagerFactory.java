@@ -19,7 +19,7 @@
 package com.tc.config.schema.setup;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.net.core.SecurityInfo;
+
 
 /**
  * An object that knows how to make TVS configuration setup managers.
@@ -38,8 +38,4 @@ public interface ConfigurationSetupManagerFactory {
    */
   L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name, ClassLoader loader)
       throws ConfigurationSetupException;
-  
-  @Deprecated
-  L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name) throws ConfigurationSetupException;
-
 }

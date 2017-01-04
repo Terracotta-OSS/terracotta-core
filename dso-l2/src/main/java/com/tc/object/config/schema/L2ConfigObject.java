@@ -30,10 +30,11 @@ import com.tc.logging.TCLogging;
 
 import java.io.File;
 
+
 /**
  * The standard implementation of {@link L2Config}.
  */
-public class L2ConfigObject implements L2Config<Server> {
+public class L2ConfigObject implements L2Config {
   private static final TCLogger logger = TCLogging.getLogger(L2ConfigObject.class);
   private static final String LOCALHOST = "localhost";
   public static final short DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT = 10;
