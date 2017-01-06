@@ -27,6 +27,8 @@ public interface ClientMessageChannel extends MessageChannel, ClientIDProvider {
   public int getConnectCount();
 
   public int getConnectAttemptCount();
+  
+  public void reset();
 
   public void reopen() throws Exception;
 

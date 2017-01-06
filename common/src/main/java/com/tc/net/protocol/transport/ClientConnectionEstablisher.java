@@ -27,8 +27,6 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressIterator;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -41,6 +39,9 @@ import com.tc.util.Util;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,7 +61,7 @@ public class ClientConnectionEstablisher {
   private final String                      desc;
   private final int                         maxReconnectTries;
   private final int                         timeout;
-  private final ConnectionAddressProvider   connAddressProvider;
+  private final Collection<ConnectionInfo>   connAddressProvider;
   private final TCConnectionManager         connManager;
   private final AtomicBoolean               asyncReconnecting     = new AtomicBoolean(false);
   private final AtomicBoolean               allowReconnects       = new AtomicBoolean(true);
@@ -79,11 +80,11 @@ public class ClientConnectionEstablisher {
     CONNECT_RETRY_INTERVAL = value;
   }
 
-  public ClientConnectionEstablisher(TCConnectionManager connManager, ConnectionAddressProvider connAddressProvider,
+  public ClientConnectionEstablisher(TCConnectionManager connManager, Collection<ConnectionInfo> connAddressProvider,
                                      int maxReconnectTries, int timeout,
                                      ReconnectionRejectedHandler reconnectionRejectedHandler) {
     this.connManager = connManager;
-    this.connAddressProvider = connAddressProvider;
+    this.connAddressProvider = (connAddressProvider != null) ? connAddressProvider : new LinkedHashSet<ConnectionInfo>();
     this.maxReconnectTries = maxReconnectTries;
     this.timeout = timeout;
     this.reconnectionRejectedHandler = reconnectionRejectedHandler;
@@ -137,18 +138,24 @@ public class ClientConnectionEstablisher {
    * @throws CommStackMismatchException
    * @throws MaxConnectionsExceededException
    */
-  public void open(ClientMessageTransport cmt) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
+  public void open(ConnectionInfo info, ClientMessageTransport cmt) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
     synchronized (this.asyncReconnecting) {
-      Assert.eval("Can't call open() while asynch reconnect occurring", !this.asyncReconnecting.get());
-      this.allowReconnects.set(true);
-      connectTryAllOnce(cmt);
+      if (info == null && !connAddressProvider.add(info)) {
+        Assert.eval("Can't call open() while asynch reconnect occurring", !this.asyncReconnecting.get());
+        this.allowReconnects.set(true);
+        connectTryAllOnce(cmt);
+      } else {
+        final TCSocketAddress csa = new TCSocketAddress(info);
+        TCConnection rv = connect(csa, cmt);
+        cmt.openConnection(rv);
+      }
     }
   }
 
   void connectTryAllOnce(ClientMessageTransport cmt) throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    final ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
+    final Iterator<ConnectionInfo> addresses = this.connAddressProvider.iterator();
     TCConnection rv = null;
     while (addresses.hasNext()) {
       final ConnectionInfo connInfo = addresses.next();
@@ -158,9 +165,9 @@ public class ClientConnectionEstablisher {
         cmt.openConnection(rv);
         break;
       } catch (TCTimeoutException e) {
-        if (!addresses.hasNext()) { throw e; }
+          if (!addresses.hasNext()) { throw e; }
       } catch (IOException e) {
-        if (!addresses.hasNext()) { throw e; }
+          if (!addresses.hasNext()) { throw e; }
       }
     }
   }
@@ -209,7 +216,7 @@ public class ClientConnectionEstablisher {
       boolean reconnectionRejected = false;
       for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && isReconnectBetweenL2s()
                       && !connected; i++) {
-        ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
+        Iterator<ConnectionInfo> addresses = this.connAddressProvider.iterator();
         while (addresses.hasNext() && !connected && isReconnectBetweenL2s()) {
 
           if (reconnectionRejected) {
@@ -480,7 +487,7 @@ public class ClientConnectionEstablisher {
     private void startThreadIfNecessary() {
   //  Should be synchronized by caller
       if (connectionEstablisherThread == null && !disableThreadSpawn) {
-        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getId() + "-" + System.identityHashCode(this));
+        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + this.cce.connAddressProvider.toString() + "-" + System.identityHashCode(this));
         thread.setDaemon(true);
         thread.start();
         connectionEstablisherThread = thread;

@@ -23,6 +23,7 @@ import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
@@ -40,7 +41,7 @@ import java.util.concurrent.TimeoutException;
  * make unit testing more direct.
  */
 public class InFlightMessage implements InvokeFuture<byte[]> {
-  private final NetworkVoltronEntityMessage message;
+  private final VoltronEntityMessage message;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the APPLIED has happened,
@@ -59,7 +60,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
 
-  public InFlightMessage(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
+  public InFlightMessage(VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
     this.message = message;
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
@@ -73,7 +74,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   /**
    * Used when populating the reconnect handshake.
    */
-  public NetworkVoltronEntityMessage getMessage() {
+  public VoltronEntityMessage getMessage() {
     return this.message;
   }
 
@@ -84,7 +85,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   public boolean send() {
     Assert.assertFalse(this.isSent);
     this.isSent = true;
-    return this.message.send();
+    return ((TCMessage)this.message).send();
   }
   
   public synchronized void waitForAcks() {
@@ -180,7 +181,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     }
   }
 
-  synchronized void setResult(byte[] value, EntityException error) {
+  public synchronized void setResult(byte[] value, EntityException error) {
     this.pendingAcks.remove(VoltronEntityMessage.Acks.APPLIED);
     if (this.canSetResult) {
       this.exception = error;

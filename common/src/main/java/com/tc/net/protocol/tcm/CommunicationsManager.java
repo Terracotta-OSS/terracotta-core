@@ -18,14 +18,14 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
+import java.util.Collection;
 
 /**
  * CommsMgr provides Listener and Channel endpoints for exchanging <code>TCMessage</code> type messages
@@ -61,16 +61,16 @@ public interface CommunicationsManager {
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+                                                  Collection<ConnectionInfo> addressProvider,
                                                   MessageTransportFactory transportFactory, TCMessageFactory msgFactory);
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider);
+                                                  String hostname, int port, int timeout,                                                   
+                                                  Collection<ConnectionInfo> connections);
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+                                                  Collection<ConnectionInfo> addressProvider,
                                                   MessageTransportFactory transportFactory);
 
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,

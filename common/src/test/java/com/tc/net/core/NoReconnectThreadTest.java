@@ -55,6 +55,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,8 +101,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                              "localhost",
                              port,
                              1000,
-                             new ConnectionAddressProvider(
-                                                           new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
+                             Arrays.asList(new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
     return clientMsgCh;
   }
 
@@ -135,13 +135,13 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     ClientMessageChannel client3 = createClientMsgCh(proxyPort);
 
     client1.addListener(this);
-    client1.open();
+    client1.open(null);
 
     client2.addListener(this);
-    client2.open();
+    client2.open(null);
 
     client3.addListener(this);
-    client3.open();
+    client3.open(null);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());
@@ -197,13 +197,13 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     ClientMessageChannel client3 = createClientMsgCh(proxyPort, true);
 
     client1.addListener(this);
-    client1.open();
+    client1.open(null);
 
     client2.addListener(this);
-    client2.open();
+    client2.open(null);
 
     client3.addListener(this);
-    client3.open();
+    client3.open(null);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());

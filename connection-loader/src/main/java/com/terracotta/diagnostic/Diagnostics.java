@@ -16,8 +16,15 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.terracotta.diagnostic;
 
-public interface ClusterTopologyChangedListener {
-  void serversUpdated(ConnectionAddressProvider addressProviders);
+import org.terracotta.connection.entity.Entity;
+
+
+public interface Diagnostics extends Entity {
+  String getState();
+  
+  String getClusterState();
+  
+  String query(String params);
 }

@@ -18,9 +18,7 @@
  */
 package com.tc.object;
 
-import com.tc.exception.EntityBusyException;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -29,8 +27,6 @@ import org.terracotta.exception.EntityException;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.request.RequestResponseHandler;
 import com.tc.text.PrettyPrintable;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 
 

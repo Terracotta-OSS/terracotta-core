@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private final GeneratedMessageFactory[] fArray = new GeneratedMessageFactory[TCMessageType.TYPE_NOOP_MESSAGE];
+  private final GeneratedMessageFactory[] fArray = new GeneratedMessageFactory[TCMessageType.TYPE_LAST_MESSAGE_DO_NOT_USE-1];
   private final MessageMonitor  monitor;
   private final SessionProvider sessionProvider;
 

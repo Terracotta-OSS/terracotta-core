@@ -24,7 +24,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ClientMessageTransport;
@@ -41,6 +40,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashSet;
 
 /**
@@ -103,7 +103,7 @@ public class LazyHandshakeTest extends TCTestCase {
     return clientComms
         .createClientChannel(new NullSessionManager(), 0, listener.getBindAddress().getHostAddress(), proxyPort,
                              (int) PROXY_SYNACK_DELAY,
-                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(listener
+                             Arrays.asList(new ConnectionInfo[] { new ConnectionInfo(listener
                                  .getBindAddress().getHostAddress(), proxyPort) }));
   }
 
@@ -143,7 +143,7 @@ public class LazyHandshakeTest extends TCTestCase {
         public void run() {
           channel[currentClient] = createClientMessageChannel();
           try {
-            channel[currentClient].open();
+            channel[currentClient].open(null);
           } catch (UnknownHostException e) {
             // who am I, then
           } catch (MaxConnectionsExceededException e) {

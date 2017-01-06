@@ -22,7 +22,6 @@ import com.tc.logging.LogLevels;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCComm;
 import com.tc.net.core.TCConnection;
@@ -49,6 +48,8 @@ import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
@@ -129,14 +130,13 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
     listener.start(Collections.<ConnectionID>emptySet());
 
-    ConnectionAddressProvider addrProvider = new ConnectionAddressProvider(
-                                                                           new ConnectionInfo[] { new ConnectionInfo(
+    Collection<ConnectionInfo> addrProvider = Arrays.asList(new ConnectionInfo[] { new ConnectionInfo(
                                                                                                                      host,
                                                                                                                      proxyPort) });
 
     clientComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     channel = clientComms.createClientChannel(new NullSessionManager(), -1, host, proxyPort, 30000, addrProvider);
-    channel.open();
+    channel.open(null);
   }
 
   public void testReverseCallback() throws Exception {

@@ -25,7 +25,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -62,14 +61,14 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final TCSecurityManager           securityManager;
-  private final ConnectionAddressProvider   addressProvider;
+  private ConnectionInfo                    connectionInfo;
 
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
     this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort,
-         ReconnectionRejectedHandlerL1.SINGLETON, null, null);
+         ReconnectionRejectedHandlerL1.SINGLETON, null);
   }
 
   /**
@@ -84,11 +83,10 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort,
                                 ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                TCSecurityManager securityManager, ConnectionAddressProvider addressProvider) {
+                                TCSecurityManager securityManager) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
-    this.addressProvider = addressProvider;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionEstablisher = clientConnectionEstablisher;
     this.callbackPort = callbackPort;
@@ -103,7 +101,7 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @throws MaxConnectionsExceededException
    */
   @Override
-  public NetworkStackID open() throws TCTimeoutException, IOException, MaxConnectionsExceededException,
+  public NetworkStackID open(ConnectionInfo info) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
     // XXX: This extra boolean flag is dumb, but it's here because the close event can show up
     // while the lock on isOpen is held here. That will cause a deadlock because the close event is thrown on the
@@ -111,8 +109,9 @@ public class ClientMessageTransport extends MessageTransportBase {
     // The state machine here needs to be rationalized.
     this.isOpening.set(true);
     synchronized (this.isOpen) {
+      this.connectionInfo = info;
       Assert.eval("can't open an already open transport", !this.isOpen.get());
-      this.connectionEstablisher.open(this);
+      this.connectionEstablisher.open(info, this);
       Assert.eval(!this.connectionId.isNull());
       this.isOpen.set(true);
       NetworkStackID nid = new NetworkStackID(this.connectionId.getChannelID());
@@ -126,6 +125,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   public void reset() {
     synchronized (this.isOpen) {
       getLogger().info("Resetting connection " + connectionId);
+      this.disconnect();
       this.isOpen.set(false);
       this.connectionEstablisher.reset();
       this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
@@ -293,7 +293,6 @@ public class ClientMessageTransport extends MessageTransportBase {
       short stackLayerFlags = getCommunicationStackFlags(this);
       if (connectionId.isSecured() && connectionId.getPassword() == null) {
         // Re-init the password
-        ConnectionInfo connectionInfo = addressProvider.getIterator().next();
         connectionId.setPassword(securityManager.getPasswordForTC(connectionId.getUsername(),
                                                                   connectionInfo.getHostname(),
                                                                   connectionInfo.getPort()));

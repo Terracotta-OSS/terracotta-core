@@ -40,7 +40,6 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
@@ -104,6 +103,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -595,7 +595,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return groupResponse;
   }
 
-  private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener, char[] password)
+  private void openChannel(ConnectionInfo info, ChannelEventListener listener, char[] password)
       throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
@@ -612,10 +612,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
     ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0, null, -1, 10000,
-                                                                             addrProvider);
+                                                                             new LinkedHashSet<>());
 
     channel.addListener(listener);
-    channel.open(password);
+    channel.open(info, password);
 
     handshake(channel);
     return;
@@ -632,7 +632,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       password = null;
       securityInfo = new SecurityInfo();
     }
-    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port, securityInfo) }), listener, password);
+    openChannel(new ConnectionInfo(hostname, port, securityInfo), listener, password);
   }
 
   private boolean isSecured() {

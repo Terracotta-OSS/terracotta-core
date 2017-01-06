@@ -21,17 +21,16 @@ package com.tc.objectserver.api;
 
 import com.tc.entity.MessageCodecSupplier;
 import com.tc.object.EntityID;
+import com.tc.text.PrettyPrintable;
 import java.util.Collection;
 
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.terracotta.entity.EntityMessage;
 
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityException;
 
-public interface EntityManager extends StateDumpable, MessageCodecSupplier {
+public interface EntityManager extends StateDumpable, MessageCodecSupplier, PrettyPrintable {
 
   /**
    * The entity manager normally starts in a "passive" state but will be notified that it should become active when the server becomes active.

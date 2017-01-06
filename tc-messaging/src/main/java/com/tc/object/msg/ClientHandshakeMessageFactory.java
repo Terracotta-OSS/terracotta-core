@@ -20,6 +20,6 @@ package com.tc.object.msg;
 
 public interface ClientHandshakeMessageFactory {
 
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient);
+  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient, boolean isDiagnostic);
 
 }

@@ -20,9 +20,11 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.objectserver.api.EntityManager;
@@ -50,6 +52,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
 
   private ServerClientHandshakeManager handshakeManager;
   private final String                 serverName;
+  private StateManager          stateManager;
   private final EntityManager          entityManager;
   private final ProcessTransactionHandler transactionHandler;
 
@@ -62,10 +65,25 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     try {
-      NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
-      checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
-      checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
-      this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
+      if (stateManager.isActiveCoordinator()) {
+        NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
+        checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
+        checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
+        this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
+      } else {
+        if (clientMsg.diagnosticClient()) {
+          this.handshakeManager.notifyDiagnosticClient(clientMsg);
+        } else {
+          ServerID active = (ServerID)stateManager.getActiveNodeID();
+          if (!active.equals(ServerID.NULL_ID)) {
+            String whole = active.getName();
+            int index = whole.indexOf(':');
+            this.handshakeManager.notifyClientRedirect(clientMsg, whole.substring(0, index), Integer.parseInt(whole.substring(index + 1)));          
+          } else {
+            clientMsg.getChannel().close();
+          }
+        }
+      }
     } catch (ClientHandshakeException e) {
       getLogger().error("Handshake Error : ", e);
       MessageChannel c = clientMsg.getChannel();
@@ -129,6 +147,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
     super.initialize(ctxt);
     ServerConfigurationContext scc = ((ServerConfigurationContext) ctxt);
     this.handshakeManager = scc.getClientHandshakeManager();
+    this.stateManager = scc.getL2Coordinator().getStateManager();
   }
 
 }

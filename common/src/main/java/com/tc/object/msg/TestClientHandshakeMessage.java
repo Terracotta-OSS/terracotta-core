@@ -32,7 +32,6 @@ import com.tc.util.Assert;
 import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
-import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -51,6 +50,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
   private boolean               enterpriseClient               = false;
+  private boolean               diagnosticClient               = false;
   public NoExceptionLinkedQueue<List<SequenceID>> setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue<List<SequenceID>>();
   public NoExceptionLinkedQueue<List<TransactionID>> setTransactionIDsCalls         = new NoExceptionLinkedQueue<List<TransactionID>>();
   public List<SequenceID>                   transactionSequenceIDs         = new ArrayList<SequenceID>();
@@ -108,11 +108,6 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public Collection<ClientServerExchangeLockContext> getLockContexts() {
-    return this.lockContexts;
-  }
-
-  @Override
   public String getClientVersion() {
     return this.clientVersion;
   }
@@ -153,8 +148,13 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public void addLockContext(ClientServerExchangeLockContext ctxt) {
-    this.lockContexts.add(ctxt);
+  public void setDiagnosticClient(boolean isDiagnosticClient) {
+    this.diagnosticClient = isDiagnosticClient;
+  }
+
+  @Override
+  public boolean diagnosticClient() {
+    return this.diagnosticClient;
   }
 
   @Override
@@ -163,8 +163,8 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public void setEnterpriseClient(boolean isEnterpirseClient) {
-    this.enterpriseClient = isEnterpirseClient;
+  public void setEnterpriseClient(boolean isEnterpriseClient) {
+    this.enterpriseClient = isEnterpriseClient;
   }
 
   @Override

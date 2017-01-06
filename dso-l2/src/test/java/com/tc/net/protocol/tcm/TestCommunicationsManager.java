@@ -18,14 +18,14 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
+import java.util.Collection;
 
 public class TestCommunicationsManager implements CommunicationsManager {
 
@@ -49,7 +49,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+                                                  Collection<ConnectionInfo> addressProvider,
                                                   MessageTransportFactory transportFactory, TCMessageFactory msgFactory) {
     throw new UnsupportedOperationException();
   }
@@ -57,14 +57,14 @@ public class TestCommunicationsManager implements CommunicationsManager {
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider) {
+                                                  Collection<ConnectionInfo> addressProvider) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+                                                  Collection<ConnectionInfo> addressProvider,
                                                   MessageTransportFactory transportFactory) {
     throw new UnsupportedOperationException();
   }

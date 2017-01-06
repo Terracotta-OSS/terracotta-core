@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.security.TCSecurityManager;
@@ -34,6 +34,7 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
+import java.util.Collection;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   private final TransportHandshakeMessageFactory transportMessageFactory;
   private final ConnectionHealthChecker          connectionHealthChecker;
   private final TCConnectionManager              connectionMgr;
-  private final ConnectionAddressProvider        addressProvider;
+  private final Collection<ConnectionInfo>        addressProvider;
   private final int                              maxReconnectTries;
   private final int                              timeout;
   private final int                              callbackport;
@@ -52,7 +53,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   public MessageTransportFactoryImpl(TransportHandshakeMessageFactory transportMessageFactory,
                                      ConnectionHealthChecker connectionHealthChecker,
                                      TCConnectionManager connectionManager,
-                                     ConnectionAddressProvider addressProvider, int maxReconnectTries,
+                                     Collection<ConnectionInfo> addressProvider, int maxReconnectTries,
                                      int timeout, int callbackPort,
                                      TransportHandshakeErrorHandler defaultHandshakeErrorHandler,
                                      ReconnectionRejectedHandler reconnectionRejectedBehaviour,
@@ -89,8 +90,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
                                                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
                                                                 int callbackPortNum) {
     return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler, securityManager,
-                                      addressProvider);
+                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler, securityManager);
   }
 
   @Override

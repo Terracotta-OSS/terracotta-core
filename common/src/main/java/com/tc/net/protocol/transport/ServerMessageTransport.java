@@ -20,6 +20,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackID;
@@ -56,7 +57,7 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(ConnectionInfo info) {
     throw new UnsupportedOperationException("Server transport doesn't support open()");
   }
 

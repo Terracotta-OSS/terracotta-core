@@ -52,6 +52,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Ignore;
 
@@ -79,8 +80,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                              "localhost",
                              port,
                              1000,
-                             new ConnectionAddressProvider(
-                                                           new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
+                             Arrays.asList(new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
     return clientMsgCh;
   }
 
@@ -126,9 +126,9 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ClientMessageChannel client2 = createClientMsgCh(proxyPort);
     ClientMessageChannel client3 = createClientMsgCh(proxyPort);
 
-    client1.open();
-    client2.open();
-    client3.open();
+    client1.open(null);
+    client2.open(null);
+    client3.open(null);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());
@@ -174,9 +174,9 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ClientMessageChannel client5 = createClientMsgCh(serverPort);
     ClientMessageChannel client6 = createClientMsgCh(serverPort);
 
-    client4.open();
-    client5.open();
-    client6.open();
+    client4.open(null);
+    client5.open(null);
+    client6.open(null);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client4.isConnected());

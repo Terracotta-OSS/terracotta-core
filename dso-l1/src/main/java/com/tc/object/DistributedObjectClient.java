@@ -24,6 +24,8 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.cluster.Cluster;
+import com.tc.entity.DiagnosticMessageImpl;
+import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.ServerEntityMessageImpl;
 import com.tc.entity.ServerEntityResponseMessageImpl;
@@ -69,7 +71,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.object.config.ClientConfig;
-import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handler.ClientCoordinationHandler;
@@ -156,6 +157,7 @@ public class DistributedObjectClient implements TCClient {
 
   private final String                                 uuid;
   private final String                               name;
+  private final boolean                              diagnostic;
 
   private ClientShutdownManager                      shutdownManager;
 
@@ -170,14 +172,14 @@ public class DistributedObjectClient implements TCClient {
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster) {
-    this(config, threadGroup, connectionComponents, cluster, null,
-        UUID.NULL_ID.toString(), "", null);
+    this(config, new StandardClientBuilder(), threadGroup, connectionComponents, cluster, null,
+        UUID.NULL_ID.toString(), "", null, false);
   }
 
-  public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
+  public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster, TCSecurityManager securityManager,
-                                 String uuid, String name, ProductID productId) {
+                                 String uuid, String name, ProductID productId,  boolean diagnostic) {
     this.productId = productId;
     Assert.assertNotNull(config);
     this.config = config;
@@ -185,19 +187,16 @@ public class DistributedObjectClient implements TCClient {
     this.connectionComponents = connectionComponents;
     this.cluster = cluster;
     this.threadGroup = threadGroup;
-    this.clientBuilder = createClientBuilder();
+    this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
+    this.diagnostic = diagnostic;
     this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
     Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA<Void> seda = new SEDA<Void>(threadGroup);
     communicationStageManager = seda.getStageManager();
-  }
-
-  protected ClientBuilder createClientBuilder() {
-    return new StandardClientBuilder();
   }
 
   private void validateSecurityConfig() {
@@ -295,12 +294,6 @@ public class DistributedObjectClient implements TCClient {
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
-    final ConnectionInfoConfig connectionInfoItems = this.connectionComponents
-        .createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = connectionInfoItems.getConnectionInfos();
-    final String serverHost = connectionInfo[0].getHostname();
-    final int serverPort = connectionInfo[0].getPort();
-
     clusterEventsStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE, ClusterInternalEventsContext.class, new ClusterInternalEventsHandler<ClusterInternalEventsContext>(cluster), 1, maxSize);
 
     final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
@@ -361,17 +354,34 @@ public class DistributedObjectClient implements TCClient {
                                                                          this.clientEntityManager,
                                                                          this.clientHandshakeManager);
     // DO NOT create any stages after this call
-    this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList());
+    
+    String[] exclusion = (diagnostic) ? 
+    new String[] {
+      ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
+      ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,
+      ClientConfigurationContext.LOCK_RESPONSE_STAGE,
+      ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE,
+      ClientConfigurationContext.SERVER_ENTITY_MESSAGE_STAGE} : 
+    new String[] {
+      ClientConfigurationContext.LOCK_RESPONSE_STAGE,
+    };
+
+    this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
     initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), multiResponseStage.getSink(), serverMessageStage.getSink());
     new Thread(threadGroup, new Runnable() {
         public void run() {
+          ConnectionInfo info = null;
           while (!clientStopped.isSet()) {
             try {
-              openChannel(serverHost, serverPort);
-              waitForHandshake();
-              connectionMade();
-              break;
+              openChannel(info);
+              info = waitForHandshake();
+              if (info == null) {
+                connectionMade();
+                break;
+              } else {
+                resetChannel();
+              }
             } catch (InterruptedException ie) {
               // We are in the process of letting the thread terminate so we don't handle this in a special way.
             }
@@ -381,7 +391,13 @@ public class DistributedObjectClient implements TCClient {
       }, "Connection Establisher - " + uuid).start();    
   }
   
-  private void connectionMade() {
+  private void resetChannel() {
+    if (this.channel != null) {
+      this.channel.reset();
+    }
+  }
+
+private void connectionMade() {
     connectionMade.attemptSet();
     synchronized (connectionMade) {
       connectionMade.notifyAll();
@@ -400,19 +416,26 @@ public class DistributedObjectClient implements TCClient {
     return connectionMade.isSet();
   }
 
-  private void openChannel(String serverHost, int serverPort) throws InterruptedException {
-    synchronized(clientStopped) {
+  private void openChannel(ConnectionInfo info) throws InterruptedException {
+    String hostname;
+    int port;
+    if (info == null) {
+      info = this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos()[0];
+    }
+      hostname = info.getHostname();
+      port = info.getPort();
+synchronized(clientStopped) {
       while (!clientStopped.isSet()) {
         try {
           DSO_LOGGER.debug("Trying to open channel....");
           final char[] pw;
           if (config.getSecurityInfo().hasCredentials()) {
             Assert.assertNotNull(securityManager);
-            pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), serverHost, serverPort);
+            pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), hostname, port);
           } else {
             pw = null;
           }
-          this.channel.open(pw);
+          this.channel.open(info, pw);
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
@@ -430,7 +453,7 @@ public class DistributedObjectClient implements TCClient {
           CONSOLE_LOGGER.fatal(e.getMessage());
           throw new IllegalStateException(e.getMessage(), e);
         } catch (final IOException ioe) {
-          CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
+          CONSOLE_LOGGER.warn("IOException connecting to server: " + hostname + ":" + port + ". "
                               + ioe.getMessage());
           clientStopped.wait(5000);
         }
@@ -438,14 +461,15 @@ public class DistributedObjectClient implements TCClient {
     }
   }
 
-  private void waitForHandshake() {
-    this.clientHandshakeManager.waitForHandshake();
+  private ConnectionInfo waitForHandshake() {
+    ConnectionInfo info = this.clientHandshakeManager.waitForHandshake();
     if (this.channel != null) {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
       CONSOLE_LOGGER.info(infoMsg);
       DSO_LOGGER.info(infoMsg);
     }
+    return info;
   }
 
   private Map<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMapping() {
@@ -469,6 +493,8 @@ public class DistributedObjectClient implements TCClient {
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
+    messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_REQUEST, DiagnosticMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_RESPONSE, DiagnosticResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
     return messageTypeClassMapping;
@@ -485,6 +511,7 @@ public class DistributedObjectClient implements TCClient {
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, multiSink, hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_RESPONSE, responseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_MESSAGE, serverEntityMessageSink, hydrateSink);
     DSO_LOGGER.debug("Added message routing types.");
   }

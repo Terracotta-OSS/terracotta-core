@@ -22,7 +22,6 @@ import com.tc.logging.LogLevels;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -47,6 +46,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.Arrays;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -172,7 +172,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     });
     ClientMessageChannel clientMsgCh = commsMgr
         .createClientChannel(new NullSessionManager(), 0, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
-                             1000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
+                             1000, Arrays.asList(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
                                  .getBindAddress().getHostAddress(), proxyPort) }));
 
     return clientMsgCh;
@@ -196,7 +196,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test11", false);
     this.setUp(hcConfig, null);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
-    clientMsgCh.open();
+    clientMsgCh.open(null);
 
     // Verifications
     ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) serverComms)
@@ -245,7 +245,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test12", false);
     this.setUp(hcConfig, null);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
-    clientMsgCh.open();
+    clientMsgCh.open(null);
 
     // Verifications
     ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) serverComms)

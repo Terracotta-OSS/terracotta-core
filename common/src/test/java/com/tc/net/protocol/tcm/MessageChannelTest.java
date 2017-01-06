@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -45,6 +44,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -196,7 +196,7 @@ public class MessageChannelTest extends TCTestCase {
 
   public void testAttachments() throws Exception {
     setUp(10);
-    clientChannel.open();
+    clientChannel.open(null);
     String key = "key";
     MessageChannel channel = createClientMessageChannel(10);
     assertNull(channel.getAttachment(key));
@@ -235,7 +235,7 @@ public class MessageChannelTest extends TCTestCase {
     t.start();
 
     try {
-      clientChannel.open();
+      clientChannel.open(null);
       fail();
     } catch (TCTimeoutException e) {
       // expected;
@@ -243,7 +243,7 @@ public class MessageChannelTest extends TCTestCase {
     }
 
     try {
-      clientChannel.open();
+      clientChannel.open(null);
       fail();
     } catch (ConnectException e) {
       // expected
@@ -282,7 +282,7 @@ public class MessageChannelTest extends TCTestCase {
         new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort()) });
 
     try {
-      clientChannel.open();
+      clientChannel.open(null);
     } catch (TCTimeoutException e) {
       Assert.eval("This is not suppose to happen", false);
     }
@@ -349,7 +349,7 @@ public class MessageChannelTest extends TCTestCase {
     setUp(10, true);
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
-    clientChannel.open();
+    clientChannel.open(null);
     assertEquals(1, clientChannel.getConnectCount());
     assertEquals(1, clientChannel.getConnectAttemptCount());
 
@@ -397,7 +397,7 @@ public class MessageChannelTest extends TCTestCase {
 
     for (int i = 0; i < 10; i++) {
       try {
-        clientChannel.open();
+        clientChannel.open(null);
         fail("Should have thrown an exception");
       } catch (TCTimeoutException e) {
         // expected
@@ -411,13 +411,13 @@ public class MessageChannelTest extends TCTestCase {
     }
 
     initListener(this.clientWatcher, this.serverWatcher, false, port);
-    clientChannel.open();
+    clientChannel.open(null);
     assertTrue(clientChannel.isConnected());
   }
 
   public void testSendAfterDisconnect() throws Exception {
     setUp(0);
-    clientChannel.open();
+    clientChannel.open(null);
 
     createAndSendMessage();
     waitForArrivalOrFail(clientWatcher, 1);
@@ -434,7 +434,7 @@ public class MessageChannelTest extends TCTestCase {
     assertEquals(0, clientChannel.getConnectAttemptCount());
     assertEquals(0, clientChannel.getConnectCount());
 
-    clientChannel.open();
+    clientChannel.open(null);
     assertEquals(1, clientChannel.getConnectAttemptCount());
     assertEquals(1, clientChannel.getConnectCount());
     clientComms.getConnectionManager().closeAllConnections(WAIT);
@@ -449,7 +449,7 @@ public class MessageChannelTest extends TCTestCase {
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
 
-    clientChannel.open();
+    clientChannel.open(null);
 
     assertEquals(1, clientChannel.getConnectCount());
     assertEquals(1, clientChannel.getConnectAttemptCount());
@@ -496,7 +496,7 @@ public class MessageChannelTest extends TCTestCase {
 
   public void testGetStatus() throws Exception {
     setUp(0);
-    clientChannel.open();
+    clientChannel.open(null);
     assertTrue(clientChannel.isOpen());
     clientChannel.close();
     assertTrue(clientChannel.isClosed());
@@ -504,7 +504,7 @@ public class MessageChannelTest extends TCTestCase {
 
   public void testSend() throws Exception {
     setUp(0);
-    clientChannel.open();
+    clientChannel.open(null);
     int count = 100;
     List<PingMessage> messages = new LinkedList<PingMessage>();
     for (int i = 0; i < count; i++) {
@@ -520,7 +520,7 @@ public class MessageChannelTest extends TCTestCase {
     assertNull(clientChannel.getRemoteAddress());
     assertNull(clientChannel.getLocalAddress());
 
-    clientChannel.open();
+    clientChannel.open(null);
     createAndSendMessage();
     waitForMessages(1);
 
@@ -568,7 +568,7 @@ public class MessageChannelTest extends TCTestCase {
     clComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ClientMessageChannel ch = clComms.createClientChannel(new NullSessionManager(), maxReconnectTries,
                                                           TCSocketAddress.LOOPBACK_IP, lsnrPort, WAIT,
-                                                          new ConnectionAddressProvider(connInfo));
+                                                          Arrays.asList(connInfo));
     return ch;
   }
 

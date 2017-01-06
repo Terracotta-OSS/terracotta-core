@@ -24,9 +24,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
 import com.tc.net.ServerID;
-import com.tc.net.StripeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.Constants;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -67,6 +66,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -255,7 +255,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider) {
+                                                  Collection<ConnectionInfo> addressProvider) {
     return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, null, null);
 
   }
@@ -263,7 +263,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+                                                  Collection<ConnectionInfo> addressProvider,
                                                   MessageTransportFactory transportFactory) {
     return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
                                transportFactory, null);
@@ -272,7 +272,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+                                                  Collection<ConnectionInfo> addressProvider,
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory) {
 
@@ -293,8 +293,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
-                                                               addressProvider.getSecurityInfo(), securityManager,
-                                                               addressProvider, productId);
+                                                               securityManager,
+                                                               productId);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,

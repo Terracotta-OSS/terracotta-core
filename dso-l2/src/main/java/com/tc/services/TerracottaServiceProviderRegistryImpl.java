@@ -28,6 +28,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.util.LinkedHashSet;
@@ -171,5 +172,13 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
       }
     }
     return hasProvider;
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    ToStringStateDumper dump = new ToStringStateDumper("services");
+    dumpStateTo(dump);
+    out.println(dump);
+    return out;
   }
 }

@@ -17,25 +17,17 @@
  *
  */
 
-package com.tc.util;
+package com.tc.entity;
+
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.object.tx.TransactionID;
+
 
 /**
- * @author tim
  */
-public enum ProductID {
-  DIAGNOSTIC(true), TMS(true), WAN(true), USER(false);
-
-  private final boolean internal;
-
-  ProductID(boolean internal) {
-    this.internal = internal;
-  }
-
-  public boolean isInternal() {
-    return internal;
-  }
-  
-  public String toString() {
-    return name().charAt(0) + name().substring(1).toLowerCase();
-  }
+public interface DiagnosticMessage extends VoltronEntityMessage, TCMessage {
+  /**
+   * Initializes the contents of the message.
+   */
+  public void setContents(TransactionID transactionID, byte[] extendedData);
 }

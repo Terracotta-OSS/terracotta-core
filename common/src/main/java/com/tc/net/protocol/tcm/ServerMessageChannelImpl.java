@@ -23,6 +23,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 
 /**
@@ -55,12 +56,12 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(ConnectionInfo info) {
     throw new UnsupportedOperationException("Server channels don't support open()");
   }
 
   @Override
-  public NetworkStackID open(char[] password) {
+  public NetworkStackID open(ConnectionInfo info, char[] password) {
     throw new UnsupportedOperationException("Server channels don't support open()");
   }
 
