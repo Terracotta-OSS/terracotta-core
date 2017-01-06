@@ -770,6 +770,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         Assert.assertTrue(entityData.consumerID > 0);
         DeferredEntityContainer container = this.consumerToLiveContainerMap.remove(entityData.consumerID);
         Assert.assertTrue(null != container);
+        Assert.assertTrue(this.persistedEntitiesByConsumerIDMap.remove(entityData.consumerID) != null);
+        try {
+          this.platformPersistence.storeDataElement(ENTITIES_FILE_NAME, this.persistedEntitiesByConsumerIDMap);
+        } catch (IOException e) {
+          Assert.unexpected(e);
+        }
         container.entity = null;
       }
       if (success && null != this.activeEntities) {
