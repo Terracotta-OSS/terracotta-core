@@ -225,7 +225,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     strBuilder.append(ReplicatedClusterStateManagerImpl.class.getSimpleName() + " [ ");
     strBuilder.append(this.state).append(" ").append(this.stateManager);
     strBuilder.append(" ]");
-    out.indent().print(strBuilder.toString()).flush();
+    out.print(strBuilder.toString());
     return out;
   }
 }
