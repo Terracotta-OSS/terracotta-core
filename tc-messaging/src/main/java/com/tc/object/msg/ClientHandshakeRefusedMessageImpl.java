@@ -62,7 +62,7 @@ public class ClientHandshakeRefusedMessageImpl extends DSOMessageBase implements
   }
 
   @Override
-  public String getRefualsCause() {
+  public String getRefusalsCause() {
     return this.refusalCause;
   }
 
