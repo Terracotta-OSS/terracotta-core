@@ -36,6 +36,8 @@ public final class TCMessageType {
   public static final int           TYPE_PING_MESSAGE                                 = 1;
   public static final int           TYPE_CLIENT_HANDSHAKE_MESSAGE                     = 2;
   public static final int           TYPE_CLIENT_HANDSHAKE_ACK_MESSAGE                 = 3;
+  public static final int           TYPE_CLIENT_HANDSHAKE_REDIRECT_MESSAGE                 = 4;
+  
   public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 6;
   public static final int           TYPE_GROUP_WRAPPER_MESSAGE                        = 7;
   public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                      = 8;
@@ -58,6 +60,7 @@ public final class TCMessageType {
   public static final TCMessageType CLIENT_HANDSHAKE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
+  public static final TCMessageType CLIENT_HANDSHAKE_REDIRECT_MESSAGE                  = new TCMessageType();
   public static final TCMessageType CLUSTER_MEMBERSHIP_EVENT_MESSAGE                  = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                             = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();

@@ -26,6 +26,7 @@ import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
+import com.tc.object.msg.ClientHandshakeRedirectMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
 
 public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
@@ -39,6 +40,8 @@ public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
       consoleLogger.error(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
       consoleLogger.info("L1 Exiting...");
       throw new RuntimeException(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
+    } else if (context instanceof ClientHandshakeRedirectMessage) {
+      handleClientHandshakeRedirectMessage((ClientHandshakeRedirectMessage) context);
     } else if (context instanceof ClientHandshakeAckMessage) {
       handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);
     } else if (context instanceof PauseContext) {
@@ -60,6 +63,10 @@ public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
     clientHandshakeManager.acknowledgeHandshake(handshakeAck);
   }
 
+  private void handleClientHandshakeRedirectMessage(ClientHandshakeRedirectMessage handshakeRedirect) {
+    clientHandshakeManager.redirect(handshakeRedirect);
+  }
+  
   @Override
   public synchronized void initialize(ConfigurationContext context) {
     super.initialize(context);

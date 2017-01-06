@@ -21,9 +21,11 @@ package com.tc.object.handshakemanager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.ClientHandshakeRedirectMessage;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -62,6 +64,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final String name;
 
   private State state;
+  private volatile ConnectionInfo redirect;
   private volatile boolean disconnected;
   private volatile boolean serverIsPersistent = false;
   private volatile boolean isShutdown = false;
@@ -162,6 +165,17 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
+  public synchronized void redirect(ClientHandshakeRedirectMessage redirect) {
+    String hostname = redirect.getActiveHost();
+    int port = redirect.getActivePort();
+    this.redirect = new ConnectionInfo(hostname, port);
+    notifyAll();
+    if (changeToPaused()) {
+      pauseCallbacks();
+    }
+  }
+  
+  @Override
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
     acknowledgeHandshake(handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
         handshakeAck.getServerVersion());
@@ -218,10 +232,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public synchronized void waitForHandshake() {
+  public synchronized ConnectionInfo waitForHandshake() {
     boolean isInterrupted = false;
     try {
-      while (this.disconnected && !this.isShutdown()) {
+      while (this.redirect == null && this.disconnected && !this.isShutdown()) {
         try {
           wait();
         } catch (InterruptedException e) {
@@ -231,6 +245,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       }
     } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
+    }
+
+    try {
+      return redirect;
+    } finally {
+      redirect = null;
     }
   }
 
@@ -256,6 +276,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private void changeToStarting() {
     Assert.assertEquals(state, State.PAUSED);
     state = State.STARTING;
+    redirect = null;
   }
 
   private void changeToRunning() {

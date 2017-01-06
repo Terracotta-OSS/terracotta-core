@@ -32,6 +32,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClientHandshakeAckMessage;
+import com.tc.object.msg.ClientHandshakeRedirectMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
 import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
@@ -123,6 +124,13 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     return (ClientHandshakeRefusedMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE);
   }
 
+  private ClientHandshakeRedirectMessage newClientHandshakeRedirectMessage(ClientID clientID)
+      throws NoSuchChannelException {
+    MessageChannelInternal channel = genericChannelManager.getChannel(new ChannelID(clientID.toLong()));
+    if (channel == null) { throw new NoSuchChannelException(); }
+    return (ClientHandshakeRedirectMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE);
+  }
+  
   private ClientHandshakeAckMessage newClientHandshakeAckMessage(ClientID clientID) throws NoSuchChannelException {
     MessageChannelInternal channel = genericChannelManager.getChannel(new ChannelID(clientID.toLong()));
     if (channel == null) { throw new NoSuchChannelException(); }
@@ -159,13 +167,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       synchronized (activeChannels) {
         handshakeRefuseMsg.initialize(message);
         if (!handshakeRefuseMsg.send()) {
-          logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+          logger.warn("Not sending handshake rejected message to disconnected client: " + clientID);
         }
       }
     } catch (NoSuchChannelException nsce) {
-      logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+      logger.warn("Not sending handshake rejected message to disconnected client: " + clientID);
     }
-
   }
 
   private Set<? extends NodeID> getAllActiveClientIDs() {

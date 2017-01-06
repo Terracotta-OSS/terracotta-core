@@ -149,6 +149,7 @@ import com.tc.object.config.schema.L2Config;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
+import com.tc.object.msg.ClientHandshakeRedirectMessageImpl;
 import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.InvokeRegisteredServiceMessage;
@@ -948,6 +949,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
         .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
+    messageTypeClassMapping
+        .put(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE, ClientHandshakeRedirectMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
 
     messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);

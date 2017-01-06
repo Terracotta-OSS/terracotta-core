@@ -19,7 +19,6 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.StageManager;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
@@ -28,24 +27,26 @@ import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.ClientEntityReferenceContext;
+import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.object.msg.ClientHandshakeRedirectMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.NoopEntityMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -105,15 +106,7 @@ public class ServerClientHandshakeManager {
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
           new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
 
-      Collection<ClientServerExchangeLockContext> lockContexts = handshake.getLockContexts();
       if (this.state == State.STARTED) {
-        // This is a normal connection handshake, from a new client connecting once the server is up and running.
-        
-        for (final ClientServerExchangeLockContext context : lockContexts) {
-          if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) {
-            throw new ClientHandshakeException("Client " + clientID + " connected after startup should have no existing wait contexts.");
-          }
-        }
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {
         // This is a client reconnecting after a restart.
@@ -168,6 +161,22 @@ public class ServerClientHandshakeManager {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
     this.channelManager.makeChannelRefuse(clientID, message);
   }
+  
+  public void notifyClientRedirect(ClientHandshakeMessage clientMsg, String hostname, int port) {
+    ClientHandshakeRedirectMessage redirect = (ClientHandshakeRedirectMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE);
+    redirect.initialize(hostname, port);
+    if (!redirect.send()) {
+      logger.warn("Not sending handshake rejected message to disconnected client: " + redirect.getChannel().getRemoteNodeID());
+    }
+    clientMsg.getChannel().close();
+  }  
+  
+  public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
+    final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
+    ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
+    ack.initialize(false, Collections.emptySet(), clientID, ProductInfo.getInstance().version());
+    ack.send();
+  }  
 
   private void sendAckMessageFor(ClientID clientID) {
     this.logger.info("Sending handshake acknowledgement to " + clientID);

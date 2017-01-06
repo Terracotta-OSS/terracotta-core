@@ -18,7 +18,9 @@
  */
 package com.tc.object.handshakemanager;
 
+import com.tc.net.core.ConnectionInfo;
 import com.tc.object.msg.ClientHandshakeAckMessage;
+import com.tc.object.msg.ClientHandshakeRedirectMessage;
 
 
 public interface ClientHandshakeManager {
@@ -47,6 +49,8 @@ public interface ClientHandshakeManager {
    * @param handshakeAck
    */
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck);
+  
+  public void redirect(ClientHandshakeRedirectMessage reddirect);
 
   /**
    * @return True if the remote server is running in a persistent mode.
@@ -57,7 +61,7 @@ public interface ClientHandshakeManager {
    * Blocks the caller until an acknowledgement of the handshake has been received, changing the receiver into a running
    * state.
    */
-  public void waitForHandshake();
+  public ConnectionInfo waitForHandshake();
 
   /**
    * Called to start a shutdown operation.
