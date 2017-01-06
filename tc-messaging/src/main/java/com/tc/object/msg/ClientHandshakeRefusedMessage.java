@@ -21,7 +21,7 @@ package com.tc.object.msg;
 import com.tc.net.protocol.tcm.TCMessage;
 
 public interface ClientHandshakeRefusedMessage extends TCMessage {
-  String getRefualsCause();
+  String getRefusalsCause();
 
   void initialize(String message);
 

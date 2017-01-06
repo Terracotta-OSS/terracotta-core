@@ -36,9 +36,9 @@ public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
   @Override
   public void handleEvent(EC context) {
     if (context instanceof ClientHandshakeRefusedMessage) {
-      consoleLogger.error(((ClientHandshakeRefusedMessage) context).getRefualsCause());
+      consoleLogger.error(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
       consoleLogger.info("L1 Exiting...");
-      throw new RuntimeException(((ClientHandshakeRefusedMessage) context).getRefualsCause());
+      throw new RuntimeException(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
     } else if (context instanceof ClientHandshakeAckMessage) {
       handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);
     } else if (context instanceof PauseContext) {
