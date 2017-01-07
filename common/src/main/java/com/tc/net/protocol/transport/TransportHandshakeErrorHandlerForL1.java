@@ -33,6 +33,10 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     } else if (e.getErrorType() == TransportHandshakeError.ERROR_RECONNECTION_REJECTED) {
       // do not log here because ClientChannelEventController will be logging this event as
       // TRANSPORT_RECONNECTION_REJECTED_EVENT
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_NONE) {
+      //  don't log these, not real errors
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_REDIRECT_CONNECTION) {
+      //  don't log these, not real errors
     } else {
       consoleLogger.error(e);
     }
