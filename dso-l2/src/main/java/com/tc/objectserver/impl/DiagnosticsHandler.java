@@ -27,6 +27,10 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 
 /**
@@ -53,6 +57,7 @@ public class DiagnosticsHandler implements TCMessageSink {
     DiagnosticMessage msg = (DiagnosticMessage)message;
     byte[] data = msg.getExtendedData();
     String cmd = new String(data, set);
+    try {
     if (cmd.equals("getState")) {
       DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);
       resp.setResponse(msg.getTransactionID(), server.getContext().getL2Coordinator().getStateManager().getCurrentState().getName().getBytes(set));
@@ -64,6 +69,16 @@ public class DiagnosticsHandler implements TCMessageSink {
     } else {
       DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);
       resp.setResponse(msg.getTransactionID(), "UNKNOWN CMD".getBytes(set));
+      resp.send();
+    }
+    } catch (RuntimeException runtime) {
+      logger.warn("diagnostic", runtime);
+      DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      Writer writer = new OutputStreamWriter(out, set);
+      PrintWriter pw = new PrintWriter(writer);
+      runtime.printStackTrace(pw);
+      resp.setResponse(msg.getTransactionID(), out.toByteArray());
       resp.send();
     }
   }
