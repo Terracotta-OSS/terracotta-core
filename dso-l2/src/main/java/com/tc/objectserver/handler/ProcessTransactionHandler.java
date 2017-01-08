@@ -54,8 +54,6 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 
 import java.util.List;
@@ -531,7 +529,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       case INVOKE_ACTION:
         action = ServerEntityAction.INVOKE_ACTION;
         break;
-      case NOOP:
+      case LOCAL_PIPELINE_FLUSH:
         action = ServerEntityAction.NOOP;
         break;
       default:

@@ -91,7 +91,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final ITopologyEventCollector eventCollector;
   private final EntityServerService<EntityMessage, EntityResponse> factory;
   // PTH sink so things can be injected into the stream
-  private final BiConsumer<EntityID, Long> noopLoopback;
+  private final BiConsumer<EntityID, Long> flushLocalPipeline;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
   //  for destroy, passives need to reference count to understand if entity is deletable
@@ -117,14 +117,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
+  ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState, int references) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
     this.consumerID = consumerID;
-    this.noopLoopback = loopback;
+    this.flushLocalPipeline = flushLocalPipeline;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -964,7 +964,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         runnables.clear(); 
   //  there may be no more incoming messages on this entity to clear the 
   //  queue so if it is not empty, push a noop.  
-        noopLoopback.accept(id, version);
+        flushLocalPipeline.accept(id, version);
       }
     }
     

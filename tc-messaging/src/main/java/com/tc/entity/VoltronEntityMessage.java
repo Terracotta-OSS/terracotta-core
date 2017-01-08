@@ -53,9 +53,9 @@ public interface VoltronEntityMessage {
      */
     INVOKE_ACTION,
     /**
-     * noop for pipeline flushes
+     * Flush the local pipeline - not ever passed over the wire.
      */
-    NOOP
+    LOCAL_PIPELINE_FLUSH
   }
   
   enum Acks {

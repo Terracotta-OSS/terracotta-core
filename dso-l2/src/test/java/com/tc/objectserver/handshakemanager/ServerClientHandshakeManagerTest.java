@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Sink;
@@ -34,7 +33,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 
 import java.util.Collections;
@@ -114,7 +113,7 @@ public class ServerClientHandshakeManagerTest {
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
     
-    verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
+    verify(this.voltronSink).addSingleThreaded(any(LocalPipelineFlushMessage.class));
   }
 
   @Test
@@ -150,7 +149,7 @@ public class ServerClientHandshakeManagerTest {
     this.manager.notifyClientConnect(message1, entityManager, transactionHandler);
     assertFalse(this.manager.isStarted());
     verify(this.transactionHandler).handleResentMessage(resend);
-    verify(this.voltronSink, never()).addSingleThreaded(any(NoopEntityMessage.class));
+    verify(this.voltronSink, never()).addSingleThreaded(any(LocalPipelineFlushMessage.class));
     
     // This second message will now start the server.
     ClientHandshakeMessage message2 = mock(ClientHandshakeMessage.class);
@@ -161,7 +160,7 @@ public class ServerClientHandshakeManagerTest {
     this.manager.notifyClientConnect(message2, entityManager, transactionHandler);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
-    verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
+    verify(this.voltronSink).addSingleThreaded(any(LocalPipelineFlushMessage.class));
   }
 
   @Test

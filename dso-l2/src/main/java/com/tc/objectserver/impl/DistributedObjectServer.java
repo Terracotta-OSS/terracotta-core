@@ -230,7 +230,7 @@ import java.util.Timer;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.entity.ServerEntityFactory;
@@ -643,7 +643,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
-    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
+    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline);
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor(), channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
@@ -832,7 +832,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     );
   }
   
-  private void sendNoop(EntityID eid, long version) {
+  private void flushLocalPipeline(EntityID eid, long version) {
     if (!this.l2Coordinator.getStateManager().isActiveCoordinator()) {
       try {
         this.seda.getStageManager()
@@ -846,7 +846,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  must be active, noop the ProcessTransactionHandler
     this.seda.getStageManager()
         .getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class)
-        .getSink().addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
+        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
   }
 
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {

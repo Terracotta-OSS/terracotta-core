@@ -19,7 +19,6 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.StageManager;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
@@ -38,8 +37,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.entity.ClientDescriptorImpl;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
@@ -204,7 +202,7 @@ public class ServerClientHandshakeManager {
     notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new NoopEntityMessage(EntityDescriptor.NULL_ID));
+    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID));
   }
   
   public void notifyComplete() {
