@@ -168,9 +168,16 @@ public class ManagedEntityImpl implements ManagedEntity {
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception) {
     ResultCapture resp;
     switch (request.getAction()) {
-      case NOOP:
+      case LOCAL_FLUSH:
+      case LOCAL_FLUSH_AND_DELETE:
+      case ORDER_PLACEHOLDER_ONLY:
         resp = createManagedEntityResponse(completion, exception, request, false);
-        processNoopMessage(request, resp);
+        processLegacyNoopMessage(request, resp);
+        break;
+      case LOCAL_FLUSH_AND_SYNC:
+        // We expect this to be filtered at a higher level.
+        Assert.fail("LOCAL_FLUSH_AND_SYNC should be filtered before reaching this point");
+        resp = null;
         break;
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
@@ -236,8 +243,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
   
-  private void processNoopMessage(ServerEntityRequest request, ResultCapture resp) {
-    Assert.assertTrue(request.getAction() == ServerEntityAction.NOOP);
+  // TODO:  Make sure that this is actually required in the cases where it is called or if some of these sites are
+  //  related to the scope expansion of the legacy "NOOP" request type.
+  private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
     scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, resp, MessagePayload.EMPTY, resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
   
@@ -431,8 +439,12 @@ public class ManagedEntityImpl implements ManagedEntity {
           case RECEIVE_SYNC_PAYLOAD:
             receiveSyncEntityPayload(response, message);
             break;
-          case NOOP:
-            break;
+          case LOCAL_FLUSH:
+          case LOCAL_FLUSH_AND_DELETE:
+          case LOCAL_FLUSH_AND_SYNC:
+          case ORDER_PLACEHOLDER_ONLY:
+            // These types are all for message order - none of them come in through this invoke path.
+            throw new IllegalArgumentException("Flow-only request observed in invoke path: " + request);
           default:
             throw new IllegalArgumentException("Unknown request " + request);
         }
@@ -796,7 +808,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
+    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();

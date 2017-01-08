@@ -67,10 +67,16 @@ public class RequestProcessor {
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
   public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
+    // Determine if this kind of action is one we want to replicate.
+    ServerEntityAction requestAction = request.getAction();
+    // We will try to replicate anything which isn't just a local flush operation.
+    boolean isActionReplicated = !((ServerEntityAction.LOCAL_FLUSH == requestAction)
+        || (ServerEntityAction.LOCAL_FLUSH_AND_DELETE == requestAction)
+        || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == requestAction));
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-    Set<NodeID> replicateTo = (isActive && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
-    ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
-        ? passives.replicateActivity(createReplicationActivity(entity, request.getNodeID(), replicate ? request.getAction() : ServerEntityAction.NOOP, 
+    Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
+    ActivePassiveAckWaiter token = (isActionReplicated && !replicateTo.isEmpty())
+        ? passives.replicateActivity(createReplicationActivity(entity, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
@@ -102,7 +108,7 @@ public class RequestProcessor {
       case INVOKE_ACTION:
         actionCode = SyncReplicationActivity.ActivityType.INVOKE_ACTION;
         break;
-      case NOOP:
+      case ORDER_PLACEHOLDER_ONLY:
         actionCode = SyncReplicationActivity.ActivityType.NOOP;
         break;
       case RELEASE_ENTITY:
@@ -115,7 +121,7 @@ public class RequestProcessor {
         break;
       default:
         // Unknown message type.
-        Assert.fail();
+        Assert.fail("Unknown message type: " + type);
         break;
     }
 //  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether

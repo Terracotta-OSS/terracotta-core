@@ -132,7 +132,7 @@ public class ReplicatedTransactionHandler {
       ServerEntityRequest req = new ServerEntityRequest() {
         @Override
         public ServerEntityAction getAction() {
-          return ServerEntityAction.NOOP;
+          return ServerEntityAction.LOCAL_FLUSH_AND_DELETE;
         }
 
         @Override
@@ -304,7 +304,7 @@ public class ReplicatedTransactionHandler {
               acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
             });
           break;
-        case NOOP:
+        case LOCAL_FLUSH_AND_DELETE:
           if (entityInstance.isRemoveable()) {
             LOGGER.debug("removing " + entityInstance.getID());
             entityManager.removeDestroyed(entityInstance.getID());
@@ -367,7 +367,7 @@ public class ReplicatedTransactionHandler {
         MessagePayload payload = new MessagePayload(activity.getExtendedData(), null, activity.getConcurrency());
         entity.get().addRequestMessage(activityToLocalRequest(activity), payload, (result)->acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception)->acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
         if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD != activity.getActivityType()) {
-          entity.get().addRequestMessage(makeNoop(eid, version), MessagePayload.EMPTY, null, null);
+          entity.get().addRequestMessage(makeLocalFlush(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
         if (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType()) {
@@ -443,10 +443,10 @@ public class ReplicatedTransactionHandler {
     }
   }
   
-  private ServerEntityRequest makeNoop(EntityID eid, long version) {
+  private ServerEntityRequest makeLocalFlush(EntityID eid, long version) {
     // Anything created within this class represents a replicated message.
     boolean isReplicatedMessage = true;
-    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.NOOP, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, ()->Optional.empty(), isReplicatedMessage);
+    return new ServerEntityRequestResponse(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ServerEntityAction.LOCAL_FLUSH, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, ()->Optional.empty(), isReplicatedMessage);
   }
       
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
@@ -541,7 +541,7 @@ public class ReplicatedTransactionHandler {
       case SYNC_BEGIN:
       case SYNC_END:
       case NOOP:
-        return ServerEntityAction.NOOP;
+        return ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
       case RECONFIGURE_ENTITY:

@@ -356,7 +356,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               serverEntityRequest.failure(exception);
             });
       } else {
-          if (ServerEntityAction.NOOP == action && entity.isRemoveable()) {
+          if ((ServerEntityAction.LOCAL_FLUSH_AND_DELETE == action) && entity.isRemoveable()) {
             LOGGER.debug("removing " + entity.getID());
             entityManager.removeDestroyed(entity.getID());
           }
@@ -530,7 +530,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         action = ServerEntityAction.INVOKE_ACTION;
         break;
       case LOCAL_PIPELINE_FLUSH:
-        action = ServerEntityAction.NOOP;
+        action = ServerEntityAction.LOCAL_FLUSH;
         break;
       default:
         // Unknown request type.
