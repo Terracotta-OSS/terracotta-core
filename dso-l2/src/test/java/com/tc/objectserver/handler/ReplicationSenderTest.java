@@ -102,10 +102,13 @@ public class ReplicationSenderTest {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
       case INVOKE_ACTION:
-      case NOOP:
       case RECONFIGURE_ENTITY:
         ClientID source = new ClientID(1);
         return SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+      case ORDERING_PLACEHOLDER:
+        return SyncReplicationActivity.createOrderingPlaceholder(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
+      case FLUSH_LOCAL_PIPELINE:
+        return SyncReplicationActivity.createFlushLocalPipelineMessage(entity, 1);
       case SYNC_BEGIN:
         return SyncReplicationActivity.createStartSyncMessage();
       case SYNC_END:
@@ -136,17 +139,17 @@ public class ReplicationSenderTest {
     List<SyncReplicationActivity> origin = new LinkedList<>();
     List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);  
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
@@ -171,17 +174,17 @@ public class ReplicationSenderTest {
     List<SyncReplicationActivity> origin = new LinkedList<>();
     List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
  // this create is not part of the sync set so everything should pass through
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);  // invoke actions are valid since the stream is working off the create
 
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
 // create and destroy can no longer happen concurrently with sync
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_END), false);
@@ -205,18 +208,18 @@ public class ReplicationSenderTest {
     List<SyncReplicationActivity> origin = new LinkedList<>();
     List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), true);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
@@ -240,18 +243,18 @@ public class ReplicationSenderTest {
     List<SyncReplicationActivity> origin = new LinkedList<>();
     List<SyncReplicationActivity> validation = new LinkedList<>();
     buildTest(origin, validation, SyncReplicationActivity.createStartMessage(), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.CREATE_ENTITY), false);//  this will be replicated, it's up to the passive to drop it on the floor if it hasn't seen a sync yet
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);   
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
-    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.NOOP), true);
+    buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_END), false);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), true);
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END), false);
@@ -268,15 +271,18 @@ public class ReplicationSenderTest {
         } else if (SyncReplicationActivity.ActivityType.SYNC_END == activityType) {
           finished.set();
         }
-        SetOnceFlag sent = new SetOnceFlag();
-        SetOnceFlag notsent = new SetOnceFlag();
-        ReplicationIntent intent = (SyncReplicationActivity.ActivityType.SYNC_START == activityType) ? 
-                ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, activity, ()->sent.set(), ()->notsent.set()) :
-                ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, activity, ()->sent.set(), ()->notsent.set());
-        testSender.handleEvent(intent);
-        Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
-        if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.NOOP != activityType)) {
-          Assert.assertTrue(activity, sent.isSet());
+        // We normally don't send the local flush operations.
+        if (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE != activityType) {
+          SetOnceFlag sent = new SetOnceFlag();
+          SetOnceFlag notsent = new SetOnceFlag();
+          ReplicationIntent intent = (SyncReplicationActivity.ActivityType.SYNC_START == activityType) ? 
+                  ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, activity, ()->sent.set(), ()->notsent.set()) :
+                  ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, activity, ()->sent.set(), ()->notsent.set());
+          testSender.handleEvent(intent);
+          Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
+          if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
+            Assert.assertTrue(activity, sent.isSet());
+          }
         }
       } catch (EventHandlerException h) {
         throw new RuntimeException(h);
@@ -291,7 +297,7 @@ public class ReplicationSenderTest {
     collector.stream().forEach(msg->{
       for (SyncReplicationActivity activity : msg.getActivities()) {
         SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
-        if ((activityType != SyncReplicationActivity.ActivityType.SYNC_START) && (activityType != SyncReplicationActivity.ActivityType.NOOP)) {
+        if ((activityType != SyncReplicationActivity.ActivityType.SYNC_START) && (activityType != SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER)) {
           SyncReplicationActivity nextActivity = next.next();
           SyncReplicationActivity.ActivityType nextActivityType = nextActivity.getActivityType();
           if (nextActivityType != SyncReplicationActivity.ActivityType.SYNC_BEGIN &&

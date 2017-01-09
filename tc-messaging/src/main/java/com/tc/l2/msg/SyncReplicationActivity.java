@@ -35,7 +35,19 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SyncReplicationActivity implements OrderedEventContext {
   public enum ActivityType {
-    NOOP,
+    /**
+     * An error/default value which should never actually be used.
+     */
+    INVALID,
+    /**
+     * Only used locally - called to ensure ordering but should never be replicated to a passive.
+     */
+    FLUSH_LOCAL_PIPELINE,
+    /**
+     * Used in the case where an invoke was issued but we don't want to run it on the passive.  It is, therefore, only
+     *  run as a placeholder of ordering data (which matters for correctly ordering re-sends upon fail-over).
+     */
+    ORDERING_PLACEHOLDER,
     CREATE_ENTITY,
     RECONFIGURE_ENTITY,
     INVOKE_ACTION,
@@ -82,11 +94,26 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
 
   // Factory methods.
-  public static SyncReplicationActivity createNoOpMessage(EntityID eid, long version) {
-    return new SyncReplicationActivity(ActivityID.getNextID(), new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.NOOP, null, 0, "");
+  public static SyncReplicationActivity createFlushLocalPipelineMessage(EntityID eid, long version) {
+    return new SyncReplicationActivity(ActivityID.getNextID(), new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, "");
+  }
+
+  public static SyncReplicationActivity createOrderingPlaceholder(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, String debugId) {
+    return new SyncReplicationActivity(ActivityID.getNextID(), descriptor, src, tid, oldest, ActivityType.ORDERING_PLACEHOLDER, null, 0, debugId);
   }
 
   public static SyncReplicationActivity createReplicatedMessage(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, String debugId) {
+    // We shouldn't be using this helper for any of the specialized activity types.
+    Assert.assertTrue(ActivityType.FLUSH_LOCAL_PIPELINE != action);
+    Assert.assertTrue(ActivityType.ORDERING_PLACEHOLDER != action);
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != action);
+    Assert.assertTrue(ActivityType.SYNC_END != action);
+    Assert.assertTrue(ActivityType.SYNC_ENTITY_BEGIN != action);
+    Assert.assertTrue(ActivityType.SYNC_ENTITY_END != action);
+    Assert.assertTrue(ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN != action);
+    Assert.assertTrue(ActivityType.SYNC_ENTITY_CONCURRENCY_END != action);
+    Assert.assertTrue(ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD != action);
+    Assert.assertTrue(ActivityType.SYNC_START != action);
     return new SyncReplicationActivity(ActivityID.getNextID(), descriptor, src, tid, oldest, action, payload, concurrency, debugId);
   }
 
@@ -215,6 +242,11 @@ public class SyncReplicationActivity implements OrderedEventContext {
   }
 
   protected void serializeTo(TCByteBufferOutput out) {
+    // This activity better be valid.
+    Assert.assertTrue(ActivityType.INVALID != this.action);
+    // We should NOT be serializing local flush activities.
+    Assert.assertTrue(ActivityType.FLUSH_LOCAL_PIPELINE != this.action);
+    
     out.writeLong(this.id.id);
     this.descriptor.serializeTo(out);
     int sourceNodeType = this.src.getNodeType();
@@ -225,7 +257,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     out.writeLong(oldest.toLong());
     
     out.writeInt(this.action.ordinal());
-    if (payload != null && this.action != ActivityType.NOOP) {
+    if (payload != null) {
       out.writeInt(payload.length);
       out.write(payload);
     } else {

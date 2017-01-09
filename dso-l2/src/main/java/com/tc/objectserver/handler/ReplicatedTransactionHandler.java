@@ -370,7 +370,8 @@ public class ReplicatedTransactionHandler {
           entity.get().addRequestMessage(makeLocalFlush(eid, version), MessagePayload.EMPTY, null, null);
         }
       } else {
-        if (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType()) {
+        if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == activity.getActivityType()) {
+          // We only received this to ensure that we saved the transaction order - we can ack without doing anything.
           acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
         } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
@@ -540,8 +541,11 @@ public class ReplicatedTransactionHandler {
       case SYNC_START:
       case SYNC_BEGIN:
       case SYNC_END:
-      case NOOP:
+      case ORDERING_PLACEHOLDER:
         return ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
+      case FLUSH_LOCAL_PIPELINE:
+        // Note that these are never replicated from the active but we do synthesize them, internally, in some cases.
+        return ServerEntityAction.LOCAL_FLUSH;
       case CREATE_ENTITY:
         return ServerEntityAction.CREATE_ENTITY;
       case RECONFIGURE_ENTITY:
@@ -565,7 +569,7 @@ public class ReplicatedTransactionHandler {
       case SYNC_ENTITY_END:
         return ServerEntityAction.RECEIVE_SYNC_ENTITY_END;
       default:
-        throw new AssertionError("bad replication type");
+        throw new AssertionError("bad replication type: " + networkType);
     }
   }  
   
@@ -686,8 +690,8 @@ public class ReplicatedTransactionHandler {
       if (eid.equals(syncing)) {
         if (syncdKeys.contains(activity.getConcurrency())) {
           return false;
-        } else if (SyncReplicationActivity.ActivityType.NOOP == activityType) {
-//  NOOP requests cannot be deferred
+        } else if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == activityType) {
+//  ORDERING_PLACEHOLDER requests cannot be deferred
           return false;
         } else if (SyncReplicationActivity.ActivityType.DESTROY_ENTITY == activityType) {
           Assert.fail("destroy received during a sync of an entity " + syncing);

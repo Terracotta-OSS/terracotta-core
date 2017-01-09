@@ -87,11 +87,9 @@ public class RequestProcessor {
     return token;
   }
   
-  private static byte[] NO_BYTES = new byte[0];
-  
   private static SyncReplicationActivity createReplicationActivity(EntityDescriptor id, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
-    SyncReplicationActivity.ActivityType actionCode = SyncReplicationActivity.ActivityType.NOOP;
+    SyncReplicationActivity.ActivityType actionCode = SyncReplicationActivity.ActivityType.INVALID;
     switch (type) {
       case CREATE_ENTITY:
         actionCode = SyncReplicationActivity.ActivityType.CREATE_ENTITY;
@@ -109,7 +107,7 @@ public class RequestProcessor {
         actionCode = SyncReplicationActivity.ActivityType.INVOKE_ACTION;
         break;
       case ORDER_PLACEHOLDER_ONLY:
-        actionCode = SyncReplicationActivity.ActivityType.NOOP;
+        actionCode = SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER;
         break;
       case RELEASE_ENTITY:
         actionCode = SyncReplicationActivity.ActivityType.RELEASE_ENTITY;
@@ -124,11 +122,18 @@ public class RequestProcessor {
         Assert.fail("Unknown message type: " + type);
         break;
     }
-//  TODO: Evaluate what to replicate...right now, everything is replicated.  Evaluate whether
-//  NOOP should be replicated.  For now, NOOPs hold ordering
-    byte[] bytes = (actionCode != SyncReplicationActivity.ActivityType.NOOP) ? payload.getRawPayload() : NO_BYTES;
     
-    return SyncReplicationActivity.createReplicatedMessage(id, src, tid, oldest, actionCode, bytes, concurrency, payload.getDebugId());
+    // Handle our replicated message creations as special-cases, if they aren't normal invokes.
+    SyncReplicationActivity activity = null;
+    if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == actionCode) {
+      activity = SyncReplicationActivity.createOrderingPlaceholder(id, src, tid, oldest, payload.getDebugId());
+    } else if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN == actionCode) {
+      activity = SyncReplicationActivity.createStartEntityKeyMessage(id.getEntityID(), id.getClientSideVersion(), concurrency);
+    } else {
+      // Normal replication.
+      activity = SyncReplicationActivity.createReplicatedMessage(id, src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+    }
+    return activity;
   }
   
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {

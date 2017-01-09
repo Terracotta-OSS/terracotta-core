@@ -282,7 +282,9 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
 // hasn't been sync'd yet.  state will be captured in sync
               return false;
             }
-          case NOOP:
+          case FLUSH_LOCAL_PIPELINE:
+          case ORDERING_PLACEHOLDER:
+            // TODO: Should we handle this placeholder a different way - excluding it at this level seems counter-intuitive.
             return false;
           case SYNC_START:
             // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
