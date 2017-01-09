@@ -16,8 +16,8 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.api;
+
 
 /**
  * These "actions" represent the superset of "Request.Type" values.
@@ -25,7 +25,10 @@ package com.tc.objectserver.api;
  * This is to loosen the coupling between ServerEntityRequest and Request.
  */
 public enum ServerEntityAction {
-  NOOP,
+  /**
+   * An error value used when the action should not be seen.
+   */
+  INVALID,
   /**
    * Same as Request.Type.
    */
@@ -79,4 +82,22 @@ public enum ServerEntityAction {
    * A synchronized state message on a specific concurrency key within a specific entity instance.
    */
   RECEIVE_SYNC_PAYLOAD,
+  // ***** END: Messages specific to received passive synchronization data *****
+  /**
+   * An action which should never be replicated, just used to synchronize on the flush of local executor queues.
+   */
+  LOCAL_FLUSH,
+  /**
+   * An action which should never be replicated, just used to clean up a deleted entity, after a pipeline flush.
+   */
+  LOCAL_FLUSH_AND_DELETE,
+  /**
+   * An action which should never be replicated, just used to start a synchronization, after a pipeline flush.
+   */
+  LOCAL_FLUSH_AND_SYNC,
+  /**
+   * Used in message replication:  we often don't want to replicate the contents of the message or its intent, just
+   *  information which might be required to correctly order re-sends, after fail-over.
+   */
+  ORDER_PLACEHOLDER_ONLY;
 }

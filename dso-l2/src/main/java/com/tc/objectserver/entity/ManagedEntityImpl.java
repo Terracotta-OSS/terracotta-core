@@ -91,7 +91,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final ITopologyEventCollector eventCollector;
   private final EntityServerService<EntityMessage, EntityResponse> factory;
   // PTH sink so things can be injected into the stream
-  private final BiConsumer<EntityID, Long> noopLoopback;
+  private final BiConsumer<EntityID, Long> flushLocalPipeline;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
   //  for destroy, passives need to reference count to understand if entity is deletable
@@ -117,14 +117,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> loopback, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
+  ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState, int references) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
     this.consumerID = consumerID;
-    this.noopLoopback = loopback;
+    this.flushLocalPipeline = flushLocalPipeline;
     this.registry = registry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -168,9 +168,16 @@ public class ManagedEntityImpl implements ManagedEntity {
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception) {
     ResultCapture resp;
     switch (request.getAction()) {
-      case NOOP:
+      case LOCAL_FLUSH:
+      case LOCAL_FLUSH_AND_DELETE:
+      case ORDER_PLACEHOLDER_ONLY:
         resp = createManagedEntityResponse(completion, exception, request, false);
-        processNoopMessage(request, resp);
+        processLegacyNoopMessage(request, resp);
+        break;
+      case LOCAL_FLUSH_AND_SYNC:
+        // We expect this to be filtered at a higher level.
+        Assert.fail("LOCAL_FLUSH_AND_SYNC should be filtered before reaching this point");
+        resp = null;
         break;
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
@@ -236,8 +243,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
   
-  private void processNoopMessage(ServerEntityRequest request, ResultCapture resp) {
-    Assert.assertTrue(request.getAction() == ServerEntityAction.NOOP);
+  // TODO:  Make sure that this is actually required in the cases where it is called or if some of these sites are
+  //  related to the scope expansion of the legacy "NOOP" request type.
+  private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
     scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, resp, MessagePayload.EMPTY, resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
   
@@ -431,8 +439,12 @@ public class ManagedEntityImpl implements ManagedEntity {
           case RECEIVE_SYNC_PAYLOAD:
             receiveSyncEntityPayload(response, message);
             break;
-          case NOOP:
-            break;
+          case LOCAL_FLUSH:
+          case LOCAL_FLUSH_AND_DELETE:
+          case LOCAL_FLUSH_AND_SYNC:
+          case ORDER_PLACEHOLDER_ONLY:
+            // These types are all for message order - none of them come in through this invoke path.
+            throw new IllegalArgumentException("Flow-only request observed in invoke path: " + request);
           default:
             throw new IllegalArgumentException("Unknown request " + request);
         }
@@ -796,7 +808,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.NOOP, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
+    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
@@ -964,7 +976,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         runnables.clear(); 
   //  there may be no more incoming messages on this entity to clear the 
   //  queue so if it is not empty, push a noop.  
-        noopLoopback.accept(id, version);
+        flushLocalPipeline.accept(id, version);
       }
     }
     

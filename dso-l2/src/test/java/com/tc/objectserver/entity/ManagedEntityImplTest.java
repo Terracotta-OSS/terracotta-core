@@ -135,7 +135,7 @@ public class ManagedEntityImplTest {
     
     Mockito.doAnswer((invocation) -> {
       TestingResponse helper = mockResponse();
-      invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockNoopRequest(), MessagePayload.EMPTY,  helper::complete, helper::failure));
+      invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.EMPTY,  helper::complete, helper::failure));
       return null;
     }).when(loopback).accept(Matchers.any(), Matchers.any());
     
@@ -308,7 +308,7 @@ public class ManagedEntityImplTest {
   @Test
   public void testNoop() throws Exception {
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockNoopRequest(), MessagePayload.EMPTY, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.EMPTY, response::complete, response::failure));
     response.waitFor();
     verify(response).complete(Matchers.any());
   }
@@ -614,7 +614,7 @@ public class ManagedEntityImplTest {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
         TestingResponse response = mockResponse();
-        managedEntity.addRequestMessage(mockNoopRequest(), MessagePayload.EMPTY,  response::complete, response::failure);
+        managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.EMPTY,  response::complete, response::failure);
         return mock(RequestProcessor.EntityRequest.class);
       }
     }).when(loopback).accept(Matchers.any(), Matchers.any());
@@ -815,10 +815,10 @@ public class ManagedEntityImplTest {
     return request;
   }
     
-  private ServerEntityRequest mockNoopRequest() {
+  private ServerEntityRequest mockLocalFlushRequest() {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getSourceDescriptor()).thenReturn(new ClientDescriptorImpl(ClientID.NULL_ID, entityDescriptor));
-    when(request.getAction()).thenReturn(ServerEntityAction.NOOP);
+    when(request.getAction()).thenReturn(ServerEntityAction.LOCAL_FLUSH);
     return request;
   }
 

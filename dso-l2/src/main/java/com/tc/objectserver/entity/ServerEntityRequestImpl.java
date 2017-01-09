@@ -24,13 +24,12 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import java.util.Collections;
+import com.tc.util.Assert;
+
 import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
 
 
-/**
- */
 public class ServerEntityRequestImpl implements ServerEntityRequest {
   
   private final ServerEntityAction action;
@@ -76,7 +75,12 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
 
   @Override
   public Set<NodeID> replicateTo(Set<NodeID> passives) {
-    return (action == ServerEntityAction.NOOP) ? Collections.emptySet() : replicates;
+    // Note that we should be avoiding the decision to replicate messages at a higher-level so filter out any local-only
+    //  operations.
+    Assert.assertFalse((ServerEntityAction.LOCAL_FLUSH == this.action)
+        || (ServerEntityAction.LOCAL_FLUSH_AND_DELETE == this.action)
+        || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == this.action));
+    return this.replicates;
   }
 
 }

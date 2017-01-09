@@ -26,22 +26,16 @@ public class ReplicationReplicateMessageIntent extends ReplicationIntent {
   public static ReplicationReplicateMessageIntent createReplicatedMessageEnvelope(NodeID dest, SyncReplicationActivity activity, Runnable droppedWithoutSend) {
     Assert.assertNotNull(dest);
     Assert.assertNotNull(activity);
-    boolean isReplicatedNoop = (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType());
-    if (isReplicatedNoop) {
-      // This better be a real client (otherwise, the synthetic path should have been used).
-      Assert.assertFalse(activity.getSource().isNull());
-    }
+    // We should never see the FLUSH_LOCAL_PIPELINE in this case (otherwise, the synthetic path should have been used).
+    Assert.assertTrue(SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE != activity.getActivityType());
     return new ReplicationReplicateMessageIntent(dest, activity, null, droppedWithoutSend);
   }
   
   public static ReplicationReplicateMessageIntent createReplicatedMessageDebugEnvelope(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
     Assert.assertNotNull(dest);
     Assert.assertNotNull(activity);
-    boolean isReplicatedNoop = (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType());
-    if (isReplicatedNoop) {
-      // This better be a real client (otherwise, the synthetic path should have been used).
-      Assert.assertFalse(activity.getSource().isNull());
-    }
+    // We should never see the FLUSH_LOCAL_PIPELINE in this case (otherwise, the synthetic path should have been used).
+    Assert.assertTrue(SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE != activity.getActivityType());
     return new ReplicationReplicateMessageIntent(dest, activity, sent, droppedWithoutSend);
   }
 

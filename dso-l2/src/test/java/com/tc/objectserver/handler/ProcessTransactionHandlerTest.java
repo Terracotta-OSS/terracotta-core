@@ -51,7 +51,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.PassiveReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.persistence.EntityData;
@@ -125,7 +125,7 @@ public class ProcessTransactionHandlerTest {
   }
   
   private void sendNoop(EntityID eid, long version) {
-    loopbackSink.addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
+    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
   }
   
   @After

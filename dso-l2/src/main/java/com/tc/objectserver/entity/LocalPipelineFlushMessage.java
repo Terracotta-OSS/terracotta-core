@@ -25,17 +25,17 @@ import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 
+
 /**
  *  This message is use to flush the deferred entity queue.  It is placed in 
  *  at the end of and exclusive entity message execution to flush the deferred queue.  
  *  It runs the entire pipeline but is never scheduled on the request processor by 
  *  ManagedEntityImpl.
  */
-public class NoopEntityMessage implements VoltronEntityMessage {
-  
+public class LocalPipelineFlushMessage implements VoltronEntityMessage {
   private final EntityDescriptor  descriptor;
 
-  public NoopEntityMessage(EntityDescriptor descriptor) {
+  public LocalPipelineFlushMessage(EntityDescriptor descriptor) {
     this.descriptor = descriptor;
   }
   
@@ -62,7 +62,7 @@ public class NoopEntityMessage implements VoltronEntityMessage {
 
   @Override
   public Type getVoltronType() {
-    return Type.NOOP;
+    return Type.LOCAL_PIPELINE_FLUSH;
   }
 
   @Override

@@ -219,14 +219,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     if (!copy.isEmpty()) {
       SyncReplicationActivity.ActivityID activityID = activity.getActivityID();
       waiters.put(activityID, waiter);
-      // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a synthetic noop.
-      boolean isSyntheticNoop = (SyncReplicationActivity.ActivityType.NOOP == activity.getActivityType())
-          && activity.getSource().isNull();
+      // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a local flush
+      //  command.
+      boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
       for (NodeID node : copy) {
         // This is a normal completion.
         boolean isNormalComplete = true;
         Runnable droppedWithoutSend = ()->internalAckCompleted(activityID, node, null, isNormalComplete);
-        if (isSyntheticNoop) {
+        if (isLocalFlush) {
           // We aren't going to send this to the replication sender so just acknowledge that it was dropped without send, here.
           droppedWithoutSend.run();
         } else {

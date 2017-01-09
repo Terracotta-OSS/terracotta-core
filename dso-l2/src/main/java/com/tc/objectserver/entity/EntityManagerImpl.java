@@ -45,7 +45,6 @@ import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 
 
@@ -59,7 +58,7 @@ public class EntityManagerImpl implements EntityManager {
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
   
-  private final BiConsumer<EntityID, Long> noopLoopback;
+  private final BiConsumer<EntityID, Long> flushLocalPipeline;
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
@@ -69,7 +68,7 @@ public class EntityManagerImpl implements EntityManager {
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
       ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
-      RequestProcessor processor, BiConsumer<EntityID, Long> noopLoopback) {
+      RequestProcessor processor, BiConsumer<EntityID, Long> flushLocalPipeline) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
@@ -77,7 +76,7 @@ public class EntityManagerImpl implements EntityManager {
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
     this.creationLoader = Thread.currentThread().getContextClassLoader();
-    this.noopLoopback = noopLoopback;
+    this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), platform);
   }
@@ -121,7 +120,7 @@ public class EntityManagerImpl implements EntityManager {
     Assert.assertTrue(version > 0);
     snapshotLock.acquireUninterruptibly();
     try {
-      ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
+      ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
           clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, references);
       ManagedEntity exists = entities.putIfAbsent(id, temp);
       if (exists == null) {
@@ -137,7 +136,7 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }    
