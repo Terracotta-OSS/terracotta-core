@@ -43,7 +43,7 @@
 
     <terracotta-apis.version>1.2.0-pre6</terracotta-apis.version>
     <terracotta-configuration.version>10.2.0-pre6</terracotta-configuration.version>
-    <galvan.version>1.2.0-pre4</galvan.version>
+    <galvan.version>1.2.0-pre7</galvan.version>
   </properties>
 
   <modules>

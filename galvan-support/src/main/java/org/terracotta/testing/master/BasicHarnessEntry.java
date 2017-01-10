@@ -43,7 +43,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stripeConfiguration.serverStartPort = chooseRandomPortRange(portsRequired);
     stripeConfiguration.serverDebugPortStart = debugOptions.serverDebugPortStart;
     stripeConfiguration.serverStartNumber = 0;
-    stripeConfiguration.isRestartable = harnessOptions.isRestartable;
     stripeConfiguration.extraJarPaths = harnessOptions.extraJarPaths;
     stripeConfiguration.namespaceFragment = harnessOptions.namespaceFragment;
     stripeConfiguration.serviceFragment = harnessOptions.serviceFragment;
