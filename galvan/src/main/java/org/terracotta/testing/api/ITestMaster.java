@@ -41,8 +41,6 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
 
   public int getClientsToStart();
 
-  public boolean isRestartable();
-
   /**
    * The test will be run for each of these server-side cluster configurations.
    */

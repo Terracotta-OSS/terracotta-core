@@ -44,7 +44,6 @@ public class ReadyStripe {
    *  port after the last, starting at this number.  0 means "no debug".
    * @param serverStartNumber The server number to use.  This is so different stripes or configs don't collide with each
    *  other on disk.
-   * @param isRestartable True if the servers in the stripe are restartable.
    * @param extraJarPaths The full paths to additional jars which need to be installed in each server.
    * @param namespaceFragment The namespace declaration string which must be injected into each config.
    * @param serviceFragment The service definition string which must be injected into each config.
@@ -53,7 +52,7 @@ public class ReadyStripe {
    * @throws IOException Thrown in case something went wrong during server installation.
    * @throws GalvanFailureException Thrown in case starting the servers in the stripe experienced a failure.
    */
-  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String kitOriginDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, boolean isRestartable, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException, GalvanFailureException {
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String kitOriginDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException, GalvanFailureException {
     ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -61,9 +60,6 @@ public class ReadyStripe {
     configBuilder.setNamespaceSnippet(namespaceFragment);
     configBuilder.setServiceSnippet(serviceFragment);
     configBuilder.setEntitySnippet(entityFragment);
-    if (isRestartable) {
-      configBuilder.setRestartable();
-    }
     // Create the stripe installer.
     StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, kitOriginDirectory, serverInstallDirectory, extraJarPaths);
     // Configure and install each server in the stripe.
