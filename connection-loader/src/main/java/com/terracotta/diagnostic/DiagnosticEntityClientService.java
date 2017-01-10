@@ -18,7 +18,6 @@
  */
 package com.terracotta.diagnostic;
 
-import com.tc.object.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
@@ -30,10 +29,8 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
-/**
- *
- */
-public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse>{
+
+public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Void>{
 
   @Override
   public boolean handlesEntityType(Class<Diagnostics> type) {
@@ -51,7 +48,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
   }
 
   @Override
-  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece) {
+  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Void ignore) {
     return (Diagnostics)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {Diagnostics.class},
             new java.lang.reflect.InvocationHandler() {
       @Override

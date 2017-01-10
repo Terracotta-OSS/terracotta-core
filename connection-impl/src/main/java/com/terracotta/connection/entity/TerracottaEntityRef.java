@@ -46,19 +46,19 @@ import com.tc.util.Util;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C> {
+public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
   private final static TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
   private final ClientEntityManager entityManager;
   private final Class<T> type;
   private final long version;
   private final String name;
-  private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> entityClientService;
+  private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> entityClientService;
 
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
   private final AtomicLong nextClientInstanceID;
 
   public TerracottaEntityRef(ClientEntityManager entityManager, 
-                             Class<T> type, long version, String name, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> entityClientService,
+                             Class<T> type, long version, String name, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> entityClientService,
                              AtomicLong clientIds) {
     this.entityManager = entityManager;
     this.type = type;
@@ -73,7 +73,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
   }
 
   @Override
-  public synchronized T fetchEntity() throws EntityNotFoundException, EntityVersionMismatchException {
+  public synchronized T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
     EntityClientEndpoint endpoint = null;
     try {
       final ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
@@ -97,7 +97,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     if (endpoint == null) {
       Assert.assertNotNull(endpoint);
     }
-    return (T)entityClientService.create(endpoint);
+    return (T)entityClientService.create(endpoint, userData);
   }
 
   @Override
