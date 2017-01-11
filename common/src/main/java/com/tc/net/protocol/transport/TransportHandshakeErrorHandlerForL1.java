@@ -48,6 +48,8 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
       case TransportHandshakeError.ERROR_STACK_MISMATCH:
       case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
       case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
+      case TransportHandshakeError.ERROR_REDIRECT_CONNECTION:
+      case TransportHandshakeError.ERROR_NONE:
         // no sleep;
         break;
       default:

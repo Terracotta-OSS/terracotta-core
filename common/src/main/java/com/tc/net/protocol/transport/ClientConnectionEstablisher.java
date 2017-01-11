@@ -173,6 +173,13 @@ public class ClientConnectionEstablisher {
 //  need to reset here as redirects are exceptions that clear this flag
         this.allowReconnects.set(true);
         break;
+      } catch (TransportRedirect redirect) {
+        ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), security);
+        if (this.connAddressProvider.add(add)) {
+          info = add;
+        }
+      } catch (NoActiveException noactive) {
+        LOGGER.debug(noactive);
       } catch (TCTimeoutException e) {
           if (!addresses.hasNext()) { throw e; }
       } catch (IOException e) {
@@ -280,6 +287,13 @@ public class ClientConnectionEstablisher {
             cmt.reconnect(connection);
             this.allowReconnects.set(true);
             connected = cmt.getConnectionId().isValid();        
+          } catch (TransportRedirect redirect) {
+            ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), security);
+            if (this.connAddressProvider.add(add)) {
+              target = add;
+            }
+          } catch (NoActiveException noactive) {
+            LOGGER.debug(noactive);
           } catch (MaxConnectionsExceededException e) {
             throw e;
           } catch (ReconnectionRejectedException e) {
@@ -335,6 +349,10 @@ public class ClientConnectionEstablisher {
           connection = connect(sa, cmt);
           cmt.reconnect(connection);
           connected = true;
+        } catch (TransportRedirect redirect) {
+          Assert.fail();
+        } catch (NoActiveException noactive) {
+          Assert.fail();
         } catch (MaxConnectionsExceededException e) {
           callback.restoreConnectionFailed(cmt);
           // DEV-2781

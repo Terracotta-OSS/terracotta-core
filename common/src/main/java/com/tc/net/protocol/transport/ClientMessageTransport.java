@@ -139,6 +139,8 @@ public class ClientMessageTransport extends MessageTransportBase {
       CommStackMismatchException, ReconnectionRejectedException {
     if (result.hasErrorContext()) {
       switch (result.getErrorType()) {
+        case TransportHandshakeError.ERROR_NONE:
+          throw new NoActiveException();
         case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
           cleanConnectionWithoutNotifyListeners();
           throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
@@ -150,6 +152,11 @@ public class ClientMessageTransport extends MessageTransportBase {
           fireTransportReconnectionRejectedEvent();
           throw new ReconnectionRejectedException(
                                                   "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
+        case TransportHandshakeError.ERROR_REDIRECT_CONNECTION:
+          if (this.followRedirects) {
+            throw new TransportRedirect(result.synAck.getErrorContext());
+          }
+          break;
         default:
           throw new TransportHandshakeException("Disconnected due to transport handshake error");
       }

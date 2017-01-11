@@ -65,14 +65,9 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void reset() {
-    init();
-  }
-
-  protected void init() {
     ChannelStatus status = getStatus();
     status.reset();
     this.sendLayer.reset();
-    setLocalNodeID(ClientID.NULL_ID);
   }
 
   @Override
@@ -103,8 +98,12 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
                                                 username, pw, getProductId());
       ((MessageTransport) this.sendLayer).initConnectionID(cid);
       final NetworkStackID id = this.sendLayer.open(info);
-      this.channelID = new ChannelID(id.toLong());
-      setLocalNodeID(new ClientID(id.toLong()));
+      if (id.isValid()) {
+ //  why are all these identifiers intermingled?
+        long validID = id.toLong();
+        this.channelID = new ChannelID(validID);
+        setLocalNodeID(new ClientID(validID));
+      }
       this.channelSessionID = this.sessionProvider.getSessionID();
       channelOpened();
       return id;
@@ -144,11 +143,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    long channelIdLong = transport.getConnectionId().getChannelID();
-    this.channelID = new ChannelID(channelIdLong);
-    setLocalNodeID(new ClientID(channelIdLong));
+    if (transport.getConnectionId().isValid()) {
+      long channelIdLong = transport.getConnectionId().getChannelID();
+      this.channelID = new ChannelID(channelIdLong);
+      setLocalNodeID(new ClientID(channelIdLong));
+      this.connectCount++;
+    }
     super.notifyTransportConnected(transport);
-    this.connectCount++;
   }
 
   @Override

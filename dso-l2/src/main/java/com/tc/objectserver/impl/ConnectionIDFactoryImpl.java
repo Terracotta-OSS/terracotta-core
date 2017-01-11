@@ -51,7 +51,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
-    if (new ChannelID(connectionID.getChannelID()).isNull()) {
+    if (!new ChannelID(connectionID.getChannelID()).isValid()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
     } else {
       return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());

@@ -393,7 +393,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         return rv;
       }
     };
-    ServerStackProvider stackProvider = new ServerStackProvider(initialConnectionIDs, stackHarnessFactory,
+    ServerStackProvider stackProvider = new ServerStackProvider(initialConnectionIDs, activeProvider, stackHarnessFactory,
                                                                 channelFactory, transportFactory,
                                                                 this.transportMessageFactory, connectionIdFactory,
                                                                 this.connectionPolicy,
