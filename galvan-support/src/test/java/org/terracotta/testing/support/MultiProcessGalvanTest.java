@@ -67,11 +67,6 @@ public abstract class MultiProcessGalvanTest extends BasicHarnessTest implements
   }
 
   @Override
-  public boolean isRestartable() {
-    return false;
-  }
-
-  @Override
   public List<BasicTestClusterConfiguration> getRunConfigurations() {
     return Collections.singletonList(new BasicTestClusterConfiguration("Test", 1));
   }
