@@ -103,15 +103,8 @@ public class ServerClientHandshakeManager {
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
           new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
 
-      Collection<ClientServerExchangeLockContext> lockContexts = handshake.getLockContexts();
       if (this.state == State.STARTED) {
         // This is a normal connection handshake, from a new client connecting once the server is up and running.
-        
-        for (final ClientServerExchangeLockContext context : lockContexts) {
-          if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) {
-            throw new ClientHandshakeException("Client " + clientID + " connected after startup should have no existing wait contexts.");
-          }
-        }
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {
         // This is a client reconnecting after a restart.

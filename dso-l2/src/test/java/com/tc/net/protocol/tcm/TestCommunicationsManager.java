@@ -18,14 +18,15 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
+import com.tc.operatorevent.NodeNameProvider;
+import java.util.Collection;
 
 public class TestCommunicationsManager implements CommunicationsManager {
 
@@ -47,53 +48,28 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory, TCMessageFactory msgFactory) {
-    throw new UnsupportedOperationException();
+  public ClientMessageChannel createClientChannel(SessionProvider provider, int maxReconnectTries, int timeout, boolean followRedirects) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider) {
-    throw new UnsupportedOperationException();
+  public ClientMessageChannel createClientChannel(SessionProvider provider, Collection<ConnectionInfo> addressList, int maxReconnectTries, int timeout, boolean followRedirects) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory) {
-    throw new UnsupportedOperationException();
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory, boolean reuseAddress) {
-    throw new UnsupportedOperationException();
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, NodeNameProvider activeNameProvider) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
   public boolean isInShutdown() {
     return this.shutdown;
-  }
-
-  @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory,
-                                        WireProtocolMessageSink wireProtoMsgSink) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

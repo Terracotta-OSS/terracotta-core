@@ -64,6 +64,7 @@ import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -87,12 +88,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, serverPort);
     ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
                                                                       commsMgr.getConnectionManager(),
-                                                                      new ConnectionAddressProvider(
-                                                                                                    new ConnectionInfo[] { connInfo }),
+                                                                      Arrays.asList(new ConnectionInfo[] { connInfo }),
                                                                       0, 1000, ReconnectionRejectedHandlerL1.SINGLETON);
 
     ClientMessageTransport cmt = new ClientMessageTransport(cce, createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
-                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT);
+                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT, true);
     transports.add(cmt);
     return cmt;
   }
@@ -122,7 +122,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy(), 4);
-    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
@@ -132,10 +132,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageTransport client3 = createClient("client3", port);
     ClientMessageTransport client4 = createClient("client4", port);
 
-    client1.open();
-    client2.open();
-    client3.open();
-    client4.open();
+    client1.open(null);
+    client2.open(null);
+    client3.open(null);
+    client4.open(null);
 
     waitForConnected(client1, client2, client3, client4);
     
@@ -170,18 +170,20 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(false),
                                                                    new NullConnectionPolicy(), 3);
-    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
+    
+    ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
 
-    ClientMessageChannel client1 = createClientMsgCh(port, false);
-    ClientMessageChannel client2 = createClientMsgCh(port, false);
-    ClientMessageChannel client3 = createClientMsgCh(port, false);
+    ClientMessageChannel client1 = createClientMsgCh(false);
+    ClientMessageChannel client2 = createClientMsgCh(false);
+    ClientMessageChannel client3 = createClientMsgCh(false);
 
-    client1.open();
-    client2.open();
-    client3.open();
+    client1.open(connectTo);
+    client2.open(connectTo);
+    client3.open(connectTo);
 
     waitForConnected(client1, client2, client3);
 
@@ -197,12 +199,12 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     waitForTotalWeights(commsMgr, 3, 1);
 
-    ClientMessageChannel client4 = createClientMsgCh(port, false);
-    ClientMessageChannel client5 = createClientMsgCh(port, false);
+    ClientMessageChannel client4 = createClientMsgCh(false);
+    ClientMessageChannel client5 = createClientMsgCh(false);
 
     // two clients open new connection
-    client4.open();
-    client5.open();
+    client4.open(connectTo);
+    client5.open(connectTo);
 
     waitForConnected(client4, client5);
 
@@ -224,23 +226,25 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(false),
                                                                    new NullConnectionPolicy(), 3);
-    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
+    
+    ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
 
-    ClientMessageChannel client1 = createClientMsgCh(port, false);
-    ClientMessageChannel client2 = createClientMsgCh(port, false);
-    ClientMessageChannel client3 = createClientMsgCh(port, false);
+    ClientMessageChannel client1 = createClientMsgCh(false);
+    ClientMessageChannel client2 = createClientMsgCh(false);
+    ClientMessageChannel client3 = createClientMsgCh(false);
 
-    client1.open();
+    client1.open(connectTo);
     waitForConnected(client1);
 
     TCConnection conns[] = commsMgr.getConnectionManager().getAllConnections();
     Assert.eval(conns.length == 1);
 
-    client2.open();
-    client3.open();
+    client2.open(connectTo);
+    client3.open(connectTo);
 
     waitForConnected(client2, client3);
 
@@ -249,12 +253,12 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
     conns[0].addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
-    ClientMessageChannel client4 = createClientMsgCh(port, false);
-    ClientMessageChannel client5 = createClientMsgCh(port, false);
+    ClientMessageChannel client4 = createClientMsgCh(false);
+    ClientMessageChannel client5 = createClientMsgCh(false);
 
     // four clients open new connection
-    client4.open();
-    client5.open();
+    client4.open(connectTo);
+    client5.open(connectTo);
 
     waitForConnected(client4, client5);
 
@@ -262,13 +266,13 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
     Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-    ClientMessageChannel client6 = createClientMsgCh(port, false);
-    ClientMessageChannel client7 = createClientMsgCh(port, false);
-    ClientMessageChannel client8 = createClientMsgCh(port, false);
+    ClientMessageChannel client6 = createClientMsgCh(false);
+    ClientMessageChannel client7 = createClientMsgCh(false);
+    ClientMessageChannel client8 = createClientMsgCh(false);
 
-    client6.open();
-    client7.open();
-    client8.open();
+    client6.open(connectTo);
+    client7.open(connectTo);
+    client8.open(connectTo);
 
     waitForConnected(client6, client7, client8);
 
@@ -286,11 +290,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   }
 
-  private ClientMessageChannel createClientMsgCh(int port) {
-    return createClientMsgCh(port, true);
+  private ClientMessageChannel createClientMsgCh() {
+    return createClientMsgCh(true);
   }
 
-  private ClientMessageChannel createClientMsgCh(int port, boolean ooo) {
+  private ClientMessageChannel createClientMsgCh(boolean ooo) {
 
     CommunicationsManager clientComms = new CommunicationsManagerImpl("Client-TestCommsMgr", new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
@@ -299,11 +303,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageChannel clientMsgCh = clientComms
         .createClientChannel(new NullSessionManager(),
                              -1,
-                             "localhost",
-                             port,
-                             1000,
-                             new ConnectionAddressProvider(
-                                                           new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
+                             1000, true);
     return clientMsgCh;
   }
 
@@ -321,7 +321,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new TransportHandshakeErrorNullHandler(),
                                                                    Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                                    Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
-    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
@@ -329,14 +329,16 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     int proxyPort = new PortChooser().chooseRandomPort();
     TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
     proxy.start();
+    
+    ConnectionInfo connectTo = new ConnectionInfo("localhost", proxyPort);
 
-    ClientMessageChannel client1 = createClientMsgCh(proxyPort);
-    ClientMessageChannel client2 = createClientMsgCh(proxyPort);
-    ClientMessageChannel client3 = createClientMsgCh(proxyPort);
+    ClientMessageChannel client1 = createClientMsgCh();
+    ClientMessageChannel client2 = createClientMsgCh();
+    ClientMessageChannel client3 = createClientMsgCh();
 
-    client1.open();
-    client2.open();
-    client3.open();
+    client1.open(connectTo);
+    client2.open(connectTo);
+    client3.open(connectTo);
 
     waitForConnected(client1, client2, client3);
 
@@ -369,13 +371,15 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     // case 3: connecting three more clients through server ports
 
-    ClientMessageChannel client4 = createClientMsgCh(serverPort);
-    ClientMessageChannel client5 = createClientMsgCh(serverPort);
-    ClientMessageChannel client6 = createClientMsgCh(serverPort);
+    ClientMessageChannel client4 = createClientMsgCh();
+    ClientMessageChannel client5 = createClientMsgCh();
+    ClientMessageChannel client6 = createClientMsgCh();
 
-    client4.open();
-    client5.open();
-    client6.open();
+    connectTo = new ConnectionInfo("localhost", serverPort);
+
+    client4.open(connectTo);
+    client5.open(connectTo);
+    client6.open(connectTo);
 
     waitForConnected(client4, client5, client6);
 

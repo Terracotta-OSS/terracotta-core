@@ -24,6 +24,7 @@ import com.tc.net.core.TCListener;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
+import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -44,11 +45,12 @@ class NetworkListenerImpl implements NetworkListener {
   private final boolean reuseAddr;
   private final ConnectionIDFactory connectionIdFactory;
   private final WireProtocolMessageSink wireProtoMsgSnk;
+  private final NodeNameProvider activeProvider;
 
   // this constructor is intentionally not public, only the Comms Manager should be creating them
   NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
                       TCMessageFactory msgFactory, boolean reuseAddr, ConnectionIDFactory connectionIdFactory,
-                      WireProtocolMessageSink wireProtoMsgSnk) {
+                      WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider) {
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
     this.addr = addr;
@@ -56,6 +58,7 @@ class NetworkListenerImpl implements NetworkListener {
     this.wireProtoMsgSnk = wireProtoMsgSnk;
     this.started = false;
     this.reuseAddr = reuseAddr;
+    this.activeProvider = activeProvider;
   }
 
   /**
@@ -66,7 +69,7 @@ class NetworkListenerImpl implements NetworkListener {
    */
   @Override
   public synchronized void start(Set<ConnectionID> initialConnectionIDs) throws IOException {
-    this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs,
+    this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
                                                   this.connectionIdFactory, this.wireProtoMsgSnk);
     this.started = true;
     this.commsMgr.registerListener(this);

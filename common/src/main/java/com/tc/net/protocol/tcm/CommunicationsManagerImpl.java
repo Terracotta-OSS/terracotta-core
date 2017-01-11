@@ -24,9 +24,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
 import com.tc.net.ServerID;
-import com.tc.net.StripeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.Constants;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -47,6 +46,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
+import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL2;
@@ -60,13 +60,19 @@ import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
+import com.tc.object.session.SessionManager;
+import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
+import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import com.tc.util.sequence.Sequence;
+import com.tc.util.sequence.SimpleSequence;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -108,6 +114,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final TransportHandshakeErrorHandler                                 handshakeErrHandler;
   private final String                                                         commsMgrName;
   private final TCSecurityManager                                              securityManager;
+  private final SessionManager                                                 sessionManager = new NullSessionManager();
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -253,33 +260,25 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider) {
-    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, null, null);
-
+  public ClientMessageChannel createClientChannel(SessionProvider sessions, int maxReconnectTries, int timeout, boolean followRedirects) {
+    return createClientChannel(sessions, maxReconnectTries, timeout, followRedirects, null, null, null);
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory) {
-    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
-                               transportFactory, null);
+  public ClientMessageChannel createClientChannel(SessionProvider sessions, Collection<ConnectionInfo> addressList, int maxReconnectTries, int timeout, boolean followRedirects) {
+    return createClientChannel(sessions, maxReconnectTries, timeout, followRedirects, addressList, null, null);
   }
-
-  @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
+  
+  public ClientMessageChannel createClientChannel(SessionProvider sessions, int maxReconnectTries,
+                                                  int timeout, boolean followRedirects, 
+                                                  Collection<ConnectionInfo> addressList,
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory) {
 
     final TCMessageFactory msgFactory;
 
     if (messageFactory == null) {
-      msgFactory = new TCMessageFactoryImpl(sessionProvider, monitor);
+      msgFactory = new TCMessageFactoryImpl(sessions, monitor);
       for (Entry<TCMessageType, Class<? extends TCMessage>> entry : this.messageTypeClassMapping.entrySet()) {
         msgFactory.addClassMapping(entry.getKey(), entry.getValue());
       }
@@ -292,15 +291,14 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       msgFactory = messageFactory;
     }
 
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
-                                                               addressProvider.getSecurityInfo(), securityManager,
-                                                               addressProvider, productId);
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessions, 
+            securityManager, productId);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
-                                                                                     addressProvider,
+                                                                                     addressList,
                                                                                      maxReconnectTries, timeout,
-                                                                                     callbackPort, handshakeErrHandler,
+                                                                                     callbackPort, followRedirects, handshakeErrHandler,
                                                                                      reconnectionRejectedHandler,
                                                                                      securityManager);
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
@@ -313,38 +311,29 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * Creates a network listener with a default network stack.
    */
   @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory) {
-    return createListener(sessionProvider, addr, transportDisconnectRemovesChannel, connectionIdFactory, true);
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
+                                        NodeNameProvider activeNameProvider) {
+    return createListener(addr, transportDisconnectRemovesChannel, new NullConnectionIDFactoryImpl(), true, null, activeNameProvider);
   }
 
   @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory, boolean reuseAddr) {
-    return createListener(sessionProvider, addr, transportDisconnectRemovesChannel, connectionIdFactory, reuseAddr, null);
-  }
-
-  @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory, WireProtocolMessageSink wireProtoMsgSnk) {
-    return createListener(sessionProvider, addr, transportDisconnectRemovesChannel, connectionIdFactory, true, wireProtoMsgSnk);
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,
+          ConnectionIDFactory connectionIdFactory) {
+    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, null);
   }
 
   /**
    * Creates a network listener with a default network stack.
    */
-  private NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
+  NetworkListener createListener(TCSocketAddress addr,
                                          boolean transportDisconnectRemovesChannel,
                                          ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
-                                         WireProtocolMessageSink wireProtoMsgSnk) {
+                                         WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider) {
     if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
     // that is so that you can control the actual class of the channels created off this listener
-    final TCMessageFactory msgFactory = new TCMessageFactoryImpl(sessionProvider, monitor);
+    final TCMessageFactory msgFactory = new TCMessageFactoryImpl(sessionManager, monitor);
 
     for (Entry<TCMessageType, Class<? extends TCMessage>> entry : this.messageTypeClassMapping.entrySet()) {
       msgFactory.addClassMapping(entry.getKey(), entry.getValue());
@@ -370,11 +359,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
     return new NetworkListenerImpl(addr, this, channelManager, msgFactory, reuseAddr,
-                                   connectionIdFactory, wireProtoMsgSnk);
+                                   connectionIdFactory, wireProtoMsgSnk, activeProvider);
   }
 
   TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set<ConnectionID> initialConnectionIDs, ConnectionIDFactory connectionIdFactory,
+                                 boolean resueAddr, Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
@@ -451,8 +440,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       }
 
       TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
-      NetworkListener callbackPortListener = createListener(new NullSessionManager(), address, true,
-                                                            new DefaultConnectionIdFactory());
+      NetworkListener callbackPortListener = createListener(address, true, new DefaultConnectionIdFactory());
       try {
         callbackPortListener.start(Collections.<ConnectionID>emptySet());
         this.callbackPort = callbackPortListener.getBindPort();

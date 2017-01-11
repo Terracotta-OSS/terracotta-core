@@ -28,8 +28,6 @@ public interface ClientMessageChannel extends MessageChannel, ClientIDProvider {
 
   public int getConnectAttemptCount();
 
-  public void reopen() throws Exception;
-
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory();
 
 }

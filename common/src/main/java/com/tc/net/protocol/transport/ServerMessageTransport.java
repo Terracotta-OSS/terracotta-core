@@ -20,6 +20,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackID;
@@ -32,7 +33,7 @@ public class ServerMessageTransport extends MessageTransportBase {
   public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
     super(MessageTransportState.STATE_RESTART, handshakeErrorHandler, messageFactory, true, smtLogger);
-    this.connectionId = connectionID;
+    initConnectionID(connectionID);
   }
 
   /**
@@ -43,7 +44,7 @@ public class ServerMessageTransport extends MessageTransportBase {
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, true, smtLogger);
-    this.connectionId = connectionId;
+    initConnectionID(connectionId);
     Assert.assertNotNull(conn);
     wireNewConnection(conn);
   }
@@ -56,7 +57,7 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(ConnectionInfo info) {
     throw new UnsupportedOperationException("Server transport doesn't support open()");
   }
 
@@ -116,8 +117,8 @@ public class ServerMessageTransport extends MessageTransportBase {
   private void handleAck(TransportHandshakeMessage ack) {
     synchronized (status) {
       Assert.eval(status.isStart());
-      Assert.eval("Wrong connection ID: [" + this.connectionId + "] != [" + ack.getConnectionId() + "]",
-                  this.connectionId.equals(ack.getConnectionId()));
+      Assert.eval("Wrong connection ID: [" + getConnectionId() + "] != [" + ack.getConnectionId() + "]",
+                  !getConnectionId().isValid() || getConnectionId().equals(ack.getConnectionId()));
       status.established();
       ack.getSource().setTransportEstablished();
     }

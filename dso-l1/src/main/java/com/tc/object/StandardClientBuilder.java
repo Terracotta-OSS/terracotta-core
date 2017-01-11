@@ -22,7 +22,6 @@ import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -46,6 +45,8 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
+import java.util.Arrays;
+import java.util.Collection;
 
 import java.util.Map;
 
@@ -56,14 +57,14 @@ public class StandardClientBuilder implements ClientBuilder {
                                                          PreparedComponentsFromL2Connection connComp,
                                                          SessionProvider sessionProvider, int maxReconnectTries,
                                                          int socketConnectTimeout, TCClient client) {
-    final ConnectionAddressProvider cap = createConnectionAddressProvider(connComp);
-    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0, socketConnectTimeout, cap);
+    final Collection<ConnectionInfo> cap = createConnectionAddressProvider(connComp);
+    return commMgr.createClientChannel(sessionProvider, cap, maxReconnectTries, socketConnectTimeout, true);
   }
 
-  protected ConnectionAddressProvider createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
+  protected Collection<ConnectionInfo> createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
     final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
     final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    final ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
+    final Collection<ConnectionInfo> cap = Arrays.asList(connectionInfo);
     return cap;
   }
 

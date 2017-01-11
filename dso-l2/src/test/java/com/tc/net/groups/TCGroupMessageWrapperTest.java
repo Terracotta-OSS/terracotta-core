@@ -24,7 +24,6 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ChannelManager;
@@ -133,8 +132,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                                                       }
                                                                                     }
                                                                                   });
-    NetworkListener lsnr = serverComms.createListener(sessionManager,
-                                                      new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
+    NetworkListener lsnr = serverComms.createListener(new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
                                                       new DefaultConnectionIdFactory());
 
     lsnr.start(new HashSet<ConnectionID>());
@@ -146,13 +144,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
     clientComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel = clientComms
         .createClientChannel(sessionManager,
-                             0,
-                             TCSocketAddress.LOOPBACK_IP,
-                             lsnr.getBindPort(),
-                             3000,
-                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(LOCALHOST, lsnr
-                                 .getBindPort()) }));
-    channel.open();
+                             0, 3000, true);
+    channel.open(new ConnectionInfo(LOCALHOST, lsnr.getBindPort()));
 
     assertTrue(channel.isConnected());
 

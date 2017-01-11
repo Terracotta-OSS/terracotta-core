@@ -294,12 +294,6 @@ public class DistributedObjectClient implements TCClient {
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
-    final ConnectionInfoConfig connectionInfoItems = this.connectionComponents
-        .createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = connectionInfoItems.getConnectionInfos();
-    final String serverHost = connectionInfo[0].getHostname();
-    final int serverPort = connectionInfo[0].getPort();
-
     clusterEventsStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE, ClusterInternalEventsContext.class, new ClusterInternalEventsHandler<ClusterInternalEventsContext>(cluster), 1, maxSize);
 
     final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
@@ -369,7 +363,7 @@ public class DistributedObjectClient implements TCClient {
         public void run() {
           while (!clientStopped.isSet()) {
             try {
-              openChannel(serverHost, serverPort);
+              openChannel();
               waitForHandshake();
               connectionMade();
               break;
@@ -401,7 +395,13 @@ public class DistributedObjectClient implements TCClient {
     return connectionMade.isSet();
   }
 
-  private void openChannel(String serverHost, int serverPort) throws InterruptedException {
+  private void openChannel() throws InterruptedException {
+    String hostname;
+    int port;
+    ConnectionInfo info = this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos()[0];
+
+    hostname = info.getHostname();
+    port = info.getPort();
     synchronized(clientStopped) {
       while (!clientStopped.isSet()) {
         try {
@@ -409,11 +409,11 @@ public class DistributedObjectClient implements TCClient {
           final char[] pw;
           if (config.getSecurityInfo().hasCredentials()) {
             Assert.assertNotNull(securityManager);
-            pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), serverHost, serverPort);
+            pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), hostname, port);
           } else {
             pw = null;
           }
-          this.channel.open(pw);
+          this.channel.open(info, pw);
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
@@ -431,7 +431,7 @@ public class DistributedObjectClient implements TCClient {
           CONSOLE_LOGGER.fatal(e.getMessage());
           throw new IllegalStateException(e.getMessage(), e);
         } catch (final IOException ioe) {
-          CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
+          CONSOLE_LOGGER.warn("IOException connecting to server: " + hostname + ":" + port + ". "
                               + ioe.getMessage());
           clientStopped.wait(5000);
         }

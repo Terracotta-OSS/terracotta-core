@@ -26,6 +26,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -131,12 +132,12 @@ public class MockMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(ConnectionInfo info) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public NetworkStackID open(char[] password) {
+  public NetworkStackID open(ConnectionInfo info, char[] password) {
     throw new UnsupportedOperationException();
   }
 

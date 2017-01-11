@@ -537,8 +537,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
-    this.l1Listener = this.communicationsManager.createListener(sessionManager,
-                                                                new TCSocketAddress(dsoBind, serverPort), true,
+    this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
 
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
