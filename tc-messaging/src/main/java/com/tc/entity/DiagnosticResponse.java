@@ -17,25 +17,19 @@
  *
  */
 
-package com.tc.util;
+package com.tc.entity;
+
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.object.tx.TransactionID;
+
 
 /**
- * @author tim
+ * The generic super-interface for the entity response types since SEDA requires that each thread only process one type of message.
+ * This means that the caller needs to down-cast to the specific sub-type, cased on getAckType.
+ * In the future, it would be ideal to remove this in favor of a different SEDA implementation.
  */
-public enum ProductID {
-  DIAGNOSTIC(true), TMS(true), WAN(true), USER(false);
-
-  private final boolean internal;
-
-  ProductID(boolean internal) {
-    this.internal = internal;
-  }
-
-  public boolean isInternal() {
-    return internal;
-  }
-  
-  public String toString() {
-    return name().charAt(0) + name().substring(1).toLowerCase();
-  }
+public interface DiagnosticResponse extends TCMessage, VoltronEntityResponse {
+  TransactionID getTransactionID();
+  byte[] getResponse();
+  void setResponse(TransactionID tid, byte[] value);
 }

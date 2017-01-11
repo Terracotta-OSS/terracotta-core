@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object;
+package com.terracotta.diagnostic;
 
 import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
@@ -36,6 +36,8 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
+import com.tc.object.ClientBuilder;
+import com.tc.object.ClientEntityManager;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -47,26 +49,28 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 import java.util.Map;
 import java.util.Set;
 
 
-public class StandardClientBuilder implements ClientBuilder {
+public class DiagnosticClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          PreparedComponentsFromL2Connection connComp,
                                                          SessionProvider sessionProvider, int maxReconnectTries,
                                                          int socketConnectTimeout, TCClient client) {
     final Collection<ConnectionInfo> cap = createConnectionAddressProvider(connComp);
-    return commMgr.createClientChannel(sessionProvider, cap, maxReconnectTries, socketConnectTimeout, true);
+    return commMgr.createClientChannel(sessionProvider, cap, maxReconnectTries, socketConnectTimeout, false);
   }
-
-  protected Collection<ConnectionInfo> createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
+  
+  private Collection<ConnectionInfo> createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
     final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
     final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    final Collection<ConnectionInfo> cap = Arrays.asList(connectionInfo);
-    return cap;
+    Set<ConnectionInfo> set = new LinkedHashSet<ConnectionInfo>();
+    set.addAll(Arrays.asList(connectionInfo));
+    return set;
   }
 
   @Override
@@ -91,7 +95,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                                              String name, 
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity, false);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity, true);
   }
 
   @Override
@@ -101,7 +105,7 @@ public class StandardClientBuilder implements ClientBuilder {
 
   @Override
   public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
-    return new ClientEntityManagerImpl(channel, stages);
+    return new DiagnosticClientEntityManager(channel);
   }
 
 }

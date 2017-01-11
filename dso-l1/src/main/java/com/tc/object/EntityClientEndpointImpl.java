@@ -58,7 +58,6 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     this.invocationHandler = invocationHandler;
     this.configuration = entityConfiguration;
     this.codec = codec;
-    Assert.assertNotNull("Endpoint didn't have close hook", closeHook);
     this.closeHook = closeHook;
     // We start in the open state.
     this.isOpen = true;
@@ -209,7 +208,9 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   public void close() {
     // We can't close twice.
     checkEndpointOpen();
-    this.closeHook.run();
+    if (this.closeHook != null) {
+      this.closeHook.run();
+    }
     // We also need to invalidate ourselves so we don't continue allowing new messages through when disconnecting.
     this.isOpen = false;
   }

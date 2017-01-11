@@ -176,10 +176,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient) {
+  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient, boolean isDiagnosticClient) {
     final ClientHandshakeMessage rv = (ClientHandshakeMessage) createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     rv.setClientVersion(clientVersion);
     rv.setEnterpriseClient(isEnterpriseClient);
+    rv.setDiagnosticClient(isDiagnosticClient);
     rv.setClientPID(getPID());
     rv.setUUID(uuid);
     rv.setName(name);

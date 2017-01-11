@@ -44,20 +44,25 @@ import org.terracotta.connection.ConnectionPropertyNames;
 
 public class DistributedObjectClientFactory {
   private final List<String> stripeMemberUris;
+  private final ClientBuilder builder;
   private final TCSecurityManager securityManager;
   private final SecurityInfo      securityInfo;
   private final ProductID         productId;
   private final Properties        properties;
+  private final boolean           diagnostic;
 
-  public DistributedObjectClientFactory(List<String> stripeMemberUris, TCSecurityManager securityManager,
+  public DistributedObjectClientFactory(List<String> stripeMemberUris, ClientBuilder builder, TCSecurityManager securityManager,
                                         SecurityInfo securityInfo, 
                                         ProductID productId,
-                                        Properties properties) {
+                                        Properties properties,
+                                        boolean diagnostic) {
     this.stripeMemberUris = stripeMemberUris;
+    this.builder = builder;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
     this.productId = productId;
     this.properties = properties;
+    this.diagnostic = diagnostic;
   }
 
   public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
@@ -94,10 +99,10 @@ public class DistributedObjectClientFactory {
     String uuid = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_UUID, UUID.getUUID().toString());
     String name = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME, "");
     
-    DistributedObjectClient client = ClientFactory.createClient(configHelper, group, connectionComponents, cluster, securityManager,
+    DistributedObjectClient client = ClientFactory.createClient(configHelper, builder, group, connectionComponents, cluster, securityManager,
         uuid,
         name,
-        productId);
+        productId,  this.diagnostic);
 
     try {
       client.start();

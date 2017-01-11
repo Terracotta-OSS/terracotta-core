@@ -32,7 +32,6 @@ import com.tc.util.Util;
 import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
 import com.tcclient.cluster.ClusterInternalEventsGun;
-import java.io.IOException;
 
 /**
  * This class has been changed to be heavily synchronized. This is in attempt to 
@@ -53,6 +52,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private static final TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
   private final ClientHandshakeCallback callBacks;
+  private final boolean diagnostic;
   private final ClientHandshakeMessageFactory chmf;
   private final TCLogger logger;
   private final SessionManager sessionManager;
@@ -71,7 +71,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public ClientHandshakeManagerImpl(TCLogger logger, ClientHandshakeMessageFactory chmf,
                                     SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
                                     String uuid, String name, String clientVersion,
-                                    ClientHandshakeCallback entities) {
+                                    ClientHandshakeCallback entities, boolean diagnostic) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
@@ -80,6 +80,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.name = name;
     this.clientVersion = clientVersion;
     this.callBacks = entities;
+    this.diagnostic = diagnostic;
     this.state = State.PAUSED;
     this.disconnected = true;
     pauseCallbacks();
@@ -109,7 +110,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     ClientHandshakeMessage handshakeMessage;
 
     changeToStarting();
-    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient());
+    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient(), diagnostic);
     notifyCallbackOnHandshake(handshakeMessage);
 
     this.logger.info("Sending handshake message");

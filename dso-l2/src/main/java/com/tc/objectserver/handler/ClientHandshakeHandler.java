@@ -20,9 +20,11 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.objectserver.api.EntityManager;
@@ -49,6 +51,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   private static final TCLogger        LOGGER                     = TCLogging.getLogger(ClientHandshakeHandler.class);
 
   private ServerClientHandshakeManager handshakeManager;
+  private StateManager                 stateManager;
   private final String                 serverName;
   private final EntityManager          entityManager;
   private final ProcessTransactionHandler transactionHandler;
@@ -62,10 +65,18 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     try {
-      NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
-      checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
-      checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
-      this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
+      if (stateManager.isActiveCoordinator()) {
+        NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
+        checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
+        checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
+        this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
+      } else {
+        if (clientMsg.diagnosticClient()) {
+          this.handshakeManager.notifyDiagnosticClient(clientMsg);
+        } else {
+          this.handshakeManager.notifyClientRefused(clientMsg, "do not handshake with passive");
+        }
+      }
     } catch (ClientHandshakeException e) {
       getLogger().error("Handshake Error : ", e);
       MessageChannel c = clientMsg.getChannel();
@@ -129,6 +140,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
     super.initialize(ctxt);
     ServerConfigurationContext scc = ((ServerConfigurationContext) ctxt);
     this.handshakeManager = scc.getClientHandshakeManager();
+    this.stateManager = scc.getL2Coordinator().getStateManager();
   }
 
 }

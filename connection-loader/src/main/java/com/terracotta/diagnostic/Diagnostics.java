@@ -16,26 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.terracotta.diagnostic;
 
-package com.tc.util;
+import org.terracotta.connection.entity.Entity;
 
-/**
- * @author tim
- */
-public enum ProductID {
-  DIAGNOSTIC(true), TMS(true), WAN(true), USER(false);
 
-  private final boolean internal;
-
-  ProductID(boolean internal) {
-    this.internal = internal;
-  }
-
-  public boolean isInternal() {
-    return internal;
-  }
+public interface Diagnostics extends Entity {
+  String getState();
   
-  public String toString() {
-    return name().charAt(0) + name().substring(1).toLowerCase();
-  }
+  String getClusterState();  
 }

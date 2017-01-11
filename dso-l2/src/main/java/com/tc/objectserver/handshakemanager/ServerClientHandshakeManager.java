@@ -27,11 +27,12 @@ import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.ClientEntityReferenceContext;
+import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
@@ -42,8 +43,8 @@ import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -159,6 +160,13 @@ public class ServerClientHandshakeManager {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
     this.channelManager.makeChannelRefuse(clientID, message);
   }
+  
+  public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
+    final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
+    ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
+    ack.initialize(false, Collections.emptySet(), clientID, ProductInfo.getInstance().version());
+    ack.send();
+  }  
 
   private void sendAckMessageFor(ClientID clientID) {
     this.logger.info("Sending handshake acknowledgement to " + clientID);
