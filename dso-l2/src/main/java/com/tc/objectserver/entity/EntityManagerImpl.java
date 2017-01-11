@@ -32,6 +32,8 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
+import com.tc.services.ToStringStateDumper;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -265,6 +267,13 @@ public class EntityManagerImpl implements EntityManager {
       EntityID entityID = entry.getKey();
       entry.getValue().dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
     }
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    ToStringStateDumper dump = new ToStringStateDumper("entities");
+    dumpStateTo(dump);
+    return out.println(dump);
   }
 }
 

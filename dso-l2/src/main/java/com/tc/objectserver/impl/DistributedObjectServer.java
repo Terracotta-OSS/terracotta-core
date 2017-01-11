@@ -366,7 +366,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     pp.println();
     this.l2Coordinator.prettyPrint(pp);
     pp.println();
-
+    this.entityManager.prettyPrint(pp);
+    pp.println();
+    this.serviceRegistry.prettyPrint(pp);
+    pp.println();
     return bytes.toByteArray();
   }
 
