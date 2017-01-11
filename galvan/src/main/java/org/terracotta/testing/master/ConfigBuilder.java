@@ -37,7 +37,6 @@ public class ConfigBuilder {
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
   private String entityXMLSnippet;
-  private boolean isRestartable;
   
   private ConfigBuilder(ContextualLogger logger, int startPort) {
     this.logger = logger;
@@ -68,39 +67,15 @@ public class ConfigBuilder {
     this.entityXMLSnippet = entityFragment;
     return this;
   }
-  
-  public ConfigBuilder setRestartable() {
-    this.isRestartable = true;
-    this.logger.output("Config set restartable");
-    return this;
-  }
 
   public String buildConfig() {
-    // We need to specialize a few things to maintain our old config structure since the other galvan classes expect restartable to be a special thing.
-    String restartableNamepsaceSnippet = "";
-    String restartableServiceSnippet = "";
-    if (this.isRestartable) {
-      // Note that the restartable service needs to inject the server name at the end.
-      String restartableDirectory = "terracotta-kit-test/restart-data";
-      restartableNamepsaceSnippet = "xmlns:restartable-platform-persistence=\"http://www.terracotta.org/config/restartable-platform-persistence\"";
-      restartableServiceSnippet
-          = "<service>\n"
-          + " <restartable-platform-persistence:restartable-platform-persistence>\n"
-          + "  <restartable-platform-persistence:path>" + restartableDirectory + "</restartable-platform-persistence:path>\n"
-          + " </restartable-platform-persistence:restartable-platform-persistence>\n"
-          + "</service>\n"
-          ;
-    }
-    
     // Now, on to the common case of the config builder.
-    String namespaces = restartableNamepsaceSnippet + " "
-        + ((null != this.xmlNamespaceFragment) ? this.xmlNamespaceFragment : "");
+    String namespaces = ((null != this.xmlNamespaceFragment) ? this.xmlNamespaceFragment : "");
     
     String pre = 
           "<tc-config xmlns=\"http://www.terracotta.org/config\" " + namespaces + ">\n"
         + "  <plugins>\n";
-    String services = restartableServiceSnippet
-        + ((null != this.serviceXMLSnippet) ? this.serviceXMLSnippet : "");
+    String services = ((null != this.serviceXMLSnippet) ? this.serviceXMLSnippet : "");
     String postservices =
           "  </plugins>\n"
         + "  <entities>\n";

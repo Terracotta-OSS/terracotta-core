@@ -65,7 +65,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     FileHelpers.cleanDirectory(fileHelperLogger, environmentOptions.testParentDirectory);
     // Put together the config for the stripe.
     String testClassName = master.getTestClassName();
-    boolean isRestartable = master.isRestartable();
     // Note that we want to uniquify the JAR list since different packaging options might result in the test config
     // redundantly specifying JARs.
     // First, however, make sure that there are no nulls in the list (since that implies we failed to look something up).
@@ -92,7 +91,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.clientsToCreate = clientsToCreate;
       harnessOptions.testClassName = testClassName;
       harnessOptions.errorClassName = master.getClientErrorHandlerClassName();
-      harnessOptions.isRestartable = isRestartable;
       harnessOptions.extraJarPaths = extraJarPaths;
       harnessOptions.namespaceFragment = namespaceFragment;
       harnessOptions.serviceFragment = serviceFragment;
@@ -140,7 +138,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String testClassName;
     public String errorClassName;
     public int serverHeapInM;
-    public boolean isRestartable;
     public List<String> extraJarPaths;
     public String namespaceFragment;
     public String serviceFragment;
