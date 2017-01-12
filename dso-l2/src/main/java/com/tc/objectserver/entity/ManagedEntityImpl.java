@@ -853,6 +853,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     interop.startSync();
   }
 
+  @Override
+  public long getConsumerID() {
+    return this.consumerID;
+  }
+
+
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     this.constructorInfo = constructorInfo;
     // Create the appropriate kind of entity, based on our active/passive state.
