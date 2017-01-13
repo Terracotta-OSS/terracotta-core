@@ -1,5 +1,7 @@
 package org.terracotta.passthrough;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import org.terracotta.monitoring.PlatformService;
 
 /**
@@ -17,4 +19,11 @@ public class PassthroughPlatformService implements PlatformService {
     public void dumpPlatformState() {
         passthroughDumper.dump();
     }
+
+    @Override
+    public InputStream getPlatformConfiguration() {
+      return new ByteArrayInputStream(new byte[0]);
+    }
+    
+    
 }
