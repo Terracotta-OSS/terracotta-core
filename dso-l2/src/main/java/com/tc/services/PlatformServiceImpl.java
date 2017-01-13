@@ -1,6 +1,8 @@
 package com.tc.services;
 
 import com.tc.management.beans.TCDumper;
+import com.tc.server.TCServerMain;
+import java.io.InputStream;
 import org.terracotta.monitoring.PlatformService;
 
 /**
@@ -17,5 +19,10 @@ public class PlatformServiceImpl implements PlatformService {
     @Override
     public void dumpPlatformState() {
         this.tcDumper.dump();
+    }
+    
+    @Override
+    public InputStream getPlatformConfiguration() {
+      return TCServerMain.getSetupManager().rawConfigFile();
     }
 }
