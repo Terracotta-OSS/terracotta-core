@@ -22,7 +22,6 @@ import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -38,8 +37,6 @@ import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.ClientBuilder;
 import com.tc.object.ClientEntityManager;
-import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -47,30 +44,16 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 
 import java.util.Map;
-import java.util.Set;
 
 
 public class DiagnosticClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         PreparedComponentsFromL2Connection connComp,
                                                          SessionProvider sessionProvider, int maxReconnectTries,
                                                          int socketConnectTimeout, TCClient client) {
-    final Collection<ConnectionInfo> cap = createConnectionAddressProvider(connComp);
-    return commMgr.createClientChannel(sessionProvider, cap, maxReconnectTries, socketConnectTimeout, false);
-  }
-  
-  private Collection<ConnectionInfo> createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
-    final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    Set<ConnectionInfo> set = new LinkedHashSet<ConnectionInfo>();
-    set.addAll(Arrays.asList(connectionInfo));
-    return set;
+    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, socketConnectTimeout, false);
   }
 
   @Override

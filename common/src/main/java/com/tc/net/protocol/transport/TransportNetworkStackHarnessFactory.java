@@ -18,11 +18,19 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.AbstractNetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
+import com.tc.util.TCTimeoutException;
+import java.io.IOException;
+import java.util.Collection;
 
 public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
@@ -51,19 +59,13 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
     }
 
     @Override
-    protected void connectStack() {
+    protected void connectStack(boolean isClientStack) {
+      super.connectStack(isClientStack);
+      //  disconnect the receive layer, nothing comes in here
       transport.setReceiveLayer(null);
-
-      // XXX: this is super ugly, but...
-      if (transport instanceof ClientMessageTransport) {
-        ClientMessageTransport cmt = (ClientMessageTransport) transport;
-        ClientConnectionEstablisher cce = cmt.getConnectionEstablisher();
-        ConnectionWatcher cw = new ConnectionWatcher(cmt, channel, cce);
-        transport.addTransportListener(cw);
-      } else {
-        transport.addTransportListener(channel);
-      }
     }
+    
+    
 
     @Override
     protected void createIntermediateLayers() {

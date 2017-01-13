@@ -26,23 +26,22 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.StripeID;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
-import com.tc.security.PwProvider;
-import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
+import java.util.Collection;
 
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
@@ -52,15 +51,19 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private int                             connectCount;
   private volatile ChannelID              channelID = ChannelID.NULL_ID;
   private final SessionProvider           sessionProvider;
-  private final PwProvider                pwProvider;
+  private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, PwProvider pwProvider, ProductID productId) {
+                                     SessionProvider sessionProvider, ProductID productId) {
     super(router, logger, msgFactory, StripeID.NULL_ID, productId);
-    this.pwProvider = pwProvider;
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider();
+  }
+
+  @Override
+  public void setMessageTransportInitiator(MessageTransportInitiator initiator) {
+    this.initiator = initiator;
   }
 
   @Override
@@ -71,33 +74,24 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public NetworkStackID open(ConnectionInfo info) throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(Collection<ConnectionInfo> info) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    return open(info, null);
+    return open(info, null, null);
   }
 
   @Override
-  public NetworkStackID open(ConnectionInfo info, char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
-      String username = null;
-      SecurityInfo securityInfo = null;
-      if (info != null) {
-        securityInfo = info.getSecurityInfo();
-      }
-      if (securityInfo != null && securityInfo.hasCredentials()) {
-        username = securityInfo.getUsername();
-        Assert.assertNotNull("TCSecurityManager", pwProvider);
-        Assert.assertNotNull("Password", pw);
-      }
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
                                                 username, pw, getProductId());
-      ((MessageTransport) this.sendLayer).initConnectionID(cid);
-      final NetworkStackID id = this.sendLayer.open(info);
+      
+      final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
+      
       if (id.isValid()) {
  //  why are all these identifiers intermingled?
         long validID = id.toLong();

@@ -122,7 +122,7 @@ try {
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
-    this.clientChannel = createClientMessageChannel(maxReconnectTries, new ConnectionInfo[] {});
+    this.clientChannel = createClientMessageChannel(maxReconnectTries);
     this.setUpClientReceiveSink();
 } catch (Exception ex) {
   ex.printStackTrace();
@@ -142,7 +142,7 @@ try {
             @Override
             public void putMessage(TCMessage message)
                 throws UnsupportedMessageTypeException {
-              // System.out.println(message);
+              //System.out.println(message);
 
               PingMessage ping = (PingMessage) message;
               try {
@@ -205,7 +205,7 @@ try {
       e.printStackTrace();
     }
     String key = "key";
-    MessageChannel channel = createClientMessageChannel(10, new ConnectionInfo[] {});
+    MessageChannel channel = createClientMessageChannel(10);
     assertNull(channel.getAttachment(key));
     assertNull(channel.removeAttachment(key));
 
@@ -259,7 +259,7 @@ try {
     clientChannel = null;
   }
 
-  public void testClientSwithOver() throws Exception {
+  public void testClientSwitchOver() throws Exception {
 
     clientWatcher = new MessageSendAndReceiveWatcher();
     serverWatcher = new MessageSendAndReceiveWatcher();
@@ -274,10 +274,10 @@ try {
                                                                        new PlainNetworkStackHarnessFactory(),
                                                                        new NullConnectionPolicy(), 0);
 
-    addCommsMappingAndRouting(clientWatcher, serverWatcher, true, serverComms1);
+    addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms1);
     NetworkListener lsnr1 = getListener(clientWatcher, serverWatcher, true, serverComms1);
 
-    addCommsMappingAndRouting(clientWatcher, serverWatcher, false, serverComms2);
+    addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms2);
     NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
 
     CommunicationsManager clComms = new CommunicationsManagerImpl("TestCommMgr-client", mm,
@@ -285,11 +285,10 @@ try {
                                                                   new NullConnectionPolicy(), 0);
 
     this.setUpClientReceiveSink();
-    this.clientChannel = createClientMessageChannel(clComms, -1, new ConnectionInfo[] {
-        new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort()) });
+    this.clientChannel = createClientMessageChannel(clComms, -1);
 
     try {
-      clientChannel.open(null);
+      clientChannel.open(Arrays.asList(new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort())));
     } catch (TCTimeoutException e) {
       Assert.eval("This is not suppose to happen", false);
     }
@@ -322,7 +321,7 @@ try {
   }
 
   private void addCommsMappingAndRouting(final MessageSendAndReceiveWatcher clientWatcher2,
-                                         final MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
+                                         final MessageSendAndReceiveWatcher serverWatcher2,
                                          CommunicationsManager serverComms1) {
     serverComms1.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ((CommunicationsManagerImpl) serverComms1).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
@@ -330,7 +329,7 @@ try {
           @Override
           public void putMessage(TCMessage message)
               throws UnsupportedMessageTypeException {
-            // System.out.println(message);
+            //System.out.println(message);
 
             PingMessage ping = (PingMessage)message;
             try {
@@ -562,14 +561,14 @@ try {
       i++;
     }
   }
-
-  private ClientMessageChannel createClientMessageChannel(int maxReconnectTries, ConnectionInfo[] infos) {
-    return createClientMessageChannel(clientComms, maxReconnectTries, infos);
+  
+  private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
+    return createClientMessageChannel(clientComms, maxReconnectTries);
   }
 
-  private ClientMessageChannel createClientMessageChannel(CommunicationsManager clComms, int maxReconnectTries, ConnectionInfo[] infos) {
+  private ClientMessageChannel createClientMessageChannel(CommunicationsManager clComms, int maxReconnectTries) {
     clComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    ClientMessageChannel ch = clComms.createClientChannel(new NullSessionManager(), Arrays.asList(infos), maxReconnectTries, WAIT, true);
+    ClientMessageChannel ch = clientComms.createClientChannel(new NullSessionManager(), maxReconnectTries, WAIT, true);
     return ch;
   }
 

@@ -86,13 +86,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy());
 
     final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, serverPort);
-    ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
-                                                                      commsMgr.getConnectionManager(),
-                                                                      Arrays.asList(new ConnectionInfo[] { connInfo }),
-                                                                      0, 1000, ReconnectionRejectedHandlerL1.SINGLETON);
+    ClientConnectionEstablisher cce = new ClientConnectionEstablisher(0, ReconnectionRejectedHandlerL1.SINGLETON);
 
-    ClientMessageTransport cmt = new ClientMessageTransport(cce, createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
-                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT, true);
+    ClientMessageTransport cmt = new ClientMessageTransport(commsMgr.getConnectionManager(), createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
+                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT, 1000, true);
     transports.add(cmt);
     return cmt;
   }

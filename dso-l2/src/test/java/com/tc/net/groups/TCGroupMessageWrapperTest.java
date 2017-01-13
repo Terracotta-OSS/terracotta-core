@@ -145,7 +145,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     channel = clientComms
         .createClientChannel(sessionManager,
                              0, 3000, true);
-    channel.open(new ConnectionInfo(LOCALHOST, lsnr.getBindPort()));
+    channel.open(Collections.singleton(new ConnectionInfo(LOCALHOST, lsnr.getBindPort())));
 
     assertTrue(channel.isConnected());
 

@@ -16,23 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.tc.net.protocol.transport;
 
-public class ConnectionAddressIterator {
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.core.ConnectionInfo;
+import com.tc.net.protocol.NetworkStackID;
+import com.tc.util.TCTimeoutException;
+import java.io.IOException;
+import java.util.Collection;
 
-  private final ConnectionInfo[] cis;
-  private int                    current = -1;
-
-  public ConnectionAddressIterator(ConnectionInfo[] cis) {
-    this.cis = cis;
-  }
-
-  public boolean hasNext() {
-    return current < (cis.length - 1);
-  }
-
-  public ConnectionInfo next() {
-    if (!hasNext()) return null;
-    return cis[++current];
-  }
+/**
+ *
+ */
+public interface MessageTransportInitiator {
+  NetworkStackID openMessageTransport(Collection<ConnectionInfo> dest, ConnectionID connection)  throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException;
 }

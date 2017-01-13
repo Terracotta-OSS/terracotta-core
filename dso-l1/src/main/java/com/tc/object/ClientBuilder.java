@@ -33,7 +33,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
@@ -46,7 +45,6 @@ import java.util.Map;
 
 public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                     PreparedComponentsFromL2Connection connComp,
                                                      SessionProvider sessionProvider, int maxReconnectTries,
                                                      int socketConnectTimeout, TCClient client);
 

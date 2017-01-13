@@ -594,7 +594,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return groupResponse;
   }
 
-  private void openChannel(ConnectionInfo info, ChannelEventListener listener, char[] password)
+  private void openChannel(ConnectionInfo info, ChannelEventListener listener, String username, char[] password)
       throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
@@ -613,7 +613,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0 /* no reconnect */, 10000 /*  timeout */, false /* no redirects */);
 
     channel.addListener(listener);
-    channel.open(info, password);
+    channel.open(Collections.singleton(info), username, password);
 
     handshake(channel);
     return;
@@ -621,6 +621,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       UnknownHostException, MaxConnectionsExceededException, IOException, CommStackMismatchException {
+    final String username = (securityManager == null) ? null : securityManager.getIntraL2Username();
     final char[] password;
     final SecurityInfo securityInfo;
     if (isSecured()) {
@@ -630,7 +631,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       password = null;
       securityInfo = new SecurityInfo();
     }
-    openChannel(new ConnectionInfo(hostname, port, securityInfo), listener, password);
+    openChannel(new ConnectionInfo(hostname, port, securityInfo), listener, username, password);
   }
 
   private boolean isSecured() {

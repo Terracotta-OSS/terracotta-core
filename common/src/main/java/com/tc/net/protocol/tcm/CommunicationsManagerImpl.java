@@ -34,6 +34,8 @@ import com.tc.net.core.TCListener;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
@@ -45,6 +47,7 @@ import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
+import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
@@ -261,17 +264,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessions, int maxReconnectTries, int timeout, boolean followRedirects) {
-    return createClientChannel(sessions, maxReconnectTries, timeout, followRedirects, null, null, null);
-  }
-
-  @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessions, Collection<ConnectionInfo> addressList, int maxReconnectTries, int timeout, boolean followRedirects) {
-    return createClientChannel(sessions, maxReconnectTries, timeout, followRedirects, addressList, null, null);
+    return createClientChannel(sessions, maxReconnectTries, timeout, followRedirects, null, null);
   }
   
   public ClientMessageChannel createClientChannel(SessionProvider sessions, int maxReconnectTries,
                                                   int timeout, boolean followRedirects, 
-                                                  Collection<ConnectionInfo> addressList,
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory) {
 
@@ -291,12 +288,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       msgFactory = messageFactory;
     }
 
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessions, 
-            securityManager, productId);
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessions, productId);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
-                                                                                     addressList,
                                                                                      maxReconnectTries, timeout,
                                                                                      callbackPort, followRedirects, handshakeErrHandler,
                                                                                      reconnectionRejectedHandler,
@@ -367,6 +362,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
+      @Override
+      public ClientConnectionEstablisher createClientConnectionEstablisher() {
+        throw new AssertionError();
+      }
+      
       @Override
       public MessageTransport createNewTransport() {
         throw new AssertionError();

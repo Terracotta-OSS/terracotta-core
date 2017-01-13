@@ -25,8 +25,10 @@ import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkLayer;
@@ -53,21 +55,22 @@ public class ClientMessageTransport extends MessageTransportBase {
                                                                                    .getProperties()
                                                                                    .getLong(TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
                                                                                             10000);
-  private final ClientConnectionEstablisher connectionEstablisher;
+  private final TCConnectionManager connectionManager;
   private boolean                           wasOpened                          = false;
   private TCFuture                          waitForSynAckResult;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
+  private final int                         timeout;
   private final boolean                     followRedirects;
   private final TCSecurityManager           securityManager;
   private ConnectionInfo                    connectionInfo;
 
-  public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
+  public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, boolean followRedirects) {
-    this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort, followRedirects,
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout, boolean followRedirects) {
+    this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort, timeout, followRedirects,
          ReconnectionRejectedHandlerL1.SINGLETON, null);
   }
 
@@ -78,18 +81,19 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @param securityManager
    * @param addressProvider
    */
-  public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
+  public ClientMessageTransport(TCConnectionManager connectionManager,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, boolean followRedirects, 
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout, boolean followRedirects, 
                                 ReconnectionRejectedHandler reconnectionRejectedHandler,
                                 TCSecurityManager securityManager) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
-    this.connectionEstablisher = clientConnectionEstablisher;
+    this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;
+    this.timeout = timeout;
     this.followRedirects = followRedirects;
     this.securityManager = securityManager;
   }
@@ -112,8 +116,24 @@ public class ClientMessageTransport extends MessageTransportBase {
     synchronized (this.isOpen) {
       Assert.eval("can't open an already open transport", !this.isOpen.get());
       Assert.eval("can't open an already connected transport", !this.isConnected());
-      
-      this.connectionEstablisher.open(info, this);
+
+      TCSocketAddress socket = new TCSocketAddress(info);
+      TCConnection connection = connect(socket);
+      try {
+        openConnection(connection);
+      } catch (CommStackMismatchException e) {
+        connection.close(100);
+        throw e;
+      } catch (MaxConnectionsExceededException e) {
+        connection.close(100);
+        throw e;
+      } catch (TCTimeoutException e) {
+        connection.close(100);
+        throw e;
+      } catch (TransportHandshakeException e) {
+        connection.close(100);
+        throw e;
+      }
       Assert.eval(!getConnectionId().isNull());
       this.isOpen.set(true);
       NetworkStackID nid = new NetworkStackID(getConnectionId().getChannelID());
@@ -122,14 +142,35 @@ public class ClientMessageTransport extends MessageTransportBase {
       return (nid);
     }
   }
-
+  /**
+   * Tries to make a connection. This is a blocking call.
+   * 
+   * @return
+   * @throws TCTimeoutException
+   * @throws IOException
+   * @throws MaxConnectionsExceededException
+   */
+  TCConnection connect(TCSocketAddress sa) throws TCTimeoutException, IOException {
+    TCConnection connection = this.connectionManager.createConnection(getProtocolAdapter());
+    fireTransportConnectAttemptEvent();
+    try {
+      connection.connect(sa, this.timeout);
+    } catch (IOException e) {
+      connection.close(100);
+      throw e;
+    } catch (TCTimeoutException e) {
+      connection.close(100);
+      throw e;
+    }
+    return connection;
+  }
+  
   @Override
   public void reset() {
     synchronized (this.isOpen) {
       getLogger().info("Resetting connection " + getConnectionId());
       this.disconnect();
       this.isOpen.set(false);
-      this.connectionEstablisher.reset();
       this.status.reset();
       clearConnection();
     }
@@ -169,7 +210,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   private void cleanConnectionWithoutNotifyListeners() {
     List<MessageTransportListener> tl = new ArrayList<MessageTransportListener>(this.getTransportListeners());
     this.removeTransportListeners();
-    this.getConnectionEstablisher().reset();
     clearConnection();
     this.addTransportListeners(tl);
     this.status.reset();
@@ -362,19 +402,27 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  void reconnect(TCConnection connection) throws Exception {
+  void reopen(ConnectionInfo info) throws Exception {
 
     // don't do reconnect if open is still going on
     if (!wasOpened()) {
-      this.getLogger().warn("Transport was opened already. Skip reconnect " + connection);
+      this.getLogger().warn("Transport was opened already. Skip reconnect " + info);
       return;
     }
-
+    
+    TCSocketAddress socket = new TCSocketAddress(info);
+    reconnect(socket);
+  }
+  
+  void reconnect(TCSocketAddress socket) throws Exception {
+    TCConnection connection = connect(socket);
+      
     Assert.eval(!isConnected());
     if (wireNewConnection(connection)) {
       try {
         handshakeConnection();
       } catch (Exception t) {
+        connection.close(100);
         this.status.reset();
         throw t;
       }
@@ -439,10 +487,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   @Override
   public boolean isConnected() {
     return super.isConnected();
-  }
-
-  public ClientConnectionEstablisher getConnectionEstablisher() {
-    return this.connectionEstablisher;
   }
 
   // method used for testing

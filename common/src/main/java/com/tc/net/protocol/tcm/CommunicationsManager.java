@@ -57,9 +57,7 @@ public interface CommunicationsManager {
    */
 
   public ClientMessageChannel createClientChannel(SessionProvider provider, int maxReconnectTries, int timeout, boolean followRedirects);
-  
-  public ClientMessageChannel createClientChannel(SessionProvider provider, Collection<ConnectionInfo> addressList, int maxReconnectTries, int timeout, boolean followRedirects);
-  
+    
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
                                         ConnectionIDFactory connectionIdFactory);
 

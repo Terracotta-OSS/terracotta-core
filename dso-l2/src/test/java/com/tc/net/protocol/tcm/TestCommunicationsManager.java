@@ -53,11 +53,6 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider provider, Collection<ConnectionInfo> addressList, int maxReconnectTries, int timeout, boolean followRedirects) {
-    throw new UnsupportedOperationException(); 
-  }
-
-  @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory) {
     throw new UnsupportedOperationException(); 
   }

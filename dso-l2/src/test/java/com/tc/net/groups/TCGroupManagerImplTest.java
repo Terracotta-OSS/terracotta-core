@@ -19,7 +19,6 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.StageManager;
-import com.tc.bytes.TCByteBuffer;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.exception.TCShutdownServerException;
@@ -40,7 +39,6 @@ import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;

@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.security.TCSecurityManager;
@@ -34,7 +33,6 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
-import java.util.Collection;
 
 import java.util.List;
 
@@ -42,7 +40,6 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   private final TransportHandshakeMessageFactory transportMessageFactory;
   private final ConnectionHealthChecker          connectionHealthChecker;
   private final TCConnectionManager              connectionMgr;
-  private final Collection<ConnectionInfo>        addressProvider;
   private final int                              maxReconnectTries;
   private final int                              timeout;
   private final int                              callbackport;
@@ -54,7 +51,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   public MessageTransportFactoryImpl(TransportHandshakeMessageFactory transportMessageFactory,
                                      ConnectionHealthChecker connectionHealthChecker,
                                      TCConnectionManager connectionManager,
-                                     Collection<ConnectionInfo> addressProvider, int maxReconnectTries,
+                                     int maxReconnectTries,
                                      int timeout, int callbackPort, boolean follow,
                                      TransportHandshakeErrorHandler defaultHandshakeErrorHandler,
                                      ReconnectionRejectedHandler reconnectionRejectedBehaviour,
@@ -62,7 +59,6 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
     this.transportMessageFactory = transportMessageFactory;
     this.connectionHealthChecker = connectionHealthChecker;
     this.connectionMgr = connectionManager;
-    this.addressProvider = addressProvider;
     this.maxReconnectTries = maxReconnectTries;
     this.timeout = timeout;
     this.callbackport = callbackPort;
@@ -71,28 +67,29 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
     this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
     this.securityManager = securityManager;
   }
+  
+  @Override
+  public ClientConnectionEstablisher createClientConnectionEstablisher() {
+    ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(maxReconnectTries,
+                                                                                              reconnectionRejectedHandler);
+    return clientConnectionEstablisher;
+  }
 
   @Override
   public MessageTransport createNewTransport() {
-    ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(connectionMgr,
-                                                                                              addressProvider,
-                                                                                              maxReconnectTries,
-                                                                                              timeout, 
-                                                                                              reconnectionRejectedHandler);
-    ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher,
+    ClientMessageTransport cmt = createClientMessageTransport(
                                                               defaultHandshakeErrorHandler, transportMessageFactory,
                                                               new WireProtocolAdaptorFactoryImpl(), callbackport, this.followRedirects);
     cmt.addTransportListener(connectionHealthChecker);
     return cmt;
   }
 
-  protected ClientMessageTransport createClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
-                                                                TransportHandshakeErrorHandler handshakeErrorHandler,
+  protected ClientMessageTransport createClientMessageTransport(TransportHandshakeErrorHandler handshakeErrorHandler,
                                                                 TransportHandshakeMessageFactory messageFactory,
                                                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
                                                                 int callbackPortNum, boolean followRedirects) {
-    return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum, followRedirects, reconnectionRejectedHandler, securityManager);
+    return new ClientMessageTransport(this.connectionMgr, handshakeErrorHandler, transportMessageFactory,
+                                      wireProtocolAdaptorFactory, callbackPortNum, this.timeout, followRedirects, reconnectionRejectedHandler, securityManager);
   }
 
   @Override

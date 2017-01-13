@@ -36,8 +36,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
-import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -45,28 +43,17 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
-import java.util.Arrays;
 import java.util.Collection;
 
 import java.util.Map;
-import java.util.Set;
 
 
 public class StandardClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         PreparedComponentsFromL2Connection connComp,
                                                          SessionProvider sessionProvider, int maxReconnectTries,
                                                          int socketConnectTimeout, TCClient client) {
-    final Collection<ConnectionInfo> cap = createConnectionAddressProvider(connComp);
-    return commMgr.createClientChannel(sessionProvider, cap, maxReconnectTries, socketConnectTimeout, true);
-  }
-
-  protected Collection<ConnectionInfo> createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
-    final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    final Collection<ConnectionInfo> cap = Arrays.asList(connectionInfo);
-    return cap;
+    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, socketConnectTimeout, true);
   }
 
   @Override

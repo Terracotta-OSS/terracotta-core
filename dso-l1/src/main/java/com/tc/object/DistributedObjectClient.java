@@ -115,6 +115,8 @@ import com.tcclient.cluster.ClusterInternalEventsContext;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -300,7 +302,7 @@ public class DistributedObjectClient implements TCClient {
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
     this.channel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
-                                                                 this.connectionComponents, sessionManager,
+                                                                 sessionManager,
                                                                  MAX_CONNECT_TRIES, socketConnectTimeout, this);
 
     final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(this.channel);
@@ -407,8 +409,12 @@ public class DistributedObjectClient implements TCClient {
   private void openChannel() throws InterruptedException {
     String hostname;
     int port;
-    ConnectionInfo info = this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos()[0];
-
+    Collection<ConnectionInfo> infos = Arrays.asList(this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos());
+    if (infos.isEmpty()) {
+//  can't open a connection to nowhere
+      return;
+    }
+    ConnectionInfo info = infos.iterator().next();
     hostname = info.getHostname();
     port = info.getPort();
     synchronized(clientStopped) {
@@ -416,13 +422,16 @@ public class DistributedObjectClient implements TCClient {
         try {
           DSO_LOGGER.debug("Trying to open channel....");
           final char[] pw;
+          final String username;
           if (config.getSecurityInfo().hasCredentials()) {
             Assert.assertNotNull(securityManager);
+            username = config.getSecurityInfo().getUsername();
             pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), hostname, port);
           } else {
             pw = null;
+            username = null;
           }
-          this.channel.open(info, pw);
+          this.channel.open(infos, username, pw);
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {

@@ -22,13 +22,20 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
+import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
+import com.tc.util.TCTimeoutException;
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.Collections;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,6 +70,11 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
     this.remoteNodeID = remoteNodeID;
     // This is set after hand shake for the clients
     this.localNodeID = ClientID.NULL_ID;
+  }
+
+  @Override
+  public NetworkStackID open(ConnectionInfo info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
+    return open(Collections.singleton(info));
   }
 
   @Override
