@@ -25,7 +25,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.Constants;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -34,8 +33,8 @@ import com.tc.net.core.TCListener;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
-import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
+import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
@@ -47,7 +46,6 @@ import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
-import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
@@ -64,18 +62,14 @@ import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -368,26 +362,26 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       }
       
       @Override
-      public MessageTransport createNewTransport() {
+      public ClientMessageTransport createNewTransport() {
         throw new AssertionError();
       }
 
       @Override
-      public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+      public ServerMessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List<MessageTransportListener> transportListeners) {
-        MessageTransport rv = new ServerMessageTransport(connectionID, handler, handshakeMessageFactory);
+        ServerMessageTransport rv = new ServerMessageTransport(connectionID, handler, handshakeMessageFactory);
         rv.addTransportListeners(transportListeners);
         rv.addTransportListener(connectionHealthChecker);
         return rv;
       }
 
       @Override
-      public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+      public ServerMessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
                                                  TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List<MessageTransportListener> transportListeners) {
-        MessageTransport rv = new ServerMessageTransport(connectionId, connection, handler, handshakeMessageFactory);
+        ServerMessageTransport rv = new ServerMessageTransport(connectionId, connection, handler, handshakeMessageFactory);
         rv.addTransportListeners(transportListeners);
         rv.addTransportListener(connectionHealthChecker);
         return rv;

@@ -18,19 +18,12 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.CommStackMismatchException;
-import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.core.ConnectionInfo;
-import com.tc.net.protocol.AbstractNetworkStackHarness;
+import com.tc.net.protocol.ClientNetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
-import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.ServerNetworkStackHarness;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
-import com.tc.util.TCTimeoutException;
-import java.io.IOException;
-import java.util.Collection;
 
 public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
@@ -38,39 +31,27 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    return new TransportNetworkStackHarness(channelFactory, transport);
+    return new ServerNetworkStackHarness(channelFactory, transport) {
+      @Override
+      protected void connectStack() {
+        super.connectStack();
+// disconnect the receive, this one is send only
+        getTransport().setReceiveLayer(null);
+      }
+    };
   }
 
   @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
-                                                 MessageChannelInternal channel,
+                                                 ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new TransportNetworkStackHarness(transportFactory, channel);
-  }
-
-  private static class TransportNetworkStackHarness extends AbstractNetworkStackHarness {
-
-    TransportNetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport) {
-      super(channelFactory, transport);
-    }
-
-    TransportNetworkStackHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel) {
-      super(transportFactory, channel);
-    }
-
-    @Override
-    protected void connectStack(boolean isClientStack) {
-      super.connectStack(isClientStack);
-      //  disconnect the receive layer, nothing comes in here
-      transport.setReceiveLayer(null);
-    }
-    
-    
-
-    @Override
-    protected void createIntermediateLayers() {
-      // no intermediate layers to create
-    }
-
+    return new ClientNetworkStackHarness(transportFactory, channel, false){
+      @Override
+      protected void connectStack() {
+        super.connectStack();
+// disconnect the receive, this one is send only
+        getTransport().setReceiveLayer(null);
+      }
+    };
   }
 }

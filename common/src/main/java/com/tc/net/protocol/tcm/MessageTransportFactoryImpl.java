@@ -25,10 +25,10 @@ import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
+import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
@@ -76,7 +76,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   }
 
   @Override
-  public MessageTransport createNewTransport() {
+  public ClientMessageTransport createNewTransport() {
     ClientMessageTransport cmt = createClientMessageTransport(
                                                               defaultHandshakeErrorHandler, transportMessageFactory,
                                                               new WireProtocolAdaptorFactoryImpl(), callbackport, this.followRedirects);
@@ -93,14 +93,14 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   }
 
   @Override
-  public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+  public ServerMessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List<MessageTransportListener> transportListeners) {
     throw new AssertionError();
   }
 
   @Override
-  public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+  public ServerMessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
                                              TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List<MessageTransportListener> transportListeners) {
