@@ -22,7 +22,6 @@ import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -37,8 +36,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
-import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -46,6 +43,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
+import java.util.Collection;
 
 import java.util.Map;
 
@@ -53,18 +51,9 @@ import java.util.Map;
 public class StandardClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         PreparedComponentsFromL2Connection connComp,
                                                          SessionProvider sessionProvider, int maxReconnectTries,
                                                          int socketConnectTimeout, TCClient client) {
-    final ConnectionAddressProvider cap = createConnectionAddressProvider(connComp);
-    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0, socketConnectTimeout, cap);
-  }
-
-  protected ConnectionAddressProvider createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
-    final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    final ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
-    return cap;
+    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, socketConnectTimeout, true);
   }
 
   @Override
@@ -89,7 +78,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                                              String name, 
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity, false);
   }
 
   @Override

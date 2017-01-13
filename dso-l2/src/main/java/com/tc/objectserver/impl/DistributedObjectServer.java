@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
@@ -46,6 +47,8 @@ import com.tc.config.HaConfigImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.entity.DiagnosticMessageImpl;
+import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.ServerEntityMessageImpl;
 import com.tc.entity.ServerEntityResponseMessage;
@@ -238,9 +241,17 @@ import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
+import com.tc.operatorevent.NodeNameProvider;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
+import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.util.Map;
 import org.terracotta.config.TcConfiguration;
 
@@ -261,6 +272,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
+  protected NetworkListener                      l1Diagnostics;
   private TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private CommunicationsManager                  communicationsManager;
   private ServerConfigurationContext             context;
@@ -334,6 +346,31 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected ServerBuilder getServerBuilder() {
     return this.serverBuilder;
+  }
+  
+  public byte[] getClusterState(Charset set) {
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    Writer writer = new OutputStreamWriter(bytes, set);
+    PrintWriter gather = new PrintWriter(writer);
+    PrettyPrinter pp = new PrettyPrinterImpl(gather) {
+      @Override
+      public void flush() {
+        println();
+      }
+    };
+    this.seda.getStageManager().prettyPrint(pp);
+    pp.println();
+    this.persistor.prettyPrint(pp);
+    pp.println();
+    this.groupCommManager.prettyPrint(pp);
+    pp.println();
+    this.l2Coordinator.prettyPrint(pp);
+    pp.println();
+    this.entityManager.prettyPrint(pp);
+    pp.println();
+    this.serviceRegistry.prettyPrint(pp);
+    pp.println();
+    return bytes.toByteArray();
   }
 
   @Override
@@ -537,10 +574,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
-    this.l1Listener = this.communicationsManager.createListener(sessionManager,
-                                                                new TCSocketAddress(dsoBind, serverPort), true,
+    this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
-
+    
+    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, () -> {
+                                                                  ServerID server1 = (ServerID)l2Coordinator.getStateManager().getActiveNodeID();
+      if (!server1.isNull()) {
+        return server1.getName();
+      }
+      return null;
+    });
+    
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
@@ -668,6 +712,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
     haChecker.validateHealthCheckSettingsForHighAvailability();
@@ -807,6 +852,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     startGroupManagers();
     this.l2Coordinator.start();
+    startDiagnosticListener();
     setLoggerOnExit();
   }
   
@@ -823,7 +869,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
-        ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
@@ -872,7 +917,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   //  responses from the same server.  The underlying collector must tolerate this
       groupCommManager.sendAll(req);  //  request info from all the other servers
     });
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE);
     return control;
   }
   
@@ -961,6 +1005,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_REQUEST, DiagnosticMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_RESPONSE, DiagnosticResponseImpl.class);
     return messageTypeClassMapping;
   }
 
@@ -1020,6 +1066,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
+    try {
+      this.l1Diagnostics.stop(0L);
+    } catch (TCTimeoutException to) {
+      throw Assert.failure("no timeout set!", to);
+    }
     this.context.getClientHandshakeManager().setStarting(existingConnections);
     this.l1Listener.start(existingConnections);
     if (!existingConnections.isEmpty()) {
@@ -1029,6 +1080,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                        + " successfully, and is now ready for work.");
   }
 
+  public void startDiagnosticListener() throws IOException {
+    this.l1Diagnostics.start(Collections.emptySet());
+  }
+  
   private static String format(NetworkListener listener) {
     final StringBuilder sb = new StringBuilder(listener.getBindAddress().getHostAddress());
     sb.append(':');

@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 abstract class MessageTransportBase extends AbstractMessageTransport implements TCConnectionEventListener {
   private TCConnection                             connection;
 
-  protected ConnectionID                           connectionId           = new ConnectionID(JvmIDUtil.getJvmID(),
+  private ConnectionID                           connectionId           = new ConnectionID(JvmIDUtil.getJvmID(),
                                                                                              ChannelID.NULL_ID.toLong());
   protected final MessageTransportStatus           status;
   protected final AtomicBoolean                    isOpen;
@@ -396,7 +396,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public void initConnectionID(ConnectionID cid) {
+  public final void initConnectionID(ConnectionID cid) {
     connectionId = cid;
   }
 

@@ -26,13 +26,11 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.net.protocol.tcm.TestTCMessage;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import com.tc.util.BitSetObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
-import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -47,10 +45,10 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public ObjectIDSet            validateObjectIds              = new BitSetObjectIDSet();
   public NoExceptionLinkedQueue<Object> sendCalls              = new NoExceptionLinkedQueue<Object>();
   public ClientID               clientID;
-  public List<ClientServerExchangeLockContext> lockContexts    = new ArrayList<ClientServerExchangeLockContext>();
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
   private boolean               enterpriseClient               = false;
+  private boolean               diagnosticClient               = false;
   public NoExceptionLinkedQueue<List<SequenceID>> setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue<List<SequenceID>>();
   public NoExceptionLinkedQueue<List<TransactionID>> setTransactionIDsCalls         = new NoExceptionLinkedQueue<List<TransactionID>>();
   public List<SequenceID>                   transactionSequenceIDs         = new ArrayList<SequenceID>();
@@ -106,12 +104,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     // TODO Auto-generated method stub
     return 0;
   }
-
-  @Override
-  public Collection<ClientServerExchangeLockContext> getLockContexts() {
-    return this.lockContexts;
-  }
-
+  
   @Override
   public String getClientVersion() {
     return this.clientVersion;
@@ -153,20 +146,25 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public void addLockContext(ClientServerExchangeLockContext ctxt) {
-    this.lockContexts.add(ctxt);
-  }
-
-  @Override
   public boolean enterpriseClient() {
     return this.enterpriseClient;
   }
 
   @Override
-  public void setEnterpriseClient(boolean isEnterpirseClient) {
-    this.enterpriseClient = isEnterpirseClient;
+  public void setEnterpriseClient(boolean isEnterpriseClient) {
+    this.enterpriseClient = isEnterpriseClient;
   }
 
+  @Override
+  public boolean diagnosticClient() {
+    return this.diagnosticClient;
+  }
+
+  @Override
+  public void setDiagnosticClient(boolean isDiagnosticClient) {
+    this.diagnosticClient = isDiagnosticClient;
+  }
+  
   @Override
   public long getLocalTimeMills() {
     return System.currentTimeMillis();

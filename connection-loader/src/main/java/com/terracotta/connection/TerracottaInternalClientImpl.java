@@ -23,6 +23,7 @@ import com.tc.net.core.SecurityInfo;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
+import com.tc.object.StandardClientBuilder;
 import com.tc.util.ProductID;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
@@ -51,10 +52,11 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productIdName, Properties props) {
     ProductID productId = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
+         new StandardClientBuilder(), 
          null,  // no security features
          new SecurityInfo(false, null),  // no security info
          productId,
-         props);
+         props, false);
   }
 
   @Override

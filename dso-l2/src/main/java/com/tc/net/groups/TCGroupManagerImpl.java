@@ -40,7 +40,6 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
@@ -104,6 +103,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -250,8 +250,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                                                           messageTypeClassMapping, Collections.emptyMap(),
         securityManager);
 
-    groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
-                                                         new DefaultConnectionIdFactory());
+    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory());
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
 
@@ -595,7 +594,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return groupResponse;
   }
 
-  private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener, char[] password)
+  private void openChannel(ConnectionInfo info, ChannelEventListener listener, String username, char[] password)
       throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
@@ -611,11 +610,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
-    ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0, null, -1, 10000,
-                                                                             addrProvider);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0 /* no reconnect */, 10000 /*  timeout */, false /* no redirects */);
 
     channel.addListener(listener);
-    channel.open(password);
+    channel.open(Collections.singleton(info), username, password);
 
     handshake(channel);
     return;
@@ -623,6 +621,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       UnknownHostException, MaxConnectionsExceededException, IOException, CommStackMismatchException {
+    final String username = (securityManager == null) ? null : securityManager.getIntraL2Username();
     final char[] password;
     final SecurityInfo securityInfo;
     if (isSecured()) {
@@ -632,7 +631,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       password = null;
       securityInfo = new SecurityInfo();
     }
-    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port, securityInfo) }), listener, password);
+    openChannel(new ConnectionInfo(hostname, port, securityInfo), listener, username, password);
   }
 
   private boolean isSecured() {

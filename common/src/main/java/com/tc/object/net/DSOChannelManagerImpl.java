@@ -159,13 +159,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       synchronized (activeChannels) {
         handshakeRefuseMsg.initialize(message);
         if (!handshakeRefuseMsg.send()) {
-          logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+          logger.warn("Not sending handshake rejected message to disconnected client: " + clientID);
         }
       }
     } catch (NoSuchChannelException nsce) {
-      logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+      logger.warn("Not sending handshake rejected message to disconnected client: " + clientID);
     }
-
   }
 
   private Set<? extends NodeID> getAllActiveClientIDs() {

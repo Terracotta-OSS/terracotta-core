@@ -25,7 +25,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 
@@ -38,7 +37,7 @@ import java.util.Comparator;
 
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
-  private static final byte   LOCK_CONTEXT             = 1;
+  private static final byte   DIAGNOSTIC_CLIENT        = 1;
   private static final byte   CLIENT_VERSION           = 2;
   private static final byte   ENTERPRISE_CLIENT        = 3;
   private static final byte   LOCAL_TIME_MILLS         = 4;
@@ -47,9 +46,10 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte   CLIENT_PID               = 7;
   private static final byte   CLIENT_UUID              = 8;
   private static final byte   CLIENT_NAME              = 9;
+  
 
-  private final Set<ClientServerExchangeLockContext> lockContexts             = new HashSet<ClientServerExchangeLockContext>();
   private long                currentLocalTimeMills    = System.currentTimeMillis();
+  private boolean             diagnosticClient         = false;
   private boolean             enterpriseClient         = false;
   private String                uuid                     = com.tc.util.UUID.NULL_ID.toString();
   private String              name                     = "";
@@ -71,11 +71,6 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
                                     TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
-  }
-
-  @Override
-  public Collection<ClientServerExchangeLockContext> getLockContexts() {
-    return this.lockContexts;
   }
 
   @Override
@@ -119,10 +114,15 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
-  public void addLockContext(ClientServerExchangeLockContext ctxt) {
-    this.lockContexts.add(ctxt);
+  public boolean diagnosticClient() {
+    return this.diagnosticClient;
   }
 
+  @Override
+  public void setDiagnosticClient(boolean isDiagnosticClient) {
+    this.diagnosticClient = isDiagnosticClient;
+  }
+  
   @Override
   public boolean enterpriseClient() {
     return this.enterpriseClient;
@@ -140,9 +140,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
 
   @Override
   protected void dehydrateValues() {
-    for (final ClientServerExchangeLockContext lockContext : this.lockContexts) {
-      putNVPair(LOCK_CONTEXT, lockContext);
-    }
+    putNVPair(DIAGNOSTIC_CLIENT, this.diagnosticClient);
     putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
     putNVPair(CLIENT_UUID, this.uuid);
     putNVPair(CLIENT_NAME, this.name);
@@ -160,8 +158,8 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case LOCK_CONTEXT:
-        this.lockContexts.add(getObject(new ClientServerExchangeLockContext()));
+      case DIAGNOSTIC_CLIENT:
+        this.diagnosticClient = getBooleanValue();
         return true;
       case ENTERPRISE_CLIENT:
         this.enterpriseClient = getBooleanValue();

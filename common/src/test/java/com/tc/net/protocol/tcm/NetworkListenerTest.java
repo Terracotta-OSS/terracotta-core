@@ -64,8 +64,7 @@ public class NetworkListenerTest extends TestCase {
     assertTrue(commsMgr.getAllListeners().length == 0);
 
     ConnectionIDFactory cidf = new DefaultConnectionIdFactory();
-    SessionProvider sessionProvider = new NullSessionManager();
-    NetworkListener lsnr = commsMgr.createListener(sessionProvider, new TCSocketAddress(0), true, cidf, false);
+    NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), true, cidf);
 
     try {
       lsnr.start(Collections.<ConnectionID>emptySet());
@@ -73,8 +72,7 @@ public class NetworkListenerTest extends TestCase {
       fail(ioe.getMessage());
     }
 
-    NetworkListener lsnr2 = commsMgr.createListener(sessionProvider, new TCSocketAddress(lsnr.getBindPort()), true,
-                                                    cidf, false);
+    NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf);
     try {
       lsnr2.start(Collections.<ConnectionID>emptySet());
       fail();
@@ -96,7 +94,7 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener[] listeners = new NetworkListener[cnt];
 
     for (int i = 0; i < cnt; i++) {
-      NetworkListener lsnr = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(InetAddress
+      NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(InetAddress
           .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory());
 
       try {

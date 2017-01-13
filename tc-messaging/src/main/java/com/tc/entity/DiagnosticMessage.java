@@ -16,8 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
 
-public interface ClusterTopologyChangedListener {
-  void serversUpdated(ConnectionAddressProvider addressProviders);
+package com.tc.entity;
+
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.object.tx.TransactionID;
+
+
+/**
+ */
+public interface DiagnosticMessage extends VoltronEntityMessage, TCMessage {
+  /**
+   * Initializes the contents of the message.
+   */
+  public void setContents(TransactionID transactionID, byte[] extendedData);
 }

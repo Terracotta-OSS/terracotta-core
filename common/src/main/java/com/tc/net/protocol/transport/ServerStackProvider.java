@@ -32,6 +32,7 @@ import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
+import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.Assert;
 import java.io.IOException;
 
@@ -62,6 +63,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final List<MessageTransportListener>   transportListeners = new ArrayList<MessageTransportListener>();
   private final ReentrantLock                    licenseLock;
   private final String                           commsMgrName;
+  private final NodeNameProvider                 activeProvider;
 
   // used only in test
   public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
@@ -70,12 +72,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
-    this(initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
+    this(initialConnectionIDs, null, harnessFactory, channelFactory, messageTransportFactory,
          handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock,
          CommunicationsManager.COMMSMGR_SERVER, null);
   }
 
-  public ServerStackProvider(Set<ConnectionID>  initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ConnectionID>  initialConnectionIDs, NodeNameProvider activeProvider, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -105,6 +107,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handshakeMessageFactory,
           transportListeners));
     }
+    this.activeProvider = activeProvider;
   }
 
   @Override
@@ -115,7 +118,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     final NetworkStackHarness harness;
     final MessageTransport rv;
     ConnectionID ourConnectionId;
-    if (connectionId.isNewConnection()) {
+    if (this.activeProvider != null || connectionId.isNewConnection()) {
       ourConnectionId = connectionIdFactory.populateConnectionID(connectionId);
 
       rv = messageTransportFactory.createNewTransport(ourConnectionId, connection, createHandshakeErrorHandler(),
@@ -400,6 +403,15 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       if (isError) {
         synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsReached,
                                                       maxConnections);
+      } else if (activeProvider != null) {
+        String active = activeProvider.getNodeName();
+        if (active != null) {
+          synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportRedirect(active), 
+                source, isMaxConnectionsReached, maxConnections);
+        } else {
+          synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportHandshakeErrorContext("no active", errorContext.ERROR_NONE), 
+                source, isMaxConnectionsReached, maxConnections);
+        }
       } else {
         int callbackPort = source.getLocalAddress().getPort();
         synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections,

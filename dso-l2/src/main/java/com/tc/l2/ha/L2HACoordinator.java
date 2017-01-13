@@ -152,11 +152,7 @@ public class L2HACoordinator implements L2Coordinator {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    final StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
-    strBuilder.append(" ]");
-    out.indent().print(strBuilder.toString()).flush();
-    out.indent().print("ReplicatedClusterStateMgr").visit(this.rClusterStateMgr).flush();
+    out.indent().visit(this.rClusterStateMgr).flush();
     return out;
   }
 }

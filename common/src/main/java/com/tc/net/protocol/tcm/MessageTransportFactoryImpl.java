@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.security.TCSecurityManager;
@@ -41,10 +40,10 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   private final TransportHandshakeMessageFactory transportMessageFactory;
   private final ConnectionHealthChecker          connectionHealthChecker;
   private final TCConnectionManager              connectionMgr;
-  private final ConnectionAddressProvider        addressProvider;
   private final int                              maxReconnectTries;
   private final int                              timeout;
   private final int                              callbackport;
+  private final boolean                          followRedirects;
   private final TransportHandshakeErrorHandler   defaultHandshakeErrorHandler;
   private final ReconnectionRejectedHandler      reconnectionRejectedHandler;
   private final TCSecurityManager                securityManager;
@@ -52,45 +51,45 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   public MessageTransportFactoryImpl(TransportHandshakeMessageFactory transportMessageFactory,
                                      ConnectionHealthChecker connectionHealthChecker,
                                      TCConnectionManager connectionManager,
-                                     ConnectionAddressProvider addressProvider, int maxReconnectTries,
-                                     int timeout, int callbackPort,
+                                     int maxReconnectTries,
+                                     int timeout, int callbackPort, boolean follow,
                                      TransportHandshakeErrorHandler defaultHandshakeErrorHandler,
                                      ReconnectionRejectedHandler reconnectionRejectedBehaviour,
                                      TCSecurityManager securityManager) {
     this.transportMessageFactory = transportMessageFactory;
     this.connectionHealthChecker = connectionHealthChecker;
     this.connectionMgr = connectionManager;
-    this.addressProvider = addressProvider;
     this.maxReconnectTries = maxReconnectTries;
     this.timeout = timeout;
     this.callbackport = callbackPort;
+    this.followRedirects = follow;
     this.defaultHandshakeErrorHandler = defaultHandshakeErrorHandler;
     this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
     this.securityManager = securityManager;
   }
+  
+  @Override
+  public ClientConnectionEstablisher createClientConnectionEstablisher() {
+    ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(maxReconnectTries,
+                                                                                              reconnectionRejectedHandler);
+    return clientConnectionEstablisher;
+  }
 
   @Override
   public MessageTransport createNewTransport() {
-    ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(connectionMgr,
-                                                                                              addressProvider,
-                                                                                              maxReconnectTries,
-                                                                                              timeout,
-                                                                                              reconnectionRejectedHandler);
-    ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher,
+    ClientMessageTransport cmt = createClientMessageTransport(
                                                               defaultHandshakeErrorHandler, transportMessageFactory,
-                                                              new WireProtocolAdaptorFactoryImpl(), callbackport);
+                                                              new WireProtocolAdaptorFactoryImpl(), callbackport, this.followRedirects);
     cmt.addTransportListener(connectionHealthChecker);
     return cmt;
   }
 
-  protected ClientMessageTransport createClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
-                                                                TransportHandshakeErrorHandler handshakeErrorHandler,
+  protected ClientMessageTransport createClientMessageTransport(TransportHandshakeErrorHandler handshakeErrorHandler,
                                                                 TransportHandshakeMessageFactory messageFactory,
                                                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
-                                                                int callbackPortNum) {
-    return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler, securityManager,
-                                      addressProvider);
+                                                                int callbackPortNum, boolean followRedirects) {
+    return new ClientMessageTransport(this.connectionMgr, handshakeErrorHandler, transportMessageFactory,
+                                      wireProtocolAdaptorFactory, callbackPortNum, this.timeout, followRedirects, reconnectionRejectedHandler, securityManager);
   }
 
   @Override

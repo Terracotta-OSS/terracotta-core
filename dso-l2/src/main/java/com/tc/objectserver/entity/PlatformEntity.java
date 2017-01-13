@@ -121,7 +121,7 @@ public class PlatformEntity implements ManagedEntity {
  
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
-
+    stateDumper.dumpState(getID().toString(), "platform entity");
   }
 
   @Override

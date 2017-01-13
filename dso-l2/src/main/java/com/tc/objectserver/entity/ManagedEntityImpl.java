@@ -327,6 +327,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       // Entities can optionally implement StateDumpable, so we do a instanceof check before calling dump state method
       if(activeServerEntity instanceof StateDumpable) {
         ((StateDumpable) activeServerEntity).dumpStateTo(stateDumper);
+      } else {
+        stateDumper.dumpState(this.getID().toString(), activeServerEntity.toString());
       }
     }
 
@@ -334,6 +336,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       // Entities can optionally implement StateDumpable, so we do a instanceof check before calling dump state method
       if(passiveServerEntity instanceof StateDumpable) {
         ((StateDumpable) passiveServerEntity).dumpStateTo(stateDumper);
+      } else {
+        stateDumper.dumpState(this.getID().toString(), passiveServerEntity.toString());
       }
     }
   }

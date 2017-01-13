@@ -99,6 +99,10 @@ public class ConnectionID {
   public boolean isNull() {
     return NULL_ID.equals(this);
   }
+  
+  public boolean isValid() {
+    return channelID >= 0;
+  }
 
   public boolean isNewConnection() {
     return (this.serverID.equals(NULL_SERVER_ID));

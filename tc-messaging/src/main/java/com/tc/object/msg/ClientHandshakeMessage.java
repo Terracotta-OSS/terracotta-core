@@ -26,9 +26,6 @@ import java.util.Collection;
 
 
 public interface ClientHandshakeMessage extends TCMessage {
-  void addLockContext(ClientServerExchangeLockContext ctxt);
-
-  Collection<ClientServerExchangeLockContext> getLockContexts();
   
   void setUUID(String uuid);
   
@@ -46,7 +43,11 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   int getClientPID();
 
-  void setEnterpriseClient(boolean isEnterpirseClient);
+  void setDiagnosticClient(boolean isDiagnosticClient);
+
+  boolean diagnosticClient();
+  
+  void setEnterpriseClient(boolean isEnterpriseClient);
 
   boolean enterpriseClient();
 

@@ -29,6 +29,7 @@ public interface TransportHandshakeError {
   public static final short ERROR_GENERIC               = 4;
   public static final short ERROR_MAX_CONNECTION_EXCEED = 5;
   public static final short ERROR_RECONNECTION_REJECTED = 6;
+  public static final short ERROR_REDIRECT_CONNECTION   = 7;
 
   public String getMessage();
 

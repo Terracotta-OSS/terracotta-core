@@ -52,6 +52,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Ignore;
 
@@ -63,11 +64,11 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
   TCLogger          logger               = TCLogging.getLogger(TCWorkerCommManager.class);
   private final int L1_RECONNECT_TIMEOUT = 15000;
 
-  private ClientMessageChannel createClientMsgCh(int port) {
-    return createClientMsgCh(port, true);
+  private ClientMessageChannel createClientMsgCh() {
+    return createClientMsgCh(true);
   }
 
-  private ClientMessageChannel createClientMsgCh(int port, boolean ooo) {
+  private ClientMessageChannel createClientMsgCh(boolean ooo) {
 
     CommunicationsManager clientComms = new CommunicationsManagerImpl("Client-TestCommsMgr", new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
@@ -76,11 +77,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ClientMessageChannel clientMsgCh = clientComms
         .createClientChannel(new NullSessionManager(),
                              -1,
-                             "localhost",
-                             port,
-                             1000,
-                             new ConnectionAddressProvider(
-                                                           new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
+                             1000, true);
     return clientMsgCh;
   }
 
@@ -113,7 +110,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                    new TransportHandshakeErrorNullHandler(),
                                                                    Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                                    Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
-    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
@@ -122,13 +119,15 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
     proxy.start();
 
-    ClientMessageChannel client1 = createClientMsgCh(proxyPort);
-    ClientMessageChannel client2 = createClientMsgCh(proxyPort);
-    ClientMessageChannel client3 = createClientMsgCh(proxyPort);
+    ClientMessageChannel client1 = createClientMsgCh();
+    ClientMessageChannel client2 = createClientMsgCh();
+    ClientMessageChannel client3 = createClientMsgCh();
+    
+    ConnectionInfo connectTo = new ConnectionInfo("localhost", proxyPort);
 
-    client1.open();
-    client2.open();
-    client3.open();
+    client1.open(connectTo);
+    client2.open(connectTo);
+    client3.open(connectTo);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());
@@ -169,14 +168,15 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
       ThreadUtil.reallySleep(5000);
     }
 
+    connectTo = new ConnectionInfo("localhost", serverPort);
     // case 3: connecting three more clients through server ports
-    ClientMessageChannel client4 = createClientMsgCh(serverPort);
-    ClientMessageChannel client5 = createClientMsgCh(serverPort);
-    ClientMessageChannel client6 = createClientMsgCh(serverPort);
+    ClientMessageChannel client4 = createClientMsgCh();
+    ClientMessageChannel client5 = createClientMsgCh();
+    ClientMessageChannel client6 = createClientMsgCh();
 
-    client4.open();
-    client5.open();
-    client6.open();
+    client4.open(connectTo);
+    client5.open(connectTo);
+    client6.open(connectTo);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client4.isConnected());

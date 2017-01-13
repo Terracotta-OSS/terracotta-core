@@ -18,14 +18,24 @@
  */
 package com.tc.net.protocol.delivery;
 
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.AbstractNetworkStackHarness;
+import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
+import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.properties.ReconnectConfig;
+import com.tc.util.TCTimeoutException;
+import java.io.IOException;
+import java.util.Collection;
 
 public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
 
@@ -51,26 +61,35 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   }
 
   @Override
-  protected void connectStack() {
+  protected void connectStack(boolean isClientStack) {
     channel.setSendLayer(oooLayer);
     oooLayer.setReceiveLayer(channel);
     oooLayer.addTransportListener(channel);
 
     transport.setAllowConnectionReplace(true);
 
-    oooLayer.setSendLayer(transport);
     transport.setReceiveLayer(oooLayer);
 
     long timeout = 0;
     if (reconnectConfig.getReconnectEnabled()) timeout = reconnectConfig.getReconnectTimeout();
     // XXX: this is super ugly, but...
-    if (transport instanceof ClientMessageTransport) {
-      ClientMessageTransport cmt = (ClientMessageTransport) transport;
-      ClientConnectionEstablisher cce = cmt.getConnectionEstablisher();
+    if (isClientStack) {
+      final ClientMessageTransport cmt = (ClientMessageTransport) transport;
+      ClientMessageChannel cmc = (ClientMessageChannel) channel;
+      final ClientConnectionEstablisher cce = createClientConnectionEstablisher();
+      cmc.setMessageTransportInitiator(new MessageTransportInitiator() {
+        @Override
+        public NetworkStackID openMessageTransport(Collection<ConnectionInfo> dest, ConnectionID connection) throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException {
+          oooLayer.setSendLayer(transport);
+          cmt.initConnectionID(connection);
+          return cce.open(dest, cmt);
+        }
+      });
       OOOConnectionWatcher cw = new OOOConnectionWatcher(cmt, cce, oooLayer, timeout);
       cmt.addTransportListener(cw);
     } else {
       OOOReconnectionTimeout ort = new OOOReconnectionTimeout(oooLayer, timeout);
+      oooLayer.setSendLayer(transport);
       transport.addTransportListener(ort);
     }
   }

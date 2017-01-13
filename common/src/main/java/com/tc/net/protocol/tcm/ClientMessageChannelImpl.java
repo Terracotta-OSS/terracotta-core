@@ -24,28 +24,24 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.StripeID;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
-import com.tc.security.PwProvider;
-import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
+import java.util.Collection;
 
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
@@ -55,85 +51,57 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private int                             connectCount;
   private volatile ChannelID              channelID = ChannelID.NULL_ID;
   private final SessionProvider           sessionProvider;
-  private final SecurityInfo              securityInfo;
-  private final PwProvider                pwProvider;
+  private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
-  private final ConnectionAddressProvider addressProvider;
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, 
-                                     SecurityInfo securityInfo, PwProvider pwProvider,
-                                     ConnectionAddressProvider addressProvider, ProductID productId) {
+                                     SessionProvider sessionProvider, ProductID productId) {
     super(router, logger, msgFactory, StripeID.NULL_ID, productId);
-
-    this.securityInfo = securityInfo;
-    this.pwProvider = pwProvider;
-    this.addressProvider = addressProvider;
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider();
   }
 
   @Override
-  public void reset() {
-    init();
+  public void setMessageTransportInitiator(MessageTransportInitiator initiator) {
+    this.initiator = initiator;
   }
 
-  protected void init() {
+  @Override
+  public void reset() {
     ChannelStatus status = getStatus();
     status.reset();
     this.sendLayer.reset();
-    setLocalNodeID(ClientID.NULL_ID);
   }
 
   @Override
-  public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(Collection<ConnectionInfo> info) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    return open(null);
+    return open(info, null, null);
   }
 
   @Override
-  public NetworkStackID open(char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
-      String username = null;
-      if (securityInfo.hasCredentials()) {
-        username = securityInfo.getUsername();
-        Assert.assertNotNull("TCSecurityManager", pwProvider);
-        Assert.assertNotNull("Password", pw);
-      }
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
                                                 username, pw, getProductId());
-      ((MessageTransport) this.sendLayer).initConnectionID(cid);
-      final NetworkStackID id = this.sendLayer.open();
-      this.channelID = new ChannelID(id.toLong());
-      setLocalNodeID(new ClientID(id.toLong()));
+      
+      final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
+      
+      if (id.isValid()) {
+ //  why are all these identifiers intermingled?
+        long validID = id.toLong();
+        this.channelID = new ChannelID(validID);
+        setLocalNodeID(new ClientID(validID));
+      }
       this.channelSessionID = this.sessionProvider.getSessionID();
       channelOpened();
       return id;
     }
-  }
-
-  @Override
-  public void reopen() throws Exception {
-    reset();
-    open(getPassword());
-  }
-
-  public char[] getPassword() {
-    char[] password = null;
-    if (securityInfo.hasCredentials()) {
-      Assert.assertNotNull("TCSecurityManager should not be null", pwProvider);
-      // use user-password of first server in the group
-      ConnectionInfo connectionInfo = addressProvider.getIterator().next();
-      password = pwProvider.getPasswordForTC(securityInfo.getUsername(), connectionInfo.getHostname(),
-                                           connectionInfo.getPort());
-      Assert.assertNotNull("password is null from securityInfo " + securityInfo, password);
-    }
-    return password;
   }
 
   @Override
@@ -169,11 +137,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    long channelIdLong = transport.getConnectionId().getChannelID();
-    this.channelID = new ChannelID(channelIdLong);
-    setLocalNodeID(new ClientID(channelIdLong));
+    if (transport.getConnectionId().isValid()) {
+      long channelIdLong = transport.getConnectionId().getChannelID();
+      this.channelID = new ChannelID(channelIdLong);
+      setLocalNodeID(new ClientID(channelIdLong));
+      this.connectCount++;
+    }
     super.notifyTransportConnected(transport);
-    this.connectCount++;
   }
 
   @Override
@@ -200,10 +170,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient) {
+  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient, boolean isDiagnosticClient) {
     final ClientHandshakeMessage rv = (ClientHandshakeMessage) createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     rv.setClientVersion(clientVersion);
     rv.setEnterpriseClient(isEnterpriseClient);
+    rv.setDiagnosticClient(isDiagnosticClient);
     rv.setClientPID(getPID());
     rv.setUUID(uuid);
     rv.setName(name);

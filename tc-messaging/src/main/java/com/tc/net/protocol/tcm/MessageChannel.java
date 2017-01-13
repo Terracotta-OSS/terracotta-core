@@ -23,12 +23,14 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Collection;
 
 /**
  * Outward facing message channel interface. This is the interface that most high level application code wants to deal
@@ -74,10 +76,12 @@ public interface MessageChannel extends ChannelIDProvider {
   public boolean isConnected();
 
   public void send(TCNetworkMessage message) throws IOException;
+  
+  public NetworkStackID open(ConnectionInfo info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
-  public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
+  public NetworkStackID open(Collection<ConnectionInfo> info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
-  public NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
+  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
   public void close();
   

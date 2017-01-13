@@ -41,7 +41,8 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   static final byte          VERSION_3  = 3;
   static final byte          VERSION_4  = 4;
   static final byte          VERSION_5  = 5;
-  static final byte          VERSION    = VERSION_5;
+  static final byte          VERSION_6  = 6;
+  static final byte          VERSION    = VERSION_6;
 
 
   static final byte          SYN        = 1;

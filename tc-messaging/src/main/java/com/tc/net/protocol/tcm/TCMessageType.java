@@ -36,6 +36,8 @@ public final class TCMessageType {
   public static final int           TYPE_PING_MESSAGE                                 = 1;
   public static final int           TYPE_CLIENT_HANDSHAKE_MESSAGE                     = 2;
   public static final int           TYPE_CLIENT_HANDSHAKE_ACK_MESSAGE                 = 3;
+  public static final int           TYPE_CLIENT_HANDSHAKE_REDIRECT_MESSAGE                 = 4;
+  
   public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 6;
   public static final int           TYPE_GROUP_WRAPPER_MESSAGE                        = 7;
   public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                      = 8;
@@ -52,12 +54,15 @@ public final class TCMessageType {
   public static final int           TYPE_VOLTRON_ENTITY_RETIRED_RESPONSE              = 19;
   public static final int           TYPE_VOLTRON_ENTITY_MULTI_RESPONSE              = 20;
   public static final int           TYPE_NOOP_MESSAGE              = 21;
-  public static final int           TYPE_LAST_MESSAGE_DO_NOT_USE              = 22;
+  public static final int           TYPE_DIAGNOSTIC_REQUEST                 = 22;
+  public static final int           TYPE_DIAGNOSTIC_RESPONSE                 = 23;
+  public static final int           TYPE_LAST_MESSAGE_DO_NOT_USE              = 24;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
+  public static final TCMessageType CLIENT_HANDSHAKE_REDIRECT_MESSAGE                  = new TCMessageType();
   public static final TCMessageType CLUSTER_MEMBERSHIP_EVENT_MESSAGE                  = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                             = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();
@@ -73,6 +78,9 @@ public final class TCMessageType {
   public static final TCMessageType VOLTRON_ENTITY_RETIRED_RESPONSE                   = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_MULTI_RESPONSE                   = new TCMessageType();
   public static final TCMessageType NOOP_MESSAGE                   = new TCMessageType();  
+  public static final TCMessageType DIAGNOSTIC_REQUEST                   = new TCMessageType();  
+  public static final TCMessageType DIAGNOSTIC_RESPONSE                   = new TCMessageType();  
+  
   public static final TCMessageType LAST_MESSAGE_DO_NOT_USE                   = new TCMessageType();  // this one must always be the last
 
   public static TCMessageType getInstance(int i) {

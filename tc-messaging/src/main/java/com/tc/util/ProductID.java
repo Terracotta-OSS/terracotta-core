@@ -23,7 +23,7 @@ package com.tc.util;
  * @author tim
  */
 public enum ProductID {
-  TMS(true), WAN(true), USER(false);
+  DIAGNOSTIC(true), TMS(true), WAN(true), USER(false);
 
   private final boolean internal;
 

@@ -42,6 +42,7 @@ public class ConnectionInfo implements java.io.Serializable {
   
   public ConnectionInfo(String hostname, int port, int server, SecurityInfo securityInfo) {
     Assert.assertNotNull(hostname);
+    Assert.assertTrue(port >= 0);
     this.hostname = hostname;
     this.port = port;
     this.server = server;

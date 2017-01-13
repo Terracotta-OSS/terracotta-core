@@ -16,23 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.tc.net.protocol.transport;
 
-public class ConnectionAddressIterator {
+public class NoActiveException extends TransportHandshakeException {
 
-  private final ConnectionInfo[] cis;
-  private int                    current = -1;
-
-  public ConnectionAddressIterator(ConnectionInfo[] cis) {
-    this.cis = cis;
-  }
-
-  public boolean hasNext() {
-    return current < (cis.length - 1);
-  }
-
-  public ConnectionInfo next() {
-    if (!hasNext()) return null;
-    return cis[++current];
+  public NoActiveException() {
+    super("no active");
   }
 }

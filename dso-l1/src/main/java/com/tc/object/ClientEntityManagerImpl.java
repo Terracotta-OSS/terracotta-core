@@ -382,7 +382,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     flush.waitForAccess();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
-      NetworkVoltronEntityMessage message = inFlight.getMessage();
+      VoltronEntityMessage message = inFlight.getMessage();
 //  validate the locking on release and destroy on resends
 
       ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
