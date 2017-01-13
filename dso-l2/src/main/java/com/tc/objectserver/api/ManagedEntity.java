@@ -18,10 +18,8 @@
  */
 package com.tc.objectserver.api;
 
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.MessageCodec;
 
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
@@ -96,4 +94,11 @@ public interface ManagedEntity extends StateDumpable {
    * @return The entity's local RetirementManager instance.
    */
   public RetirementManager getRetirementManager();
+
+  /**
+   * Called in cases where the entities need to be sorted, for example.
+   * 
+   * @return The unique ID associated with the receiver.
+   */
+  public long getConsumerID();
 }

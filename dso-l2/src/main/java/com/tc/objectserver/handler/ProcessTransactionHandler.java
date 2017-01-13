@@ -54,6 +54,10 @@ import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 import java.util.List;
@@ -371,7 +375,21 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
   
   public void loadExistingEntities() {
-    for(EntityData.Value entityValue : this.entityPersistor.loadEntityData()) {
+    // issue-439: We need to sort these entities, ascending by consumerID.
+    List<EntityData.Value> sortingList = new ArrayList<EntityData.Value>(this.entityPersistor.loadEntityData());
+    Collections.sort(sortingList, new Comparator<EntityData.Value>() {
+      @Override
+      public int compare(EntityData.Value o1, EntityData.Value o2) {
+        long firstID = o1.consumerID;
+        long secondID = o2.consumerID;
+        // NOTE:  The ids are unique.
+        Assert.assertTrue(firstID != secondID);
+        return (firstID > secondID)
+            ? 1
+            : -1;
+      }});
+    
+    for(EntityData.Value entityValue : sortingList) {
       Assert.assertTrue(entityValue.version > 0);
       Assert.assertTrue(entityValue.consumerID > 0);
       EntityID entityID = new EntityID(entityValue.className, entityValue.entityName);

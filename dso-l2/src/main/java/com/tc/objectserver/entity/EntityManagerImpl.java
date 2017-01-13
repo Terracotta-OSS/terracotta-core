@@ -37,6 +37,9 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,7 +108,20 @@ public class EntityManagerImpl implements EntityManager {
     // We can promote directly because this method is only called from PTH initialize 
     //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
     try {
-      for (ManagedEntity entity : this.entities.values()) {
+      // issue-439: We need to sort these entities, ascending by consumerID.
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
+      Collections.sort(sortingList, new Comparator<ManagedEntity>() {
+        @Override
+        public int compare(ManagedEntity o1, ManagedEntity o2) {
+          long firstID = o1.getConsumerID();
+          long secondID = o2.getConsumerID();
+          // NOTE:  The ids are unique.
+          Assert.assertTrue(firstID != secondID);
+          return (firstID > secondID)
+              ? 1
+              : -1;
+        }});
+      for (ManagedEntity entity : sortingList) {
         entity.promoteEntity();
       }
     } catch (ConfigurationException ce) {

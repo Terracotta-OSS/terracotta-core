@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -29,8 +28,8 @@ import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 import java.util.function.Consumer;
 
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityException;
 
@@ -134,5 +133,11 @@ public class PlatformEntity implements ManagedEntity {
     // The platform entity doesn't expose this since it isn't expecting message interdependencies, internally.
     Assert.fail();
     return null;
+  }
+
+  @Override
+  public long getConsumerID() {
+    // The platform uses the consumerID 0 constant.
+    return ServiceProvider.PLATFORM_CONSUMER_ID;
   }
 }
