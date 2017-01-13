@@ -536,7 +536,9 @@ public class TCLoggingLog4J implements TCLoggingService {
   private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
     List<Logger> loggers = new ArrayList<Logger>();
     loggers.addAll(internalLoggers);
-    loggers.add(customerLogger);
+//  do not add the customer logger anymore since it is covered by the "com" internal namespace
+//  if the namespace for customer ever changes, add it back
+//    loggers.add(customerLogger);
     return loggers.toArray(new Logger[] {});
   }
 
