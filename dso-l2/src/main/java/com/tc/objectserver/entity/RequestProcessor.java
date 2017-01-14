@@ -165,8 +165,10 @@ public class RequestProcessor {
     }
     
     void invoke()  {
-        // NOTE:  We want to wait to hear that the passive has received the replicated invoke.
-        this.replicationWaiter.waitForReceived();
+        // NOTE:  No longer waiting for received for before invoke.  Wait has been moved to 
+	// the completed/failure notification.  This should be fine for both client invokes 
+	// and EntityMessenger
+
         // We can now run the invoke.
         invoke.run();
     }
