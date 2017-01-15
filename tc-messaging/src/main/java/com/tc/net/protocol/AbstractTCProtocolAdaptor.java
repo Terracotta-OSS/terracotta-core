@@ -109,7 +109,10 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
 
   private TCByteBuffer[] createDataBuffers(int length) {
     Assert.eval(mode == MODE_DATA);
-    return TCByteBufferFactory.getFixedSizedInstancesForLength(false, length);
+    return (TCByteBufferFactory.isPoolingEnabled()) ?
+      TCByteBufferFactory.getFixedSizedInstancesForLength(false, length)
+      :
+      new TCByteBuffer[] {TCByteBufferFactory.getInstance(false, length)};
   }
 
   private TCNetworkMessage processHeaderData(TCConnection source, TCByteBuffer[] data) throws TCProtocolException {

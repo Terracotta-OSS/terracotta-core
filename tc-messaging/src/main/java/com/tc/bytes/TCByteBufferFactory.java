@@ -276,4 +276,7 @@ public class TCByteBufferFactory {
     return rv;
   }
 
+  public static boolean isPoolingEnabled() {
+    return !disablePooling;
+  }
 }

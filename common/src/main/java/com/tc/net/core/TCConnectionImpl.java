@@ -938,7 +938,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
 
-      if (MESSSAGE_PACKUP) {
+      if (MESSSAGE_PACKUP && TCByteBufferFactory.isPoolingEnabled()) {
         this.entireMessageData = getPackedUpMessage(message.getEntireMessageData());
       } else {
         this.entireMessageData = getClonedMessage(message.getEntireMessageData());
