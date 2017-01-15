@@ -36,8 +36,8 @@ import java.util.List;
  */
 public final class TCByteBufferOutputStream extends OutputStream implements TCByteBufferOutput {
 
-  private static final int       DEFAULT_MAX_BLOCK_SIZE     = 4096;
-  private static final int       DEFAULT_INITIAL_BLOCK_SIZE = 32;
+  private static final int       DEFAULT_MAX_BLOCK_SIZE     = 512 * 1024;
+  private static final int       DEFAULT_INITIAL_BLOCK_SIZE = 1024;
 
   private final boolean          direct;
   private final int              maxBlockSize;
