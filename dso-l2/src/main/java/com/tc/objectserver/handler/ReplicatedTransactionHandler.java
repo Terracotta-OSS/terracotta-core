@@ -337,6 +337,7 @@ public class ReplicatedTransactionHandler {
   }  
   
   private void syncActivityReceived(ServerID activeSender, SyncReplicationActivity activity) {
+    SyncReplicationActivity.ActivityType thisActivityType = activity.getActivityType();
     EntityDescriptor descriptor = activity.getEntityDescriptor();
     EntityID eid = descriptor.getEntityID();
     long version = descriptor.getClientSideVersion();
@@ -344,12 +345,13 @@ public class ReplicatedTransactionHandler {
     ackReceived(activeSender, activity);
     beforeSyncAction(activity);
     
-    if ((SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == activity.getActivityType()) && !eid.equals(EntityID.NULL_ID)) {
+    if ((SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == thisActivityType) && !eid.equals(EntityID.NULL_ID)) {
       try {
         if (!this.entityManager.getEntity(eid, version).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
- //  repurposed concurrency id to tell passive if entity can be deleted 0 for deletable and 1 for not deletable
-          this.entityManager.createEntity(eid, version, consumerID, activity.getConcurrency());
+          // Reference count interpretation:  0 for deletable and 1 for not deletable.
+          int referenceCount = activity.getReferenceCount();
+          this.entityManager.createEntity(eid, version, consumerID, referenceCount);
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
           this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !activity.getSource().isNull(), activity.getExtendedData());
         } else {
@@ -364,13 +366,21 @@ public class ReplicatedTransactionHandler {
     try {
       Optional<ManagedEntity> entity = entityManager.getEntity(eid, version);
       if (entity.isPresent()) {
-        MessagePayload payload = MessagePayload.syncPayloadNormal(activity.getExtendedData(), activity.getConcurrency());
+        // Note that we might have just created this as SYNC_ENTITY_BEGIN, above, so create the payload based on the message type.
+        MessagePayload payload = null;
+        if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == thisActivityType) {
+          int referenceCount = activity.getReferenceCount();
+          payload = MessagePayload.syncPayloadCreation(activity.getExtendedData(), referenceCount);
+        } else {
+          int concurrencyKey = activity.getConcurrency();
+          payload = MessagePayload.syncPayloadNormal(activity.getExtendedData(), concurrencyKey);
+        }
         entity.get().addRequestMessage(activityToLocalRequest(activity), payload, (result)->acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception)->acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
-        if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD != activity.getActivityType()) {
+        if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD != thisActivityType) {
           entity.get().addRequestMessage(makeLocalFlush(eid, version), MessagePayload.emptyPayload(), null, null);
         }
       } else {
-        if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == activity.getActivityType()) {
+        if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == thisActivityType) {
           // We only received this to ensure that we saved the transaction order - we can ack without doing anything.
           acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
         } else if (!eid.equals(EntityID.NULL_ID)) {
@@ -378,7 +388,7 @@ public class ReplicatedTransactionHandler {
         } else {
           MessagePayload payload = MessagePayload.syncPayloadNormal(activity.getExtendedData(), activity.getConcurrency());
           platform.addRequestMessage(activityToLocalRequest(activity), payload, (result)-> {
-            if (SyncReplicationActivity.ActivityType.SYNC_END == activity.getActivityType()) {
+            if (SyncReplicationActivity.ActivityType.SYNC_END == thisActivityType) {
               try {
                 entityPersistor.layer(new ObjectInputStream(new ByteArrayInputStream(payload.getRawPayload())));
               } catch (IOException ioe) {
@@ -652,9 +662,10 @@ public class ReplicatedTransactionHandler {
         // Note that it is possible that the currently syncing entity has already been destroyed, in which case this message
         //  is either targeting something which doesn't exist or targets something which has been created over top of it.
         // In either case, we shouldn't ignore it.
-        if (activity.getConcurrency() == currentKey) {
+        int concurrencyKey = activity.getConcurrency();
+        if (currentKey == concurrencyKey) {
           return false;
-        } else if (!syncdKeys.contains(activity.getConcurrency())) {
+        } else if (!syncdKeys.contains(concurrencyKey)) {
 //  ignore, haven't gotten to this key yet
           return true;
         } else {
@@ -688,7 +699,8 @@ public class ReplicatedTransactionHandler {
       }
       
       if (eid.equals(syncing)) {
-        if (syncdKeys.contains(activity.getConcurrency())) {
+        int concurrencyKey = activity.getConcurrency();
+        if (syncdKeys.contains(concurrencyKey)) {
           return false;
         } else if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == activityType) {
 //  ORDERING_PLACEHOLDER requests cannot be deferred
@@ -696,7 +708,7 @@ public class ReplicatedTransactionHandler {
         } else if (SyncReplicationActivity.ActivityType.DESTROY_ENTITY == activityType) {
           Assert.fail("destroy received during a sync of an entity " + syncing);
           return false;
-        } else if (currentKey == activity.getConcurrency()) {
+        } else if (currentKey == concurrencyKey) {
           defer.add(new DeferredContainer(activeSender, activity));
           return true;
         }

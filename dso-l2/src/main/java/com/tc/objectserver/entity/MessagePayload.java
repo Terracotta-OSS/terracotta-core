@@ -25,27 +25,31 @@ import org.terracotta.entity.MessageCodecException;
 
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
-    return new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY, true, true);
+    return new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
   }
 
   public static final MessagePayload rawDataOnly(byte[] raw) {
-    return new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, false, false);
+    return new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, false, false);
   }
 
   public static final MessagePayload commonMessagePayloadBusy(byte[] raw, EntityMessage message, boolean replicate) {
-    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate, true);
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, true);
   }
 
   public static final MessagePayload commonMessagePayloadNotBusy(byte[] raw, EntityMessage message, boolean replicate) {
-    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate, false);
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, false);
   }
 
   public static final MessagePayload syncPayloadWithMessage(byte[] raw, EntityMessage message, int concurrencyKey) {
-    return new MessagePayload(raw, message, concurrencyKey, false, false);
+    return new MessagePayload(raw, message, concurrencyKey, 0, false, false);
   }
 
   public static final MessagePayload syncPayloadNormal(byte[] raw, int concurrencyKey) {
-    return new MessagePayload(raw, null, concurrencyKey, false, false);
+    return new MessagePayload(raw, null, concurrencyKey, 0, false, false);
+  }
+
+  public static final MessagePayload syncPayloadCreation(byte[] raw, int referenceCount) {
+    return new MessagePayload(raw, null, 0, referenceCount, false, false);
   }
 
 
@@ -56,7 +60,8 @@ public class MessagePayload {
   private final boolean canBeBusy;
   private String debugId;
   
-  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate, boolean canBeBusy) {
+  // NOTE:  ReferenceCount is a special-case for synchronizing the creation of an existing entity.
+  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
     this.raw = raw;
     this.message = message;
     this.debugId = (message != null) ? message.toString() : "";
