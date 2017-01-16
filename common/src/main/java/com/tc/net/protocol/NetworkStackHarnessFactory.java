@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.net.protocol.tcm.MessageChannelInternal;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
@@ -38,7 +38,7 @@ public interface NetworkStackHarnessFactory {
   /**
    * Creates client-side stack harnesses.
    */
-  NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel,
+  NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel,
                                           MessageTransportListener[] transportListeners);
 
 }

@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol;
 
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.transport.MessageTransport;
@@ -43,35 +44,14 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    return new PlainNetworkStackHarness(channelFactory, transport);
+    transport.setAllowConnectionReplace(allowConnectionReplace);
+    return new ServerNetworkStackHarness(channelFactory, transport);
   }
 
   @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
-                                                 MessageChannelInternal channel,
+                                                 ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new PlainNetworkStackHarness(transportFactory, channel);
-  }
-
-  private class PlainNetworkStackHarness extends AbstractNetworkStackHarness {
-
-    PlainNetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport) {
-      super(channelFactory, transport);
-    }
-
-    PlainNetworkStackHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel) {
-      super(transportFactory, channel);
-    }
-
-    @Override
-    protected void connectStack(boolean isClientStack) {
-      transport.setAllowConnectionReplace(allowConnectionReplace);
-      super.connectStack(isClientStack); 
-    }
-
-    @Override
-    protected void createIntermediateLayers() {
-      // No intermediate layers to create.
-    }
+    return new ClientNetworkStackHarness(transportFactory, channel, this.allowConnectionReplace);
   }
 }

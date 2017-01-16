@@ -18,10 +18,15 @@
  */
 package com.tc.net.protocol.delivery;
 
+import com.tc.net.protocol.ClientNetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.ServerNetworkStackHarness;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
+import com.tc.net.protocol.transport.ClientConnectionEstablisher;
+import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
@@ -40,16 +45,37 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
 
   @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
-                                                 MessageChannelInternal channel,
+                                                 ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(transportFactory, channel, factory, reconnectConfig);
+    final OnceAndOnlyOnceProtocolNetworkLayer layer = factory.createNewClientInstance(reconnectConfig);
+    final long timeout = reconnectConfig != null ? reconnectConfig.getReconnectTimeout() : 0;
+    layer.addTransportListener(channel);
+    ClientNetworkStackHarness harness = new ClientNetworkStackHarness(transportFactory, channel, true) {
+      @Override
+      protected MessageTransportListener createTransportListener(ClientMessageTransport transport, ClientConnectionEstablisher cce) {
+        return new OOOConnectionWatcher(transport, cce, layer, timeout);
+      }
+    };
+    harness.appendIntermediateLayer(layer);
+    return harness;
   }
 
   @Override
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(channelFactory, transport, factory, reconnectConfig);
+    transport.setAllowConnectionReplace(true);
+    final OnceAndOnlyOnceProtocolNetworkLayer layer = factory.createNewServerInstance(reconnectConfig);
+    final long timeout = reconnectConfig != null ? reconnectConfig.getReconnectTimeout() : 0;
+    ServerNetworkStackHarness harness = new ServerNetworkStackHarness(channelFactory, transport) {
+      @Override
+      protected MessageTransportListener createTransportListener(MessageChannelInternal created) {
+        layer.addTransportListener(created);
+        return new OOOReconnectionTimeout(layer, timeout);
+      }
+    };
+    harness.appendIntermediateLayer(layer);
+    return harness;
   }
 
 }

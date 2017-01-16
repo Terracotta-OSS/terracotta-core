@@ -46,7 +46,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   }
 
   private static TCByteBufferOutputStream createBuffer() {
-    return new TCByteBufferOutputStream(4, 4096, false);
+    return new TCByteBufferOutputStream();
   }
 
   @Override
