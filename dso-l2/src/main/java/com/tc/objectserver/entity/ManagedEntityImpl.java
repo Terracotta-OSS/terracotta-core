@@ -246,7 +246,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   // TODO:  Make sure that this is actually required in the cases where it is called or if some of these sites are
   //  related to the scope expansion of the legacy "NOOP" request type.
   private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
-    scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, resp, MessagePayload.EMPTY, resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
+    scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, resp, MessagePayload.emptyPayload(), resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
   
   private SchedulingRunnable scheduleInOrder(EntityDescriptor desc, ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {
@@ -812,7 +812,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.EMPTY, ()-> { 
+    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.emptyPayload(), ()-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
@@ -834,7 +834,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           //  don't care about the result
                                               
           BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.EMPTY,  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.EMPTY, concurrency), true, concurrency).waitForCompleted();
+          this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.emptyPayload(),  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency).waitForCompleted();
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();

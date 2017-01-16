@@ -165,12 +165,12 @@ public class ReplicatedTransactionHandler {
         BarrierCompletion latch = new BarrierCompletion();
         me.clearQueue();
         me.addRequestMessage(req,
-            new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY), 
+            MessagePayload.emptyPayload(),
             (result)->latch.complete(), exception->Assert.fail());
         latch.waitForCompletion();
       }
       BarrierCompletion latch = new BarrierCompletion();
-      platform.addRequestMessage(req, new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY), (result)->latch.complete(), null);
+      platform.addRequestMessage(req, MessagePayload.emptyPayload(), (result)->latch.complete(), null);
       latch.waitForCompletion();
     }    
   };
@@ -243,7 +243,7 @@ public class ReplicatedTransactionHandler {
       long consumerID = this.entityPersistor.getNextConsumerID();
       try {
         ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull() ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
-        temp.addRequestMessage(request, new MessagePayload(extendedData, null, ConcurrencyStrategy.MANAGEMENT_KEY), 
+        temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), 
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true /*from client checked*/, extendedData);
@@ -272,7 +272,7 @@ public class ReplicatedTransactionHandler {
       } catch (MessageCodecException codec) {
         throw new RuntimeException(codec);
       }
-      MessagePayload payload = new MessagePayload(extendedData, msg, activity.getConcurrency());
+      MessagePayload payload = MessagePayload.syncPayloadWithMessage(extendedData, msg, activity.getConcurrency());
       if (null != request.getAction()) switch (request.getAction()) {
         case RECONFIGURE_ENTITY:  
           entity.get().addRequestMessage(request, payload, 
@@ -364,10 +364,10 @@ public class ReplicatedTransactionHandler {
     try {
       Optional<ManagedEntity> entity = entityManager.getEntity(eid, version);
       if (entity.isPresent()) {
-        MessagePayload payload = new MessagePayload(activity.getExtendedData(), null, activity.getConcurrency());
+        MessagePayload payload = MessagePayload.syncPayloadNormal(activity.getExtendedData(), activity.getConcurrency());
         entity.get().addRequestMessage(activityToLocalRequest(activity), payload, (result)->acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception)->acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
         if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD != activity.getActivityType()) {
-          entity.get().addRequestMessage(makeLocalFlush(eid, version), MessagePayload.EMPTY, null, null);
+          entity.get().addRequestMessage(makeLocalFlush(eid, version), MessagePayload.emptyPayload(), null, null);
         }
       } else {
         if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == activity.getActivityType()) {
@@ -376,7 +376,7 @@ public class ReplicatedTransactionHandler {
         } else if (!eid.equals(EntityID.NULL_ID)) {
           throw new AssertionError();
         } else {
-          MessagePayload payload = new MessagePayload(activity.getExtendedData(), null, activity.getConcurrency());
+          MessagePayload payload = MessagePayload.syncPayloadNormal(activity.getExtendedData(), activity.getConcurrency());
           platform.addRequestMessage(activityToLocalRequest(activity), payload, (result)-> {
             if (SyncReplicationActivity.ActivityType.SYNC_END == activity.getActivityType()) {
               try {

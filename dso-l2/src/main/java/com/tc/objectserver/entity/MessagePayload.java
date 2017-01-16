@@ -20,14 +20,35 @@ package com.tc.objectserver.entity;
 
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
-/**
- *
- */
+
 public class MessagePayload {
-  
+  public static final MessagePayload emptyPayload() {
+    return new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY, true, true);
+  }
+
+  public static final MessagePayload rawDataOnly(byte[] raw) {
+    return new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, false, false);
+  }
+
+  public static final MessagePayload commonMessagePayloadBusy(byte[] raw, EntityMessage message, boolean replicate) {
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate, true);
+  }
+
+  public static final MessagePayload commonMessagePayloadNotBusy(byte[] raw, EntityMessage message, boolean replicate) {
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate, false);
+  }
+
+  public static final MessagePayload syncPayloadWithMessage(byte[] raw, EntityMessage message, int concurrencyKey) {
+    return new MessagePayload(raw, message, concurrencyKey, false, false);
+  }
+
+  public static final MessagePayload syncPayloadNormal(byte[] raw, int concurrencyKey) {
+    return new MessagePayload(raw, null, concurrencyKey, false, false);
+  }
+
+
   private final byte[] raw;
   private EntityMessage message;
   private final int concurrency;
@@ -35,16 +56,6 @@ public class MessagePayload {
   private final boolean canBeBusy;
   private String debugId;
   
-  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, true, true);
-  
-  public MessagePayload(byte[] raw, EntityMessage message, boolean replicate, boolean canBeBusy) {
-    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate, canBeBusy);
-  }
-  
-  public MessagePayload(byte[] raw, EntityMessage message, int concurrency) {
-    this(raw, message, concurrency, false, false);
-  }
-
   private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate, boolean canBeBusy) {
     this.raw = raw;
     this.message = message;
