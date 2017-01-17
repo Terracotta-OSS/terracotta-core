@@ -107,6 +107,7 @@ import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.SetOnceFlag;
+import com.tc.util.concurrent.SetOnceRef;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tcclient.cluster.ClusterInternal;
@@ -166,6 +167,8 @@ public class DistributedObjectClient implements TCClient {
 
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
   private final SetOnceFlag                          connectionMade                       = new SetOnceFlag();
+  private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<Exception>();
+ 
   private ClientEntityManager clientEntityManager;
   private final StageManager communicationStageManager;
 
@@ -378,8 +381,18 @@ public class DistributedObjectClient implements TCClient {
               waitForHandshake();
               connectionMade();
               break;
+            } catch (RuntimeException runtime) {
+              synchronized (connectionMade) {
+                exceptionMade.set(runtime);
+                connectionMade.notifyAll();
+              }
+              break;
             } catch (InterruptedException ie) {
-              // We are in the process of letting the thread terminate so we don't handle this in a special way.
+              synchronized (connectionMade) {
+                exceptionMade.set(ie);
+                connectionMade.notifyAll();
+              }              // We are in the process of letting the thread terminate so we don't handle this in a special way.
+              break;
             }
           }
           //  don't reset interrupted, thread is done
@@ -397,11 +410,15 @@ public class DistributedObjectClient implements TCClient {
   public boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
     long left = timeout > 0 ? units.toMillis(timeout) : Long.MAX_VALUE;
     synchronized(connectionMade) {
-      while (!connectionMade.isSet() && left > 0) {
+      while (!connectionMade.isSet() && !exceptionMade.isSet() && left > 0) {
         long start = System.currentTimeMillis();
         connectionMade.wait(units.toMillis(timeout));
         left -= (System.currentTimeMillis() - start);
       }
+    }
+    if (exceptionMade.isSet()) {
+      Exception exp = exceptionMade.get();
+      throw new RuntimeException(exp);
     }
     return connectionMade.isSet();
   }
