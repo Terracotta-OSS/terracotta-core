@@ -23,7 +23,7 @@ import com.tc.entity.MessageCodecSupplier;
 import com.tc.object.EntityID;
 import com.tc.text.PrettyPrintable;
 import java.util.Collection;
-
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -79,13 +79,15 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier, Pret
   void resetReferences();
 
   /**
-   * get the collection of managed entities under lock.  
-   * @param runFirst
-   * @param runEach
-   * @param runLast
-   * @return 
+   * Gets a snapshot of the entity list, sorted by order in which they were initially instantiated, under lock.
+   * 
+   * runFirst is allowed to consume the entire sorted list, prior to running runEach on each element in the list.
+   * 
+   * @param runFirst Consumes the entire list before it is iterated.
+   * @param runOnEach Consumes each element of the list, in order.
+   * @return The sorted list.
    */
-  Collection<ManagedEntity> snapshot(Runnable runFirst, Consumer<ManagedEntity> runEach, Runnable runLast);
+  List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst, Consumer<ManagedEntity> runOnEach);
   
   Collection<ManagedEntity> getAll();
   /**

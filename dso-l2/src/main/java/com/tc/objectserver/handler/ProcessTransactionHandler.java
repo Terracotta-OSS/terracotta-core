@@ -63,6 +63,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
@@ -179,8 +180,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
    * startSync is called on each one so that internal state of the entity is locked down until 
    * the sync has happened on that particular entity
    */
-  public Iterable<ManagedEntity> snapshotEntityList(Runnable r) {
-    return entityManager.snapshot(r, m->m.startSync(), null);
+  public Iterable<ManagedEntity> snapshotEntityList(Consumer<List<ManagedEntity>> runFirst) {
+    return entityManager.snapshot(runFirst, m->m.startSync());
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {

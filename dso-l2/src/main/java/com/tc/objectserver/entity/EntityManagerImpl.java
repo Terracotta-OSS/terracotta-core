@@ -69,6 +69,19 @@ public class EntityManagerImpl implements EntityManager {
   private boolean shouldCreateActiveEntities;
   
   private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
+  
+  // The sort comparator.
+  private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
+    @Override
+    public int compare(ManagedEntity o1, ManagedEntity o2) {
+      long firstID = o1.getConsumerID();
+      long secondID = o2.getConsumerID();
+      // NOTE:  The ids are unique.
+      Assert.assertTrue(firstID != secondID);
+      return (firstID > secondID)
+          ? 1
+          : -1;
+    }};
 
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
@@ -110,17 +123,7 @@ public class EntityManagerImpl implements EntityManager {
     try {
       // issue-439: We need to sort these entities, ascending by consumerID.
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
-      Collections.sort(sortingList, new Comparator<ManagedEntity>() {
-        @Override
-        public int compare(ManagedEntity o1, ManagedEntity o2) {
-          long firstID = o1.getConsumerID();
-          long secondID = o2.getConsumerID();
-          // NOTE:  The ids are unique.
-          Assert.assertTrue(firstID != secondID);
-          return (firstID > secondID)
-              ? 1
-              : -1;
-        }});
+      Collections.sort(sortingList, this.consumerIdSorter);
       for (ManagedEntity entity : sortingList) {
         entity.promoteEntity();
       }
@@ -212,18 +215,16 @@ public class EntityManagerImpl implements EntityManager {
   }
   
   @Override
-  public Collection<ManagedEntity> snapshot(Runnable runFirst, Consumer<ManagedEntity> runOnEach, Runnable runLast) {
+  public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst, Consumer<ManagedEntity> runOnEach) {
     snapshotLock.acquireUninterruptibly();
     try {
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
+      Collections.sort(sortingList, this.consumerIdSorter);
       if (runFirst != null) {
-        runFirst.run();
+        runFirst.accept(sortingList);
       }
-      Collection<ManagedEntity> collection = new ArrayList<>(entities.values());
-      collection.forEach(runOnEach);
-      if (runLast != null) {
-        runLast.run();
-      }
-      return collection;
+      sortingList.forEach(runOnEach);
+      return sortingList;
     } finally {
       snapshotLock.release();
     }
