@@ -31,8 +31,10 @@ import com.tc.logging.TCLogging;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.entity.StateDumper;
@@ -51,26 +53,35 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public void initialize(PlatformConfiguration platformConfiguration, TcConfiguration configuration, ClassLoader loader) {
-    List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
+    final Map<Class<? extends ServiceProvider>, ServiceProviderTuple> serviceProviderTupleMap = findServiceProviders(configuration, loader);
+    serviceProviderTupleMap.values().forEach((tuple) -> {
+      tuple.getServiceProvider().initialize(tuple.getServiceProviderConfiguration(), platformConfiguration);
+      registerNewServiceProvider(tuple.getServiceProvider());
+    });
+  }
+
+
+  public Map<Class<? extends ServiceProvider>, ServiceProviderTuple> findServiceProviders(TcConfiguration tcConfiguration, ClassLoader loader) {
+    final Map<Class<? extends ServiceProvider>, ServiceProviderTuple> serviceProviderTupleMap = new HashMap<>();
+    List<ServiceProviderConfiguration> serviceProviderConfigurationList = tcConfiguration.getServiceConfigurations();
     if(serviceProviderConfigurationList != null) {
       for (ServiceProviderConfiguration config : serviceProviderConfigurationList) {
         Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
         try {
           ServiceProvider provider = serviceClazz.newInstance();
-          if (provider.initialize(config, platformConfiguration)) {
-            registerNewServiceProvider(provider);
-          }
+          serviceProviderTupleMap.put(config.getServiceProviderType(), new ServiceProviderTuple(provider, config));
         } catch (InstantiationException | IllegalAccessException ie) {
           logger.error("caught exception while initializing service " + serviceClazz, ie);
           throw new RuntimeException(ie);
         }
       }
     }
-    loadClasspathBuiltins(loader, platformConfiguration);
+    loadClasspathBuiltins(serviceProviderTupleMap, loader);
+    return serviceProviderTupleMap;
   }
   
-  private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
+  private void loadClasspathBuiltins(Map<Class<? extends ServiceProvider>, ServiceProviderTuple> serviceProviderTupleMap, ClassLoader loader) {
     List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, loader);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
@@ -78,11 +89,10 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
           logger.warn("service:" + clazz.getName() + " is registered as a builtin but is not properly annotated with @BuiltinService.  This builtin will not be loaded");
         } else {
       // only add a builtin if one has not already been configured into the system via xml
-          if (serviceProviders.stream().noneMatch(sp->sp.getClass().getName().equals(clazz.getName()))) {
-            ServiceProvider service = clazz.newInstance();
+          if (serviceProviderTupleMap.get(clazz) == null) {
+            ServiceProvider serviceProvider = clazz.newInstance();
       //  there is no config for builtins
-            service.initialize(null, platformConfiguration);
-            registerNewServiceProvider(service);
+            serviceProviderTupleMap.put(clazz, new ServiceProviderTuple(serviceProvider, null));
           }
         }
       } catch (IllegalAccessException | InstantiationException i) {
@@ -163,10 +173,11 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   /**
    * @return True if there is a user-provided service for the given class registered.
    */
-  public boolean hasUserProvidedServiceProvider(Class<?> serviceInterface) {
+  public boolean hasUserProvidedServiceProvider(TcConfiguration tcConfiguration, ClassLoader loader, Class<?> serviceInterface) {
     boolean hasProvider = false;
-    for (ServiceProvider serviceProvider : this.serviceProviders) {
-      if (serviceProvider.getProvidedServiceTypes().contains(serviceInterface)) {
+    Map<Class<? extends ServiceProvider>, ServiceProviderTuple> serviceProviderTupleMap = findServiceProviders(tcConfiguration, loader);
+    for (ServiceProviderTuple serviceProviderTuple : serviceProviderTupleMap.values()) {
+      if (serviceProviderTuple.getServiceProvider().getProvidedServiceTypes().contains(serviceInterface)) {
         hasProvider = true;
         break;
       }
@@ -180,5 +191,24 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     dumpStateTo(dump);
     out.println(dump);
     return out;
+  }
+
+  private static class ServiceProviderTuple {
+    private final ServiceProvider serviceProvider;
+    private final ServiceProviderConfiguration serviceProviderConfiguration;
+
+    private ServiceProviderTuple(ServiceProvider serviceProvider,
+                                 ServiceProviderConfiguration serviceProviderConfiguration) {
+      this.serviceProvider = serviceProvider;
+      this.serviceProviderConfiguration = serviceProviderConfiguration;
+    }
+
+    public ServiceProvider getServiceProvider() {
+      return serviceProvider;
+    }
+
+    public ServiceProviderConfiguration getServiceProviderConfiguration() {
+      return serviceProviderConfiguration;
+    }
   }
 }
