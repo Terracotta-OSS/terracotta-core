@@ -11,10 +11,12 @@ public class PlatformConfigurationImpl implements PlatformConfiguration {
 
   private final String serverName;
   private final TcConfiguration config;
+  private final boolean restartable;
 
-  public PlatformConfigurationImpl(String serverName, TcConfiguration config) {
+  public PlatformConfigurationImpl(String serverName, TcConfiguration config, boolean restartable) {
     this.serverName = serverName;
     this.config = config;
+    this.restartable = restartable;
   }
 
   @Override
@@ -25,5 +27,10 @@ public class PlatformConfigurationImpl implements PlatformConfiguration {
   @Override
   public <T> Collection<T> getExtendedConfiguration(Class<T> type) {
     return config.getExtendedConfiguration(type);
+  }
+
+  @Override
+  public boolean isRestartable() {
+    return restartable;
   }
 }

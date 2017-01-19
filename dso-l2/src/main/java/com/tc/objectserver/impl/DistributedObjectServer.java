@@ -462,7 +462,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // Set up the ServiceRegistry.
     TcConfiguration base = this.configSetupManager.commonl2Config().getBean();
-    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier(), base);
+    // See if we need to add an in-memory service for IPlatformPersistence.
+    boolean serverIsRestartable = this.serviceRegistry.hasUserProvidedServiceProvider(base, Thread.currentThread().getContextClassLoader(), IPlatformPersistence.class);
+    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier(), base, serverIsRestartable);
     serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
@@ -471,9 +473,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     final CommunicatorService communicatorService = new CommunicatorService();
     serviceRegistry.registerImplementationProvided(communicatorService);
-    
-    // See if we need to add an in-memory service for IPlatformPersistence.
-    boolean serverIsRestartable = this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class);
+
     if (!serverIsRestartable) {
       // In this case, we do still need to provide an implementation of IPlatformPersistence, backed by memory, so that entities can request a service which is as persistent as this server is.
       NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
