@@ -67,6 +67,7 @@ import java.util.Random;
 import java.util.function.Consumer;
 import org.junit.Test;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import org.mockito.Mockito;
@@ -142,7 +143,7 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
+    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
       when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
       return entity;
     });
@@ -219,7 +220,7 @@ public class ReplicatedTransactionHandlerTest {
     MessageCodec codec = mock(MessageCodec.class);
     SyncMessageCodec sync = mock(SyncMessageCodec.class);
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyInt())).then((invoke)->{
+    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
       when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
       return entity;
     });

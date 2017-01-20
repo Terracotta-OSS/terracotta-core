@@ -18,18 +18,14 @@
  */
 package com.tc.objectserver.handler;
 
-import java.util.Optional;
-
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
-import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityNotFoundException;
 
 
 /**
@@ -51,7 +47,7 @@ public class EntityExistenceHelpers {
       resultWasCached = true;
     } else {
       // There is no record of this, so give it a try.
-      entityManager.createEntity(entityID, version, consumerID, canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
+      entityManager.createEntity(entityID, version, consumerID, canDelete);
     }
     return resultWasCached;
   }
@@ -138,7 +134,6 @@ public class EntityExistenceHelpers {
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
     long transactionID = transactionIDObject.toLong();
-    long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
     
     return entityPersistor.reconfiguredResultInJournal(clientID, transactionID);
   }

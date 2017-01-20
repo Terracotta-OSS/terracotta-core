@@ -119,7 +119,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
-                    boolean isInActiveState, int references) {
+                    boolean isInActiveState, boolean canDelete) {
     this.id = id;
     this.isDestroyed = true;
     this.version = version;
@@ -133,8 +133,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     // Create the RetirementManager here, since it is currently scoped per-entity.
     this.retirementManager = new RetirementManager();
     this.isInActiveState = isInActiveState;
-    this.canDelete = references >= 0;
-    this.clientReferenceCount = references;
+    this.canDelete = canDelete;
+    this.clientReferenceCount = canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY;
     registry.setOwningEntity(this);
     this.codec = factory.getMessageCodec();
     this.syncCodec = factory.getSyncMessageCodec();

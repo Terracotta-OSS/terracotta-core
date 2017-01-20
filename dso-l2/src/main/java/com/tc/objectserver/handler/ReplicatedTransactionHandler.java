@@ -242,7 +242,9 @@ public class ReplicatedTransactionHandler {
 // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
       long consumerID = this.entityPersistor.getNextConsumerID();
       try {
-        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull() ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
+        // TODO:  When a permanent entity is being synced, should we be creating it or ensuring it already exists?
+        boolean canDelete = !sourceNodeID.isNull();
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, canDelete);
         temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), 
           (result) -> {
             if (!sourceNodeID.isNull()) {
@@ -349,9 +351,13 @@ public class ReplicatedTransactionHandler {
       try {
         if (!this.entityManager.getEntity(eid, version).isPresent()) {
           long consumerID = entityPersistor.getNextConsumerID();
-          // Reference count interpretation:  0 for deletable and 1 for not deletable.
           int referenceCount = activity.getReferenceCount();
-          this.entityManager.createEntity(eid, version, consumerID, referenceCount);
+          boolean canDelete = (referenceCount >= 0);
+          ManagedEntity newEntity = this.entityManager.createEntity(eid, version, consumerID, canDelete);
+          if (canDelete) {
+            // Set the reference count to what we were given.
+            newEntity.resetReferences(referenceCount);
+          }
           // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
           this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !activity.getSource().isNull(), activity.getExtendedData());
         } else {
