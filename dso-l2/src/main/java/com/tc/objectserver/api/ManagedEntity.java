@@ -20,6 +20,7 @@ package com.tc.objectserver.api;
 
 import org.terracotta.entity.MessageCodec;
 
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
@@ -56,7 +57,14 @@ public interface ManagedEntity extends StateDumpable {
   * @throws EntityUserException A state-safe exception (MessageCodecException) was encountered while setting up the invoke.
   */ 
   SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception);
-    
+
+  /**
+   * Called when passive sync wants to communicate how to instantiate this entity.
+   * 
+   * @return The message tuple describing how to instantiate this entity (or null if it can't be synced).
+   */
+  public SyncReplicationActivity.EntityCreationTuple getCreationDataForSync();
+
   /**
    * Called to sync an entity.  Caller initiates sync of an entity through this method.  
    * 

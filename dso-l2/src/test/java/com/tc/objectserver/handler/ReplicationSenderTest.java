@@ -110,7 +110,7 @@ public class ReplicationSenderTest {
       case FLUSH_LOCAL_PIPELINE:
         return SyncReplicationActivity.createFlushLocalPipelineMessage(entity, 1);
       case SYNC_BEGIN:
-        return SyncReplicationActivity.createStartSyncMessage();
+        return SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0] );
       case SYNC_END:
         return SyncReplicationActivity.createEndSyncMessage(new byte[0]);
       case SYNC_ENTITY_BEGIN:

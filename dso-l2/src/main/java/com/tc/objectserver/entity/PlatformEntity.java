@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -83,6 +84,12 @@ public class PlatformEntity implements ManagedEntity {
   @Override
   public boolean isRemoveable() {
     return false;
+  }
+
+  @Override
+  public SyncReplicationActivity.EntityCreationTuple getCreationDataForSync() {
+    // This is a special-case, since it is part of the platform and cannot be "created" or "synced".
+    return null;
   }
 
   @Override

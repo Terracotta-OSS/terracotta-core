@@ -155,8 +155,12 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage()));
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityMessage(eid, 1, new byte[0], 0)));
+    SyncReplicationActivity.EntityCreationTuple[] entitiesToSync = {
+        new SyncReplicationActivity.EntityCreationTuple(eid, 1, new byte[0], true)
+    };
+    int referenceCount = 0;
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(entitiesToSync)));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, entitiesToSync[0].configPayload, referenceCount)));
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityKeyMessage(eid, 1, rand)));
     this.loopbackSink.addSingleThreaded(msg);
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, rand)));
@@ -197,7 +201,7 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage()));
+    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
     this.loopbackSink.addSingleThreaded(msg);
     verify(activity).getExtendedData();
@@ -299,7 +303,11 @@ public class ReplicatedTransactionHandlerTest {
     EntityID eid = new EntityID("foo", "bar");
     long VERSION = 1;
     byte[] config = new byte[0];
-    send(SyncReplicationActivity.createStartSyncMessage());
+    boolean canDelete = true;
+    SyncReplicationActivity.EntityCreationTuple[] entitiesToSync = {
+        new SyncReplicationActivity.EntityCreationTuple(eid, VERSION, config, canDelete)
+    };
+    send(SyncReplicationActivity.createStartSyncMessage(entitiesToSync));
     send(SyncReplicationActivity.createStartEntityMessage(eid, VERSION, config, 0));
     send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, 1));
     send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, 1, config, ""));

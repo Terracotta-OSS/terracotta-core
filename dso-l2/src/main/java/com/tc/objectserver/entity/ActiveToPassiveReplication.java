@@ -154,7 +154,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
           @Override
           public void accept(List<ManagedEntity> sortedEntities) {
-            replicateActivity(SyncReplicationActivity.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted();
+            // We want to create the array of activity data.
+            // Note that this list will include the PlatformEntity, which we want to ignore (we expect it to be first).
+            int sortedSize = sortedEntities.size() - 1;
+            SyncReplicationActivity.EntityCreationTuple[] tuplesForCreation = new SyncReplicationActivity.EntityCreationTuple[sortedSize];
+            Assert.assertNull(sortedEntities.get(0).getCreationDataForSync());
+            for (int i = 0; i < sortedSize; ++i) {
+              tuplesForCreation[i] = sortedEntities.get(i + 1).getCreationDataForSync();
+            }
+            replicateActivity(SyncReplicationActivity.createStartSyncMessage(tuplesForCreation), Collections.singleton(newNode)).waitForCompleted();
           }}
         );
         for (ManagedEntity entity : e) {

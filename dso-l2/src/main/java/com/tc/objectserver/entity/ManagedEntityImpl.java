@@ -803,7 +803,12 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
   }
-  
+
+  @Override
+  public SyncReplicationActivity.EntityCreationTuple getCreationDataForSync() {
+    return new SyncReplicationActivity.EntityCreationTuple(this.id, this.version, this.constructorInfo, canDelete);
+  }
+
   @Override
   public void sync(NodeID passive) {
 // iterate through all the concurrency keys of an entity
