@@ -120,7 +120,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   
 
   @Override
-  public C reconfigure(C configuration) throws EntityNotProvidedException, EntityConfigurationException {
+  public C reconfigure(C configuration) throws EntityNotProvidedException, EntityNotFoundException, EntityConfigurationException {
     C result = null;
     // Make sure that we have a service provider.
     if (null != this.service) {
@@ -132,7 +132,9 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
         result = this.service.deserializeConfiguration(received.get());
       } catch (EntityException e) {
         // Check that this is the correct type.
-        if (e instanceof EntityNotProvidedException) {
+        if (e instanceof EntityNotFoundException) {
+          throw (EntityNotFoundException) e;
+        } else if (e instanceof EntityNotProvidedException) {
           throw (EntityNotProvidedException) e;
         } else if (e instanceof EntityConfigurationException) {
           throw (EntityConfigurationException) e;
