@@ -112,6 +112,9 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
         ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput);      
         try {
           objectOutput.writeObject(this.failureException);
+        } catch (RuntimeException t) {
+          logger.warn("response failure", t);
+          throw t;
         } finally {
           objectOutput.close();
         }
