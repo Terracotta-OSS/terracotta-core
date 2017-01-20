@@ -75,6 +75,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.SyncMessageCodec;
 
@@ -241,7 +242,10 @@ public class ReplicatedTransactionHandlerTest {
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       // NOTE:  We don't retire replicated messages.
-      verifySequence(req, ((MessagePayload)invocation.getArguments()[1]).getRawPayload(), ((MessagePayload)invocation.getArguments()[1]).getConcurrency());
+      MessagePayload payload = (MessagePayload)invocation.getArguments()[1];
+      byte[] raw = (null != payload) ? payload.getRawPayload() : null;
+      int concurrency = (null != payload) ? payload.getConcurrency() : ConcurrencyStrategy.MANAGEMENT_KEY;
+      verifySequence(req, raw, concurrency);
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     mockPassiveSync(rth);
@@ -254,13 +258,18 @@ public class ReplicatedTransactionHandlerTest {
   
   private void verifySequence(ServerEntityRequest req, byte[] payload, int c) {
     switch(req.getAction()) {
-      case RECEIVE_SYNC_ENTITY_START:
+      case RECEIVE_SYNC_CREATE_ENTITY:
         Assert.assertNull(last);
         last = req;
         Assert.assertEquals(0, concurrency);
         break;
+      case RECEIVE_SYNC_ENTITY_START_SYNCING:
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY);
+        last = req;
+        Assert.assertEquals(0, concurrency);
+        break;
       case RECEIVE_SYNC_ENTITY_KEY_START:
-        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         last = req;
         Assert.assertEquals(0, concurrency);
         concurrency = c;

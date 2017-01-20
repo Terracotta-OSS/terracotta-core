@@ -63,9 +63,13 @@ public enum ServerEntityAction {
   RECONFIGURE_ENTITY,  
   // ***** Messages specific to received passive synchronization data below this point *****
   /**
+   * During sync, create an entity which will later by synced.
+   */
+  RECEIVE_SYNC_CREATE_ENTITY,
+  /**
    * Messages related to the synchronization of a specific entity instance follow.
    */
-  RECEIVE_SYNC_ENTITY_START,
+  RECEIVE_SYNC_ENTITY_START_SYNCING,
   /**
    * Messages related to the synchronization of a specific entity instance are now done.
    */

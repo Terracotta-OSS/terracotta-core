@@ -242,18 +242,22 @@ public class SyncReplicationActivity implements OrderedEventContext {
   }
 
   public byte[] getExtendedData() {
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return payload;
   }
   
   public ClientID getSource() {
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return src;
   }
   
   public TransactionID getTransactionID() {
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return tid;
   }
   
   public TransactionID getOldestTransactionOnClient() {
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return oldest;
   }
 
@@ -268,13 +272,15 @@ public class SyncReplicationActivity implements OrderedEventContext {
   
   public int getConcurrency() {
     // SYNC_ENTITY_BEGIN contains reference-count, not concurrency.
-    Assert.assertTrue(ActivityType.SYNC_ENTITY_BEGIN != this.action);
+    Assert.assertFalse(ActivityType.SYNC_ENTITY_BEGIN == this.action);
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return this.concurrency;
   }
 
   public int getReferenceCount() {
     // SYNC_ENTITY_BEGIN is the only case which has a reference count.
     Assert.assertTrue(ActivityType.SYNC_ENTITY_BEGIN == this.action);
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return this.referenceCount;
   }
 

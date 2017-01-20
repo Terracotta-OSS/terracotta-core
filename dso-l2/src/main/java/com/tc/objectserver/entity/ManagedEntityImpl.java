@@ -191,14 +191,23 @@ public class ManagedEntityImpl implements ManagedEntity {
         resp = createManagedEntityResponse(completion, exception, request, false);
         processInvokeRequest(request, resp, data, data.getConcurrency());
         break;
-      case RECEIVE_SYNC_ENTITY_START:
+      case RECEIVE_SYNC_CREATE_ENTITY:
+        Assert.assertTrue(!this.isInActiveState);
+        resp = createManagedEntityResponse(completion, exception, request, false);
+        processSyncCreateMessage(request, resp, data);
+        break;
+      case RECEIVE_SYNC_ENTITY_START_SYNCING:
       case RECEIVE_SYNC_ENTITY_END:
+        Assert.assertTrue(!this.isInActiveState);
+        resp = createManagedEntityResponse(completion, exception, request, false);
+        processSyncStartEndMessage(request, resp, data);
+        break;
       case RECEIVE_SYNC_ENTITY_KEY_START:
       case RECEIVE_SYNC_ENTITY_KEY_END:
       case RECEIVE_SYNC_PAYLOAD:
         Assert.assertTrue(!this.isInActiveState);
         resp = createManagedEntityResponse(completion, exception, request, false);
-        processSyncMessage(request, resp, data, data.getConcurrency());
+        processSyncPayloadOtherMessage(request, resp, data, data.getConcurrency());
         break;
       default:
         throw new IllegalArgumentException("Unknown request " + request);
@@ -299,16 +308,38 @@ public class ManagedEntityImpl implements ManagedEntity {
     scheduleInOrder(getEntityDescriptorForSource(client), request, response, message, ()->invoke(request, response, message, locked), locked);
   }
 
-  private void processSyncMessage(ServerEntityRequest sync, ResultCapture response, MessagePayload syncPayload, int concurrencyKey) {
-    if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START || 
-        sync.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_END) {
-      scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
-          ()-> {
-            invokeLifecycleOperation(sync, syncPayload, response);
-          }, 
-        ConcurrencyStrategy.MANAGEMENT_KEY
-      );
-    } else if (sync.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD) {
+  private void processSyncCreateMessage(ServerEntityRequest sync, ResultCapture response, MessagePayload syncPayload) {
+    ServerEntityAction action = sync.getAction();
+    Assert.assertTrue(action == ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY);
+    scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
+        ()-> {
+          invokeLifecycleOperation(sync, syncPayload, response);
+        }, 
+      ConcurrencyStrategy.MANAGEMENT_KEY
+    );
+  }
+
+  private void processSyncStartEndMessage(ServerEntityRequest sync, ResultCapture response, MessagePayload syncPayload) {
+    ServerEntityAction action = sync.getAction();
+    Assert.assertTrue(
+        action == ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING
+        || action == ServerEntityAction.RECEIVE_SYNC_ENTITY_END
+    );
+    scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
+        ()-> {
+          invokeLifecycleOperation(sync, syncPayload, response);
+        }, 
+      ConcurrencyStrategy.MANAGEMENT_KEY
+    );
+  }
+
+  private void processSyncPayloadOtherMessage(ServerEntityRequest sync, ResultCapture response, MessagePayload syncPayload, int concurrencyKey) {
+    ServerEntityAction action = sync.getAction();
+    Assert.assertTrue(action != ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY);
+    Assert.assertTrue(action != ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING);
+    Assert.assertTrue(action != ServerEntityAction.RECEIVE_SYNC_ENTITY_END);
+    
+    if (action == ServerEntityAction.RECEIVE_SYNC_PAYLOAD) {
       scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
         ()-> {
           invoke(sync, response, syncPayload, concurrencyKey);
@@ -381,8 +412,17 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  all request queues are flushed because this action is on the MGMT_KEY
           destroyEntity(request, resp);
           break;
-        case RECEIVE_SYNC_ENTITY_START:
-          receiveSyncEntityStart(resp, payload.getRawPayload());
+        case RECEIVE_SYNC_CREATE_ENTITY:
+          // Update our reference count.
+          this.resetReferences(payload.getReferenceCount());
+          receiveSyncCreateEntity(resp, payload.getRawPayload());
+          break;
+        case RECEIVE_SYNC_ENTITY_START_SYNCING:
+          /// NOTE:  There is currently an assumption that the sync entity start completes after the entity has been
+          //  created but before it is actually told that it will start to sync.  This may be a bug but will be
+          //  preserved, for now, to minimize extraneous behavioral changes.
+          resp.complete();
+          receiveSyncEntityStartSyncing();
           break;
         case RECEIVE_SYNC_ENTITY_END:
           receiveSyncEntityEnd(resp);
@@ -462,7 +502,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
   }
   
-  private void receiveSyncEntityStart(ResultCapture response, byte[] constructor) {
+  private void receiveSyncCreateEntity(ResultCapture response, byte[] constructor) {
     if (this.passiveServerEntity != null) {
       throw new AssertionError("not null " + this.getID());
     }
@@ -473,6 +513,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     } catch (ConfigurationException ce) {
       throw new TCShutdownServerException("unable to create entity on passive sync " + this.id);
     }
+  }
+
+  private void receiveSyncEntityStartSyncing() {
 //  it better be a passive instance
     Assert.assertNotNull(this.passiveServerEntity);
     this.passiveServerEntity.startSyncEntity();

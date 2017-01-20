@@ -27,6 +27,7 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.msg.SyncReplicationActivity.ActivityType;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -186,7 +187,11 @@ public class ReplicatedTransactionHandler {
     ServerID activeSender = (ServerID) rep.messageFrom();
     for (SyncReplicationActivity activity : rep.getActivities()) {
       if (activity.isSyncActivity()) {
-        syncActivityReceived(activeSender, activity);
+        if (SyncReplicationActivity.ActivityType.SYNC_BEGIN == activity.getActivityType()) {
+          syncBeginEntityListReceived(activeSender, activity);
+        } else {
+          syncActivityReceived(activeSender, activity);
+        }
       } else {
         if (state.ignore(activity)) {
           if (LOGGER.isDebugEnabled()) {
@@ -206,6 +211,34 @@ public class ReplicatedTransactionHandler {
       }
     }
   }
+
+  private void syncBeginEntityListReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
+    ackReceived(activeSender, activity);
+    beforeSyncAction(activity);
+    
+    // In this case, we want to create all the provided entities.
+    SyncReplicationActivity.EntityCreationTuple[] entityTuples = activity.getEntitiesToCreateForSync();
+    Assert.assertNotNull(entityTuples);
+    // Note that these are provided in the order they must be instantiated so just walk the list.
+    for (SyncReplicationActivity.EntityCreationTuple tuple : entityTuples) {
+      EntityID eid = tuple.id;
+      long version = tuple.version;
+      byte[] config = tuple.configPayload;
+      boolean canDelete = tuple.canDelete;
+      
+      if (!this.entityManager.getEntity(eid, version).isPresent()) {
+        long consumerID = entityPersistor.getNextConsumerID();
+        this.entityManager.createEntity(eid, version, consumerID, canDelete);
+        this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, canDelete, config);
+      } else {
+        Assert.fail("this entity should not be here");
+      }
+    }
+    // This is somewhat strange in that these entities won't actually contain any data or receive replicated messages
+    //  until the SYNC_ENTITY_BEGIN for this specific entity is received.
+    acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
+  }
+
 //  don't need to worry about resends here for lifecycle messages.  active will filer them  
   private void replicatedActivityReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
     ClientID sourceNodeID = activity.getSource();
@@ -344,25 +377,23 @@ public class ReplicatedTransactionHandler {
     EntityID eid = descriptor.getEntityID();
     long version = descriptor.getClientSideVersion();
     
+    // This should have been handled in its own path.
+    Assert.assertTrue(SyncReplicationActivity.ActivityType.SYNC_BEGIN != thisActivityType);
+    
     ackReceived(activeSender, activity);
     beforeSyncAction(activity);
     
     if ((SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == thisActivityType) && !eid.equals(EntityID.NULL_ID)) {
       try {
-        if (!this.entityManager.getEntity(eid, version).isPresent()) {
-          long consumerID = entityPersistor.getNextConsumerID();
-          int referenceCount = activity.getReferenceCount();
-          boolean canDelete = (referenceCount >= 0);
-          ManagedEntity newEntity = this.entityManager.createEntity(eid, version, consumerID, canDelete);
-          if (canDelete) {
-            // Set the reference count to what we were given.
-            newEntity.resetReferences(referenceCount);
-          }
-          // We record this in the persistor but not record it in the journal since it has no originating client and can't be re-sent. 
-          this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, !activity.getSource().isNull(), activity.getExtendedData());
-        } else {
-          Assert.fail("this entity should not be here");
-        }
+        // This should have already been created.
+        Assert.assertTrue(this.entityManager.getEntity(eid, version).isPresent());
+        
+        // Now we can actually start synchronizing the entity.
+        // NOTE:  We need to update the reference count at this point.
+        int referenceCount = activity.getReferenceCount();
+        MessagePayload payload = MessagePayload.syncPayloadCreation(activity.getExtendedData(), referenceCount);
+        BasicServerEntityRequest request = new BasicServerEntityRequest(ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY, activity.getSource(), activity.getTransactionID(), activity.getOldestTransactionOnClient(), activity.getEntityDescriptor());
+        this.entityManager.getEntity(eid, version).get().addRequestMessage(request, payload, (result)->{/* do nothing - this in-between state is temporary*/}, (exception)->{acknowledge(activeSender, activity, ReplicationResultCode.FAIL);});
       } catch (EntityException exception) {
 //  TODO: this needs to be controlled.  
         LOGGER.warn("entity has already been created", exception);
@@ -375,8 +406,9 @@ public class ReplicatedTransactionHandler {
         // Note that we might have just created this as SYNC_ENTITY_BEGIN, above, so create the payload based on the message type.
         MessagePayload payload = null;
         if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == thisActivityType) {
-          int referenceCount = activity.getReferenceCount();
-          payload = MessagePayload.syncPayloadCreation(activity.getExtendedData(), referenceCount);
+          payload = MessagePayload.emptyPayload();
+        } else if (SyncReplicationActivity.ActivityType.SYNC_BEGIN == thisActivityType) {
+          payload = MessagePayload.emptyPayload();
         } else {
           int concurrencyKey = activity.getConcurrency();
           payload = MessagePayload.syncPayloadNormal(activity.getExtendedData(), concurrencyKey);
@@ -386,6 +418,8 @@ public class ReplicatedTransactionHandler {
           entity.get().addRequestMessage(makeLocalFlush(eid, version), MessagePayload.emptyPayload(), null, null);
         }
       } else {
+        // We should have already created this.
+        Assert.assertFalse(SyncReplicationActivity.ActivityType.SYNC_ENTITY_BEGIN == thisActivityType);
         if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == thisActivityType) {
           // We only received this to ensure that we saved the transaction order - we can ack without doing anything.
           acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
@@ -467,8 +501,13 @@ public class ReplicatedTransactionHandler {
   }
       
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
-    return new BasicServerEntityRequest(decodeReplicationType(activity.getActivityType()), activity.getSource(),  
-      activity.getTransactionID(), activity.getOldestTransactionOnClient(), activity.getEntityDescriptor());
+    ActivityType activityType = activity.getActivityType();
+    ClientID source = ClientID.NULL_ID;
+    TransactionID transactionID = TransactionID.NULL_ID;
+    TransactionID oldestTransactionID = TransactionID.NULL_ID;
+    EntityDescriptor descriptor = EntityDescriptor.NULL_ID;
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != activityType);
+    return new BasicServerEntityRequest(decodeReplicationType(activityType), source, transactionID, oldestTransactionID, descriptor);
   }
   
   private void beforeSyncAction(SyncReplicationActivity activity) {
@@ -554,8 +593,9 @@ public class ReplicatedTransactionHandler {
 
   private static ServerEntityAction decodeReplicationType(SyncReplicationActivity.ActivityType networkType) {
     switch(networkType) {
-      case SYNC_START:
       case SYNC_BEGIN:
+        throw Assert.failure("Shouldn't decode this type into an internal action");
+      case SYNC_START:
       case SYNC_END:
       case ORDERING_PLACEHOLDER:
         return ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
@@ -575,7 +615,7 @@ public class ReplicatedTransactionHandler {
       case RELEASE_ENTITY:
         return ServerEntityAction.RELEASE_ENTITY;
       case SYNC_ENTITY_BEGIN:
-        return ServerEntityAction.RECEIVE_SYNC_ENTITY_START;
+        return ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
         return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_START;
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
@@ -682,6 +722,10 @@ public class ReplicatedTransactionHandler {
       if (SyncReplicationActivity.ActivityType.CREATE_ENTITY == activity.getActivityType()) {
         syncdEntities.add(eid);
         return false;
+      } else if (SyncReplicationActivity.ActivityType.DESTROY_ENTITY == activity.getActivityType()) {
+        // Since we sent the entire collection of entities, at the beginning, we always need to replicate destroys.
+        return false;
+        
       }
 //  if not syncing or sync'd, just ignore it.
       return (!syncdEntities.contains(eid));

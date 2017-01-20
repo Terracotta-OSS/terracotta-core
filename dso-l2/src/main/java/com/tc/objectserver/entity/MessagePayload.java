@@ -56,6 +56,7 @@ public class MessagePayload {
   private final byte[] raw;
   private EntityMessage message;
   private final int concurrency;
+  private final int referenceCount;
   private final boolean replicate;
   private final boolean canBeBusy;
   private String debugId;
@@ -66,6 +67,7 @@ public class MessagePayload {
     this.message = message;
     this.debugId = (message != null) ? message.toString() : "";
     this.concurrency = concurrency;
+    this.referenceCount = referenceCount;
     this.replicate = replicate;
     this.canBeBusy = canBeBusy;
   }
@@ -104,6 +106,10 @@ public class MessagePayload {
   
   public int getConcurrency() {
     return concurrency;
+  }
+  
+  public int getReferenceCount() {
+    return this.referenceCount;
   }
   
   public boolean shouldReplicate() {
