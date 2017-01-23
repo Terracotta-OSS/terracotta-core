@@ -854,6 +854,8 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void sync(NodeID passive) {
+//  lock out lifecycle invokes until after sync is finished
+    interop.startSync();
 // iterate through all the concurrency keys of an entity
     EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
@@ -896,10 +898,6 @@ public class ManagedEntityImpl implements ManagedEntity {
       interop.syncFinished();
     }
   }  
-  
-  public void startSync() {
-    interop.startSync();
-  }
 
   @Override
   public long getConsumerID() {

@@ -96,11 +96,6 @@ public class PlatformEntity implements ManagedEntity {
   public void sync(NodeID passive) {
   //  never sync
   }
-
-  @Override
-  public void startSync() {
-
-  }
   
   @Override
   public void loadEntity(byte[] configuration) {

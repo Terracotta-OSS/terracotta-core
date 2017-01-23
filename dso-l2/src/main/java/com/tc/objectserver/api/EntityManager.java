@@ -44,6 +44,7 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier, Pret
    * @param version the version of the entity on the calling client
    * @param consumerID the unique consumerID this entity uses when interacting with services
    * @param canDelete True if this is an entity which can be deleted, false if it is permanent.
+   * @return an uninitialized ManagedEntity
    */
   ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException;
  
@@ -70,9 +71,10 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier, Pret
    * that information in.  In the case of "createEntity", a create request is handled by the entity, right after it is
    * created whereas this call is stand-alone and the entity is ready for use immediately.
    * 
-   * @param id id of the entity to create
+   * @param entityID id of the entity to create
    * @param recordedVersion the version of the entity's implementation from before the restart
    * @param consumerID the unique consumerID this entity uses when interacting with services
+   * @param canDelete if the entity can be deleted by the user
    * @param configuration The opaque configuration to use in the creation.
    */
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException;
@@ -85,10 +87,9 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier, Pret
    * runFirst is allowed to consume the entire sorted list, prior to running runEach on each element in the list.
    * 
    * @param runFirst Consumes the entire list before it is iterated.
-   * @param runOnEach Consumes each element of the list, in order.
    * @return The sorted list.
    */
-  List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst, Consumer<ManagedEntity> runOnEach);
+  List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst);
   
   Collection<ManagedEntity> getAll();
   /**

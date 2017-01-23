@@ -215,7 +215,7 @@ public class EntityManagerImpl implements EntityManager {
   }
   
   @Override
-  public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst, Consumer<ManagedEntity> runOnEach) {
+  public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst) {
     snapshotLock.acquireUninterruptibly();
     try {
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
@@ -223,13 +223,12 @@ public class EntityManagerImpl implements EntityManager {
       if (runFirst != null) {
         runFirst.accept(sortingList);
       }
-      sortingList.forEach(runOnEach);
       return sortingList;
     } finally {
       snapshotLock.release();
     }
   }
-  
+
   private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);

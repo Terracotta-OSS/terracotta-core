@@ -181,7 +181,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
    * the sync has happened on that particular entity
    */
   public Iterable<ManagedEntity> snapshotEntityList(Consumer<List<ManagedEntity>> runFirst) {
-    return entityManager.snapshot(runFirst, m->m.startSync());
+    return entityManager.snapshot(runFirst);
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {

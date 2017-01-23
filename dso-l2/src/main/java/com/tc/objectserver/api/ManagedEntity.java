@@ -71,9 +71,7 @@ public interface ManagedEntity extends StateDumpable {
    * @param passive target passive
    */
   void sync(NodeID passive);
-  
-  void startSync();
-  
+    
   void loadEntity(byte[] configuration) throws ConfigurationException;
   
   void promoteEntity() throws ConfigurationException;
