@@ -19,6 +19,8 @@
 package org.terracotta.passthrough;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.classloader.PermanentEntity;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -28,12 +30,14 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
+import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.EntityException;
 
 
 /**
@@ -162,6 +166,27 @@ public class PassthroughServer implements PassthroughDumper {
     }
   }
   
+  public void addPermanentEntities() {
+    // Populate the server with its services.
+    for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
+      if (serverEntityService.getClass().isAnnotationPresent(PermanentEntity.class)) {
+        PermanentEntity pe = serverEntityService.getClass().getAnnotation(PermanentEntity.class);
+        String type = pe.type();
+        String[] names = pe.names();
+        int version = pe.version();
+        for (String name : names) {
+          try {
+            pseudoConnection.getEntityRef((Class)Class.forName(type), (long)version, name).create(null);
+          } catch (ClassNotFoundException not) {
+            throw new RuntimeException(not);
+          } catch (EntityException exp) {
+            throw new RuntimeException(exp);
+          }
+        }
+      }
+    }     
+  }
+
   private void bootstrapProcess(boolean active) {
     this.serverProcess = new PassthroughServerProcess(serverName, bindPort, groupPort, this.extendedConfigurationObjects, active, this.crasher);
 

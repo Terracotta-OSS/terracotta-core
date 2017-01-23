@@ -18,8 +18,11 @@
  */
 package org.terracotta.passthrough;
 
+import com.tc.classloader.PermanentEntity;
 import java.util.ArrayList;
 import java.util.List;
+import org.terracotta.entity.EntityServerService;
+import org.terracotta.exception.EntityException;
 
 
 /**
@@ -190,6 +193,8 @@ public class PassthroughClusterControl implements IClusterControl {
     boolean shouldStorageLoaded = false;
 
     electedActive.start(isActive, shouldStorageLoaded);
+    electedActive.addPermanentEntities();
+
     for (PassthroughServer passthroughServer : passthroughServers) {
       if(!electedActive.equals(passthroughServer)) {
         passthroughServer.start(!isActive, shouldStorageLoaded);
