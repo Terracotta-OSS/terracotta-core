@@ -63,6 +63,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
@@ -136,7 +137,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
 
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, new MessagePayload(extendedData, entityMessage, doesRequireReplication, true), transactionID, oldestTransactionOnClient);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient);
     }
 
     @Override
@@ -179,8 +180,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
    * startSync is called on each one so that internal state of the entity is locked down until 
    * the sync has happened on that particular entity
    */
-  public Iterable<ManagedEntity> snapshotEntityList(Runnable r) {
-    return entityManager.snapshot(r, m->m.startSync(), null);
+  public Iterable<ManagedEntity> snapshotEntityList(Consumer<List<ManagedEntity>> runFirst) {
+    return entityManager.snapshot(runFirst);
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
@@ -250,7 +251,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
       long consumerID = this.entityPersistor.getNextConsumerID();
       serverEntityRequest.setAutoRetire();
       try {
-        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !sourceNodeID.isNull() ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
+        boolean canDelete = !sourceNodeID.isNull();
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, canDelete);
         temp.addRequestMessage(serverEntityRequest, entityMessage,
           (result) -> {
             if (!sourceNodeID.isNull()) {
@@ -519,7 +521,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
     TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
-    MessagePayload payload = new MessagePayload(extendedData, entityMessage, doesRequireReplication, false);
+    MessagePayload payload = MessagePayload.commonMessagePayloadNotBusy(extendedData, entityMessage, doesRequireReplication);
     payload.setDebugId(message.toString());
     
     ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient);

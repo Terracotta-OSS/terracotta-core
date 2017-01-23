@@ -43,11 +43,13 @@ import java.io.ObjectOutputStream;
 import java.util.Collections;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 
 /**
@@ -149,7 +151,20 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       public void run() {    
         // start passive sync message
         logger.debug("starting sync for " + newNode);
-        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(()->replicateActivity(SyncReplicationActivity.createStartSyncMessage(), Collections.singleton(newNode)).waitForCompleted());
+        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
+          @Override
+          public void accept(List<ManagedEntity> sortedEntities) {
+            // We want to create the array of activity data.
+            // Note that this list will include the PlatformEntity, which we want to ignore (we expect it to be first).
+            int sortedSize = sortedEntities.size() - 1;
+            SyncReplicationActivity.EntityCreationTuple[] tuplesForCreation = new SyncReplicationActivity.EntityCreationTuple[sortedSize];
+            Assert.assertNull(sortedEntities.get(0).getCreationDataForSync());
+            for (int i = 0; i < sortedSize; ++i) {
+              tuplesForCreation[i] = sortedEntities.get(i + 1).getCreationDataForSync();
+            }
+            replicateActivity(SyncReplicationActivity.createStartSyncMessage(tuplesForCreation), Collections.singleton(newNode)).waitForCompleted();
+          }}
+        );
         for (ManagedEntity entity : e) {
           logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
           entity.sync(newNode);

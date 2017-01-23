@@ -69,6 +69,19 @@ public class EntityManagerImpl implements EntityManager {
   private boolean shouldCreateActiveEntities;
   
   private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
+  
+  // The sort comparator.
+  private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
+    @Override
+    public int compare(ManagedEntity o1, ManagedEntity o2) {
+      long firstID = o1.getConsumerID();
+      long secondID = o2.getConsumerID();
+      // NOTE:  The ids are unique.
+      Assert.assertTrue(firstID != secondID);
+      return (firstID > secondID)
+          ? 1
+          : -1;
+    }};
 
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
@@ -110,17 +123,7 @@ public class EntityManagerImpl implements EntityManager {
     try {
       // issue-439: We need to sort these entities, ascending by consumerID.
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
-      Collections.sort(sortingList, new Comparator<ManagedEntity>() {
-        @Override
-        public int compare(ManagedEntity o1, ManagedEntity o2) {
-          long firstID = o1.getConsumerID();
-          long secondID = o2.getConsumerID();
-          // NOTE:  The ids are unique.
-          Assert.assertTrue(firstID != secondID);
-          return (firstID > secondID)
-              ? 1
-              : -1;
-        }});
+      Collections.sort(sortingList, this.consumerIdSorter);
       for (ManagedEntity entity : sortingList) {
         entity.promoteEntity();
       }
@@ -133,13 +136,13 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public ManagedEntity createEntity(EntityID id, long version, long consumerID, int references) throws EntityException {
+  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     snapshotLock.acquireUninterruptibly();
     try {
       ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, references);
+          clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
       ManagedEntity exists = entities.putIfAbsent(id, temp);
       if (exists == null) {
         LOGGER.debug("created " + id);
@@ -154,7 +157,7 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete ? 0 : ManagedEntity.UNDELETABLE_ENTITY);
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
     }    
@@ -212,23 +215,20 @@ public class EntityManagerImpl implements EntityManager {
   }
   
   @Override
-  public Collection<ManagedEntity> snapshot(Runnable runFirst, Consumer<ManagedEntity> runOnEach, Runnable runLast) {
+  public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst) {
     snapshotLock.acquireUninterruptibly();
     try {
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
+      Collections.sort(sortingList, this.consumerIdSorter);
       if (runFirst != null) {
-        runFirst.run();
+        runFirst.accept(sortingList);
       }
-      Collection<ManagedEntity> collection = new ArrayList<>(entities.values());
-      collection.forEach(runOnEach);
-      if (runLast != null) {
-        runLast.run();
-      }
-      return collection;
+      return sortingList;
     } finally {
       snapshotLock.release();
     }
   }
-  
+
   private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);

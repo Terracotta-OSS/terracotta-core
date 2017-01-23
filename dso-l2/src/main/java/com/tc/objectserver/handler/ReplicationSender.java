@@ -180,11 +180,18 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   }
   
   private static class SyncState {
+    // liveSet is the total set of entities which we believe have finished syncing and fully exist on the passive.
     private final Set<EntityID> liveSet = new HashSet<>();
+    // syncdID is the set of concurrency keys, of the entity syncingID, which we believe have finished syncing and fully
+    //  exist on the passive.
     private final Set<Integer> syncdID = new HashSet<>();
+    // syncingID is the entity currently being synced to this passive.
     private EntityID syncingID = EntityID.NULL_ID;
+    // syncingConcurrency is the concurrency key we are currently syncing to syncingID, 0 if none is in progress.
     private int syncingConcurrency = -1;
+    // begun is true when we decide to start syncing to this passive node (triggered by SYNC_BEGIN).
     boolean begun = false;
+    // complete is true when we decide that syncing to this node is now complete (triggered by SYNC_END).
     boolean complete = false;
     private SyncReplicationActivity.ActivityType lastSeen;
     private SyncReplicationActivity.ActivityType lastSent;
@@ -273,11 +280,12 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
             if (liveSet.contains(eid)) {
               return true;
             } else if (syncingID.equals(eid)) {
-              if (syncingConcurrency == activity.getConcurrency()) {
+              int concurrencyKey = activity.getConcurrency();
+              if (syncingConcurrency == concurrencyKey) {
 //  special case.  passive will apply this after sync of the key is complete
                 return true;
               }
-              return syncdID.contains(activity.getConcurrency());
+              return syncdID.contains(concurrencyKey);
             } else {
 // hasn't been sync'd yet.  state will be captured in sync
               return false;
