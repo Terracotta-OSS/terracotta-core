@@ -173,7 +173,7 @@ public class ClientConnectionEstablisher {
         if (!addresses.hasNext()) { throw e; }
       }
     }
-    return null;
+    throw new IOException("active not available");
   }
 
   @Override
