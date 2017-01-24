@@ -257,8 +257,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
     scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, resp, MessagePayload.emptyPayload(), resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
-  
-  private SchedulingRunnable scheduleInOrder(EntityDescriptor desc, ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {
+//  synchronized here because this method must be mutually exclusive with clearQueue
+  private synchronized SchedulingRunnable scheduleInOrder(EntityDescriptor desc, ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
     if (isInActiveState) {
@@ -286,9 +286,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     
     return next;
   }
-  
+//  synchronized here because this method must be mutually exclusive with scheduleInOrder
   @Override
-  public boolean clearQueue() {
+  public synchronized boolean clearQueue() {
     while (!runnables.isEmpty()) {
       SchedulingRunnable sr = runnables.checkDeferred();
       if (sr != null) {
@@ -848,14 +848,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public SyncReplicationActivity.EntityCreationTuple getCreationDataForSync() {
-    return new SyncReplicationActivity.EntityCreationTuple(this.id, this.version, this.constructorInfo, canDelete);
-  }
-
-  @Override
   public void sync(NodeID passive) {
-//  lock out lifecycle invokes until after sync is finished
-    interop.startSync();
 // iterate through all the concurrency keys of an entity
     EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
@@ -898,6 +891,17 @@ public class ManagedEntityImpl implements ManagedEntity {
       interop.syncFinished();
     }
   }  
+
+  @Override
+  public SyncReplicationActivity.EntityCreationTuple startSync() {
+    interop.startSync();
+    clearQueue();
+    if (!this.isDestroyed) {
+      return new SyncReplicationActivity.EntityCreationTuple(this.id, this.version, this.constructorInfo, canDelete);
+    } else {
+      return null;
+    }
+  }
 
   @Override
   public long getConsumerID() {

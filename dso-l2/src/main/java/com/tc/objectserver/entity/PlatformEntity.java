@@ -87,14 +87,13 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public SyncReplicationActivity.EntityCreationTuple getCreationDataForSync() {
-    // This is a special-case, since it is part of the platform and cannot be "created" or "synced".
-    return null;
-  }
-
-  @Override
   public void sync(NodeID passive) {
   //  never sync
+  }
+  
+  @Override
+  public SyncReplicationActivity.EntityCreationTuple  startSync() {
+    return null;
   }
   
   @Override

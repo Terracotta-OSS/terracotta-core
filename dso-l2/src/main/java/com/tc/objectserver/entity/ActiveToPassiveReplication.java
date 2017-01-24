@@ -40,6 +40,7 @@ import com.tc.util.Assert;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import java.util.HashSet;
@@ -155,14 +156,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           @Override
           public void accept(List<ManagedEntity> sortedEntities) {
             // We want to create the array of activity data.
-            // Note that this list will include the PlatformEntity, which we want to ignore (we expect it to be first).
-            int sortedSize = sortedEntities.size() - 1;
-            SyncReplicationActivity.EntityCreationTuple[] tuplesForCreation = new SyncReplicationActivity.EntityCreationTuple[sortedSize];
-            Assert.assertNull(sortedEntities.get(0).getCreationDataForSync());
-            for (int i = 0; i < sortedSize; ++i) {
-              tuplesForCreation[i] = sortedEntities.get(i + 1).getCreationDataForSync();
+            List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
+            for (ManagedEntity e : sortedEntities) {
+              SyncReplicationActivity.EntityCreationTuple data = e.startSync();
+              // null creation data means that the entity, while in the list of entities, is 
+              // not to be synced because it has been destroyed or not yet fully created and 
+              // initiated
+              if (data != null) {
+                tuplesForCreation.add(data);
+              }              
             }
-            replicateActivity(SyncReplicationActivity.createStartSyncMessage(tuplesForCreation), Collections.singleton(newNode)).waitForCompleted();
+            replicateActivity(SyncReplicationActivity.
+                    createStartSyncMessage(tuplesForCreation.
+                            toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(newNode)).waitForCompleted();
           }}
         );
         for (ManagedEntity entity : e) {

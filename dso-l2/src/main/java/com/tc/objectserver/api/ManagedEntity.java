@@ -59,19 +59,18 @@ public interface ManagedEntity extends StateDumpable {
   SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception);
 
   /**
-   * Called when passive sync wants to communicate how to instantiate this entity.
-   * 
-   * @return The message tuple describing how to instantiate this entity (or null if it can't be synced).
-   */
-  public SyncReplicationActivity.EntityCreationTuple getCreationDataForSync();
-
-  /**
    * Called to sync an entity.  Caller initiates sync of an entity through this method.  
    * 
    * @param passive target passive
    */
   void sync(NodeID passive);
-    
+  /**
+  * Called when passive sync wants to start sync on this entity.
+  * 
+  * @return The message tuple describing how to instantiate this entity (or null if it can't be synced).
+  */
+  SyncReplicationActivity.EntityCreationTuple startSync();
+  
   void loadEntity(byte[] configuration) throws ConfigurationException;
   
   void promoteEntity() throws ConfigurationException;
