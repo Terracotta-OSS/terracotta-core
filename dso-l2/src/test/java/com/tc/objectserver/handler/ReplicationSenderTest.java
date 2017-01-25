@@ -19,14 +19,13 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
+import com.tc.async.api.SpecializedEventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.l2.msg.ReplicationAddPassiveIntent;
-import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -36,6 +35,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
+import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -55,12 +55,64 @@ import static org.mockito.Mockito.mock;
 
 
 public class ReplicationSenderTest {
-  
   NodeID node = mock(NodeID.class);
   @SuppressWarnings("unchecked")
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
   ReplicationSender testSender = new ReplicationSender(groupMgr);
+  Sink<NodeID> sink = new Sink<NodeID>() {
+    @Override
+    public void enableStatsCollection(boolean enable) {
+      Assert.fail("Not in test");
+    }
+    @Override
+    public boolean isStatsCollectionEnabled() {
+      Assert.fail("Not in test");
+      return false;
+    }
+    @Override
+    public Stats getStats(long frequency) {
+      Assert.fail("Not in test");
+      return null;
+    }
+    @Override
+    public Stats getStatsAndReset(long frequency) {
+      Assert.fail("Not in test");
+      return null;
+    }
+    @Override
+    public void resetStats() {
+      Assert.fail("Not in test");
+    }
+    @Override
+    public void addSingleThreaded(NodeID context) {
+      try {
+        testSender.handleEvent(context);
+      } catch (EventHandlerException e) {
+        Assert.fail(e.getLocalizedMessage());
+      }
+    }
+    @Override
+    public void addMultiThreaded(NodeID context) {
+      Assert.fail("Not in test");
+    }
+    @Override
+    public void addSpecialized(SpecializedEventContext specialized) {
+      Assert.fail("Not in test");
+    }
+    @Override
+    public int size() {
+      Assert.fail("Not in test");
+      return 0;
+    }
+    @Override
+    public void clear() {
+      Assert.fail("Not in test");
+    }
+    @Override
+    public void setClosed(boolean closed) {
+      Assert.fail("Not in test");
+    }};
   EntityID entity = EntityID.NULL_ID;
   int concurrency = 1;
   
@@ -77,6 +129,7 @@ public class ReplicationSenderTest {
   
   @Before
   public void setUp() throws Exception {
+    this.testSender.setSelfSink(this.sink);
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
       // We need to emulate having sent the message so run it through the serialization mechanism.
@@ -157,12 +210,8 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      try {
-        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, activity, null));
-      } catch (EventHandlerException h) {
-        throw new RuntimeException(h);
-      }
-    });
+      testSender.replicateMessage(node, activity);
+      });
     System.err.println("filter SDSC");
     validateCollector(validation);
   }  
@@ -191,12 +240,8 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      try {
-        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
-      } catch (EventHandlerException h) {
-        throw new RuntimeException(h);
-      }
-    });
+      testSender.replicateMessage(node, msg);
+      });
     
     System.err.println("filter CDC");
     validateCollector(validation);
@@ -227,12 +272,8 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      try {
-        testSender.handleEvent(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
-      } catch (EventHandlerException h) {
-        throw new RuntimeException(h);
-      }
-    });
+      testSender.replicateMessage(node, msg);
+      });
     
     validateCollector(validation);
   }
@@ -264,7 +305,6 @@ public class ReplicationSenderTest {
     SetOnceFlag started = new SetOnceFlag();
     SetOnceFlag finished = new SetOnceFlag();
     origin.stream().forEach(activity-> {
-      try {
         SyncReplicationActivity.ActivityType activityType = activity.getActivityType();
         if (SyncReplicationActivity.ActivityType.SYNC_BEGIN == activityType) {
           started.set();
@@ -275,18 +315,22 @@ public class ReplicationSenderTest {
         if (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE != activityType) {
           SetOnceFlag sent = new SetOnceFlag();
           SetOnceFlag notsent = new SetOnceFlag();
-          ReplicationIntent intent = (SyncReplicationActivity.ActivityType.SYNC_START == activityType) ? 
-                  ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, activity, ()->sent.set(), ()->notsent.set()) :
-                  ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, activity, ()->sent.set(), ()->notsent.set());
-          testSender.handleEvent(intent);
+          if (SyncReplicationActivity.ActivityType.SYNC_START == activityType) {
+            this.testSender.addPassive(node, activity);
+            sent.set();
+          } else {
+            boolean didSend = this.testSender.replicateMessage(node, activity);
+            if (didSend) {
+              sent.set();
+            } else {
+              notsent.set();
+            }
+          }
           Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
           if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
             Assert.assertTrue(activity, sent.isSet());
           }
         }
-      } catch (EventHandlerException h) {
-        throw new RuntimeException(h);
-      }
     });
     
     validateCollector(validation);

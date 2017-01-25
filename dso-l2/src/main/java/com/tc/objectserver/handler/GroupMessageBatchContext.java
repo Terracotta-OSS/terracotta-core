@@ -20,22 +20,19 @@ package com.tc.objectserver.handler;
 
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.util.Assert;
 
 
 public class GroupMessageBatchContext {
-  private static final TCLogger LOGGER = TCLogging.getLogger(GroupMessageBatchContext.class);
-  
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final NodeID target;
   private final int maximumBatchSize;
   private final int idealMessagesInFlight;
+  private final Runnable networkDoneTarget;
+  
   private int messagesInFlight;
   private ReplicationMessage cachedMessage;
   private long nextReplicationID;
@@ -43,11 +40,12 @@ public class GroupMessageBatchContext {
   private GroupException mostRecentException;
 
 
-  public GroupMessageBatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight) {
+  public GroupMessageBatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Runnable networkDoneTarget) {
     this.groupManager = groupManager;
     this.target = target;
     this.maximumBatchSize = maximumBatchSize;
     this.idealMessagesInFlight = idealMessagesInFlight;
+    this.networkDoneTarget = networkDoneTarget;
   }
 
   private final Runnable handleMessageSend = new Runnable() {
@@ -57,68 +55,75 @@ public class GroupMessageBatchContext {
     }
   };
 
-  public void batchAndSend(SyncReplicationActivity activity) throws GroupException {
-    // Determine if batching is even enabled.
-    if (0 == this.idealMessagesInFlight) {
-      // There is no batching - send directly.
-      Assert.assertTrue(null == this.cachedMessage);
-      ReplicationMessage message = ReplicationMessage.createActivityContainer(activity);
-      this.groupManager.sendTo(this.target, message);
-    } else {
-      // We are using batching.
-      batchAndSendEnabled(activity);
-    }
-  }
-
-  private synchronized void batchAndSendEnabled(SyncReplicationActivity activity) throws GroupException {
+  /**
+   * Called to send a new activity.  This might be added to an existing batch or used to create a new one.  In either
+   *  case, this isn't sent now, but might be sent during the next call to flushBatch().
+   *  
+   * @param activity The activity to batch.
+   * @throws GroupException The exception cached from the most recent attempt to send.
+   */
+  public synchronized void batchMessage(SyncReplicationActivity activity) throws GroupException {
+    // Throw any async exception.
     if (null != this.mostRecentException) {
       throw this.mostRecentException;
     }
-    boolean mustFlush = false;
-    if (null == this.cachedMessage) {
+    
+    // See if we have an existing message we must batch.
+    if (null != this.cachedMessage) {
+      // Just add to this batch.
+      this.cachedMessage.addActivity(activity);
+    } else {
+      // Create a new batch.
       this.cachedMessage = ReplicationMessage.createActivityContainer(activity);
       this.cachedMessage.setReplicationID(this.nextReplicationID++);
-    } else {
-      int currentBatchSize = this.cachedMessage.addActivity(activity);
-      mustFlush = (currentBatchSize >= this.maximumBatchSize);
+    }
+  }
+
+  /**
+   * Called by a thread which is expected to do the message serialization to determine if the current batch is ready to
+   *  be flushed to the network.
+   * 
+   * @throws GroupException Something went wrong in the transmission (note that this same exception will be thrown on
+   *  the next call to batchMessage).
+   */
+  public void flushBatch() throws GroupException {
+    ReplicationMessage messageToSend = null;
+    synchronized (this) {
+      // See if we have a batched message and are ready to send one.
+      // Note that we will override the ideal number of in-flight messages if the batch is getting too large.
+      if ((null != this.cachedMessage) && (
+          ((0 == this.idealMessagesInFlight) || (this.messagesInFlight < this.idealMessagesInFlight))
+          || (this.cachedMessage.getBatchSize() >= this.maximumBatchSize))
+        ) {
+        // There is a batched message so send it.
+        messageToSend = this.cachedMessage;
+        this.cachedMessage = null;
+        this.messagesInFlight += 1;
+      }
     }
     
-    if (mustFlush || (this.messagesInFlight < this.idealMessagesInFlight)) {
+    // Note that we don't want to make this call to send the message under lock since it results in the message
+    //  serialization, which is potentially slow and shouldn't block other attempts to batch.
+    if (null != messageToSend) {
       try {
-        synchronizedSendBatch();
+        this.groupManager.sendToWithSentCallback(this.target, messageToSend, this.handleMessageSend);
       } catch (GroupException e) {
         // Set the exception, before throwing it, so the next call also fails.
-        this.mostRecentException = e;
+        synchronized (this) {
+          this.mostRecentException = e;
+          this.messagesInFlight -= 1;
+        }
         throw e;
       }
     }
   }
-  public synchronized void handleNetworkDone() {
-    this.messagesInFlight -= 1;
-    // Note that we might still be over the ideal number of in-flight messages if they are being flushed due to batch
-    //  size so check this limit.
-    if ((null != this.cachedMessage) && (this.messagesInFlight < this.idealMessagesInFlight)) {
-      try {
-        synchronizedSendBatch();
-      } catch (GroupException e) {
-        // This happened asynchronously so we can't throw back to the caller (it thinks we already send this).
-        // Log that this happened and set our exception state so that this batch context will be assumed invalid.
-        LOGGER.warn("Asynchronous group exception in batched replication message", e);
-        this.mostRecentException = e;
-      }
-    }
-  }
 
-  private void synchronizedSendBatch() throws GroupException {
-    ReplicationMessage cachedBatch = this.cachedMessage;
-    this.cachedMessage = null;
-    this.messagesInFlight += 1;
-    try {
-      this.groupManager.sendToWithSentCallback(this.target, cachedBatch, this.handleMessageSend);
-    } catch (GroupException e) {
-      // We aren't going to be hearing back from this decrement our in-flight counter.
+  public void handleNetworkDone() {
+    synchronized (this) {
       this.messagesInFlight -= 1;
-      throw e;
     }
+    
+    // Call the network done target so that our owner can decide how to enqueue the next flush.
+    this.networkDoneTarget.run();
   }
 }

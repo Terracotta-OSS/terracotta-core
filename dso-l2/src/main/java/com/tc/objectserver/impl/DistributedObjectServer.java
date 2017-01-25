@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
@@ -86,7 +85,6 @@ import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
-import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -241,7 +239,6 @@ import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
-import com.tc.operatorevent.NodeNameProvider;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.text.PrettyPrinter;
@@ -752,9 +749,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     connectServerStateToReplicatedState(state, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Stage<ReplicationIntent> replicationDriver = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationIntent.class, new ReplicationSender(groupCommManager), 1, maxStageSize);
+    ReplicationSender replicationSender = new ReplicationSender(groupCommManager);
+    final Stage<NodeID> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, NodeID.class, replicationSender, 1, maxStageSize);
+    replicationSender.setSelfSink(replicationSenderStage.getSink());
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationDriver.getSink(), this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 

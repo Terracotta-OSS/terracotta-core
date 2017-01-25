@@ -21,10 +21,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.l2.msg.ReplicationAddPassiveIntent;
-import com.tc.l2.msg.ReplicationIntent;
-import com.tc.l2.msg.ReplicationRemovePassiveIntent;
-import com.tc.l2.msg.ReplicationReplicateMessageIntent;
+import com.tc.async.api.Sink;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -44,9 +41,9 @@ import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
+public class ReplicationSender extends AbstractEventHandler<NodeID> {
   private static final int DEFAULT_BATCH_LIMIT = 64;
-  private static final int DEFAULT_INFLIGHT_MESSAGES = 2;
+  private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
   
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
@@ -57,49 +54,78 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
   private final Map<NodeID, GroupMessageBatchContext> batchContexts = new HashMap<>();
+  private Sink<NodeID> selfSink;
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
   }
 
-  @Override
-  public void handleEvent(ReplicationIntent context) throws EventHandlerException {
-    NodeID nodeid = context.getDestination();
+  public void setSelfSink(Sink<NodeID> sink) {
+    this.selfSink = sink;
+  }
+
+  public void removePassive(NodeID dest) {
+    // this is a flush of the replication channel.  shut it down and return;
+    filtering.remove(dest);
+    this.batchContexts.remove(dest);
+  }
+
+  public void addPassive(NodeID dest, SyncReplicationActivity activity) {
+    // Set up the sync state.
+    createAndRegisterSyncState(dest);
+    // Send the message.
+    try {
+      doSendActivity(dest, activity);
+    } catch (GroupException e) {
+      // This can't happen at this point since these exceptions only happen asynchronously but this is the first
+      //  message we are batching.
+      throw Assert.failure("Unexpected GroupException while adding new passive", e);
+    }
+    // Try to flush the message.
+    this.selfSink.addSingleThreaded(dest);
+  }
+
+  public boolean replicateMessage(NodeID dest, SyncReplicationActivity activity) {
+    SyncState syncing = getSyncState(dest, activity);
     
-    if (context instanceof ReplicationRemovePassiveIntent) {
-   // this is a flush of the replication channel.  shut it down and return;
-      filtering.remove(nodeid);
-      this.batchContexts.remove(nodeid);
-      context.droppedWithoutSend();
-    } else if (context instanceof ReplicationAddPassiveIntent) {
-      // Set up the sync state.
-      createAndRegisterSyncState(nodeid);
-      // Send the message.
-      tagAndSendActivityCompletingContext(context, nodeid, ((ReplicationAddPassiveIntent)context).getActivity());
-    } else if (context instanceof ReplicationReplicateMessageIntent) {
-      SyncReplicationActivity activity = ((ReplicationReplicateMessageIntent)context).getActivity();
-      SyncState syncing = getSyncState(nodeid, activity);
-      
-      // See if the message needs to be filtered out of the stream.
-      boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
-      if (!shouldRemoveFromStream) {
-        // We want to send this message.
-        syncing.validateSending(activity);
-        tagAndSendActivityCompletingContext(context, nodeid, activity);
-      } else {
-        // We are filtering this out so don't send it.
-        // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
-        // Log that this is dropped due to filtering.
-        if (debugLogging) {
-          logger.debug("FILTERING:" + activity);
-        }
-        // Call the dropped callback on the context.
-        context.droppedWithoutSend();
+    boolean didSend = false;
+    // See if the message needs to be filtered out of the stream.
+    boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
+    if (!shouldRemoveFromStream) {
+      // We want to send this message.
+      syncing.validateSending(activity);
+      try {
+        doSendActivity(dest, activity);
+        didSend = true;
+      } catch (GroupException e) {
+        // This can happen if the previous flush for this node failed.
+        logger.error("Replication to node " + dest + " failed due to previous flush exception", e);
+      }
+      if (didSend) {
+        // We were able to add the message to the batch so try to flush it.
+        this.selfSink.addSingleThreaded(dest);
       }
     } else {
-      Assert.fail("Unknown replication intent type");
+      // We are filtering this out so don't send it.
+      // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
+      // Log that this is dropped due to filtering.
+      if (debugLogging) {
+        logger.debug("FILTERING:" + activity);
+      }
     }
-    Assert.assertTrue(context.wasSentOrDropped());
+    // If we didn't filter the message or trigger an exception, we sent/batched it so let the caller know.
+    return didSend;
+  }
+
+  @Override
+  public void handleEvent(NodeID nodeToFlush) throws EventHandlerException {
+    try {
+      this.batchContexts.get(nodeToFlush).flushBatch();
+    } catch (GroupException e) {
+      // We can't handle this here, but the next attempt to add to a batch will see the exception from this same
+      //  context.
+      logger.error("Exception flushing batch context", e);
+    }
   }
 
   private boolean shouldRemoveActivityFromReplicationStream(SyncReplicationActivity activity, SyncState syncing) {
@@ -117,16 +143,6 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     return shouldRemoveFromStream;
   }
 
-  private void tagAndSendActivityCompletingContext(ReplicationIntent context, NodeID nodeid, SyncReplicationActivity activity) {
-    try {
-      doSendActivity(nodeid, activity);
-      context.sent();
-    }  catch (GroupException ge) {
-      logger.info(activity, ge);
-      context.droppedWithoutSend();
-    }
-  }
-
   private void doSendActivity(NodeID nodeid, SyncReplicationActivity activity) throws GroupException {
     if (debugLogging) {
       logger.debug("WIRE:" + activity);
@@ -134,7 +150,7 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     if (debugMessaging) {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
-    this.batchContexts.get(nodeid).batchAndSend(activity);
+    this.batchContexts.get(nodeid).batchMessage(activity);
   }
   
   private void createAndRegisterSyncState(NodeID nodeid) {
@@ -147,7 +163,15 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
     int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("active-passive.batchsize", DEFAULT_BATCH_LIMIT);
     int idealMessagesInFlight = TCPropertiesImpl.getProperties().getInt("active-passive.inflight", DEFAULT_INFLIGHT_MESSAGES);
     logger.info("Created batch context for passive " + nodeid + " with max batch size " + maximumBatchSize + " and ideal messages in flight " + idealMessagesInFlight);
-    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid, maximumBatchSize, idealMessagesInFlight));
+    // Create the runnable which will be called, on the network thread, to notify us when a message has been sent.  In
+    //  those cases, we want to incur a new flush operation into our internal thread.
+    Runnable networkDoneTarget = new Runnable() {
+      @Override
+      public void run() {
+        ReplicationSender.this.selfSink.addSingleThreaded(nodeid);
+      }
+    };
+    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid, maximumBatchSize, idealMessagesInFlight, networkDoneTarget));
   }
 
   private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {

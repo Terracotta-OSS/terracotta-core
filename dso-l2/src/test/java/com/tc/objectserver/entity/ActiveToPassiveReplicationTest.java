@@ -18,12 +18,11 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
-import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -33,12 +32,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -59,17 +54,9 @@ public class ActiveToPassiveReplicationTest {
   }
   
   @Before
-  @SuppressWarnings("unchecked")
   public void setUp() {
     passive = mock(ServerID.class);
-    Sink<ReplicationIntent> replicate = mock(Sink.class);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((ReplicationIntent)invocation.getArguments()[0]).droppedWithoutSend();
-        return null;
-      }
-    }).when(replicate).addSingleThreaded(Matchers.any());
+    ReplicationSender replicate = mock(ReplicationSender.class);
     replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   
