@@ -79,7 +79,8 @@ public class GroupMessageBatchContext {
       this.cachedMessage = ReplicationMessage.createActivityContainer(activity);
       this.cachedMessage.setReplicationID(this.nextReplicationID++);
     } else {
-      int currentBatchSize = this.cachedMessage.addActivity(activity);
+      this.cachedMessage.addActivity(activity);
+      int currentBatchSize = this.cachedMessage.getBatchSize();
       mustFlush = (currentBatchSize >= this.maximumBatchSize);
     }
     
