@@ -18,12 +18,12 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -59,17 +59,19 @@ public class ActiveToPassiveReplicationTest {
   }
   
   @Before
-  @SuppressWarnings("unchecked")
   public void setUp() {
     passive = mock(ServerID.class);
-    Sink<ReplicationIntent> replicate = mock(Sink.class);
-    doAnswer(new Answer<Void>() {
+    ReplicationSender replicate = mock(ReplicationSender.class);
+    Answer<Void> commonAnswer = new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
         ((ReplicationIntent)invocation.getArguments()[0]).droppedWithoutSend();
         return null;
       }
-    }).when(replicate).addSingleThreaded(Matchers.any());
+    };
+    doAnswer(commonAnswer).when(replicate).addPassive(Matchers.any());
+    doAnswer(commonAnswer).when(replicate).removePassive(Matchers.any());
+    doAnswer(commonAnswer).when(replicate).replicateMessage(Matchers.any());
     replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   

@@ -21,6 +21,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationRemovePassiveIntent;
@@ -57,9 +58,29 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
   private final Map<NodeID, GroupMessageBatchContext> batchContexts = new HashMap<>();
+  private Sink<ReplicationIntent> selfSink;
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
+  }
+
+  public void setSelfSink(Sink<ReplicationIntent> sink) {
+    this.selfSink = sink;
+  }
+
+  public void removePassive(ReplicationRemovePassiveIntent context) {
+    // NOTE:  Temporary implementation to get API in place.
+    this.selfSink.addSingleThreaded(context);
+  }
+
+  public void addPassive(ReplicationAddPassiveIntent context) {
+    // NOTE:  Temporary implementation to get API in place.
+    this.selfSink.addSingleThreaded(context);
+  }
+
+  public void replicateMessage(ReplicationReplicateMessageIntent context) {
+    // NOTE:  Temporary implementation to get API in place.
+    this.selfSink.addSingleThreaded(context);
   }
 
   @Override

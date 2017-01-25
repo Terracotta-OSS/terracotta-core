@@ -67,14 +67,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
-  private final Sink<ReplicationIntent> replicate;
+  private final ReplicationSender replicationSender;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
 
-  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, Sink<ReplicationIntent> replicate, GroupManager serverMatch) {
-    this.replicate = replicate;
+  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
+    this.replicationSender = replicationSender;
     this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
@@ -123,7 +123,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, SyncReplicationActivity.createStartMessage(), ()->block.complete(), ()->block.complete()));
+      this.replicationSender.addPassive(ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, SyncReplicationActivity.createStartMessage(), ()->block.complete(), ()->block.complete()));
       block.waitForCompletion();
       return true;
     } else {
@@ -251,7 +251,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           // We aren't going to send this to the replication sender so just acknowledge that it was dropped without send, here.
           droppedWithoutSend.run();
         } else {
-          replicate.addSingleThreaded(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, activity, droppedWithoutSend));
+          this.replicationSender.replicateMessage(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, activity, droppedWithoutSend));
         }
       }
     }
@@ -271,7 +271,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
       BarrierCompletion block = new BarrierCompletion();
-      replicate.addSingleThreaded(ReplicationRemovePassiveIntent.createRemovePassiveEnvelope(nodeID, ()->block.complete()));
+      this.replicationSender.removePassive(ReplicationRemovePassiveIntent.createRemovePassiveEnvelope(nodeID, ()->block.complete()));
       block.waitForCompletion();
     }
   }
