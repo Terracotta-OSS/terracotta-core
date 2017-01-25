@@ -117,9 +117,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
       logger.info("Starting message sequence on " + node);
-      BarrierCompletion block = new BarrierCompletion();
-      this.replicationSender.addPassive(node, SyncReplicationActivity.createStartMessage(), ()->block.complete(), ()->block.complete());
-      block.waitForCompletion();
+      this.replicationSender.addPassive(node, SyncReplicationActivity.createStartMessage());
       return true;
     } else {
       return false;
@@ -240,13 +238,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
       for (NodeID node : copy) {
         // This is a normal completion.
-        boolean isNormalComplete = true;
-        Runnable droppedWithoutSend = ()->internalAckCompleted(activityID, node, null, isNormalComplete);
-        if (isLocalFlush) {
-          // We aren't going to send this to the replication sender so just acknowledge that it was dropped without send, here.
-          droppedWithoutSend.run();
-        } else {
-          this.replicationSender.replicateMessage(node, activity, null, droppedWithoutSend);
+        boolean didSend = false;
+        if (!isLocalFlush) {
+          // This isn't local-only so try to replicate.
+          didSend = this.replicationSender.replicateMessage(node, activity);
+        }
+        if (!didSend) {
+          // We didn't send so just ack complete, internally.
+          boolean isNormalComplete = true;
+          internalAckCompleted(activityID, node, null, isNormalComplete);
         }
       }
     }
@@ -265,9 +265,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
 //  this is a flush message (null).  Tell the sink there will be no more 
 //  messages targeted at this nodeid
-      BarrierCompletion block = new BarrierCompletion();
-      this.replicationSender.removePassive(nodeID, ()->block.complete());
-      block.waitForCompletion();
+      this.replicationSender.removePassive(nodeID);
     }
   }
 

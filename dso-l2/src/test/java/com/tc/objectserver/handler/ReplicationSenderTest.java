@@ -210,7 +210,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      testSender.replicateMessage(node, activity, null, null);
+      testSender.replicateMessage(node, activity);
       });
     System.err.println("filter SDSC");
     validateCollector(validation);
@@ -240,7 +240,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg, null, null);
+      testSender.replicateMessage(node, msg);
       });
     
     System.err.println("filter CDC");
@@ -272,7 +272,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg, null, null);
+      testSender.replicateMessage(node, msg);
       });
     
     validateCollector(validation);
@@ -316,9 +316,15 @@ public class ReplicationSenderTest {
           SetOnceFlag sent = new SetOnceFlag();
           SetOnceFlag notsent = new SetOnceFlag();
           if (SyncReplicationActivity.ActivityType.SYNC_START == activityType) {
-            this.testSender.addPassive(node, activity, ()->sent.set(), ()->notsent.set());
+            this.testSender.addPassive(node, activity);
+            sent.set();
           } else {
-            this.testSender.replicateMessage(node, activity, ()->sent.set(), ()->notsent.set());
+            boolean didSend = this.testSender.replicateMessage(node, activity);
+            if (didSend) {
+              sent.set();
+            } else {
+              notsent.set();
+            }
           }
           Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
           if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {

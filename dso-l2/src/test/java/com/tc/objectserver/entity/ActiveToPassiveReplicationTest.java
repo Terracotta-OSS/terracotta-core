@@ -32,12 +32,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -61,27 +57,6 @@ public class ActiveToPassiveReplicationTest {
   public void setUp() {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((Runnable)invocation.getArguments()[3]).run();
-        return null;
-      }
-    }).when(replicate).addPassive(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((Runnable)invocation.getArguments()[1]).run();
-        return null;
-      }
-    }).when(replicate).removePassive(Matchers.any(), Matchers.any());
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((Runnable)invocation.getArguments()[3]).run();
-        return null;
-      }
-    }).when(replicate).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   

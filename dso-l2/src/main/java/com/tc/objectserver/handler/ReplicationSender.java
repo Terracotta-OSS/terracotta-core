@@ -64,33 +64,47 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     this.selfSink = sink;
   }
 
-  public void removePassive(NodeID dest, Runnable droppedWithoutSend) {
+  public void removePassive(NodeID dest) {
     // this is a flush of the replication channel.  shut it down and return;
     filtering.remove(dest);
     this.batchContexts.remove(dest);
-    droppedWithoutSend.run();
   }
 
-  public void addPassive(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
+  public void addPassive(NodeID dest, SyncReplicationActivity activity) {
     // Set up the sync state.
     createAndRegisterSyncState(dest);
     // Send the message.
-    tagAndSendActivityCompletingContext(dest, activity, sent, droppedWithoutSend);
+    try {
+      doSendActivity(dest, activity);
+    } catch (GroupException e) {
+      // This can't happen at this point since these exceptions only happen asynchronously but this is the first
+      //  message we are batching.
+      throw Assert.failure("Unexpected GroupException while adding new passive", e);
+    }
     // Try to flush the message.
     this.selfSink.addSingleThreaded(dest);
   }
 
-  public void replicateMessage(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
+  public boolean replicateMessage(NodeID dest, SyncReplicationActivity activity) {
     SyncState syncing = getSyncState(dest, activity);
     
+    boolean didSend = false;
     // See if the message needs to be filtered out of the stream.
     boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
     if (!shouldRemoveFromStream) {
       // We want to send this message.
       syncing.validateSending(activity);
-      tagAndSendActivityCompletingContext(dest, activity, sent, droppedWithoutSend);
-      // Try to flush the message.
-      this.selfSink.addSingleThreaded(dest);
+      try {
+        doSendActivity(dest, activity);
+        didSend = true;
+      } catch (GroupException e) {
+        // This can happen if the previous flush for this node failed.
+        logger.error("Replication to node " + dest + " failed due to previous flush exception", e);
+      }
+      if (didSend) {
+        // We were able to add the message to the batch so try to flush it.
+        this.selfSink.addSingleThreaded(dest);
+      }
     } else {
       // We are filtering this out so don't send it.
       // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
@@ -98,11 +112,9 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
       if (debugLogging) {
         logger.debug("FILTERING:" + activity);
       }
-      // Call the dropped callback on the context.
-      if (null != droppedWithoutSend) {
-        droppedWithoutSend.run();
-      }
     }
+    // If we didn't filter the message or trigger an exception, we sent/batched it so let the caller know.
+    return didSend;
   }
 
   @Override
@@ -129,18 +141,6 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
               || !syncing.hasSyncBegun());
     }
     return shouldRemoveFromStream;
-  }
-
-  private void tagAndSendActivityCompletingContext(NodeID nodeid, SyncReplicationActivity activity, Runnable onSent, Runnable onDroppedWithoutSend) {
-    try {
-      doSendActivity(nodeid, activity);
-      if (null != onSent) {
-        onSent.run();
-      }
-    }  catch (GroupException ge) {
-      logger.info(activity, ge);
-      onDroppedWithoutSend.run();
-    }
   }
 
   private void doSendActivity(NodeID nodeid, SyncReplicationActivity activity) throws GroupException {
