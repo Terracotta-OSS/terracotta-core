@@ -22,10 +22,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.l2.msg.ReplicationAddPassiveIntent;
-import com.tc.l2.msg.ReplicationIntent;
-import com.tc.l2.msg.ReplicationRemovePassiveIntent;
-import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -68,39 +64,33 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     this.selfSink = sink;
   }
 
-  public void removePassive(ReplicationRemovePassiveIntent context) {
+  public void removePassive(NodeID dest, Runnable droppedWithoutSend) {
     // this is a flush of the replication channel.  shut it down and return;
-    NodeID nodeid = context.getDestination();
-    filtering.remove(nodeid);
-    this.batchContexts.remove(nodeid);
-    context.droppedWithoutSend();
-    Assert.assertTrue(context.wasSentOrDropped());
+    filtering.remove(dest);
+    this.batchContexts.remove(dest);
+    droppedWithoutSend.run();
   }
 
-  public void addPassive(ReplicationAddPassiveIntent context) {
-    NodeID nodeid = context.getDestination();
+  public void addPassive(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
     // Set up the sync state.
-    createAndRegisterSyncState(nodeid);
+    createAndRegisterSyncState(dest);
     // Send the message.
-    tagAndSendActivityCompletingContext(context, nodeid, context.getActivity());
+    tagAndSendActivityCompletingContext(dest, activity, sent, droppedWithoutSend);
     // Try to flush the message.
-    this.selfSink.addSingleThreaded(nodeid);
-    Assert.assertTrue(context.wasSentOrDropped());
+    this.selfSink.addSingleThreaded(dest);
   }
 
-  public void replicateMessage(ReplicationReplicateMessageIntent context) {
-    NodeID nodeid = context.getDestination();
-    SyncReplicationActivity activity = ((ReplicationReplicateMessageIntent)context).getActivity();
-    SyncState syncing = getSyncState(nodeid, activity);
+  public void replicateMessage(NodeID dest, SyncReplicationActivity activity, Runnable sent, Runnable droppedWithoutSend) {
+    SyncState syncing = getSyncState(dest, activity);
     
     // See if the message needs to be filtered out of the stream.
     boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
     if (!shouldRemoveFromStream) {
       // We want to send this message.
       syncing.validateSending(activity);
-      tagAndSendActivityCompletingContext(context, nodeid, activity);
+      tagAndSendActivityCompletingContext(dest, activity, sent, droppedWithoutSend);
       // Try to flush the message.
-      this.selfSink.addSingleThreaded(nodeid);
+      this.selfSink.addSingleThreaded(dest);
     } else {
       // We are filtering this out so don't send it.
       // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
@@ -109,9 +99,10 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
         logger.debug("FILTERING:" + activity);
       }
       // Call the dropped callback on the context.
-      context.droppedWithoutSend();
+      if (null != droppedWithoutSend) {
+        droppedWithoutSend.run();
+      }
     }
-    Assert.assertTrue(context.wasSentOrDropped());
   }
 
   @Override
@@ -140,13 +131,15 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     return shouldRemoveFromStream;
   }
 
-  private void tagAndSendActivityCompletingContext(ReplicationIntent context, NodeID nodeid, SyncReplicationActivity activity) {
+  private void tagAndSendActivityCompletingContext(NodeID nodeid, SyncReplicationActivity activity, Runnable onSent, Runnable onDroppedWithoutSend) {
     try {
       doSendActivity(nodeid, activity);
-      context.sent();
+      if (null != onSent) {
+        onSent.run();
+      }
     }  catch (GroupException ge) {
       logger.info(activity, ge);
-      context.droppedWithoutSend();
+      onDroppedWithoutSend.run();
     }
   }
 

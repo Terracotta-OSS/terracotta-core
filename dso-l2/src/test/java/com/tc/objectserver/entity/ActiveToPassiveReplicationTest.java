@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
@@ -62,16 +61,27 @@ public class ActiveToPassiveReplicationTest {
   public void setUp() {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
-    Answer<Void> commonAnswer = new Answer<Void>() {
+    doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((ReplicationIntent)invocation.getArguments()[0]).droppedWithoutSend();
+        ((Runnable)invocation.getArguments()[3]).run();
         return null;
       }
-    };
-    doAnswer(commonAnswer).when(replicate).addPassive(Matchers.any());
-    doAnswer(commonAnswer).when(replicate).removePassive(Matchers.any());
-    doAnswer(commonAnswer).when(replicate).replicateMessage(Matchers.any());
+    }).when(replicate).addPassive(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        ((Runnable)invocation.getArguments()[1]).run();
+        return null;
+      }
+    }).when(replicate).removePassive(Matchers.any(), Matchers.any());
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        ((Runnable)invocation.getArguments()[3]).run();
+        return null;
+      }
+    }).when(replicate).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   

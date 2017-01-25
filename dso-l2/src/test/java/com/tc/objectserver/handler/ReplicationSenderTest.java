@@ -25,9 +25,7 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.l2.msg.ReplicationAddPassiveIntent;
 import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -212,7 +210,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      testSender.replicateMessage(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, activity, null));
+      testSender.replicateMessage(node, activity, null, null);
       });
     System.err.println("filter SDSC");
     validateCollector(validation);
@@ -242,7 +240,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
+      testSender.replicateMessage(node, msg, null, null);
       });
     
     System.err.println("filter CDC");
@@ -274,7 +272,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(ReplicationReplicateMessageIntent.createReplicatedMessageEnvelope(node, msg, null));
+      testSender.replicateMessage(node, msg, null, null);
       });
     
     validateCollector(validation);
@@ -318,9 +316,9 @@ public class ReplicationSenderTest {
           SetOnceFlag sent = new SetOnceFlag();
           SetOnceFlag notsent = new SetOnceFlag();
           if (SyncReplicationActivity.ActivityType.SYNC_START == activityType) {
-            this.testSender.addPassive(ReplicationAddPassiveIntent.createAddPassiveEnvelope(node, activity, ()->sent.set(), ()->notsent.set()));
+            this.testSender.addPassive(node, activity, ()->sent.set(), ()->notsent.set());
           } else {
-            this.testSender.replicateMessage(ReplicationReplicateMessageIntent.createReplicatedMessageDebugEnvelope(node, activity, ()->sent.set(), ()->notsent.set()));
+            this.testSender.replicateMessage(node, activity, ()->sent.set(), ()->notsent.set());
           }
           Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
           if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
