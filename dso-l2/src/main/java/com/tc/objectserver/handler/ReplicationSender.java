@@ -45,7 +45,7 @@ import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
+public class ReplicationSender extends AbstractEventHandler<NodeID> {
   private static final int DEFAULT_BATCH_LIMIT = 64;
   private static final int DEFAULT_INFLIGHT_MESSAGES = 2;
   
@@ -58,69 +58,65 @@ public class ReplicationSender extends AbstractEventHandler<ReplicationIntent> {
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
   private final Map<NodeID, GroupMessageBatchContext> batchContexts = new HashMap<>();
-  private Sink<ReplicationIntent> selfSink;
+  private Sink<NodeID> selfSink;
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
   }
 
-  public void setSelfSink(Sink<ReplicationIntent> sink) {
+  public void setSelfSink(Sink<NodeID> sink) {
     this.selfSink = sink;
   }
 
   public void removePassive(ReplicationRemovePassiveIntent context) {
-    // NOTE:  Temporary implementation to get API in place.
-    this.selfSink.addSingleThreaded(context);
+    // this is a flush of the replication channel.  shut it down and return;
+    NodeID nodeid = context.getDestination();
+    filtering.remove(nodeid);
+    this.batchContexts.remove(nodeid);
+    context.droppedWithoutSend();
+    Assert.assertTrue(context.wasSentOrDropped());
   }
 
   public void addPassive(ReplicationAddPassiveIntent context) {
-    // NOTE:  Temporary implementation to get API in place.
-    this.selfSink.addSingleThreaded(context);
+    NodeID nodeid = context.getDestination();
+    // Set up the sync state.
+    createAndRegisterSyncState(nodeid);
+    // Send the message.
+    tagAndSendActivityCompletingContext(context, nodeid, context.getActivity());
+    // Try to flush the message.
+    this.selfSink.addSingleThreaded(nodeid);
+    Assert.assertTrue(context.wasSentOrDropped());
   }
 
   public void replicateMessage(ReplicationReplicateMessageIntent context) {
-    // NOTE:  Temporary implementation to get API in place.
-    this.selfSink.addSingleThreaded(context);
+    NodeID nodeid = context.getDestination();
+    SyncReplicationActivity activity = ((ReplicationReplicateMessageIntent)context).getActivity();
+    SyncState syncing = getSyncState(nodeid, activity);
+    
+    // See if the message needs to be filtered out of the stream.
+    boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
+    if (!shouldRemoveFromStream) {
+      // We want to send this message.
+      syncing.validateSending(activity);
+      tagAndSendActivityCompletingContext(context, nodeid, activity);
+      // Try to flush the message.
+      this.selfSink.addSingleThreaded(nodeid);
+    } else {
+      // We are filtering this out so don't send it.
+      // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
+      // Log that this is dropped due to filtering.
+      if (debugLogging) {
+        logger.debug("FILTERING:" + activity);
+      }
+      // Call the dropped callback on the context.
+      context.droppedWithoutSend();
+    }
+    Assert.assertTrue(context.wasSentOrDropped());
   }
 
   @Override
-  public void handleEvent(ReplicationIntent context) throws EventHandlerException {
-    NodeID nodeid = context.getDestination();
-    
-    if (context instanceof ReplicationRemovePassiveIntent) {
-   // this is a flush of the replication channel.  shut it down and return;
-      filtering.remove(nodeid);
-      this.batchContexts.remove(nodeid);
-      context.droppedWithoutSend();
-    } else if (context instanceof ReplicationAddPassiveIntent) {
-      // Set up the sync state.
-      createAndRegisterSyncState(nodeid);
-      // Send the message.
-      tagAndSendActivityCompletingContext(context, nodeid, ((ReplicationAddPassiveIntent)context).getActivity());
-    } else if (context instanceof ReplicationReplicateMessageIntent) {
-      SyncReplicationActivity activity = ((ReplicationReplicateMessageIntent)context).getActivity();
-      SyncState syncing = getSyncState(nodeid, activity);
-      
-      // See if the message needs to be filtered out of the stream.
-      boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
-      if (!shouldRemoveFromStream) {
-        // We want to send this message.
-        syncing.validateSending(activity);
-        tagAndSendActivityCompletingContext(context, nodeid, activity);
-      } else {
-        // We are filtering this out so don't send it.
-        // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
-        // Log that this is dropped due to filtering.
-        if (debugLogging) {
-          logger.debug("FILTERING:" + activity);
-        }
-        // Call the dropped callback on the context.
-        context.droppedWithoutSend();
-      }
-    } else {
-      Assert.fail("Unknown replication intent type");
-    }
-    Assert.assertTrue(context.wasSentOrDropped());
+  public void handleEvent(NodeID context) throws EventHandlerException {
+    // NOTE:  This is just a mechanical commit where we temporarily moved the message send onto the caller's thread.
   }
 
   private boolean shouldRemoveActivityFromReplicationStream(SyncReplicationActivity activity, SyncState syncing) {

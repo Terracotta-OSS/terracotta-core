@@ -26,7 +26,6 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.msg.ReplicationAddPassiveIntent;
-import com.tc.l2.msg.ReplicationIntent;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationReplicateMessageIntent;
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -63,7 +62,7 @@ public class ReplicationSenderTest {
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
   ReplicationSender testSender = new ReplicationSender(groupMgr);
-  Sink<ReplicationIntent> sink = new Sink<ReplicationIntent>() {
+  Sink<NodeID> sink = new Sink<NodeID>() {
     @Override
     public void enableStatsCollection(boolean enable) {
       Assert.fail("Not in test");
@@ -88,7 +87,7 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
     }
     @Override
-    public void addSingleThreaded(ReplicationIntent context) {
+    public void addSingleThreaded(NodeID context) {
       try {
         testSender.handleEvent(context);
       } catch (EventHandlerException e) {
@@ -96,7 +95,7 @@ public class ReplicationSenderTest {
       }
     }
     @Override
-    public void addMultiThreaded(ReplicationIntent context) {
+    public void addMultiThreaded(NodeID context) {
       Assert.fail("Not in test");
     }
     @Override
