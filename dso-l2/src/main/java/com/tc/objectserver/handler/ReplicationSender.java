@@ -47,7 +47,7 @@ import org.terracotta.entity.ConcurrencyStrategy;
 
 public class ReplicationSender extends AbstractEventHandler<NodeID> {
   private static final int DEFAULT_BATCH_LIMIT = 64;
-  private static final int DEFAULT_INFLIGHT_MESSAGES = 2;
+  private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
   
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
@@ -115,8 +115,14 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   }
 
   @Override
-  public void handleEvent(NodeID context) throws EventHandlerException {
-    // NOTE:  This is just a mechanical commit where we temporarily moved the message send onto the caller's thread.
+  public void handleEvent(NodeID nodeToFlush) throws EventHandlerException {
+    try {
+      this.batchContexts.get(nodeToFlush).flushBatch();
+    } catch (GroupException e) {
+      // We can't handle this here, but the next attempt to add to a batch will see the exception from this same
+      //  context.
+      logger.error("Exception flushing batch context", e);
+    }
   }
 
   private boolean shouldRemoveActivityFromReplicationStream(SyncReplicationActivity activity, SyncState syncing) {
@@ -151,7 +157,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     if (debugMessaging) {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
-    this.batchContexts.get(nodeid).batchAndSend(activity);
+    this.batchContexts.get(nodeid).batchMessage(activity);
   }
   
   private void createAndRegisterSyncState(NodeID nodeid) {
@@ -164,7 +170,15 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("active-passive.batchsize", DEFAULT_BATCH_LIMIT);
     int idealMessagesInFlight = TCPropertiesImpl.getProperties().getInt("active-passive.inflight", DEFAULT_INFLIGHT_MESSAGES);
     logger.info("Created batch context for passive " + nodeid + " with max batch size " + maximumBatchSize + " and ideal messages in flight " + idealMessagesInFlight);
-    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid, maximumBatchSize, idealMessagesInFlight));
+    // Create the runnable which will be called, on the network thread, to notify us when a message has been sent.  In
+    //  those cases, we want to incur a new flush operation into our internal thread.
+    Runnable networkDoneTarget = new Runnable() {
+      @Override
+      public void run() {
+        ReplicationSender.this.selfSink.addSingleThreaded(nodeid);
+      }
+    };
+    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid, maximumBatchSize, idealMessagesInFlight, networkDoneTarget));
   }
 
   private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
