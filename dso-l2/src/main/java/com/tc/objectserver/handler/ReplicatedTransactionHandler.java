@@ -22,6 +22,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
@@ -64,8 +65,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 
@@ -175,9 +174,32 @@ public class ReplicatedTransactionHandler {
       latch.waitForCompletion();
     }    
   };
-  
+
+  /**
+   * The outgoing response handler is where the passive enqueues any instructions to flush the outgoing ack channel
+   *  (messages to ack messages from the active).
+   */
+  private final EventHandler<ReplicationMessageAck> outgoingResponseHandler = new AbstractEventHandler<ReplicationMessageAck>() {
+    @Override
+    public void handleEvent(ReplicationMessageAck message) throws EventHandlerException {
+      determineIfSendRequired(message);
+    }
+  };
+
+  private Sink<ReplicationMessageAck> outgoingResponseSink;
+
+
   public EventHandler<ReplicationMessage> getEventHandler() {
     return eventHorizon;
+  }
+
+  public EventHandler<ReplicationMessageAck> getOutgoingResponseHandler() {
+    return this.outgoingResponseHandler;
+  }
+
+  public void setOutgoingResponseSink(Sink<ReplicationMessageAck> sink) {
+    Assert.assertNull(this.outgoingResponseSink);
+    this.outgoingResponseSink = sink;
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
@@ -546,41 +568,58 @@ public class ReplicatedTransactionHandler {
   }
 
   private synchronized void prepareAckForSend(NodeID sender, SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode code) {
+    boolean didCreate = false;
     if (null == this.cachedBatchAck) {
       this.cachedBatchAck = ReplicationMessageAck.createBatchAck();
       this.cachedMessageAckFrom = sender;
+      didCreate = true;
     } else {
       Assert.assertTrue(this.cachedMessageAckFrom.equals(sender));
     }
 
     this.cachedBatchAck.addAck(respondTo, code);
     
-    if (!isWaitingForNetwork) {
-      synchronizedSendAckBatch();
+    // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
+    //  available).
+    if (didCreate) {
+      this.outgoingResponseSink.addSingleThreaded(this.cachedBatchAck);
     }
   }
 
   private synchronized void handleNetworkDone() {
     this.isWaitingForNetwork = false;
     if (null != this.cachedBatchAck) {
-      synchronizedSendAckBatch();
+      this.outgoingResponseSink.addSingleThreaded(this.cachedBatchAck);
     }
   }
 
-  private void synchronizedSendAckBatch() {
-    // Note that we want to set the flags _before_ making the calls since the unit test mock calls back, immediate.
-    //  (it shouldn't make a different to any other call since this is already synchronized)
-    NodeID cachedMessageAckFrom = this.cachedMessageAckFrom;
-    this.cachedMessageAckFrom = null;
-    ReplicationMessageAck cachedBatchAck = this.cachedBatchAck;
-    this.cachedBatchAck = null;
-    this.isWaitingForNetwork = true;
-    try {
-      groupManager.sendToWithSentCallback(cachedMessageAckFrom, cachedBatchAck, this.handleMessageSend);
-    } catch (GroupException e) {
-      // Active must have died.  Swallow the exception after logging.
-      LOGGER.debug("active died on ack", e);
-      this.isWaitingForNetwork = false;
+  private void determineIfSendRequired(ReplicationMessageAck messagePassedToEventHandler) {
+    // We need to interact with cachedBatchAck which can only be done under monitor.
+    ReplicationMessageAck messageToSend = null;
+    NodeID target = null;
+    synchronized(this) {
+      if (!this.isWaitingForNetwork && (messagePassedToEventHandler == this.cachedBatchAck)) {
+        // This is the same message installed so it isn't an ignored event so we want to process this.
+        // (note that many events will be ignored since lots of flush attempts will be made but we only want to honor
+        //  one per message).
+        messageToSend = this.cachedBatchAck;
+        this.cachedBatchAck = null;
+        target = this.cachedMessageAckFrom;
+        this.cachedMessageAckFrom = null;
+        // We are going to send this so set us as busy.
+        this.isWaitingForNetwork = true;
+      }
+    }
+    if (null != messageToSend) {
+      try {
+        groupManager.sendToWithSentCallback(target, messageToSend, this.handleMessageSend);
+      } catch (GroupException e) {
+        // Active must have died.  Swallow the exception after logging.
+        LOGGER.debug("active died on ack", e);
+        synchronized(this) {
+          this.isWaitingForNetwork = false;
+        }
+      }
     }
   }
 
