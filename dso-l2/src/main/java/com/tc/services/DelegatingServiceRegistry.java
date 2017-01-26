@@ -72,8 +72,11 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
   public <T> T getService(ServiceConfiguration<T> configuration) {
     T builtInService = getBuiltInService(configuration);
     T externalService = getExternalService(configuration);
-    // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
-    Assert.assertFalse((null != builtInService) && (null != externalService));
+    // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
+    //  given type.
+    if ((null != builtInService) && (null != externalService)) {
+      throw new IllegalArgumentException("Both built-in and external service found for type: " + configuration.getServiceType());
+    }
     return (null != builtInService)
         ? builtInService
         : externalService;
@@ -86,15 +89,20 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
   }
 
   private <T> T getBuiltInService(ServiceConfiguration<T> configuration) {
-    List<ImplementationProvidedServiceProvider> serviceProviders = implementationProvidedServiceProviderMap.get(configuration.getServiceType());
+    Class<T> serviceType = configuration.getServiceType();
+    List<ImplementationProvidedServiceProvider> serviceProviders = implementationProvidedServiceProviderMap.get(serviceType);
     T service = null;
     if (null != serviceProviders) {
       for (ImplementationProvidedServiceProvider provider : serviceProviders) {
         T oneService = provider.getService(this.consumerID, this.owningEntity, configuration);
         if (null != oneService) {
-          // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
-          Assert.assertNull(service);
-          service = oneService;
+          // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
+          //  given type.
+          if (null != service) {
+            throw new IllegalArgumentException("Multiple built-in service providers matched for type: " + serviceType);
+          } else {
+            service = oneService;
+          }
         }
       }
     }
@@ -102,7 +110,8 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
   }
 
   private <T> T getExternalService(ServiceConfiguration<T> configuration) {
-    List<ServiceProvider> serviceProviders = serviceProviderMap.get(configuration.getServiceType());
+    Class<T> serviceType = configuration.getServiceType();
+    List<ServiceProvider> serviceProviders = serviceProviderMap.get(serviceType);
     if (serviceProviders == null) {
      return null;
     }
@@ -110,9 +119,13 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
     for (ServiceProvider provider : serviceProviders) {
       T oneService = provider.getService(this.consumerID, configuration);
       if (null != oneService) {
-        // TODO:  Determine how to rationalize multiple matches.  For now, we will force either 1 or 0.
-        Assert.assertNull(service);
-        service = oneService;
+        // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
+        //  given type.
+        if (null != service) {
+          throw new IllegalArgumentException("Multiple service providers matched for type: " + serviceType);
+        } else {
+          service = oneService;
+        }
       }
     }
     return service;
