@@ -299,15 +299,8 @@ public class ReplicatedTransactionHandler {
       }
     } else if (entity.isPresent()) {
       ManagedEntity entityInstance = entity.get();
-      EntityMessage msg = null;
-      try {
-        if (SyncReplicationActivity.ActivityType.INVOKE_ACTION == activity.getActivityType()) {
-          msg = entityInstance.getCodec().decodeMessage(extendedData);
-        }
-      } catch (MessageCodecException codec) {
-        throw new RuntimeException(codec);
-      }
-      MessagePayload payload = MessagePayload.syncPayloadWithMessage(extendedData, msg, activity.getConcurrency());
+
+      MessagePayload payload = MessagePayload.syncPayloadNormal(extendedData, activity.getConcurrency());
       if (null != request.getAction()) switch (request.getAction()) {
         case RECONFIGURE_ENTITY:  
           entity.get().addRequestMessage(request, payload, 

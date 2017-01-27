@@ -40,10 +40,6 @@ public class MessagePayload {
     return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, false);
   }
 
-  public static final MessagePayload syncPayloadWithMessage(byte[] raw, EntityMessage message, int concurrencyKey) {
-    return new MessagePayload(raw, message, concurrencyKey, 0, false, false);
-  }
-
   public static final MessagePayload syncPayloadNormal(byte[] raw, int concurrencyKey) {
     return new MessagePayload(raw, null, concurrencyKey, 0, false, false);
   }
