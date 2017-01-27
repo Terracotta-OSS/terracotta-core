@@ -235,15 +235,9 @@ public class ManagementTopologyEventCollectorTest {
     this.collector.clientDidReleaseEntity(client, entityDescriptor1);
     this.collector.clientDidReleaseEntity(client, entityDescriptor2);
     
-    // A third attempt to release should fail.
-    boolean didSucceed = false;
-    try {
-      this.collector.clientDidReleaseEntity(client, entityDescriptor1);
-      didSucceed = true;
-    } catch (AssertionError e) {
-      // Expected.
-    }
-    Assert.assertFalse(didSucceed);
+    // NOTE:  This used to throw an assertion error but that is no longer the case since the value being used in the
+    //  assert came from external code.
+    this.collector.clientDidReleaseEntity(client, entityDescriptor1);
     
     // Disconnect the client.
     this.collector.clientDidDisconnect(client);
