@@ -188,16 +188,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
 
   @Override
   public synchronized void entityWasReloaded(EntityID id, long consumerID, boolean isActive) {
-    // Ensure that this is the expected state.
-    // NOTE:  We currently can't verify the isActiveState since the reload path sets it _after_ the entities are reloaded.
-    // Note that this could happen due to promotion or reloading from restart so we can't know if it already is in our set.
-    if (!this.entities.contains(id)) {
-      // Seems to be new so add it to the set.
-      addEntityToTracking(id, consumerID, isActive);
-    } else {
-      removeEntityFromTracking(id);
-      addEntityToTracking(id, consumerID, isActive);
-    }
+    // terracotta-core issue-461:  reconfigured entities should be re-added, not remove-then-add.
+    addEntityToTracking(id, consumerID, isActive);
     LOGGER.debug("entity reloaded " + id);
   }
 
