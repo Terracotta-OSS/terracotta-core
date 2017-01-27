@@ -54,6 +54,7 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.PlatformEntity;
+import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.stats.Stats;
@@ -68,7 +69,6 @@ import java.util.function.Consumer;
 import org.junit.Test;
 import org.mockito.Matchers;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.times;
@@ -77,7 +77,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.SyncMessageCodec;
 
 
 public class ReplicatedTransactionHandlerTest {
@@ -101,13 +100,13 @@ public class ReplicatedTransactionHandlerTest {
     this.stateManager = mock(StateManager.class);
     this.entityManager = mock(EntityManager.class);
     this.groupManager = mock(GroupManager.class);
-    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
+    Mockito.doAnswer((Answer<Void>) (InvocationOnMock invocation) -> {
       ((Runnable)invocation.getArguments()[2]).run();
       return null;
     }).when(groupManager).sendToWithSentCallback(Mockito.any(), Mockito.any(), Mockito.any());
     this.platform = mock(ManagedEntity.class);
-    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
-      ((Consumer)invocation.getArguments()[2]).accept(null);
+    Mockito.doAnswer((Answer<SimpleCompletion>) (InvocationOnMock invocation) -> {
+      ((Consumer<byte[]>)invocation.getArguments()[2]).accept(null);
       return null;
     }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
@@ -149,7 +148,7 @@ public class ReplicatedTransactionHandlerTest {
       return entity;
     });
     Mockito.doAnswer(invocation->{
-      Consumer consumer = (Consumer)invocation.getArguments()[2];
+      Consumer<byte[]> consumer = (Consumer)invocation.getArguments()[2];
       if (consumer != null) {
         consumer.accept(new byte[0]);
       }
@@ -167,9 +166,7 @@ public class ReplicatedTransactionHandlerTest {
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, rand)));
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityMessage(eid, 1)));
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
-//  verify there was an attempt to decode the invoke message
     verify(activity).getExtendedData();
-    verify(entity).getCodec();
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendToWithSentCallback(Matchers.eq(sid), Matchers.any(), Matchers.any());
   }  
@@ -195,7 +192,7 @@ public class ReplicatedTransactionHandlerTest {
     when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getMessageCodec(Matchers.any())).thenReturn(codec);
     Mockito.doAnswer(invocation->{
-      Consumer consumer = (Consumer)invocation.getArguments()[2];
+      Consumer<byte[]> consumer = (Consumer)invocation.getArguments()[2];
       if (consumer != null) {
         consumer.accept(new byte[0]);
       }
@@ -220,10 +217,8 @@ public class ReplicatedTransactionHandlerTest {
   @Test
   public void testTestDefermentDuringSync() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
-    long VERSION = 1;
     ManagedEntity entity = mock(ManagedEntity.class);
     MessageCodec codec = mock(MessageCodec.class);
-    SyncMessageCodec sync = mock(SyncMessageCodec.class);
     when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
     when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
       when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
