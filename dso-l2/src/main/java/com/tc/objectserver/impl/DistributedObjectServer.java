@@ -867,6 +867,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  exclude from startup specific stages that are controlled by the stage controller. 
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
+        ServerConfigurationContext.HYDRATE_MESSAGE_SINK,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
@@ -905,6 +906,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  active to start
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.HYDRATE_MESSAGE_SINK);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addTriggerToState(StateManager.ACTIVE_COORDINATOR, () -> {
