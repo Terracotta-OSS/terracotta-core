@@ -142,8 +142,11 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
                           entityIdentifierForService(ed.getEntity().getEntityID()), 
                           ed.getClient()));
           // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
-          Assert.assertTrue(didAdd);
+          if (!didAdd) {
+            LOGGER.warn("unbalanced client connect " + fetchIdentifier);
+          }        
         }
+        
       }
     }
     LOGGER.debug("client did connect " + channel);
@@ -209,7 +212,9 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
         boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
         // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
-        Assert.assertTrue(didAdd);
+        if (!didAdd) {
+          LOGGER.warn("unbalanced client fetch " + fetchIdentifier);
+        }
       } else {
         Collection<ResolvedDescriptors> set = incomingFetches.computeIfAbsent(client, (c)->new HashSet<>());
         set.add(new ResolvedDescriptors(entityDescriptor, clientDescriptor));
@@ -225,7 +230,9 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
       boolean didRemove = this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
       // This CANNOT be unbalanced (it implies that there is a serious bug somewhere).
-      Assert.assertTrue(didRemove);
+      if (!didRemove) {
+        LOGGER.warn("unbalanced client release " + fetchIdentifier);
+      }
     }
     
     if (incomingReleases.containsKey(client)) {
