@@ -742,6 +742,14 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public byte[] reconfigure(String entityClassName, String entityName, long version, byte[] serializedConfiguration) throws EntityException {
     PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> entityData = (this.activeEntities != null) ? this.activeEntities.get(entityTuple) : this.passiveEntities.get(entityTuple);
+    
+    // Make sure that we update the node in monitoring.
+    if (null != this.serviceInterface) {
+      PlatformEntity record = new PlatformEntity(entityClassName, entityName, entityData.consumerID, entityData.isActive);
+      String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+      this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
+    }
+    
     try {
       return entityData.reconfigure(serializedConfiguration);
     } catch (ConfigurationException e) {
