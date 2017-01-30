@@ -705,6 +705,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     CommonServerEntity<?, ?> newEntity = null;
     try {
       newEntity = createAndStoreEntity(entityClassName, entityName, version, serializedConfiguration, entityTuple, service, registry, consumerID);
+      
+      // Tell the entity to create itself as something new.
+      newEntity.createNew();
     } catch (ConfigurationException e) {
       // Wrap this and re-throw.
       throw new EntityConfigurationException(entityClassName, entityName, e);
@@ -720,9 +723,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
       this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
-    
-    // Tell the entity to create itself as something new.
-    newEntity.createNew();
     
     // If we have a persistence layer, record this.
     EntityData data = new EntityData();
