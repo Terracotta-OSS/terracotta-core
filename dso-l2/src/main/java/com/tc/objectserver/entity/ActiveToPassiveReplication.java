@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -191,7 +192,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   public void batchAckReceived(ReplicationMessageAck context) {
     NodeID messageFrom = context.messageFrom();
-    for (ReplicationMessageAck.Tuple tuple : context.getBatch()) {
+    for (ReplicationAckTuple tuple : context.getBatch()) {
       if (ReplicationResultCode.RECEIVED == tuple.result) {
         ActivePassiveAckWaiter waiter = waiters.get(tuple.respondTo);
         if (null != waiter) {

@@ -44,7 +44,7 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   }
 
 
-  private List<Tuple> batch;
+  private List<ReplicationAckTuple> batch;
 
   public ReplicationMessageAck() {
     super(INVALID);
@@ -54,7 +54,7 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   private ReplicationMessageAck(int type) {
     super(type);
     if (BATCH == type) {
-      this.batch = new ArrayList<Tuple>();
+      this.batch = new ArrayList<ReplicationAckTuple>();
     }
   }
 
@@ -62,11 +62,11 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
   public void addAck(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
     Assert.assertTrue(BATCH == this.getType());
-    Tuple tuple = new Tuple(respondTo, result);
+    ReplicationAckTuple tuple = new ReplicationAckTuple(respondTo, result);
     this.batch.add(tuple);
   }
 
-  public List<Tuple> getBatch() {
+  public List<ReplicationAckTuple> getBatch() {
     return this.batch;
   }
 
@@ -76,11 +76,11 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
       int batchSize = in.readInt();
       // We should never send an empty message.
       Assert.assertTrue(batchSize > 0);
-      this.batch = new ArrayList<Tuple>();
+      this.batch = new ArrayList<ReplicationAckTuple>();
       for (int i = 0; i < batchSize; ++i) {
         SyncReplicationActivity.ActivityID respondTo = new SyncReplicationActivity.ActivityID(in.readLong());
         ReplicationResultCode result = ReplicationResultCode.decode(in.readInt());
-        this.batch.add(new Tuple(respondTo, result));
+        this.batch.add(new ReplicationAckTuple(respondTo, result));
       }
     }
   }
@@ -92,23 +92,10 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
       // We should never send an empty message.
       Assert.assertTrue(size > 0);
       out.writeInt(size);
-      for (Tuple tuple : this.batch) {
+      for (ReplicationAckTuple tuple : this.batch) {
         out.writeLong(tuple.respondTo.id);
         out.writeInt(tuple.result.code());
       }
-    }
-  }
-
-  /**
-   * The respondTo is the message to which we are responding.  The result determines if this is a RECEIVED, SUCCESS, or FAIL.
-   */
-  public static class Tuple {
-    public final SyncReplicationActivity.ActivityID respondTo;
-    public final ReplicationResultCode result;
-    
-    public Tuple(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
-      this.respondTo = respondTo;
-      this.result = result;
     }
   }
 }
