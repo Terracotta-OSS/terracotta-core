@@ -736,7 +736,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
     // And the stage for handling their response batching/serialization.
-    Stage<ReplicationMessageAck> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, ReplicationMessageAck.class, 
+    Stage<ReplicatedTransactionHandler.SedaToken> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, ReplicatedTransactionHandler.SedaToken.class, 
         replicatedTransactionHandler.getOutgoingResponseHandler(), 1, maxStageSize);
     replicatedTransactionHandler.setOutgoingResponseSink(replicationResponseStage.getSink());
     

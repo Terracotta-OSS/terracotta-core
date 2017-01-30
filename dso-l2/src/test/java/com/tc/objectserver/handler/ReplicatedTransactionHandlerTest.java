@@ -36,7 +36,6 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
@@ -112,7 +111,7 @@ public class ReplicatedTransactionHandlerTest {
     }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
-    this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicationMessageAck>(this.rth.getOutgoingResponseHandler()));
+    this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
     this.source = new ClientID(1);
     

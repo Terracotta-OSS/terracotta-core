@@ -179,25 +179,26 @@ public class ReplicatedTransactionHandler {
    * The outgoing response handler is where the passive enqueues any instructions to flush the outgoing ack channel
    *  (messages to ack messages from the active).
    */
-  private final EventHandler<ReplicationMessageAck> outgoingResponseHandler = new AbstractEventHandler<ReplicationMessageAck>() {
+  private final EventHandler<SedaToken> outgoingResponseHandler = new AbstractEventHandler<SedaToken>() {
     @Override
-    public void handleEvent(ReplicationMessageAck message) throws EventHandlerException {
-      determineIfSendRequired(message);
+    public void handleEvent(SedaToken ignored) throws EventHandlerException {
+      determineIfSendRequired();
     }
   };
 
-  private Sink<ReplicationMessageAck> outgoingResponseSink;
+  private Sink<SedaToken> outgoingResponseSink;
+  private final SedaToken selfMessageToken = new SedaToken();
 
 
   public EventHandler<ReplicationMessage> getEventHandler() {
     return eventHorizon;
   }
 
-  public EventHandler<ReplicationMessageAck> getOutgoingResponseHandler() {
+  public EventHandler<SedaToken> getOutgoingResponseHandler() {
     return this.outgoingResponseHandler;
   }
 
-  public void setOutgoingResponseSink(Sink<ReplicationMessageAck> sink) {
+  public void setOutgoingResponseSink(Sink<SedaToken> sink) {
     Assert.assertNull(this.outgoingResponseSink);
     this.outgoingResponseSink = sink;
   }
@@ -582,23 +583,26 @@ public class ReplicatedTransactionHandler {
     // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
     //  available).
     if (didCreate) {
-      this.outgoingResponseSink.addSingleThreaded(this.cachedBatchAck);
+      this.outgoingResponseSink.addSingleThreaded(this.selfMessageToken);
     }
   }
 
   private synchronized void handleNetworkDone() {
     this.isWaitingForNetwork = false;
     if (null != this.cachedBatchAck) {
-      this.outgoingResponseSink.addSingleThreaded(this.cachedBatchAck);
+      this.outgoingResponseSink.addSingleThreaded(this.selfMessageToken);
     }
   }
 
-  private void determineIfSendRequired(ReplicationMessageAck messagePassedToEventHandler) {
+  private void determineIfSendRequired() {
     // We need to interact with cachedBatchAck which can only be done under monitor.
     ReplicationMessageAck messageToSend = null;
     NodeID target = null;
     synchronized(this) {
-      if (!this.isWaitingForNetwork && (messagePassedToEventHandler == this.cachedBatchAck)) {
+      // While we normally only enqueue the event to that got us here when a message is created (meaning that it
+      //  couldn't be null), the network callbacks mean that you could enqueue an event to flush the same batch, twice,
+      //  so make sure we are the first to get here.
+      if (!this.isWaitingForNetwork && (null != this.cachedBatchAck)) {
         // This is the same message installed so it isn't an ignored event so we want to process this.
         // (note that many events will be ignored since lots of flush attempts will be made but we only want to honor
         //  one per message).
@@ -871,5 +875,12 @@ public class ReplicatedTransactionHandler {
       this.activeSender = activeSender;
       this.activity = activity;
     }
+  }
+
+  /**
+   * This is a singleton used only to satisfy SEDA message routing.
+   */
+  public static class SedaToken {
+    
   }
 }
