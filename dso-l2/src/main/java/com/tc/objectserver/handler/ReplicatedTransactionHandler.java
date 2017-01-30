@@ -22,7 +22,9 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.objectserver.entity.MessagePayload;
+import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
@@ -50,8 +52,10 @@ import com.tc.objectserver.entity.BarrierCompletion;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
+import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -64,14 +68,15 @@ import java.util.Optional;
 import java.util.Set;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 
 public class ReplicatedTransactionHandler {
+  private static final int DEFAULT_BATCH_LIMIT = 64;
+  private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
+
   private final EntityManager entityManager;
   private final EntityPersistor entityPersistor;
   private final GroupManager<AbstractGroupMessage> groupManager;
@@ -82,13 +87,12 @@ public class ReplicatedTransactionHandler {
   private final SyncState state = new SyncState();
   
   // This MUST be manipulated under lock - it is the batch of ack messages we are accumulating until the network is ready for another message.
-  private boolean isWaitingForNetwork;
   private NodeID cachedMessageAckFrom;
-  private ReplicationMessageAck cachedBatchAck;
+  private GroupMessageBatchContext<ReplicationMessageAck, ReplicationAckTuple> cachedBatchAck;
   private final Runnable handleMessageSend = new Runnable() {
     @Override
     public void run() {
-      handleNetworkDone();
+      ReplicatedTransactionHandler.this.outgoingResponseSink.addSingleThreaded(ReplicatedTransactionHandler.this.selfMessageToken);
     }
   };
   
@@ -175,9 +179,39 @@ public class ReplicatedTransactionHandler {
       latch.waitForCompletion();
     }    
   };
-  
+
+  /**
+   * The outgoing response handler is where the passive enqueues any instructions to flush the outgoing ack channel
+   *  (messages to ack messages from the active).
+   */
+  private final EventHandler<SedaToken> outgoingResponseHandler = new AbstractEventHandler<SedaToken>() {
+    @Override
+    public void handleEvent(SedaToken ignored) throws EventHandlerException {
+      try {
+        cachedBatchAck.flushBatch();
+      } catch (GroupException e) {
+        // We can't handle this here, but the next attempt to add to a batch will see the exception from this same
+        //  context.
+        LOGGER.error("Exception flushing ack batch context", e);
+      }
+    }
+  };
+
+  private Sink<SedaToken> outgoingResponseSink;
+  private final SedaToken selfMessageToken = new SedaToken();
+
+
   public EventHandler<ReplicationMessage> getEventHandler() {
     return eventHorizon;
+  }
+
+  public EventHandler<SedaToken> getOutgoingResponseHandler() {
+    return this.outgoingResponseHandler;
+  }
+
+  public void setOutgoingResponseSink(Sink<SedaToken> sink) {
+    Assert.assertNull(this.outgoingResponseSink);
+    this.outgoingResponseSink = sink;
   }
 
   private void processMessage(ReplicationMessage rep) throws EntityException {
@@ -546,41 +580,34 @@ public class ReplicatedTransactionHandler {
   }
 
   private synchronized void prepareAckForSend(NodeID sender, SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode code) {
-    if (null == this.cachedBatchAck) {
-      this.cachedBatchAck = ReplicationMessageAck.createBatchAck();
+    // The batch context is cached and constructed lazily when the sender changes.
+    if (!sender.equals(this.cachedMessageAckFrom)) {
+      int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("passive-active.batchsize", DEFAULT_BATCH_LIMIT);
+      int idealMessagesInFlight = TCPropertiesImpl.getProperties().getInt("passive-active.inflight", DEFAULT_INFLIGHT_MESSAGES);
+      IBatchableMessageFactory<ReplicationMessageAck, ReplicationAckTuple> factory = new IBatchableMessageFactory<ReplicationMessageAck, ReplicationAckTuple>() {
+        @Override
+        public ReplicationMessageAck createNewBatch(ReplicationAckTuple initialActivity, long id) {
+          ReplicationMessageAck message = ReplicationMessageAck.createBatchAck();
+          message.addToBatch(initialActivity);
+          return message;
+        }
+      };
       this.cachedMessageAckFrom = sender;
-    } else {
-      Assert.assertTrue(this.cachedMessageAckFrom.equals(sender));
+      this.cachedBatchAck = new GroupMessageBatchContext<>(factory, this.groupManager, this.cachedMessageAckFrom, maximumBatchSize, idealMessagesInFlight, this.handleMessageSend);
     }
-
-    this.cachedBatchAck.addAck(respondTo, code);
     
-    if (!isWaitingForNetwork) {
-      synchronizedSendAckBatch();
-    }
-  }
-
-  private synchronized void handleNetworkDone() {
-    this.isWaitingForNetwork = false;
-    if (null != this.cachedBatchAck) {
-      synchronizedSendAckBatch();
-    }
-  }
-
-  private void synchronizedSendAckBatch() {
-    // Note that we want to set the flags _before_ making the calls since the unit test mock calls back, immediate.
-    //  (it shouldn't make a different to any other call since this is already synchronized)
-    NodeID cachedMessageAckFrom = this.cachedMessageAckFrom;
-    this.cachedMessageAckFrom = null;
-    ReplicationMessageAck cachedBatchAck = this.cachedBatchAck;
-    this.cachedBatchAck = null;
-    this.isWaitingForNetwork = true;
+    boolean didCreate = false;
     try {
-      groupManager.sendToWithSentCallback(cachedMessageAckFrom, cachedBatchAck, this.handleMessageSend);
+      didCreate = this.cachedBatchAck.batchMessage(new ReplicationAckTuple(respondTo, code));
     } catch (GroupException e) {
       // Active must have died.  Swallow the exception after logging.
       LOGGER.debug("active died on ack", e);
-      this.isWaitingForNetwork = false;
+    }
+    
+    // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
+    //  available).
+    if (didCreate) {
+      this.outgoingResponseSink.addSingleThreaded(this.selfMessageToken);
     }
   }
 
@@ -832,5 +859,9 @@ public class ReplicatedTransactionHandler {
       this.activeSender = activeSender;
       this.activity = activity;
     }
+  }
+
+  public static class SedaToken {
+    
   }
 }

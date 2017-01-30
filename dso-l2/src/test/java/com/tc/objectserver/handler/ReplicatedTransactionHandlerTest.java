@@ -84,7 +84,7 @@ public class ReplicatedTransactionHandlerTest {
   private TransactionOrderPersistor transactionOrderPersistor;
   private ReplicatedTransactionHandler rth;
   private ClientID source;
-  private ForwardingSink loopbackSink;
+  private ForwardingSink<ReplicationMessage> loopbackSink;
   private StateManager stateManager;
   private EntityManager entityManager;
   private ManagedEntity platform;
@@ -111,6 +111,7 @@ public class ReplicatedTransactionHandlerTest {
     }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
+    this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
     this.source = new ClientID(1);
     
@@ -121,7 +122,7 @@ public class ReplicatedTransactionHandlerTest {
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
     
-    this.loopbackSink = new ForwardingSink(this.rth.getEventHandler());
+    this.loopbackSink = new ForwardingSink<ReplicationMessage>(this.rth.getEventHandler());
   }
   
   @Test
@@ -389,15 +390,15 @@ public class ReplicatedTransactionHandlerTest {
   }
 
 
-  private static class ForwardingSink extends NoStatsSink<ReplicationMessage> {
-    private final EventHandler<ReplicationMessage> target;
+  private static class ForwardingSink<M> extends NoStatsSink<M> {
+    private final EventHandler<M> target;
 
-    public ForwardingSink(EventHandler<ReplicationMessage> voltronMessageHandler) {
+    public ForwardingSink(EventHandler<M> voltronMessageHandler) {
       this.target = voltronMessageHandler;
     }
 
     @Override
-    public void addSingleThreaded(ReplicationMessage context) {
+    public void addSingleThreaded(M context) {
       try {
         this.target.handleEvent(context);
       } catch (EventHandlerException e) {
@@ -405,7 +406,7 @@ public class ReplicatedTransactionHandlerTest {
       }
     }
     @Override
-    public void addMultiThreaded(ReplicationMessage context) {
+    public void addMultiThreaded(M context) {
       throw new UnsupportedOperationException();
     }
 

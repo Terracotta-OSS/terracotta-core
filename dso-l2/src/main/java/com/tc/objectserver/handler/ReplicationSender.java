@@ -22,6 +22,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
+import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -31,6 +32,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
+import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.util.EnumSet;
@@ -53,7 +55,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
-  private final Map<NodeID, GroupMessageBatchContext> batchContexts = new HashMap<>();
+  private final Map<NodeID, GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity>> batchContexts = new HashMap<>();
   private Sink<NodeID> selfSink;
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
@@ -171,7 +173,16 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
         ReplicationSender.this.selfSink.addSingleThreaded(nodeid);
       }
     };
-    this.batchContexts.put(nodeid, new GroupMessageBatchContext(this.group, nodeid, maximumBatchSize, idealMessagesInFlight, networkDoneTarget));
+    
+    IBatchableMessageFactory<ReplicationMessage, SyncReplicationActivity> factory = new IBatchableMessageFactory<ReplicationMessage, SyncReplicationActivity>() {
+      @Override
+      public ReplicationMessage createNewBatch(SyncReplicationActivity initialActivity, long id) {
+        ReplicationMessage message = ReplicationMessage.createActivityContainer(initialActivity);
+        message.setReplicationID(id);
+        return message;
+      }
+    };
+    this.batchContexts.put(nodeid, new GroupMessageBatchContext<>(factory, this.group, nodeid, maximumBatchSize, idealMessagesInFlight, networkDoneTarget));
   }
 
   private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {

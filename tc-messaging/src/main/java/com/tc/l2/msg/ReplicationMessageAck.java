@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ReplicationMessageAck extends AbstractGroupMessage {
+public class ReplicationMessageAck extends AbstractGroupMessage implements IBatchableGroupMessage<ReplicationAckTuple> {
   //message types  
   public static final int INVALID               = 0; // Sent to replicate a request on the passive
   public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
@@ -44,7 +44,7 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   }
 
 
-  private List<Tuple> batch;
+  private List<ReplicationAckTuple> batch;
 
   public ReplicationMessageAck() {
     super(INVALID);
@@ -54,19 +54,24 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
   private ReplicationMessageAck(int type) {
     super(type);
     if (BATCH == type) {
-      this.batch = new ArrayList<Tuple>();
+      this.batch = new ArrayList<ReplicationAckTuple>();
     }
   }
 
   // Note that this does change the instance, so synchronized would be required if it were being called by multiple threads.
   // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
-  public void addAck(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
+  @Override
+  public void addToBatch(ReplicationAckTuple element) {
     Assert.assertTrue(BATCH == this.getType());
-    Tuple tuple = new Tuple(respondTo, result);
-    this.batch.add(tuple);
+    this.batch.add(element);
   }
 
-  public List<Tuple> getBatch() {
+  @Override
+  public int getBatchSize() {
+    return this.batch.size();
+  }
+
+  public List<ReplicationAckTuple> getBatch() {
     return this.batch;
   }
 
@@ -76,11 +81,11 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
       int batchSize = in.readInt();
       // We should never send an empty message.
       Assert.assertTrue(batchSize > 0);
-      this.batch = new ArrayList<Tuple>();
+      this.batch = new ArrayList<ReplicationAckTuple>();
       for (int i = 0; i < batchSize; ++i) {
         SyncReplicationActivity.ActivityID respondTo = new SyncReplicationActivity.ActivityID(in.readLong());
         ReplicationResultCode result = ReplicationResultCode.decode(in.readInt());
-        this.batch.add(new Tuple(respondTo, result));
+        this.batch.add(new ReplicationAckTuple(respondTo, result));
       }
     }
   }
@@ -92,23 +97,15 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
       // We should never send an empty message.
       Assert.assertTrue(size > 0);
       out.writeInt(size);
-      for (Tuple tuple : this.batch) {
+      for (ReplicationAckTuple tuple : this.batch) {
         out.writeLong(tuple.respondTo.id);
         out.writeInt(tuple.result.code());
       }
     }
   }
 
-  /**
-   * The respondTo is the message to which we are responding.  The result determines if this is a RECEIVED, SUCCESS, or FAIL.
-   */
-  public static class Tuple {
-    public final SyncReplicationActivity.ActivityID respondTo;
-    public final ReplicationResultCode result;
-    
-    public Tuple(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
-      this.respondTo = respondTo;
-      this.result = result;
-    }
+  @Override
+  public AbstractGroupMessage asAbstractGroupMessage() {
+    return this;
   }
 }

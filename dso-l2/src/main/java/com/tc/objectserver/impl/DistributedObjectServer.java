@@ -731,9 +731,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     state.registerForStateChangeEvents(this.server);
 //  routing for passive to receive replication    
+    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, this.persistor.getTransactionOrderPersistor(), entityManager, this.persistor.getEntityPersistor(), groupCommManager);
+    // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
-        new ReplicatedTransactionHandler(state, this.persistor.getTransactionOrderPersistor(), entityManager, 
-            this.persistor.getEntityPersistor(), groupCommManager).getEventHandler(), 1, maxStageSize);
+        replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
+    // And the stage for handling their response batching/serialization.
+    Stage<ReplicatedTransactionHandler.SedaToken> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, ReplicatedTransactionHandler.SedaToken.class, 
+        replicatedTransactionHandler.getOutgoingResponseHandler(), 1, maxStageSize);
+    replicatedTransactionHandler.setOutgoingResponseSink(replicationResponseStage.getSink());
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, stageManager, channelManager, clientEntityStateManager, state, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
@@ -865,11 +870,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   
   private void startStages(StageManager stageManager, List<PostInit> toInit) {
 //  exclude from startup specific stages that are controlled by the stage controller. 
+    // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
+        ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
         ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
         ServerConfigurationContext.REQUEST_LOCK_STAGE  
@@ -896,11 +903,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {
     StageController control = new StageController();
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
+    // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC also needs to be handled.
     control.addStageToState(StateManager.PASSIVE_SYNCING, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(StateManager.PASSIVE_SYNCING, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here. SYNC goes away
     control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
