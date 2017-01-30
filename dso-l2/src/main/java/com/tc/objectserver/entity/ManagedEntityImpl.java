@@ -664,12 +664,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         entityToCreate = this.passiveServerEntity;
       }
     }
-    this.isDestroyed = false;
-    eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
-    response.complete();
     // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
     //  instance so make that call.
     entityToCreate.createNew();
+    this.isDestroyed = false;
+    eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
+    response.complete();
   }
 
   private void performSync(ResultCapture response, Set<NodeID> passives, int concurrencyKey) {
