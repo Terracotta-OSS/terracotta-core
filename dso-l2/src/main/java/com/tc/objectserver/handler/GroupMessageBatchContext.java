@@ -62,21 +62,25 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
    *  
    * @param activity The activity to batch.
    * @throws GroupException The exception cached from the most recent attempt to send.
+   * @return True if this required creating a new batch (the message is batched, either way).
    */
-  public synchronized void batchMessage(E activity) throws GroupException {
+  public synchronized boolean batchMessage(E activity) throws GroupException {
     // Throw any async exception.
     if (null != this.mostRecentException) {
       throw this.mostRecentException;
     }
     
     // See if we have an existing message we must batch.
+    boolean didCreateNewBatch = false;
     if (null != this.cachedMessage) {
       // Just add to this batch.
       this.cachedMessage.addToBatch(activity);
     } else {
       // Create a new batch.
       this.cachedMessage = this.messageFactory.createNewBatch(activity, this.nextReplicationID++);
+      didCreateNewBatch = true;
     }
+    return didCreateNewBatch;
   }
 
   /**

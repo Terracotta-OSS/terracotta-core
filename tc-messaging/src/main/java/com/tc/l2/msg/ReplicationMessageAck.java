@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ReplicationMessageAck extends AbstractGroupMessage {
+public class ReplicationMessageAck extends AbstractGroupMessage implements IBatchableGroupMessage<ReplicationAckTuple> {
   //message types  
   public static final int INVALID               = 0; // Sent to replicate a request on the passive
   public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
@@ -60,10 +60,15 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
 
   // Note that this does change the instance, so synchronized would be required if it were being called by multiple threads.
   // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
-  public void addAck(SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode result) {
+  @Override
+  public void addToBatch(ReplicationAckTuple element) {
     Assert.assertTrue(BATCH == this.getType());
-    ReplicationAckTuple tuple = new ReplicationAckTuple(respondTo, result);
-    this.batch.add(tuple);
+    this.batch.add(element);
+  }
+
+  @Override
+  public int getBatchSize() {
+    return this.batch.size();
   }
 
   public List<ReplicationAckTuple> getBatch() {
@@ -97,5 +102,10 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
         out.writeInt(tuple.result.code());
       }
     }
+  }
+
+  @Override
+  public AbstractGroupMessage asAbstractGroupMessage() {
+    return this;
   }
 }
