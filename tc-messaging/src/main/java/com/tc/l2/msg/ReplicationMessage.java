@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
+public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext, IBatchableGroupMessage<SyncReplicationActivity> {
   // We don't have an explicit message type - the ReplicationMessage is only a container.
   public static final int IGNORED = 0;
 
@@ -82,13 +82,9 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     return rid;
   }
 
-  /**
-   * Adds the given activity to the current batch.
-   * 
-   * @param activity The activity to add to the batch.
-   */
-  public void addActivity(SyncReplicationActivity activity) {
-    this.activities.add(activity);
+  @Override
+  public void addToBatch(SyncReplicationActivity element) {
+    this.activities.add(element);
   }
 
   /**
@@ -148,5 +144,10 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   @Override
   public String toString() {
     return "ReplicationMessage{rid=" + rid + ", " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities") + "}";
+  }
+
+  @Override
+  public AbstractGroupMessage asAbstractGroupMessage() {
+    return this;
   }
 }

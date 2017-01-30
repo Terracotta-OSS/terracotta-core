@@ -18,15 +18,15 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.msg.IBatchableGroupMessage;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 
 
-public class GroupMessageBatchContext {
+public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
+  private final IBatchableMessageFactory<M, E> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final NodeID target;
   private final int maximumBatchSize;
@@ -34,13 +34,14 @@ public class GroupMessageBatchContext {
   private final Runnable networkDoneTarget;
   
   private int messagesInFlight;
-  private ReplicationMessage cachedMessage;
+  private M cachedMessage;
   private long nextReplicationID;
   // Note that we may see this exception, asynchronously.  In that case, we will just hold it and fail in the next call.
   private GroupException mostRecentException;
 
 
-  public GroupMessageBatchContext(GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Runnable networkDoneTarget) {
+  public GroupMessageBatchContext(IBatchableMessageFactory<M, E> messageFactory, GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Runnable networkDoneTarget) {
+    this.messageFactory = messageFactory;
     this.groupManager = groupManager;
     this.target = target;
     this.maximumBatchSize = maximumBatchSize;
@@ -62,7 +63,7 @@ public class GroupMessageBatchContext {
    * @param activity The activity to batch.
    * @throws GroupException The exception cached from the most recent attempt to send.
    */
-  public synchronized void batchMessage(SyncReplicationActivity activity) throws GroupException {
+  public synchronized void batchMessage(E activity) throws GroupException {
     // Throw any async exception.
     if (null != this.mostRecentException) {
       throw this.mostRecentException;
@@ -71,11 +72,10 @@ public class GroupMessageBatchContext {
     // See if we have an existing message we must batch.
     if (null != this.cachedMessage) {
       // Just add to this batch.
-      this.cachedMessage.addActivity(activity);
+      this.cachedMessage.addToBatch(activity);
     } else {
       // Create a new batch.
-      this.cachedMessage = ReplicationMessage.createActivityContainer(activity);
-      this.cachedMessage.setReplicationID(this.nextReplicationID++);
+      this.cachedMessage = this.messageFactory.createNewBatch(activity, this.nextReplicationID++);
     }
   }
 
@@ -87,7 +87,7 @@ public class GroupMessageBatchContext {
    *  the next call to batchMessage).
    */
   public void flushBatch() throws GroupException {
-    ReplicationMessage messageToSend = null;
+    IBatchableGroupMessage<E> messageToSend = null;
     synchronized (this) {
       // See if we have a batched message and are ready to send one.
       // Note that we will override the ideal number of in-flight messages if the batch is getting too large.
@@ -106,7 +106,7 @@ public class GroupMessageBatchContext {
     //  serialization, which is potentially slow and shouldn't block other attempts to batch.
     if (null != messageToSend) {
       try {
-        this.groupManager.sendToWithSentCallback(this.target, messageToSend, this.handleMessageSend);
+        this.groupManager.sendToWithSentCallback(this.target, messageToSend.asAbstractGroupMessage(), this.handleMessageSend);
       } catch (GroupException e) {
         // Set the exception, before throwing it, so the next call also fails.
         synchronized (this) {
@@ -125,5 +125,23 @@ public class GroupMessageBatchContext {
     
     // Call the network done target so that our owner can decide how to enqueue the next flush.
     this.networkDoneTarget.run();
+  }
+
+
+  /**
+   * The factory used by the GroupMessageBatchContext to start a new batch.
+   * 
+   * @param <N> The type of batch message
+   * @param <E> The batch element type
+   */
+  public interface IBatchableMessageFactory<N extends IBatchableGroupMessage<E>, E> {
+    /**
+     * Create a new batch message with the given id and containing an initial element.
+     * 
+     * @param initialElement The first message to add to the batch.
+     * @param id The ID of the batch message.
+     * @return The new batch, containing initialElement.
+     */
+    public N createNewBatch(E initialElement, long id);
   }
 }
