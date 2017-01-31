@@ -709,6 +709,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // Tell the entity to create itself as something new.
       newEntity.createNew();
     } catch (ConfigurationException e) {
+      // Clean up any state about this entity
+      if (this.activeEntities != null) {
+        activeEntities.remove(entityTuple);
+      } else {
+        passiveEntities.remove(entityTuple);
+      }
       // Wrap this and re-throw.
       throw new EntityConfigurationException(entityClassName, entityName, e);
     }
