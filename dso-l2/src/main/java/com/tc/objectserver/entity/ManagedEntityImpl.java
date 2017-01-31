@@ -643,30 +643,27 @@ public class ManagedEntityImpl implements ManagedEntity {
       return;
     }
     this.constructorInfo = constructorInfo;
-    CommonServerEntity<EntityMessage, EntityResponse> entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
       if (null != this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " already exists.");
       } else {
-        this.activeServerEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
+        ActiveServerEntity<EntityMessage, EntityResponse> tmpEntity = this.factory.createActiveEntity(this.registry, this.constructorInfo);
+        tmpEntity.createNew();
+        this.activeServerEntity = tmpEntity;
         this.concurrencyStrategy = this.factory.getConcurrencyStrategy(constructorInfo);
         this.executionStrategy = this.factory.getExecutionStrategy(constructorInfo);
-        entityToCreate = this.activeServerEntity;
       }
     } else {
       if (null != this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " already exists.");
       } else {
-        this.passiveServerEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
+        PassiveServerEntity<EntityMessage, EntityResponse> tmpEntity = this.factory.createPassiveEntity(this.registry, this.constructorInfo);
+        tmpEntity.createNew();
+        this.passiveServerEntity = tmpEntity;
         Assert.assertNull(this.concurrencyStrategy);
-        // Store the configuration in case we promote.
-        entityToCreate = this.passiveServerEntity;
       }
     }
-    // We currently don't support loading an entity from a persistent back-end and this call is in response to creating a new
-    //  instance so make that call.
-    entityToCreate.createNew();
     this.isDestroyed = false;
     eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
     response.complete();
