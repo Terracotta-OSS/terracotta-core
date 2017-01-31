@@ -71,7 +71,7 @@ public class RequestProcessor {
     ServerEntityAction requestAction = request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
     boolean isActionReplicated = !((ServerEntityAction.LOCAL_FLUSH == requestAction)
-        || (ServerEntityAction.LOCAL_FLUSH_AND_DELETE == requestAction)
+        || (ServerEntityAction.MANAGED_ENTITY_GC == requestAction)
         || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == requestAction));
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();

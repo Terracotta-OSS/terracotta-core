@@ -78,7 +78,6 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
     // Note that we should be avoiding the decision to replicate messages at a higher-level so filter out any local-only
     //  operations.
     Assert.assertFalse((ServerEntityAction.LOCAL_FLUSH == this.action)
-        || (ServerEntityAction.LOCAL_FLUSH_AND_DELETE == this.action)
         || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == this.action));
     return this.replicates;
   }

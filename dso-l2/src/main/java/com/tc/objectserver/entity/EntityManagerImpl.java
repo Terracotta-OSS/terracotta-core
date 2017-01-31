@@ -51,6 +51,7 @@ import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
+import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -63,7 +64,7 @@ public class EntityManagerImpl implements EntityManager {
   private final ClientEntityStateManager clientEntityStateManager;
   private final ITopologyEventCollector eventCollector;
   
-  private final BiConsumer<EntityID, Long> flushLocalPipeline;
+  private final ManagementKeyCallback flushLocalPipeline;
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
@@ -86,7 +87,7 @@ public class EntityManagerImpl implements EntityManager {
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
       ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
-      RequestProcessor processor, BiConsumer<EntityID, Long> flushLocalPipeline) {
+      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;

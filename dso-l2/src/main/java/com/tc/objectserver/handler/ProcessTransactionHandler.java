@@ -361,13 +361,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
             }, (exception) -> {
               serverEntityRequest.failure(exception);
             });
-      } else {
-          if ((ServerEntityAction.LOCAL_FLUSH_AND_DELETE == action) && entity.isRemoveable()) {
-            LOGGER.debug("removing " + entity.getID());
-            entityManager.removeDestroyed(entity.getID());
+        } else {
+          if (ServerEntityAction.MANAGED_ENTITY_GC == action && entity.isRemoveable()) {
+              LOGGER.debug("removing " + entity.getID());
+              entityManager.removeDestroyed(entity.getID());
+            // no scheduling needed
+          } else {
+            // if this is the MANAGED_ENTTIY_GC and not removable then still need to flush
+            serverEntityRequest.setAutoRetire();
+            entity.addRequestMessage(serverEntityRequest, entityMessage, serverEntityRequest::complete, serverEntityRequest::failure);
           }
-          serverEntityRequest.setAutoRetire();
-          entity.addRequestMessage(serverEntityRequest, entityMessage, serverEntityRequest::complete, serverEntityRequest::failure);
         }  
       } catch (EntityException ee) {
         serverEntityRequest.failure(ee);
@@ -551,6 +554,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
         break;
       case LOCAL_PIPELINE_FLUSH:
         action = ServerEntityAction.LOCAL_FLUSH;
+        break;
+      case LOCAL_ENTITY_GC:
+        action = ServerEntityAction.MANAGED_ENTITY_GC;
         break;
       default:
         // Unknown request type.

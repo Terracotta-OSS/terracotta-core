@@ -203,7 +203,7 @@ public class ServerClientHandshakeManager {
     notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID));
+    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
   }
   
   public void notifyComplete() {

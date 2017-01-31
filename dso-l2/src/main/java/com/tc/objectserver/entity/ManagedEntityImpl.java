@@ -75,6 +75,7 @@ import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.PermanentEntityException;
+import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -91,7 +92,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final ITopologyEventCollector eventCollector;
   private final EntityServerService<EntityMessage, EntityResponse> factory;
   // PTH sink so things can be injected into the stream
-  private final BiConsumer<EntityID, Long> flushLocalPipeline;
+  private final ManagementKeyCallback flushLocalPipeline;
   // isInActiveState defines which entity type to check/create - we need the flag to represent the pre-create state.
   private boolean isInActiveState;
   //  for destroy, passives need to reference count to understand if entity is deletable
@@ -117,7 +118,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  when we promote to an active.
   private byte[] constructorInfo;
 
-  ManagedEntityImpl(EntityID id, long version, long consumerID, BiConsumer<EntityID, Long> flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
+  ManagedEntityImpl(EntityID id, long version, long consumerID, ManagementKeyCallback flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState, boolean canDelete) {
     this.id = id;
@@ -169,8 +170,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     ResultCapture resp;
     switch (request.getAction()) {
       case LOCAL_FLUSH:
-      case LOCAL_FLUSH_AND_DELETE:
       case ORDER_PLACEHOLDER_ONLY:
+      case MANAGED_ENTITY_GC:
         resp = createManagedEntityResponse(completion, exception, request, false);
         processLegacyNoopMessage(request, resp);
         break;
@@ -484,7 +485,6 @@ public class ManagedEntityImpl implements ManagedEntity {
             receiveSyncEntityPayload(response, message);
             break;
           case LOCAL_FLUSH:
-          case LOCAL_FLUSH_AND_DELETE:
           case LOCAL_FLUSH_AND_SYNC:
           case ORDER_PLACEHOLDER_ONLY:
             // These types are all for message order - none of them come in through this invoke path.
@@ -1033,7 +1033,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         runnables.clear(); 
   //  there may be no more incoming messages on this entity to clear the 
   //  queue so if it is not empty, push a noop.  
-        flushLocalPipeline.accept(id, version);
+        flushLocalPipeline.completed(id, version, request.getAction());
       }
     }
     
