@@ -126,12 +126,13 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageTransport client2 = createClient("client2", port);
     ClientMessageTransport client3 = createClient("client3", port);
     ClientMessageTransport client4 = createClient("client4", port);
+    ConnectionInfo info = new ConnectionInfo("localhost", port);
 
-    client1.open(null);
-    client2.open(null);
-    client3.open(null);
-    client4.open(null);
-
+    client1.open(info);
+    client2.open(info);
+    client3.open(info);
+    client4.open(info);
+    
     waitForConnected(client1, client2, client3, client4);
     
     waitForWeight(commsMgr, 0, 1);
