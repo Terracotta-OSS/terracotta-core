@@ -197,7 +197,9 @@ public class ServerClientHandshakeManager {
     // It is important to start all the managers before sending the ack to the clients
     for (NodeID nid : cids) {
       final ClientID clientID = (ClientID) nid;
-      sendAckMessageFor(clientID);
+      if (this.channelManager.isActiveID(clientID)) {
+        sendAckMessageFor(clientID);
+      }
     }
     this.state = State.STARTED;
     notifyComplete();
