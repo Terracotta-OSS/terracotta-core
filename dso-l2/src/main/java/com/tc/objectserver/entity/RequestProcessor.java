@@ -79,7 +79,7 @@ public class RequestProcessor {
         ? passives.replicateActivity(createReplicationActivity(entity, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
-    EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey, token);
+    EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey);
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + entity + ":" + concurrencyKey);
     }
@@ -139,14 +139,11 @@ public class RequestProcessor {
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {
     private final EntityDescriptor entity;
     private final Runnable invoke;
-    private final ActivePassiveAckWaiter replicationWaiter;
     private final int key;
-    private boolean done = false;
 
-    public EntityRequest(EntityDescriptor entity, Runnable runnable, int key, ActivePassiveAckWaiter replicationWaiter) {
+    public EntityRequest(EntityDescriptor entity, Runnable runnable, int key) {
       this.entity = entity;
       this.invoke = runnable;
-      this.replicationWaiter = replicationWaiter;
       this.key = key;
     }
 
