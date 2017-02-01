@@ -162,6 +162,7 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
@@ -883,12 +884,25 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     );
   }
   
-  private void flushLocalPipeline(EntityID eid, long version) {
+  private void flushLocalPipeline(EntityID eid, long version, ServerEntityAction action) {
+    switch(action) {
+      case CREATE_ENTITY:
+      case DESTROY_ENTITY:
+      case FETCH_ENTITY:
+      case RECONFIGURE_ENTITY:
+      case RELEASE_ENTITY:
+        logger.info("completed lifecycle " + action + " on " + eid);
+        break;
+      default:
+      //  not lifecycle, ignore
+        logger.debug("completed mgmt " + action + " on " + eid);
+    }
+    boolean forDestroy = (action == ServerEntityAction.DESTROY_ENTITY);
     if (!this.l2Coordinator.getStateManager().isActiveCoordinator()) {
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(eid, version)));
+            .getSink().addSingleThreaded(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(eid, version, forDestroy)));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
@@ -897,7 +911,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  must be active, noop the ProcessTransactionHandler
     this.seda.getStageManager()
         .getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class)
-        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
+        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), forDestroy));
   }
 
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {

@@ -46,6 +46,7 @@ import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.ClientEntityStateManager;
@@ -81,6 +82,7 @@ public class ProcessTransactionHandlerTest {
   private RunnableSink requestProcessorSink;
   private ClientEntityStateManager clientEntityStateManager;
   private ITopologyEventCollector eventCollector;
+  private EntityManagerImpl entityManager;
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -110,7 +112,7 @@ public class ProcessTransactionHandlerTest {
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
+    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     entityManager.enterActiveState();
 
     this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager, mock(Runnable.class));
@@ -124,8 +126,8 @@ public class ProcessTransactionHandlerTest {
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
   
-  private void sendNoop(EntityID eid, long version) {
-    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
+  private void sendNoop(EntityID eid, long version, ServerEntityAction action) {
+    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
   @After
@@ -176,6 +178,22 @@ public class ProcessTransactionHandlerTest {
       // Expected.
     }
   }
+  
+  @Test
+  public void testManagedEntityGC() throws Exception {
+    // Send in the GET as a simple request.
+    String entityName = "foo";
+    EntityID entityID = createMockEntity(entityName);
+    NetworkVoltronEntityMessage request = createMockRequest(VoltronEntityMessage.Type.CREATE_ENTITY, entityID, new TransactionID(1));
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(request);
+    this.requestProcessorSink.runUntilEmpty();
+    Assert.assertTrue(entityManager.getEntity(entityID, 1L).isPresent());
+    NetworkVoltronEntityMessage destroy = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(1));
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroy);
+    this.requestProcessorSink.runUntilEmpty();
+    Assert.assertFalse(entityManager.getEntity(entityID, 1L).isPresent());
+  }
+    
 
   @Test
   public void testChannelManagement() throws Exception {    
@@ -254,7 +272,7 @@ public class ProcessTransactionHandlerTest {
   }
 
 
-  private static abstract class NoStatsSink<T> implements Sink<T> {
+  public static abstract class NoStatsSink<T> implements Sink<T> {
     @Override
     public void enableStatsCollection(boolean enable) {
       throw new UnsupportedOperationException();
@@ -290,7 +308,7 @@ public class ProcessTransactionHandlerTest {
   }
 
 
-  private static class RunnableSink extends NoStatsSink<Runnable> {
+  public static class RunnableSink extends NoStatsSink<Runnable> {
     private final Queue<Runnable> runnableQueue;
 
     public RunnableSink() {

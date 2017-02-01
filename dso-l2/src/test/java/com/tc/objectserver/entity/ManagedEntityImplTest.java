@@ -62,7 +62,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.BiConsumer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.mockito.Matchers;
@@ -78,13 +77,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
+import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class ManagedEntityImplTest {
@@ -93,7 +92,7 @@ public class ManagedEntityImplTest {
   private long version;
   private long consumerID;
   private ManagedEntityImpl managedEntity;
-  private BiConsumer<EntityID, Long> loopback;
+  private ManagementKeyCallback loopback;
   private InternalServiceRegistry serviceRegistry;
   private EntityServerService<EntityMessage, EntityResponse> serverEntityService;
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
@@ -131,13 +130,13 @@ public class ManagedEntityImplTest {
     entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     serviceRegistry = mock(InternalServiceRegistry.class);
     
-    loopback = mock(BiConsumer.class);
+    loopback = mock(ManagementKeyCallback.class);
     
     Mockito.doAnswer((invocation) -> {
       TestingResponse helper = mockResponse();
       invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(),  helper::complete, helper::failure));
       return null;
-    }).when(loopback).accept(Matchers.any(), Matchers.any());
+    }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(ServerEntityAction.class));
     
     executionSink = mock(Sink.class);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
@@ -528,7 +527,7 @@ public class ManagedEntityImplTest {
     barrier.await();
     fin.waitFor();
     
-    verify(loopback, times(1)).accept(Matchers.any(), Matchers.anyLong());
+    verify(loopback, times(1)).completed(Matchers.any(), Matchers.anyLong(), Matchers.any());
     verify(activeServerEntity, times(2)).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(response, times(1)).complete(any());
     verify(fin, times(1)).complete(any());
@@ -610,14 +609,11 @@ public class ManagedEntityImplTest {
         return null;
     }).when(executionSink).addMultiThreaded(Matchers.any());
 
-    Mockito.doAnswer(new Answer<Object>() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        TestingResponse response = mockResponse();
-        managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(),  response::complete, response::failure);
+    Mockito.doAnswer(invocation->{
+        TestingResponse resp = mockResponse();
+        managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(),  resp::complete, resp::failure);
         return mock(RequestProcessor.EntityRequest.class);
-      }
-    }).when(loopback).accept(Matchers.any(), Matchers.any());
+      }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(ServerEntityAction.class));
     
     invokeOnTransactionHandler(()->{EntityMessage cstring = mock(EntityMessage.class);
       when(cstring.toString()).thenReturn(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY));
@@ -653,7 +649,7 @@ public class ManagedEntityImplTest {
       Assert.assertEquals(Integer.toString(check  ^ entityID.hashCode()), queued.pop().toString());
     }
     Assert.assertEquals(index, 25);
-    verify(loopback, times(3)).accept(Matchers.any(), Matchers.any());
+    verify(loopback, times(3)).completed(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(ServerEntityAction.class));
   }
 
   @Test (expected = EntityUserException.class)

@@ -137,7 +137,7 @@ public class ReplicatedTransactionHandler {
       ServerEntityRequest req = new ServerEntityRequest() {
         @Override
         public ServerEntityAction getAction() {
-          return ServerEntityAction.LOCAL_FLUSH_AND_DELETE;
+          return ServerEntityAction.LOCAL_FLUSH;
         }
 
         @Override
@@ -366,12 +366,15 @@ public class ReplicatedTransactionHandler {
               acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
             });
           break;
-        case LOCAL_FLUSH_AND_DELETE:
+        case MANAGED_ENTITY_GC:
           if (entityInstance.isRemoveable()) {
-            LOGGER.debug("removing " + entityInstance.getID());
-            entityManager.removeDestroyed(entityInstance.getID());
+            LOGGER.debug("removing " + entityID);
+            entityManager.removeDestroyed(entityID);
+          //  no scheduling needed
+            break;
           }
-          //  fall-through to default
+          //  fall through
+          // if this is the MANAGED_ENTTIY_GC and not removable then still need to flush
         default:
           entityInstance.addRequestMessage(request, payload, (result)-> acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
           break;
@@ -619,6 +622,8 @@ public class ReplicatedTransactionHandler {
       case SYNC_END:
       case ORDERING_PLACEHOLDER:
         return ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
+      case LOCAL_ENTITY_GC:
+        return ServerEntityAction.MANAGED_ENTITY_GC;
       case FLUSH_LOCAL_PIPELINE:
         // Note that these are never replicated from the active but we do synthesize them, internally, in some cases.
         return ServerEntityAction.LOCAL_FLUSH;

@@ -34,9 +34,11 @@ import com.tc.object.tx.TransactionID;
  */
 public class LocalPipelineFlushMessage implements VoltronEntityMessage {
   private final EntityDescriptor  descriptor;
+  private final boolean forDestroy;
 
-  public LocalPipelineFlushMessage(EntityDescriptor descriptor) {
+  public LocalPipelineFlushMessage(EntityDescriptor descriptor, boolean forDestroy) {
     this.descriptor = descriptor;
+    this.forDestroy = forDestroy;
   }
   
 
@@ -62,7 +64,7 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage {
 
   @Override
   public Type getVoltronType() {
-    return Type.LOCAL_PIPELINE_FLUSH;
+    return (forDestroy) ? Type.LOCAL_ENTITY_GC : Type.LOCAL_PIPELINE_FLUSH;
   }
 
   @Override

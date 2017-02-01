@@ -40,6 +40,10 @@ public class SyncReplicationActivity implements OrderedEventContext {
      */
     INVALID,
     /**
+     * Only used locally - called to remove a ManagedEntity from entity manager after destroy
+     */
+    LOCAL_ENTITY_GC,
+    /**
      * Only used locally - called to ensure ordering but should never be replicated to a passive.
      */
     FLUSH_LOCAL_PIPELINE,
@@ -110,9 +114,9 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
 
   // Factory methods.
-  public static SyncReplicationActivity createFlushLocalPipelineMessage(EntityID eid, long version) {
+  public static SyncReplicationActivity createFlushLocalPipelineMessage(EntityID eid, long version, boolean forDestroy) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, "");
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, forDestroy ? ActivityType.LOCAL_ENTITY_GC : ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, "");
   }
 
   public static SyncReplicationActivity createOrderingPlaceholder(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, String debugId) {
@@ -122,6 +126,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
   public static SyncReplicationActivity createReplicatedMessage(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, String debugId) {
     // We shouldn't be using this helper for any of the specialized activity types.
+    Assert.assertTrue(ActivityType.LOCAL_ENTITY_GC != action);
     Assert.assertTrue(ActivityType.FLUSH_LOCAL_PIPELINE != action);
     Assert.assertTrue(ActivityType.ORDERING_PLACEHOLDER != action);
     Assert.assertTrue(ActivityType.SYNC_BEGIN != action);
@@ -301,7 +306,9 @@ public class SyncReplicationActivity implements OrderedEventContext {
     Assert.assertTrue(ActivityType.INVALID != this.action);
     // We should NOT be serializing local flush activities.
     Assert.assertTrue(ActivityType.FLUSH_LOCAL_PIPELINE != this.action);
-    
+    // We should NOT be serializing local flush activities.
+    Assert.assertTrue(ActivityType.LOCAL_ENTITY_GC != this.action);
+        
     out.writeLong(this.id.id);
     out.writeInt(this.action.ordinal());
     

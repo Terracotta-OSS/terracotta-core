@@ -197,13 +197,15 @@ public class ServerClientHandshakeManager {
     // It is important to start all the managers before sending the ack to the clients
     for (NodeID nid : cids) {
       final ClientID clientID = (ClientID) nid;
-      sendAckMessageFor(clientID);
+      if (this.channelManager.isActiveID(clientID)) {
+        sendAckMessageFor(clientID);
+      }
     }
     this.state = State.STARTED;
     notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID));
+    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
   }
   
   public void notifyComplete() {

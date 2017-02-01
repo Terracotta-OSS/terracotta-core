@@ -18,17 +18,10 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import org.junit.After;
-import org.junit.Before;
-
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
-import com.tc.objectserver.entity.MessagePayload;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.io.TCByteBufferInput;
@@ -53,26 +46,39 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.entity.ClientEntityStateManager;
+import com.tc.objectserver.entity.EntityManagerImpl;
+import com.tc.objectserver.entity.MessagePayload;
+import com.tc.objectserver.entity.PassiveReplicationBroker;
 import com.tc.objectserver.entity.PlatformEntity;
+import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
-
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -85,6 +91,7 @@ public class ReplicatedTransactionHandlerTest {
   private ReplicatedTransactionHandler rth;
   private ClientID source;
   private ForwardingSink<ReplicationMessage> loopbackSink;
+  private ProcessTransactionHandlerTest.RunnableSink requestProcessorSink;
   private StateManager stateManager;
   private EntityManager entityManager;
   private ManagedEntity platform;
@@ -121,8 +128,13 @@ public class ReplicatedTransactionHandlerTest {
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
-    
+        
     this.loopbackSink = new ForwardingSink<ReplicationMessage>(this.rth.getEventHandler());
+  }
+    
+  private void sendNoop(EntityID eid, long version, ServerEntityAction action) {
+    ReplicationMessage flush = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(eid, version, action == ServerEntityAction.DESTROY_ENTITY));
+    loopbackSink.addSingleThreaded(flush);
   }
   
   @Test
@@ -213,6 +225,33 @@ public class ReplicatedTransactionHandlerTest {
   public void testDestroy() throws Exception {
     this.rth.getEventHandler().destroy();
     verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any(), Matchers.any());
+  }
+  
+  @Test
+  public void testManagedEntityGC() throws Exception {
+    EntityID entityID = new EntityID("TEST", "TEST");
+    ManagedEntity entity = mock(ManagedEntity.class);
+    Mockito.doAnswer(invoked->{
+      if (((ServerEntityRequest)invoked.getArguments()[0]).getAction() != ServerEntityAction.LOCAL_FLUSH) {
+        sendNoop(entityID, 1L, ((ServerEntityRequest)invoked.getArguments()[0]).getAction());
+      }
+      return null;
+    }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    when(this.entityManager.getEntity(eq(EntityID.NULL_ID), eq(0L))).thenReturn(Optional.empty());
+    when(this.entityManager.getEntity(eq(entityID), eq(1L))).thenReturn(Optional.of(entity));
+    when(this.entityManager.createEntity(eq(entityID), eq(1L), anyLong(), anyBoolean())).thenReturn(entity);
+    this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    ObjectOutputStream out = new ObjectOutputStream(bout);
+    out.writeInt(0);
+    out.close();
+    this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(bout.toByteArray())));
+    ReplicationMessage request = createMockRequest(SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entityID,ClientInstanceID.NULL_ID, 1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.CREATE_ENTITY, new byte[0], 1, ""));
+    this.rth.getEventHandler().handleEvent(request);
+    ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entityID,ClientInstanceID.NULL_ID, 1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, new byte[0], 1, ""));
+    when(entity.isRemoveable()).thenReturn(Boolean.TRUE);
+    this.rth.getEventHandler().handleEvent(destroy);
+    verify(entityManager).removeDestroyed(eq(entityID));
   }
   
   @Test
@@ -436,5 +475,10 @@ public class ReplicatedTransactionHandlerTest {
       Assert.fail(e.getLocalizedMessage());
     }
     return receiving;
+  }  
+  
+  ReplicationMessage createMockRequest(SyncReplicationActivity act) {
+    ReplicationMessage msg = ReplicationMessage.createLocalContainer(act);
+    return msg;
   }
 }

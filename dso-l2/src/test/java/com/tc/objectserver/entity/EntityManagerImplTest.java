@@ -50,6 +50,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.terracotta.entity.ClientDescriptor;
+import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class EntityManagerImplTest {
@@ -73,7 +74,7 @@ public class EntityManagerImplTest {
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
         mock(RequestProcessor.class),
-        mock(BiConsumer.class)
+        mock(ManagementKeyCallback.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");
     version = 1;

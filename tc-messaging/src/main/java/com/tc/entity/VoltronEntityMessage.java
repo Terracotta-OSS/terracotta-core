@@ -55,7 +55,11 @@ public interface VoltronEntityMessage {
     /**
      * Flush the local pipeline - not ever passed over the wire.
      */
-    LOCAL_PIPELINE_FLUSH
+    LOCAL_PIPELINE_FLUSH,
+    /**
+     * GC a managed entity after destroy - do not pass on the wire.
+     */
+    LOCAL_ENTITY_GC
   }
   
   enum Acks {

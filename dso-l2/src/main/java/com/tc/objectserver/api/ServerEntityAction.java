@@ -94,7 +94,7 @@ public enum ServerEntityAction {
   /**
    * An action which should never be replicated, just used to clean up a deleted entity, after a pipeline flush.
    */
-  LOCAL_FLUSH_AND_DELETE,
+  MANAGED_ENTITY_GC,
   /**
    * An action which should never be replicated, just used to start a synchronization, after a pipeline flush.
    */

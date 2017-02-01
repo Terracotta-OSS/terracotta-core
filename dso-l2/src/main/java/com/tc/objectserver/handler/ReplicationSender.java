@@ -325,6 +325,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
 // hasn't been sync'd yet.  state will be captured in sync
               return false;
             }
+          case LOCAL_ENTITY_GC:
           case FLUSH_LOCAL_PIPELINE:
           case ORDERING_PLACEHOLDER:
             // TODO: Should we handle this placeholder a different way - excluding it at this level seems counter-intuitive.
