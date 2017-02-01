@@ -63,7 +63,7 @@ public class TransactionOrderPersistor {
    * This new transactionID will be enqueued as the most recent transaction for the given source but also globally.
    * Any transactions for this source which are older than oldestTransactionOnClient will be removed from persistence.
    */
-  public synchronized void updateWithNewMessage(ClientID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
+  public synchronized Future<Void> updateWithNewMessage(ClientID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
     // We need to ensure that the arguments are sane.
     if ((null == oldestTransactionOnClient) || (null == transactionID)) {
       throw new IllegalArgumentException("Transactions cannot be null");
@@ -88,17 +88,9 @@ public class TransactionOrderPersistor {
     
     // We now pass this straight into the underlying storage.
     if (!source.isNull()) {
-      Future<Void> syncFuture = this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
-    
-    // TODO:  We need to float this future blocking on the sync further out.
-      try {
-        syncFuture.get();
-      } catch (InterruptedException e) {
-        Assert.fail(e.getLocalizedMessage());
-      } catch (ExecutionException e) {
-        Assert.fail(e.getLocalizedMessage());
-      }
+      return this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
     }
+    return null;
   }
 
   /**
