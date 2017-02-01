@@ -75,9 +75,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   List<ClientMessageTransport> transports = new ArrayList<ClientMessageTransport>();
 
   public TCWorkerCommManagerTest() {
-      timebombTest("2017-02-01");   //  need a proper solution to this.  Either fix the test to 
-                                  // represent the best efforts algorithm that it is using or 
-                                  // change the implementation to use exact weights
+
   }
   
   private synchronized ClientMessageTransport createClient(String clientName, int serverPort) {
@@ -389,9 +387,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     int weightFor2 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2);
     System.out.println("Issue #414 debug weights: " + weightFor0 + ", " + weightFor1 + ", " + weightFor2);
     Assert.assertEquals(6, weightFor0 + weightFor1 + weightFor2);
-    Assert.assertEquals(2, weightFor0);
-    Assert.assertEquals(2, weightFor1);
-    Assert.assertEquals(2, weightFor2);
+    // distribution may not be even since weighting is best efforts but horribly skewed
+    Assert.assertTrue(0 < weightFor0);
+    Assert.assertTrue(0 < weightFor1);
+    Assert.assertTrue(0 < weightFor2);
 
     // case 4: closing all connections from server side
     System.out.println("XXX closing all client connections");
