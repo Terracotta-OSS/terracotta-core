@@ -31,6 +31,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Set;
 import org.terracotta.entity.ConcurrencyStrategy;
 
@@ -87,41 +88,24 @@ public class RequestProcessor {
     return token;
   }
   
+  private static final EnumMap<ServerEntityAction, SyncReplicationActivity.ActivityType> typeMap  = new EnumMap<>(ServerEntityAction.class);
+  
+  static {
+    typeMap.put(ServerEntityAction.CREATE_ENTITY, SyncReplicationActivity.ActivityType.CREATE_ENTITY);
+    typeMap.put(ServerEntityAction.RECONFIGURE_ENTITY, SyncReplicationActivity.ActivityType.RECONFIGURE_ENTITY);
+    typeMap.put(ServerEntityAction.DESTROY_ENTITY, SyncReplicationActivity.ActivityType.DESTROY_ENTITY);
+    typeMap.put(ServerEntityAction.FETCH_ENTITY, SyncReplicationActivity.ActivityType.FETCH_ENTITY);
+    typeMap.put(ServerEntityAction.INVOKE_ACTION, SyncReplicationActivity.ActivityType.INVOKE_ACTION);
+    typeMap.put(ServerEntityAction.ORDER_PLACEHOLDER_ONLY, SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER);
+    typeMap.put(ServerEntityAction.RELEASE_ENTITY, SyncReplicationActivity.ActivityType.RELEASE_ENTITY);
+    typeMap.put(ServerEntityAction.REQUEST_SYNC_ENTITY, SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN);
+    
+  }
+  
   private static SyncReplicationActivity createReplicationActivity(EntityDescriptor id, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
-    SyncReplicationActivity.ActivityType actionCode = SyncReplicationActivity.ActivityType.INVALID;
-    switch (type) {
-      case CREATE_ENTITY:
-        actionCode = SyncReplicationActivity.ActivityType.CREATE_ENTITY;
-        break;
-      case RECONFIGURE_ENTITY:
-        actionCode = SyncReplicationActivity.ActivityType.RECONFIGURE_ENTITY;
-        break;
-      case DESTROY_ENTITY:
-        actionCode = SyncReplicationActivity.ActivityType.DESTROY_ENTITY;
-        break;
-      case FETCH_ENTITY:
-        actionCode = SyncReplicationActivity.ActivityType.FETCH_ENTITY;
-        break;
-      case INVOKE_ACTION:
-        actionCode = SyncReplicationActivity.ActivityType.INVOKE_ACTION;
-        break;
-      case ORDER_PLACEHOLDER_ONLY:
-        actionCode = SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER;
-        break;
-      case RELEASE_ENTITY:
-        actionCode = SyncReplicationActivity.ActivityType.RELEASE_ENTITY;
-        break;
-      case REQUEST_SYNC_ENTITY:
-//  this marks the start of entity sync for a concurrency key.  practically, this means that
-//  all replicated messages for this key and entity must be forwarded to passives
-        actionCode = SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN;
-        break;
-      default:
-        // Unknown message type.
-        Assert.fail("Unknown message type: " + type);
-        break;
-    }
+    SyncReplicationActivity.ActivityType actionCode = typeMap.get(type);
+    Assert.assertNotNull(actionCode);
     
     // Handle our replicated message creations as special-cases, if they aren't normal invokes.
     SyncReplicationActivity activity = null;
