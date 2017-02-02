@@ -26,8 +26,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -43,10 +43,8 @@ import java.util.concurrent.Future;
  * the same order as their original order.
  */
 public class TransactionOrderPersistor {
-  private static final String RECEIVED_TRANSACTION_COUNT_FILE_NAME = "received_transaction_count.map";
-  
   private final IPlatformPersistence storageManager;
-  private Long receivedTransactionCount;
+  private Long receivedTransactionCount = new Long(0L);
     
   private List<ClientTransaction> globalList = null;
   private final Set<Long> clientNodeIDs;
@@ -58,15 +56,6 @@ public class TransactionOrderPersistor {
     for (ChannelID oneClient : clients) {
       this.clientNodeIDs.add(oneClient.toLong());
     }
-    
-    Long receivedTransactionCount = null;
-    try {
-      receivedTransactionCount = (Long)this.storageManager.loadDataElement(RECEIVED_TRANSACTION_COUNT_FILE_NAME);
-    } catch (IOException e) {
-      // We don't expect this during startup so just throw it as runtime.
-      throw new RuntimeException("Failure reading TransactionOrderPersistor count file", e);
-    }
-    this.receivedTransactionCount = (null != receivedTransactionCount) ? receivedTransactionCount : new Long(0L);
   }
 
   /**
@@ -91,7 +80,6 @@ public class TransactionOrderPersistor {
     
     // Increment the number of received transactions.
     this.receivedTransactionCount += 1;
-    storeToDisk(RECEIVED_TRANSACTION_COUNT_FILE_NAME, this.receivedTransactionCount);
     
     // Create the new pair.
     IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
@@ -169,6 +157,7 @@ public class TransactionOrderPersistor {
         }
       }
       globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
+      receivedTransactionCount = sortMap.size() != 0 ? sortMap.lastKey() : new Long(0L);
     }
     return globalList;
   }
@@ -214,14 +203,5 @@ public class TransactionOrderPersistor {
    */
   public long getReceivedTransactionCount() {
     return this.receivedTransactionCount;
-  }
-
-  private void storeToDisk(String dataName, Serializable dataElement) {
-    try {
-      this.storageManager.storeDataElement(dataName, dataElement);
-    } catch (IOException e) {
-      // In general, we have no way of solving this problem so throw it.
-      throw new RuntimeException("Failure storing TransactionOrderPersistor data", e);
-    }
   }
 }
