@@ -270,7 +270,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     SchedulingRunnable next = new SchedulingRunnable(desc, request, payload, r, ckey);
-    results.setWaitFor(next);
+    
+    if (isActive()) {
+// only if this is active is waiting required.  This is set to wait for the 
+// passives to complete before presenting results back to the client
+      results.setWaitFor(next);
+    }
     
     for (SchedulingRunnable msg : runnables) {
       msg.start();
