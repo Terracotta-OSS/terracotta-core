@@ -339,9 +339,14 @@ public class SyncReplicationActivity implements OrderedEventContext {
       } else {
         out.writeInt(this.concurrency);
       }
+      if (this.debugId != null) {
+        byte[] data = this.debugId.getBytes();
+        out.writeInt(data.length);
+        out.write(data);
+      } else {
+        out.writeInt(0);
+      }
     }
-    String debugIdToWrite = (this.debugId != null) ? this.debugId : "";
-    out.writeString(debugIdToWrite);
   }
 
   public static SyncReplicationActivity deserializeFrom(TCByteBufferInput in) throws IOException {
@@ -357,6 +362,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     byte[] payload = null;
     int concurrency = 0;
     int referenceCount = 0;
+    String debug = null;
     if (ActivityType.SYNC_BEGIN == action) {
       int arraySize = in.readInt();
       entitiesForSyncStart = new EntityCreationTuple[arraySize];
@@ -383,8 +389,13 @@ public class SyncReplicationActivity implements OrderedEventContext {
       } else {
         concurrency = in.readInt();
       }
+      int dlen = in.readInt();
+      if (dlen > 0) {
+        byte[] data = new byte[dlen];
+        in.read(data);
+        debug = new String(data);
+      }
     }
-    String debug = in.readString();
     return new SyncReplicationActivity(activityID, entitiesForSyncStart, descriptor, source, tid, oldest, action, payload, concurrency, referenceCount, debug);
   }
 
