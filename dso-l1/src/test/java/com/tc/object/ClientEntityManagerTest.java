@@ -52,6 +52,7 @@ import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
@@ -76,7 +77,8 @@ public class ClientEntityManagerTest extends TestCase {
   private StageManager stageMgr;
   
   private EntityID entityID;
-  private EntityDescriptor entityDescriptor;
+  private ClientInstanceID instance;
+  private EntityDescriptor descriptor;
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
@@ -96,7 +98,8 @@ public class ClientEntityManagerTest extends TestCase {
     String entityClassName = "Class Name";
     String entityInstanceName = "Instance Name";
     this.entityID = new EntityID(entityClassName, entityInstanceName);
-    this.entityDescriptor = new EntityDescriptor(this.entityID, new ClientInstanceID(1), 1);
+    this.instance = new ClientInstanceID(1);
+    this.descriptor = new EntityDescriptor(entityID, instance, 1L);
   }
   
   public void testResponseSinkFlush() throws Exception {
@@ -106,10 +109,11 @@ public class ClientEntityManagerTest extends TestCase {
   // Test that a simple lookup will succeed.
   public void testSimpleLookupSuccess() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     
     // Set the target for success.
-    final byte[] resultObject = new byte[0];
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
     when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
       @Override
@@ -129,7 +133,7 @@ public class ClientEntityManagerTest extends TestCase {
   // Test that a simple lookup can fail.
   public void testSimpleLookupFailure() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     
     // Set the target for failure.
     final byte[] resultObject = null;
@@ -159,7 +163,7 @@ public class ClientEntityManagerTest extends TestCase {
       }
     });    
     // We will create a runnable which will attempt to fetch the entity.
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     
     // Pause the manager before we start anything.
     this.manager.pause();
@@ -181,10 +185,11 @@ public class ClientEntityManagerTest extends TestCase {
   // Test fetch+release on success.
   public void testFetchReleaseOnSuccess() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     
     // Set the target for success.
-    final byte[] resultObject = new byte[0];
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
     when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
       @Override
@@ -204,7 +209,7 @@ public class ClientEntityManagerTest extends TestCase {
   // Test fetch+release on failure.
   public void testFetchReleaseOnFailure() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     
     // Set the target for failure.
     final byte[] resultObject = null;
@@ -238,7 +243,7 @@ public class ClientEntityManagerTest extends TestCase {
   // That that we can shut down while in a paused state without locking up.
   public void testShutdownWhilePaused() throws Exception {
     // We will create a runnable which will attempt to fetch the entity (and we will get this stuck in "WAITING" on pause).
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     
     // Pause the manager before we start anything.
     this.manager.pause();
@@ -278,8 +283,8 @@ public class ClientEntityManagerTest extends TestCase {
       }
     });
     
-    TestFetcher fetcher1 = new TestFetcher(this.manager, this.entityDescriptor);
-    TestFetcher fetcher2 = new TestFetcher(this.manager, this.entityDescriptor);
+    TestFetcher fetcher1 = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    TestFetcher fetcher2 = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
     fetcher1.start();
     fetcher2.start();
     fetcher1.join();
@@ -314,7 +319,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -327,7 +332,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(entityDescriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     long start = System.currentTimeMillis();
     try {
@@ -369,7 +374,7 @@ public class ClientEntityManagerTest extends TestCase {
 
       @Override
       public void run() {
-        mgr.invokeAction(entityDescriptor, requestedAcks, false, true, new byte[0]);
+        mgr.invokeAction(descriptor, requestedAcks, false, true, new byte[0]);
       }
       
     });
@@ -404,19 +409,23 @@ public class ClientEntityManagerTest extends TestCase {
 
   private static class TestFetcher extends Thread {
     private final ClientEntityManager manager;
-    private final EntityDescriptor entityDescriptor;
+    private final EntityID entity;
+    private final long version;
+    private final ClientInstanceID instance;
     private EntityClientEndpoint<EntityMessage, EntityResponse> result;
     private Exception exception;
     
-    public TestFetcher(ClientEntityManager manager, EntityDescriptor entityDescriptor) {
+    public TestFetcher(ClientEntityManager manager, EntityID entity, long version, ClientInstanceID instance) {
       this.manager = manager;
-      this.entityDescriptor = entityDescriptor;
+      this.entity = entity;
+      this.version = version;
+      this.instance = instance;
     }
     @SuppressWarnings("unchecked")
     @Override
     public void run() {
       try {
-        this.result = this.manager.fetchEntity(this.entityDescriptor, mock(MessageCodec.class), mock(Runnable.class));
+        this.result = this.manager.fetchEntity(entity, version, instance, mock(MessageCodec.class), mock(Runnable.class));
       } catch (Exception t) {
         this.exception = t;
       }

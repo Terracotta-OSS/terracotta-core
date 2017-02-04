@@ -245,7 +245,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     if (schedule) {
-      scheduleInOrder(getEntityDescriptorForSource(create.getSourceDescriptor()), create, resp, data , ()-> {
+      scheduleInOrder(create, resp, data , ()-> {
         invokeLifecycleOperation(create, data, resp);
       }, ConcurrencyStrategy.MANAGEMENT_KEY);
     } else {
@@ -256,10 +256,10 @@ public class ManagedEntityImpl implements ManagedEntity {
   // TODO:  Make sure that this is actually required in the cases where it is called or if some of these sites are
   //  related to the scope expansion of the legacy "NOOP" request type.
   private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
-    scheduleInOrder(getEntityDescriptorForSource(request.getSourceDescriptor()), request, resp, MessagePayload.emptyPayload(), resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
+    scheduleInOrder(request, resp, MessagePayload.emptyPayload(), resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
   }
 //  synchronized here because this method must be mutually exclusive with clearQueue
-  private synchronized SchedulingRunnable scheduleInOrder(EntityDescriptor desc, ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {
+  private synchronized SchedulingRunnable scheduleInOrder(ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
     if (isInActiveState) {
@@ -269,7 +269,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE));
     }
     
-    SchedulingRunnable next = new SchedulingRunnable(desc, request, payload, r, ckey);
+    SchedulingRunnable next = new SchedulingRunnable(request, payload, r, ckey);
     
     if (isActive()) {
 // only if this is active is waiting required.  This is set to wait for the 
@@ -306,18 +306,17 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void processInvokeRequest(final ServerEntityRequest request, ResultCapture response, MessagePayload message, int key) {
-    ClientDescriptor client = request.getSourceDescriptor();
     if (isInActiveState) {
       key = this.concurrencyStrategy.concurrencyKey(message.decodeRawMessage(raw->this.codec.decodeMessage(raw)));
     }
     int locked = key;
-    scheduleInOrder(getEntityDescriptorForSource(client), request, response, message, ()->invoke(request, response, message, locked), locked);
+    scheduleInOrder(request, response, message, ()->invoke(request, response, message, locked), locked);
   }
 
   private void processSyncCreateMessage(ServerEntityRequest sync, ResultCapture response, MessagePayload syncPayload) {
     ServerEntityAction action = sync.getAction();
     Assert.assertTrue(action == ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY);
-    scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
+    scheduleInOrder(sync, response, syncPayload, 
         ()-> {
           invokeLifecycleOperation(sync, syncPayload, response);
         }, 
@@ -331,7 +330,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         action == ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING
         || action == ServerEntityAction.RECEIVE_SYNC_ENTITY_END
     );
-    scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
+    scheduleInOrder(sync, response, syncPayload, 
         ()-> {
           invokeLifecycleOperation(sync, syncPayload, response);
         }, 
@@ -346,12 +345,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertTrue(action != ServerEntityAction.RECEIVE_SYNC_ENTITY_END);
     
     if (action == ServerEntityAction.RECEIVE_SYNC_PAYLOAD) {
-      scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
+      scheduleInOrder(sync, response, syncPayload, 
         ()-> {
           invoke(sync, response, syncPayload, concurrencyKey);
         }, concurrencyKey);
     } else {
-      scheduleInOrder(getEntityDescriptorForSource(sync.getSourceDescriptor()), sync, response, syncPayload, 
+      scheduleInOrder(sync, response, syncPayload, 
         ()->{
           invoke(sync, response, null, concurrencyKey);
         }, concurrencyKey);
@@ -581,8 +580,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
         ? activeServerEntity
         : passiveServerEntity;
-    ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
-    EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
+    EntityDescriptor entityDescriptor = new EntityDescriptor(id, request.getClientInstance(), version);
     if (this.isDestroyed) {
       response.failure(new EntityNotFoundException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));        
     } else if (null != commonServerEntity) {
@@ -719,7 +717,8 @@ public class ManagedEntityImpl implements ManagedEntity {
           this.retirementManager.registerWithMessage(em, concurrencyKey);
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
           if (loc.runOnActive()) {
-            byte[] er = runWithHelper(()->codec.encodeResponse(this.activeServerEntity.invoke(wrappedRequest.getSourceDescriptor(), em)));
+            EntityResponse resp = this.activeServerEntity.invoke(new ClientDescriptorImpl(wrappedRequest.getNodeID(), wrappedRequest.getClientInstance()), em);
+            byte[] er = runWithHelper(()->codec.encodeResponse(resp));
             response.complete(er);
           } else {
             response.complete(new byte[0]);
@@ -769,19 +768,18 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertTrue(clientReferenceCount > 0);
       }
       if (this.isInActiveState) {
-        ClientDescriptor sourceDescriptor = getEntityRequest.getSourceDescriptor();
-        EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
         // The FETCH can only come directly from a client so we can down-cast.
         ClientID clientID = (ClientID) getEntityRequest.getNodeID();
-        boolean added = clientEntityStateManager.addReference(clientID, entityDescriptor);
+        ClientDescriptorImpl descriptor = new ClientDescriptorImpl(clientID, getEntityRequest.getClientInstance());
+        boolean added = clientEntityStateManager.addReference(descriptor, this.id);
         Assert.assertTrue(added);
         // Fire the event that the client fetched the entity.
-        this.eventCollector.clientDidFetchEntity(clientID, entityDescriptor, sourceDescriptor);
+        this.eventCollector.clientDidFetchEntity(clientID, this.id, getEntityRequest.getClientInstance());
         // finally notify the entity that it was fetched
-        this.activeServerEntity.connected(sourceDescriptor);
+        this.activeServerEntity.connected(descriptor);
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
 //   this is a reconnection, handle the extended reconnect data
-          this.activeServerEntity.handleReconnect(sourceDescriptor, extendedData);
+          this.activeServerEntity.handleReconnect(descriptor, extendedData);
         }
       }
       response.complete(this.constructorInfo);
@@ -797,25 +795,20 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertTrue(clientReferenceCount >= 0);
       }
       if (this.isInActiveState) {
-        ClientDescriptor sourceDescriptor = request.getSourceDescriptor();
-        EntityDescriptor entityDescriptor = getEntityDescriptorForSource(sourceDescriptor);
         // The RELEASE can only come directly from a client so we can down-cast.
         ClientID clientID = (ClientID) request.getNodeID();
-        boolean removed = clientEntityStateManager.removeReference(clientID, entityDescriptor);
+
+        ClientDescriptorImpl clientInstance = new ClientDescriptorImpl(clientID, request.getClientInstance());
+
+        boolean removed = clientEntityStateManager.removeReference(clientInstance);
         Assert.assertTrue(removed);
         
-        this.activeServerEntity.disconnected(sourceDescriptor);
+        this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
-        this.eventCollector.clientDidReleaseEntity(clientID, entityDescriptor);
+        this.eventCollector.clientDidReleaseEntity(clientID, this.id, request.getClientInstance());
       }
       response.complete();
     }
-  }
-  
-  private EntityDescriptor getEntityDescriptorForSource(ClientDescriptor sourceDescriptor) {
-    // We are in internal code so downcast the descriptor.
-    ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)sourceDescriptor;
-    return rawDescriptor.getEntityDescriptor();
   }
   
   @Override
@@ -851,13 +844,11 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void sync(NodeID passive) {
-// iterate through all the concurrency keys of an entity
-    EntityDescriptor entityDescriptor = new EntityDescriptor(this.id, ClientInstanceID.NULL_ID, this.version);
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(entityDescriptor, new ServerEntityRequestImpl(entityDescriptor, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.emptyPayload(), ()-> { 
+    this.executor.scheduleRequest(this.id, this.version, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.emptyPayload(), ()-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
@@ -879,7 +870,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           //  don't care about the result
                                               
           BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(entityDescriptor, req, MessagePayload.emptyPayload(),  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency).waitForCompleted();
+          this.executor.scheduleRequest(this.id, this.version, req, MessagePayload.emptyPayload(),  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency).waitForCompleted();
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
@@ -958,7 +949,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
 
     @Override
-    public ClientDescriptor getSourceDescriptor() {
+    public ClientInstanceID getClientInstance() {
       return null;
     }
 
@@ -979,7 +970,6 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private class SchedulingRunnable implements Runnable {
-    private final EntityDescriptor desc;
     private final ServerEntityRequest request;
     private final MessagePayload payload;
     private final Runnable original;
@@ -987,8 +977,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     private ActivePassiveAckWaiter  waitFor;
     private boolean waitForReplication = false;
 
-    public SchedulingRunnable(EntityDescriptor desc, ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
-      this.desc = desc;
+    public SchedulingRunnable(ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
       this.request = request;
       this.payload = payload;
       this.original = r;
@@ -1021,7 +1010,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
       } 
       waitForReplication = replicate;
-      waitFor = executor.scheduleRequest(desc, request, payload, this, replicate, concurrency);
+      waitFor = executor.scheduleRequest(id, version, request, payload, this, replicate, concurrency);
       this.notifyAll();
     }
     

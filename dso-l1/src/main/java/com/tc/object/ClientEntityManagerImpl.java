@@ -60,6 +60,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import java.util.EnumSet;
@@ -85,7 +86,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final AtomicLong currentTransactionID;
 
   private final ClientEntityStateManager stateManager;
-  private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint<?, ?>> objectStoreMap;
+  private final ConcurrentMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>> objectStoreMap;
     
   private final StageManager stages;
   
@@ -103,7 +104,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.requestTickets = new Semaphore(ClientConfigurationContext.MAX_SENT_REQUESTS);
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
-    this.objectStoreMap = new ConcurrentHashMap<EntityDescriptor, EntityClientEndpoint<?, ?>>(10240, 0.75f, 128);
+    this.objectStoreMap = new ConcurrentHashMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>>(10240, 0.75f, 128);
     this.stages = mgr;
     
     this.outbound = createSendStage();
@@ -219,13 +220,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @SuppressWarnings("rawtypes")
   @Override
-  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
-    return internalLookup(entityDescriptor, codec, closeHook);
+  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
+    return internalLookup(entity, version, instance, codec, closeHook);
   }
 
   @Override
-  public void handleMessage(EntityDescriptor entityDescriptor, byte[] message) {
-    EntityClientEndpoint<?, ?> endpoint = this.objectStoreMap.get(entityDescriptor);
+  public void handleMessage(ClientInstanceID clientInstance, byte[] message) {
+    EntityClientEndpoint<?, ?> endpoint = this.objectStoreMap.get(clientInstance);
     if (endpoint != null) {
       EntityClientEndpointImpl<?, ?> endpointImpl = (EntityClientEndpointImpl<?, ?>) endpoint;
       try {
@@ -236,7 +237,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         Assert.fail(e.getLocalizedMessage());
       }
     } else {
-      logger.info("Entity " + entityDescriptor + " not found. Ignoring message.");
+      logger.info("Instance " + clientInstance + " not found. Ignoring message.");
     }
   }
 
@@ -363,12 +364,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     stateManager.start();
     // Walk the objectStoreMap and add reconnect references for any objects found there.
-    for (EntityDescriptor descriptor : this.objectStoreMap.keySet()) {
-      EntityID entityID = descriptor.getEntityID();
-      long entityVersion = descriptor.getClientSideVersion();
-      ClientInstanceID clientInstanceID = descriptor.getClientInstanceID();
-      byte[] extendedReconnectData = this.objectStoreMap.get(descriptor).getExtendedReconnectData();
-      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, clientInstanceID, extendedReconnectData);
+    for (EntityClientEndpointImpl endpoint : this.objectStoreMap.values()) {
+      EntityDescriptor descriptor = endpoint.getEntityDescriptor();
+      EntityID entityID = endpoint.getEntityID();
+      long entityVersion = endpoint.getVersion();
+      byte[] extendedReconnectData = endpoint.getExtendedReconnectData();
+      ClientEntityReferenceContext context = new ClientEntityReferenceContext(entityID, entityVersion, descriptor.getClientInstanceID(), extendedReconnectData);
       handshakeMessage.addReconnectReference(context);
     }
     
@@ -416,19 +417,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private void throwClosedExceptionOnMessage(InFlightMessage msg) {
     msg.received();
     msg.setResult(null, new EntityException(
-        msg.getMessage().getEntityDescriptor().getEntityID().getClassName(),
-        msg.getMessage().getEntityDescriptor().getEntityID().getEntityName(),
+        "",
+        "",
         "connection closed",
         new ConnectionException(null)) {});
     msg.retired();
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(final EntityDescriptor entityDescriptor, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
-    Assert.assertNotNull("Can't lookup null entity descriptor", entityDescriptor);
-
-    EntityClientEndpoint<M, R> resolvedEndpoint = null;
+  private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(EntityID entity, long version, final ClientInstanceID instance, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
+    Assert.assertNotNull("Can't lookup null entity descriptor", instance);
+    final EntityDescriptor fetchDescriptor = new EntityDescriptor(entity, instance, version);
+    EntityClientEndpointImpl<M, R> resolvedEndpoint = null;
     try {
-      byte[] config = internalRetrieve(entityDescriptor);
+      byte[] config = internalRetrieve(fetchDescriptor);
       // We can only fail to get the config if we threw an exception.
       Assert.assertTrue(null != config);
       // We managed to retrieve the config so create the end-point.
@@ -438,32 +439,32 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         @Override
         public void run() {
           try {
-            internalRelease(entityDescriptor, closeHook);
+            internalRelease(fetchDescriptor, closeHook);
           } catch (EntityException e) {
             // We aren't expecting there to be any problems releasing an entity in the close hook so we will just log and re-throw.
             Util.printLogAndRethrowError(e, logger);
           }
         }
       };
-      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entityDescriptor, this, config, codec, compoundRunnable);
+      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entity, version, fetchDescriptor, this, config, codec, compoundRunnable);
       
-      if (null != this.objectStoreMap.get(entityDescriptor)) {
+      if (null != this.objectStoreMap.get(instance)) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()
                              + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(resolvedEndpoint)) + "] ");
       }
-      this.objectStoreMap.put(entityDescriptor, resolvedEndpoint);
+      this.objectStoreMap.put(instance, resolvedEndpoint);
     } catch (EntityNotFoundException notfound) {
       throw notfound;
     } catch (EntityException e) {
       // Release the entity and re-throw to the higher level.
-      internalRelease(entityDescriptor, null);
+      internalRelease(fetchDescriptor, null);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
-      logger.warn("Exception retrieving entity descriptor " + entityDescriptor, t);
+      logger.warn("Exception retrieving entity descriptor " + fetchDescriptor, t);
       // Clean up any client-side or server-side state regarding this failed connection.
-      internalRelease(entityDescriptor, null);
+      internalRelease(fetchDescriptor, null);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.
       throw Throwables.propagate(t);
     }
@@ -486,7 +487,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // Note that we remove the entity from the local object store only after this release call returns in order to avoid
     // the case where a reconnect might happen before the message completes, thus causing a re-send.  If we don't include
     // this reference in the reconnect handshake, the re-sent release will try to release a non-fetched entity.
-    this.objectStoreMap.remove(entityDescriptor);
+    this.objectStoreMap.remove(entityDescriptor.getClientInstanceID());
     
     if (closeHook != null) {
       closeHook.run();

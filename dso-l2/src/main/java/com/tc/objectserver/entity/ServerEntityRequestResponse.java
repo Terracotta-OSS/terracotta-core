@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -92,9 +93,10 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   }
 
   @Override
-  public ClientDescriptor getSourceDescriptor() {
-    return new ClientDescriptorImpl(getNodeID(), this.descriptor);
+  public ClientInstanceID getClientInstance() {
+    return this.descriptor.getClientInstanceID();
   }
+
 
   @Override
   public String toString() {

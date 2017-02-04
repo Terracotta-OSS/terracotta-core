@@ -156,8 +156,8 @@ public class ReplicatedTransactionHandler {
         }
 
         @Override
-        public ClientDescriptor getSourceDescriptor() {
-          return new ClientDescriptorImpl(ClientID.NULL_ID, EntityDescriptor.NULL_ID);
+        public ClientInstanceID getClientInstance() {
+          return ClientInstanceID.NULL_ID;
         }
 
         @Override
@@ -846,8 +846,8 @@ public class ReplicatedTransactionHandler {
     }
 
     @Override
-    public ClientDescriptor getSourceDescriptor() {
-      return new ClientDescriptorImpl(getNodeID(), this.descriptor);
+    public ClientInstanceID getClientInstance() {
+      return this.descriptor.getClientInstanceID();
     }
 
     @Override

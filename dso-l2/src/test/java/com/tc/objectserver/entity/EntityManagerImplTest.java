@@ -65,7 +65,7 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
+    when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
         ((Runnable)invoke.getArguments()[3]).run();
         return null;
       });
@@ -82,7 +82,7 @@ public class EntityManagerImplTest {
 
   @Test
   public void testGetNonExistent() throws Exception {
-    assertThat(entityManager.getEntity(id, version), is(empty()));
+    assertThat(entityManager.getEntity(id,  version), is(empty()));
   }
 
   @Test
@@ -100,7 +100,7 @@ public class EntityManagerImplTest {
   
   @Test
   public void testNullEntityChecks() throws Exception {
-    Optional<ManagedEntity> check = entityManager.getEntity(EntityID.NULL_ID, 0);
+    Optional<ManagedEntity> check = entityManager.getEntity(EntityID.NULL_ID, version);
     Assert.assertFalse(check.isPresent());
     ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
     Assert.assertNotNull(entity);
@@ -108,7 +108,7 @@ public class EntityManagerImplTest {
     Assert.assertTrue(check.isPresent());
     check = entityManager.getEntity(id, 0);
     //  make sure zero versions go to empty
-    Assert.assertFalse(check.isPresent());
+    Assert.assertTrue(check.isPresent());
     //  make sure null goes to empty
     check = entityManager.getEntity(EntityID.NULL_ID, 1);
     Assert.assertFalse(check.isPresent());
@@ -141,8 +141,8 @@ public class EntityManagerImplTest {
       }
 
       @Override
-      public ClientDescriptor getSourceDescriptor() {
-        return new ClientDescriptorImpl(ClientID.NULL_ID, new EntityDescriptor(id, ClientInstanceID.NULL_ID, version));
+      public ClientInstanceID getClientInstance() {
+        return ClientInstanceID.NULL_ID;
       }
 
       @Override

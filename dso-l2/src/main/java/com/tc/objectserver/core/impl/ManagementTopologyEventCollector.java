@@ -36,9 +36,11 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import com.tc.util.State;
@@ -135,12 +137,12 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
       if (earlyFetches != null && !earlyFetches.isEmpty()) {
         for (ResolvedDescriptors ed : earlyFetches) {
-          String fetchIdentifier = fetchIdentifierForService(client, ed.getEntity());
+          String fetchIdentifier = fetchIdentifierForService(client, ed.id, ed.getClientInstanceID());
           boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, 
                   fetchIdentifier, 
                   new PlatformClientFetchedEntity(clientIdentifierForService(client), 
-                          entityIdentifierForService(ed.getEntity().getEntityID()), 
-                          ed.getClient()));
+                          entityIdentifierForService(ed.getEntityID()), 
+                          new ClientDescriptorImpl(client, ed.getClientInstanceID())));
           // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
           if (!didAdd) {
             LOGGER.warn("unbalanced client connect " + fetchIdentifier);
@@ -194,14 +196,14 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void clientDidFetchEntity(ClientID client, EntityDescriptor entityDescriptor, ClientDescriptor clientDescriptor) {
+  public synchronized void clientDidFetchEntity(ClientID client, EntityID entity, ClientInstanceID instance) {
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       String clientIdentifier = clientIdentifierForService(client);
-      String entityIdentifier = entityIdentifierForService(entityDescriptor.getEntityID());
-      PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, clientDescriptor);
+      String entityIdentifier = entityIdentifierForService(entity);
+      PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, new ClientDescriptorImpl(client, instance));
       if (connectedClients.contains(client)) {
-        String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
+        String fetchIdentifier = fetchIdentifierForService(client, entity, instance);
         boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
         // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
         if (!didAdd) {
@@ -209,17 +211,17 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         }
       } else {
         Collection<ResolvedDescriptors> set = incomingFetches.computeIfAbsent(client, (c)->new HashSet<>());
-        set.add(new ResolvedDescriptors(entityDescriptor, clientDescriptor));
+        set.add(new ResolvedDescriptors(entity, instance));
       }
     }
-    LOGGER.debug("client " + client + " fetched " + entityDescriptor);
+    LOGGER.debug("client " + client + " fetched " + instance);
   }
 
   @Override
-  public synchronized void clientDidReleaseEntity(ClientID client, EntityDescriptor entityDescriptor) {
+  public synchronized void clientDidReleaseEntity(ClientID client, EntityID entity, ClientInstanceID instance) {
     // Remove it from the monitoring interface.
     if (null != this.serviceInterface) {
-      String fetchIdentifier = fetchIdentifierForService(client, entityDescriptor);
+      String fetchIdentifier = fetchIdentifierForService(client, entity, instance);
       boolean didRemove = this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
       // This CANNOT be unbalanced (it implies that there is a serious bug somewhere).
       if (!didRemove) {
@@ -229,7 +231,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     
     if (incomingReleases.containsKey(client)) {
       Collection<EntityDescriptor> expected = incomingReleases.get(client);
-      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(entityDescriptor.getEntityID())));
+      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(entity)));
       if (expected.isEmpty()) {
         incomingReleases.remove(client);
         // Remove it from the monitoring interface.
@@ -239,7 +241,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         }
       }
     }
-    LOGGER.debug("client " + client + " released " + entityDescriptor);
+    LOGGER.debug("client " + client + " released " + entity);
   }
   
   public synchronized void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
@@ -280,26 +282,25 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     return id.getClassName() + id.getEntityName();
   }
   
-  private String fetchIdentifierForService(ClientID client, EntityDescriptor entityDescriptor) {
-    EntityID entity = entityDescriptor.getEntityID();
-    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity) + "_" + entityDescriptor.getClientInstanceID().getID(); 
+  private String fetchIdentifierForService(ClientID client, EntityID entity, ClientInstanceID cid) {
+    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity) + "_" + cid.getID(); 
   }
   
   private static class ResolvedDescriptors {
-    private final EntityDescriptor entity;
-    private final ClientDescriptor client;
+    private final EntityID   id;
+    private final ClientInstanceID instance;
 
-    public ResolvedDescriptors(EntityDescriptor entity, ClientDescriptor client) {
-      this.entity = entity;
-      this.client = client;
+    public ResolvedDescriptors(EntityID entityID, ClientInstanceID instance) {
+      this.id = entityID;
+      this.instance = instance;
     }
 
-    public EntityDescriptor getEntity() {
-      return entity;
+    public ClientInstanceID getClientInstanceID() {
+      return instance;
     }
 
-    public ClientDescriptor getClient() {
-      return client;
+    public EntityID getEntityID() {
+      return id;
     }
   }
 }

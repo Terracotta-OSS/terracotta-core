@@ -19,13 +19,12 @@
 package com.terracotta.diagnostic;
 
 import com.tc.entity.DiagnosticMessage;
-import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
-import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientEntityManager;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityClientEndpointImpl;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -60,15 +59,14 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
-    EntityID eid = entityDescriptor.getEntityID();
-    Assert.assertEquals(Diagnostics.class.getName(), eid.getClassName());
-    Assert.assertEquals("root", eid.getEntityName());
-    return new EntityClientEndpointImpl(entityDescriptor, this, new byte[] {}, codec, closeHook);
+  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
+    Assert.assertEquals(Diagnostics.class.getName(), entity.getClassName());
+    Assert.assertEquals("root", entity.getEntityName());
+    return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook);
   }
 
   @Override
-  public void handleMessage(EntityDescriptor entityDescriptor, byte[] message) {
+  public void handleMessage(ClientInstanceID entityDescriptor, byte[] message) {
 
   }
 

@@ -25,7 +25,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityDescriptor;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
@@ -40,7 +40,7 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   private static final byte RESPONSE_ID = 2;
 
   private byte[] message;
-  private EntityDescriptor entityDescriptor;
+  private ClientInstanceID clientInstance;
   private Long responseId;
 
   public ServerEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
@@ -52,14 +52,14 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   }
 
   @Override
-  public void setMessage(EntityDescriptor entityDescriptor, byte[] message) {
-    this.entityDescriptor = entityDescriptor;
+  public void setMessage(ClientInstanceID clientInstance, byte[] message) {
+    this.clientInstance = clientInstance;
     this.message = message;
   }
 
   @Override
-  public void setMessage(EntityDescriptor entityDescriptor, byte[] payload, long responseId) {
-    this.entityDescriptor = entityDescriptor;
+  public void setMessage(ClientInstanceID clientInstance, byte[] payload, long responseId) {
+    this.clientInstance = clientInstance;
     this.message = payload;
     this.responseId = responseId;
   }
@@ -70,8 +70,8 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   }
 
   @Override
-  public EntityDescriptor getEntityDescriptor() {
-    return this.entityDescriptor;
+  public ClientInstanceID getClientInstanceID() {
+    return this.clientInstance;
   }
 
   @Override
@@ -81,7 +81,7 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
 
   @Override
   protected void dehydrateValues() {
-    putNVPair(ENTITY_DESCRIPTOR, this.entityDescriptor);
+    putNVPair(ENTITY_DESCRIPTOR, this.clientInstance);
     if (responseId != null) {
       putNVPair(RESPONSE_ID, responseId);
     }
@@ -94,7 +94,7 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
     boolean didMatch = false;
     switch (name) {
       case ENTITY_DESCRIPTOR:
-        this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
+        this.clientInstance = ClientInstanceID.readFrom(getInputStream());
         didMatch = true;
         break;
       case MESSAGE:

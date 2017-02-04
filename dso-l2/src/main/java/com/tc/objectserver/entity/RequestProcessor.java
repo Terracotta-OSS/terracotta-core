@@ -25,7 +25,9 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -67,7 +69,7 @@ public class RequestProcessor {
 
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
-  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityDescriptor entity, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
+  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityID eid, long version, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
     // Determine if this kind of action is one we want to replicate.
     ServerEntityAction requestAction = request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
@@ -77,12 +79,12 @@ public class RequestProcessor {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     ActivePassiveAckWaiter token = (isActionReplicated && !replicateTo.isEmpty())
-        ? passives.replicateActivity(createReplicationActivity(entity, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
+        ? passives.replicateActivity(createReplicationActivity(eid, version, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
-    EntityRequest entityRequest =  new EntityRequest(entity, call, concurrencyKey);
+    EntityRequest entityRequest =  new EntityRequest(eid, call, concurrencyKey);
     if (PLOGGER.isDebugEnabled()) {
-      PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + entity + ":" + concurrencyKey);
+      PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + eid + ":" + concurrencyKey);
     }
     requestExecution.addMultiThreaded(entityRequest);
     return token;
@@ -102,7 +104,7 @@ public class RequestProcessor {
     
   }
   
-  private static SyncReplicationActivity createReplicationActivity(EntityDescriptor id, ClientID src,
+  private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
     SyncReplicationActivity.ActivityType actionCode = typeMap.get(type);
     Assert.assertNotNull(actionCode);
@@ -110,22 +112,22 @@ public class RequestProcessor {
     // Handle our replicated message creations as special-cases, if they aren't normal invokes.
     SyncReplicationActivity activity = null;
     if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == actionCode) {
-      activity = SyncReplicationActivity.createOrderingPlaceholder(id, src, tid, oldest, payload.getDebugId());
+      activity = SyncReplicationActivity.createOrderingPlaceholder(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), src, tid, oldest, payload.getDebugId());
     } else if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN == actionCode) {
-      activity = SyncReplicationActivity.createStartEntityKeyMessage(id.getEntityID(), id.getClientSideVersion(), concurrency);
+      activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, concurrency);
     } else {
       // Normal replication.
-      activity = SyncReplicationActivity.createReplicatedMessage(id, src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+      activity = SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
     }
     return activity;
   }
   
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {
-    private final EntityDescriptor entity;
+    private final EntityID entity;
     private final Runnable invoke;
     private final int key;
 
-    public EntityRequest(EntityDescriptor entity, Runnable runnable, int key) {
+    public EntityRequest(EntityID entity, Runnable runnable, int key) {
       this.entity = entity;
       this.invoke = runnable;
       this.key = key;
@@ -137,7 +139,7 @@ public class RequestProcessor {
         return null;
       }
 //  create some additional entropy so all entities are not ordered the same
-      return key ^ entity.getEntityID().hashCode();
+      return key ^ entity.hashCode();
     }
 //  Runnable so handler can cast and execute
     @Override

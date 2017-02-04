@@ -52,6 +52,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -64,6 +65,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 
 import static org.mockito.Matchers.any;
@@ -101,9 +103,8 @@ public class ManagedEntityImplTest {
   private RequestProcessor requestMulti;
   private ClientEntityStateManager clientEntityStateManager;
   private ITopologyEventCollector eventCollector;
-  private NodeID nodeID;
+  private ClientID nodeID;
   private ClientDescriptor clientDescriptor;
-  private EntityDescriptor entityDescriptor;
   private static ExecutorService exec;
   private static ExecutorService pth;
 
@@ -122,12 +123,11 @@ public class ManagedEntityImplTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
-    nodeID = mock(NodeID.class);
+    nodeID = mock(ClientID.class);
     entityID = new EntityID(TestEntity.class.getName(), "foo");
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
     consumerID = 1;
-    entityDescriptor = new EntityDescriptor(entityID, clientInstanceID, version);
     serviceRegistry = mock(InternalServiceRegistry.class);
     
     loopback = mock(ManagementKeyCallback.class);
@@ -156,13 +156,13 @@ public class ManagedEntityImplTest {
     passiveServerEntity = mock(PassiveServerEntity.class);
     serverEntityService = getServerEntityService(this.activeServerEntity, this.passiveServerEntity);
     clientEntityStateManager = mock(ClientEntityStateManager.class);
-    when(clientEntityStateManager.addReference(any(ClientID.class), any(EntityDescriptor.class))).thenReturn(Boolean.TRUE);
-    when(clientEntityStateManager.removeReference(any(ClientID.class), any(EntityDescriptor.class))).thenReturn(Boolean.TRUE);
+    when(clientEntityStateManager.addReference(any(ClientDescriptorImpl.class), any(EntityID.class))).thenReturn(Boolean.TRUE);
+    when(clientEntityStateManager.removeReference(any(ClientDescriptorImpl.class))).thenReturn(Boolean.TRUE);
     eventCollector = mock(ITopologyEventCollector.class);
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
     managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
-    clientDescriptor = new ClientDescriptorImpl(nodeID, entityDescriptor);
+    clientDescriptor = new ClientDescriptorImpl(nodeID, clientInstanceID);
     invokeOnTransactionHandler(()->Thread.currentThread().setName(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
   }
   
@@ -356,11 +356,11 @@ public class ManagedEntityImplTest {
 
     promote();
     
-    com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
+    ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest request = mockGetRequest(requester);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockInvokePayload(), response::complete, response::failure));
     response.waitFor();
-    verify(clientEntityStateManager, never()).addReference(requester, new EntityDescriptor(entityID, clientInstanceID, version));
+    verify(clientEntityStateManager, never()).addReference(any(ClientDescriptorImpl.class), any(EntityID.class));
     verify(response).failure(Mockito.any());
   }
 
@@ -373,12 +373,18 @@ public class ManagedEntityImplTest {
     resp.waitFor();
     promote();
 
-    com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
+    ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest request = mockGetRequest(requester);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockInvokePayload(), response::complete, response::failure));
     response.waitFor();
-    verify(clientEntityStateManager).addReference(requester, new EntityDescriptor(entityID, clientInstanceID, version));
-    verify(response).complete(Matchers.eq(config.getRawPayload()));
+    verify(clientEntityStateManager).addReference(requester, entityID);
+    ArgumentCaptor<byte[]> data = ArgumentCaptor.forClass(byte[].class);
+    verify(response).complete(data.capture());
+    byte[] raw = data.getValue();
+    Assert.assertEquals(raw.length, config.getRawPayload().length + 8);
+    byte[] sub = new byte[raw.length - 8];
+    System.arraycopy(raw, 8, sub, 0, raw.length - 8);
+    Assert.assertEquals(sub, config.getRawPayload());
   }
 
   @Test
@@ -670,12 +676,12 @@ public class ManagedEntityImplTest {
     promote();
 
     // Run the GET and verify that connected() call was received by the entity.
-    com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
+    ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest getRequest = mockGetRequest(requester);
     TestingResponse response2 = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(getRequest,  mockInvokePayload(), response2::complete, response2::failure));
     response2.waitFor();
-    verify(activeServerEntity).connected(eq(clientDescriptor));
+    verify(activeServerEntity).connected(eq(requester));
     verify(response2).complete(Mockito.any());
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
@@ -683,7 +689,7 @@ public class ManagedEntityImplTest {
     TestingResponse response3 = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), response3::complete, response3::failure));
     response3.waitFor();
-    verify(activeServerEntity).disconnected(eq(clientDescriptor));
+    verify(activeServerEntity).disconnected(eq(requester));
     verify(response3).complete(Mockito.any());
   }
 
@@ -714,12 +720,12 @@ public class ManagedEntityImplTest {
     verify(response2, never()).complete(Mockito.any());
     
     // Verify that we can get and release, just like with any other active.
-    com.tc.net.ClientID requester = new com.tc.net.ClientID(0);
+    ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest getRequest = mockGetRequest(requester);
     TestingResponse response3 = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(getRequest, MessagePayload.emptyPayload(), response3::complete, response3::failure));
     response3.waitFor();
-    verify(activeServerEntity).connected(eq(clientDescriptor));
+    verify(activeServerEntity).connected(eq(requester));
     verify(response3).complete(Mockito.any());
     
     // Run the RELEASE and verify that disconnected() call was received by the entity.
@@ -727,7 +733,7 @@ public class ManagedEntityImplTest {
     TestingResponse response4 = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), response4::complete, response4::failure));
     response4.waitFor();
-    verify(activeServerEntity).disconnected(eq(clientDescriptor));
+    verify(activeServerEntity).disconnected(eq(requester));
     verify(response4).complete(Mockito.any());
   }
 
@@ -777,51 +783,56 @@ public class ManagedEntityImplTest {
 
   private ServerEntityRequest mockCreateEntityRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.CREATE_ENTITY);
+    when(request.getNodeID()).thenReturn(nodeID);
     return request;
   }
 
   private ServerEntityRequest mockReconfigureEntityRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RECONFIGURE_ENTITY);
+    when(request.getNodeID()).thenReturn(nodeID);
     return request;
   }
   
   private ServerEntityRequest mockInvokeRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.INVOKE_ACTION);
+    when(request.getNodeID()).thenReturn(nodeID);
     return request;
   }
 
   private ServerEntityRequest mockExecutionInvokeRequest(ExecutionStrategy.Location loc) {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
-    when(request.getSourceDescriptor()).thenReturn(clientDescriptor);
+    when(request.getClientInstance()).thenReturn(clientInstanceID);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
+    when(request.getNodeID()).thenReturn(nodeID);
     return request;
   }
   
-  private ServerEntityRequest mockGetRequest(com.tc.net.ClientID requester) {
+  private ServerEntityRequest mockGetRequest(ClientDescriptorImpl requester) {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.FETCH_ENTITY);
-    when(request.getNodeID()).thenReturn(requester);
+    when(request.getNodeID()).thenReturn(requester.getNodeID());
     when(request.getTransaction()).thenReturn(new TransactionID(1));
     return request;
   }
 
-  private ServerEntityRequest mockReleaseRequest(com.tc.net.ClientID requester) {
+  private ServerEntityRequest mockReleaseRequest(ClientDescriptorImpl requester) {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RELEASE_ENTITY);
-    when(request.getNodeID()).thenReturn(requester);
+    when(request.getNodeID()).thenReturn(requester.getNodeID());
     when(request.getTransaction()).thenReturn(new TransactionID(1));
     return request;
   }
     
   private ServerEntityRequest mockLocalFlushRequest() {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
-    when(request.getSourceDescriptor()).thenReturn(new ClientDescriptorImpl(ClientID.NULL_ID, entityDescriptor));
+    when(request.getClientInstance()).thenReturn(ClientInstanceID.NULL_ID);
     when(request.getAction()).thenReturn(ServerEntityAction.LOCAL_FLUSH);
     return request;
   }
 
   private ServerEntityRequest mockRequestForAction(ServerEntityAction action) {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
-    when(request.getSourceDescriptor()).thenReturn(clientDescriptor);
+    when(request.getClientInstance()).thenReturn(clientInstanceID);
     when(request.getAction()).thenReturn(action);
+    when(request.getNodeID()).thenReturn(nodeID);
     return request;
   }
 

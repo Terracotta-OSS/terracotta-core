@@ -38,7 +38,7 @@ import org.terracotta.exception.EntityException;
 public class PlatformEntity implements ManagedEntity {
   public static EntityID PLATFORM_ID = new EntityID("platform", "root");
   public static long VERSION = 1L;
-  private static EntityDescriptor descriptor = new EntityDescriptor(PLATFORM_ID, ClientInstanceID.NULL_ID, VERSION);
+  private static EntityDescriptor descriptor = EntityDescriptor.NULL_ID;
   public final RequestProcessor processor;
   private boolean isActive;
 
@@ -62,7 +62,7 @@ public class PlatformEntity implements ManagedEntity {
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Consumer<byte[]> complete, Consumer<EntityException> exception) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    ActivePassiveAckWaiter waiter = processor.scheduleRequest(descriptor, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
+    ActivePassiveAckWaiter waiter = processor.scheduleRequest(PLATFORM_ID, VERSION, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
     return new SimpleCompletion() {
       @Override
       public void waitForCompletion() {

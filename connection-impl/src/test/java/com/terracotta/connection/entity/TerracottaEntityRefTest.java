@@ -21,6 +21,7 @@ package com.terracotta.connection.entity;
 
 import com.tc.exception.EntityReferencedException;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -62,14 +63,14 @@ public class TerracottaEntityRefTest {
     Entity testEntity = mock(Entity.class);
     when(mockEntityClientService.create(any(EntityClientEndpoint.class))).thenReturn(testEntity);
     EntityClientEndpoint mockTestEntityClientEndpoint = mock(EntityClientEndpoint.class);
-    when(mockClientEntityManager.fetchEntity(any(EntityDescriptor.class), any(MessageCodec.class), any(Runnable.class))).thenReturn(mockTestEntityClientEndpoint);
+    when(mockClientEntityManager.fetchEntity(any(EntityID.class), anyLong(), any(ClientInstanceID.class), any(MessageCodec.class), any(Runnable.class))).thenReturn(mockTestEntityClientEndpoint);
     
     // Now, run the test.
     long version = 1;
 // clientids start at 1
     TerracottaEntityRef<Entity, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     Entity entity1 = testRef.fetchEntity();
-    verify(mockClientEntityManager).fetchEntity(eq(new EntityDescriptor(new EntityID(Entity.class.getName(), "TEST"), new ClientInstanceID(1), version)), any(MessageCodec.class), any(Runnable.class));
+    verify(mockClientEntityManager).fetchEntity(eq(new EntityID(Entity.class.getName(), "TEST")), anyLong(), any(ClientInstanceID.class), any(MessageCodec.class), any(Runnable.class));
     Assert.assertNotNull(entity1);
     Assert.assertEquals(testEntity, entity1);
     entity1.close();

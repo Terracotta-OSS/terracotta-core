@@ -41,20 +41,26 @@ import java.util.concurrent.TimeoutException;
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
   private final InvocationHandler invocationHandler;
   private final byte[] configuration;
-  private final EntityDescriptor entityDescriptor;
+  private final EntityDescriptor invokeDescriptor;
+  private final EntityID entityID;
+  private final long version;
   private final MessageCodec<M, R> codec;
   private final Runnable closeHook;
   private EndpointDelegate delegate;
   private boolean isOpen;
 
   /**
-   * @param entityDescriptor The server-side entity and corresponding client-side instance ID.
+   * @param eid The type name name of the target entity
+   * @param version the version of the entity targeted
+   * @param instance the combination of the FetchID from the server and the ClientInstanceID from the client
    * @param invocationHandler Called to handle "invokeAction" requests made on this end-point.
    * @param entityConfiguration Opaque byte[] describing how to configure the entity to be built on top of this end-point.
    * @param closeHook A Runnable which will be run last when the end-point is closed.
    */
-  public EntityClientEndpointImpl(EntityDescriptor entityDescriptor, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Runnable closeHook) {
-    this.entityDescriptor = entityDescriptor;
+  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Runnable closeHook) {
+    this.entityID = eid;
+    this.version = version;
+    this.invokeDescriptor = instance;
     this.invocationHandler = invocationHandler;
     this.configuration = entityConfiguration;
     this.codec = codec;
@@ -62,6 +68,20 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     // We start in the open state.
     this.isOpen = true;
   }
+  
+  EntityID getEntityID() {
+    return this.entityID;
+  }
+  
+  long getVersion() {
+    return this.version;
+  }
+  
+  EntityDescriptor getEntityDescriptor() {
+    return this.invokeDescriptor;
+  }
+  
+  
 
   @Override
   public byte[] getEntityConfiguration() {
@@ -151,7 +171,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
       checkInvoked();
       invoked = true;
-      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(entityDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request));
+      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(invokeDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request));
       return new InvokeFuture<R>() {
         @Override
         public boolean isDone() {

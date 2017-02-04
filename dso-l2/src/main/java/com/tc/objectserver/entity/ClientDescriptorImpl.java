@@ -18,10 +18,12 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.net.ClientID;
 import org.terracotta.entity.ClientDescriptor;
 
 import com.tc.net.NodeID;
-import com.tc.object.EntityDescriptor;
+import com.tc.object.ClientInstanceID;
+import com.tc.util.Assert;
 
 /**
  * An opaque token representing a specific entity instance on a specific client node.
@@ -33,33 +35,35 @@ import com.tc.object.EntityDescriptor;
  */
 public class ClientDescriptorImpl implements ClientDescriptor {
   // The specific node where the referenced instance lives.
-  private final NodeID nodeID;
-  private final EntityDescriptor entityDescriptor;
+  private final ClientID nodeID;
+  private final ClientInstanceID clientInstance;
   
-  public ClientDescriptorImpl(NodeID nodeID, EntityDescriptor entityDescriptor) {
+  public ClientDescriptorImpl(ClientID nodeID, ClientInstanceID clientInstance) {
+    Assert.assertNotNull(nodeID);
+    Assert.assertNotNull(clientInstance);
     this.nodeID = nodeID;
-    this.entityDescriptor = entityDescriptor;
+    this.clientInstance = clientInstance;
   }
   
-  public NodeID getNodeID() {
+  public ClientID getNodeID() {
     return this.nodeID;
   }
   
-  public EntityDescriptor getEntityDescriptor() {
-    return this.entityDescriptor;
+  public ClientInstanceID getClientInstanceID() {
+    return this.clientInstance;
   }
 
   @Override
   public String toString() {
     return "ClientDescriptorImpl{" +
            "nodeID=" + nodeID +
-           ", entityDescriptor=" + entityDescriptor +
+           ", entityDescriptor=" + clientInstance +
            "}";
   }
   
   @Override
   public int hashCode() {
-    return this.nodeID.hashCode() ^ this.entityDescriptor.hashCode();
+    return this.nodeID.hashCode() ^ this.clientInstance.hashCode();
   }
   
   @Override
@@ -69,7 +73,7 @@ public class ClientDescriptorImpl implements ClientDescriptor {
     {
       final ClientDescriptorImpl that = (ClientDescriptorImpl) other;
       doesMatch = this.nodeID.equals(that.nodeID)
-          && this.entityDescriptor.equals(that.entityDescriptor);
+          && this.clientInstance.equals(that.clientInstance);
     }
     return doesMatch;
   }

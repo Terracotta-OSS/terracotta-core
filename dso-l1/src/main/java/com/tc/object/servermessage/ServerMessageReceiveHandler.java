@@ -28,6 +28,7 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClientEntityManager;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.util.Assert;
 
@@ -43,8 +44,8 @@ public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
   @Override
   public void handleEvent(EC context) throws EventHandlerException {
     ServerEntityMessage message = (ServerEntityMessage) context;
-    EntityDescriptor entityDescriptor = message.getEntityDescriptor();
-    clientEntityManager.handleMessage(entityDescriptor, message.getMessage());
+    ClientInstanceID clientInstance = message.getClientInstanceID();
+    clientEntityManager.handleMessage(clientInstance, message.getMessage());
     Long responseId = message.getResponseId();
     if (responseId != null) {
       ServerEntityResponseMessage response = (ServerEntityResponseMessage) clientMessageChannel.createMessage(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE);
