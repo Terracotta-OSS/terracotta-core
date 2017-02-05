@@ -21,6 +21,7 @@ package com.tc.entity;
 import java.io.IOException;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
@@ -34,6 +35,7 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+import java.util.EnumSet;
 
 import org.junit.Test;
 
@@ -61,7 +63,8 @@ public class NetworkVoltronEntityMessageImplTest {
     boolean requiresReplication = false;
     byte[] extendedData = new byte[1];
     TransactionID oldestTransactionPending = new TransactionID(1);
-    message.setContents(clientID, transactionID, entityDescriptor, messageType, requiresReplication, extendedData, oldestTransactionPending);
+    message.setContents(clientID, transactionID, entityDescriptor, messageType, 
+            requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));
     message.dehydrate();
     
     TCMessageHeader header = (TCMessageHeader) message.getHeader();

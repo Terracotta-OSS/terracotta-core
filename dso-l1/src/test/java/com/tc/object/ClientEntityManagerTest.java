@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -475,6 +476,12 @@ public class ClientEntityManagerTest extends TestCase {
     public TransactionID getTransactionID() {
       return this.transactionID;
     }
+
+    @Override
+    public Set<Acks> getRequestedAcks() {
+      throw new UnsupportedOperationException();
+    }
+    
     @Override
     public TCMessageType getMessageType() {
       throw new UnsupportedOperationException();
@@ -552,7 +559,8 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
     @Override
-    public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
+    public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, 
+            Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;

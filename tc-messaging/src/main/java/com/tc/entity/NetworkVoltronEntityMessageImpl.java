@@ -33,6 +33,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -50,6 +52,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private TransactionID oldestTransactionPending;
   private MessageCodecSupplier supplier;
   private EntityMessage message;
+  private Set<VoltronEntityMessage.Acks> requestedAcks;
 
   @Override
   public ClientID getSource() {
@@ -91,7 +94,13 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
 
   @Override
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending) {
+  public Set<Acks> getRequestedAcks() {
+    return requestedAcks;
+  }
+  
+  @Override
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, 
+          Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
     Assert.assertNotNull(clientID);
@@ -100,6 +109,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     Assert.assertNotNull(type);
     Assert.assertNotNull(extendedData);
     Assert.assertNotNull(oldestTransactionPending);
+    Assert.assertNotNull(acks);
     if (type == Type.INVOKE_ACTION) {
       Assert.assertTrue(entityDescriptor.isIndexed());
     } else {
@@ -113,6 +123,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.requiresReplication = requiresReplication;
     this.extendedData = extendedData;
     this.oldestTransactionPending = oldestTransactionPending;
+    this.requestedAcks = acks;
   }
 
   @Override
@@ -148,6 +159,11 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     outputStream.writeBoolean(requiresReplication);
     
     outputStream.writeLong(this.oldestTransactionPending.toLong());
+    
+    outputStream.writeByte(requestedAcks.size());
+    for (VoltronEntityMessage.Acks ack : this.requestedAcks) {
+      outputStream.writeByte(ack.ordinal());
+    }
   }
   
   @Override
@@ -165,6 +181,22 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
     
+    int ac = getByteValue();
+    if (ac == 0) {
+      this.requestedAcks = EnumSet.noneOf(Acks.class);
+    } else {
+      Acks first = Acks.values()[getByteValue()];
+      if (ac > 1) {
+        Acks[] rest = new Acks[ac - 1];
+        for (int x=0;x < ac - 1;x++) {
+          rest[x] = Acks.values()[getByteValue()];
+        }
+        this.requestedAcks = EnumSet.of(first, rest);
+      } else {
+        this.requestedAcks = EnumSet.of(first);
+      }
+    }
+
     try {
       if (this.type == Type.INVOKE_ACTION) {
         MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor);
