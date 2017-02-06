@@ -156,6 +156,12 @@ public class EntityMessengerService implements IEntityMessenger {
     public boolean doesRequireReplication() {
       return true;
     }
+
+    @Override
+    public boolean doesRequestReceived() {
+      return false;
+    }
+    
     @Override
     public Type getVoltronType() {
       return Type.INVOKE_ACTION;

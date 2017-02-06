@@ -1162,6 +1162,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.notify();
     }
        
+    public void waitForReceived() {
+      if (setOnce != null) {
+        ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
+        waiter.waitForReceived();
+      }
+    }
+       
     public void waitForCompletion() {
       this.waitForCompletion(0, TimeUnit.MILLISECONDS);
     }

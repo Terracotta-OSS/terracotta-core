@@ -481,6 +481,11 @@ public class ClientEntityManagerTest extends TestCase {
     public Set<Acks> getRequestedAcks() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean doesRequestReceived() {
+      return true;
+    }
     
     @Override
     public TCMessageType getMessageType() {

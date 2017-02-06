@@ -79,6 +79,12 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
   public boolean doesRequireReplication() {
     return this.requiresReplication;
   }
+
+  @Override
+  public boolean doesRequestReceived() {
+// if it's a resend, this already happened or it didn't
+    return false;
+  }
   
   @Override
   public Type getVoltronType() {

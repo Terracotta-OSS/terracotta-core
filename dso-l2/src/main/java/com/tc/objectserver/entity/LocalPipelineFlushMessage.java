@@ -63,6 +63,11 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage {
   }
 
   @Override
+  public boolean doesRequestReceived() {
+    return false;
+  }
+
+  @Override
   public Type getVoltronType() {
     return (forDestroy) ? Type.LOCAL_ENTITY_GC : Type.LOCAL_PIPELINE_FLUSH;
   }
