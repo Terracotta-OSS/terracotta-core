@@ -854,7 +854,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(this.id, this.version, fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, Collections.emptySet()), MessagePayload.emptyPayload(), ()-> { 
+    this.executor.scheduleRequest(this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false, Collections.emptySet()), MessagePayload.emptyPayload(), ()-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, fetchID, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
@@ -947,6 +947,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     @Override
     public ClientID getNodeID() {
       return ClientID.NULL_ID;
+    }
+
+    @Override
+    public boolean requiresReceived() {
+      return false;
     }
 
     @Override

@@ -160,6 +160,11 @@ public class ReplicatedTransactionHandler {
         }
 
         @Override
+        public boolean requiresReceived() {
+          return false;
+        }
+
+        @Override
         public Set<NodeID> replicateTo(Set<NodeID> passives) {
           return Collections.emptySet();
         }
@@ -520,7 +525,9 @@ public class ReplicatedTransactionHandler {
   private ServerEntityRequest makeLocalFlush(EntityID eid, long version) {
     // Anything created within this class represents a replicated message.
     boolean isReplicatedMessage = true;
-    return new ServerEntityRequestResponse(EntityDescriptor.createDescriptorForLifecycle(eid, version), ServerEntityAction.LOCAL_FLUSH, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, ()->Optional.empty(), isReplicatedMessage);
+    // and doesn't need received
+    boolean requiresReceived = false;
+    return new ServerEntityRequestResponse(EntityDescriptor.createDescriptorForLifecycle(eid, version), ServerEntityAction.LOCAL_FLUSH, TransactionID.NULL_ID, TransactionID.NULL_ID, ClientID.NULL_ID, ()->Optional.empty(), requiresReceived, isReplicatedMessage);
   }
       
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
@@ -858,6 +865,11 @@ public class ReplicatedTransactionHandler {
     @Override
     public ClientInstanceID getClientInstance() {
       return this.descriptor.getClientInstanceID();
+    }
+
+    @Override
+    public boolean requiresReceived() {
+      return false;
     }
 
     @Override

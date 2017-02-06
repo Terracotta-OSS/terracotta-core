@@ -146,6 +146,11 @@ public class EntityManagerImplTest {
       }
 
       @Override
+      public boolean requiresReceived() {
+        return false;
+      }
+
+      @Override
       public Set<NodeID> replicateTo(Set<NodeID> passives) {
         return Collections.emptySet();
       }

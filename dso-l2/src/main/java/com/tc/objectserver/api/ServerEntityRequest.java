@@ -43,6 +43,8 @@ public interface ServerEntityRequest {
    * @return 
    */
   ClientInstanceID getClientInstance();
+  
+  boolean requiresReceived();
 /**
  * Provide the nodes which need to be replicated to for this request
  * @param passives current set of passive nodes
