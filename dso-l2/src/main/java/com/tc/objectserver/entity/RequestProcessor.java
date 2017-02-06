@@ -79,8 +79,19 @@ public class RequestProcessor {
         || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == requestAction));
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
-    ActivePassiveAckWaiter token = (isActionReplicated && !replicateTo.isEmpty())
-        ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
+//  if there is somewhere to replicate to but replication was not required
+    if (!replicateTo.isEmpty() && !replicate) {
+      if (request.requiresReceived()) {
+//  ordering symantics requested, send a special placeholder that is completed
+//  as soon as it is received
+        requestAction = ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
+      } else {
+//  ordering is not requested so don't bother replicating a placeholder
+        replicateTo = Collections.emptySet();
+      }
+    }
+    ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
+        ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), requestAction, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(eid, call, concurrencyKey);
