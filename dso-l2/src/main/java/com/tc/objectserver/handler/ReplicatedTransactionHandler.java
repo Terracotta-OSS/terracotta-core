@@ -373,6 +373,10 @@ public class ReplicatedTransactionHandler {
             //  no scheduling needed
               break;
             }
+          case ORDER_PLACEHOLDER_ONLY:
+            // go ahead and ack right away and don't schedule, no need, work is done
+            acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
+            break;
           default:
             entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity),(result)-> acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
             break;

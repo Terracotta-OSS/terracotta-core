@@ -1054,12 +1054,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         while (waitFor == null) {
           this.wait();
         }
-        if (waitForReplication) {
-          waitFor.waitForCompleted();
-        } else {
-          waitFor.waitForReceived();
-        }
-        return waitForReplication ? waitFor : null;
+        return waitFor;
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
