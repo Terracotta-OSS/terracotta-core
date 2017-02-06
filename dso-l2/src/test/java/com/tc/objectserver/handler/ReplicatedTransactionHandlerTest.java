@@ -110,7 +110,7 @@ public class ReplicatedTransactionHandlerTest {
     Mockito.doAnswer((Answer<SimpleCompletion>) (InvocationOnMock invocation) -> {
       ((Consumer<byte[]>)invocation.getArguments()[3]).accept(null);
       return null;
-    }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entityManager.getEntity(Matchers.eq(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, 1L)))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
     this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
@@ -168,7 +168,7 @@ public class ReplicatedTransactionHandlerTest {
       }
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     SyncReplicationActivity.EntityCreationTuple[] entitiesToSync = {
         new SyncReplicationActivity.EntityCreationTuple(eid, 1, 10L, new byte[0], true)
     };
@@ -216,7 +216,7 @@ public class ReplicatedTransactionHandlerTest {
       }
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
     this.loopbackSink.addSingleThreaded(msg);
@@ -229,7 +229,7 @@ public class ReplicatedTransactionHandlerTest {
   @Test
   public void testDestroy() throws Exception {
     this.rth.getEventHandler().destroy();
-    verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any(), Matchers.any());
+    verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any(), Matchers.any(), Matchers.any());
   }
   
   @Test
@@ -242,7 +242,7 @@ public class ReplicatedTransactionHandlerTest {
         sendNoop(entityID, fetchID, ((ServerEntityRequest)invoked.getArguments()[0]).getAction());
       }
       return null;
-    }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entity.getID()).thenReturn(entityID);
     when(this.entityManager.getEntity(Matchers.any())).then(invoke->{
       EntityDescriptor desp = (EntityDescriptor)invoke.getArguments()[0];
@@ -293,7 +293,7 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       verifySequence(req, ((MessagePayload)invocation.getArguments()[1]).getRawPayload(), ((MessagePayload)invocation.getArguments()[1]).getConcurrency());
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       // NOTE:  We don't retire replicated messages.
@@ -302,7 +302,7 @@ public class ReplicatedTransactionHandlerTest {
       int concurrency = (null != payload) ? payload.getConcurrency() : ConcurrencyStrategy.MANAGEMENT_KEY;
       verifySequence(req, raw, concurrency);
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
     mockPassiveSync(rth);
   }
   

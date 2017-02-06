@@ -76,6 +76,7 @@ import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.PermanentEntityException;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.util.concurrent.SetOnceFlag;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -154,8 +155,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     return version;
   }
     
-  private ResultCapture createManagedEntityResponse(Consumer<byte[]> completion, Consumer<EntityException> exception, Object debug, boolean lifecycle) {
-    return new ResultCapture(completion, exception, debug, lifecycle);
+  private ResultCapture createManagedEntityResponse(Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception, Object debug, boolean lifecycle) {
+    return new ResultCapture(received, completion, exception, debug, lifecycle);
   }
 /**
  * This is the main entry point for interaction with the managed entity.  A request consists of a defining action, a 
@@ -168,14 +169,15 @@ public class ManagedEntityImpl implements ManagedEntity {
  * @param exception - called when an exception occurs
  * @return a completion object which can be invoked to wait for the requested action to complete
  */
+
   @Override
-  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception) {
+  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception) {
     ResultCapture resp;
     switch (request.getAction()) {
       case LOCAL_FLUSH:
       case ORDER_PLACEHOLDER_ONLY:
       case MANAGED_ENTITY_GC:
-        resp = createManagedEntityResponse(completion, exception, request, false);
+        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processLegacyNoopMessage(request, resp);
         break;
       case LOCAL_FLUSH_AND_SYNC:
@@ -188,29 +190,29 @@ public class ManagedEntityImpl implements ManagedEntity {
       case FETCH_ENTITY:
       case RECONFIGURE_ENTITY:
       case RELEASE_ENTITY:
-        resp = createManagedEntityResponse(completion, exception, request, true);
+        resp = createManagedEntityResponse(received, completion, exception, request, true);
         processLifecycleEntity(request, data, resp);
         break;
       case INVOKE_ACTION:
-        resp = createManagedEntityResponse(completion, exception, request, false);
+        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processInvokeRequest(request, resp, data, data.getConcurrency());
         break;
       case RECEIVE_SYNC_CREATE_ENTITY:
         Assert.assertTrue(!this.isInActiveState);
-        resp = createManagedEntityResponse(completion, exception, request, false);
+        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processSyncCreateMessage(request, resp, data);
         break;
       case RECEIVE_SYNC_ENTITY_START_SYNCING:
       case RECEIVE_SYNC_ENTITY_END:
         Assert.assertTrue(!this.isInActiveState);
-        resp = createManagedEntityResponse(completion, exception, request, false);
+        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processSyncStartEndMessage(request, resp, data);
         break;
       case RECEIVE_SYNC_ENTITY_KEY_START:
       case RECEIVE_SYNC_ENTITY_KEY_END:
       case RECEIVE_SYNC_PAYLOAD:
         Assert.assertTrue(!this.isInActiveState);
-        resp = createManagedEntityResponse(completion, exception, request, false);
+        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processSyncPayloadOtherMessage(request, resp, data, data.getConcurrency());
         break;
       default:
@@ -469,6 +471,11 @@ public class ManagedEntityImpl implements ManagedEntity {
    * @param message 
    */
   private void invoke(ServerEntityRequest request, ResultCapture response, MessagePayload message, int concurrencyKey) {
+    if (request.requiresReceived()) {
+      response.waitForReceived(); // waits for received on passives
+    }  
+    response.received(); // call received locally
+    
     Lock read = reconnectAccessLock.readLock();
       try {
         read.lock();
@@ -876,7 +883,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           //  don't care about the result
                                               
           BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(this.id, this.version, fetchID, req, MessagePayload.emptyPayload(),  ()->invoke(req, new ResultCapture(result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency).waitForCompleted();
+          this.executor.scheduleRequest(this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  ()->invoke(req, new ResultCapture(null, result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency).waitForCompleted();
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
@@ -1141,15 +1148,18 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
   
-  public static class ResultCapture implements SimpleCompletion {
+  private static class ResultCapture implements SimpleCompletion {
+    private final Runnable received;
     private final Consumer<byte[]> result;
     private final Consumer<EntityException> error;
     private SchedulingRunnable setOnce;
     private boolean done = false;
     private final boolean lifecycle;
     private final Object debugID;
+    private final SetOnceFlag receivedSent = new SetOnceFlag();
 
-    public ResultCapture(Consumer<byte[]> result, Consumer<EntityException> error, Object debugID, boolean lifecycle) {
+    private ResultCapture(Runnable received, Consumer<byte[]> result, Consumer<EntityException> error, Object debugID, boolean lifecycle) {
+      this.received = received;
       this.result = result;
       this.error = error;
       this.lifecycle = lifecycle;
@@ -1192,10 +1202,21 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     
+    public void received() {
+      this.receivedSent.set();
+      if (received != null) {
+        received.run();
+      }
+    }
+    
     public void complete() {
+      if (!this.receivedSent.isSet()) {
+        received();
+      }
       if (result != null) {
         if (setOnce != null) {
           ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
+          waiter.waitForCompleted();
           if (lifecycle) {
             if (waiter.verifyLifecycleResult(true)) {
               logger.warn("ZAP occurred while processing " + debugID);
@@ -1208,9 +1229,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     }  
     
     public void complete(byte[] value) {
+      if (!this.receivedSent.isSet()) {
+        received();
+      }
       if (result != null) {
         if (setOnce != null) {
           ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
+          waiter.waitForCompleted();
           if (lifecycle) {
             if (waiter.verifyLifecycleResult(true)) {
               logger.warn("ZAP occurred while processing " + debugID);
@@ -1223,9 +1248,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     public void failure(EntityException ee) {
+      if (!this.receivedSent.isSet()) {
+        received();
+      }
       if (error != null) {
         if (setOnce != null) {
           ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
+          waiter.waitForCompleted();
           if (lifecycle) {
             if (waiter.verifyLifecycleResult(false)) {
               logger.warn("ZAP occurred while processing " + debugID);

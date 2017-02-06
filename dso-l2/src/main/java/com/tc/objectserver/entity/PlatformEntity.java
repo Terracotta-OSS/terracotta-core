@@ -60,7 +60,7 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Consumer<byte[]> complete, Consumer<EntityException> exception) {
+  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Runnable received, Consumer<byte[]> complete, Consumer<EntityException> exception) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
     ActivePassiveAckWaiter waiter = processor.scheduleRequest(PLATFORM_ID, VERSION, FetchID.NULL_ID, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    

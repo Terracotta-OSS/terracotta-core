@@ -156,7 +156,7 @@ public class EntityManagerImplTest {
       }
     };
     //  set the destroyed flag in the entity
-    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null);
+    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null, null);
     //  remove it from the manager
     entityManager.removeDestroyed(id);
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
