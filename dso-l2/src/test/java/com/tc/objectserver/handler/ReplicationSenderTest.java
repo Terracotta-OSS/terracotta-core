@@ -157,9 +157,9 @@ public class ReplicationSenderTest {
       case INVOKE_ACTION:
       case RECONFIGURE_ENTITY:
         ClientID source = new ClientID(1);
-        return SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+        return SyncReplicationActivity.createReplicatedMessage(EntityDescriptor.createDescriptorForLifecycle(entity, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
       case ORDERING_PLACEHOLDER:
-        return SyncReplicationActivity.createOrderingPlaceholder(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
+        return SyncReplicationActivity.createOrderingPlaceholder(EntityDescriptor.createDescriptorForLifecycle(entity, 1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
       case LOCAL_ENTITY_GC:
         return SyncReplicationActivity.createFlushLocalPipelineMessage(entity, 1, true);
       case FLUSH_LOCAL_PIPELINE:

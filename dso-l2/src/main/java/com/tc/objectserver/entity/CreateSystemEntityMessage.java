@@ -53,7 +53,7 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
 
   @Override
   public EntityDescriptor getEntityDescriptor() {
-    return new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version);
+    return EntityDescriptor.createDescriptorForLifecycle(eid, version);
   }
 
   @Override

@@ -57,7 +57,7 @@ public class ServerEntityRequestImplTest {
     responseMessage = mock(VoltronEntityAppliedResponse.class);
     retiredMessage = mock(VoltronEntityRetiredResponse.class);
     messageChannel = mockMessageChannel(requestAckMessage, responseMessage, retiredMessage);
-    entityDescriptor = new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1);
+    entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(new EntityID("foo", "bar"), 1);
     transactionID = new TransactionID(1);
     nodeID = mock(ClientID.class);
   }

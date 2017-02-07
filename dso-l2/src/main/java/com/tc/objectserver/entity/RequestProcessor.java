@@ -112,12 +112,12 @@ public class RequestProcessor {
     // Handle our replicated message creations as special-cases, if they aren't normal invokes.
     SyncReplicationActivity activity = null;
     if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == actionCode) {
-      activity = SyncReplicationActivity.createOrderingPlaceholder(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), src, tid, oldest, payload.getDebugId());
+      activity = SyncReplicationActivity.createOrderingPlaceholder(EntityDescriptor.createDescriptorForLifecycle(id, version), src, tid, oldest, payload.getDebugId());
     } else if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN == actionCode) {
       activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, concurrency);
     } else {
       // Normal replication.
-      activity = SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(id, ClientInstanceID.NULL_ID, version), src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+      activity = SyncReplicationActivity.createReplicatedMessage(EntityDescriptor.createDescriptorForLifecycle(id, version), src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
     }
     return activity;
   }

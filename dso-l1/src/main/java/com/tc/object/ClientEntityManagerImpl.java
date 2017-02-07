@@ -426,7 +426,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(EntityID entity, long version, final ClientInstanceID instance, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
     Assert.assertNotNull("Can't lookup null entity descriptor", instance);
-    final EntityDescriptor fetchDescriptor = new EntityDescriptor(entity, instance, version);
+    final EntityDescriptor fetchDescriptor = EntityDescriptor.createDescriptorForFetch(entity, version, instance);
     EntityClientEndpointImpl<M, R> resolvedEndpoint = null;
     try {
       byte[] config = internalRetrieve(fetchDescriptor);
@@ -537,7 +537,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type) {
     // We have no client instance for a create but the request currently requires a full descriptor.
-    EntityDescriptor entityDescriptor = new EntityDescriptor(entityID, ClientInstanceID.NULL_ID, version);
+    EntityDescriptor entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(entityID, version);
     return createMessageWithDescriptor(entityDescriptor, requiresReplication, config, type);
   }
 

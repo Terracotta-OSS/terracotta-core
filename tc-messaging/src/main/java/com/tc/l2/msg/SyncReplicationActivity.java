@@ -116,7 +116,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   // Factory methods.
   public static SyncReplicationActivity createFlushLocalPipelineMessage(EntityID eid, long version, boolean forDestroy) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, forDestroy ? ActivityType.LOCAL_ENTITY_GC : ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, "");
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityDescriptor.createDescriptorForLifecycle(eid, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, forDestroy ? ActivityType.LOCAL_ENTITY_GC : ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, "");
   }
 
   public static SyncReplicationActivity createOrderingPlaceholder(EntityDescriptor descriptor, ClientID src, TransactionID tid, TransactionID oldest, String debugId) {
@@ -187,7 +187,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   }
 
   private static EntityDescriptor descriptorWithoutClient(EntityID id, long version) {
-    return new EntityDescriptor(id, ClientInstanceID.NULL_ID, version);
+    return EntityDescriptor.createDescriptorForLifecycle(id, version);
   }
 
 

@@ -127,7 +127,7 @@ public class ProcessTransactionHandlerTest {
   }
   
   private void sendNoop(EntityID eid, long version, ServerEntityAction action) {
-    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), (action == ServerEntityAction.DESTROY_ENTITY)));
+    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForLifecycle(eid, version), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
   @After

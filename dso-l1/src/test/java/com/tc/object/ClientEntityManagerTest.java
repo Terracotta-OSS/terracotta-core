@@ -99,7 +99,7 @@ public class ClientEntityManagerTest extends TestCase {
     String entityInstanceName = "Instance Name";
     this.entityID = new EntityID(entityClassName, entityInstanceName);
     this.instance = new ClientInstanceID(1);
-    this.descriptor = new EntityDescriptor(entityID, instance, 1L);
+    this.descriptor = EntityDescriptor.createDescriptorForFetch(this.entityID, 1L, instance);
   }
   
   public void testResponseSinkFlush() throws Exception {

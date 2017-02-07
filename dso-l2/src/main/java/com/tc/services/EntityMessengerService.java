@@ -63,7 +63,7 @@ public class EntityMessengerService implements IEntityMessenger {
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();
     
-    this.fakeDescriptor = new EntityDescriptor(owningEntity.getID(), ClientInstanceID.NULL_ID, owningEntity.getVersion());
+    this.fakeDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
   }
 
   @Override

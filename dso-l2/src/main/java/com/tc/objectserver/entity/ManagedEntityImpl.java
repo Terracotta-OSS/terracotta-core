@@ -580,7 +580,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
         ? activeServerEntity
         : passiveServerEntity;
-    EntityDescriptor entityDescriptor = new EntityDescriptor(id, request.getClientInstance(), version);
+    EntityDescriptor entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(id, version);
     if (this.isDestroyed) {
       response.failure(new EntityNotFoundException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));        
     } else if (null != commonServerEntity) {

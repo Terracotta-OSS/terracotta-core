@@ -56,7 +56,7 @@ public class NetworkVoltronEntityMessageImplTest {
     
     ClientID clientID = new ClientID(1);
     TransactionID transactionID = new TransactionID(2);
-    EntityDescriptor entityDescriptor = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, 3);
+    EntityDescriptor entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, 3);
     Type messageType = VoltronEntityMessage.Type.FETCH_ENTITY;
     boolean requiresReplication = false;
     byte[] extendedData = new byte[1];

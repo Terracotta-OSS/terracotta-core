@@ -57,7 +57,7 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
   }
   
   public EntityDescriptor getEntityDescriptor() {
-    return new EntityDescriptor(this.entityID, this.clientInstanceID, this.entityVersion);
+    return EntityDescriptor.createDescriptorForFetch(this.entityID, this.entityVersion, this.clientInstanceID);
   }
 
   public byte[] getExtendedReconnectData() {

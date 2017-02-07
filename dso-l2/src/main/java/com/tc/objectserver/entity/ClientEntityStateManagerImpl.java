@@ -67,7 +67,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
 
     clientStates.entrySet().stream().filter(e->e.getKey().getNodeID().equals(client)).forEach(e->
             //  don't care about version for reslease.  Is this OK?
-      msgs.add(new ReferenceMessage(client, false, new EntityDescriptor(e.getValue(), e.getKey().getClientInstanceID(), EntityDescriptor.INVALID_VERSION), null))
+      msgs.add(new ReferenceMessage(client, false, EntityDescriptor.createDescriptorForFetch(e.getValue(), EntityDescriptor.INVALID_VERSION, e.getKey().getClientInstanceID()), null))
     );
     return msgs;
   }

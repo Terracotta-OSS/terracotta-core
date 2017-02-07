@@ -417,7 +417,7 @@ public class ManagementTopologyEventCollectorTest {
       this.collector.clientDidConnect(channel, cid);
       verify(monitoringProducer, times(count)).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.anyString(), Matchers.any());
   //  simulate ClientEntityStateManger detecting a client disconnect
-      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1L)).collect(Collectors.toList()));
+      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->EntityDescriptor.createDescriptorForFetch(eid, 1, new ClientInstanceID(1))).collect(Collectors.toList()));
   //  now disconnect the client
       this.collector.clientDidDisconnect(cid);
       for (EntityID eid : entities) {
@@ -471,7 +471,7 @@ public class ManagementTopologyEventCollectorTest {
         this.collector.clientDidFetchEntity(cid, eid, instance);
       }
   //  simulate ClientEntityStateManger detecting a client disconnect
-      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1L)).collect(Collectors.toList()));
+      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->EntityDescriptor.createDescriptorForFetch(eid, 1, new ClientInstanceID(1))).collect(Collectors.toList()));
   //  now disconnect the client
       this.collector.clientDidDisconnect(cid);
       for (EntityID eid : entities) {

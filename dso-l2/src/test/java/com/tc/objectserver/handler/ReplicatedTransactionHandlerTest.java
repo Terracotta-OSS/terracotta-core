@@ -116,7 +116,7 @@ public class ReplicatedTransactionHandlerTest {
       ((Consumer<byte[]>)invocation.getArguments()[2]).accept(null);
       return null;
     }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-    when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
+    when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(1L))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
     this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
@@ -140,7 +140,7 @@ public class ReplicatedTransactionHandlerTest {
   @Test
   public void testEntityNoIgnoresDuringSyncOfKey() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
-    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
+    EntityDescriptor descriptor = EntityDescriptor.createDescriptorForLifecycle(eid, 1);
     ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
     SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
@@ -187,7 +187,7 @@ public class ReplicatedTransactionHandlerTest {
   @Test
   public void testEntityGetsConcurrencyKey() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
-    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
+    EntityDescriptor descriptor = EntityDescriptor.createDescriptorForLifecycle(eid, 1);
     ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
     SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
@@ -246,9 +246,9 @@ public class ReplicatedTransactionHandlerTest {
     out.writeInt(0);
     out.close();
     this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(bout.toByteArray())));
-    ReplicationMessage request = createMockRequest(SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entityID,ClientInstanceID.NULL_ID, 1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.CREATE_ENTITY, new byte[0], 1, ""));
+    ReplicationMessage request = createMockRequest(SyncReplicationActivity.createReplicatedMessage(EntityDescriptor.createDescriptorForLifecycle(entityID,1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.CREATE_ENTITY, new byte[0], 1, ""));
     this.rth.getEventHandler().handleEvent(request);
-    ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entityID,ClientInstanceID.NULL_ID, 1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, new byte[0], 1, ""));
+    ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createReplicatedMessage(EntityDescriptor.createDescriptorForLifecycle(entityID,1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, new byte[0], 1, ""));
     when(entity.isRemoveable()).thenReturn(Boolean.TRUE);
     this.rth.getEventHandler().handleEvent(destroy);
     verify(entityManager).removeDestroyed(eq(entityID));
@@ -389,7 +389,7 @@ public class ReplicatedTransactionHandlerTest {
   }
   
   private SyncReplicationActivity createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
-    return SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
+    return SyncReplicationActivity.createReplicatedMessage(EntityDescriptor.createDescriptorForLifecycle(eid, VERSION), 
         source, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.INVOKE_ACTION, payload, concurrency, "");
   }
 

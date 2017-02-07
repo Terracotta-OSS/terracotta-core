@@ -911,7 +911,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  must be active, noop the ProcessTransactionHandler
     this.seda.getStageManager()
         .getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class)
-        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), forDestroy));
+        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForLifecycle(eid, version), forDestroy));
   }
 
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {
