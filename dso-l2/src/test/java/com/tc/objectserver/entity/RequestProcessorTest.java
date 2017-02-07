@@ -22,9 +22,8 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -82,7 +81,7 @@ public class RequestProcessorTest {
     Sink<Runnable> dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
 
-    instance.scheduleRequest(mock(EntityID.class), 1L, request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
+    instance.scheduleRequest(mock(EntityID.class), 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
     
     verify(dump).addMultiThreaded(Matchers.any());
   }
@@ -106,7 +105,7 @@ public class RequestProcessorTest {
     instance.setReplication(broker);
     int expResult = key;
 
-    instance.scheduleRequest(testid, 1L, request, MessagePayload.commonMessagePayloadBusy(payload, null, true), ()->{}, true, key);
+    instance.scheduleRequest(testid, 1L, new FetchID(1L), request, MessagePayload.commonMessagePayloadBusy(payload, null, true), ()->{}, true, key);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
   }
@@ -126,7 +125,7 @@ public class RequestProcessorTest {
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
-    instance.scheduleRequest(testid, 1L, request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
+    instance.scheduleRequest(testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
   }
@@ -145,7 +144,7 @@ public class RequestProcessorTest {
 
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
-    instance.scheduleRequest(testid, 1L, request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.MANAGEMENT_KEY);
+    instance.scheduleRequest(testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.MANAGEMENT_KEY);
 
     verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, ConcurrencyStrategy.MANAGEMENT_KEY)));
   }
@@ -179,13 +178,13 @@ public class RequestProcessorTest {
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     
-    instance.scheduleRequest(testid, 1L, request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
+    instance.scheduleRequest(testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
     
     verify(broker, times(0)).replicateActivity(Matchers.any(), Matchers.any());
     
     instance.enterActiveState();
     
-    instance.scheduleRequest(testid, 1L, request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
+    instance.scheduleRequest(testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), ()->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
 //  assume args from mocked request are passed.  just testing execution
     verify(broker).replicateActivity(Matchers.any(), Matchers.any());
 //    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());

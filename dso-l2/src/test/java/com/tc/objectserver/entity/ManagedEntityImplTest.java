@@ -33,10 +33,9 @@ import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityUserException;
 
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -52,7 +51,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -136,7 +134,7 @@ public class ManagedEntityImplTest {
       TestingResponse helper = mockResponse();
       invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(),  helper::complete, helper::failure));
       return null;
-    }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(ServerEntityAction.class));
+    }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
     
     executionSink = mock(Sink.class);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
@@ -533,7 +531,7 @@ public class ManagedEntityImplTest {
     barrier.await();
     fin.waitFor();
     
-    verify(loopback, times(1)).completed(Matchers.any(), Matchers.anyLong(), Matchers.any());
+    verify(loopback, times(1)).completed(Matchers.any(), Matchers.any(FetchID.class), Matchers.any());
     verify(activeServerEntity, times(2)).invoke(eq(clientDescriptor), any(EntityMessage.class));
     verify(response, times(1)).complete(any());
     verify(fin, times(1)).complete(any());
@@ -619,7 +617,7 @@ public class ManagedEntityImplTest {
         TestingResponse resp = mockResponse();
         managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(),  resp::complete, resp::failure);
         return mock(RequestProcessor.EntityRequest.class);
-      }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(ServerEntityAction.class));
+      }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
     
     invokeOnTransactionHandler(()->{EntityMessage cstring = mock(EntityMessage.class);
       when(cstring.toString()).thenReturn(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY));
@@ -655,7 +653,7 @@ public class ManagedEntityImplTest {
       Assert.assertEquals(Integer.toString(check  ^ entityID.hashCode()), queued.pop().toString());
     }
     Assert.assertEquals(index, 25);
-    verify(loopback, times(3)).completed(Mockito.any(EntityID.class), Mockito.anyLong(), Mockito.any(ServerEntityAction.class));
+    verify(loopback, times(3)).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
   }
 
   @Test (expected = EntityUserException.class)

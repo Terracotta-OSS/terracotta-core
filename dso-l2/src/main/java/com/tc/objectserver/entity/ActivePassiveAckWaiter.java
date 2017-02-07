@@ -124,7 +124,7 @@ public class ActivePassiveAckWaiter {
     if (isNormalComplete) {
       // In the unexpected case, we are just making sure this node is removed from all waiters, even though it might have
       // already completed on some of them.
-      Assert.assertTrue(onePassive + " " + toString(), didContainInCompleted);
+      Assert.assertTrue(didContainInCompleted);
       this.results.put(onePassive, payload);
     }
     boolean isDoneWaiting = this.completedPending.isEmpty();

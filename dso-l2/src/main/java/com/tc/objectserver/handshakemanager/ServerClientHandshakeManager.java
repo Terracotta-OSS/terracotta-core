@@ -29,6 +29,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.msg.ClientEntityReferenceContext;
@@ -114,11 +115,10 @@ public class ServerClientHandshakeManager {
         
         // Find any client-entity references and ensure that we account for them.
         for(ClientEntityReferenceContext referenceContext : handshake.getReconnectReferences()) {
-          EntityID entityID = referenceContext.getEntityID();
-          long version = referenceContext.getEntityVersion();
           Optional<ManagedEntity> entity = null;
+          EntityDescriptor descriptor = EntityDescriptor.createDescriptorForFetch(referenceContext.getEntityID(), referenceContext.getEntityVersion(), referenceContext.getClientInstanceID());
           try {
-            entity = entityManager.getEntity(entityID, version);
+            entity = entityManager.getEntity(descriptor);
           } catch (EntityException e) {
             // We don't expect to fail at this point.
             // TODO:  Determine if we have a meaningful way to handle this error.
@@ -126,9 +126,8 @@ public class ServerClientHandshakeManager {
           }
 
           if (entity.isPresent()) {
-            EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
             byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
-            ReferenceMessage msg = new ReferenceMessage(clientID, true, entityDescriptor, extendedReconnectData);
+            ReferenceMessage msg = new ReferenceMessage(clientID, true, descriptor, extendedReconnectData);
             transactionHandler.handleResentReferenceMessage(msg);
           } else {
             throw Assert.failure("entity not found");

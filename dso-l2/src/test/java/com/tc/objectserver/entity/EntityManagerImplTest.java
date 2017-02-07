@@ -65,7 +65,7 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
+    when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
         ((Runnable)invoke.getArguments()[3]).run();
         return null;
       });
@@ -82,13 +82,13 @@ public class EntityManagerImplTest {
 
   @Test
   public void testGetNonExistent() throws Exception {
-    assertThat(entityManager.getEntity(id,  version), is(empty()));
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 
   @Test
   public void testCreateEntity() throws Exception {
     entityManager.createEntity(id, version, consumerID, true);
-    assertThat(entityManager.getEntity(id, version).get().getID(), is(id));
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)).get().getID(), is(id));
   }
 
   @Test
@@ -100,17 +100,17 @@ public class EntityManagerImplTest {
   
   @Test
   public void testNullEntityChecks() throws Exception {
-    Optional<ManagedEntity> check = entityManager.getEntity(EntityID.NULL_ID, version);
+    Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));
     Assert.assertFalse(check.isPresent());
     ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
     Assert.assertNotNull(entity);
-    check = entityManager.getEntity(id, version);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version));
     Assert.assertTrue(check.isPresent());
-    check = entityManager.getEntity(id, 0);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, 0));
     //  make sure zero versions go to empty
     Assert.assertTrue(check.isPresent());
     //  make sure null goes to empty
-    check = entityManager.getEntity(EntityID.NULL_ID, 1);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, 1));
     Assert.assertFalse(check.isPresent());
   }
 
@@ -154,7 +154,7 @@ public class EntityManagerImplTest {
     entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null);
     //  remove it from the manager
     entityManager.removeDestroyed(id);
-    assertThat(entityManager.getEntity(id, version), is(empty()));
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 
 }

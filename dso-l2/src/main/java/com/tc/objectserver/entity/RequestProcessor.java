@@ -28,6 +28,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -69,7 +70,7 @@ public class RequestProcessor {
 
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
-  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityID eid, long version, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
+  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityID eid, long version, FetchID fetchID, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
     // Determine if this kind of action is one we want to replicate.
     ServerEntityAction requestAction = request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
@@ -79,7 +80,7 @@ public class RequestProcessor {
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
     ActivePassiveAckWaiter token = (isActionReplicated && !replicateTo.isEmpty())
-        ? passives.replicateActivity(createReplicationActivity(eid, version, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
+        ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), replicate ? requestAction : ServerEntityAction.ORDER_PLACEHOLDER_ONLY, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(eid, call, concurrencyKey);
@@ -104,7 +105,7 @@ public class RequestProcessor {
     
   }
   
-  private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, ClientID src,
+  private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, FetchID fetchID, ClientID src,
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
     SyncReplicationActivity.ActivityType actionCode = typeMap.get(type);
     Assert.assertNotNull(actionCode);
@@ -112,12 +113,14 @@ public class RequestProcessor {
     // Handle our replicated message creations as special-cases, if they aren't normal invokes.
     SyncReplicationActivity activity = null;
     if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == actionCode) {
-      activity = SyncReplicationActivity.createOrderingPlaceholder(EntityDescriptor.createDescriptorForLifecycle(id, version), src, tid, oldest, payload.getDebugId());
+      activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, tid, oldest, payload.getDebugId());
     } else if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN == actionCode) {
-      activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, concurrency);
+      activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, fetchID, concurrency);
+    } else if (SyncReplicationActivity.ActivityType.INVOKE_ACTION == actionCode) {
+      activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
     } else {
       // Normal replication.
-      activity = SyncReplicationActivity.createReplicatedMessage(EntityDescriptor.createDescriptorForLifecycle(id, version), src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+      activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, tid, oldest, actionCode, payload.getRawPayload());
     }
     return activity;
   }

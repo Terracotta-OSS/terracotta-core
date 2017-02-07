@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.EntityDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumper;
@@ -28,6 +29,7 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
@@ -45,7 +47,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
@@ -57,6 +58,7 @@ import com.tc.objectserver.api.ManagementKeyCallback;
 public class EntityManagerImpl implements EntityManager {
   private static final TCLogger LOGGER = TCLogging.getLogger(EntityManagerImpl.class);
   private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
+  private final ConcurrentMap<FetchID, ManagedEntity> entityIndex = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
   private final ClassLoader creationLoader;
@@ -147,6 +149,8 @@ public class EntityManagerImpl implements EntityManager {
       ManagedEntity exists = entities.putIfAbsent(id, temp);
       if (exists == null) {
         LOGGER.debug("created " + id);
+  // using consumerid to seed fetchid
+        entityIndex.put(new FetchID(consumerID), temp);
       }
       return exists != null ? exists : temp;
     } finally {
@@ -161,7 +165,10 @@ public class EntityManagerImpl implements EntityManager {
     ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
     if (entities.putIfAbsent(entityID, temp) != null) {
       throw new IllegalStateException("Double create for entity " + entityID);
-    }    
+    } else {
+// using consumerid to seed fetchid
+      entityIndex.put(new FetchID(consumerID), temp);
+    }
     try {
       temp.loadEntity(configuration);
     } catch (ConfigurationException ce) {
@@ -178,6 +185,7 @@ public class EntityManagerImpl implements EntityManager {
       ManagedEntity e = entities.get(id);
       if (e != null && e.isDestroyed()) {
         if (entities.remove(id) != null) {
+          entityIndex.remove(e.getConsumerID());
           removed = true;
         }
       }
@@ -191,19 +199,31 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
+  public Optional<ManagedEntity> getEntity(EntityDescriptor descriptor) throws EntityException {
+    if (descriptor.isIndexed()) {
+      return getEntity(descriptor.getFetchID());
+    } else {
+      return getEntity(descriptor.getEntityID(), descriptor.getClientSideVersion());
+    }
+  }
+  
+  private Optional<ManagedEntity> getEntity(FetchID idx) {
+    Assert.assertFalse(idx.isNull());
+    return Optional.ofNullable(this.entityIndex.get(idx));
+  }
+  
+  private Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
     Assert.assertNotNull(id);
-    if (EntityID.NULL_ID == id || version == 0) {
+    if (EntityID.NULL_ID == id) {
 //  just do instance check, believe it or not, equality check is expensive due to frequency called
 //  short circuit for null entity, it's never here
       return Optional.empty();
     }
     ManagedEntity entity = entities.get(id);
     if (entity != null) {
-      // Valid entity versions start at 1.
-      Assert.assertTrue(version > 0);
+      //  if the version in the descriptor is not valid, don't check 
       //  check the provided version against the version of the entity
-      if (entity.getVersion() != version) {
+      if (version > 0 && entity.getVersion() != version) {
         throw new EntityVersionMismatchException(id.getClassName(), id.getEntityName(), entity.getVersion(), version);
       }
     }
@@ -265,8 +285,8 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityID eid) {
-    ManagedEntity e = this.entities.get(eid);
+  public MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityDescriptor eid) {
+    ManagedEntity e = this.entityIndex.get(eid.getFetchID());
     if (e != null) {
       return e.getCodec();
     }

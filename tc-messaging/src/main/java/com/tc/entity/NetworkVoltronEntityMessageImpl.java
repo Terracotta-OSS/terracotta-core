@@ -100,6 +100,11 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     Assert.assertNotNull(type);
     Assert.assertNotNull(extendedData);
     Assert.assertNotNull(oldestTransactionPending);
+    if (type == Type.INVOKE_ACTION) {
+      Assert.assertTrue(entityDescriptor.isIndexed());
+    } else {
+      Assert.assertFalse(entityDescriptor.isIndexed());
+    }
 
     this.clientID = clientID;
     this.transactionID = transactionID;
@@ -162,7 +167,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     
     try {
       if (this.type == Type.INVOKE_ACTION) {
-        MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor.getEntityID());
+        MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor);
         this.message = codec.decodeMessage(extendedData);
       }
     } catch (MessageCodecException exception) {

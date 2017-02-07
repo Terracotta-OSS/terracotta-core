@@ -330,6 +330,7 @@ public class EntityPersistor {
       bucket.writeObject(local);
       bucket.writeObject(this.entityLifeJournal.get(local));
     }
+    bucket.writeLong(this.counters.get(COUNTERS_CONSUMER_ID));
   }  
   
   public synchronized void layer(ObjectInput bucket) throws IOException {
@@ -362,6 +363,9 @@ public class EntityPersistor {
       throw new IOException(cnf);
     }
     storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
+    long nextConsumer = bucket.readLong();
+    this.counters.put(COUNTERS_CONSUMER_ID, nextConsumer);
+    storeToDisk(COUNTERS_FILE_NAME, this.counters);
   }
 
   private void storeToDisk(String dataName, Serializable dataElement) {

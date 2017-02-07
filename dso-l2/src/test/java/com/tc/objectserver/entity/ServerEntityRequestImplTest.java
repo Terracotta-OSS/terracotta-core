@@ -30,9 +30,9 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.api.ServerEntityRequest;
 
 import java.util.Optional;
 
@@ -107,8 +107,8 @@ public class ServerEntityRequestImplTest {
   }
 
   private ServerEntityRequestResponse buildInvoke() {
-    boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
+    EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
     return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), isReplicatedMessage);
   }
 }

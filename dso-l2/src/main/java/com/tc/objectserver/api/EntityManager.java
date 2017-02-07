@@ -20,6 +20,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.entity.MessageCodecSupplier;
+import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.text.PrettyPrintable;
 import java.util.Collection;
@@ -58,12 +59,11 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier, Pret
   /**
    * Get the stub for the specified entity
    *  
-   * @param id entity id
-   * @param version the version of the entity on the calling client
+   * @param descriptor
    * @return ManagedEntity wrapper for the entity
    */
-  Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException;
-
+  Optional<ManagedEntity> getEntity(EntityDescriptor descriptor) throws EntityException;
+  
   /**
    * Creates an entity instance from existing storage.  This case is called during restart.
    * 

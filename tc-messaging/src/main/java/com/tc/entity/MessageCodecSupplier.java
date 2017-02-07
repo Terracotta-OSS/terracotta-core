@@ -18,7 +18,7 @@
  */
 package com.tc.entity;
 
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
@@ -27,5 +27,5 @@ import org.terracotta.entity.MessageCodec;
  *
  */
 public interface MessageCodecSupplier {
-  MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityID eid);
+  MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityDescriptor fetchID);
 }

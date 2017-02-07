@@ -37,7 +37,7 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   public static final long INVALID_VERSION = 0;
   public static final EntityDescriptor NULL_ID = new EntityDescriptor(EntityID.NULL_ID, INVALID_VERSION);
 
-  private final long fetchID;
+  private final FetchID fetchID;
   private final EntityID entityID;
   private final ClientInstanceID clientInstanceID;
   // The version of the client-side entity implementation.
@@ -52,21 +52,25 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
     return new EntityDescriptor(entityID, clientSideVersion, instance);
   }
   
+  public static EntityDescriptor createDescriptorForInvoke(FetchID fetchID, ClientInstanceID clientInstanceID) {
+    return new EntityDescriptor(fetchID, clientInstanceID);
+  }
+  
   private EntityDescriptor(EntityID entityID, long clientSideVersion) {
-    this.fetchID = -1L;
+    this.fetchID = FetchID.NULL_ID;
     this.entityID = entityID;
     this.clientInstanceID = ClientInstanceID.NULL_ID;
     this.clientSideVersion = clientSideVersion;
   }
   
   private EntityDescriptor(EntityID entityID, long clientSideVersion, ClientInstanceID instance) {
-    this.fetchID = -1L;
+    this.fetchID = FetchID.NULL_ID;
     this.entityID = entityID;
     this.clientInstanceID = instance;
     this.clientSideVersion = clientSideVersion;
   }
   
-  private EntityDescriptor(long fetchID, ClientInstanceID clientInstanceID) {
+  private EntityDescriptor(FetchID fetchID, ClientInstanceID clientInstanceID) {
     this.fetchID = fetchID;
     this.entityID = EntityID.NULL_ID;
     this.clientInstanceID = clientInstanceID;
@@ -74,10 +78,10 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   }
   
   public boolean isIndexed() {
-    return this.fetchID >= 0;
+    return !this.fetchID.isNull();
   }
   
-  public long getFetchID() {
+  public FetchID getFetchID() {
     Assert.assertTrue(isIndexed());
     return this.fetchID;
   }
@@ -116,8 +120,8 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
   
   @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeLong(fetchID);
-    if (fetchID < 0) {
+    serialOutput.writeLong(fetchID.toLong());
+    if (fetchID.isNull()) {
       this.entityID.serializeTo(serialOutput);
       serialOutput.writeLong(this.clientSideVersion);
     }
@@ -132,16 +136,16 @@ public class EntityDescriptor implements TCSerializable<EntityDescriptor> {
 
   public static EntityDescriptor readFrom(TCByteBufferInput serialInput) throws IOException {
     long fetchID = serialInput.readLong();
-    if (fetchID < 0) {
+    if (fetchID == FetchID.NULL_ID.toLong()) {
       return new EntityDescriptor(EntityID.readFrom(serialInput), serialInput.readLong(), ClientInstanceID.readFrom(serialInput));
     } else {
-      return new EntityDescriptor(fetchID, ClientInstanceID.readFrom(serialInput));
+      return new EntityDescriptor(new FetchID(fetchID), ClientInstanceID.readFrom(serialInput));
     }
   }
 
   @Override
   public String toString() {
-    if (fetchID < 0) {
+    if (fetchID.isNull()) {
       return "EntityDescriptor{" + "entityID=" + entityID + ", version=" + clientSideVersion + ", instance=" + clientInstanceID + '}';
     } else {
       return "EntityDescriptor{" + "fetchID=" + fetchID + ", instance=" + clientInstanceID + '}';

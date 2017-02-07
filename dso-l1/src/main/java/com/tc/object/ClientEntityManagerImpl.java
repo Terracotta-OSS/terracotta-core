@@ -429,9 +429,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     final EntityDescriptor fetchDescriptor = EntityDescriptor.createDescriptorForFetch(entity, version, instance);
     EntityClientEndpointImpl<M, R> resolvedEndpoint = null;
     try {
-      byte[] config = internalRetrieve(fetchDescriptor);
+      byte[] raw = internalRetrieve(fetchDescriptor);
+      ByteBuffer br = ByteBuffer.wrap(raw);
+      final long fetchID = br.getLong();
+      FetchID fetch = new FetchID(fetchID);
+      byte[] config = new byte[br.remaining()];
+      br.get(config);
       // We can only fail to get the config if we threw an exception.
-      Assert.assertTrue(null != config);
+      Assert.assertTrue(null != raw);
       // We managed to retrieve the config so create the end-point.
       // Note that we will need to call release on this descriptor, when it is closed, prior to running the closeHook we
       //  were given so combine these ideas to pass in one runnable.
@@ -446,7 +451,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           }
         }
       };
-      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entity, version, fetchDescriptor, this, config, codec, compoundRunnable);
+      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, compoundRunnable);
       
       if (null != this.objectStoreMap.get(instance)) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()

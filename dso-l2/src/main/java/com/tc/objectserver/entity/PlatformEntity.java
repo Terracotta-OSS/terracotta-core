@@ -23,6 +23,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.RetirementManager;
@@ -62,7 +63,7 @@ public class PlatformEntity implements ManagedEntity {
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Consumer<byte[]> complete, Consumer<EntityException> exception) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    ActivePassiveAckWaiter waiter = processor.scheduleRequest(PLATFORM_ID, VERSION, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
+    ActivePassiveAckWaiter waiter = processor.scheduleRequest(PLATFORM_ID, VERSION, FetchID.NULL_ID, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
     return new SimpleCompletion() {
       @Override
       public void waitForCompletion() {
